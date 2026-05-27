@@ -37,6 +37,7 @@ Vol.1 — GitHub Docs & Product Blueprint
 | `GITHUB_REPO_SETUP.md` | GitHub setup strategy |
 | `GITHUB_INITIAL_UPLOAD_PACKAGE.md` | Upload checklist |
 | `CODEX_GITHUB_SYNC_INSTRUCTIONS.md` | Codex execution guide |
+| `GITHUB_ISSUES_BACKLOG.md` | Staging backlog for GitHub-ready issues; do not create GitHub Issues or Projects yet |
 
 ## Examples
 
