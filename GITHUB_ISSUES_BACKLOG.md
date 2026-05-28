@@ -1,9 +1,9 @@
-# GITHUB_ISSUES_BACKLOG.md v0.1.4.3.2
+# GITHUB_ISSUES_BACKLOG.md v0.1.5.3.2
 
-Status: Draft — updated after Codex/GitHub push recovery on 2026-05-28
+Status: Draft — updated after Project-Preserving Model Switching UX discovery on 2026-05-28
 Repository: `loseyourself1978-blip/tianma-work-os`  
 Latest baseline commit: `e3e15d7 Add Tianma Work OS product blueprint documents`  
-Generated from: Tianma Work OS Vol.1 → Vol.2 handoff, updated with LDD Sync Blocks and Multi-Source Signal Command discussion on 2026-05-28 Singapore/Beijing time  
+Generated from: Tianma Work OS Vol.1 → Vol.2 handoff, LDD Sync Blocks, Signal Command Layer, Codex/GitHub execution recovery, and Project-Preserving Model Switching UX discovery.
 Primary next step: Add this backlog to GitHub, update INDEX.md, then select the first issues to create. Do not create GitHub Projects yet.
 
 ---
@@ -78,6 +78,8 @@ GitHub Projects should remain delayed until issue priority and MVP scope are sta
 - `area:docs`
 - `area:mvp`
 - `area:ux`
+- `area:project-continuity`
+- `area:model-switching`
 - `area:architecture`
 - `area:signal-command`
 
@@ -368,6 +370,45 @@ This update adds:
 
 The protocol should protect completed work, diagnose the failure type, generate safe recovery instructions, and decide whether the task is blocked or can continue.
 
+---
+
+# 5E. Project-Preserving Model Switching UX Update — 2026-05-28
+
+A new DUXD discovery came from ChatGPT project usage itself.
+
+In the Mac app project conversation, the user observed:
+
+- The web-style model selector is not available in the input/composer area.
+- The top conversation-title selector can open a model selection page.
+- Selecting Thinking can create or jump to a new chat.
+- The new chat may not remain inside the current Project.
+- This breaks project continuity, context preservation, and record routing.
+
+## Product Impact
+
+This is a direct project-continuity UX issue.
+
+Tianma Work OS depends on stable project context. A user should be able to switch model, role, or reasoning intensity inside a project without losing:
+
+- Project membership.
+- Project memory.
+- Project files.
+- Project instructions.
+- Active session context.
+- Review logs.
+- Decision history.
+- Handoff continuity.
+
+## New Issue
+
+This update adds:
+
+- `TWOS-034 — Create Project-Preserving Model Switching`
+
+The system should ensure that model switching or reasoning-depth switching does not scatter records into unrelated new chats.
+
+If a new conversation is technically required, it should default to the current project and carry a structured handoff.
+
 # 6. Backlog Overview
 
 | ID | Title | Type | Priority | Milestone | Area |
@@ -405,6 +446,7 @@ The protocol should protect completed work, diagnose the failure type, generate 
 | TWOS-031 | Create Stakeholder / External Resource Registry | Feature | P1 | M5 | Signal Command |
 | TWOS-032 | Create Decision-to-Command Routing System | Feature | P0 | M5 | Signal Command |
 | TWOS-033 | Create Codex / GitHub Execution Failure Recovery Protocol | Feature | P1 | M4 | Codex / GitHub Workflow |
+| TWOS-034 | Create Project-Preserving Model Switching | Feature | P0 | M1 | Project Continuity UX |
 
 ---
 
@@ -1753,6 +1795,60 @@ Every execution-chain failure should become structured product knowledge.
 
 A failure is not merely trouble. It is a chance to improve the solution and upgrade the product.
 
+---
+
+## TWOS-034 — Create Project-Preserving Model Switching
+
+Type: `type:feature`  
+Priority: `priority:p0-critical`  
+Milestone: `M1 — Project Memory & Continuity MVP`  
+Labels: `area:project-continuity`, `area:model-switching`, `area:ux`, `area:project-memory`, `area:mvp`, `area:duxd`, `status:backlog`
+
+### Background
+
+A DUXD discovery came from using ChatGPT project conversations.
+
+In the Mac app, switching to a Thinking model from the top conversation-title selector can create or jump to a new chat that may not remain inside the current Project. This breaks the continuity that Tianma Work OS is designed to protect.
+
+For long-running projects, model switching should not scatter work across unrelated conversations or cause the user to lose project context.
+
+### Requirement
+
+Create a Project-Preserving Model Switching design.
+
+The user should be able to change model, role, or thinking intensity inside a project without leaving the project context.
+
+### Acceptance Criteria
+
+The design supports:
+
+- Switching models inside the current project without creating an unassigned new chat.
+- Switching thinking intensity inside the current project.
+- Preserving project memory, files, instructions, and current session context.
+- Preserving active project routing for reminders, review logs, and operational records.
+- Warning the user before any switch that would create a new conversation.
+- If a new conversation is technically required, defaulting that conversation into the current project.
+- Generating an automatic handoff summary when a new project conversation is required.
+- Linking the old and new conversations in the project index.
+- Preventing accidental work fragmentation across non-project chats.
+
+### Related Issues
+
+- `TWOS-005 — Design Project Memory & Index System v0.1`
+- `TWOS-006 — Create Session Volume / Handoff Protocol`
+- `TWOS-008 — Create Project-Aware Reminder / Record Routing System`
+- `TWOS-026 — Route review logs to the latest active project thread`
+- `TWOS-029 — Create Multi-Source Signal Intake System`
+- `TWOS-032 — Create Decision-to-Command Routing System`
+
+### DUXD Lesson
+
+Model capability is not enough.
+
+For serious project work, stronger models must be reachable without breaking project continuity.
+
+The user should not have to choose between better reasoning and keeping the project context intact.
+
 # 8. Recommended First Issues to Create
 
 Do not create all 24 issues immediately.
@@ -1774,6 +1870,7 @@ Recommended first batch:
 13. TWOS-030 — Create Signal Classification & Priority Engine.
 14. TWOS-032 — Create Decision-to-Command Routing System.
 15. TWOS-033 — Create Codex / GitHub Execution Failure Recovery Protocol.
+16. TWOS-034 — Create Project-Preserving Model Switching.
 
 Reason:
 
@@ -1805,7 +1902,7 @@ For Vol.2, the next best workflow is:
 Suggested commit message:
 
 ```text
-Add GitHub issues backlog v0.1.4.3.2
+Add GitHub issues backlog v0.1.5.3.2
 ```
 
 ---
@@ -1815,7 +1912,7 @@ Add GitHub issues backlog v0.1.4.3.2
 Use this instruction if asking Codex to sync the file.
 
 ```text
-Task: Add GitHub Issues Backlog v0.1.4 to Tianma Work OS repository.
+Task: Add GitHub Issues Backlog v0.1.5 to Tianma Work OS repository.
 
 Repository:
 https://github.com/loseyourself1978-blip/tianma-work-os
@@ -1836,7 +1933,7 @@ Requirements:
 4. Do not create GitHub Issues yet.
 5. Do not create a GitHub Projects board yet.
 6. Commit changes with:
-   Add GitHub issues backlog v0.1.4.3.2
+   Add GitHub issues backlog v0.1.5.3.2
 
 Verification:
 - Confirm git status is clean after commit.
