@@ -1,10 +1,10 @@
-# GITHUB_ISSUES_BACKLOG.md v0.1.5.3.2
+# GITHUB_ISSUES_BACKLOG.md v0.1.6
 
-Status: Draft — updated after Project-Preserving Model Switching UX discovery on 2026-05-28
+Status: Draft — v0.1.6 updated after Cross-Workstream Coordination and Strategy-State Risk Monitor discoveries on 2026-05-28
 Repository: `loseyourself1978-blip/tianma-work-os`  
 Latest baseline commit: `e3e15d7 Add Tianma Work OS product blueprint documents`  
-Generated from: Tianma Work OS Vol.1 → Vol.2 handoff, LDD Sync Blocks, Signal Command Layer, Codex/GitHub execution recovery, and Project-Preserving Model Switching UX discovery.
-Primary next step: Add this backlog to GitHub, update INDEX.md, then select the first issues to create. Do not create GitHub Projects yet.
+Generated from: Tianma Work OS Vol.1 → Vol.2 handoff, LDD Sync Blocks, Signal Command Layer, Codex/GitHub execution recovery, Project-Preserving Model Switching UX discovery, Cross-Workstream Coordination, and Strategy-State Risk Monitor discovery.
+Primary next step: Add this backlog to GitHub, update INDEX.md, then review the next backlog items. The first 8 trunk issues have been created. Do not create GitHub Projects yet.
 
 ---
 
@@ -80,6 +80,9 @@ GitHub Projects should remain delayed until issue priority and MVP scope are sta
 - `area:ux`
 - `area:project-continuity`
 - `area:model-switching`
+- `area:workstream-coordination`
+- `area:strategy-health`
+- `area:bot-monitoring`
 - `area:architecture`
 - `area:signal-command`
 
@@ -409,6 +412,96 @@ The system should ensure that model switching or reasoning-depth switching does 
 
 If a new conversation is technically required, it should default to the current project and carry a structured handoff.
 
+---
+
+# 5F. Cross-Workstream Interruption & Coordination Update — 2026-05-28
+
+After the first 8 GitHub trunk issues were created, the next Codex execution step was intentionally paused because a time-sensitive LDD review was about to start.
+
+This created another DUXD discovery:
+
+> Tianma Work OS must coordinate competing active workstreams without losing the state of either workflow.
+
+The system should not blindly continue a lower-priority execution stream when a higher-priority signal arrives. It should also not destroy or forget the paused workflow.
+
+## Product Impact
+
+This update adds:
+
+- `TWOS-035 — Create Cross-Workstream Interruption & Coordination System`
+
+The system should support:
+
+- Saving the current workstream checkpoint.
+- Classifying the incoming signal or workstream.
+- Determining whether to continue, pause, switch, or queue.
+- Preserving the resume point for the paused workflow.
+- Recording why the switch happened.
+- Resuming later without losing context.
+
+## Real Case
+
+Current workstream:
+
+- Tianma Work OS / Codex / GitHub Issues creation.
+- First 8 GitHub trunk issues were successfully created.
+- Repo state was clean.
+- No GitHub Projects board was created.
+
+Incoming workstream:
+
+- LDD premarket / crypto risk review.
+- ZEC bot profit-protection decision became time-sensitive.
+
+Decision:
+
+- Pause further Codex execution.
+- Switch to LDD review.
+- Keep GitHub workstream checkpoint clean and resumable.
+
+---
+
+# 5G. Strategy-State Risk Monitor Update — 2026-05-28
+
+LDD produced a new financial-cockpit requirement from ZEC grid-bot management.
+
+The user closed the 600U / 80-grid ZEC bot and selected automatic ZEC selling. One robot order sold about 0.608 ZEC at about 524.61 USDT,成交额 around 318.97 USDT.
+
+After that, only the 500U / 60-grid ZEC bot remained active:
+
+- Asset value: about 601.84 USDT.
+- Total return: about +163.93 USDT / +32.78%.
+- Grid profit: about +94.67 USDT / +18.93%.
+- Floating profit: about +69.26 USDT / +13.85%.
+
+The remaining bot was still profitable, but the return had moved closer to the hard 30% protection threshold.
+
+## Product Impact
+
+This update adds:
+
+- `TWOS-036 — Create Strategy-State Risk Monitor`
+
+The key lesson:
+
+> A strategy can still be profitable but no longer safe.
+
+The financial cockpit should monitor strategy health, profit drawdown, bot deterioration, and action thresholds, not only current P/L.
+
+## Real Case
+
+ZEC bot state:
+
+- 600U bot: closed to lock profit.
+- Automatic ZEC selling selected.
+- Sold about 0.608 ZEC at about 524.61 USDT.
+- Remaining 500U / 60-grid bot:
+  - asset value about 601.84 USDT.
+  - total return about +32.78%.
+  - hard protection threshold: below 30%.
+  - health state: `profitable_but_deteriorating`.
+  - current instruction: observe, prepare at 31.5%, close and auto-sell below 30%.
+
 # 6. Backlog Overview
 
 | ID | Title | Type | Priority | Milestone | Area |
@@ -447,6 +540,8 @@ If a new conversation is technically required, it should default to the current 
 | TWOS-032 | Create Decision-to-Command Routing System | Feature | P0 | M5 | Signal Command |
 | TWOS-033 | Create Codex / GitHub Execution Failure Recovery Protocol | Feature | P1 | M4 | Codex / GitHub Workflow |
 | TWOS-034 | Create Project-Preserving Model Switching | Feature | P0 | M1 | Project Continuity UX |
+| TWOS-035 | Create Cross-Workstream Interruption & Coordination System | Feature | P0 | M5 | Signal Command / Workstream Coordination |
+| TWOS-036 | Create Strategy-State Risk Monitor | Feature | P0 | M3 | Financial Cockpit / Strategy Health |
 
 ---
 
@@ -1849,9 +1944,185 @@ For serious project work, stronger models must be reachable without breaking pro
 
 The user should not have to choose between better reasoning and keeping the project context intact.
 
+---
+
+## TWOS-035 — Create Cross-Workstream Interruption & Coordination System
+
+Type: `type:feature`  
+Priority: `priority:p0-critical`  
+Milestone: `M5 — Multi-Source Signal Command Layer MVP`  
+Labels: `area:signal-command`, `area:workstream-coordination`, `area:project-memory`, `area:duxd`, `area:mvp`, `status:backlog`
+
+### Background
+
+During Vol.2, Tianma Work OS / GitHub work reached a clean checkpoint after creating the first 8 GitHub trunk issues. A time-sensitive LDD review then arrived.
+
+The correct decision was not to keep pushing Codex execution blindly. The system paused the Codex/GitHub workstream and switched to LDD review while preserving the GitHub resume point.
+
+This exposed a product need: Tianma Work OS must coordinate competing active workstreams.
+
+### Requirement
+
+Create a Cross-Workstream Interruption & Coordination System.
+
+The system should decide whether an incoming signal should interrupt, pause, queue, or simply be recorded while another workstream is active.
+
+### Acceptance Criteria
+
+The system supports:
+
+- Active workstream detection.
+- Incoming signal classification.
+- Urgency and priority comparison.
+- Workstream pause checkpoint.
+- Resume-point preservation.
+- Decision reason logging.
+- Queued follow-up tasks.
+- Cross-project or cross-workstream memory routing.
+- Human override.
+- Return-to-workflow reminder or resume command.
+
+Suggested workstream states:
+
+- `active`
+- `paused`
+- `queued`
+- `interrupted`
+- `resumed`
+- `completed`
+- `blocked`
+
+Suggested coordination decisions:
+
+- `continue_current`
+- `pause_and_switch`
+- `queue_new_signal`
+- `record_only`
+- `merge_into_current`
+- `escalate_to_human`
+- `trigger_ai_board`
+
+### Real Case
+
+Current workstream:
+
+- GitHub issues first batch creation.
+
+Incoming workstream:
+
+- LDD premarket and ZEC bot risk review.
+
+Decision:
+
+- Pause further Codex execution.
+- Switch to LDD review.
+- Preserve GitHub state:
+  - v0.1.5 pushed.
+  - issues #1–#8 created.
+  - repo clean.
+  - no Projects board.
+  - next Codex work deferred.
+
+### Related Issues
+
+- `TWOS-029 — Create Multi-Source Signal Intake System`
+- `TWOS-030 — Create Signal Classification & Priority Engine`
+- `TWOS-032 — Create Decision-to-Command Routing System`
+- `TWOS-034 — Create Project-Preserving Model Switching`
+
+---
+
+## TWOS-036 — Create Strategy-State Risk Monitor
+
+Type: `type:feature`  
+Priority: `priority:p0-critical`  
+Milestone: `M3 — LLM Daredevil Desk Financial Cockpit MVP`  
+Labels: `area:financial-cockpit`, `area:strategy-health`, `area:bot-monitoring`, `type:risk-control`, `area:mvp`, `area:duxd`, `status:backlog`
+
+### Background
+
+LDD discovered that an automated strategy can remain profitable while its risk state is deteriorating.
+
+The ZEC spot grid bot case showed this clearly. One ZEC bot was still profitable, but its total return was close to the hard protection threshold. The correct interpretation was not simply “profitable,” but “profitable but deteriorating.”
+
+### Requirement
+
+Create a Strategy-State Risk Monitor for automated strategies, bot positions, and structured strategy positions.
+
+The monitor should track strategy health, profit drawdown, deterioration state, and action thresholds.
+
+### Acceptance Criteria
+
+The system supports:
+
+- Strategy ID.
+- Strategy type.
+- Linked asset.
+- Account or sub-account.
+- Initial capital.
+- Current value.
+- Current return percentage.
+- Peak return percentage.
+- Profit drawdown percentage.
+- Soft warning threshold.
+- Hard protection threshold.
+- Market-state context.
+- Strategy health state.
+- Recommended action.
+- Last review time.
+- Linked trade intent ledger entries.
+- Linked position intent tags.
+- Linked decision or review logs.
+
+Suggested `strategy_type` values:
+
+- `spot_grid_bot`
+- `futures_grid_bot`
+- `manual_position_strategy`
+- `model_portfolio_strategy`
+- `hedge_strategy`
+- `cash_defense_strategy`
+
+Suggested `health_state` values:
+
+- `healthy_profit`
+- `profitable_but_deteriorating`
+- `near_protection_threshold`
+- `below_protection_threshold`
+- `forced_exit_required`
+- `stopped`
+
+### Real Case
+
+ZEC grid bot update:
+
+- 600U / 80-grid bot: closed.
+- Automatic ZEC selling selected.
+- Sold about 0.608 ZEC at about 524.61 USDT.
+- Remaining 500U / 60-grid bot:
+  - asset value about 601.84 USDT.
+  - total return about +32.78%.
+  - hard protection threshold: below 30%.
+  - health state: `profitable_but_deteriorating`.
+
+### Product Principle
+
+A strategy can still be profitable but no longer safe.
+
+The cockpit must monitor strategy health, not only current P/L.
+
+### Related Issues
+
+- `TWOS-017 — Implement Position Intent Tagging System`
+- `TWOS-020 — Create LDD review scoring and forecast calibration module`
+- `TWOS-027 — Create Trade Intent Ledger`
+- `TWOS-028 — Create Account Structure Improvement Score`
+- `TWOS-029 — Create Multi-Source Signal Intake System`
+- `TWOS-032 — Create Decision-to-Command Routing System`
+
 # 8. Recommended First Issues to Create
 
-Do not create all 24 issues immediately.
+Do not create all backlog issues immediately.
 
 Recommended first batch:
 
@@ -1871,6 +2142,8 @@ Recommended first batch:
 14. TWOS-032 — Create Decision-to-Command Routing System.
 15. TWOS-033 — Create Codex / GitHub Execution Failure Recovery Protocol.
 16. TWOS-034 — Create Project-Preserving Model Switching.
+17. TWOS-035 — Create Cross-Workstream Interruption & Coordination System.
+18. TWOS-036 — Create Strategy-State Risk Monitor.
 
 Reason:
 
@@ -1902,7 +2175,7 @@ For Vol.2, the next best workflow is:
 Suggested commit message:
 
 ```text
-Add GitHub issues backlog v0.1.5.3.2
+Add GitHub issues backlog v0.1.6
 ```
 
 ---
@@ -1912,7 +2185,7 @@ Add GitHub issues backlog v0.1.5.3.2
 Use this instruction if asking Codex to sync the file.
 
 ```text
-Task: Add GitHub Issues Backlog v0.1.5 to Tianma Work OS repository.
+Task: Add GitHub Issues Backlog v0.1.6 to Tianma Work OS repository.
 
 Repository:
 https://github.com/loseyourself1978-blip/tianma-work-os
@@ -1933,7 +2206,7 @@ Requirements:
 4. Do not create GitHub Issues yet.
 5. Do not create a GitHub Projects board yet.
 6. Commit changes with:
-   Add GitHub issues backlog v0.1.5.3.2
+   Add GitHub issues backlog v0.1.6
 
 Verification:
 - Confirm git status is clean after commit.
