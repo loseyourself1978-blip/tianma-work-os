@@ -1,10 +1,10 @@
-# GITHUB_ISSUES_BACKLOG.md v0.1.1
+# GITHUB_ISSUES_BACKLOG.md v0.1.3.3.2
 
-Status: Draft — updated after LDD sync on 2026-05-27  
+Status: Draft — updated after multi-source signal command discussion on 2026-05-28  
 Repository: `loseyourself1978-blip/tianma-work-os`  
 Latest baseline commit: `e3e15d7 Add Tianma Work OS product blueprint documents`  
-Generated from: Tianma Work OS Vol.1 → Vol.2 handoff, updated with LDD Sync Block 2026-05-27 16:37 Singapore/Beijing time  
-Primary next step: Review this backlog, select the first issues to create, then decide whether GitHub Projects is needed.
+Generated from: Tianma Work OS Vol.1 → Vol.2 handoff, updated with LDD Sync Blocks and Multi-Source Signal Command discussion on 2026-05-28 Singapore/Beijing time  
+Primary next step: Add this backlog to GitHub, update INDEX.md, then select the first issues to create. Do not create GitHub Projects yet.
 
 ---
 
@@ -23,6 +23,8 @@ The backlog follows the DUXD methodology:
 > Real Scenario → Deep Usage → Pain Point Discovery → Product Abstraction → Requirement Generation → Product Iteration → Real Scenario Again
 
 The current seed battlefield is **LLM Daredevil Desk**, which continuously stress-tests the product through real trading-analysis, portfolio-review, multi-role decision-making, and project-memory workflows.
+
+This version also introduces the **Signal Command Layer**, which expands Tianma Work OS from project memory and task coordination into multi-source intelligence intake, synthesis, decision-making, and outbound command routing.
 
 ---
 
@@ -76,6 +78,7 @@ GitHub Projects should remain delayed until issue priority and MVP scope are sta
 - `area:mvp`
 - `area:ux`
 - `area:architecture`
+- `area:signal-command`
 
 ### Status Labels
 
@@ -133,6 +136,10 @@ Goal: Use LDD as the first domain-specific cockpit to stress-test Tianma Work OS
 
 Goal: Make real user pain points continuously become structured product requirements and implementation tasks.
 
+### Milestone M5 — Multi-Source Signal Command Layer MVP
+
+Goal: Build the upstream intelligence layer that collects signals from LDD, Codex, GitHub, users, stakeholders, and external events; classifies and prioritizes them; routes them into AI Board synthesis; and sends precise commands or feedback to the right destination.
+
 ---
 
 ---
@@ -187,6 +194,142 @@ The 2026-05-27 16:37 LDD sync block included:
   - Premarket vs Regular Session Execution Confirmation module.
   - Review logs should be written into the corresponding project’s latest active thread by default.
 
+---
+
+# 5B. LDD Sync Update — 2026-05-28
+
+The latest LLM Daredevil Desk review after the 2026-05-27 U.S. regular trading session produced another product implication: trade records must explain **why** a trade was made, not only what was traded.
+
+## Product Impact
+
+### 1. New issue: TWOS-027
+
+Add `Trade Intent Ledger`.
+
+Reason:
+
+- Every trade must record ticker, quantity, price, and P/L.
+- This is not enough for a serious financial cockpit.
+- The cockpit must also know the intent of each trade:
+  - New entry.
+  - Historical cleanup.
+  - Risk reduction.
+  - Leverage-decay exit.
+  - Hedge removal.
+  - Stop-loss.
+  - Take-profit.
+  - Bot profit protection.
+  - Cash release.
+- Without trade intent, the system cannot correctly evaluate whether an action improved the account.
+
+### 2. New issue: TWOS-028
+
+Add `Account Structure Improvement Score`.
+
+Reason:
+
+- A trade can lose money but improve account structure by removing bad risk.
+- A trade can make money but worsen account structure by increasing hidden leverage, concentration, or opposite exposure.
+- Financial cockpit review should judge account-structure improvement, not only immediate P/L.
+
+### 3. Linkage update
+
+Trade records should connect with:
+
+- `TWOS-015 — Opposite Exposure Detector / Net Exposure Map`
+- `TWOS-017 — Position Intent Tagging System`
+- `TWOS-019 — Source-of-truth priority system for financial data`
+- `TWOS-020 — LDD review scoring and forecast calibration module`
+
+## LDD Case Inputs
+
+The 2026-05-28 morning LDD sync block included:
+
+- Historical TSLQ fully closed.
+- Historical SOXS already fully closed.
+- GDXU reduced by 20 shares, leaving 20 shares.
+- UGL reduced by 20 shares, leaving 10 shares.
+- LDD U.S. model strategy remains separate and still in cash.
+- These trades were not new model strategy trades; they were historical-position cleanup and risk-reduction actions.
+- New DUXD requirement:
+  - `Trade Intent Ledger`.
+- Tianma Work OS design update:
+  - Financial cockpit should judge whether a trade improved account structure, not merely whether it made immediate profit.
+  - Trade records should connect to Position Intent Tags and Net Exposure Map.
+
+---
+
+# 5C. Multi-Source Signal Command Update — 2026-05-28
+
+As Tianma Work OS moves from documentation into development, the project is no longer receiving information from a single source.
+
+The system now needs to handle multiple signal streams:
+
+- LDD review feedback.
+- Codex task instructions.
+- Codex execution reports.
+- GitHub repository state.
+- Future GitHub Issues, Pull Requests, and comments.
+- Future user, customer, supplier, employee, partner, investor, advisor, market, media, regulatory, and international-event inputs.
+
+This changes the product requirement from simple project memory to a broader command-system capability.
+
+## Product Impact
+
+Tianma Work OS needs a new core layer:
+
+# Signal Command Layer
+
+The Signal Command Layer manages:
+
+```text
+External / Internal Signals
+→ Intake
+→ Classification
+→ Reliability / Priority Scoring
+→ Routing
+→ AI Board Synthesis
+→ Decision
+→ Command Output
+→ Feedback Tracking
+→ Memory / Ledger Update
+```
+
+This layer is responsible for transforming messy real-world information into structured decisions and executable instructions.
+
+## Product Definition Update
+
+Tianma Work OS is not only a task manager or AI assistant.
+
+It is a multi-source intelligence and command operating system that helps humans collect complex signals, synthesize decisions through AI roles, and route precise commands back to people, tools, agents, and projects.
+
+## MVP Scope for Signal Command Layer
+
+The first MVP should not try to support every possible external stakeholder.
+
+The first MVP should support three real signal sources:
+
+1. LDD Sync Blocks.
+2. Codex Task / Execution Reports.
+3. GitHub Issue / Pull Request / Comment Feedback.
+
+These three sources are enough to validate the architecture:
+
+- LDD represents real business/operational scenario input.
+- Codex represents execution-agent input and output.
+- GitHub represents development collaboration and external feedback.
+
+After these three are stable, future expansion can add customers, suppliers, employees, investors, partners, advisors, and external market events as additional source types.
+
+## New Issues
+
+This update adds:
+
+- `TWOS-029 — Create Multi-Source Signal Intake System`
+- `TWOS-030 — Create Signal Classification & Priority Engine`
+- `TWOS-031 — Create Stakeholder / External Resource Registry`
+- `TWOS-032 — Create Decision-to-Command Routing System`
+
 # 6. Backlog Overview
 
 | ID | Title | Type | Priority | Milestone | Area |
@@ -217,6 +360,12 @@ The 2026-05-27 16:37 LDD sync block included:
 | TWOS-024 | Decide whether to create GitHub Projects board | Research | P2 | M4 | GitHub Workflow |
 | TWOS-025 | Create Premarket vs Regular Session Execution Confirmation module | Feature | P0 | M3 | Financial Cockpit |
 | TWOS-026 | Route review logs to the latest active project thread | Feature | P0 | M1 | Project Memory |
+| TWOS-027 | Create Trade Intent Ledger | Feature | P0 | M3 | Financial Cockpit |
+| TWOS-028 | Create Account Structure Improvement Score | Feature | P1 | M3 | Financial Cockpit |
+| TWOS-029 | Create Multi-Source Signal Intake System | Feature | P0 | M5 | Signal Command |
+| TWOS-030 | Create Signal Classification & Priority Engine | Feature | P0 | M5 | Signal Command |
+| TWOS-031 | Create Stakeholder / External Resource Registry | Feature | P1 | M5 | Signal Command |
+| TWOS-032 | Create Decision-to-Command Routing System | Feature | P0 | M5 | Signal Command |
 
 ---
 
@@ -1047,6 +1196,429 @@ The routing system supports:
 - Creating searchable project memory entries from review logs.
 - Allowing user override when a review belongs to a different project or subproject.
 
+---
+
+## TWOS-027 — Create Trade Intent Ledger
+
+Type: `type:feature`  
+Priority: `priority:p0-critical`  
+Milestone: `M3 — LLM Daredevil Desk Financial Cockpit MVP`  
+Labels: `area:financial-cockpit`, `type:risk-control`, `area:mvp`, `area:duxd`, `status:backlog`
+
+### Background
+
+LDD discovered that a trade record is incomplete if it only records ticker, quantity, price, and P/L.
+
+A real financial cockpit must know why a trade happened. Otherwise the system cannot distinguish a new strategy entry from a historical cleanup, a leverage-decay exit, a hedge removal, or a cash-release action.
+
+### Requirement
+
+Create a Trade Intent Ledger for the LDD financial cockpit.
+
+### Acceptance Criteria
+
+Each trade record supports:
+
+- Trade timestamp.
+- Account or sub-account.
+- Asset class.
+- Ticker or symbol.
+- Quantity.
+- Price.
+- Gross value.
+- Fees, if available.
+- Realized P/L, if available.
+- Source of execution data.
+- Trade intent.
+- Linked position intent tag.
+- Linked net exposure impact.
+- Linked review record.
+- Whether the trade belongs to model strategy performance or historical-position management.
+
+Initial trade intent categories:
+
+- `new_entry`
+- `add_to_position`
+- `reduce_position`
+- `historical_cleanup`
+- `risk_reduction`
+- `leverage_decay_exit`
+- `hedge_removal`
+- `stop_loss`
+- `take_profit`
+- `bot_profit_protection`
+- `cash_release`
+- `rebalance`
+- `mistake_correction`
+- `manual_override`
+
+The ledger should support human-readable labels and machine-readable intent codes.
+
+### LDD Example
+
+TSLQ, SOXS, GDXU, and UGL reductions should not be recorded as LDD U.S. model strategy trades.
+
+They should be recorded as historical-position cleanup and risk-reduction trades.
+
+---
+
+## TWOS-028 — Create Account Structure Improvement Score
+
+Type: `type:feature`  
+Priority: `priority:p1-high`  
+Milestone: `M3 — LLM Daredevil Desk Financial Cockpit MVP`  
+Labels: `area:financial-cockpit`, `type:risk-control`, `area:duxd`, `status:backlog`
+
+### Background
+
+A trade should not be judged only by immediate profit or loss.
+
+For example, closing a decaying inverse leveraged ETF at a realized loss may still improve the account by removing bad convexity, opposite exposure, financing pressure, or long-term decay risk.
+
+### Requirement
+
+Create an Account Structure Improvement Score for trade review.
+
+### Acceptance Criteria
+
+The score evaluates whether a trade improved:
+
+- Net exposure clarity.
+- Leverage risk.
+- Opposite exposure risk.
+- Concentration risk.
+- Cash flexibility.
+- Strategy purity.
+- Separation between model strategy and historical positions.
+- Reduction of legacy-error positions.
+- Reduction of volatility-decay exposure.
+- Alignment with current strategy.
+
+The score should be shown alongside immediate P/L.
+
+Suggested output fields:
+
+- `immediate_pnl_result`
+- `structure_improvement_score`
+- `risk_reduction_score`
+- `strategy_alignment_score`
+- `cash_flexibility_impact`
+- `net_exposure_impact`
+- `review_comment`
+
+### LDD Example
+
+Closing SOXS and TSLQ may realize or lock in historical losses, but it can still receive a high structure-improvement score because it removes opposite exposure, inverse-leveraged decay risk, and strategic confusion.
+
+---
+
+## TWOS-029 — Create Multi-Source Signal Intake System
+
+Type: `type:feature`  
+Priority: `priority:p0-critical`  
+Milestone: `M5 — Multi-Source Signal Command Layer MVP`  
+Labels: `area:signal-command`, `area:mvp`, `area:architecture`, `area:duxd`, `status:backlog`
+
+### Background
+
+As Tianma Work OS moves from documentation into development, information no longer comes from one source.
+
+The project already has several real signal streams:
+
+- LDD review feedback.
+- Codex task instructions.
+- Codex execution reports.
+- GitHub repository updates.
+
+Future sources may include:
+
+- GitHub Issues, Pull Requests, and comments.
+- Customers.
+- Suppliers.
+- Employees.
+- Partners.
+- Investors.
+- Advisors.
+- Market events.
+- Media events.
+- Regulatory or international events.
+
+Without a unified intake system, important signals will be scattered across chats, documents, GitHub, Codex reports, and external channels.
+
+### Requirement
+
+Create a Multi-Source Signal Intake System.
+
+### Acceptance Criteria
+
+The system supports intake records with:
+
+- Signal ID.
+- Source type.
+- Source name.
+- Project.
+- Related subproject.
+- Timestamp.
+- Raw content.
+- Summary.
+- Attachments or links.
+- Initial classification.
+- Initial priority.
+- Confidence level.
+- Suggested routing destination.
+- Related memory records.
+- Related decisions, issues, tasks, or commands.
+
+Initial MVP source types:
+
+- `ldd_sync_block`
+- `codex_instruction`
+- `codex_execution_report`
+- `github_issue`
+- `github_pull_request`
+- `github_comment`
+- `user_feedback`
+- `project_update`
+
+Future source types:
+
+- `customer_feedback`
+- `supplier_update`
+- `employee_update`
+- `partner_feedback`
+- `investor_feedback`
+- `advisor_feedback`
+- `market_event`
+- `media_event`
+- `regulatory_event`
+- `international_event`
+
+### MVP Constraint
+
+The first implementation should focus on three source streams:
+
+1. LDD Sync Blocks.
+2. Codex Task / Execution Reports.
+3. GitHub Issue / Pull Request / Comment Feedback.
+
+---
+
+## TWOS-030 — Create Signal Classification & Priority Engine
+
+Type: `type:feature`  
+Priority: `priority:p0-critical`  
+Milestone: `M5 — Multi-Source Signal Command Layer MVP`  
+Labels: `area:signal-command`, `area:mvp`, `area:ai-board`, `area:duxd`, `status:backlog`
+
+### Background
+
+Raw signals are not equal. Some are urgent execution blockers. Some are product requirements. Some are low-confidence external noise. Some are strategic inputs. Some should be archived only.
+
+Tianma Work OS needs a systematic way to classify and prioritize incoming signals before they are routed to AI Board, project memory, backlog, Codex, GitHub, or a human decision-maker.
+
+### Requirement
+
+Create a Signal Classification & Priority Engine.
+
+### Acceptance Criteria
+
+The engine supports:
+
+- Signal type classification.
+- Domain classification.
+- Urgency scoring.
+- Priority scoring.
+- Reliability scoring.
+- Confidence level.
+- Impact scope.
+- Suggested next action.
+- Suggested routing target.
+- Human review flag.
+
+Suggested `signal_type` values:
+
+- `trading_review`
+- `product_feedback`
+- `codex_execution_result`
+- `github_feedback`
+- `bug_report`
+- `feature_request`
+- `strategic_input`
+- `market_event`
+- `stakeholder_feedback`
+- `operational_update`
+- `risk_alert`
+- `decision_request`
+- `implementation_blocker`
+
+Suggested priority values:
+
+- `critical`
+- `high`
+- `medium`
+- `low`
+
+Suggested urgency values:
+
+- `immediate`
+- `today`
+- `this_week`
+- `later`
+- `archive_only`
+
+Suggested confidence values:
+
+- `verified`
+- `user_reported`
+- `source_reported`
+- `external_unverified`
+- `conflicting`
+- `unknown`
+
+### AI Board Integration
+
+Signals with high impact, conflicting evidence, or cross-domain implications should trigger AI Board Mode.
+
+---
+
+## TWOS-031 — Create Stakeholder / External Resource Registry
+
+Type: `type:feature`  
+Priority: `priority:p1-high`  
+Milestone: `M5 — Multi-Source Signal Command Layer MVP`  
+Labels: `area:signal-command`, `area:project-memory`, `area:architecture`, `status:backlog`
+
+### Background
+
+Real projects involve many stakeholders and external resource streams. Tianma Work OS must know who or what a signal came from, how much weight it should carry, and where responses should go.
+
+### Requirement
+
+Create a Stakeholder / External Resource Registry.
+
+### Acceptance Criteria
+
+The registry supports:
+
+- Source ID.
+- Source name.
+- Source type.
+- Relationship to project.
+- Trust level.
+- Decision weight.
+- Usual response channel.
+- Related projects.
+- Related documents.
+- Historical reliability notes.
+- Last interaction timestamp.
+- Open loops or pending responses.
+
+Suggested `source_type` values:
+
+- `user`
+- `customer`
+- `developer`
+- `codex`
+- `github_community`
+- `supplier`
+- `employee`
+- `partner`
+- `investor`
+- `advisor`
+- `market_data_source`
+- `media_source`
+- `regulator`
+- `competitor`
+- `unknown_external`
+
+### MVP Constraint
+
+The first version can support only:
+
+- User.
+- LDD.
+- Codex.
+- GitHub.
+
+The schema should still allow future expansion.
+
+---
+
+## TWOS-032 — Create Decision-to-Command Routing System
+
+Type: `type:feature`  
+Priority: `priority:p0-critical`  
+Milestone: `M5 — Multi-Source Signal Command Layer MVP`  
+Labels: `area:signal-command`, `area:ai-board`, `area:codex`, `area:github-workflow`, `area:mvp`, `status:backlog`
+
+### Background
+
+Tianma Work OS should not stop at collecting and analyzing information. It must turn decisions into precise outbound commands or feedback.
+
+Examples:
+
+- LDD review produces a product requirement → update backlog.
+- Codex execution fails → generate a repair instruction.
+- GitHub user feedback suggests a feature → create an issue candidate.
+- Investor advice affects strategy → route to strategy review.
+- Customer complaint reveals a UX problem → route to product and support triage.
+- Market event affects trading risk → route to LDD risk review.
+
+### Requirement
+
+Create a Decision-to-Command Routing System.
+
+### Acceptance Criteria
+
+The system supports:
+
+- Decision ID.
+- Source signal IDs.
+- AI Board summary.
+- Final decision.
+- Command destination.
+- Command type.
+- Command content.
+- Owner.
+- Due date or urgency.
+- Expected feedback format.
+- Tracking status.
+- Related issue, pull request, document, or memory record.
+- Closed-loop confirmation.
+
+Suggested `command_destination` values:
+
+- `user`
+- `codex`
+- `github_issue`
+- `github_pull_request`
+- `project_memory`
+- `ldd_cockpit`
+- `product_backlog`
+- `decision_log`
+- `external_stakeholder`
+- `archive`
+
+Suggested `command_type` values:
+
+- `create_issue`
+- `update_document`
+- `execute_coding_task`
+- `request_clarification`
+- `send_feedback`
+- `schedule_review`
+- `update_memory`
+- `trigger_ai_board`
+- `archive_only`
+
+### MVP Constraint
+
+The first version should support:
+
+1. LDD signal → product requirement / backlog update.
+2. Codex report → follow-up Codex instruction.
+3. GitHub feedback → issue candidate or documentation update.
+
 # 8. Recommended First Issues to Create
 
 Do not create all 24 issues immediately.
@@ -1063,6 +1635,10 @@ Recommended first batch:
 8. TWOS-017 — Implement Position Intent Tagging System.
 9. TWOS-021 — Create DUXD requirement intake and abstraction workflow.
 10. TWOS-025 — Create Premarket vs Regular Session Execution Confirmation module.
+11. TWOS-027 — Create Trade Intent Ledger.
+12. TWOS-029 — Create Multi-Source Signal Intake System.
+13. TWOS-030 — Create Signal Classification & Priority Engine.
+14. TWOS-032 — Create Decision-to-Command Routing System.
 
 Reason:
 
@@ -1074,6 +1650,8 @@ These issues represent the real MVP spine:
 - Domain-specific cockpit.
 - Financial risk-control use case.
 - Premarket-to-regular-session execution confirmation.
+- Trade intent and account-structure improvement evaluation.
+- Multi-source signal intake, classification, and command routing.
 - DUXD feedback loop.
 
 ---
@@ -1092,7 +1670,7 @@ For Vol.2, the next best workflow is:
 Suggested commit message:
 
 ```text
-Add GitHub issues backlog v0.1.1
+Add GitHub issues backlog v0.1.3.3.2
 ```
 
 ---
@@ -1102,7 +1680,7 @@ Add GitHub issues backlog v0.1.1
 Use this instruction if asking Codex to sync the file.
 
 ```text
-Task: Add GitHub Issues Backlog v0.1.1 to Tianma Work OS repository.
+Task: Add GitHub Issues Backlog v0.1.3 to Tianma Work OS repository.
 
 Repository:
 https://github.com/loseyourself1978-blip/tianma-work-os
@@ -1123,7 +1701,7 @@ Requirements:
 4. Do not create GitHub Issues yet.
 5. Do not create a GitHub Projects board yet.
 6. Commit changes with:
-   Add GitHub issues backlog v0.1.1
+   Add GitHub issues backlog v0.1.3.3.2
 
 Verification:
 - Confirm git status is clean after commit.
