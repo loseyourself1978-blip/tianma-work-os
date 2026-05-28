@@ -1,6 +1,6 @@
-# GITHUB_ISSUES_BACKLOG.md v0.1.3.3.2
+# GITHUB_ISSUES_BACKLOG.md v0.1.4.3.2
 
-Status: Draft — updated after multi-source signal command discussion on 2026-05-28  
+Status: Draft — updated after Codex/GitHub push recovery on 2026-05-28
 Repository: `loseyourself1978-blip/tianma-work-os`  
 Latest baseline commit: `e3e15d7 Add Tianma Work OS product blueprint documents`  
 Generated from: Tianma Work OS Vol.1 → Vol.2 handoff, updated with LDD Sync Blocks and Multi-Source Signal Command discussion on 2026-05-28 Singapore/Beijing time  
@@ -71,6 +71,7 @@ GitHub Projects should remain delayed until issue priority and MVP scope are sta
 - `area:ai-board`
 - `area:codex`
 - `area:github-workflow`
+- `area:execution-recovery`
 - `area:duxd`
 - `area:financial-cockpit`
 - `area:domain-cockpit`
@@ -330,6 +331,43 @@ This update adds:
 - `TWOS-031 — Create Stakeholder / External Resource Registry`
 - `TWOS-032 — Create Decision-to-Command Routing System`
 
+---
+
+# 5D. Codex / GitHub Execution Recovery Update — 2026-05-28
+
+During Vol.2 execution, Codex successfully created local commits but the initial GitHub push failed twice over HTTPS due to connection timeouts.
+
+The repository was safe:
+
+- Working tree was clean.
+- Local `main` was ahead of `origin/main` by 2 commits.
+- No repository files were modified during recovery.
+- No GitHub Issues or GitHub Projects board were created.
+
+Diagnostics showed:
+
+- `curl -I https://github.com` returned HTTP/2 200.
+- `curl -I https://api.github.com` returned HTTP/2 200.
+- No Git proxy was configured.
+- SSH reached GitHub but failed at host-key verification, so SSH was not usable in the non-interactive Codex context.
+- A verbose HTTPS retry succeeded and pushed `e3e15d7..07ead2c main -> main`.
+
+## Product Impact
+
+This became another DUXD discovery:
+
+> Execution failures are not merely operational trouble. They are opportunities to strengthen Tianma Work OS.
+
+Tianma Work OS needs a standard failure-recovery protocol for Codex, GitHub, and future execution agents.
+
+## New Issue
+
+This update adds:
+
+- `TWOS-033 — Create Codex / GitHub Execution Failure Recovery Protocol`
+
+The protocol should protect completed work, diagnose the failure type, generate safe recovery instructions, and decide whether the task is blocked or can continue.
+
 # 6. Backlog Overview
 
 | ID | Title | Type | Priority | Milestone | Area |
@@ -366,6 +404,7 @@ This update adds:
 | TWOS-030 | Create Signal Classification & Priority Engine | Feature | P0 | M5 | Signal Command |
 | TWOS-031 | Create Stakeholder / External Resource Registry | Feature | P1 | M5 | Signal Command |
 | TWOS-032 | Create Decision-to-Command Routing System | Feature | P0 | M5 | Signal Command |
+| TWOS-033 | Create Codex / GitHub Execution Failure Recovery Protocol | Feature | P1 | M4 | Codex / GitHub Workflow |
 
 ---
 
@@ -1619,6 +1658,101 @@ The first version should support:
 2. Codex report → follow-up Codex instruction.
 3. GitHub feedback → issue candidate or documentation update.
 
+---
+
+## TWOS-033 — Create Codex / GitHub Execution Failure Recovery Protocol
+
+Type: `type:feature`  
+Priority: `priority:p1-high`  
+Milestone: `M4 — DUXD Feedback Loop & Codex Implementation Workflow`  
+Labels: `area:codex`, `area:github-workflow`, `area:execution-recovery`, `type:technical-debt`, `area:duxd`, `status:backlog`
+
+### Background
+
+During Vol.2, Codex successfully committed local repository changes but failed to push to GitHub twice due to HTTPS connection timeouts.
+
+The failure was recovered through diagnostics:
+
+- Confirming the working tree was clean.
+- Confirming local commits were preserved.
+- Confirming the branch was ahead of `origin/main`.
+- Checking Git remote configuration.
+- Checking Git proxy configuration.
+- Checking GitHub and GitHub API reachability with `curl`.
+- Checking SSH reachability.
+- Retrying HTTPS push with verbose Git tracing.
+
+The verbose HTTPS retry succeeded.
+
+### Requirement
+
+Create a standard Codex / GitHub Execution Failure Recovery Protocol.
+
+The protocol should help Tianma Work OS handle execution-agent failures safely instead of treating them as unstructured interruptions.
+
+### Acceptance Criteria
+
+The protocol supports:
+
+- Detecting execution failure type.
+- Preserving current work before further action.
+- Checking repository cleanliness.
+- Checking local commits and branch divergence.
+- Checking remote configuration.
+- Checking network reachability.
+- Checking proxy configuration.
+- Checking authentication or permission failures.
+- Checking SSH fallback feasibility.
+- Recommending the safest next action.
+- Deciding whether the issue blocks the project.
+- Recording the failure and recovery result into project memory.
+- Generating a follow-up Codex instruction when needed.
+
+Suggested failure categories:
+
+- `network_timeout`
+- `authentication_failure`
+- `permission_denied`
+- `host_key_verification_failed`
+- `dirty_working_tree`
+- `merge_conflict`
+- `remote_rejected`
+- `rate_limit`
+- `tool_limitation`
+- `unclear_instruction`
+- `unknown_failure`
+
+Suggested recovery states:
+
+- `recovered`
+- `retry_needed`
+- `requires_user_action`
+- `blocked`
+- `safe_to_continue`
+- `archive_only`
+
+### Recovery Rule from Vol.2
+
+If HTTPS push timeout recurs:
+
+1. Confirm `git status`, `git branch -vv`, and `git log --oneline -5`.
+2. Check `curl -I https://github.com`.
+3. Check `curl -I https://api.github.com`.
+4. Check Git proxy settings.
+5. Retry HTTPS once with:
+
+```bash
+GIT_CURL_VERBOSE=1 GIT_TRACE=1 git push origin main
+```
+
+6. If it still fails, fix SSH host-key setup or push manually from the local terminal.
+
+### DUXD Lesson
+
+Every execution-chain failure should become structured product knowledge.
+
+A failure is not merely trouble. It is a chance to improve the solution and upgrade the product.
+
 # 8. Recommended First Issues to Create
 
 Do not create all 24 issues immediately.
@@ -1639,6 +1773,7 @@ Recommended first batch:
 12. TWOS-029 — Create Multi-Source Signal Intake System.
 13. TWOS-030 — Create Signal Classification & Priority Engine.
 14. TWOS-032 — Create Decision-to-Command Routing System.
+15. TWOS-033 — Create Codex / GitHub Execution Failure Recovery Protocol.
 
 Reason:
 
@@ -1670,7 +1805,7 @@ For Vol.2, the next best workflow is:
 Suggested commit message:
 
 ```text
-Add GitHub issues backlog v0.1.3.3.2
+Add GitHub issues backlog v0.1.4.3.2
 ```
 
 ---
@@ -1680,7 +1815,7 @@ Add GitHub issues backlog v0.1.3.3.2
 Use this instruction if asking Codex to sync the file.
 
 ```text
-Task: Add GitHub Issues Backlog v0.1.3 to Tianma Work OS repository.
+Task: Add GitHub Issues Backlog v0.1.4 to Tianma Work OS repository.
 
 Repository:
 https://github.com/loseyourself1978-blip/tianma-work-os
@@ -1701,7 +1836,7 @@ Requirements:
 4. Do not create GitHub Issues yet.
 5. Do not create a GitHub Projects board yet.
 6. Commit changes with:
-   Add GitHub issues backlog v0.1.3.3.2
+   Add GitHub issues backlog v0.1.4.3.2
 
 Verification:
 - Confirm git status is clean after commit.
