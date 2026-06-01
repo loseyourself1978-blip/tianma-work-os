@@ -37,7 +37,7 @@ Vol.1 — GitHub Docs & Product Blueprint
 | `GITHUB_REPO_SETUP.md` | GitHub setup strategy |
 | `GITHUB_INITIAL_UPLOAD_PACKAGE.md` | Upload checklist |
 | `CODEX_GITHUB_SYNC_INSTRUCTIONS.md` | Codex execution guide |
-| `GITHUB_ISSUES_BACKLOG.md` | v0.1.6 staging backlog for GitHub-ready issues, Signal Command Layer work, workstream coordination, and strategy-state risk monitoring; first 8 trunk issues have been created; do not create GitHub Projects yet |
+| `GITHUB_ISSUES_BACKLOG.md` | v0.1.7 staging backlog for GitHub-ready issues, Signal Command Layer work, workstream coordination, strategy-state risk monitoring, runtime continuity, execution-resource scheduling, and financial cockpit rule-ledger improvements; first 8 trunk issues have been created; do not create GitHub Projects yet |
 
 ## Examples
 

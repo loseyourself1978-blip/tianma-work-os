@@ -1,9 +1,9 @@
-# GITHUB_ISSUES_BACKLOG.md v0.1.6
+# GITHUB_ISSUES_BACKLOG.md v0.1.7
 
-Status: Draft — v0.1.6 updated after Cross-Workstream Coordination and Strategy-State Risk Monitor discoveries on 2026-05-28
+Status: Draft — v0.1.7 updated with Agent Resource / Quota-Aware Execution Scheduler, Multi-Dimensional Progress Continuity, Rule-Based Execution Review, Volatility-Aware Execution Splitter, DUXD Spiral Improvement Loop, Account Structure Quality Score, Trigger-to-Execution Rule Ledger, and Profit Surge Protection for Strategy-State Risk Monitor.
 Repository: `loseyourself1978-blip/tianma-work-os`  
 Latest baseline commit: `e3e15d7 Add Tianma Work OS product blueprint documents`  
-Generated from: Tianma Work OS Vol.1 → Vol.2 handoff, LDD Sync Blocks, Signal Command Layer, Codex/GitHub execution recovery, Project-Preserving Model Switching UX discovery, Cross-Workstream Coordination, and Strategy-State Risk Monitor discovery.
+Generated from: Tianma Work OS Vol.1 → Vol.2 handoff, LDD Sync Blocks, Signal Command Layer, Codex/GitHub execution recovery, Project-Preserving Model Switching UX discovery, Cross-Workstream Coordination, Strategy-State Risk Monitor discovery, and post-quota runtime continuity updates.
 Primary next step: Add this backlog to GitHub, update INDEX.md, then review the next backlog items. The first 8 trunk issues have been created. Do not create GitHub Projects yet.
 
 ---
@@ -83,6 +83,13 @@ GitHub Projects should remain delayed until issue priority and MVP scope are sta
 - `area:workstream-coordination`
 - `area:strategy-health`
 - `area:bot-monitoring`
+- `area:runtime`
+- `area:agent-resource`
+- `area:execution-review`
+- `area:execution`
+- `area:methodology`
+- `area:account-quality`
+- `area:rule-ledger`
 - `area:architecture`
 - `area:signal-command`
 
@@ -502,6 +509,177 @@ ZEC bot state:
   - health state: `profitable_but_deteriorating`.
   - current instruction: observe, prepare at 31.5%, close and auto-sell below 30%.
 
+---
+
+# 5H. Agent Resource / Quota-Aware Execution Scheduler Update
+
+Codex quota exhaustion showed that execution agents are finite, stateful resources. Tianma Work OS must know when an agent is unavailable, which task types are blocked, and what can still continue safely.
+
+## Product Impact
+
+This update adds:
+
+- `TWOS-037 — Create Agent Resource / Quota-Aware Execution Scheduler`
+
+## Core Principle
+
+If an execution agent is unavailable, Tianma Work OS should preserve checkpoints, avoid stacking risky changes, continue in non-mutating design mode, queue pending tasks, and resume execution from a clean state when capacity returns.
+
+---
+
+# 5I. Multi-Dimensional Progress Continuity Update
+
+A blocked dimension should not freeze the whole project. During Codex pause, LDD review, product architecture, and DUXD discovery continued.
+
+## Product Impact
+
+This update adds:
+
+- `TWOS-038 — Create Multi-Dimensional Progress Continuity & Resume Orchestrator`
+
+## Core Principle
+
+Tianma Work OS must preserve blocked checkpoints, advance unblocked dimensions, and reconcile all progress when the blocked dimension resumes.
+
+---
+
+# 5J. Rule-Based Execution Review Update
+
+LDD discovered that the user sold 5 SOXL at 206 after SOXL broke the 210 protection line. SOXL later rebounded, but the sale was rule-compliant and improved risk structure.
+
+## Product Impact
+
+This update adds:
+
+- `TWOS-039 — Create Rule-Based Execution Review`
+
+## Core Principle
+
+Trade correctness should be judged by rule compliance and account-risk improvement, not by short-term price movement after execution.
+
+---
+
+# 5K. Volatility-Aware Execution Splitter Update
+
+For high-volatility leveraged ETFs, ETNs, crypto, and bot strategies, execution should be staged rather than binary.
+
+## Product Impact
+
+This update adds:
+
+- `TWOS-040 — Create Volatility-Aware Execution Splitter`
+
+## Core Principle
+
+The system should recommend partial exit, confirmation windows, rebound zones, and final stop lines.
+
+---
+
+# 5L. DUXD Spiral Improvement Loop Update
+
+Tianma Work OS and DUXD are mutually reinforcing. Real project execution improves the product, the product structures the method, and the improved method improves future requirement discovery.
+
+## Product Impact
+
+This update adds:
+
+- `TWOS-041 — Create DUXD Spiral Improvement Loop`
+
+## Core Principle
+
+DUXD is not only a requirement discovery method. It is a spiral product evolution mechanism driven by real project execution.
+
+---
+
+# 5M. Account Structure Quality Score Update
+
+After SOXS, TSLQ, GDXU, partial SOXL, partial INTC, and partial GGLL reductions, the account moved from risk-cleanup mode toward account-structure optimization. Cash improved from negative financing pressure to positive cash.
+
+## Product Impact
+
+This update adds:
+
+- `TWOS-042 — Create Account Structure Quality Score`
+
+## Core Principle
+
+A trading cockpit should not only evaluate P/L. It should evaluate account structure quality: cash pressure, exposure clarity, leverage risk, bot health, strategy separation, and redeployment readiness.
+
+---
+
+# 5N. Trigger-to-Execution Rule Ledger Update
+
+LDD discovered that remaining positions now have many trigger conditions and next action lines:
+
+- SOXL: 210 / 205
+- GOOG / GGLL: 380 / 374
+- GLD / UGL: 405
+- NVDA: 208
+- INTC: 118 / 114
+- BTC: 75,500-76,000 staged buyback
+- ZEC bot: 31.5% / 30%
+
+## Product Impact
+
+This update adds:
+
+- `TWOS-043 — Create Trigger-to-Execution Rule Ledger`
+
+## Core Principle
+
+A financial cockpit must remember why a position should be acted on, which trigger fired, what was executed, what remains, and what the next trigger is.
+
+---
+
+# 5O. Profit Surge Protection Update for TWOS-036
+
+As of 2026-06-01 09:01 Singapore/Beijing, the remaining 500U / 60-grid ZEC bot was still running:
+
+- Asset value: about 637.74 USDT.
+- Total return: about +199.39 USDT / +39.87%.
+- Grid profit: about +98.43 USDT / +19.68%.
+- Floating profit: about +100.96 USDT / +20.19%.
+
+The bot is no longer just in normal running mode. It is near a high-profit lock-profit observation zone.
+
+## Product Impact
+
+Update existing `TWOS-036 — Create Strategy-State Risk Monitor` with a sub-module called `Profit Surge Protection`.
+
+## Core Principle
+
+Grid/robot strategies need upside lock-profit monitoring, not only downside stop-loss monitoring.
+
+Suggested states:
+
+- `normal_running`
+- `healthy_profit`
+- `profit_surge_observation`
+- `lock_profit_zone`
+- `profit_extraction_recommended`
+- `partial_close_recommended`
+- `full_close_recommended`
+- `downside_protection_triggered`
+
+Suggested fields:
+
+- `current_return_pct`
+- `peak_return_pct`
+- `profit_surge_threshold`
+- `lock_profit_zone`
+- `profit_extraction_zone`
+- `partial_close_zone`
+- `full_close_zone`
+- `downside_hard_stop`
+- `recommended_action`
+
+Real case:
+
+- Continue running while total return stays above 35%.
+- Consider profit extraction or closure if return reaches 40%-42% or ZEC approaches 600-620.
+- Prepare to close near 31.5%.
+- Close below 30%.
+
 # 6. Backlog Overview
 
 | ID | Title | Type | Priority | Milestone | Area |
@@ -542,6 +720,13 @@ ZEC bot state:
 | TWOS-034 | Create Project-Preserving Model Switching | Feature | P0 | M1 | Project Continuity UX |
 | TWOS-035 | Create Cross-Workstream Interruption & Coordination System | Feature | P0 | M5 | Signal Command / Workstream Coordination |
 | TWOS-036 | Create Strategy-State Risk Monitor | Feature | P0 | M3 | Financial Cockpit / Strategy Health |
+| TWOS-037 | Create Agent Resource / Quota-Aware Execution Scheduler | Feature | P0 | M5 | Runtime / Agent Resource |
+| TWOS-038 | Create Multi-Dimensional Progress Continuity & Resume Orchestrator | Feature | P0 | M5 | Runtime / Continuity |
+| TWOS-039 | Create Rule-Based Execution Review | Feature | P0 | M3 | Financial Cockpit / Execution Review |
+| TWOS-040 | Create Volatility-Aware Execution Splitter | Feature | P0 | M3 | Financial Cockpit / Execution |
+| TWOS-041 | Create DUXD Spiral Improvement Loop | DUXD | P1 | M4 | DUXD / Methodology |
+| TWOS-042 | Create Account Structure Quality Score | Feature | P0 | M3 | Financial Cockpit / Account Quality |
+| TWOS-043 | Create Trigger-to-Execution Rule Ledger | Feature | P0 | M3 | Financial Cockpit / Rule Ledger |
 
 ---
 
@@ -2111,6 +2296,40 @@ A strategy can still be profitable but no longer safe.
 
 The cockpit must monitor strategy health, not only current P/L.
 
+### Profit Surge Protection Sub-module
+
+Grid/robot strategies need upside lock-profit monitoring, not only downside stop-loss monitoring.
+
+The system should detect when a bot moves from normal running state into high-profit lock-profit state and recommend:
+
+- Continue.
+- Extract profit.
+- Partially close.
+- Fully close.
+
+Suggested states:
+
+- `normal_running`
+- `healthy_profit`
+- `profit_surge_observation`
+- `lock_profit_zone`
+- `profit_extraction_recommended`
+- `partial_close_recommended`
+- `full_close_recommended`
+- `downside_protection_triggered`
+
+Real case:
+
+As of 2026-06-01, the remaining 500U / 60-grid ZEC bot had total return around +39.87%, near a 40% lock-profit observation zone.
+
+Rules:
+
+- Continue while total return stays above 35%.
+- Consider profit extraction or closure at 40%-42%.
+- Consider closure if ZEC approaches 600-620.
+- Prepare to close near 31.5%.
+- Close below 30%.
+
 ### Related Issues
 
 - `TWOS-017 — Implement Position Intent Tagging System`
@@ -2120,9 +2339,298 @@ The cockpit must monitor strategy health, not only current P/L.
 - `TWOS-029 — Create Multi-Source Signal Intake System`
 - `TWOS-032 — Create Decision-to-Command Routing System`
 
+---
+
+## TWOS-037 — Create Agent Resource / Quota-Aware Execution Scheduler
+
+Type: `type:feature`  
+Priority: `priority:p0-critical`  
+Milestone: `M5 — Multi-Source Signal Command Layer MVP`  
+Labels: `area:runtime`, `area:agent-resource`, `area:codex`, `area:mvp`, `area:duxd`, `status:backlog`
+
+### Background
+
+Codex quota exhaustion showed that execution agents are finite, stateful resources. Tianma Work OS must know when an agent is unavailable, which task types are blocked, and what can still continue safely.
+
+### Requirement
+
+Create an Agent Resource / Quota-Aware Execution Scheduler.
+
+The scheduler should preserve checkpoints, avoid stacking risky changes, continue in non-mutating design mode when needed, queue pending tasks, and resume execution from a clean state when capacity returns.
+
+### Acceptance Criteria
+
+The system supports:
+
+- Tracking `agent_id`.
+- Tracking `agent_type`.
+- Tracking `availability_state`.
+- Tracking `quota_state`.
+- Tracking `current_blocker`.
+- Tracking `safe_task_types`.
+- Tracking `blocked_task_types`.
+- Tracking `resume_time`.
+- Tracking `pending_queue`.
+- Tracking `fallback_agent`.
+- Tracking `manual_override`.
+
+Suggested `availability_state` values:
+
+- `available`
+- `rate_limited`
+- `quota_exhausted`
+- `network_blocked`
+- `auth_blocked`
+- `permission_blocked`
+- `tool_unavailable`
+- `manual_only`
+- `unsafe_to_execute`
+- `unknown`
+
+Suggested execution modes:
+
+- `execute_now`
+- `queue_until_available`
+- `switch_agent`
+- `manual_handoff`
+- `non_mutating_discussion_only`
+- `blocked`
+
+The system preserves checkpoints when agents are unavailable.
+
+---
+
+## TWOS-038 — Create Multi-Dimensional Progress Continuity & Resume Orchestrator
+
+Type: `type:feature`  
+Priority: `priority:p0-critical`  
+Milestone: `M5 — Multi-Source Signal Command Layer MVP`  
+Labels: `area:runtime`, `area:workstream-coordination`, `area:project-memory`, `area:mvp`, `area:duxd`, `status:backlog`
+
+### Background
+
+A blocked dimension should not freeze the whole project. During Codex pause, LDD review, product architecture, and DUXD discovery continued.
+
+### Requirement
+
+Create a Multi-Dimensional Progress Continuity & Resume Orchestrator.
+
+The orchestrator should preserve blocked checkpoints, advance unblocked dimensions, and reconcile all progress when the blocked dimension resumes.
+
+### Acceptance Criteria
+
+The system supports:
+
+- Maintaining a dimension registry.
+- Tracking blocked dimensions.
+- Tracking active dimensions.
+- Preserving checkpoints.
+- Routing progress to unblocked dimensions.
+- Maintaining a pending queue.
+- Running a resume bridge before restarting blocked dimensions.
+- Reconciling pause-period updates before further execution.
+
+---
+
+## TWOS-039 — Create Rule-Based Execution Review
+
+Type: `type:feature`  
+Priority: `priority:p0-critical`  
+Milestone: `M3 — LLM Daredevil Desk Financial Cockpit MVP`  
+Labels: `area:financial-cockpit`, `area:execution-review`, `type:risk-control`, `area:mvp`, `area:duxd`, `status:backlog`
+
+### Background
+
+LDD discovered that the user sold 5 SOXL at 206 after SOXL broke the 210 protection line. SOXL later rebounded, but the sale was rule-compliant and improved risk structure.
+
+### Requirement
+
+Create a Rule-Based Execution Review module.
+
+Trade correctness should be judged by rule compliance and account-risk improvement, not by short-term price movement after execution.
+
+### Acceptance Criteria
+
+The system supports:
+
+- Evaluating whether a trade followed predefined rules.
+- Evaluating whether account risk improved.
+- Distinguishing rule compliance from short-term price outcome.
+- Linking to Trade Intent Ledger.
+- Linking to Position Intent Tags.
+- Linking to Account Structure Quality Score.
+
+Suggested review results:
+
+- `rule_compliant`
+- `rule_violation`
+- `rule_ambiguous`
+- `improved_structure`
+- `worsened_structure`
+
+---
+
+## TWOS-040 — Create Volatility-Aware Execution Splitter
+
+Type: `type:feature`  
+Priority: `priority:p0-critical`  
+Milestone: `M3 — LLM Daredevil Desk Financial Cockpit MVP`  
+Labels: `area:financial-cockpit`, `area:execution`, `type:risk-control`, `area:mvp`, `area:duxd`, `status:backlog`
+
+### Background
+
+For high-volatility leveraged ETFs, ETNs, crypto, and bot strategies, execution should be staged rather than binary.
+
+### Requirement
+
+Create a Volatility-Aware Execution Splitter.
+
+The splitter should recommend partial exit, confirmation windows, rebound zones, and final stop lines.
+
+### Acceptance Criteria
+
+The system supports:
+
+- Staged exits.
+- Staged entries.
+- Partial exit zones.
+- Confirmation windows.
+- Rebound zones.
+- Final stop lines.
+- Application to leveraged ETFs.
+- Application to inverse ETFs.
+- Application to ETNs.
+- Application to crypto.
+- Application to high-beta stocks.
+- Application to grid/bot strategies.
+- Linking to Trigger-to-Execution Rule Ledger.
+
+---
+
+## TWOS-041 — Create DUXD Spiral Improvement Loop
+
+Type: `type:duxd`  
+Priority: `priority:p1-high`  
+Milestone: `M4 — DUXD Feedback Loop & Codex Implementation Workflow`  
+Labels: `area:duxd`, `area:methodology`, `area:docs`, `status:backlog`
+
+### Background
+
+Tianma Work OS and DUXD are mutually reinforcing. Real project execution improves the product, the product structures the method, and the improved method improves future requirement discovery.
+
+### Requirement
+
+Create a DUXD Spiral Improvement Loop.
+
+DUXD should be defined not only as a requirement discovery method, but as a spiral product evolution mechanism driven by real project execution.
+
+### Acceptance Criteria
+
+The system supports:
+
+- Defining DUXD as a spiral product evolution mechanism.
+- Documenting the loop: real project execution -> real friction -> product requirement -> system upgrade -> methodology upgrade -> better execution.
+- Explaining how LDD, Tianma Work OS, Codex/GitHub, and DUXD mutually reinforce each other.
+- Adding this concept to future methodology documentation.
+
+---
+
+## TWOS-042 — Create Account Structure Quality Score
+
+Type: `type:feature`  
+Priority: `priority:p0-critical`  
+Milestone: `M3 — LLM Daredevil Desk Financial Cockpit MVP`  
+Labels: `area:financial-cockpit`, `area:account-quality`, `type:risk-control`, `area:mvp`, `area:duxd`, `status:backlog`
+
+### Background
+
+After SOXS, TSLQ, GDXU, partial SOXL, partial INTC, and partial GGLL reductions, the account moved from risk-cleanup mode toward account-structure optimization. Cash improved from negative financing pressure to positive cash.
+
+### Requirement
+
+Create an Account Structure Quality Score.
+
+A trading cockpit should not only evaluate P/L. It should evaluate account structure quality: cash pressure, exposure clarity, leverage risk, bot health, strategy separation, and redeployment readiness.
+
+### Acceptance Criteria
+
+The system evaluates:
+
+- Cash / financing pressure.
+- Exposure clarity.
+- Leverage risk.
+- Opposite exposure.
+- Legacy vs strategy separation.
+- Bot / automated strategy health.
+- Concentration risk.
+- Rule compliance.
+- Redeployment readiness.
+- Portfolio cleanliness.
+
+The system outputs an account structure quality score and review comment.
+
+---
+
+## TWOS-043 — Create Trigger-to-Execution Rule Ledger
+
+Type: `type:feature`  
+Priority: `priority:p0-critical`  
+Milestone: `M3 — LLM Daredevil Desk Financial Cockpit MVP`  
+Labels: `area:financial-cockpit`, `area:rule-ledger`, `type:risk-control`, `area:mvp`, `area:duxd`, `status:backlog`
+
+### Background
+
+LDD discovered that remaining positions now have many trigger conditions and next action lines, including SOXL 210 / 205, GOOG / GGLL 380 / 374, GLD / UGL 405, NVDA 208, INTC 118 / 114, BTC 75,500-76,000 staged buyback, and ZEC bot 31.5% / 30%.
+
+### Requirement
+
+Create a Trigger-to-Execution Rule Ledger.
+
+A financial cockpit must remember why a position should be acted on, which trigger fired, what was executed, what remains, and what the next trigger is.
+
+### Acceptance Criteria
+
+The system tracks:
+
+- `position_id`
+- `asset`
+- `current_quantity`
+- `trigger_condition`
+- `trigger_level`
+- `execution_status`
+- `executed_quantity`
+- `remaining_quantity`
+- `execution_price`
+- `trade_intent`
+- `next_trigger_line`
+- `next_action`
+- `reminder_required`
+- `last_review_time`
+
+The system links to:
+
+- Trade records.
+- Position intent.
+- Account quality score.
+- Reminders.
+
+Suggested states:
+
+- `waiting`
+- `triggered`
+- `executed`
+- `partially_executed`
+- `invalidated`
+- `next_trigger_pending`
+- `closed`
+
+The ledger prevents rule drift and forgotten follow-up actions.
+
 # 8. Recommended First Issues to Create
 
 Do not create all backlog issues immediately.
+
+The first 8 trunk GitHub Issues have already been created. Items after the first created trunk set should remain pending for later issue creation unless explicitly selected.
 
 Recommended first batch:
 
@@ -2144,6 +2652,13 @@ Recommended first batch:
 16. TWOS-034 — Create Project-Preserving Model Switching.
 17. TWOS-035 — Create Cross-Workstream Interruption & Coordination System.
 18. TWOS-036 — Create Strategy-State Risk Monitor.
+19. TWOS-037 — Create Agent Resource / Quota-Aware Execution Scheduler.
+20. TWOS-038 — Create Multi-Dimensional Progress Continuity & Resume Orchestrator.
+21. TWOS-039 — Create Rule-Based Execution Review.
+22. TWOS-040 — Create Volatility-Aware Execution Splitter.
+23. TWOS-041 — Create DUXD Spiral Improvement Loop.
+24. TWOS-042 — Create Account Structure Quality Score.
+25. TWOS-043 — Create Trigger-to-Execution Rule Ledger.
 
 Reason:
 
@@ -2167,15 +2682,15 @@ For Vol.2, the next best workflow is:
 
 1. Add this updated file to the repository root as `GITHUB_ISSUES_BACKLOG.md`.
 2. Update `INDEX.md` to include this file.
-3. Review the recommended first batch.
-4. Convert only 5–8 selected items into actual GitHub Issues.
+3. Review the recommended and pending backlog items.
+4. Keep the first 8 trunk GitHub Issues as the current created issue set.
 5. Continue delaying GitHub Projects until the first active issue set is stable.
 6. Ask Codex to implement the documentation update with a clean commit.
 
 Suggested commit message:
 
 ```text
-Add GitHub issues backlog v0.1.6
+Add GitHub issues backlog v0.1.7
 ```
 
 ---
@@ -2185,7 +2700,7 @@ Add GitHub issues backlog v0.1.6
 Use this instruction if asking Codex to sync the file.
 
 ```text
-Task: Add GitHub Issues Backlog v0.1.6 to Tianma Work OS repository.
+Task: Add GitHub Issues Backlog v0.1.7 to Tianma Work OS repository.
 
 Repository:
 https://github.com/loseyourself1978-blip/tianma-work-os
@@ -2206,7 +2721,7 @@ Requirements:
 4. Do not create GitHub Issues yet.
 5. Do not create a GitHub Projects board yet.
 6. Commit changes with:
-   Add GitHub issues backlog v0.1.6
+   Add GitHub issues backlog v0.1.7
 
 Verification:
 - Confirm git status is clean after commit.
