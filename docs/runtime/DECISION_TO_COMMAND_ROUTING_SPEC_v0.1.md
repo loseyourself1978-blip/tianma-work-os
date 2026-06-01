@@ -1,0 +1,71 @@
+# Decision-to-Command Routing Spec v0.1
+
+Status: Draft for Vol.3 Runtime MVP
+
+## Purpose
+
+Decision-to-Command Routing converts a decision into a precise next action without losing context.
+
+## Runtime Position
+
+```text
+AI Board Decision
+-> Decision-to-Command Routing
+-> LDD Financial Cockpit Pilot
+-> Runtime Validation
+```
+
+## Command Types
+
+Supported command types:
+
+- `create_doc`
+- `update_doc`
+- `create_issue`
+- `review_strategy`
+- `update_rule`
+- `manual_follow_up`
+- `no_action`
+
+Vol.3 does not create GitHub issues automatically. `create_issue` is included as a future command type only.
+
+## Command Fields
+
+Each command should include:
+
+- `command_id`
+- `project_id`
+- `decision_id`
+- `source_signal_ids`
+- `target_type`
+- `command_type`
+- `status`
+- `command_summary`
+- `constraints`
+- `created_at`
+
+## Command Status Values
+
+Suggested status values:
+
+- `proposed`
+- `approved`
+- `routed`
+- `executed`
+- `blocked`
+- `cancelled`
+
+## Safety Constraints
+
+All command records must be explicit about constraints:
+
+- No brokerage API access.
+- No Binance API access.
+- No automated trading.
+- No GitHub Projects board creation unless explicitly requested.
+- No new GitHub issues unless explicitly requested.
+
+## Relationship to TWOS-032
+
+This spec is the first runtime documentation surface for TWOS-032. It records routing logic and command shape; it does not implement a router service.
+

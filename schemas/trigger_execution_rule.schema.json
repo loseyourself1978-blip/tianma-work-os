@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/trigger_execution_rule.schema.json",
+  "title": "Trigger Execution Rule",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "rule_id",
+    "project_id",
+    "position_id",
+    "asset",
+    "current_quantity",
+    "trigger_condition",
+    "trigger_level",
+    "execution_status",
+    "remaining_quantity",
+    "trade_intent",
+    "next_trigger_line",
+    "next_action",
+    "reminder_required",
+    "last_review_time"
+  ],
+  "properties": {
+    "rule_id": {
+      "type": "string"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "position_id": {
+      "type": "string"
+    },
+    "asset": {
+      "type": "string"
+    },
+    "current_quantity": {
+      "type": "number"
+    },
+    "trigger_condition": {
+      "type": "string"
+    },
+    "trigger_level": {
+      "type": [
+        "number",
+        "string"
+      ]
+    },
+    "execution_status": {
+      "type": "string",
+      "enum": [
+        "waiting",
+        "triggered",
+        "executed",
+        "partially_executed",
+        "invalidated",
+        "next_trigger_pending",
+        "closed"
+      ]
+    },
+    "executed_quantity": {
+      "type": "number"
+    },
+    "remaining_quantity": {
+      "type": "number"
+    },
+    "execution_price": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "trade_intent": {
+      "type": "string",
+      "enum": [
+        "new_entry",
+        "staged_buyback",
+        "risk_reduction",
+        "leverage_decay_exit",
+        "hedge_removal",
+        "stop_loss",
+        "take_profit",
+        "observe"
+      ]
+    },
+    "next_trigger_line": {
+      "type": "string"
+    },
+    "next_action": {
+      "type": "string"
+    },
+    "reminder_required": {
+      "type": "boolean"
+    },
+    "last_review_time": {
+      "type": "string"
+    }
+  }
+}

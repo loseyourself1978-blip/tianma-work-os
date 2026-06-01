@@ -1,0 +1,18 @@
+{
+  "rule_id": "ldd-soxl-protection-20260601",
+  "project_id": "tianma-work-os",
+  "position_id": "soxl-historical-risk-cleanup",
+  "asset": "SOXL",
+  "current_quantity": 5,
+  "trigger_condition": "If SOXL breaks the 210 protection line, review partial reduction; if it weakens toward 205, prioritize risk reduction.",
+  "trigger_level": 210,
+  "execution_status": "partially_executed",
+  "executed_quantity": 5,
+  "remaining_quantity": 5,
+  "execution_price": 206,
+  "trade_intent": "risk_reduction",
+  "next_trigger_line": "205 final risk review line.",
+  "next_action": "Review remaining exposure manually; judge correctness by rule compliance and account-risk improvement, not later rebound alone.",
+  "reminder_required": true,
+  "last_review_time": "2026-06-01T09:01:00+08:00"
+}

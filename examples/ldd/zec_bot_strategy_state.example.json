@@ -1,0 +1,26 @@
+{
+  "strategy_id": "zec-500u-60grid-20260601",
+  "project_id": "tianma-work-os",
+  "strategy_type": "spot_grid_bot",
+  "linked_asset": "ZEC",
+  "account_ref": "sanitized-ldd-example",
+  "initial_capital": 500,
+  "current_value": 637.74,
+  "current_return_pct": 39.87,
+  "peak_return_pct": 39.87,
+  "profit_drawdown_pct": 0,
+  "soft_warning_threshold_pct": 35,
+  "hard_protection_threshold_pct": 30,
+  "market_state_context": "High-profit observation zone after prior bot closure and automatic selling selection.",
+  "health_state": "profit_surge_observation",
+  "recommended_action": "Continue while above 35%; consider profit extraction or closure at 40%-42% or if ZEC approaches 600-620; prepare to close near 31.5%; close below 30%.",
+  "last_review_time": "2026-06-01T09:01:00+08:00",
+  "linked_trade_intent_records": [],
+  "linked_position_intent_tags": [
+    "bot_health",
+    "profit_surge_protection"
+  ],
+  "linked_review_logs": [
+    "ldd-sync-block-20260601"
+  ]
+}

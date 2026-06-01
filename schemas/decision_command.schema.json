@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/decision_command.schema.json",
+  "title": "Decision Command",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "command_id",
+    "project_id",
+    "decision_id",
+    "source_signal_ids",
+    "target_type",
+    "command_type",
+    "status",
+    "command_summary",
+    "constraints",
+    "created_at"
+  ],
+  "properties": {
+    "command_id": {
+      "type": "string"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "decision_id": {
+      "type": "string"
+    },
+    "source_signal_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "target_type": {
+      "type": "string",
+      "enum": [
+        "codex",
+        "github",
+        "docs",
+        "runtime",
+        "ldd",
+        "manual"
+      ]
+    },
+    "command_type": {
+      "type": "string",
+      "enum": [
+        "create_doc",
+        "update_doc",
+        "create_issue",
+        "review_strategy",
+        "update_rule",
+        "manual_follow_up",
+        "no_action"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "proposed",
+        "approved",
+        "routed",
+        "executed",
+        "blocked",
+        "cancelled"
+      ]
+    },
+    "command_summary": {
+      "type": "string"
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "created_at": {
+      "type": "string"
+    }
+  }
+}

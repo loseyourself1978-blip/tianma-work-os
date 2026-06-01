@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/project_memory_record.schema.json",
+  "title": "Project Memory Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_id",
+    "project_id",
+    "record_type",
+    "source",
+    "timestamp",
+    "title",
+    "summary",
+    "tags"
+  ],
+  "properties": {
+    "record_id": {
+      "type": "string"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "record_type": {
+      "type": "string",
+      "enum": [
+        "session_summary",
+        "decision",
+        "requirement",
+        "task",
+        "file_index",
+        "sync_block",
+        "trigger_rule",
+        "strategy_state",
+        "validation_result"
+      ]
+    },
+    "source": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_issue_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "links": {
+      "type": "object"
+    }
+  }
+}

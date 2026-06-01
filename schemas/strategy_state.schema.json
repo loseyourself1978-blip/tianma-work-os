@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/strategy_state.schema.json",
+  "title": "Strategy State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "strategy_id",
+    "project_id",
+    "strategy_type",
+    "linked_asset",
+    "account_ref",
+    "initial_capital",
+    "current_value",
+    "current_return_pct",
+    "peak_return_pct",
+    "profit_drawdown_pct",
+    "soft_warning_threshold_pct",
+    "hard_protection_threshold_pct",
+    "market_state_context",
+    "health_state",
+    "recommended_action",
+    "last_review_time"
+  ],
+  "properties": {
+    "strategy_id": {
+      "type": "string"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "strategy_type": {
+      "type": "string",
+      "enum": [
+        "spot_grid_bot",
+        "futures_grid_bot",
+        "manual_position_strategy",
+        "model_portfolio_strategy",
+        "hedge_strategy",
+        "cash_defense_strategy"
+      ]
+    },
+    "linked_asset": {
+      "type": "string"
+    },
+    "account_ref": {
+      "type": "string"
+    },
+    "initial_capital": {
+      "type": "number"
+    },
+    "current_value": {
+      "type": "number"
+    },
+    "current_return_pct": {
+      "type": "number"
+    },
+    "peak_return_pct": {
+      "type": "number"
+    },
+    "profit_drawdown_pct": {
+      "type": "number"
+    },
+    "soft_warning_threshold_pct": {
+      "type": "number"
+    },
+    "hard_protection_threshold_pct": {
+      "type": "number"
+    },
+    "market_state_context": {
+      "type": "string"
+    },
+    "health_state": {
+      "type": "string",
+      "enum": [
+        "healthy_profit",
+        "profitable_but_deteriorating",
+        "near_protection_threshold",
+        "below_protection_threshold",
+        "forced_exit_required",
+        "stopped",
+        "profit_surge_observation",
+        "lock_profit_zone",
+        "profit_extraction_recommended",
+        "partial_close_recommended",
+        "full_close_recommended",
+        "downside_protection_triggered"
+      ]
+    },
+    "recommended_action": {
+      "type": "string"
+    },
+    "last_review_time": {
+      "type": "string"
+    },
+    "linked_trade_intent_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "linked_position_intent_tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "linked_review_logs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/signal_intake.schema.json",
+  "title": "Signal Intake",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "signal_id",
+    "project_id",
+    "source_type",
+    "source_ref",
+    "received_at",
+    "urgency",
+    "priority",
+    "summary",
+    "payload",
+    "routing_hint"
+  ],
+  "properties": {
+    "signal_id": {
+      "type": "string"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "user",
+        "ldd",
+        "codex",
+        "github",
+        "external_observation",
+        "schedule"
+      ]
+    },
+    "source_ref": {
+      "type": "string"
+    },
+    "received_at": {
+      "type": "string"
+    },
+    "urgency": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "p0",
+        "p1",
+        "p2",
+        "p3"
+      ]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "object"
+    },
+    "routing_hint": {
+      "type": "string",
+      "enum": [
+        "project_memory",
+        "ai_board",
+        "decision_command",
+        "ldd_cockpit",
+        "manual_review",
+        "backlog"
+      ]
+    }
+  }
+}

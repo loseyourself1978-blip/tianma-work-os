@@ -51,6 +51,15 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `templates/HANDOFF_SUMMARY_TEMPLATE.md`
 - `templates/LDD_SYNC_BLOCK_TEMPLATE.md`
 
+## Vol.3 / Runtime Architecture
+
+- `docs/runtime/MVP_SCOPE_v0.2_RUNTIME.md`
+- `docs/runtime/RUNTIME_ARCHITECTURE_v0.1.md`
+- `docs/runtime/PROJECT_MEMORY_INDEX_SPEC_v0.2.md`
+- `docs/runtime/SIGNAL_COMMAND_LAYER_SPEC_v0.1.md`
+- `docs/runtime/DECISION_TO_COMMAND_ROUTING_SPEC_v0.1.md`
+- `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

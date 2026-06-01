@@ -1,0 +1,18 @@
+{
+  "rule_id": "ldd-btc-buyback-20260601",
+  "project_id": "tianma-work-os",
+  "position_id": "btc-cash-defense-watch",
+  "asset": "BTC",
+  "current_quantity": 0,
+  "trigger_condition": "Watch for staged buyback if BTC trades into the 75500-76000 zone and broader risk context remains acceptable.",
+  "trigger_level": "75500-76000",
+  "execution_status": "waiting",
+  "executed_quantity": 0,
+  "remaining_quantity": 0,
+  "execution_price": null,
+  "trade_intent": "staged_buyback",
+  "next_trigger_line": "Confirm zone behavior before any staged entry.",
+  "next_action": "Manual review only. No automated execution.",
+  "reminder_required": true,
+  "last_review_time": "2026-06-01T09:01:00+08:00"
+}
