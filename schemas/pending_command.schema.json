@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/pending_command.schema.json",
+  "title": "Pending Command",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "command_id",
+    "project",
+    "subproject",
+    "created_at",
+    "source_signal_id",
+    "command_summary",
+    "command_content_reference",
+    "intended_executor",
+    "status",
+    "waiting_for",
+    "blocker_type",
+    "blocker_description",
+    "superseded_by_signal_id",
+    "superseded_by_command_id",
+    "revision_reason",
+    "latest_valid_version",
+    "related_records",
+    "execution_feedback",
+    "final_status"
+  ],
+  "properties": {
+    "command_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "subproject": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "source_signal_id": {
+      "type": "string"
+    },
+    "command_summary": {
+      "type": "string"
+    },
+    "command_content_reference": {
+      "type": "string"
+    },
+    "intended_executor": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "drafted",
+        "queued",
+        "sent",
+        "acknowledged",
+        "executing",
+        "blocked",
+        "waiting_feedback",
+        "superseded",
+        "cancelled",
+        "completed",
+        "failed"
+      ]
+    },
+    "waiting_for": {
+      "type": "string"
+    },
+    "blocker_type": {
+      "type": "string"
+    },
+    "blocker_description": {
+      "type": "string"
+    },
+    "superseded_by_signal_id": {
+      "type": "string"
+    },
+    "superseded_by_command_id": {
+      "type": "string"
+    },
+    "revision_reason": {
+      "type": "string"
+    },
+    "latest_valid_version": {
+      "type": "string"
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "execution_feedback": {
+      "type": "object"
+    },
+    "final_status": {
+      "type": "string"
+    }
+  }
+}

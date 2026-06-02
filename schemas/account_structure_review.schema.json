@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/account_structure_review.schema.json",
+  "title": "Account Structure Review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id",
+    "project",
+    "snapshot_time",
+    "account",
+    "structure_score",
+    "cash_pressure",
+    "leverage_risk",
+    "opposite_exposure_risk",
+    "weak_position_drag",
+    "legacy_position_risk",
+    "bot_strategy_risk",
+    "rule_compliance",
+    "redeployment_readiness",
+    "key_findings",
+    "recommended_next_actions",
+    "related_records"
+  ],
+  "properties": {
+    "review_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "snapshot_time": {
+      "type": "string"
+    },
+    "account": {
+      "type": "string"
+    },
+    "structure_score": {
+      "type": "number"
+    },
+    "cash_pressure": {
+      "type": "string"
+    },
+    "leverage_risk": {
+      "type": "string"
+    },
+    "opposite_exposure_risk": {
+      "type": "string"
+    },
+    "weak_position_drag": {
+      "type": "string"
+    },
+    "legacy_position_risk": {
+      "type": "string"
+    },
+    "bot_strategy_risk": {
+      "type": "string"
+    },
+    "rule_compliance": {
+      "type": "string"
+    },
+    "redeployment_readiness": {
+      "type": "string"
+    },
+    "key_findings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recommended_next_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

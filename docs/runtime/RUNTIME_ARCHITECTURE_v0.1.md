@@ -99,6 +99,19 @@ Validation is offline and deterministic:
 - No Binance connection.
 - No automated trading.
 
+## Phase 2 Runtime Data Layer
+
+Vol.3 Phase 2 introduces `records/` as the first real runtime data layer.
+
+- `examples/` remains illustrative and stable for schema demonstrations.
+- `records/` contains real project pilot records derived from current source-of-truth sync blocks.
+- LDD is the first validation battlefield.
+- Pending instructions must be tracked until they are executed, acknowledged, cancelled, or superseded.
+- Newer incoming signals can revise or invalidate pending commands before execution.
+- Command Intelligence ensures that Tianma Work OS executes the latest valid command, not stale command drafts.
+
+The 2026-06-02 LDD pilot records demonstrate this behavior: Phase 2 v1 and v2 were drafted but superseded before execution, while Phase 2 v3 became the latest valid command.
+
 ## Non-Goals
 
 Vol.3 does not include:
@@ -110,4 +123,3 @@ Vol.3 does not include:
 - Brokerage, Binance, or exchange API integration.
 - Real-time market data ingestion.
 - Whole-repository restructuring.
-

@@ -1,0 +1,36 @@
+{
+  "review_id": "account-structure-review-20260602-0822",
+  "project": "tianma-work-os",
+  "snapshot_time": "2026-06-02T08:22:00+08:00",
+  "account": "ldd-combined-visible-snapshot",
+  "structure_score": 73,
+  "cash_pressure": "low; crypto account remains USDT-cash dominant",
+  "leverage_risk": "medium; reduced but still present through SOXL, GGLL, UGL, and historical cleanup positions",
+  "opposite_exposure_risk": "low; SOXS, TSLQ, and GDXU are fully closed",
+  "weak_position_drag": "medium; GOOG remains weak below 380 and INTC remains weak below 118-120",
+  "legacy_position_risk": "medium; historical-position cleanup phase continues",
+  "bot_strategy_risk": "medium; ZEC bot remains profitable but in profit-protection mode",
+  "rule_compliance": "good; no visible new current-day broker orders should be recorded without order-detail screenshots",
+  "redeployment_readiness": "moderate; cash posture improved but new LDD U.S. model strategy position remains inactive",
+  "key_findings": [
+    "P/L alone is not enough; account structure quality must be evaluated.",
+    "Cash pressure improved because crypto remains USDT-cash dominant.",
+    "Weak-position drag remains in GOOG, GGLL linkage, and INTC.",
+    "SOXL remainder is acceptable above 220 but needs explicit trigger tracking.",
+    "ZEC bot is profitable but in profit-protection mode."
+  ],
+  "recommended_next_actions": [
+    "Do not add GOOG, GGLL, INTC, GLD, UGL, ETH, SOL, DOGE, or ZEC spot.",
+    "Hold NVDA while it remains strong.",
+    "Track SOXL 220 and 210 trigger lines.",
+    "Track BTC stabilization above 75,500-76,000 before any staged buyback.",
+    "Keep ZEC bot running above 35%, alert below 35%, prepare closure near 31.5%, and close below 30%."
+  ],
+  "related_records": [
+    "ldd-runtime-sync-20260602-0822",
+    "ldd-portfolio-state-20260602-0822",
+    "zec-bot-strategy-state-20260602-0822",
+    "btc-buyback-trigger-rule-20260602-0822",
+    "soxl-trigger-rule-20260602-0822"
+  ]
+}

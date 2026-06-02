@@ -23,6 +23,12 @@
     "project_id": {
       "type": "string"
     },
+    "project": {
+      "type": "string"
+    },
+    "subproject": {
+      "type": "string"
+    },
     "decision_id": {
       "type": "string"
     },
@@ -77,6 +83,12 @@
     },
     "created_at": {
       "type": "string"
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   }
 }

@@ -29,6 +29,12 @@
     "project_id": {
       "type": "string"
     },
+    "project": {
+      "type": "string"
+    },
+    "subproject": {
+      "type": "string"
+    },
     "strategy_type": {
       "type": "string",
       "enum": [
@@ -92,6 +98,18 @@
     },
     "last_review_time": {
       "type": "string"
+    },
+    "source_of_truth": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "linked_trade_intent_records": {
       "type": "array",

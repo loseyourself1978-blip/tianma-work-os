@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/portfolio_state.schema.json",
+  "title": "Portfolio State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_id",
+    "project",
+    "subproject",
+    "account_type",
+    "snapshot_time",
+    "source_of_truth",
+    "base_currency",
+    "total_visible_assets",
+    "cash_balance",
+    "holdings",
+    "strategy_tags",
+    "notes",
+    "related_records"
+  ],
+  "properties": {
+    "record_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "subproject": {
+      "type": "string"
+    },
+    "account_type": {
+      "type": "string"
+    },
+    "snapshot_time": {
+      "type": "string"
+    },
+    "source_of_truth": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "base_currency": {
+      "type": "string"
+    },
+    "total_visible_assets": {
+      "type": "object"
+    },
+    "cash_balance": {
+      "type": "object"
+    },
+    "holdings": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "strategy_tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -69,3 +69,24 @@ All command records must be explicit about constraints:
 
 This spec is the first runtime documentation surface for TWOS-032. It records routing logic and command shape; it does not implement a router service.
 
+## Phase 2 Command Intelligence
+
+Vol.3 Phase 2 adds a file-based pending-command record to capture command freshness.
+
+Pending instructions must remain editable until they are:
+
+- Executed.
+- Acknowledged.
+- Cancelled.
+- Superseded.
+
+Newer incoming signals can revise or invalidate pending commands before execution. The runtime should check freshness, priority, resource state, dependencies, and validation results before routing a command.
+
+The system should execute the latest valid command, not stale command drafts.
+
+The 2026-06-02 LDD pilot records show this pattern:
+
+- Phase 2 v1 was drafted but not executed.
+- Phase 2 v2 was drafted but not executed.
+- The 2026-06-02 08:22 sync block superseded both.
+- Phase 2 v3 became the latest valid command.

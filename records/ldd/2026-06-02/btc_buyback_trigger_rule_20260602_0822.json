@@ -1,0 +1,27 @@
+{
+  "rule_id": "btc-buyback-trigger-rule-20260602-0822",
+  "project_id": "tianma-work-os",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "position_id": "btc-staged-buyback-watch",
+  "asset": "BTC",
+  "current_quantity": 0.00055762,
+  "trigger_condition": "Do not buy BTC unless BTC stabilizes above 75,500-76,000.",
+  "trigger_level": "75500-76000 stabilization zone",
+  "execution_status": "waiting",
+  "executed_quantity": 0,
+  "remaining_quantity": 0.00055762,
+  "execution_price": null,
+  "trade_intent": "staged_buyback",
+  "next_trigger_line": "First staged buyback is 300 USDT only after stabilization; another 300 USDT only after further confirmation.",
+  "next_action": "Manual review only. No automated execution.",
+  "reminder_required": true,
+  "last_review_time": "2026-06-02T08:22:00+08:00",
+  "source_of_truth": [
+    "user_provided_binance_screenshots"
+  ],
+  "related_records": [
+    "ldd-runtime-sync-20260602-0822",
+    "ldd-portfolio-state-20260602-0822"
+  ]
+}

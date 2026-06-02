@@ -1,0 +1,28 @@
+{
+  "rule_id": "soxl-trigger-rule-20260602-0822",
+  "project_id": "tianma-work-os",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "position_id": "soxl-historical-cleanup-remainder",
+  "asset": "SOXL",
+  "current_quantity": 5,
+  "trigger_condition": "Hold 5-share SOXL remainder while above 220; prepare to close if SOXL loses 220; close if it loses 210.",
+  "trigger_level": 220,
+  "execution_status": "waiting",
+  "executed_quantity": 0,
+  "remaining_quantity": 5,
+  "execution_price": null,
+  "trade_intent": "risk_reduction",
+  "next_trigger_line": "210 hard close line.",
+  "next_action": "Manual review only. No current-day order is recorded without order-detail screenshots.",
+  "reminder_required": true,
+  "last_review_time": "2026-06-02T08:22:00+08:00",
+  "source_of_truth": [
+    "user_provided_broker_screenshots"
+  ],
+  "related_records": [
+    "ldd-runtime-sync-20260602-0822",
+    "ldd-portfolio-state-20260602-0822",
+    "account-structure-review-20260602-0822"
+  ]
+}

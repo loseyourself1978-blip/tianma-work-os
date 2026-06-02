@@ -1,0 +1,47 @@
+{
+  "command_id": "pending-phase2-codex-instruction-20260602-0822",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "created_at": "2026-06-02T08:22:00+08:00",
+  "source_signal_id": "ldd-sync-20260602-0822",
+  "command_summary": "Execute Vol.3 Phase 2 v3 runtime data model hardening and LDD pilot records using the 2026-06-02 08:22 post-session sync block.",
+  "command_content_reference": "records/ldd/2026-06-02/ldd_runtime_sync_20260602_0822.md",
+  "intended_executor": "codex",
+  "status": "queued",
+  "waiting_for": "freshness_priority_resource_dependency_validation_checks",
+  "blocker_type": "none",
+  "blocker_description": "Phase 2 v1 and v2 were drafted but not executed; v3 is the latest valid version.",
+  "superseded_by_signal_id": "",
+  "superseded_by_command_id": "",
+  "revision_reason": "The 2026-06-02 08:22 LDD Sync Block superseded older 2026-06-01 09:01 and 2026-06-01 16:37-16:38 pending commands before execution.",
+  "latest_valid_version": "phase2_v3_20260602_0822",
+  "related_records": [
+    "ldd-runtime-sync-20260602-0822",
+    "ldd-portfolio-state-20260602-0822",
+    "account-structure-review-20260602-0822"
+  ],
+  "execution_feedback": {
+    "superseded_versions": [
+      {
+        "version": "phase2_v1_20260601_0901",
+        "status": "drafted_not_executed",
+        "reason": "Superseded by newer LDD sync data."
+      },
+      {
+        "version": "phase2_v2_20260601_1637_1638",
+        "status": "drafted_not_executed",
+        "reason": "Superseded by 2026-06-02 08:22 post-session source of truth."
+      }
+    ],
+    "command_intelligence_checks": [
+      "freshness_check",
+      "source_of_truth_update",
+      "priority_check",
+      "resource_check",
+      "dependency_check",
+      "schema_validation_check"
+    ],
+    "execution_rule": "Execute only the latest valid command, not stale command drafts."
+  },
+  "final_status": "pending_execution"
+}

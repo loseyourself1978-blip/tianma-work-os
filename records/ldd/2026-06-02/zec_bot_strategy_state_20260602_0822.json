@@ -1,0 +1,35 @@
+{
+  "strategy_id": "zec-500u-60grid-20260602-0822",
+  "project_id": "tianma-work-os",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "strategy_type": "spot_grid_bot",
+  "linked_asset": "ZEC",
+  "account_ref": "sanitized-binance-visible-snapshot",
+  "initial_capital": 500,
+  "current_value": 621.37,
+  "current_return_pct": 36.6,
+  "peak_return_pct": 39.87,
+  "profit_drawdown_pct": 3.27,
+  "soft_warning_threshold_pct": 35,
+  "hard_protection_threshold_pct": 30,
+  "market_state_context": "Remaining 500U / 60-grid ZEC bot is profitable but in profit-protection mode after the latest post-U.S.-session review.",
+  "health_state": "profit_surge_observation",
+  "recommended_action": "Keep running while total return stays above 35%; alert below 35%; prepare closure near 31.5%; close below 30% with automatic ZEC-to-USDT sell.",
+  "last_review_time": "2026-06-02T08:22:00+08:00",
+  "source_of_truth": [
+    "user_provided_binance_screenshots"
+  ],
+  "related_records": [
+    "ldd-runtime-sync-20260602-0822",
+    "ldd-portfolio-state-20260602-0822"
+  ],
+  "linked_trade_intent_records": [],
+  "linked_position_intent_tags": [
+    "bot_profit_protection",
+    "cash_dominant_crypto"
+  ],
+  "linked_review_logs": [
+    "ldd-runtime-sync-20260602-0822"
+  ]
+}

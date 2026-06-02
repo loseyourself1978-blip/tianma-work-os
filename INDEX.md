@@ -60,6 +60,17 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `docs/runtime/DECISION_TO_COMMAND_ROUTING_SPEC_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
+## Vol.3 Phase 2 / Runtime Records
+
+- `records/ldd/2026-06-02/README.md`
+- `records/ldd/2026-06-02/ldd_runtime_sync_20260602_0822.md`
+- `records/ldd/2026-06-02/ldd_portfolio_state_20260602_0822.json`
+- `records/ldd/2026-06-02/zec_bot_strategy_state_20260602_0822.json`
+- `records/ldd/2026-06-02/btc_buyback_trigger_rule_20260602_0822.json`
+- `records/ldd/2026-06-02/soxl_trigger_rule_20260602_0822.json`
+- `records/ldd/2026-06-02/account_structure_review_20260602_0822.json`
+- `records/ldd/2026-06-02/pending_phase2_codex_instruction_20260602_0822.json`
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

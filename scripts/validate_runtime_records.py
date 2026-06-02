@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Vol.3 runtime JSON examples against local schemas.
+"""Validate Vol.3 runtime JSON examples and records against local schemas.
 
 This validator intentionally uses only the Python standard library. It supports
 the small JSON Schema subset used by this repository: type, required,
@@ -10,23 +10,47 @@ from __future__ import annotations
 
 import json
 import sys
+from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES_DIR = REPO_ROOT / "examples" / "ldd"
+RECORDS_DIR = REPO_ROOT / "records" / "ldd"
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
-SCHEMA_BY_EXAMPLE = {
-    "btc_buyback_trigger_rule.example.json": "trigger_execution_rule.schema.json",
-    "soxl_trigger_rule.example.json": "trigger_execution_rule.schema.json",
-    "zec_bot_strategy_state.example.json": "strategy_state.schema.json"
+
+@dataclass(frozen=True)
+class ValidationTarget:
+    path: Path
+    bucket: str
+    schema_name: str
+    schema_key: str
+
+
+SCHEMA_FILES = {
+    "trigger_execution_rule": "trigger_execution_rule.schema.json",
+    "strategy_state": "strategy_state.schema.json",
+    "portfolio_state": "portfolio_state.schema.json",
+    "account_structure_review": "account_structure_review.schema.json",
+    "pending_command": "pending_command.schema.json"
 }
 
 
-class ValidationError(Exception):
-    pass
+def schema_for_filename(filename: str) -> tuple[str, str] | None:
+    if "trigger_rule" in filename:
+        return "trigger_execution_rule", SCHEMA_FILES["trigger_execution_rule"]
+    if "strategy_state" in filename:
+        return "strategy_state", SCHEMA_FILES["strategy_state"]
+    if "portfolio_state" in filename:
+        return "portfolio_state", SCHEMA_FILES["portfolio_state"]
+    if "account_structure_review" in filename:
+        return "account_structure_review", SCHEMA_FILES["account_structure_review"]
+    if filename.startswith("pending_") or "pending_command" in filename:
+        return "pending_command", SCHEMA_FILES["pending_command"]
+    return None
 
 
 def load_json(path: Path) -> Any:
@@ -107,50 +131,87 @@ def validate(value: Any, schema: dict[str, Any], path: str = "$") -> list[str]:
     return errors
 
 
-def main() -> int:
-    if not EXAMPLES_DIR.exists():
-        print(f"FAIL examples directory not found: {EXAMPLES_DIR}")
-        return 1
+def collect_targets() -> tuple[list[ValidationTarget], list[Path]]:
+    targets: list[ValidationTarget] = []
+    unmapped: list[Path] = []
 
-    failures = 0
-    checked = 0
+    roots = [
+        (EXAMPLES_DIR, "examples"),
+        (RECORDS_DIR, "records")
+    ]
 
-    for example_path in sorted(EXAMPLES_DIR.glob("*.json")):
-        schema_name = SCHEMA_BY_EXAMPLE.get(example_path.name)
-        if not schema_name:
-            print(f"SKIP {example_path.relative_to(REPO_ROOT)} no schema mapping")
+    for root, bucket in roots:
+        if not root.exists():
             continue
+        for path in sorted(root.rglob("*.json")):
+            schema_match = schema_for_filename(path.name)
+            if schema_match is None:
+                unmapped.append(path)
+                continue
+            schema_key, schema_name = schema_match
+            targets.append(ValidationTarget(path, bucket, schema_name, schema_key))
 
-        schema_path = SCHEMAS_DIR / schema_name
+    return targets, unmapped
+
+
+def main() -> int:
+    targets, unmapped = collect_targets()
+    failures = 0
+    examples_checked = 0
+    records_checked = 0
+    coverage: Counter[str] = Counter()
+
+    if unmapped:
+        for path in unmapped:
+            print(f"FAIL {path.relative_to(REPO_ROOT)} has no schema mapping")
+        failures += len(unmapped)
+
+    for target in targets:
+        schema_path = SCHEMAS_DIR / target.schema_name
         try:
-            example = load_json(example_path)
+            document = load_json(target.path)
             schema = load_json(schema_path)
         except json.JSONDecodeError as exc:
-            print(f"FAIL {example_path.relative_to(REPO_ROOT)} invalid JSON: {exc}")
+            print(f"FAIL {target.path.relative_to(REPO_ROOT)} invalid JSON: {exc}")
             failures += 1
             continue
         except OSError as exc:
-            print(f"FAIL {example_path.relative_to(REPO_ROOT)} cannot load file: {exc}")
+            print(f"FAIL {target.path.relative_to(REPO_ROOT)} cannot load file: {exc}")
             failures += 1
             continue
 
-        errors = validate(example, schema)
-        checked += 1
+        errors = validate(document, schema)
+        coverage[target.schema_key] += 1
+
+        if target.bucket == "examples":
+            examples_checked += 1
+        elif target.bucket == "records":
+            records_checked += 1
 
         if errors:
-            print(f"FAIL {example_path.relative_to(REPO_ROOT)} against {schema_name}")
+            print(f"FAIL {target.path.relative_to(REPO_ROOT)} against {target.schema_name}")
             for error in errors:
                 print(f"  - {error}")
             failures += 1
         else:
-            print(f"PASS {example_path.relative_to(REPO_ROOT)} against {schema_name}")
+            print(f"PASS {target.path.relative_to(REPO_ROOT)} against {target.schema_name}")
 
+    total_checked = examples_checked + records_checked
+
+    print()
     if failures:
-        print(f"\nRuntime validation failed: {failures} failure(s), {checked} checked.")
-        return 1
+        print("Runtime validation failed.")
+    else:
+        print("Runtime validation passed.")
 
-    print(f"\nRuntime validation passed: {checked} JSON example(s) checked.")
-    return 0
+    print(f"Examples checked: {examples_checked}")
+    print(f"Records checked: {records_checked}")
+    print(f"Total JSON files checked: {total_checked}")
+    print("Schema coverage:")
+    for schema_key in sorted(SCHEMA_FILES):
+        print(f"- {schema_key}: {coverage.get(schema_key, 0)}")
+
+    return 1 if failures else 0
 
 
 if __name__ == "__main__":

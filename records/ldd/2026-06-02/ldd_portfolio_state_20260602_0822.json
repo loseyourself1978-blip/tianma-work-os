@@ -1,0 +1,136 @@
+{
+  "record_id": "ldd-portfolio-state-20260602-0822",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "account_type": "multi_account_visible_snapshot",
+  "snapshot_time": "2026-06-02T08:22:00+08:00",
+  "source_of_truth": [
+    "user_provided_broker_screenshots",
+    "user_provided_binance_screenshots"
+  ],
+  "base_currency": "mixed_usd_usdt",
+  "total_visible_assets": {
+    "us_broker_total_assets_usd": 44149.98,
+    "us_stock_section_usd": 25443.82,
+    "us_holdings_market_value_usd": 21932.64,
+    "us_holding_pl_usd": 3926.49,
+    "us_day_pl_usd": -65.12,
+    "binance_visible_assets_usdt": 8647.06
+  },
+  "cash_balance": {
+    "binance_usdt": 5652.13,
+    "crypto_account_posture": "USDT-cash dominant"
+  },
+  "holdings": [
+    {
+      "account": "us_broker",
+      "asset": "GLD",
+      "quantity": 20,
+      "approx_price": 411.3,
+      "runtime_note": "Monitor 405 as a risk line; not an add candidate."
+    },
+    {
+      "account": "us_broker",
+      "asset": "GOOG",
+      "quantity": 14,
+      "approx_price": 370,
+      "runtime_note": "Weak below 380; do not add GOOG or GGLL."
+    },
+    {
+      "account": "us_broker",
+      "asset": "NVDA",
+      "quantity": 20,
+      "approx_price": 223.92,
+      "runtime_note": "Remains strong and can be held."
+    },
+    {
+      "account": "us_broker",
+      "asset": "GGLL",
+      "quantity": 10,
+      "approx_price": 127.54,
+      "runtime_note": "Reduced to 10 shares; do not add while GOOG remains weak."
+    },
+    {
+      "account": "us_broker",
+      "asset": "SOXL",
+      "quantity": 5,
+      "approx_price": 225.76,
+      "runtime_note": "Hold above 220; prepare close below 220; close below 210."
+    },
+    {
+      "account": "us_broker",
+      "asset": "INTC",
+      "quantity": 10,
+      "approx_price": 108.6,
+      "runtime_note": "Weak below 118-120; do not add and consider further cleanup if it cannot recover."
+    },
+    {
+      "account": "us_broker",
+      "asset": "UGL",
+      "quantity": 10,
+      "approx_price": 55.325,
+      "runtime_note": "Not an add candidate."
+    },
+    {
+      "account": "us_broker",
+      "asset": "TSLA",
+      "quantity": 0.0116,
+      "runtime_note": "Tiny residual position."
+    },
+    {
+      "account": "crypto",
+      "asset": "USDT",
+      "quantity": 5652.13,
+      "runtime_note": "Dominant crypto account balance."
+    },
+    {
+      "account": "crypto",
+      "asset": "ETH",
+      "quantity": 0.8070416,
+      "runtime_note": "Do not add."
+    },
+    {
+      "account": "crypto",
+      "asset": "DOGE",
+      "quantity": 8400.535,
+      "runtime_note": "Do not add."
+    },
+    {
+      "account": "crypto",
+      "asset": "ZEC",
+      "quantity": 0.469772,
+      "runtime_note": "Do not add spot; monitor remaining grid bot separately."
+    },
+    {
+      "account": "crypto",
+      "asset": "SOL",
+      "quantity": 2.931163,
+      "runtime_note": "Do not add."
+    },
+    {
+      "account": "crypto",
+      "asset": "BTC",
+      "quantity": 0.00055762,
+      "runtime_note": "Do not buy unless BTC stabilizes above 75,500-76,000."
+    }
+  ],
+  "strategy_tags": [
+    "historical_position_cleanup",
+    "new_strategy_separation",
+    "cash_dominant_crypto",
+    "bot_profit_protection"
+  ],
+  "notes": [
+    "No new LDD U.S. model strategy position.",
+    "SOXS, TSLQ, and GDXU are fully closed.",
+    "Latest screenshots show no new current-day broker orders in the visible order section.",
+    "Unshown trades should not be recorded until order-detail screenshots are provided."
+  ],
+  "related_records": [
+    "ldd-runtime-sync-20260602-0822",
+    "zec-bot-strategy-state-20260602-0822",
+    "soxl-trigger-rule-20260602-0822",
+    "btc-buyback-trigger-rule-20260602-0822",
+    "account-structure-review-20260602-0822"
+  ]
+}

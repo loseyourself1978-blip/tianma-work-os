@@ -56,6 +56,19 @@ Files:
 - `examples/ldd/zec_bot_strategy_state.example.json`
 - `examples/ldd/soxl_trigger_rule.example.json`
 
+## LDD Pilot Records
+
+Vol.3 Phase 2 introduces `records/ldd/` as the first real runtime data layer.
+
+- `examples/ldd/` remains illustrative.
+- `records/ldd/` contains real project pilot records.
+- The latest pilot set is `records/ldd/2026-06-02/`.
+- The 2026-06-02 08:22 post-U.S.-session sync block is the latest source of truth for that pilot set.
+
+The records include portfolio state, strategy state, trigger rules, account-structure review, and a pending command sample.
+
+The pending command sample demonstrates Command Intelligence: pending instructions remain editable until they are executed, acknowledged, cancelled, or superseded. Newer incoming signals can invalidate stale command drafts before execution.
+
 ## Validation
 
 Run:
@@ -74,4 +87,3 @@ The pilot primarily exercises:
 - TWOS-043 Trigger-to-Execution Rule Ledger.
 - TWOS-039 Rule-Based Execution Review.
 - TWOS-040 Volatility-Aware Execution Splitter.
-
