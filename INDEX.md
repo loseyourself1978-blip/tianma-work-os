@@ -58,6 +58,7 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `docs/runtime/PROJECT_MEMORY_INDEX_SPEC_v0.2.md`
 - `docs/runtime/SIGNAL_COMMAND_LAYER_SPEC_v0.1.md`
 - `docs/runtime/DECISION_TO_COMMAND_ROUTING_SPEC_v0.1.md`
+- `docs/runtime/COMMAND_INTELLIGENCE_PROTOCOL_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
 ## Vol.3 Phase 2 / Runtime Records
@@ -70,6 +71,13 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `records/ldd/2026-06-02/soxl_trigger_rule_20260602_0822.json`
 - `records/ldd/2026-06-02/account_structure_review_20260602_0822.json`
 - `records/ldd/2026-06-02/pending_phase2_codex_instruction_20260602_0822.json`
+
+## Vol.3 Phase 2.5 / Command Intelligence
+
+- `docs/runtime/COMMAND_INTELLIGENCE_PROTOCOL_v0.1.md`
+- `examples/runtime/phase2_instruction_superseded_check.example.json`
+- `examples/runtime/phase2_v3_smart_execution_plan.example.json`
+- `examples/runtime/phase2_execution_feedback_template.example.json`
 
 ## Product Principles
 

@@ -69,6 +69,20 @@ The records include portfolio state, strategy state, trigger rules, account-stru
 
 The pending command sample demonstrates Command Intelligence: pending instructions remain editable until they are executed, acknowledged, cancelled, or superseded. Newer incoming signals can invalidate stale command drafts before execution.
 
+## Command Intelligence In The LDD Pilot
+
+Vol.3 Phase 2.5 adds Command Intelligence between Decision-to-Command Routing and Execution.
+
+For LDD, this means the runtime checks whether the latest sync block, account state, strategy state, and risk rules still support the command before any execution step begins.
+
+The Phase 2 v1, v2, and v3 sequence is the first real sample:
+
+- v1 was drafted from older 2026-06-01 data and became stale.
+- v2 was drafted from the 2026-06-01 16:37-16:38 sync block and was also superseded.
+- v3 used the 2026-06-02 08:22 post-U.S.-session sync block and was executed successfully.
+
+The LDD pilot therefore treats prepared commands as editable drafts until Command Intelligence confirms freshness, resources, dependencies, risk, validation criteria, and feedback routing.
+
 ## Validation
 
 Run:

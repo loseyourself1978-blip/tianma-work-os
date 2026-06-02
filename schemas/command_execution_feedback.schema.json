@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/command_execution_feedback.schema.json",
+  "title": "Command Execution Feedback",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "feedback_id",
+    "command_id",
+    "plan_id",
+    "executor",
+    "execution_time",
+    "status",
+    "files_created",
+    "files_modified",
+    "validation_result",
+    "commit_hash",
+    "push_result",
+    "errors",
+    "unresolved_blockers",
+    "next_actions",
+    "memory_updates_required",
+    "related_records"
+  ],
+  "properties": {
+    "feedback_id": {
+      "type": "string"
+    },
+    "command_id": {
+      "type": "string"
+    },
+    "plan_id": {
+      "type": "string"
+    },
+    "executor": {
+      "type": "string"
+    },
+    "execution_time": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "completed_with_warnings",
+        "validation_failed",
+        "execution_failed",
+        "push_failed",
+        "blocked",
+        "cancelled",
+        "superseded"
+      ]
+    },
+    "files_created": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "files_modified": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "validation_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "examples_checked",
+        "records_checked",
+        "total_json_files_checked"
+      ],
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "examples_checked": {
+          "type": "integer"
+        },
+        "records_checked": {
+          "type": "integer"
+        },
+        "total_json_files_checked": {
+          "type": "integer"
+        },
+        "schema_coverage": {
+          "type": "object"
+        }
+      }
+    },
+    "commit_hash": {
+      "type": "string"
+    },
+    "push_result": {
+      "type": "string"
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "unresolved_blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "memory_updates_required": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

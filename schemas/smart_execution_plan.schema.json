@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/smart_execution_plan.schema.json",
+  "title": "Smart Execution Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "plan_id",
+    "command_id",
+    "project",
+    "subproject",
+    "executor",
+    "execution_mode",
+    "execution_steps",
+    "preconditions",
+    "validation_steps",
+    "expected_feedback",
+    "fallback_plan",
+    "stop_conditions",
+    "related_records"
+  ],
+  "properties": {
+    "plan_id": {
+      "type": "string"
+    },
+    "command_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "subproject": {
+      "type": "string"
+    },
+    "executor": {
+      "type": "string"
+    },
+    "execution_mode": {
+      "type": "string",
+      "enum": [
+        "single_step",
+        "staged",
+        "manual_handoff",
+        "agent_execution",
+        "script_execution",
+        "validation_only"
+      ]
+    },
+    "execution_steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "step_id",
+          "sequence",
+          "action",
+          "expected_result"
+        ],
+        "properties": {
+          "step_id": {
+            "type": "string"
+          },
+          "sequence": {
+            "type": "integer"
+          },
+          "action": {
+            "type": "string"
+          },
+          "expected_result": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "preconditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "validation_steps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expected_feedback": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "fallback_plan": {
+      "type": "string"
+    },
+    "stop_conditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/command_intelligence_check.schema.json",
+  "title": "Command Intelligence Check",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "check_id",
+    "command_id",
+    "project",
+    "subproject",
+    "check_time",
+    "freshness_status",
+    "priority_status",
+    "dependency_status",
+    "resource_status",
+    "risk_level",
+    "reversibility",
+    "human_approval_required",
+    "execution_recommendation",
+    "reason",
+    "related_signals",
+    "related_records"
+  ],
+  "properties": {
+    "check_id": {
+      "type": "string"
+    },
+    "command_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "subproject": {
+      "type": "string"
+    },
+    "check_time": {
+      "type": "string"
+    },
+    "freshness_status": {
+      "type": "string",
+      "enum": [
+        "fresh",
+        "stale",
+        "superseded",
+        "needs_review",
+        "unknown"
+      ]
+    },
+    "priority_status": {
+      "type": "string"
+    },
+    "dependency_status": {
+      "type": "string"
+    },
+    "resource_status": {
+      "type": "string"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "reversibility": {
+      "type": "string",
+      "enum": [
+        "reversible",
+        "partially_reversible",
+        "irreversible",
+        "unknown"
+      ]
+    },
+    "human_approval_required": {
+      "type": "boolean"
+    },
+    "execution_recommendation": {
+      "type": "string",
+      "enum": [
+        "execute_now",
+        "delay",
+        "revise_before_execution",
+        "request_human_approval",
+        "split_execution",
+        "cancel",
+        "archive"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "related_signals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

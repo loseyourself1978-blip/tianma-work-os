@@ -11,8 +11,12 @@ Decision-to-Command Routing converts a decision into a precise next action witho
 ```text
 AI Board Decision
 -> Decision-to-Command Routing
--> LDD Financial Cockpit Pilot
--> Runtime Validation
+-> Command Intelligence
+-> Smart Execution Plan
+-> Execution
+-> Validation
+-> Feedback Reconciliation
+-> Runtime Memory Update
 ```
 
 ## Command Types
@@ -90,3 +94,17 @@ The 2026-06-02 LDD pilot records show this pattern:
 - Phase 2 v2 was drafted but not executed.
 - The 2026-06-02 08:22 sync block superseded both.
 - Phase 2 v3 became the latest valid command.
+
+## Phase 2.5 Routing Boundary
+
+Decision-to-Command Routing creates the command candidate. Command Intelligence decides whether that candidate can actually run.
+
+Before execution, Command Intelligence should check:
+
+- Whether newer signals supersede the command.
+- Whether project priority or risk requires a delay.
+- Whether dependencies and resources are available.
+- Whether the command should run as one step or staged execution.
+- Whether validation and feedback requirements are explicit.
+
+Routing should pass commands to execution only after this check succeeds.

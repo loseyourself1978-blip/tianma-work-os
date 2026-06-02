@@ -17,8 +17,13 @@ from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-EXAMPLES_DIR = REPO_ROOT / "examples" / "ldd"
-RECORDS_DIR = REPO_ROOT / "records" / "ldd"
+EXAMPLE_DIRS = [
+    REPO_ROOT / "examples" / "ldd",
+    REPO_ROOT / "examples" / "runtime"
+]
+RECORD_DIRS = [
+    REPO_ROOT / "records" / "ldd"
+]
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 
@@ -35,11 +40,20 @@ SCHEMA_FILES = {
     "strategy_state": "strategy_state.schema.json",
     "portfolio_state": "portfolio_state.schema.json",
     "account_structure_review": "account_structure_review.schema.json",
-    "pending_command": "pending_command.schema.json"
+    "pending_command": "pending_command.schema.json",
+    "command_intelligence_check": "command_intelligence_check.schema.json",
+    "smart_execution_plan": "smart_execution_plan.schema.json",
+    "command_execution_feedback": "command_execution_feedback.schema.json"
 }
 
 
 def schema_for_filename(filename: str) -> tuple[str, str] | None:
+    if "command_intelligence_check" in filename or "superseded_check" in filename:
+        return "command_intelligence_check", SCHEMA_FILES["command_intelligence_check"]
+    if "smart_execution_plan" in filename:
+        return "smart_execution_plan", SCHEMA_FILES["smart_execution_plan"]
+    if "execution_feedback" in filename:
+        return "command_execution_feedback", SCHEMA_FILES["command_execution_feedback"]
     if "trigger_rule" in filename:
         return "trigger_execution_rule", SCHEMA_FILES["trigger_execution_rule"]
     if "strategy_state" in filename:
@@ -135,10 +149,8 @@ def collect_targets() -> tuple[list[ValidationTarget], list[Path]]:
     targets: list[ValidationTarget] = []
     unmapped: list[Path] = []
 
-    roots = [
-        (EXAMPLES_DIR, "examples"),
-        (RECORDS_DIR, "records")
-    ]
+    roots = [(root, "examples") for root in EXAMPLE_DIRS]
+    roots.extend((root, "records") for root in RECORD_DIRS)
 
     for root, bucket in roots:
         if not root.exists():

@@ -1,0 +1,85 @@
+{
+  "plan_id": "smart-plan-phase2-v3-ldd-runtime-records",
+  "command_id": "phase2-v3-ldd-runtime-records",
+  "project": "Tianma Work OS",
+  "subproject": "Vol.3 Runtime",
+  "executor": "Codex",
+  "execution_mode": "staged",
+  "execution_steps": [
+    {
+      "step_id": "verify-repo",
+      "sequence": 1,
+      "action": "Run git status, git log --oneline -5, and existing runtime validation.",
+      "expected_result": "Working tree is clean, latest pushed commit is confirmed, and current validation passes before editing."
+    },
+    {
+      "step_id": "add-runtime-records",
+      "sequence": 2,
+      "action": "Add the 2026-06-02 08:22 LDD records under records/ldd/2026-06-02/.",
+      "expected_result": "Portfolio state, strategy state, trigger rules, account review, runtime sync, and pending command records exist."
+    },
+    {
+      "step_id": "add-and-harden-schemas",
+      "sequence": 3,
+      "action": "Add portfolio, account-structure, and pending-command schemas while lightly hardening related runtime schemas.",
+      "expected_result": "All related JSON records can be validated by local schemas without external dependencies."
+    },
+    {
+      "step_id": "update-docs",
+      "sequence": 4,
+      "action": "Update INDEX.md and runtime docs to explain records/ as the first real runtime data layer.",
+      "expected_result": "Documentation distinguishes illustrative examples from real pilot records."
+    },
+    {
+      "step_id": "validate",
+      "sequence": 5,
+      "action": "Run bash scripts/validate_runtime_records.sh.",
+      "expected_result": "Runtime validation passes and prints coverage summary."
+    },
+    {
+      "step_id": "commit",
+      "sequence": 6,
+      "action": "Commit with message Add Vol.3 Phase 2 LDD runtime records.",
+      "expected_result": "Local commit is created."
+    },
+    {
+      "step_id": "push-and-report",
+      "sequence": 7,
+      "action": "Push once to origin/main and report feedback.",
+      "expected_result": "Remote main is updated or push failure is reported with recovery context."
+    }
+  ],
+  "preconditions": [
+    "No GitHub Projects board creation.",
+    "No new GitHub issue creation.",
+    "No UI implementation.",
+    "No external API connection.",
+    "No automated trading.",
+    "Use 2026-06-02 08:22 LDD Sync Block as latest source of truth."
+  ],
+  "validation_steps": [
+    "Run local runtime validator before editing.",
+    "Run local runtime validator after editing.",
+    "Confirm git status is clean after commit.",
+    "Confirm push result."
+  ],
+  "expected_feedback": [
+    "Files created.",
+    "Files modified.",
+    "Validation result.",
+    "Git status.",
+    "Commit hash.",
+    "Push result.",
+    "Issues encountered."
+  ],
+  "fallback_plan": "If push fails, stop editing, confirm local commit hash and branch-ahead state, then run the safe push recovery workflow before recommending the next action.",
+  "stop_conditions": [
+    "Validation fails and cannot be fixed locally.",
+    "A newer source-of-truth signal arrives before execution completes.",
+    "A requested action would create GitHub Projects, new GitHub Issues, external API connections, or automated trading."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-02/pending_phase2_codex_instruction_20260602_0822.json",
+    "records/ldd/2026-06-02/ldd_runtime_sync_20260602_0822.md"
+  ]
+}

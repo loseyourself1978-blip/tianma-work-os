@@ -11,12 +11,15 @@ The runtime is not a trading bot, brokerage connector, or UI implementation. It 
 ## Runtime Chain
 
 ```text
-Project Memory
--> Multi-Source Signal Intake
+Signal Intake
 -> AI Board Decision
 -> Decision-to-Command Routing
--> LDD Financial Cockpit Pilot
--> Runtime Validation
+-> Command Intelligence
+-> Smart Execution Plan
+-> Execution
+-> Validation
+-> Feedback Reconciliation
+-> Runtime Memory Update
 ```
 
 ## First Implementation Focus
@@ -79,6 +82,34 @@ Converts an approved decision into a command record:
 - Manual follow-up.
 - No-action decision.
 
+### Command Intelligence
+
+Checks whether a command should execute now, be revised, be split into stages, require human approval, or be cancelled.
+
+Command Intelligence evaluates:
+
+- Freshness.
+- Priority.
+- Resource availability.
+- Dependencies.
+- Risk and reversibility.
+- Validation expectations.
+- Feedback requirements.
+
+### Smart Execution Plan
+
+Turns a valid command into an execution plan:
+
+- Executor.
+- Execution mode.
+- Execution steps.
+- Preconditions.
+- Validation steps.
+- Stop conditions.
+- Fallback plan.
+
+The plan is intentionally explicit because pending commands can be superseded before execution.
+
 ### LDD Financial Cockpit Pilot
 
 Uses LDD as the first runtime pilot. It records:
@@ -99,6 +130,10 @@ Validation is offline and deterministic:
 - No Binance connection.
 - No automated trading.
 
+### Feedback Reconciliation
+
+Captures execution output and routes it back into memory, runtime records, rule ledgers, backlog notes, decision logs, and related issue status.
+
 ## Phase 2 Runtime Data Layer
 
 Vol.3 Phase 2 introduces `records/` as the first real runtime data layer.
@@ -111,6 +146,12 @@ Vol.3 Phase 2 introduces `records/` as the first real runtime data layer.
 - Command Intelligence ensures that Tianma Work OS executes the latest valid command, not stale command drafts.
 
 The 2026-06-02 LDD pilot records demonstrate this behavior: Phase 2 v1 and v2 were drafted but superseded before execution, while Phase 2 v3 became the latest valid command.
+
+## Phase 2.5 Command Intelligence Layer
+
+Vol.3 Phase 2.5 adds `COMMAND_INTELLIGENCE_PROTOCOL_v0.1.md` plus local schemas and examples for command checks, smart execution plans, and execution feedback.
+
+Command Intelligence sits between Decision-to-Command Routing and Execution. It ensures that Tianma Work OS executes the latest valid command, not stale command drafts.
 
 ## Non-Goals
 
