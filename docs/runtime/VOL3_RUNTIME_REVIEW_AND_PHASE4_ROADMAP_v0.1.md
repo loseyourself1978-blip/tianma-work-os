@@ -289,3 +289,9 @@ Suggested Phase 4.1 deliverables:
 - `reports/ldd/pending_commands_summary.md`
 
 The script should avoid external APIs and only read local runtime records.
+
+## Phase 4.1 Implementation Note
+
+Phase 4.1 implements the recommended Runtime Query & Report Layer as a local file-based report generator.
+
+It adds `docs/runtime/RUNTIME_QUERY_AND_REPORT_LAYER_v0.1.md`, `scripts/generate_runtime_report.py`, `scripts/generate_runtime_report.sh`, and generated Markdown reports under `reports/ldd/`.

@@ -98,6 +98,17 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `records/ldd/2026-06-03/crypto_account_structure_update_20260603_0839.json`
 - `records/ldd/2026-06-03/sync_block_delta_protocol_feedback_20260603.json`
 
+## Vol.3 Phase 4.1 / Runtime Query & Report Layer
+
+- `docs/runtime/RUNTIME_QUERY_AND_REPORT_LAYER_v0.1.md`
+- `reports/ldd/latest_runtime_report.md`
+- `reports/ldd/active_trigger_rules.md`
+- `reports/ldd/strategy_state_summary.md`
+- `reports/ldd/pending_commands_summary.md`
+- `reports/ldd/account_structure_summary.md`
+- `reports/ldd/execution_review_summary.md`
+- `reports/ldd/delta_sync_summary.md`
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.
