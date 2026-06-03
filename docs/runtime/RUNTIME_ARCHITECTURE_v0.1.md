@@ -188,6 +188,12 @@ Vol.3 Phase 3.5 consolidates the current runtime progress into `VOL3_RUNTIME_REV
 
 The recommended next workstream is Phase 4.1 Runtime Query & Report Layer. Before UI, API integration, or automation, Tianma Work OS should be able to read its local runtime records and generate reliable summaries.
 
+## Phase 4.2 Memory Lifecycle Layer
+
+Vol.3 Phase 4.2 adds the first memory lifecycle layer through `MEMORY_CAPACITY_AND_RETENTION_MANAGEMENT_v0.1.md`.
+
+The layer classifies memories into durable rules, current checkpoints, historical snapshots, archived records, superseded memories, active memory, project reports, temporary instructions, and pending-command memory. It does not directly modify ChatGPT memory or delete user data. It generates cleanup recommendations and active checkpoint reports so stale snapshots can be reviewed and removed from active memory only with user control.
+
 ## Non-Goals
 
 Vol.3 does not include:

@@ -295,3 +295,11 @@ The script should avoid external APIs and only read local runtime records.
 Phase 4.1 implements the recommended Runtime Query & Report Layer as a local file-based report generator.
 
 It adds `docs/runtime/RUNTIME_QUERY_AND_REPORT_LAYER_v0.1.md`, `scripts/generate_runtime_report.py`, `scripts/generate_runtime_report.sh`, and generated Markdown reports under `reports/ldd/`.
+
+## Phase 4.2 Implementation Note
+
+Phase 4.2 implements the first Memory Capacity & Retention Management layer for TWOS-045.
+
+It adds `docs/runtime/MEMORY_CAPACITY_AND_RETENTION_MANAGEMENT_v0.1.md`, memory-retention schemas and examples, plus `reports/ldd/memory_cleanup_recommendations.md` and `reports/ldd/latest_active_memory_checkpoint.md`.
+
+The implementation does not modify ChatGPT saved memory. It produces human-readable cleanup guidance so old historical snapshots can be reviewed, archived, compacted, or removed from active memory without losing durable rules or latest project checkpoints.

@@ -50,6 +50,8 @@ Phase 4.1 generates:
 - `reports/ldd/account_structure_summary.md`
 - `reports/ldd/execution_review_summary.md`
 - `reports/ldd/delta_sync_summary.md`
+- `reports/ldd/memory_cleanup_recommendations.md`
+- `reports/ldd/latest_active_memory_checkpoint.md`
 
 These reports are deterministic and safe to regenerate.
 
@@ -81,6 +83,8 @@ This helps future TWOS-045 work:
 - Mark superseded records.
 - Preserve durable rules.
 - Avoid manual one-by-one memory cleanup.
+
+Phase 4.2 turns this into the first memory lifecycle layer by generating cleanup recommendations and a latest active memory checkpoint report.
 
 ## Future Agent And Cockpit Support
 

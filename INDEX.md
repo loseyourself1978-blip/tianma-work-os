@@ -109,6 +109,15 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `reports/ldd/execution_review_summary.md`
 - `reports/ldd/delta_sync_summary.md`
 
+## Vol.3 Phase 4.2 / Memory Capacity & Retention Management
+
+- `docs/runtime/MEMORY_CAPACITY_AND_RETENTION_MANAGEMENT_v0.1.md`
+- `reports/ldd/memory_cleanup_recommendations.md`
+- `reports/ldd/latest_active_memory_checkpoint.md`
+- `examples/runtime/ldd_memory_retention_policy.example.json`
+- `examples/runtime/ldd_memory_cleanup_recommendation_202605.example.json`
+- `examples/runtime/ldd_active_memory_checkpoint.example.json`
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

@@ -48,11 +48,20 @@ SCHEMA_FILES = {
     "volatility_execution_split": "volatility_execution_split.schema.json",
     "sync_delta_update": "sync_delta_update.schema.json",
     "rule_ledger_snapshot": "rule_ledger_snapshot.schema.json",
-    "execution_event": "execution_event.schema.json"
+    "execution_event": "execution_event.schema.json",
+    "memory_retention_policy": "memory_retention_policy.schema.json",
+    "memory_cleanup_recommendation": "memory_cleanup_recommendation.schema.json",
+    "active_memory_checkpoint": "active_memory_checkpoint.schema.json"
 }
 
 
 def schema_for_filename(filename: str) -> tuple[str, str] | None:
+    if "memory_retention_policy" in filename:
+        return "memory_retention_policy", SCHEMA_FILES["memory_retention_policy"]
+    if "memory_cleanup_recommendation" in filename:
+        return "memory_cleanup_recommendation", SCHEMA_FILES["memory_cleanup_recommendation"]
+    if "active_memory_checkpoint" in filename:
+        return "active_memory_checkpoint", SCHEMA_FILES["active_memory_checkpoint"]
     if "command_intelligence_check" in filename or "superseded_check" in filename:
         return "command_intelligence_check", SCHEMA_FILES["command_intelligence_check"]
     if "smart_execution_plan" in filename:

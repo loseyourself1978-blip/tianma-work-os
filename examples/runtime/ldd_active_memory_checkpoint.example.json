@@ -1,0 +1,49 @@
+{
+  "checkpoint_id": "ldd-active-memory-checkpoint-20260603",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "checkpoint_time": "2026-06-03T14:10:00+08:00",
+  "durable_rules": [
+    "Do not execute stale command drafts; execute latest valid command.",
+    "User-provided broker/Binance screenshots remain execution source of truth.",
+    "No automated trading.",
+    "No external API connection without explicit implementation phase.",
+    "ZEC grid should not be reopened or chased after profit lock.",
+    "BTC buyback waits for 75,500-76,000 stabilization/confirmation."
+  ],
+  "latest_valid_state": [
+    "ZEC bot is closed / profit locked after 2026-06-03 08:38-08:39 closure.",
+    "Crypto account remains USDT defensive / cash dominant.",
+    "BTC buyback has not triggered.",
+    "U.S. historical positions remain in cleanup and risk-control phase.",
+    "No new LDD U.S. model strategy position is recorded."
+  ],
+  "latest_runtime_records": [
+    "records/ldd/2026-06-02/",
+    "records/ldd/2026-06-02/phase3/",
+    "records/ldd/2026-06-03/"
+  ],
+  "latest_reports": [
+    "reports/ldd/latest_runtime_report.md",
+    "reports/ldd/active_trigger_rules.md",
+    "reports/ldd/strategy_state_summary.md",
+    "reports/ldd/account_structure_summary.md",
+    "reports/ldd/memory_cleanup_recommendations.md"
+  ],
+  "superseded_memories": [
+    "Old 2026-05 detailed LDD account snapshot memories.",
+    "Phase 2 v1 and v2 drafted command memories.",
+    "Phase 3 v1 still-running ZEC bot assumption."
+  ],
+  "open_risks": [
+    "DOGE remains a weak-risk holding.",
+    "SOXL still has 220 / 210 trigger-line risk.",
+    "Memory cleanup requires human approval before active saved-memory removal."
+  ],
+  "next_review": "Regenerate runtime reports after the next major LDD sync or memory-capacity warning.",
+  "related_records": [
+    "docs/runtime/MEMORY_CAPACITY_AND_RETENTION_MANAGEMENT_v0.1.md",
+    "reports/ldd/latest_runtime_report.md",
+    "records/ldd/2026-06-03/sync_block_delta_protocol_feedback_20260603.json"
+  ]
+}

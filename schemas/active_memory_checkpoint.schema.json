@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/active_memory_checkpoint.schema.json",
+  "title": "Active Memory Checkpoint",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "checkpoint_id",
+    "project",
+    "subproject",
+    "checkpoint_time",
+    "durable_rules",
+    "latest_valid_state",
+    "latest_runtime_records",
+    "latest_reports",
+    "superseded_memories",
+    "open_risks",
+    "next_review",
+    "related_records"
+  ],
+  "properties": {
+    "checkpoint_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "subproject": {
+      "type": "string"
+    },
+    "checkpoint_time": {
+      "type": "string"
+    },
+    "durable_rules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "latest_valid_state": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "latest_runtime_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "latest_reports": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "superseded_memories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "open_risks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next_review": {
+      "type": "string"
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

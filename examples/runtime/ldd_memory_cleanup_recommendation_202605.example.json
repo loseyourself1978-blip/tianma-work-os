@@ -1,0 +1,50 @@
+{
+  "recommendation_id": "ldd-memory-cleanup-recommendation-202605",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "generated_at": "2026-06-03T14:10:00+08:00",
+  "memory_scope": "Old 2026-05 LDD saved-memory snapshots after 2026-06 runtime records and reports exist.",
+  "items_to_keep": [
+    "Durable LDD strategy rules.",
+    "Tianma Work OS runtime principles.",
+    "Latest valid LDD checkpoint.",
+    "Open risks and active trigger rules.",
+    "Pending command or Command Intelligence context that has not been resolved."
+  ],
+  "items_to_archive": [
+    "Detailed old 2026-05 LDD account snapshots.",
+    "Old broker/Binance visible account-number summaries after they are represented in records or reports.",
+    "Historical sync details that are useful for audit but no longer needed in active memory."
+  ],
+  "items_to_delete_or_remove_from_active_memory": [
+    "Superseded 2026-05 account snapshot memories after confirming details exist in GitHub/runtime records or reports.",
+    "Duplicate saved memories that repeat old account numbers without adding durable rules.",
+    "Temporary instructions that were executed, cancelled, or superseded."
+  ],
+  "items_requiring_human_review": [
+    "Any memory that might contain a durable rule.",
+    "Any memory that contains an unresolved risk or active command.",
+    "Any memory whose details have not yet been archived into records/ or reports/."
+  ],
+  "rationale": [
+    "The user should not have to delete dozens of old memories manually.",
+    "Latest 2026-06 LDD records and reports provide a durable archive.",
+    "Active memory should preserve rules and latest checkpoint rather than every historical snapshot."
+  ],
+  "safety_notes": [
+    "Do not delete durable project rules.",
+    "Do not delete latest active checkpoint.",
+    "Do not remove pending command context unless executed, cancelled, or superseded.",
+    "Cleanup is a recommendation and requires user approval."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-02/",
+    "records/ldd/2026-06-03/",
+    "docs/runtime/MEMORY_CAPACITY_AND_RETENTION_MANAGEMENT_v0.1.md"
+  ],
+  "related_reports": [
+    "reports/ldd/latest_runtime_report.md",
+    "reports/ldd/active_trigger_rules.md",
+    "reports/ldd/memory_cleanup_recommendations.md"
+  ]
+}

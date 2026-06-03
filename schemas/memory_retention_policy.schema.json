@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/memory_retention_policy.schema.json",
+  "title": "Memory Retention Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "policy_id",
+    "project",
+    "subproject",
+    "created_at",
+    "memory_classes",
+    "retention_rules",
+    "archive_destination",
+    "active_memory_rules",
+    "cleanup_frequency",
+    "human_approval_required",
+    "related_records"
+  ],
+  "properties": {
+    "policy_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "subproject": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "memory_classes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "durable_rule",
+          "current_checkpoint",
+          "historical_snapshot",
+          "archived_record",
+          "superseded_memory",
+          "active_memory",
+          "project_report",
+          "temporary_instruction",
+          "pending_command_memory"
+        ]
+      }
+    },
+    "retention_rules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "archive_destination": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "active_memory_rules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cleanup_frequency": {
+      "type": "string"
+    },
+    "human_approval_required": {
+      "type": "boolean"
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

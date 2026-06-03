@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import datetime
@@ -253,6 +254,20 @@ def write_report(filename: str, lines: list[str]) -> None:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     path = REPORT_DIR / filename
     path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+
+
+def local_git_log(limit: int = 5) -> list[str]:
+    try:
+        result = subprocess.run(
+            ["git", "log", f"--oneline", f"-{limit}", "--skip=1"],
+            cwd=REPO_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return []
+    return [line.strip() for line in result.stdout.splitlines() if line.strip()]
 
 
 def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
@@ -634,6 +649,181 @@ def generate_delta_sync_summary(records: list[RuntimeRecord]) -> list[str]:
     return lines
 
 
+def generated_report_paths() -> list[str]:
+    return [
+        "reports/ldd/latest_runtime_report.md",
+        "reports/ldd/active_trigger_rules.md",
+        "reports/ldd/strategy_state_summary.md",
+        "reports/ldd/pending_commands_summary.md",
+        "reports/ldd/account_structure_summary.md",
+        "reports/ldd/execution_review_summary.md",
+        "reports/ldd/delta_sync_summary.md",
+        "reports/ldd/memory_cleanup_recommendations.md",
+        "reports/ldd/latest_active_memory_checkpoint.md",
+    ]
+
+
+def generate_memory_cleanup_recommendations(records: list[RuntimeRecord]) -> list[str]:
+    lines = common_header("Memory Cleanup Recommendations", records)
+    lines.extend(
+        [
+            "This report is a recommendation only. It does not delete ChatGPT memory, local files, runtime records, or user data.",
+            "",
+            "## Memories To Keep",
+            "",
+            "- Durable Tianma Work OS principles and LDD operating rules.",
+            "- Latest valid LDD checkpoint.",
+            "- Active trigger rules and open risks.",
+            "- Pending command context that has not been executed, cancelled, or superseded.",
+            "- User-visible constraints such as no automated trading and no external API connections.",
+            "",
+            "## Memories Safe To Remove From Active Saved Memory After Review",
+            "",
+            "- Old 2026-05 detailed LDD account snapshot memories after confirming their historical details are archived in records or reports.",
+            "- Duplicate saved memories that repeat old account numbers but do not add durable rules.",
+            "- Temporary instructions that were executed, cancelled, or superseded.",
+            "- Superseded Phase 2 v1/v2 command drafts after retaining the Command Intelligence lesson.",
+            "- Superseded Phase 3 v1 still-running ZEC bot assumption after retaining the 2026-06-03 closure delta.",
+            "",
+            "## Memories Requiring Human Review",
+            "",
+            "- Any memory that may contain a durable rule.",
+            "- Any memory with an unresolved risk or active command.",
+            "- Any memory whose details are not yet preserved in `records/` or `reports/`.",
+            "- Any memory the user wants to keep for emotional, strategic, or audit reasons.",
+            "",
+            "## Rationale",
+            "",
+            "- The user should not have to delete dozens of stale memories manually.",
+            "- Current 2026-06 runtime records and reports provide a durable archive for the active LDD state.",
+            "- Active memory should preserve durable rules and latest checkpoints, not every historical snapshot.",
+            "- Cleanup recommendations support long-context management without silent deletion.",
+            "",
+            "## Source Records And Reports Preserving Historical Details",
+            "",
+        ]
+    )
+    lines.extend(
+        md_list(
+            [
+                "`records/ldd/2026-06-02/`",
+                "`records/ldd/2026-06-02/phase3/`",
+                "`records/ldd/2026-06-03/`",
+                "`reports/ldd/latest_runtime_report.md`",
+                "`reports/ldd/active_trigger_rules.md`",
+                "`reports/ldd/account_structure_summary.md`",
+                "`reports/ldd/delta_sync_summary.md`",
+            ]
+        )
+    )
+    lines.extend(
+        [
+            "",
+            "## Safety Notes",
+            "",
+            "- Do not delete durable rules.",
+            "- Do not delete latest active checkpoint.",
+            "- Do not remove active pending command context unless it is executed, cancelled, or superseded.",
+            "- Keep user-visible control over any memory cleanup.",
+        ]
+    )
+    return lines
+
+
+def generate_latest_active_memory_checkpoint(records: list[RuntimeRecord]) -> list[str]:
+    lines = common_header("Latest Active Memory Checkpoint", records)
+    zec_state = latest(
+        [
+            record
+            for record in by_kind(records, "strategy_state")
+            if "zec" in scalar(record.data.get("linked_asset")).lower()
+        ]
+    )
+    account = latest_account_review(records)
+    deltas = by_kind(records, "delta_sync")
+    commits = local_git_log(6)
+
+    lines.extend(["## Latest Project Checkpoint", ""])
+    lines.extend(
+        [
+            "- Tianma Work OS Vol.3 now has runtime records, validation, report generation, Command Intelligence, rule ledger, strategy-state monitoring, delta sync, and memory-retention planning.",
+            "- Active memory should keep durable rules and latest valid checkpoint while detailed historical snapshots live in records/reports.",
+            "",
+        ]
+    )
+
+    lines.extend(["## Durable LDD / Tianma Rules", ""])
+    lines.extend(
+        md_list(
+            [
+                "User-provided broker/Binance screenshots remain execution source of truth.",
+                "Do not execute stale command drafts; execute latest valid command.",
+                "No automated trading.",
+                "No external API connection without an explicit implementation phase.",
+                "ZEC grid should not be reopened or chased after profit lock.",
+                "BTC buyback waits for 75,500-76,000 stabilization/confirmation.",
+                "Do not delete durable rules during memory cleanup.",
+            ]
+        )
+    )
+    lines.append("")
+
+    lines.extend(["## Recent Runtime Baseline Commits", ""])
+    lines.append("")
+    lines.append("The current report commit is intentionally omitted to avoid self-referential hash drift.")
+    lines.append("")
+    lines.extend(md_list([f"`{item}`" for item in commits], "No local git log available."))
+    lines.append("")
+
+    lines.extend(["## Latest LDD State References", ""])
+    if zec_state:
+        lines.extend(
+            [
+                f"- ZEC strategy state: `{scalar(zec_state.data.get('health_state'))}` from `{zec_state.relpath}`",
+                f"- ZEC recommended action: {scalar(zec_state.data.get('recommended_action'))}",
+            ]
+        )
+    if account:
+        lines.extend(
+            [
+                f"- Latest account structure score: `{scalar(account.data.get('structure_score'))}` from `{account.relpath}`",
+                f"- Redeployment readiness: {scalar(account.data.get('redeployment_readiness'))}",
+            ]
+        )
+    for record in deltas:
+        lines.append(f"- Delta sync: `{record.relpath}`")
+    lines.append("")
+
+    lines.extend(["## Latest Report References", ""])
+    lines.extend(md_list([f"`{item}`" for item in generated_report_paths()]))
+    lines.append("")
+
+    lines.extend(["## Superseded Old Snapshot Categories", ""])
+    lines.extend(
+        md_list(
+            [
+                "Old 2026-05 detailed LDD account snapshot memories.",
+                "Phase 2 v1 and v2 drafted command memories.",
+                "Phase 3 v1 still-running ZEC bot assumption.",
+                "Duplicate account-number snapshots that are now preserved in runtime records or reports.",
+            ]
+        )
+    )
+    lines.append("")
+
+    lines.extend(["## Open Risks", ""])
+    lines.extend(
+        md_list(
+            [
+                "DOGE remains a weak-risk holding.",
+                "SOXL still has 220 / 210 trigger-line risk.",
+                "Memory cleanup requires human approval before active saved-memory removal.",
+            ]
+        )
+    )
+    return lines
+
+
 def main() -> int:
     records, warnings = collect_records()
 
@@ -645,6 +835,8 @@ def main() -> int:
         "account_structure_summary.md": generate_account_structure_summary(records),
         "execution_review_summary.md": generate_execution_review_summary(records),
         "delta_sync_summary.md": generate_delta_sync_summary(records),
+        "memory_cleanup_recommendations.md": generate_memory_cleanup_recommendations(records),
+        "latest_active_memory_checkpoint.md": generate_latest_active_memory_checkpoint(records),
     }
 
     for filename, lines in reports.items():

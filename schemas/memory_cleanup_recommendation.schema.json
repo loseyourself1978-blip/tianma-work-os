@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/memory_cleanup_recommendation.schema.json",
+  "title": "Memory Cleanup Recommendation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "recommendation_id",
+    "project",
+    "subproject",
+    "generated_at",
+    "memory_scope",
+    "items_to_keep",
+    "items_to_archive",
+    "items_to_delete_or_remove_from_active_memory",
+    "items_requiring_human_review",
+    "rationale",
+    "safety_notes",
+    "related_records",
+    "related_reports"
+  ],
+  "properties": {
+    "recommendation_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "subproject": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "memory_scope": {
+      "type": "string"
+    },
+    "items_to_keep": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "items_to_archive": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "items_to_delete_or_remove_from_active_memory": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "items_requiring_human_review": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rationale": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "safety_notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_reports": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

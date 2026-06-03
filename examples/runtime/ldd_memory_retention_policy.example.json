@@ -1,0 +1,41 @@
+{
+  "policy_id": "ldd-memory-retention-policy-v0-1",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "created_at": "2026-06-03T14:10:00+08:00",
+  "memory_classes": [
+    "durable_rule",
+    "current_checkpoint",
+    "historical_snapshot",
+    "archived_record",
+    "superseded_memory",
+    "active_memory",
+    "project_report",
+    "temporary_instruction",
+    "pending_command_memory"
+  ],
+  "retention_rules": [
+    "Keep durable LDD/Tianma rules in active memory.",
+    "Keep only the latest valid LDD checkpoint in active memory.",
+    "Move old 2026-05 account snapshot memories into historical_snapshot or superseded_memory after newer records exist.",
+    "Archive detailed historical snapshots into records/ldd and reports/ldd before recommending active-memory cleanup.",
+    "Never silently delete durable project context."
+  ],
+  "archive_destination": [
+    "records/ldd/",
+    "reports/ldd/",
+    "docs/runtime/"
+  ],
+  "active_memory_rules": [
+    "Active memory should store durable rules, current checkpoint, open risks, and latest valid command context.",
+    "Detailed account numbers should live in runtime records and reports once archived.",
+    "Superseded snapshots should be removable from active memory only after user review."
+  ],
+  "cleanup_frequency": "after_major_sync_or_when_saved_memory_capacity_warning_occurs",
+  "human_approval_required": true,
+  "related_records": [
+    "docs/runtime/MEMORY_CAPACITY_AND_RETENTION_MANAGEMENT_v0.1.md",
+    "reports/ldd/latest_runtime_report.md",
+    "reports/ldd/memory_cleanup_recommendations.md"
+  ]
+}
