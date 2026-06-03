@@ -60,6 +60,7 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `docs/runtime/DECISION_TO_COMMAND_ROUTING_SPEC_v0.1.md`
 - `docs/runtime/COMMAND_INTELLIGENCE_PROTOCOL_v0.1.md`
 - `docs/runtime/RULE_LEDGER_AND_STRATEGY_MONITOR_v0.1.md`
+- `docs/runtime/VOL3_RUNTIME_REVIEW_AND_PHASE4_ROADMAP_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
 ## Vol.3 Phase 2 / Runtime Records

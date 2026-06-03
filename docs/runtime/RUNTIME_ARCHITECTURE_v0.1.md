@@ -182,6 +182,12 @@ Account structure score evaluates cash pressure, leverage exposure, weak-positio
 
 LDD sync blocks need versioning and delta update handling when new execution evidence arrives after a prior sync.
 
+## Phase 3.5 Review And Phase 4 Direction
+
+Vol.3 Phase 3.5 consolidates the current runtime progress into `VOL3_RUNTIME_REVIEW_AND_PHASE4_ROADMAP_v0.1.md`.
+
+The recommended next workstream is Phase 4.1 Runtime Query & Report Layer. Before UI, API integration, or automation, Tianma Work OS should be able to read its local runtime records and generate reliable summaries.
+
 ## Non-Goals
 
 Vol.3 does not include:
