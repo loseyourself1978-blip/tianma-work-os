@@ -382,6 +382,8 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
 
     lines.extend(["## Pending Commands", ""])
     if pending:
+        lines.append("These entries report the status stored in source records; later commits or reports may have resolved historical pending work.")
+        lines.append("")
         for record in pending:
             lines.extend(
                 [
@@ -445,15 +447,29 @@ def generate_strategy_state_summary(records: list[RuntimeRecord]) -> list[str]:
 
     lines.extend(["## Strategy Records", ""])
     if strategy_states:
+        lines.append("Records are shown newest first. Older records are historical and may be superseded by later state transitions.")
+        lines.append("")
+        latest_by_asset: dict[str, RuntimeRecord] = {}
         for record in strategy_states:
+            asset = scalar(record.data.get("linked_asset")).lower()
+            latest_by_asset[asset] = record
+        for record in reversed(strategy_states):
+            asset = scalar(record.data.get("linked_asset")).lower()
+            current_for_asset = latest_by_asset.get(asset)
+            record_status = "latest"
+            recommended_action = scalar(record.data.get("recommended_action"))
+            if current_for_asset is not None and current_for_asset.relpath != record.relpath:
+                record_status = f"historical / superseded by `{current_for_asset.relpath}`"
+                recommended_action = "Superseded; see latest strategy-state record above."
             lines.extend(
                 [
                     f"### {scalar(record.data.get('strategy_id'))}",
                     "",
+                    f"- Record status: {record_status}",
                     f"- Asset: {scalar(record.data.get('linked_asset'))}",
                     f"- Health state: `{scalar(record.data.get('health_state'))}`",
                     f"- Current return: `{scalar(record.data.get('current_return_pct'))}%`",
-                    f"- Recommended action: {scalar(record.data.get('recommended_action'))}",
+                    f"- Recommended action: {recommended_action}",
                     f"- Source: `{record.relpath}`",
                     "",
                 ]
@@ -482,6 +498,7 @@ def generate_pending_commands_summary(records: list[RuntimeRecord]) -> list[str]
             "",
             "- Newer LDD sync data superseded older drafted instructions.",
             "- Tianma Work OS should execute the latest valid command, not stale command drafts.",
+            "- Command records below report source-record status; later commits or reports may have resolved historical pending work.",
             "",
         ]
     )
@@ -521,6 +538,8 @@ def generate_account_structure_summary(records: list[RuntimeRecord]) -> list[str
     lines.extend(
         [
             "The account structure score evaluates cash pressure, leverage exposure, weak-position drag, historical-position cleanup, new-strategy separation, bot exposure, cash dominance, and redeployment readiness.",
+            "",
+            "Reviews are shown newest first. Older reviews are retained for traceability and may describe pre-delta conditions.",
             "",
         ]
     )

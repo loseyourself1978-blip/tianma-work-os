@@ -13,6 +13,7 @@ Phase 2 v1 -> v2 -> v3 demonstrates that pending command was not final command.
 
 - Newer LDD sync data superseded older drafted instructions.
 - Tianma Work OS should execute the latest valid command, not stale command drafts.
+- Command records below report source-record status; later commits or reports may have resolved historical pending work.
 
 ## Command Records
 

@@ -60,7 +60,11 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `docs/runtime/DECISION_TO_COMMAND_ROUTING_SPEC_v0.1.md`
 - `docs/runtime/COMMAND_INTELLIGENCE_PROTOCOL_v0.1.md`
 - `docs/runtime/RULE_LEDGER_AND_STRATEGY_MONITOR_v0.1.md`
+- `docs/runtime/RUNTIME_QUERY_AND_REPORT_LAYER_v0.1.md`
+- `docs/runtime/MEMORY_CAPACITY_AND_RETENTION_MANAGEMENT_v0.1.md`
+- `docs/runtime/RUNTIME_REPORT_QUALITY_REVIEW_v0.1.md`
 - `docs/runtime/VOL3_RUNTIME_REVIEW_AND_PHASE4_ROADMAP_v0.1.md`
+- `docs/runtime/VOL3_HANDOFF_SUMMARY_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
 ## Vol.3 Phase 2 / Runtime Records
@@ -108,6 +112,8 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `reports/ldd/account_structure_summary.md`
 - `reports/ldd/execution_review_summary.md`
 - `reports/ldd/delta_sync_summary.md`
+- `reports/ldd/memory_cleanup_recommendations.md`
+- `reports/ldd/latest_active_memory_checkpoint.md`
 
 ## Vol.3 Phase 4.2 / Memory Capacity & Retention Management
 
@@ -117,6 +123,11 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `examples/runtime/ldd_memory_retention_policy.example.json`
 - `examples/runtime/ldd_memory_cleanup_recommendation_202605.example.json`
 - `examples/runtime/ldd_active_memory_checkpoint.example.json`
+
+## Vol.3 Phase 4.3 / Report Quality Review & Handoff
+
+- `docs/runtime/RUNTIME_REPORT_QUALITY_REVIEW_v0.1.md`
+- `docs/runtime/VOL3_HANDOFF_SUMMARY_v0.1.md`
 
 ## Product Principles
 
