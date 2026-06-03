@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/runtime_timeline_event.schema.json",
+  "title": "Runtime Timeline Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "timeline_event_id",
+    "event_time",
+    "event_type",
+    "source_file",
+    "source_record_type",
+    "title",
+    "summary",
+    "cockpit_priority",
+    "tags"
+  ],
+  "properties": {
+    "timeline_event_id": {
+      "type": "string"
+    },
+    "event_time": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "portfolio_snapshot",
+        "strategy_state_update",
+        "trigger_rule_update",
+        "execution_event",
+        "rule_review",
+        "account_structure_review",
+        "sync_delta",
+        "pending_command",
+        "command_intelligence",
+        "memory_checkpoint",
+        "report_generation",
+        "unknown"
+      ]
+    },
+    "source_file": {
+      "type": "string"
+    },
+    "source_record_type": {
+      "type": "string"
+    },
+    "asset_or_module": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "state_before": {
+      "type": "string"
+    },
+    "state_after": {
+      "type": "string"
+    },
+    "supersedes_or_updates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "execution_evidence_level": {
+      "type": "string",
+      "enum": [
+        "user_screenshot_source_of_truth",
+        "runtime_record",
+        "generated_report",
+        "inferred_from_record",
+        "unknown"
+      ]
+    },
+    "cockpit_priority": {
+      "type": "string",
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

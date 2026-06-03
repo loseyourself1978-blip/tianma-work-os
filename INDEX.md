@@ -63,6 +63,7 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `docs/runtime/RUNTIME_QUERY_AND_REPORT_LAYER_v0.1.md`
 - `docs/runtime/MEMORY_CAPACITY_AND_RETENTION_MANAGEMENT_v0.1.md`
 - `docs/runtime/RUNTIME_REPORT_QUALITY_REVIEW_v0.1.md`
+- `docs/runtime/RUNTIME_TIMELINE_LAYER_v0.1.md`
 - `docs/runtime/VOL3_RUNTIME_REVIEW_AND_PHASE4_ROADMAP_v0.1.md`
 - `docs/runtime/VOL3_HANDOFF_SUMMARY_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
@@ -128,6 +129,15 @@ Vol.1 — GitHub Docs & Product Blueprint
 
 - `docs/runtime/RUNTIME_REPORT_QUALITY_REVIEW_v0.1.md`
 - `docs/runtime/VOL3_HANDOFF_SUMMARY_v0.1.md`
+
+## Vol.4 Phase 4.1 / Runtime Timeline Layer
+
+- `docs/runtime/RUNTIME_TIMELINE_LAYER_v0.1.md`
+- `reports/ldd/runtime_timeline.md`
+- `cockpit/ldd/runtime_timeline.json`
+- `cockpit/ldd/README.md`
+- `scripts/generate_runtime_timeline.py`
+- `scripts/generate_runtime_timeline.sh`
 
 ## Product Principles
 

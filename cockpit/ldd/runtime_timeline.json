@@ -1,0 +1,341 @@
+{
+  "generated_at": "2026-06-03T08:39:00+08:00",
+  "project": "LLM Daredevil Desk",
+  "runtime_layer": "runtime_timeline",
+  "version": "0.1",
+  "source_root": "records/ldd",
+  "event_count": 16,
+  "date_range": {
+    "start": "2026-06-02T08:22:00+08:00",
+    "end": "2026-06-03T08:39:00+08:00"
+  },
+  "events": [
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-02-account-structure-review-20260602-0822-json",
+      "event_time": "2026-06-02T08:22:00+08:00",
+      "event_type": "account_structure_review",
+      "source_file": "records/ldd/2026-06-02/account_structure_review_20260602_0822.json",
+      "source_record_type": "account_structure_review",
+      "asset_or_module": "ldd-combined-visible-snapshot",
+      "title": "Account structure review: score 73",
+      "summary": "Cash pressure: low; crypto account remains USDT-cash dominant; redeployment readiness: moderate; cash posture improved but new LDD U.S. model strategy position remains inactive.",
+      "state_before": "",
+      "state_after": "structure_score=73",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "medium",
+      "tags": [
+        "account_structure_review",
+        "btc",
+        "soxl",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-02-btc-buyback-trigger-rule-20260602-0822-json",
+      "event_time": "2026-06-02T08:22:00+08:00",
+      "event_type": "trigger_rule_update",
+      "source_file": "records/ldd/2026-06-02/btc_buyback_trigger_rule_20260602_0822.json",
+      "source_record_type": "trigger_execution_rule",
+      "asset_or_module": "BTC",
+      "title": "Trigger rule: BTC",
+      "summary": "Do not buy BTC unless BTC stabilizes above 75,500-76,000.",
+      "state_before": "",
+      "state_after": "waiting",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "medium",
+      "tags": [
+        "btc",
+        "trigger_execution_rule"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-02-ldd-portfolio-state-20260602-0822-json",
+      "event_time": "2026-06-02T08:22:00+08:00",
+      "event_type": "portfolio_snapshot",
+      "source_file": "records/ldd/2026-06-02/ldd_portfolio_state_20260602_0822.json",
+      "source_record_type": "portfolio_state",
+      "asset_or_module": "multi_account_visible_snapshot",
+      "title": "Portfolio snapshot: multi_account_visible_snapshot",
+      "summary": "Visible portfolio snapshot recorded with base currency mixed_usd_usdt.",
+      "state_before": "",
+      "state_after": "",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "low",
+      "tags": [
+        "btc",
+        "portfolio_state",
+        "soxl",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-02-pending-phase2-codex-instruction-20260602-0822-json",
+      "event_time": "2026-06-02T08:22:00+08:00",
+      "event_type": "pending_command",
+      "source_file": "records/ldd/2026-06-02/pending_phase2_codex_instruction_20260602_0822.json",
+      "source_record_type": "pending_command",
+      "asset_or_module": "llm-daredevil-desk",
+      "title": "Pending command: pending-phase2-codex-instruction-20260602-0822",
+      "summary": "Execute Vol.3 Phase 2 v3 runtime data model hardening and LDD pilot records using the 2026-06-02 08:22 post-session sync block. Source status is retained as a Command Intelligence example; later runtime work may have resolved the draft.",
+      "state_before": "",
+      "state_after": "queued/pending_execution",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "low",
+      "tags": [
+        "historical_command_sample",
+        "pending_command",
+        "source_status"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-02-phase3-account-structure-score-20260602-json",
+      "event_time": "2026-06-02T08:22:00+08:00",
+      "event_type": "account_structure_review",
+      "source_file": "records/ldd/2026-06-02/phase3/account_structure_score_20260602.json",
+      "source_record_type": "account_structure_review",
+      "asset_or_module": "ldd-combined-visible-snapshot",
+      "title": "Account structure review: score 73",
+      "summary": "Cash pressure: low; crypto account is USDT-cash dominant; redeployment readiness: moderate; cash is available but BTC buyback and new U.S. model strategy positions remain untriggered.",
+      "state_before": "",
+      "state_after": "structure_score=73",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "medium",
+      "tags": [
+        "account_structure_review",
+        "btc",
+        "soxl",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-02-phase3-btc-volatility-execution-split-20260602-json",
+      "event_time": "2026-06-02T08:22:00+08:00",
+      "event_type": "trigger_rule_update",
+      "source_file": "records/ldd/2026-06-02/phase3/btc_volatility_execution_split_20260602.json",
+      "source_record_type": "volatility_execution_split",
+      "asset_or_module": "BTC",
+      "title": "Volatility split plan: BTC",
+      "summary": "Crypto account remains USDT-cash dominant. BTC buyback is not triggered until stabilization above 75,500-76,000.",
+      "state_before": "",
+      "state_after": "",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "low",
+      "tags": [
+        "btc",
+        "volatility_execution_split",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-02-phase3-ldd-rule-ledger-snapshot-20260602-json",
+      "event_time": "2026-06-02T08:22:00+08:00",
+      "event_type": "trigger_rule_update",
+      "source_file": "records/ldd/2026-06-02/phase3/ldd_rule_ledger_snapshot_20260602.json",
+      "source_record_type": "rule_ledger_snapshot",
+      "asset_or_module": "llm-daredevil-desk",
+      "title": "Rule ledger snapshot",
+      "summary": "Rule ledger snapshot captured 7 trigger rules.",
+      "state_before": "",
+      "state_after": "",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "low",
+      "tags": [
+        "btc",
+        "rule_ledger_snapshot",
+        "soxl",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-02-phase3-soxl-rule-based-execution-review-20260602-json",
+      "event_time": "2026-06-02T08:22:00+08:00",
+      "event_type": "rule_review",
+      "source_file": "records/ldd/2026-06-02/phase3/soxl_rule_based_execution_review_20260602.json",
+      "source_record_type": "rule_based_execution_review",
+      "asset_or_module": "SOXL",
+      "title": "Rule review: SOXL",
+      "summary": "Rule-compliant hold state. Continue monitoring 220 soft line and 210 hard close line.",
+      "state_before": "",
+      "state_after": "",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "medium",
+      "tags": [
+        "rule_based_execution_review",
+        "soxl"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-02-soxl-trigger-rule-20260602-0822-json",
+      "event_time": "2026-06-02T08:22:00+08:00",
+      "event_type": "trigger_rule_update",
+      "source_file": "records/ldd/2026-06-02/soxl_trigger_rule_20260602_0822.json",
+      "source_record_type": "trigger_execution_rule",
+      "asset_or_module": "SOXL",
+      "title": "Trigger rule: SOXL",
+      "summary": "Hold 5-share SOXL remainder while above 220; prepare to close if SOXL loses 220; close if it loses 210.",
+      "state_before": "",
+      "state_after": "waiting",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "medium",
+      "tags": [
+        "soxl",
+        "trigger_execution_rule"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-02-zec-bot-strategy-state-20260602-0822-json",
+      "event_time": "2026-06-02T08:22:00+08:00",
+      "event_type": "strategy_state_update",
+      "source_file": "records/ldd/2026-06-02/zec_bot_strategy_state_20260602_0822.json",
+      "source_record_type": "strategy_state",
+      "asset_or_module": "ZEC",
+      "title": "Strategy state: ZEC profit_surge_observation",
+      "summary": "Historical ZEC state retained for traceability; superseded by the 2026-06-03 ZEC closure event. Original summary: Remaining 500U / 60-grid ZEC bot is profitable but in profit-protection mode after the latest post-U.S.-session review.",
+      "state_before": "",
+      "state_after": "profit_surge_observation; superseded_by=records/ldd/2026-06-03/zec_bot_closure_execution_20260603_0838.json",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "medium",
+      "tags": [
+        "historical",
+        "strategy_state",
+        "superseded",
+        "superseded_by_zec_closure",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-03-zec-bot-closure-execution-20260603-0838-json",
+      "event_time": "2026-06-03T08:38:18+08:00",
+      "event_type": "execution_event",
+      "source_file": "records/ldd/2026-06-03/zec_bot_closure_execution_20260603_0838.json",
+      "source_record_type": "execution_event",
+      "asset_or_module": "ZEC/USDT",
+      "title": "Execution event: close_bot ZEC/USDT",
+      "summary": "bot_closure: sell 0.209 ZEC/USDT at 635.17.",
+      "state_before": "bot_profit_protection_historical_strategy_lock_profit_not_new_position",
+      "state_after": "close_bot",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "critical",
+      "tags": [
+        "closed_profit_locked",
+        "execution_event",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-03-crypto-account-structure-update-20260603-0839-json",
+      "event_time": "2026-06-03T08:39:00+08:00",
+      "event_type": "account_structure_review",
+      "source_file": "records/ldd/2026-06-03/crypto_account_structure_update_20260603_0839.json",
+      "source_record_type": "account_structure_review",
+      "asset_or_module": "binance_visible_snapshot",
+      "title": "Account structure review: score 80",
+      "summary": "Cash pressure: low; USDT balance increased to about 5,936.00171992; redeployment readiness: moderate-to-high; cash dominance strengthened, but BTC buyback has still not triggered.",
+      "state_before": "",
+      "state_after": "structure_score=80",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "medium",
+      "tags": [
+        "account_structure_review",
+        "btc",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-03-sync-block-delta-protocol-feedback-20260603-json",
+      "event_time": "2026-06-03T08:39:00+08:00",
+      "event_type": "sync_delta",
+      "source_file": "records/ldd/2026-06-03/sync_block_delta_protocol_feedback_20260603.json",
+      "source_record_type": "sync_delta_update",
+      "asset_or_module": "llm-daredevil-desk",
+      "title": "Sync delta: sync-block-delta-protocol-feedback-20260603",
+      "summary": "New execution evidence arrived after the prior sync state and has higher priority than the previous still-running bot assumption.",
+      "state_before": "prior sync or strategy-state assumption",
+      "state_after": "zec_bot_state: profit_protection_mode -> closed_profit_locked; zec_bot_execution_status: waiting -> completed; crypto_account_structure: stronger_usdt_cash_dominance; phase3_command: v1_superseded_by_v2",
+      "supersedes_or_updates": [
+        "phase3-v1-drafted-instruction",
+        "records/ldd/2026-06-02/zec_bot_strategy_state_20260602_0822.json",
+        "records/ldd/2026-06-02/phase3/ldd_rule_ledger_snapshot_20260602.json"
+      ],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "critical",
+      "tags": [
+        "btc",
+        "closed_profit_locked",
+        "sync_delta_update",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-03-zec-bot-rule-based-execution-review-20260603-0839-json",
+      "event_time": "2026-06-03T08:39:00+08:00",
+      "event_type": "rule_review",
+      "source_file": "records/ldd/2026-06-03/zec_bot_rule_based_execution_review_20260603_0839.json",
+      "source_record_type": "rule_based_execution_review",
+      "asset_or_module": "ZEC/USDT",
+      "title": "Rule review: ZEC/USDT",
+      "summary": "Execution was rule-compliant and positive for account structure because it locked a high bot return during a defensive phase.",
+      "state_before": "",
+      "state_after": "",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "medium",
+      "tags": [
+        "rule_based_execution_review",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-03-zec-bot-strategy-state-closed-20260603-0839-json",
+      "event_time": "2026-06-03T08:39:00+08:00",
+      "event_type": "strategy_state_update",
+      "source_file": "records/ldd/2026-06-03/zec_bot_strategy_state_closed_20260603_0839.json",
+      "source_record_type": "strategy_state",
+      "asset_or_module": "ZEC",
+      "title": "Strategy state: ZEC closed_profit_locked",
+      "summary": "The remaining 500U / 60-grid ZEC/USDT bot was closed after total return reached about 42.97%. Automatic ZEC-to-USDT sell was selected to lock profit.",
+      "state_before": "profit_protection_mode",
+      "state_after": "closed_profit_locked",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "high",
+      "tags": [
+        "closed_profit_locked",
+        "strategy_state",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-03-zec-profit-surge-trigger-execution-20260603-0839-json",
+      "event_time": "2026-06-03T08:39:00+08:00",
+      "event_type": "trigger_rule_update",
+      "source_file": "records/ldd/2026-06-03/zec_profit_surge_trigger_execution_20260603_0839.json",
+      "source_record_type": "trigger_execution_rule",
+      "asset_or_module": "ZEC/USDT",
+      "title": "Trigger rule: ZEC/USDT",
+      "summary": "Profit Surge Protection triggers when total return reaches the 40%-42%+ lock-profit zone.",
+      "state_before": "triggered_and_executed",
+      "state_after": "executed",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "high",
+      "tags": [
+        "trigger_execution_rule",
+        "zec"
+      ]
+    }
+  ],
+  "warnings": []
+}
