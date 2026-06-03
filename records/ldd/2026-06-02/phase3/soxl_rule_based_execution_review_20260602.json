@@ -1,0 +1,30 @@
+{
+  "review_id": "soxl-rule-based-execution-review-20260602",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "account": "us_broker_visible_snapshot",
+  "asset": "SOXL",
+  "position_tag": "historical_position_cleanup_remainder",
+  "review_time": "2026-06-02T08:22:00+08:00",
+  "related_trigger_rule_id": "soxl-trigger-rule-20260602-0822",
+  "related_strategy_state_id": "none",
+  "intended_rule": "Hold 5-share remainder while above 220; prepare close below 220; close below 210.",
+  "actual_execution": "No execution recorded in the visible order section for this sync.",
+  "execution_evidence": [
+    "user_provided_broker_screenshots",
+    "no_visible_current_day_order_detail"
+  ],
+  "rule_compliance_score": 0.9,
+  "account_risk_improvement": "No additional leverage was added; cleanup rule remains intact.",
+  "short_term_price_outcome": "Not used as the main correctness metric because no execution was recorded.",
+  "review_conclusion": "Rule-compliant hold state. Continue monitoring 220 soft line and 210 hard close line.",
+  "lessons_learned": [
+    "SOXL correctness should be judged by explicit trigger behavior, not by emotional reaction to volatility.",
+    "Without order-detail evidence, the ledger should not invent an execution."
+  ],
+  "next_rule_update": "Update only if SOXL loses 220, loses 210, or user provides executed order evidence.",
+  "related_records": [
+    "records/ldd/2026-06-02/soxl_trigger_rule_20260602_0822.json",
+    "records/ldd/2026-06-02/phase3/ldd_rule_ledger_snapshot_20260602.json"
+  ]
+}

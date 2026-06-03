@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/execution_event.schema.json",
+  "title": "Execution Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "project",
+    "subproject",
+    "event_time",
+    "account",
+    "asset",
+    "execution_type",
+    "execution_nature",
+    "action",
+    "closing_method",
+    "trade",
+    "source_of_truth",
+    "related_records"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "subproject": {
+      "type": "string"
+    },
+    "event_time": {
+      "type": "string"
+    },
+    "account": {
+      "type": "string"
+    },
+    "asset": {
+      "type": "string"
+    },
+    "execution_type": {
+      "type": "string"
+    },
+    "execution_nature": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string"
+    },
+    "closing_method": {
+      "type": "string"
+    },
+    "trade": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "symbol",
+        "time",
+        "side",
+        "price",
+        "quantity",
+        "amount",
+        "fee",
+        "fee_asset",
+        "role"
+      ],
+      "properties": {
+        "symbol": {
+          "type": "string"
+        },
+        "time": {
+          "type": "string"
+        },
+        "side": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number"
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "fee": {
+          "type": "number"
+        },
+        "fee_asset": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        }
+      }
+    },
+    "source_of_truth": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

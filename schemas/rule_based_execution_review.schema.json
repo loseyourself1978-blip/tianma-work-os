@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/rule_based_execution_review.schema.json",
+  "title": "Rule Based Execution Review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id",
+    "project",
+    "subproject",
+    "account",
+    "asset",
+    "position_tag",
+    "review_time",
+    "related_trigger_rule_id",
+    "related_strategy_state_id",
+    "intended_rule",
+    "actual_execution",
+    "execution_evidence",
+    "rule_compliance_score",
+    "account_risk_improvement",
+    "short_term_price_outcome",
+    "review_conclusion",
+    "lessons_learned",
+    "next_rule_update",
+    "related_records"
+  ],
+  "properties": {
+    "review_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "subproject": {
+      "type": "string"
+    },
+    "account": {
+      "type": "string"
+    },
+    "asset": {
+      "type": "string"
+    },
+    "position_tag": {
+      "type": "string"
+    },
+    "review_time": {
+      "type": "string"
+    },
+    "related_trigger_rule_id": {
+      "type": "string"
+    },
+    "related_strategy_state_id": {
+      "type": "string"
+    },
+    "intended_rule": {
+      "type": "string"
+    },
+    "actual_execution": {
+      "type": "string"
+    },
+    "execution_evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rule_compliance_score": {
+      "type": "number"
+    },
+    "account_risk_improvement": {
+      "type": "string"
+    },
+    "short_term_price_outcome": {
+      "type": "string"
+    },
+    "review_conclusion": {
+      "type": "string"
+    },
+    "lessons_learned": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next_rule_update": {
+      "type": "string"
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

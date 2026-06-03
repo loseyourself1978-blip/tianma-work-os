@@ -83,6 +83,24 @@ The Phase 2 v1, v2, and v3 sequence is the first real sample:
 
 The LDD pilot therefore treats prepared commands as editable drafts until Command Intelligence confirms freshness, resources, dependencies, risk, validation criteria, and feedback routing.
 
+## Phase 3 Rule Ledger And Strategy Monitor
+
+Vol.3 Phase 3 expands LDD runtime from static records into operational rule-ledger and strategy-state monitoring.
+
+The ZEC bot closure validates Profit Surge Protection:
+
+- The 2026-06-02 state showed the remaining 500U / 60-grid ZEC bot running in profit-protection mode.
+- On 2026-06-03 at 08:38-08:39 SGT/BJT, the bot was closed and ZEC was auto-sold into USDT.
+- The strategy state is now closed / profit locked.
+
+Execution correctness is judged by rule compliance and account-risk improvement, not only by short-term price movement after closure.
+
+Strategy-state monitoring must track profit-protection mode, lock-profit execution, closed/profit-locked state, downside thresholds, and state transitions.
+
+Account structure score evaluates cash pressure, leverage exposure, weak-position drag, historical cleanup, strategy separation, bot state, cash dominance, and redeployment readiness.
+
+LDD sync blocks now require versioning and delta update handling when new execution evidence arrives after a prior sync block.
+
 ## Validation
 
 Run:

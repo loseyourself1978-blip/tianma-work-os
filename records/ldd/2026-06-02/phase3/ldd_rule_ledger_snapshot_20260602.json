@@ -1,0 +1,123 @@
+{
+  "snapshot_id": "ldd-rule-ledger-snapshot-20260602",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "snapshot_time": "2026-06-02T08:22:00+08:00",
+  "source_of_truth": [
+    "user_provided_broker_screenshots",
+    "user_provided_binance_screenshots",
+    "records/ldd/2026-06-02/ldd_runtime_sync_20260602_0822.md"
+  ],
+  "rules": [
+    {
+      "rule_id": "soxl-close-trigger-20260602",
+      "asset": "SOXL",
+      "account": "us_broker_visible_snapshot",
+      "strategy": "historical_position_cleanup",
+      "trigger_condition": "Hold while above 220; prepare close if below 220; close if below 210.",
+      "trigger_level": "220 soft line, 210 hard close line",
+      "current_observed_value": "about 225.76 visible holding value context",
+      "trigger_status": "waiting",
+      "intended_action": "risk_reduction_or_final_cleanup",
+      "execution_status": "not_executed",
+      "execution_evidence_requirement": "order-detail screenshot required before recording an executed close",
+      "next_review_time": "next LDD broker sync",
+      "rule_drift_prevention": "Do not change 220/210 lines without a new sync block or explicit user instruction."
+    },
+    {
+      "rule_id": "btc-staged-buyback-20260602",
+      "asset": "BTC",
+      "account": "binance_visible_snapshot",
+      "strategy": "staged_buyback_watch",
+      "trigger_condition": "No buy unless BTC stabilizes above 75,500-76,000.",
+      "trigger_level": "75,500 stability, 76,000 confirmation",
+      "current_observed_value": "not triggered",
+      "trigger_status": "waiting",
+      "intended_action": "300 USDT first buyback after 75,500 stability; another 300 USDT after 76,000 confirmation",
+      "execution_status": "not_executed",
+      "execution_evidence_requirement": "manual confirmation and order evidence required",
+      "next_review_time": "next crypto sync",
+      "rule_drift_prevention": "Do not buy BTC below the stabilization zone."
+    },
+    {
+      "rule_id": "zec-bot-profit-protection-20260602",
+      "asset": "ZEC",
+      "account": "binance_spot_grid_bot",
+      "strategy": "500U_60_grid_profit_protection",
+      "trigger_condition": "Continue above 35%; alert below 35%; prepare closure near 31.5%; close below 30%; lock profit if total return reaches 40%-42%+.",
+      "trigger_level": "35 soft warning, 31.5 prepare close, 30 hard close, 40-42 profit surge lock zone",
+      "current_observed_value": "36.60 total return at 2026-06-02 08:22",
+      "trigger_status": "profit_protection_mode",
+      "intended_action": "protect floating profit and close if protection rule triggers",
+      "execution_status": "not_executed_in_20260602_baseline",
+      "execution_evidence_requirement": "bot closure and auto-sell evidence required before marking closed",
+      "next_review_time": "next Binance bot sync",
+      "rule_drift_prevention": "Profit-protection thresholds must remain explicit after bot closure."
+    },
+    {
+      "rule_id": "goog-ggll-no-add-20260602",
+      "asset": "GOOG/GGLL",
+      "account": "us_broker_visible_snapshot",
+      "strategy": "weak_position_drag_control",
+      "trigger_condition": "Do not add GOOG or GGLL while GOOG remains below 380.",
+      "trigger_level": "GOOG 380",
+      "current_observed_value": "GOOG around 370",
+      "trigger_status": "blocked_add",
+      "intended_action": "observe_only",
+      "execution_status": "not_executed",
+      "execution_evidence_requirement": "new add orders require explicit user-provided order evidence",
+      "next_review_time": "next broker sync",
+      "rule_drift_prevention": "Do not reframe weakness as add opportunity without a new decision."
+    },
+    {
+      "rule_id": "intc-cleanup-20260602",
+      "asset": "INTC",
+      "account": "us_broker_visible_snapshot",
+      "strategy": "historical_position_cleanup",
+      "trigger_condition": "Do not add while below 118-120; consider cleanup if it cannot recover.",
+      "trigger_level": "118-120 recovery zone",
+      "current_observed_value": "about 108.60",
+      "trigger_status": "weak_position_drag",
+      "intended_action": "observe_or_cleanup",
+      "execution_status": "not_executed",
+      "execution_evidence_requirement": "order-detail screenshot required for cleanup recording",
+      "next_review_time": "next broker sync",
+      "rule_drift_prevention": "No add unless recovery condition is met."
+    },
+    {
+      "rule_id": "gld-ugl-risk-line-20260602",
+      "asset": "GLD/UGL",
+      "account": "us_broker_visible_snapshot",
+      "strategy": "gold_position_monitor",
+      "trigger_condition": "Do not add GLD or UGL; monitor GLD 405 as risk line.",
+      "trigger_level": "GLD 405",
+      "current_observed_value": "GLD about 411.30",
+      "trigger_status": "waiting",
+      "intended_action": "observe_only",
+      "execution_status": "not_executed",
+      "execution_evidence_requirement": "manual review required before any action",
+      "next_review_time": "next broker sync",
+      "rule_drift_prevention": "Do not add gold exposure during cleanup phase."
+    },
+    {
+      "rule_id": "nvda-hold-20260602",
+      "asset": "NVDA",
+      "account": "us_broker_visible_snapshot",
+      "strategy": "strong_position_hold",
+      "trigger_condition": "Hold while strong.",
+      "trigger_level": "strength confirmation from next sync",
+      "current_observed_value": "about 223.92 visible holding value context",
+      "trigger_status": "hold",
+      "intended_action": "hold",
+      "execution_status": "not_executed",
+      "execution_evidence_requirement": "no action unless rule changes",
+      "next_review_time": "next broker sync",
+      "rule_drift_prevention": "Separate strong hold logic from weak-position cleanup."
+    }
+  ],
+  "related_records": [
+    "records/ldd/2026-06-02/ldd_runtime_sync_20260602_0822.md",
+    "records/ldd/2026-06-02/account_structure_review_20260602_0822.json",
+    "records/ldd/2026-06-03/ldd_delta_sync_zec_bot_closure_20260603_0839.md"
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "delta_id": "sync-block-delta-protocol-feedback-20260603",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "sync_time": "2026-06-03T08:39:00+08:00",
+  "source_cutoff_time": "2026-06-03T08:39:00+08:00",
+  "source_of_truth": [
+    "actual_execution",
+    "user_provided_binance_execution_screenshot",
+    "user_provided_binance_account_screenshot"
+  ],
+  "updates_or_supersedes": [
+    "phase3-v1-drafted-instruction",
+    "records/ldd/2026-06-02/zec_bot_strategy_state_20260602_0822.json",
+    "records/ldd/2026-06-02/phase3/ldd_rule_ledger_snapshot_20260602.json"
+  ],
+  "included_events": [
+    "ZEC bot closed at 2026-06-03 08:38-08:39 SGT/BJT.",
+    "Automatic ZEC-to-USDT sell selected.",
+    "ZEC/USDT sell at 635.17 for 0.209 ZEC recorded.",
+    "Main ZEC bot position converted to USDT.",
+    "Residual ZEC remains small at 0.012974."
+  ],
+  "pending_events": [
+    "No BTC buyback triggered.",
+    "No ZEC grid reopen allowed.",
+    "Residual ZEC may be converted later after manual review."
+  ],
+  "delta_reason": "New execution evidence arrived after the prior sync state and has higher priority than the previous still-running bot assumption.",
+  "changed_fields": [
+    "zec_bot_state: profit_protection_mode -> closed_profit_locked",
+    "zec_bot_execution_status: waiting -> completed",
+    "crypto_account_structure: stronger_usdt_cash_dominance",
+    "phase3_command: v1_superseded_by_v2"
+  ],
+  "new_records": [
+    "records/ldd/2026-06-03/zec_bot_closure_execution_20260603_0838.json",
+    "records/ldd/2026-06-03/zec_bot_strategy_state_closed_20260603_0839.json",
+    "records/ldd/2026-06-03/zec_profit_surge_trigger_execution_20260603_0839.json",
+    "records/ldd/2026-06-03/zec_bot_rule_based_execution_review_20260603_0839.json",
+    "records/ldd/2026-06-03/crypto_account_structure_update_20260603_0839.json"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-03/ldd_delta_sync_zec_bot_closure_20260603_0839.md",
+    "docs/runtime/RULE_LEDGER_AND_STRATEGY_MONITOR_v0.1.md",
+    "docs/runtime/COMMAND_INTELLIGENCE_PROTOCOL_v0.1.md"
+  ],
+  "sync_status": "delta_update"
+}

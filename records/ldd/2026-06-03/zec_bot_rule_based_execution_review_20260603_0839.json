@@ -1,0 +1,33 @@
+{
+  "review_id": "zec-bot-rule-based-execution-review-20260603-0839",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "account": "binance_spot_grid_bot",
+  "asset": "ZEC/USDT",
+  "position_tag": "500u_60_grid_profit_protection",
+  "review_time": "2026-06-03T08:39:00+08:00",
+  "related_trigger_rule_id": "zec-profit-surge-trigger-execution-20260603-0839",
+  "related_strategy_state_id": "zec-500u-60grid-closed-20260603-0839",
+  "intended_rule": "Lock profit when ZEC bot total return reaches the 40%-42%+ Profit Surge Protection zone or if downside protection thresholds are violated.",
+  "actual_execution": "Bot was closed and automatic ZEC-to-USDT sell was selected. ZEC/USDT sell executed at 635.17 USDT for 0.209 ZEC.",
+  "execution_evidence": [
+    "user_provided_binance_execution_screenshot",
+    "user_provided_binance_account_screenshot",
+    "zec_bot_closure_execution_20260603_0838.json"
+  ],
+  "rule_compliance_score": 0.97,
+  "account_risk_improvement": "Floating-profit giveback risk was reduced and USDT cash dominance improved.",
+  "short_term_price_outcome": "Not the primary correctness metric. A later ZEC rise or drop does not override rule compliance.",
+  "review_conclusion": "Execution was rule-compliant and positive for account structure because it locked a high bot return during a defensive phase.",
+  "lessons_learned": [
+    "Execution review should judge rule compliance, floating-profit protection, and account-risk improvement.",
+    "Profit lock decisions should not be retroactively judged only by post-closure price movement.",
+    "Actual execution evidence has priority over prior strategy-state assumptions."
+  ],
+  "next_rule_update": "Mark ZEC grid as closed/profit locked. Do not reopen grid or chase spot without a new rule and fresh sync.",
+  "related_records": [
+    "records/ldd/2026-06-03/zec_bot_strategy_state_closed_20260603_0839.json",
+    "records/ldd/2026-06-03/zec_profit_surge_trigger_execution_20260603_0839.json",
+    "records/ldd/2026-06-03/crypto_account_structure_update_20260603_0839.json"
+  ]
+}

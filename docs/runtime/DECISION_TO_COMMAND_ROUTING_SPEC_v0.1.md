@@ -30,6 +30,9 @@ Supported command types:
 - `update_rule`
 - `manual_follow_up`
 - `no_action`
+- `update_rule_ledger`
+- `update_strategy_state`
+- `append_delta_sync`
 
 Vol.3 does not create GitHub issues automatically. `create_issue` is included as a future command type only.
 
@@ -108,3 +111,17 @@ Before execution, Command Intelligence should check:
 - Whether validation and feedback requirements are explicit.
 
 Routing should pass commands to execution only after this check succeeds.
+
+## Phase 3 Rule-Ledger Routing
+
+Phase 3 introduces command candidates that update rule ledgers, strategy-state monitors, rule-based reviews, and sync delta records.
+
+Routing must preserve the distinction between:
+
+- A rule that is still waiting.
+- A trigger event that occurred.
+- An execution that has evidence.
+- A strategy state that changed because of execution.
+- A delta sync that supersedes a prior assumption.
+
+For the 2026-06-03 ZEC bot closure, routing should send the update through Command Intelligence because actual execution evidence supersedes the prior Phase 3 v1 command draft.

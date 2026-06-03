@@ -85,6 +85,8 @@
         "hedge_removal",
         "stop_loss",
         "take_profit",
+        "lock_profit",
+        "profit_protection",
         "observe"
       ]
     },
@@ -111,6 +113,36 @@
       "items": {
         "type": "string"
       }
+    },
+    "current_observed_value": {
+      "type": [
+        "number",
+        "string"
+      ]
+    },
+    "trigger_status": {
+      "type": "string"
+    },
+    "intended_action": {
+      "type": "string"
+    },
+    "execution_evidence_requirement": {
+      "type": "string"
+    },
+    "next_review_time": {
+      "type": "string"
+    },
+    "rule_drift_prevention": {
+      "type": "string"
+    },
+    "execution_result": {
+      "type": "string"
+    },
+    "review_conclusion": {
+      "type": "string"
+    },
+    "account_structure_impact": {
+      "type": "string"
     }
   }
 }

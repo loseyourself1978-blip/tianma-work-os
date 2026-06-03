@@ -90,7 +90,10 @@
         "profit_extraction_recommended",
         "partial_close_recommended",
         "full_close_recommended",
-        "downside_protection_triggered"
+        "downside_protection_triggered",
+        "closed_profit_locked",
+        "closed",
+        "profit_locked"
       ]
     },
     "recommended_action": {
@@ -127,6 +130,30 @@
       "type": "array",
       "items": {
         "type": "string"
+      }
+    },
+    "previous_state": {
+      "type": "string"
+    },
+    "trigger": {
+      "type": "string"
+    },
+    "new_state": {
+      "type": "string"
+    },
+    "execution_status": {
+      "type": "string"
+    },
+    "recommended_action_after_execution": {
+      "type": "string"
+    },
+    "residual_position": {
+      "type": "object"
+    },
+    "status_transition_history": {
+      "type": "array",
+      "items": {
+        "type": "object"
       }
     }
   }

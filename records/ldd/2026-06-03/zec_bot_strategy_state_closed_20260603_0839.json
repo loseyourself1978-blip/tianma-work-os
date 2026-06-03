@@ -1,0 +1,65 @@
+{
+  "strategy_id": "zec-500u-60grid-closed-20260603-0839",
+  "project_id": "tianma-work-os",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "strategy_type": "spot_grid_bot",
+  "linked_asset": "ZEC",
+  "account_ref": "binance_spot_grid_bot",
+  "initial_capital": 500,
+  "current_value": 653.09,
+  "current_return_pct": 42.97,
+  "peak_return_pct": 42.97,
+  "profit_drawdown_pct": 0,
+  "soft_warning_threshold_pct": 35,
+  "hard_protection_threshold_pct": 30,
+  "market_state_context": "The remaining 500U / 60-grid ZEC/USDT bot was closed after total return reached about 42.97%. Automatic ZEC-to-USDT sell was selected to lock profit.",
+  "health_state": "closed_profit_locked",
+  "recommended_action": "Do not reopen ZEC grid and do not chase ZEC spot. Treat USDT as the main defensive position.",
+  "last_review_time": "2026-06-03T08:39:00+08:00",
+  "source_of_truth": [
+    "user_provided_binance_execution_screenshot",
+    "user_provided_binance_account_screenshot"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-03/zec_bot_closure_execution_20260603_0838.json",
+    "records/ldd/2026-06-03/zec_profit_surge_trigger_execution_20260603_0839.json",
+    "records/ldd/2026-06-02/zec_bot_strategy_state_20260602_0822.json"
+  ],
+  "linked_trade_intent_records": [
+    "zec-bot-closure-execution-20260603-0838"
+  ],
+  "linked_position_intent_tags": [
+    "bot_profit_protection",
+    "lock_profit_execution",
+    "cash_dominant_crypto"
+  ],
+  "linked_review_logs": [
+    "records/ldd/2026-06-03/ldd_delta_sync_zec_bot_closure_20260603_0839.md"
+  ],
+  "previous_state": "profit_protection_mode",
+  "trigger": "total_return_pct_reached_42.97_profit_surge_zone",
+  "new_state": "closed_profit_locked",
+  "execution_status": "completed",
+  "recommended_action_after_execution": "do_not_reopen_grid_do_not_chase",
+  "residual_position": {
+    "asset": "ZEC",
+    "quantity": 0.012974,
+    "approx_value_usdt": 8.21,
+    "action": "no_immediate_action_may_convert_later"
+  },
+  "status_transition_history": [
+    {
+      "time": "2026-06-02T08:22:00+08:00",
+      "from_state": "profit_surge_observation",
+      "to_state": "profit_protection_mode",
+      "reason": "Bot remained profitable but still exposed to floating-profit giveback."
+    },
+    {
+      "time": "2026-06-03T08:39:00+08:00",
+      "from_state": "profit_protection_mode",
+      "to_state": "closed_profit_locked",
+      "reason": "Total return reached 42.97% and user closed bot with automatic ZEC-to-USDT sell."
+    }
+  ]
+}

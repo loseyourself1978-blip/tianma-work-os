@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/volatility_execution_split.schema.json",
+  "title": "Volatility Execution Split",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "split_plan_id",
+    "project",
+    "subproject",
+    "asset",
+    "account",
+    "direction",
+    "position_tag",
+    "created_at",
+    "market_context",
+    "trigger_zone",
+    "confirmation_zone",
+    "staged_actions",
+    "soft_stop",
+    "hard_stop",
+    "rebound_action",
+    "max_position_size",
+    "risk_notes",
+    "validation_requirements",
+    "related_trigger_rules",
+    "related_records"
+  ],
+  "properties": {
+    "split_plan_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "subproject": {
+      "type": "string"
+    },
+    "asset": {
+      "type": "string"
+    },
+    "account": {
+      "type": "string"
+    },
+    "direction": {
+      "type": "string"
+    },
+    "position_tag": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "market_context": {
+      "type": "string"
+    },
+    "trigger_zone": {
+      "type": "string"
+    },
+    "confirmation_zone": {
+      "type": "string"
+    },
+    "staged_actions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "soft_stop": {
+      "type": "string"
+    },
+    "hard_stop": {
+      "type": "string"
+    },
+    "rebound_action": {
+      "type": "string"
+    },
+    "max_position_size": {
+      "type": [
+        "number",
+        "string"
+      ]
+    },
+    "risk_notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "validation_requirements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_trigger_rules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

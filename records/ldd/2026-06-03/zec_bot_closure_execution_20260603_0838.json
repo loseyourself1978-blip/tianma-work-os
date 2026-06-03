@@ -1,0 +1,32 @@
+{
+  "event_id": "zec-bot-closure-execution-20260603-0838",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "event_time": "2026-06-03T08:38:18+08:00",
+  "account": "binance_spot_grid_bot",
+  "asset": "ZEC/USDT",
+  "execution_type": "bot_closure",
+  "execution_nature": "bot_profit_protection_historical_strategy_lock_profit_not_new_position",
+  "action": "close_bot",
+  "closing_method": "automatic_zec_to_usdt_sell",
+  "trade": {
+    "symbol": "ZEC/USDT",
+    "time": "2026-06-03T08:38:18+08:00",
+    "side": "sell",
+    "price": 635.17,
+    "quantity": 0.209,
+    "amount": 132.76,
+    "fee": 0.13275053,
+    "fee_asset": "USDT",
+    "role": "taker"
+  },
+  "source_of_truth": [
+    "user_provided_binance_execution_screenshot",
+    "user_provided_binance_account_screenshot"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-03/ldd_delta_sync_zec_bot_closure_20260603_0839.md",
+    "records/ldd/2026-06-03/zec_bot_strategy_state_closed_20260603_0839.json",
+    "records/ldd/2026-06-03/zec_profit_surge_trigger_execution_20260603_0839.json"
+  ]
+}

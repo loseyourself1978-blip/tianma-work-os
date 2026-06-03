@@ -1,0 +1,37 @@
+{
+  "review_id": "crypto-account-structure-update-20260603-0839",
+  "project": "tianma-work-os",
+  "snapshot_time": "2026-06-03T08:39:00+08:00",
+  "account": "binance_visible_snapshot",
+  "structure_score": 80,
+  "cash_pressure": "low; USDT balance increased to about 5,936.00171992",
+  "leverage_risk": "low; no leverage or new grid expansion is recorded",
+  "opposite_exposure_risk": "low; closure reduced active ZEC bot exposure rather than adding conflicting exposure",
+  "weak_position_drag": "medium; DOGE remains a weak-risk holding and should not be added",
+  "legacy_position_risk": "low-to-medium; ZEC bot historical strategy is now closed/profit locked, with only small residual ZEC",
+  "bot_strategy_risk": "reduced; main ZEC grid-bot exposure was closed and profit was converted into USDT",
+  "rule_compliance": "strong; Profit Surge Protection was executed with evidence",
+  "redeployment_readiness": "moderate-to-high; cash dominance strengthened, but BTC buyback has still not triggered",
+  "key_findings": [
+    "USDT cash dominance strengthened.",
+    "ZEC grid-bot exposure was reduced.",
+    "Bot profit was converted from floating risk to realized/cash-like state.",
+    "Crypto account remains defensive instead of expanding risk.",
+    "DOGE remains a weak-risk holding.",
+    "Residual ZEC exists but is small.",
+    "BTC buyback is still not triggered.",
+    "No new grid should be opened impulsively."
+  ],
+  "recommended_next_actions": [
+    "Do not reopen ZEC grid and do not chase ZEC spot.",
+    "Do not add ETH, SOL, DOGE, or ZEC.",
+    "Do not buy BTC unless BTC stabilizes above 75,500-76,000.",
+    "Keep USDT as the main defensive position.",
+    "Residual small ZEC has no immediate action and may be converted later."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-03/ldd_delta_sync_zec_bot_closure_20260603_0839.md",
+    "records/ldd/2026-06-03/zec_bot_closure_execution_20260603_0838.json",
+    "records/ldd/2026-06-03/zec_bot_rule_based_execution_review_20260603_0839.json"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "rule_id": "zec-profit-surge-trigger-execution-20260603-0839",
+  "project_id": "tianma-work-os",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "position_id": "zec-500u-60grid-bot",
+  "asset": "ZEC/USDT",
+  "current_quantity": 0.209,
+  "trigger_condition": "Profit Surge Protection triggers when total return reaches the 40%-42%+ lock-profit zone.",
+  "trigger_level": "40%-42%+ total return",
+  "execution_status": "executed",
+  "executed_quantity": 0.209,
+  "remaining_quantity": 0.012974,
+  "execution_price": 635.17,
+  "trade_intent": "lock_profit",
+  "next_trigger_line": "No reopen trigger. Residual small ZEC may be converted later after manual review.",
+  "next_action": "Do not reopen ZEC grid and do not chase. Keep USDT as defensive position.",
+  "reminder_required": false,
+  "last_review_time": "2026-06-03T08:39:00+08:00",
+  "source_of_truth": [
+    "user_provided_binance_execution_screenshot",
+    "user_provided_binance_account_screenshot"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-03/zec_bot_closure_execution_20260603_0838.json",
+    "records/ldd/2026-06-03/zec_bot_strategy_state_closed_20260603_0839.json"
+  ],
+  "current_observed_value": "42.97% total return before closure",
+  "trigger_status": "triggered_and_executed",
+  "intended_action": "Close remaining 500U / 60-grid bot and auto-sell ZEC into USDT.",
+  "execution_evidence_requirement": "Binance bot closure and trade execution screenshots.",
+  "next_review_time": "next crypto account sync",
+  "rule_drift_prevention": "Do not reinterpret the closure as a failed trade if ZEC rises afterward; review correctness by rule compliance and risk reduction.",
+  "execution_result": "ZEC exposure reduced, USDT cash increased, and floating profit was locked.",
+  "review_conclusion": "Rule-compliant and account-structure positive.",
+  "account_structure_impact": "Cash dominance strengthened and bot giveback risk reduced."
+}

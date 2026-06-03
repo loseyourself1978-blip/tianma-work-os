@@ -1,0 +1,32 @@
+{
+  "review_id": "account-structure-score-20260602-phase3",
+  "project": "tianma-work-os",
+  "snapshot_time": "2026-06-02T08:22:00+08:00",
+  "account": "ldd-combined-visible-snapshot",
+  "structure_score": 73,
+  "cash_pressure": "low; crypto account is USDT-cash dominant",
+  "leverage_risk": "medium; SOXL, GGLL, and UGL keep leverage exposure visible even after cleanup",
+  "opposite_exposure_risk": "low; SOXS, TSLQ, and GDXU are fully closed",
+  "weak_position_drag": "medium; GOOG below 380 and INTC below 118-120 remain drag signals",
+  "legacy_position_risk": "medium; historical-position cleanup continues",
+  "bot_strategy_risk": "medium before delta; ZEC bot was profitable but still exposed to floating-profit giveback",
+  "rule_compliance": "good; no unseen order should be recorded without user-provided order evidence",
+  "redeployment_readiness": "moderate; cash is available but BTC buyback and new U.S. model strategy positions remain untriggered",
+  "key_findings": [
+    "Account quality depends on cash pressure, leverage exposure, weak-position drag, and bot state.",
+    "SOXL remains a small cleanup remainder with explicit 220 and 210 lines.",
+    "Crypto account was defensive but ZEC bot floating profit still needed protection.",
+    "New-strategy separation remains intact because no new LDD U.S. model position is active."
+  ],
+  "recommended_next_actions": [
+    "Keep SOXL trigger review active.",
+    "Do not add GOOG, GGLL, INTC, GLD, or UGL.",
+    "Do not buy BTC until stabilization above 75,500-76,000.",
+    "Apply ZEC profit-protection rule when total return enters the 40%-42%+ lock-profit zone."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-02/phase3/ldd_rule_ledger_snapshot_20260602.json",
+    "records/ldd/2026-06-02/account_structure_review_20260602_0822.json",
+    "records/ldd/2026-06-03/crypto_account_structure_update_20260603_0839.json"
+  ]
+}

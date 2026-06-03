@@ -59,6 +59,7 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `docs/runtime/SIGNAL_COMMAND_LAYER_SPEC_v0.1.md`
 - `docs/runtime/DECISION_TO_COMMAND_ROUTING_SPEC_v0.1.md`
 - `docs/runtime/COMMAND_INTELLIGENCE_PROTOCOL_v0.1.md`
+- `docs/runtime/RULE_LEDGER_AND_STRATEGY_MONITOR_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
 ## Vol.3 Phase 2 / Runtime Records
@@ -78,6 +79,23 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `examples/runtime/phase2_instruction_superseded_check.example.json`
 - `examples/runtime/phase2_v3_smart_execution_plan.example.json`
 - `examples/runtime/phase2_execution_feedback_template.example.json`
+
+## Vol.3 Phase 3 / Rule Ledger And Strategy Monitor
+
+- `docs/runtime/RULE_LEDGER_AND_STRATEGY_MONITOR_v0.1.md`
+- `records/ldd/2026-06-02/phase3/README.md`
+- `records/ldd/2026-06-02/phase3/ldd_rule_ledger_snapshot_20260602.json`
+- `records/ldd/2026-06-02/phase3/account_structure_score_20260602.json`
+- `records/ldd/2026-06-02/phase3/soxl_rule_based_execution_review_20260602.json`
+- `records/ldd/2026-06-02/phase3/btc_volatility_execution_split_20260602.json`
+- `records/ldd/2026-06-03/README.md`
+- `records/ldd/2026-06-03/ldd_delta_sync_zec_bot_closure_20260603_0839.md`
+- `records/ldd/2026-06-03/zec_bot_closure_execution_20260603_0838.json`
+- `records/ldd/2026-06-03/zec_bot_strategy_state_closed_20260603_0839.json`
+- `records/ldd/2026-06-03/zec_profit_surge_trigger_execution_20260603_0839.json`
+- `records/ldd/2026-06-03/zec_bot_rule_based_execution_review_20260603_0839.json`
+- `records/ldd/2026-06-03/crypto_account_structure_update_20260603_0839.json`
+- `records/ldd/2026-06-03/sync_block_delta_protocol_feedback_20260603.json`
 
 ## Product Principles
 

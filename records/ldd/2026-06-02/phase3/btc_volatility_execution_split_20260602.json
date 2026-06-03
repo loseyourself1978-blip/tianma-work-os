@@ -1,0 +1,46 @@
+{
+  "split_plan_id": "btc-volatility-execution-split-20260602",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "asset": "BTC",
+  "account": "binance_visible_snapshot",
+  "direction": "staged_buyback",
+  "position_tag": "crypto_defensive_redeployment_watch",
+  "created_at": "2026-06-02T08:22:00+08:00",
+  "market_context": "Crypto account remains USDT-cash dominant. BTC buyback is not triggered until stabilization above 75,500-76,000.",
+  "trigger_zone": "75,500 stabilization zone",
+  "confirmation_zone": "76,000 confirmation zone",
+  "staged_actions": [
+    {
+      "sequence": 1,
+      "action": "Buy back 300 USDT BTC only after BTC stabilizes above 75,500.",
+      "status": "waiting"
+    },
+    {
+      "sequence": 2,
+      "action": "Add another 300 USDT BTC only after further confirmation near or above 76,000.",
+      "status": "waiting"
+    }
+  ],
+  "soft_stop": "Do not buy if stabilization fails after crossing 75,500.",
+  "hard_stop": "No automated execution and no buy below the trigger zone.",
+  "rebound_action": "If BTC rebounds into confirmation zone, require manual review and order evidence before recording execution.",
+  "max_position_size": "600 USDT staged buyback total",
+  "risk_notes": [
+    "Do not add ETH, SOL, DOGE, or ZEC spot as substitutes.",
+    "USDT remains the defensive position.",
+    "This plan is a ledger record, not an automated trading instruction."
+  ],
+  "validation_requirements": [
+    "Latest Binance visible account state must be confirmed.",
+    "Manual order evidence is required before recording an executed buyback.",
+    "Runtime validation must pass after any record update."
+  ],
+  "related_trigger_rules": [
+    "btc-buyback-trigger-rule-20260602-0822"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-02/btc_buyback_trigger_rule_20260602_0822.json",
+    "records/ldd/2026-06-02/phase3/ldd_rule_ledger_snapshot_20260602.json"
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/sync_delta_update.schema.json",
+  "title": "Sync Delta Update",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "delta_id",
+    "project",
+    "subproject",
+    "sync_time",
+    "source_cutoff_time",
+    "source_of_truth",
+    "updates_or_supersedes",
+    "included_events",
+    "pending_events",
+    "delta_reason",
+    "changed_fields",
+    "new_records",
+    "related_records",
+    "sync_status"
+  ],
+  "properties": {
+    "delta_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "subproject": {
+      "type": "string"
+    },
+    "sync_time": {
+      "type": "string"
+    },
+    "source_cutoff_time": {
+      "type": "string"
+    },
+    "source_of_truth": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "updates_or_supersedes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "included_events": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pending_events": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "delta_reason": {
+      "type": "string"
+    },
+    "changed_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "new_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sync_status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "validated",
+        "supersedes_prior",
+        "delta_update",
+        "archived"
+      ]
+    }
+  }
+}

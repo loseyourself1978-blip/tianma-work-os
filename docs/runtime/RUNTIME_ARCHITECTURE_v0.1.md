@@ -118,6 +118,7 @@ Uses LDD as the first runtime pilot. It records:
 - Strategy-state risk.
 - Rule-based execution review.
 - Account quality signals.
+- Sync delta updates.
 
 ### Runtime Validation
 
@@ -152,6 +153,34 @@ The 2026-06-02 LDD pilot records demonstrate this behavior: Phase 2 v1 and v2 we
 Vol.3 Phase 2.5 adds `COMMAND_INTELLIGENCE_PROTOCOL_v0.1.md` plus local schemas and examples for command checks, smart execution plans, and execution feedback.
 
 Command Intelligence sits between Decision-to-Command Routing and Execution. It ensures that Tianma Work OS executes the latest valid command, not stale command drafts.
+
+## Phase 3 Rule Ledger And Strategy Monitor
+
+Vol.3 Phase 3 expands LDD runtime from static records into operational rule-ledger and strategy-state monitoring.
+
+The expanded chain is:
+
+```text
+Trigger Rule
+-> Monitoring State
+-> Trigger Event
+-> Execution Decision
+-> Execution Status
+-> Rule-Based Review
+-> Strategy-State Update
+-> Account Structure Impact
+-> Delta Sync / Runtime Memory Update
+```
+
+Phase 3 v2 records the 2026-06-03 ZEC bot closure as a delta sync update. The closure validates Profit Surge Protection because total return reached the 40%-42%+ lock-profit zone and the user closed the remaining 500U / 60-grid bot with automatic ZEC-to-USDT sell.
+
+Rule correctness is judged by rule compliance and account-risk improvement, not only by short-term price movement after execution.
+
+Strategy-state monitoring must track profit-protection mode, lock-profit execution, closed/profit-locked state, downside thresholds, and state transitions.
+
+Account structure score evaluates cash pressure, leverage exposure, weak-position drag, historical cleanup, strategy separation, bot state, cash dominance, and redeployment readiness.
+
+LDD sync blocks need versioning and delta update handling when new execution evidence arrives after a prior sync.
 
 ## Non-Goals
 

@@ -43,7 +43,12 @@ SCHEMA_FILES = {
     "pending_command": "pending_command.schema.json",
     "command_intelligence_check": "command_intelligence_check.schema.json",
     "smart_execution_plan": "smart_execution_plan.schema.json",
-    "command_execution_feedback": "command_execution_feedback.schema.json"
+    "command_execution_feedback": "command_execution_feedback.schema.json",
+    "rule_based_execution_review": "rule_based_execution_review.schema.json",
+    "volatility_execution_split": "volatility_execution_split.schema.json",
+    "sync_delta_update": "sync_delta_update.schema.json",
+    "rule_ledger_snapshot": "rule_ledger_snapshot.schema.json",
+    "execution_event": "execution_event.schema.json"
 }
 
 
@@ -54,13 +59,27 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "smart_execution_plan", SCHEMA_FILES["smart_execution_plan"]
     if "execution_feedback" in filename:
         return "command_execution_feedback", SCHEMA_FILES["command_execution_feedback"]
+    if "rule_based_execution_review" in filename:
+        return "rule_based_execution_review", SCHEMA_FILES["rule_based_execution_review"]
+    if "volatility_execution_split" in filename:
+        return "volatility_execution_split", SCHEMA_FILES["volatility_execution_split"]
+    if "sync_block_delta" in filename or "sync_delta" in filename or "delta_protocol" in filename:
+        return "sync_delta_update", SCHEMA_FILES["sync_delta_update"]
+    if "rule_ledger_snapshot" in filename:
+        return "rule_ledger_snapshot", SCHEMA_FILES["rule_ledger_snapshot"]
+    if "closure_execution" in filename:
+        return "execution_event", SCHEMA_FILES["execution_event"]
     if "trigger_rule" in filename:
+        return "trigger_execution_rule", SCHEMA_FILES["trigger_execution_rule"]
+    if "trigger_execution" in filename:
         return "trigger_execution_rule", SCHEMA_FILES["trigger_execution_rule"]
     if "strategy_state" in filename:
         return "strategy_state", SCHEMA_FILES["strategy_state"]
     if "portfolio_state" in filename:
         return "portfolio_state", SCHEMA_FILES["portfolio_state"]
     if "account_structure_review" in filename:
+        return "account_structure_review", SCHEMA_FILES["account_structure_review"]
+    if "account_structure_score" in filename or "account_structure_update" in filename:
         return "account_structure_review", SCHEMA_FILES["account_structure_review"]
     if filename.startswith("pending_") or "pending_command" in filename:
         return "pending_command", SCHEMA_FILES["pending_command"]

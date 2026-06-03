@@ -42,6 +42,14 @@ During Vol.3 Phase 2 planning:
 
 This proves that command drafts must remain editable until they are executed, acknowledged, cancelled, or superseded.
 
+## Real Vol.3 Phase 3 Sample
+
+Phase 3 v1 was drafted from the 2026-06-02 08:22 LDD state, where the remaining 500U / 60-grid ZEC bot was still running in profit-protection mode.
+
+Before Phase 3 was implemented, a newer execution event arrived: at 2026-06-03 08:38-08:39 SGT/BJT, the ZEC/USDT bot was closed and automatic ZEC-to-USDT sell was selected.
+
+Command Intelligence must therefore treat Phase 3 v2 as the latest valid command. The newer actual execution evidence supersedes the prior still-running strategy-state assumption.
+
 ## 1. Freshness Check
 
 The runtime checks whether a command is still based on the latest valid context.
@@ -55,6 +63,7 @@ Freshness inputs can include:
 - Superseded command drafts.
 - Updated validation results.
 - Updated issue, backlog, or memory records.
+- Actual execution evidence that supersedes a prior strategy-state assumption.
 
 Freshness outcomes:
 
