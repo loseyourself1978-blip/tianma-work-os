@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/cockpit_manifest.schema.json",
+  "title": "Cockpit Manifest",
+  "type": "object",
+  "required": [
+    "generated_at",
+    "project",
+    "cockpit_layer",
+    "version",
+    "files",
+    "recommended_read_order",
+    "status",
+    "warnings"
+  ],
+  "properties": {
+    "generated_at": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "cockpit_layer": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "latest_active_checkpoint": {
+      "type": "string"
+    },
+    "source_root": {
+      "type": "string"
+    },
+    "source_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "files": {
+      "type": "object"
+    },
+    "recommended_read_order": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "type": "object"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

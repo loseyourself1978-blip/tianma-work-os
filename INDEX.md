@@ -147,6 +147,19 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json`
 - `records/ldd/2026-06-04/section_level_account_structure_requirement_0812_0813_sgt.json`
 
+## Vol.4 Phase 4.2b / Cockpit-Ready JSON Summary Layer
+
+- `docs/runtime/COCKPIT_READY_SUMMARY_LAYER_v0.1.md`
+- `cockpit/ldd/manifest.json`
+- `cockpit/ldd/latest_state.json`
+- `cockpit/ldd/active_rules.json`
+- `cockpit/ldd/strategy_states.json`
+- `cockpit/ldd/account_structure.json`
+- `cockpit/ldd/pending_commands.json`
+- `cockpit/ldd/memory_checkpoint.json`
+- `scripts/generate_cockpit_summary.py`
+- `scripts/generate_cockpit_summary.sh`
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

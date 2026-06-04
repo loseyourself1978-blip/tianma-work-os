@@ -1,0 +1,240 @@
+{
+  "generated_at": "2026-06-04T08:13:00+08:00",
+  "project": "LLM Daredevil Desk",
+  "runtime_layer": "cockpit_strategy_states",
+  "version": "0.1",
+  "latest_active_checkpoint": "2026-06-04T08:13:00+08:00",
+  "source_files": [
+    "records/ldd/2026-06-04/account_state_delta_0812_0813_sgt.json",
+    "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json",
+    "records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json",
+    "records/ldd/2026-06-04/section_level_account_structure_requirement_0812_0813_sgt.json",
+    "records/ldd/2026-06-04/ldd_post_close_runtime_delta_0812_0813_sgt.json"
+  ],
+  "strategy_states": [
+    {
+      "strategy_id": "us-historical-position-management",
+      "asset_or_module": "U.S. historical positions",
+      "status": "active",
+      "summary": "Historical-position cleanup and risk-control phase remains active.",
+      "next_required_action": "Use SOXL, GGLL, and UGL as risk-reduction valves when rules confirm.",
+      "source_files": [
+        "records/ldd/2026-06-04/account_state_delta_0812_0813_sgt.json",
+        "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json"
+      ],
+      "last_updated": "2026-06-04T08:13:00+08:00",
+      "cockpit_priority": "high",
+      "tags": [
+        "historical_cleanup",
+        "risk_control"
+      ]
+    },
+    {
+      "strategy_id": "us-new-ldd-model-strategy",
+      "asset_or_module": "U.S. model strategy",
+      "status": "not_opened",
+      "summary": "No new LDD U.S. model strategy position is open.",
+      "next_required_action": "Do not open a new model position from this checkpoint.",
+      "source_files": [
+        "records/ldd/2026-06-04/account_state_delta_0812_0813_sgt.json"
+      ],
+      "last_updated": "2026-06-04T08:13:00+08:00",
+      "cockpit_priority": "medium",
+      "tags": [
+        "new_strategy_separation",
+        "no_new_buying"
+      ]
+    },
+    {
+      "strategy_id": "soxs-closed",
+      "asset_or_module": "SOXS",
+      "status": "closed",
+      "summary": "SOXS remains closed with no reopening.",
+      "next_required_action": "No reopening.",
+      "source_files": [
+        "records/ldd/2026-06-04/account_state_delta_0812_0813_sgt.json"
+      ],
+      "last_updated": "2026-06-04T08:13:00+08:00",
+      "cockpit_priority": "low",
+      "tags": [
+        "closed",
+        "historical_cleanup"
+      ]
+    },
+    {
+      "strategy_id": "tslq-closed",
+      "asset_or_module": "TSLQ",
+      "status": "closed",
+      "summary": "TSLQ remains closed with no reopening.",
+      "next_required_action": "No reopening.",
+      "source_files": [
+        "records/ldd/2026-06-04/account_state_delta_0812_0813_sgt.json"
+      ],
+      "last_updated": "2026-06-04T08:13:00+08:00",
+      "cockpit_priority": "low",
+      "tags": [
+        "closed",
+        "historical_cleanup"
+      ]
+    },
+    {
+      "strategy_id": "gdxu-closed",
+      "asset_or_module": "GDXU",
+      "status": "closed",
+      "summary": "GDXU remains closed with no reopening.",
+      "next_required_action": "No reopening.",
+      "source_files": [
+        "records/ldd/2026-06-04/account_state_delta_0812_0813_sgt.json"
+      ],
+      "last_updated": "2026-06-04T08:13:00+08:00",
+      "cockpit_priority": "low",
+      "tags": [
+        "closed",
+        "historical_cleanup"
+      ]
+    },
+    {
+      "strategy_id": "soxl-risk-valve",
+      "asset_or_module": "SOXL",
+      "status": "monitoring",
+      "summary": "SOXL remains a leveraged risk valve with quote-source conflict requiring order-ticket confirmation.",
+      "next_required_action": "Use executable order-ticket bid/ask before any sell or close decision.",
+      "source_files": [
+        "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json",
+        "records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json"
+      ],
+      "last_updated": "2026-06-04T08:13:00+08:00",
+      "cockpit_priority": "high",
+      "tags": [
+        "soxl",
+        "quote_source_conflict",
+        "risk_valve"
+      ]
+    },
+    {
+      "strategy_id": "ggll-risk-valve",
+      "asset_or_module": "GGLL",
+      "status": "monitoring",
+      "summary": "GGLL is governed by GOOG weakness and rebound rules.",
+      "next_required_action": "Prepare reduction only after GOOG confirmation lines are observed.",
+      "source_files": [
+        "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json"
+      ],
+      "last_updated": "2026-06-04T08:13:00+08:00",
+      "cockpit_priority": "high",
+      "tags": [
+        "goog",
+        "ggll",
+        "risk_valve"
+      ]
+    },
+    {
+      "strategy_id": "ugl-risk-valve",
+      "asset_or_module": "UGL",
+      "status": "monitoring",
+      "summary": "UGL is the first gold-risk valve if GLD breaks 405.",
+      "next_required_action": "Monitor GLD 405 and require order evidence before action.",
+      "source_files": [
+        "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json"
+      ],
+      "last_updated": "2026-06-04T08:13:00+08:00",
+      "cockpit_priority": "high",
+      "tags": [
+        "gld",
+        "ugl",
+        "risk_valve"
+      ]
+    },
+    {
+      "strategy_id": "nvda-core-ai-exposure",
+      "asset_or_module": "NVDA",
+      "status": "monitoring",
+      "summary": "NVDA remains held but is near the 215/212 risk area.",
+      "next_required_action": "Hold unless 212 break requires SOXL or NVDA risk reassessment.",
+      "source_files": [
+        "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json"
+      ],
+      "last_updated": "2026-06-04T08:13:00+08:00",
+      "cockpit_priority": "high",
+      "tags": [
+        "nvda",
+        "ai_exposure",
+        "near_trigger"
+      ]
+    },
+    {
+      "strategy_id": "crypto-defensive-state",
+      "asset_or_module": "Crypto spot",
+      "status": "active",
+      "summary": "Crypto remains USDT-dominant and defensive.",
+      "next_required_action": "Do not add ETH, SOL, DOGE, or ZEC; wait for BTC trigger.",
+      "source_files": [
+        "records/ldd/2026-06-04/account_state_delta_0812_0813_sgt.json"
+      ],
+      "last_updated": "2026-06-04T08:13:00+08:00",
+      "cockpit_priority": "medium",
+      "tags": [
+        "crypto",
+        "usdt_defensive"
+      ]
+    },
+    {
+      "strategy_id": "btc-staged-buyback",
+      "asset_or_module": "BTC",
+      "status": "waiting_for_trigger",
+      "summary": "BTC buyback is not triggered below 75,500-76,000.",
+      "next_required_action": "Wait for stabilization and confirmation before staged buyback.",
+      "source_files": [
+        "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json"
+      ],
+      "last_updated": "2026-06-04T08:13:00+08:00",
+      "cockpit_priority": "medium",
+      "tags": [
+        "btc",
+        "waiting_for_trigger"
+      ]
+    },
+    {
+      "strategy_id": "zec-grid-profit-locked",
+      "asset_or_module": "ZEC grid",
+      "status": "closed",
+      "summary": "ZEC grid remains closed / profit locked based on prior execution state.",
+      "next_required_action": "Do not reopen grid or chase; residual ZEC can be converted later if needed.",
+      "source_files": [
+        "records/ldd/2026-06-03/zec_bot_strategy_state_closed_20260603_0839.json",
+        "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json"
+      ],
+      "last_updated": "2026-06-04T08:13:00+08:00",
+      "cockpit_priority": "medium",
+      "tags": [
+        "zec",
+        "closed_profit_locked",
+        "no_reopen"
+      ]
+    },
+    {
+      "strategy_id": "runtime-records-latest-checkpoint",
+      "asset_or_module": "Runtime records",
+      "status": "active",
+      "summary": "Latest active checkpoint is 2026-06-04T08:13:00+08:00.",
+      "next_required_action": "Future cockpit work should read manifest.json first.",
+      "source_files": [
+        "cockpit/ldd/manifest.json",
+        "cockpit/ldd/runtime_timeline.json"
+      ],
+      "last_updated": "2026-06-04T08:13:00+08:00",
+      "cockpit_priority": "medium",
+      "tags": [
+        "runtime_records",
+        "latest_active_checkpoint"
+      ]
+    }
+  ],
+  "summary": {
+    "strategy_state_count": 13,
+    "active_or_monitoring_count": 7,
+    "closed_count": 4,
+    "waiting_for_trigger_count": 1
+  },
+  "warnings": []
+}

@@ -24,6 +24,9 @@ EXAMPLE_DIRS = [
 RECORD_DIRS = [
     REPO_ROOT / "records" / "ldd"
 ]
+COCKPIT_DIRS = [
+    REPO_ROOT / "cockpit" / "ldd"
+]
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 
@@ -51,11 +54,27 @@ SCHEMA_FILES = {
     "execution_event": "execution_event.schema.json",
     "memory_retention_policy": "memory_retention_policy.schema.json",
     "memory_cleanup_recommendation": "memory_cleanup_recommendation.schema.json",
-    "active_memory_checkpoint": "active_memory_checkpoint.schema.json"
+    "active_memory_checkpoint": "active_memory_checkpoint.schema.json",
+    "cockpit_manifest": "cockpit_manifest.schema.json",
+    "cockpit_summary": "cockpit_summary.schema.json"
+}
+
+
+COCKPIT_SUMMARY_FILES = {
+    "latest_state.json",
+    "active_rules.json",
+    "strategy_states.json",
+    "account_structure.json",
+    "pending_commands.json",
+    "memory_checkpoint.json"
 }
 
 
 def schema_for_filename(filename: str) -> tuple[str, str] | None:
+    if filename == "manifest.json":
+        return "cockpit_manifest", SCHEMA_FILES["cockpit_manifest"]
+    if filename in COCKPIT_SUMMARY_FILES:
+        return "cockpit_summary", SCHEMA_FILES["cockpit_summary"]
     if "post_close_runtime_delta" in filename:
         return "sync_delta_update", SCHEMA_FILES["sync_delta_update"]
     if "account_state_delta" in filename:
@@ -201,6 +220,16 @@ def collect_targets() -> tuple[list[ValidationTarget], list[Path]]:
             schema_key, schema_name = schema_match
             targets.append(ValidationTarget(path, bucket, schema_name, schema_key))
 
+    for root in COCKPIT_DIRS:
+        if not root.exists():
+            continue
+        for path in sorted(root.rglob("*.json")):
+            schema_match = schema_for_filename(path.name)
+            if schema_match is None:
+                continue
+            schema_key, schema_name = schema_match
+            targets.append(ValidationTarget(path, "cockpit", schema_name, schema_key))
+
     return targets, unmapped
 
 
@@ -209,6 +238,7 @@ def main() -> int:
     failures = 0
     examples_checked = 0
     records_checked = 0
+    cockpit_checked = 0
     coverage: Counter[str] = Counter()
 
     if unmapped:
@@ -237,6 +267,8 @@ def main() -> int:
             examples_checked += 1
         elif target.bucket == "records":
             records_checked += 1
+        elif target.bucket == "cockpit":
+            cockpit_checked += 1
 
         if errors:
             print(f"FAIL {target.path.relative_to(REPO_ROOT)} against {target.schema_name}")
@@ -246,7 +278,7 @@ def main() -> int:
         else:
             print(f"PASS {target.path.relative_to(REPO_ROOT)} against {target.schema_name}")
 
-    total_checked = examples_checked + records_checked
+    total_checked = examples_checked + records_checked + cockpit_checked
 
     print()
     if failures:
@@ -256,6 +288,7 @@ def main() -> int:
 
     print(f"Examples checked: {examples_checked}")
     print(f"Records checked: {records_checked}")
+    print(f"Cockpit files checked: {cockpit_checked}")
     print(f"Total JSON files checked: {total_checked}")
     print("Schema coverage:")
     for schema_key in sorted(SCHEMA_FILES):

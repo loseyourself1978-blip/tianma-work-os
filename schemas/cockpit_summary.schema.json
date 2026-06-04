@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/cockpit_summary.schema.json",
+  "title": "Cockpit Summary",
+  "type": "object",
+  "required": [
+    "generated_at",
+    "project",
+    "version",
+    "source_files",
+    "warnings"
+  ],
+  "properties": {
+    "generated_at": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "runtime_layer": {
+      "type": "string"
+    },
+    "cockpit_layer": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "latest_active_checkpoint": {
+      "type": "string"
+    },
+    "source_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true
+}
