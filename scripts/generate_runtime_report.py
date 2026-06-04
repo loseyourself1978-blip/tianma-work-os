@@ -77,6 +77,14 @@ def first_timestamp(data: dict[str, Any]) -> tuple[str, datetime | None]:
 
 def classify_record(path: Path, data: dict[str, Any]) -> str | None:
     name = path.name
+    if "account_state_delta" in name:
+        return "portfolio_state"
+    if "rule_trigger_monitor" in name:
+        return "rule_ledger_snapshot"
+    if "post_close_runtime_delta" in name:
+        return "delta_sync"
+    if "quote_source_conflict" in name or "section_level_account_structure_requirement" in name:
+        return "account_structure_review"
     if "portfolio_state" in name:
         return "portfolio_state"
     if "pending_" in name or "pending_command" in name:
@@ -106,6 +114,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "account_structure_review"
     if "delta_id" in data:
         return "delta_sync"
+    if "snapshot_id" in data and "rules" in data:
+        return "rule_ledger_snapshot"
     return None
 
 
@@ -203,11 +213,13 @@ def common_header(title: str, records: list[RuntimeRecord]) -> list[str]:
 
 def trigger_entries(records: list[RuntimeRecord]) -> list[dict[str, Any]]:
     entries: list[dict[str, Any]] = []
-    top_level_assets: set[str] = set()
+    top_level_asset_latest: dict[str, datetime | None] = {}
     for record in by_kind(records, "trigger_rule"):
         data = record.data
         asset_key = scalar(data.get("asset")).lower().replace("/usdt", "")
-        top_level_assets.add(asset_key)
+        existing = top_level_asset_latest.get(asset_key)
+        if existing is None or (record.timestamp is not None and record.timestamp > existing):
+            top_level_asset_latest[asset_key] = record.timestamp
         entries.append(
             {
                 "asset": scalar(data.get("asset")),
@@ -225,7 +237,8 @@ def trigger_entries(records: list[RuntimeRecord]) -> list[dict[str, Any]]:
             if not isinstance(rule, dict):
                 continue
             asset_key = scalar(rule.get("asset")).lower().replace("/usdt", "")
-            if asset_key in top_level_assets:
+            top_level_time = top_level_asset_latest.get(asset_key)
+            if top_level_time is not None and (record.timestamp or datetime.min) <= top_level_time:
                 continue
             entries.append(
                 {
@@ -283,6 +296,7 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
     execution = latest(by_kind(records, "execution_event"))
     account = latest_account_review(records)
     crypto_account = latest_account_review(records, "binance")
+    delta = latest(by_kind(records, "delta_sync"))
     pending = by_kind(records, "pending_command")
 
     lines.extend(["## Latest Record Dates", ""])
@@ -311,11 +325,44 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
         lines.append("- No portfolio state record found.")
     lines.append("")
 
+    lines.extend(["## Latest Hong Kong Equity State", ""])
+    if portfolio:
+        hk_holdings = [
+            item
+            for item in portfolio.data.get("holdings", [])
+            if isinstance(item, dict)
+            and (
+                "hong_kong" in scalar(item.get("account")).lower()
+                or scalar(item.get("asset")).startswith("02513")
+            )
+        ]
+        if hk_holdings:
+            for item in hk_holdings:
+                lines.extend(
+                    [
+                        f"- Asset: {scalar(item.get('asset'))}",
+                        f"- Quantity: `{scalar(item.get('quantity'))}`",
+                        f"- Latest price: `{scalar(item.get('approx_price_hkd'))} HKD`",
+                        f"- Market value: `{scalar(item.get('market_value_hkd'))} HKD`",
+                        f"- Day P/L: `{scalar(item.get('day_pl_hkd'))} HKD / {scalar(item.get('day_pl_pct'))}%`",
+                        f"- Holding P/L: `{scalar(item.get('holding_pl_hkd'))} HKD`",
+                    ]
+                )
+        else:
+            lines.append("- No Hong Kong holding details in latest portfolio state.")
+        lines.append(f"- Source: `{portfolio.relpath}`")
+    else:
+        lines.append("- No portfolio state record found.")
+    lines.append("")
+
     lines.extend(["## Latest Crypto Account State", ""])
     if portfolio:
+        assets = portfolio.data.get("total_visible_assets", {})
         cash = portfolio.data.get("cash_balance", {})
         lines.extend(
             [
+                f"- Binance visible assets: `{scalar(assets.get('binance_visible_assets_usdt'))} USDT`",
+                f"- Binance day P/L: `{scalar(assets.get('binance_day_pl_usdt'))} USDT / {scalar(assets.get('binance_day_pl_pct'))}%`",
                 f"- Portfolio snapshot crypto posture: {scalar(cash.get('crypto_account_posture'))}",
                 f"- Binance USDT in portfolio snapshot: `{scalar(cash.get('binance_usdt'))}`",
             ]
@@ -363,6 +410,25 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
         )
     else:
         lines.append("- No execution event record found.")
+    lines.append("")
+
+    lines.extend(["## Latest Delta Sync / Execution Status", ""])
+    if delta:
+        lines.extend(
+            [
+                f"- Delta: `{scalar(delta.data.get('delta_id'))}`",
+                f"- Sync time: `{scalar(delta.data.get('sync_time'))}`",
+                f"- Sync status: `{scalar(delta.data.get('sync_status'))}`",
+                f"- Reason: {scalar(delta.data.get('delta_reason'))}",
+                f"- Source: `{delta.relpath}`",
+            ]
+        )
+        included = delta.data.get("included_events", [])
+        if included:
+            lines.append("- Included events:")
+            lines.extend([f"  - {item}" for item in included])
+    else:
+        lines.append("- No delta sync record found.")
     lines.append("")
 
     lines.extend(["## Latest Account Structure Conclusion", ""])

@@ -139,6 +139,14 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `scripts/generate_runtime_timeline.py`
 - `scripts/generate_runtime_timeline.sh`
 
+## Vol.4 Phase 4.2a-2 / 2026-06-04 LDD Post-Close Delta
+
+- `records/ldd/2026-06-04/ldd_post_close_runtime_delta_0812_0813_sgt.json`
+- `records/ldd/2026-06-04/account_state_delta_0812_0813_sgt.json`
+- `records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json`
+- `records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json`
+- `records/ldd/2026-06-04/section_level_account_structure_requirement_0812_0813_sgt.json`
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

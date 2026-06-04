@@ -57,6 +57,8 @@ The timeline does not delete old records.
 
 Instead, generated events can label older records as historical or superseded. For example, the 2026-06-02 ZEC bot strategy state remains in the archive, while the 2026-06-03 ZEC closure event and delta sync mark the latest state as closed / profit locked.
 
+Later delta records can update the active checkpoint while preserving the prior timeline. For example, a post-close checkpoint can supersede an intraday or premarket checkpoint where conflicts exist, and the generated timeline should show both the older record and the newer active-state update.
+
 ## Non-Goals
 
 Vol.4 Phase 4.1 does not implement:

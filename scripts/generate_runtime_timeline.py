@@ -109,6 +109,14 @@ def event_time_for(path: Path, data: dict[str, Any]) -> tuple[str, datetime | No
 
 def classify_record(path: Path, data: dict[str, Any]) -> str:
     name = path.name
+    if "account_state_delta" in name:
+        return "portfolio_state"
+    if "rule_trigger_monitor" in name:
+        return "rule_ledger_snapshot"
+    if "post_close_runtime_delta" in name:
+        return "sync_delta_update"
+    if "quote_source_conflict" in name or "section_level_account_structure_requirement" in name:
+        return "account_structure_review"
     if "portfolio_state" in name:
         return "portfolio_state"
     if "pending_" in name or "pending_command" in name:
@@ -154,6 +162,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str:
         return "account_structure_review"
     if "review_id" in data and "rule_compliance_score" in data:
         return "rule_based_execution_review"
+    if "snapshot_id" in data and "rules" in data:
+        return "rule_ledger_snapshot"
     if "command_id" in data:
         return "pending_command"
     return "unknown"
@@ -227,10 +237,13 @@ def evidence_level(data: dict[str, Any], record_type: str) -> str:
 
 
 def priority(record_type: str, data: dict[str, Any], tags: list[str]) -> str:
+    text = json.dumps(data, ensure_ascii=False).lower()
     if record_type == "execution_event":
         return "critical"
     if record_type == "sync_delta_update":
         return "critical"
+    if "quote_source_conflict" in text or "quote-source-conflict" in text or "near_trigger" in text:
+        return "high"
     if "closed_profit_locked" in scalar(data.get("health_state")):
         return "high"
     if "executed" in scalar(data.get("execution_status")):
@@ -266,6 +279,12 @@ def title_and_summary(record: LoadedRecord) -> tuple[str, str]:
     data = record.data
     rt = record.record_type
     if rt == "portfolio_state":
+        assets = data.get("total_visible_assets", {}) if isinstance(data.get("total_visible_assets"), dict) else {}
+        if "latest_active_checkpoint" in json.dumps(data, ensure_ascii=False).lower():
+            return (
+                "Portfolio snapshot: latest active LDD checkpoint",
+                f"Post-close account state recorded with broker total assets about {scalar(assets.get('broker_total_assets_usd') or assets.get('us_broker_total_assets_usd'))} USD and Binance visible assets about {scalar(assets.get('binance_visible_assets_usdt'))} USDT.",
+            )
         return (
             f"Portfolio snapshot: {scalar(data.get('account_type'))}",
             f"Visible portfolio snapshot recorded with base currency {scalar(data.get('base_currency'))}.",
@@ -283,6 +302,12 @@ def title_and_summary(record: LoadedRecord) -> tuple[str, str]:
     if rt == "rule_ledger_snapshot":
         rules = data.get("rules", [])
         count = len(rules) if isinstance(rules, list) else 0
+        text = json.dumps(data, ensure_ascii=False).lower()
+        if "rule-trigger-monitor" in scalar(data.get("snapshot_id")) or "near_trigger" in text:
+            return (
+                "Runtime rule trigger monitor",
+                f"Rule trigger monitor captured {count} active rules, including near-trigger states and execution-confirmation requirements.",
+            )
         return (
             "Rule ledger snapshot",
             f"Rule ledger snapshot captured {count} trigger rules.",
@@ -304,11 +329,29 @@ def title_and_summary(record: LoadedRecord) -> tuple[str, str]:
             scalar(data.get("review_conclusion")),
         )
     if rt == "account_structure_review":
+        review_id = scalar(data.get("review_id")).lower()
+        findings = data.get("key_findings", [])
+        first_finding = str(findings[0]) if isinstance(findings, list) and findings else ""
+        if "quote-source-conflict-soxl" in review_id:
+            return (
+                "Quote source conflict: SOXL",
+                first_finding or "SOXL quote-source conflict requires order-ticket bid/ask confirmation before execution.",
+            )
+        if "section-level-account-structure-requirement" in review_id:
+            return (
+                "Section-level account structure requirement",
+                first_finding or "Section-level account structure scoring separates total account, U.S. equity, Hong Kong equity, crypto, cash, stablecoin, and leveraged exposure.",
+            )
         return (
             f"Account structure review: score {scalar(data.get('structure_score'))}",
             f"Cash pressure: {scalar(data.get('cash_pressure'))}; redeployment readiness: {scalar(data.get('redeployment_readiness'))}.",
         )
     if rt == "sync_delta_update":
+        if "post-close-runtime-delta" in scalar(data.get("delta_id")):
+            return (
+                "Post-close runtime delta: latest active checkpoint",
+                scalar(data.get("delta_reason")),
+            )
         return (
             f"Sync delta: {scalar(data.get('delta_id'))}",
             scalar(data.get("delta_reason")),
@@ -362,6 +405,18 @@ def tags_for(record: LoadedRecord, zec_closure_exists: bool) -> list[str]:
         tags.append("btc")
     if "soxl" in text:
         tags.append("soxl")
+    if "goog" in text:
+        tags.append("goog")
+    if "nvda" in text:
+        tags.append("nvda")
+    if "gld" in text:
+        tags.append("gld")
+    if "quote_source" in text:
+        tags.append("quote_source_reconciliation")
+    if "near_trigger" in text:
+        tags.append("near_trigger")
+    if "latest_active_checkpoint" in text:
+        tags.append("latest_active_checkpoint")
     if "closed_profit_locked" in text or "close_bot" in text:
         tags.append("closed_profit_locked")
     if record.record_type == "strategy_state" and zec_closure_exists:

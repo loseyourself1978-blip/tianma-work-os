@@ -88,6 +88,7 @@
         "validated",
         "supersedes_prior",
         "delta_update",
+        "delta_update_required",
         "archived"
       ]
     }

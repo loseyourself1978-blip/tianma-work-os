@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-06-03T08:39:00+08:00",
+  "generated_at": "2026-06-04T08:13:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "runtime_timeline",
   "version": "0.1",
   "source_root": "records/ldd",
-  "event_count": 16,
+  "event_count": 21,
   "date_range": {
     "start": "2026-06-02T08:22:00+08:00",
-    "end": "2026-06-03T08:39:00+08:00"
+    "end": "2026-06-04T08:13:00+08:00"
   },
   "events": [
     {
@@ -27,6 +27,9 @@
       "tags": [
         "account_structure_review",
         "btc",
+        "gld",
+        "goog",
+        "nvda",
         "soxl",
         "zec"
       ]
@@ -66,6 +69,9 @@
       "cockpit_priority": "low",
       "tags": [
         "btc",
+        "gld",
+        "goog",
+        "nvda",
         "portfolio_state",
         "soxl",
         "zec"
@@ -108,6 +114,8 @@
       "tags": [
         "account_structure_review",
         "btc",
+        "gld",
+        "goog",
         "soxl",
         "zec"
       ]
@@ -148,6 +156,9 @@
       "cockpit_priority": "low",
       "tags": [
         "btc",
+        "gld",
+        "goog",
+        "nvda",
         "rule_ledger_snapshot",
         "soxl",
         "zec"
@@ -333,6 +344,136 @@
       "cockpit_priority": "high",
       "tags": [
         "trigger_execution_rule",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-04-account-state-delta-0812-0813-sgt-json",
+      "event_time": "2026-06-04T08:13:00+08:00",
+      "event_type": "portfolio_snapshot",
+      "source_file": "records/ldd/2026-06-04/account_state_delta_0812_0813_sgt.json",
+      "source_record_type": "portfolio_state",
+      "asset_or_module": "multi_section_post_close_snapshot",
+      "title": "Portfolio snapshot: latest active LDD checkpoint",
+      "summary": "Post-close account state recorded with broker total assets about 43727.82 USD and Binance visible assets about 8425.94 USDT.",
+      "state_before": "",
+      "state_after": "",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "high",
+      "tags": [
+        "btc",
+        "closed_profit_locked",
+        "gld",
+        "goog",
+        "latest_active_checkpoint",
+        "nvda",
+        "portfolio_state",
+        "quote_source_reconciliation",
+        "soxl",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-04-ldd-post-close-runtime-delta-0812-0813-sgt-json",
+      "event_time": "2026-06-04T08:13:00+08:00",
+      "event_type": "sync_delta",
+      "source_file": "records/ldd/2026-06-04/ldd_post_close_runtime_delta_0812_0813_sgt.json",
+      "source_record_type": "sync_delta_update",
+      "asset_or_module": "llm-daredevil-desk",
+      "title": "Post-close runtime delta: latest active checkpoint",
+      "summary": "A newer post-close LDD sync block arrived after the earlier intraday and premarket checkpoints. This checkpoint becomes the latest active LDD state where conflicts exist.",
+      "state_before": "prior sync or strategy-state assumption",
+      "state_after": "latest_active_checkpoint: older intraday/premarket state -> 2026-06-04 08:12-08:13 post-close state; total_account_state: broker_total_assets_about_43727.82_usd; hong_kong_equity_state: 02513_zhipu_positive_day_pl_supports_total_account; us_equity_section_state: negative_day_pl_about_-314.54_usd; binance_spot_state: about_8425.94_usdt_usdt_dominant; execution_status: no_new_confirmed_execution_visible; zec_grid_state: remains_closed_profit_locked_based_on_prior_execution; soxl_quote_state: quote_source_conflict_requires_order_ticket_confirmation; runtime_rules: GOOG_NVDA_SOXL_GLD_BTC_trigger_proximity_updated; product_requirements: quote_source_reconciliation_rule_trigger_monitor_section_level_account_structure",
+      "supersedes_or_updates": [
+        "2026-06-04 00:29 intraday checkpoint",
+        "2026-06-03 17:27-17:30 premarket checkpoint",
+        "records/ldd/2026-06-03/sync_block_delta_protocol_feedback_20260603.json",
+        "reports/ldd/latest_active_memory_checkpoint.md prior generated state"
+      ],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "critical",
+      "tags": [
+        "btc",
+        "closed_profit_locked",
+        "gld",
+        "goog",
+        "latest_active_checkpoint",
+        "nvda",
+        "quote_source_reconciliation",
+        "soxl",
+        "sync_delta_update",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-04-quote-source-conflict-soxl-0812-0813-sgt-json",
+      "event_time": "2026-06-04T08:13:00+08:00",
+      "event_type": "account_structure_review",
+      "source_file": "records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json",
+      "source_record_type": "account_structure_review",
+      "asset_or_module": "quote_source_reconciliation_soxl",
+      "title": "Quote source conflict: SOXL",
+      "summary": "symbol: SOXL",
+      "state_before": "",
+      "state_after": "structure_score=58",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "high",
+      "tags": [
+        "account_structure_review",
+        "nvda",
+        "quote_source_reconciliation",
+        "soxl"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-04-rule-trigger-monitor-0812-0813-sgt-json",
+      "event_time": "2026-06-04T08:13:00+08:00",
+      "event_type": "trigger_rule_update",
+      "source_file": "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json",
+      "source_record_type": "rule_ledger_snapshot",
+      "asset_or_module": "llm-daredevil-desk",
+      "title": "Runtime rule trigger monitor",
+      "summary": "Rule trigger monitor captured 8 active rules, including near-trigger states and execution-confirmation requirements.",
+      "state_before": "",
+      "state_after": "",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "high",
+      "tags": [
+        "btc",
+        "gld",
+        "goog",
+        "near_trigger",
+        "nvda",
+        "quote_source_reconciliation",
+        "rule_ledger_snapshot",
+        "soxl",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-04-section-level-account-structure-requirement-0812-0813-sgt-json",
+      "event_time": "2026-06-04T08:13:00+08:00",
+      "event_type": "account_structure_review",
+      "source_file": "records/ldd/2026-06-04/section_level_account_structure_requirement_0812_0813_sgt.json",
+      "source_record_type": "account_structure_review",
+      "asset_or_module": "multi_section_account_structure_quality_score",
+      "title": "Section-level account structure requirement",
+      "summary": "Total account day P/L was positive about +323.45 USD, but this was supported by Hong Kong 02513 Zhipu.",
+      "state_before": "",
+      "state_after": "structure_score=76",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "high",
+      "tags": [
+        "account_structure_review",
+        "btc",
+        "goog",
+        "nvda",
+        "quote_source_reconciliation",
+        "soxl",
         "zec"
       ]
     }

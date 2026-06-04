@@ -56,6 +56,16 @@ SCHEMA_FILES = {
 
 
 def schema_for_filename(filename: str) -> tuple[str, str] | None:
+    if "post_close_runtime_delta" in filename:
+        return "sync_delta_update", SCHEMA_FILES["sync_delta_update"]
+    if "account_state_delta" in filename:
+        return "portfolio_state", SCHEMA_FILES["portfolio_state"]
+    if "rule_trigger_monitor" in filename:
+        return "rule_ledger_snapshot", SCHEMA_FILES["rule_ledger_snapshot"]
+    if "quote_source_conflict" in filename:
+        return "account_structure_review", SCHEMA_FILES["account_structure_review"]
+    if "section_level_account_structure_requirement" in filename:
+        return "account_structure_review", SCHEMA_FILES["account_structure_review"]
     if "memory_retention_policy" in filename:
         return "memory_retention_policy", SCHEMA_FILES["memory_retention_policy"]
     if "memory_cleanup_recommendation" in filename:

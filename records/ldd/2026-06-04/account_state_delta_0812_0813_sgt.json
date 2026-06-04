@@ -1,0 +1,182 @@
+{
+  "record_id": "ldd-account-state-delta-20260604-0812-0813-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "account_type": "multi_section_post_close_snapshot",
+  "snapshot_time": "2026-06-04T08:13:00+08:00",
+  "source_of_truth": [
+    "user_provided_longbridge_broker_screenshots_20260604_0812_0813_sgt",
+    "user_provided_binance_screenshots_20260604_0812_0813_sgt"
+  ],
+  "base_currency": "mixed_usd_hkd_usdt",
+  "total_visible_assets": {
+    "us_broker_total_assets_usd": 43727.82,
+    "broker_total_assets_usd": 43727.82,
+    "total_holding_value_usd": 40216.64,
+    "total_holding_pl_usd": 20727.78,
+    "cash_usd": 3511.18,
+    "total_account_day_pl_usd": 323.45,
+    "hong_kong_02513_market_value_hkd": 146200,
+    "hong_kong_02513_day_pl_hkd": 5000,
+    "hong_kong_02513_day_pl_pct": 3.54,
+    "hong_kong_02513_holding_pl_hkd": 134580,
+    "us_stock_section_usd": 25072.7,
+    "us_equity_section_usd": 25072.7,
+    "us_holdings_market_value_usd": 21561.52,
+    "us_holding_pl_usd": 3555.37,
+    "us_day_pl_usd": -314.54,
+    "binance_visible_assets_usdt": 8425.94,
+    "binance_day_pl_usdt": -34.42,
+    "binance_day_pl_pct": -0.38
+  },
+  "cash_balance": {
+    "broker_cash_usd": 3511.18,
+    "binance_usdt": 5936.00171992,
+    "crypto_account_posture": "USDT defensive / cash dominant"
+  },
+  "holdings": [
+    {
+      "account": "hong_kong_equity",
+      "asset": "02513 Zhipu",
+      "quantity": 100,
+      "approx_price_hkd": 1462,
+      "market_value_hkd": 146200,
+      "day_pl_hkd": 5000,
+      "day_pl_pct": 3.54,
+      "holding_pl_hkd": 134580,
+      "runtime_note": "Hong Kong holding supported positive total-account day P/L."
+    },
+    {
+      "account": "us_equity",
+      "asset": "GLD",
+      "quantity": 20,
+      "approx_price": 408.94,
+      "runtime_note": "No add; GLD 405 remains the risk line."
+    },
+    {
+      "account": "us_equity",
+      "asset": "GOOG",
+      "quantity": 14,
+      "approx_price": 354.588,
+      "runtime_note": "Near/below 355 risk level; no GOOG add and GGLL caution remains active."
+    },
+    {
+      "account": "us_equity",
+      "asset": "NVDA",
+      "quantity": 20,
+      "approx_price": 214.26,
+      "runtime_note": "Hold 20 shares, do not add; 218-220 reclaim and 212 break are active review lines."
+    },
+    {
+      "account": "us_equity",
+      "asset": "SOXL",
+      "quantity": 5,
+      "approx_price": 261.55,
+      "quote_note": "Holding page shows about 261.55 while watchlist/external quote shows about 280.54; order-ticket bid/ask is required for execution validity.",
+      "runtime_note": "Main U.S. risk valve; no new add."
+    },
+    {
+      "account": "us_equity",
+      "asset": "GGLL",
+      "quantity": 10,
+      "approx_price": 116.695,
+      "runtime_note": "No add; governed by GOOG weakness and rebound rules."
+    },
+    {
+      "account": "us_equity",
+      "asset": "INTC",
+      "quantity": 10,
+      "approx_price": 110.613,
+      "runtime_note": "No add; cleanup remains conditional on rebound or renewed weakness."
+    },
+    {
+      "account": "us_equity",
+      "asset": "UGL",
+      "quantity": 10,
+      "approx_price": 54.759,
+      "runtime_note": "No add; close UGL first if GLD breaks 405."
+    },
+    {
+      "account": "us_equity",
+      "asset": "TSLA",
+      "quantity": 0.0116,
+      "approx_price": 420.248,
+      "runtime_note": "Tiny residual position."
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "USDT",
+      "quantity": 5936.00171992,
+      "runtime_note": "Dominant defensive crypto balance."
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "ETH",
+      "quantity": 0.8070416,
+      "runtime_note": "Do not add."
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "DOGE",
+      "quantity": 8400.535,
+      "runtime_note": "Do not add; continue monitoring weakness risk."
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "SOL",
+      "quantity": 2.931163,
+      "runtime_note": "Do not add."
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "BTC",
+      "quantity": 0.00055762,
+      "runtime_note": "No buyback unless BTC stabilizes above 75,500-76,000."
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "ZEC",
+      "quantity": 0.012974,
+      "approx_value_usdt": 7.85,
+      "runtime_note": "Small residual only; main ZEC grid remains closed/profit-locked based on prior execution state."
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "FUSD",
+      "quantity": 0.00134463,
+      "runtime_note": "Tiny residual."
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "BNB",
+      "quantity": 0.00000134,
+      "runtime_note": "Tiny residual."
+    }
+  ],
+  "strategy_tags": [
+    "latest_active_checkpoint",
+    "post_close_delta",
+    "historical_position_cleanup",
+    "no_new_us_model_strategy_position",
+    "us_section_negative_despite_total_account_positive",
+    "usdt_defensive_crypto",
+    "zec_closed_profit_locked",
+    "no_new_confirmed_execution"
+  ],
+  "notes": [
+    "Total-account positive day P/L was supported by Hong Kong holding 02513 Zhipu; the U.S. equity section itself was negative.",
+    "SOXS, TSLQ, and GDXU remain closed with no reopening.",
+    "No visible same-day U.S. broker order was shown in the provided screenshots.",
+    "No confirmed buy, sell, reduction, add, stop-loss, cancel order, robot adjustment, or robot closure is visible in this update.",
+    "ZEC grid remains closed/profit-locked based on prior state; no latest ZEC bot page screenshot was provided in this update.",
+    "SOXL has a material quote-source conflict and must not be used for automatic execution without order-ticket confirmation.",
+    "No new buying, no BTC buyback, no ZEC grid reopening, and no AI/semiconductor chase."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-04/ldd_post_close_runtime_delta_0812_0813_sgt.json",
+    "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json",
+    "records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json",
+    "records/ldd/2026-06-04/section_level_account_structure_requirement_0812_0813_sgt.json",
+    "records/ldd/2026-06-03/zec_bot_strategy_state_closed_20260603_0839.json"
+  ]
+}

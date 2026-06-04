@@ -1,0 +1,41 @@
+{
+  "review_id": "section-level-account-structure-requirement-20260604-0812-0813-sgt",
+  "project": "tianma-work-os",
+  "snapshot_time": "2026-06-04T08:13:00+08:00",
+  "account": "multi_section_account_structure_quality_score",
+  "structure_score": 76,
+  "cash_pressure": "low-to-medium overall; broker cash about 3,511.18 USD and Binance USDT about 5,936.00171992",
+  "leverage_risk": "medium; SOXL and UGL remain active leveraged risk valves even though no new add is allowed",
+  "opposite_exposure_risk": "low; SOXS, TSLQ, and GDXU remain closed with no reopening",
+  "weak_position_drag": "medium-to-high in U.S. section; GOOG near 355, NVDA near 215/212 risk area, GGLL caution active, INTC weak below 116-120",
+  "legacy_position_risk": "medium; historical-position cleanup remains active and U.S. model strategy has no new position",
+  "bot_strategy_risk": "low; ZEC grid remains closed/profit-locked based on prior execution state, with only small residual ZEC",
+  "rule_compliance": "strong if no new buying or unconfirmed execution occurs; SOXL requires quote-source confirmation before action",
+  "redeployment_readiness": "moderate; cash exists but BTC buyback is inactive and new U.S. model strategy should remain inactive",
+  "key_findings": [
+    "Total account day P/L was positive about +323.45 USD, but this was supported by Hong Kong 02513 Zhipu.",
+    "U.S. equity section day P/L was negative about -314.54 USD, so total-account P/L cannot be treated as broad risk-on confirmation.",
+    "Hong Kong equity section: 02513 Zhipu 100 shares, market value about 146,200 HKD, day P/L about +5,000 HKD / +3.54%, holding P/L about +134,580 HKD.",
+    "U.S. equity section: about 25,072.70 USD with holdings market value about 21,561.52 USD and holding P/L about +3,555.37 USD.",
+    "Crypto section: Binance about 8,425.94 USDT, day P/L about -34.42 USDT / -0.38%, USDT remains dominant.",
+    "Section-level scoring is required because total account, U.S. equity, Hong Kong equity, crypto, cash, stablecoin, and leveraged exposure contribute different risk signals.",
+    "Main U.S. risk valves are SOXL, GGLL, and UGL.",
+    "No visible same-day U.S. broker orders were shown in the provided screenshots.",
+    "No new buying, no BTC buyback, and no ZEC grid reopening are allowed at this checkpoint."
+  ],
+  "recommended_next_actions": [
+    "Treat 2026-06-04 08:12-08:13 SGT/BJT as the latest active LDD checkpoint.",
+    "Archive prior intraday/premarket state where conflicts exist.",
+    "Keep total-account, U.S. equity, Hong Kong equity, crypto, cash, stablecoin, and leveraged exposure separate in future account-structure reviews.",
+    "Use SOXL, GGLL, and UGL as risk-reduction valves rather than adding new risk.",
+    "Keep USDT-dominant crypto defense while BTC remains below 75,500-76,000.",
+    "Require order screenshots before recording any execution.",
+    "Do not change ZEC grid state without a latest bot page or execution screenshot."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-04/ldd_post_close_runtime_delta_0812_0813_sgt.json",
+    "records/ldd/2026-06-04/account_state_delta_0812_0813_sgt.json",
+    "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json",
+    "records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json"
+  ]
+}

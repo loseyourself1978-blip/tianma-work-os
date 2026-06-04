@@ -1,0 +1,65 @@
+{
+  "delta_id": "ldd-post-close-runtime-delta-20260604-0812-0813-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "sync_time": "2026-06-04T08:13:00+08:00",
+  "source_cutoff_time": "2026-06-04T08:13:00+08:00",
+  "source_of_truth": [
+    "user_provided_longbridge_broker_screenshots_20260604_0812_0813_sgt",
+    "user_provided_binance_screenshots_20260604_0812_0813_sgt",
+    "external_market_data_cross_check_macro_context_only"
+  ],
+  "updates_or_supersedes": [
+    "2026-06-04 00:29 intraday checkpoint",
+    "2026-06-03 17:27-17:30 premarket checkpoint",
+    "records/ldd/2026-06-03/sync_block_delta_protocol_feedback_20260603.json",
+    "reports/ldd/latest_active_memory_checkpoint.md prior generated state"
+  ],
+  "included_events": [
+    "Post-U.S.-close Longbridge and Binance screenshots captured at 2026-06-04 08:12-08:13 SGT/BJT.",
+    "Broker total assets were about 43,727.82 USD, with total-account day P/L about +323.45 USD.",
+    "Hong Kong holding 02513 Zhipu supported positive total-account day P/L.",
+    "U.S. equity section was negative, with U.S. day P/L about -314.54 USD.",
+    "Binance visible assets were about 8,425.94 USDT and remained USDT-dominant.",
+    "No visible same-day U.S. broker order was shown in the provided screenshots.",
+    "ZEC grid remains closed/profit-locked based on prior execution state; no latest ZEC bot page screenshot was included.",
+    "SOXL quote-source conflict was detected between holding page and watchlist/external quote.",
+    "Active trigger proximity was updated for GOOG, NVDA, SOXL, GLD, and BTC.",
+    "Product requirements strengthened: Quote Source Reconciliation, Runtime Rule Trigger Monitor, and Section-Level Account Structure Quality Score."
+  ],
+  "pending_events": [
+    "Confirm whether GOOG reclaims 358-360 or remains below 355.",
+    "Confirm whether NVDA reclaims 218-220 or breaks below 212.",
+    "Confirm which SOXL quote is execution-valid on the order ticket.",
+    "Confirm whether GLD holds 405.",
+    "Confirm whether BTC remains below 75,500-76,000.",
+    "Wait for new order screenshots before recording any actual execution.",
+    "Wait for latest ZEC bot page screenshot before changing ZEC bot status away from prior closed/profit-locked state."
+  ],
+  "delta_reason": "A newer post-close LDD sync block arrived after the earlier intraday and premarket checkpoints. This checkpoint becomes the latest active LDD state where conflicts exist.",
+  "changed_fields": [
+    "latest_active_checkpoint: older intraday/premarket state -> 2026-06-04 08:12-08:13 post-close state",
+    "total_account_state: broker_total_assets_about_43727.82_usd",
+    "hong_kong_equity_state: 02513_zhipu_positive_day_pl_supports_total_account",
+    "us_equity_section_state: negative_day_pl_about_-314.54_usd",
+    "binance_spot_state: about_8425.94_usdt_usdt_dominant",
+    "execution_status: no_new_confirmed_execution_visible",
+    "zec_grid_state: remains_closed_profit_locked_based_on_prior_execution",
+    "soxl_quote_state: quote_source_conflict_requires_order_ticket_confirmation",
+    "runtime_rules: GOOG_NVDA_SOXL_GLD_BTC_trigger_proximity_updated",
+    "product_requirements: quote_source_reconciliation_rule_trigger_monitor_section_level_account_structure"
+  ],
+  "new_records": [
+    "records/ldd/2026-06-04/account_state_delta_0812_0813_sgt.json",
+    "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json",
+    "records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json",
+    "records/ldd/2026-06-04/section_level_account_structure_requirement_0812_0813_sgt.json"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-03/zec_bot_closure_execution_20260603_0838.json",
+    "records/ldd/2026-06-03/zec_bot_strategy_state_closed_20260603_0839.json",
+    "records/ldd/2026-06-03/sync_block_delta_protocol_feedback_20260603.json",
+    "docs/runtime/RUNTIME_TIMELINE_LAYER_v0.1.md"
+  ],
+  "sync_status": "delta_update_required"
+}

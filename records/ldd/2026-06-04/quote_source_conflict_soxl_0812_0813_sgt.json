@@ -1,0 +1,40 @@
+{
+  "review_id": "quote-source-conflict-soxl-20260604-0812-0813-sgt",
+  "project": "tianma-work-os",
+  "snapshot_time": "2026-06-04T08:13:00+08:00",
+  "account": "quote_source_reconciliation_soxl",
+  "structure_score": 58,
+  "cash_pressure": "not_applicable; this is quote-source quality review rather than cash review",
+  "leverage_risk": "medium-to-high; SOXL is a leveraged historical-position remainder and should use executable quotes only",
+  "opposite_exposure_risk": "low; no opposite SOXL/SOXS reopening is visible",
+  "weak_position_drag": "medium; NVDA weakness increases risk for SOXL even if semiconductor theme remains structurally strong",
+  "legacy_position_risk": "medium; SOXL remains a historical leveraged-profit risk valve",
+  "bot_strategy_risk": "not_applicable",
+  "rule_compliance": "requires_order_ticket_confirmation; holding-page, watchlist, after-hours, or external quotes are not enough for execution",
+  "redeployment_readiness": "blocked_for_execution; no automatic execution should use an untagged SOXL quote",
+  "key_findings": [
+    "symbol: SOXL",
+    "price: holding page around 261.550; watchlist/external quote around 280.54",
+    "quote_source: Longbridge holding page versus watchlist/external quote cross-check",
+    "quote_type: holding_page_mark versus watchlist_or_external_quote",
+    "screenshot_time: 2026-06-04 08:12-08:13 SGT/BJT",
+    "market_session: post-U.S.-close / extended-context review",
+    "execution_validity: invalid for automatic execution until order-ticket bid/ask is confirmed",
+    "trigger_validity: trigger proximity can be monitored, but sell/close decision requires executable order-ticket quote",
+    "confidence_level: medium for conflict detection, low for execution price until order-ticket confirmation",
+    "conflict_notes: materially different SOXL values mean trigger rules must tag quote source and quote type before action"
+  ],
+  "recommended_next_actions": [
+    "Add Quote Source Reconciliation / Quote Type Tagging as a runtime requirement before any quote-driven execution.",
+    "Use executable order-ticket bid/ask only for SOXL action decisions.",
+    "If executable SOXL price is below 270, sell 2 shares.",
+    "If executable SOXL price is below 260, close remaining SOXL.",
+    "If SOXL rebounds strongly but NVDA remains weak, consider selling 2 shares to lock historical leveraged profit.",
+    "Do not record a SOXL execution without order-detail screenshot evidence."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-04/ldd_post_close_runtime_delta_0812_0813_sgt.json",
+    "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json",
+    "records/ldd/2026-06-04/account_state_delta_0812_0813_sgt.json"
+  ]
+}
