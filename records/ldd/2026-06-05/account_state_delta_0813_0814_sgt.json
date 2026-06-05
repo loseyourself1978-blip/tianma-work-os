@@ -1,0 +1,194 @@
+{
+  "record_id": "ldd-account-state-delta-20260605-0813-0814-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "account_type": "multi_section_post_close_snapshot",
+  "snapshot_time": "2026-06-05T08:14:00+08:00",
+  "source_of_truth": [
+    "user_provided_longbridge_broker_screenshots_20260605_0813_0814_sgt",
+    "user_provided_binance_screenshots_20260605_0813_0814_sgt",
+    "user_provided_soxl_order_screenshot_20260604_1732_sgt"
+  ],
+  "base_currency": "mixed_usd_hkd_usdt",
+  "total_visible_assets": {
+    "broker_total_assets_usd": 43500.82,
+    "us_broker_total_assets_usd": 43500.82,
+    "broker_day_pl_usd": -346.7,
+    "total_holding_value_usd": 39245.64,
+    "total_holding_pl_usd": 20500.77,
+    "cash_usd": 4255.18,
+    "cash_previous_usd": 3511.18,
+    "cash_change_usd": 744,
+    "expected_soxl_cash_delta_usd": 744,
+    "hong_kong_02513_market_value_hkd": 142600,
+    "hong_kong_02513_day_pl_hkd": -3600,
+    "hong_kong_02513_day_pl_pct": -2.46,
+    "hong_kong_02513_holding_pl_hkd": 130980,
+    "us_stock_section_usd": 25305.06,
+    "us_equity_section_usd": 25305.06,
+    "us_holdings_market_value_usd": 21049.88,
+    "us_holding_pl_usd": 3787.73,
+    "us_day_pl_usd": 112.65,
+    "binance_visible_assets_usdt": 8371.43,
+    "binance_day_pl_usdt": -50.17,
+    "binance_day_pl_pct": -0.6
+  },
+  "cash_balance": {
+    "broker_cash_usd": 4255.18,
+    "broker_cash_previous_usd": 3511.18,
+    "broker_cash_change_usd": 744,
+    "binance_usdt": 5936,
+    "crypto_account_posture": "USDT defensive / cash dominant"
+  },
+  "holdings": [
+    {
+      "account": "hong_kong_equity",
+      "asset": "02513 Zhipu",
+      "quantity": 100,
+      "approx_price_hkd": 1426,
+      "market_value_hkd": 142600,
+      "day_pl_hkd": -3600,
+      "day_pl_pct": -2.46,
+      "holding_pl_hkd": 130980,
+      "runtime_note": "Hong Kong holding weakness drove total-account day P/L negative."
+    },
+    {
+      "account": "us_equity",
+      "asset": "GLD",
+      "quantity": 20,
+      "approx_price": 409.3,
+      "runtime_note": "Hold; no add. GLD remains above 405 risk line."
+    },
+    {
+      "account": "us_equity",
+      "asset": "GOOG",
+      "quantity": 14,
+      "approx_price": 367.61,
+      "runtime_note": "GOOG rebounded away from 355; monitor 360 support and 372-380 rebound failure zone."
+    },
+    {
+      "account": "us_equity",
+      "asset": "NVDA",
+      "quantity": 20,
+      "approx_price": 216.31,
+      "runtime_note": "Recovered intraday but remains below 218-220 confirmation."
+    },
+    {
+      "account": "us_equity",
+      "asset": "GGLL",
+      "quantity": 10,
+      "approx_price": 124.365,
+      "runtime_note": "Hold for now after GOOG rebound; profit-lock candidate if GOOG fails near 372-380."
+    },
+    {
+      "account": "us_equity",
+      "asset": "INTC",
+      "quantity": 10,
+      "approx_price": 109.847,
+      "runtime_note": "Hold; no add. Cleanup remains conditional."
+    },
+    {
+      "account": "us_equity",
+      "asset": "UGL",
+      "quantity": 10,
+      "approx_price": 54.8,
+      "runtime_note": "Cleanup candidate if GLD breaks 405 or rallies to 412-416."
+    },
+    {
+      "account": "us_equity",
+      "asset": "SOXL",
+      "quantity": 2,
+      "approx_price": 248.099,
+      "position_before_execution": 5,
+      "sold_quantity": 3,
+      "filled_price": 248,
+      "cash_impact_usd": 744,
+      "runtime_note": "Confirmed reduced from 5 shares to 2 shares; residual watch position, no re-add."
+    },
+    {
+      "account": "us_equity",
+      "asset": "TSLA",
+      "quantity": 0.0116,
+      "approx_price": 416.19,
+      "runtime_note": "Tiny residual position."
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "USDT",
+      "quantity": 5936,
+      "runtime_note": "Dominant defensive crypto balance."
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "ETH",
+      "quantity": 0.8070416,
+      "approx_value_usdt": 1437.54,
+      "runtime_note": "No add."
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "DOGE",
+      "quantity": 8400.535,
+      "approx_value_usdt": 749.57,
+      "runtime_note": "No add."
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "SOL",
+      "quantity": 2.931163,
+      "approx_value_usdt": 205.79,
+      "runtime_note": "No add."
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "BTC",
+      "quantity": 0.00055762,
+      "approx_value_usdt": 35.74,
+      "runtime_note": "No buyback below 75,500."
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "ZEC",
+      "quantity": 0.012974,
+      "approx_value_usdt": 6.77,
+      "runtime_note": "Small residual only; main ZEC grid remains closed/profit-locked."
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "FUSD",
+      "quantity": 0.00134463,
+      "runtime_note": "Tiny residual."
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "BNB",
+      "quantity": 0.00000134,
+      "runtime_note": "Tiny residual."
+    }
+  ],
+  "strategy_tags": [
+    "latest_active_checkpoint",
+    "post_close_delta",
+    "confirmed_execution_reconciliation",
+    "soxl_reduced_to_residual_watch_position",
+    "historical_position_cleanup",
+    "no_new_us_model_strategy_position",
+    "total_account_negative_us_section_positive",
+    "usdt_defensive_crypto",
+    "zec_closed_profit_locked"
+  ],
+  "notes": [
+    "SOXL confirmed reduced from 5 shares to 2 shares.",
+    "Cash increase of about 744 USD matches the confirmed SOXL sale: 3 shares x 248.00 USD.",
+    "Total-account day P/L was negative mainly due to Hong Kong holding weakness; U.S. equity section was positive.",
+    "No new buying is allowed currently.",
+    "SOXS, TSLQ, and GDXU remain closed with no reopening.",
+    "ZEC grid remains closed/profit-locked based on prior confirmed execution; no new running bot screenshot was provided."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-04/soxl_execution_filled_1732_sgt.json",
+    "records/ldd/2026-06-05/ldd_post_close_checkpoint_0813_0814_sgt.json",
+    "records/ldd/2026-06-05/soxl_execution_reconciliation_0813_0814_sgt.json",
+    "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
+  ]
+}

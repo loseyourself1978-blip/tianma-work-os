@@ -59,6 +59,8 @@ Instead, generated events can label older records as historical or superseded. F
 
 Later delta records can update the active checkpoint while preserving the prior timeline. For example, a post-close checkpoint can supersede an intraday or premarket checkpoint where conflicts exist, and the generated timeline should show both the older record and the newer active-state update.
 
+Confirmed execution reconciliation events should appear as order lifecycle events in the timeline: trigger context, order fill, position update, cash delta, rule-based review, and active checkpoint update.
+
 ## Non-Goals
 
 Vol.4 Phase 4.1 does not implement:

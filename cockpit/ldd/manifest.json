@@ -1,16 +1,18 @@
 {
-  "generated_at": "2026-06-04T08:13:00+08:00",
+  "generated_at": "2026-06-05T08:14:00+08:00",
   "project": "LLM Daredevil Desk",
   "cockpit_layer": "ldd_runtime_cockpit_summary",
   "version": "0.1",
-  "latest_active_checkpoint": "2026-06-04T08:13:00+08:00",
+  "latest_active_checkpoint": "2026-06-05T08:14:00+08:00",
   "source_root": "records/ldd",
   "source_files": [
-    "records/ldd/2026-06-04/account_state_delta_0812_0813_sgt.json",
-    "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json",
+    "records/ldd/2026-06-05/account_state_delta_0813_0814_sgt.json",
+    "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json",
     "records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json",
-    "records/ldd/2026-06-04/section_level_account_structure_requirement_0812_0813_sgt.json",
-    "records/ldd/2026-06-04/ldd_post_close_runtime_delta_0812_0813_sgt.json",
+    "records/ldd/2026-06-05/execution_feedback_loop_requirement_0813_0814_sgt.json",
+    "records/ldd/2026-06-05/ldd_post_close_checkpoint_0813_0814_sgt.json",
+    "records/ldd/2026-06-04/soxl_execution_filled_1732_sgt.json",
+    "records/ldd/2026-06-05/soxl_execution_reconciliation_0813_0814_sgt.json",
     "cockpit/ldd/runtime_timeline.json"
   ],
   "files": {

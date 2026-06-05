@@ -91,13 +91,15 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "pending_command"
     if "rule_based_execution_review" in name:
         return "execution_review"
+    if "execution_reconciliation" in name:
+        return "execution_review"
     if "volatility_execution_split" in name:
         return "volatility_split"
     if "sync_block_delta" in name or "sync_delta" in name or "delta_protocol" in name:
         return "delta_sync"
     if "rule_ledger_snapshot" in name:
         return "rule_ledger_snapshot"
-    if "closure_execution" in name:
+    if "closure_execution" in name or "execution_filled" in name:
         return "execution_event"
     if "strategy_state" in name:
         return "strategy_state"
@@ -112,6 +114,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "strategy_state"
     if "review_id" in data and "structure_score" in data:
         return "account_structure_review"
+    if "review_id" in data and "actual_execution" in data:
+        return "execution_review"
     if "delta_id" in data:
         return "delta_sync"
     if "snapshot_id" in data and "rules" in data:
@@ -901,7 +905,7 @@ def generate_latest_active_memory_checkpoint(records: list[RuntimeRecord]) -> li
         md_list(
             [
                 "DOGE remains a weak-risk holding.",
-                "SOXL still has 220 / 210 trigger-line risk.",
+                "Residual SOXL 2-share leveraged exposure remains under the 240 close / 255-260 hold / 265-270 strength-review rule.",
                 "Memory cleanup requires human approval before active saved-memory removal.",
             ]
         )

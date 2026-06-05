@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-06-04T08:13:00+08:00",
+  "generated_at": "2026-06-05T08:14:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "runtime_timeline",
   "version": "0.1",
   "source_root": "records/ldd",
-  "event_count": 21,
+  "event_count": 27,
   "date_range": {
     "start": "2026-06-02T08:22:00+08:00",
-    "end": "2026-06-04T08:13:00+08:00"
+    "end": "2026-06-05T08:14:00+08:00"
   },
   "events": [
     {
@@ -475,6 +475,148 @@
         "quote_source_reconciliation",
         "soxl",
         "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-04-soxl-execution-filled-1732-sgt-json",
+      "event_time": "2026-06-04T17:32:00+08:00",
+      "event_type": "execution_event",
+      "source_file": "records/ldd/2026-06-04/soxl_execution_filled_1732_sgt.json",
+      "source_record_type": "execution_event",
+      "asset_or_module": "SOXL",
+      "title": "Execution event: sell_3_shares SOXL",
+      "summary": "confirmed_sell_order: sell 3 SOXL at 248.",
+      "state_before": "rule_compliant_risk_reduction_historical_leveraged_etf_cleanup_not_new_position",
+      "state_after": "sell_3_shares",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "critical",
+      "tags": [
+        "execution_event",
+        "soxl"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-05-account-state-delta-0813-0814-sgt-json",
+      "event_time": "2026-06-05T08:14:00+08:00",
+      "event_type": "portfolio_snapshot",
+      "source_file": "records/ldd/2026-06-05/account_state_delta_0813_0814_sgt.json",
+      "source_record_type": "portfolio_state",
+      "asset_or_module": "multi_section_post_close_snapshot",
+      "title": "Portfolio snapshot: latest active LDD checkpoint",
+      "summary": "Post-close account state recorded with broker total assets about 43500.82 USD and Binance visible assets about 8371.43 USDT.",
+      "state_before": "",
+      "state_after": "",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "low",
+      "tags": [
+        "btc",
+        "closed_profit_locked",
+        "gld",
+        "goog",
+        "latest_active_checkpoint",
+        "nvda",
+        "portfolio_state",
+        "soxl",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-05-execution-feedback-loop-requirement-0813-0814-sgt-json",
+      "event_time": "2026-06-05T08:14:00+08:00",
+      "event_type": "command_intelligence",
+      "source_file": "records/ldd/2026-06-05/execution_feedback_loop_requirement_0813_0814_sgt.json",
+      "source_record_type": "command_execution_feedback",
+      "asset_or_module": "runtime_execution_feedback_loop",
+      "title": "Runtime record: execution_feedback_loop_requirement_0813_0814_sgt.json",
+      "summary": "Runtime record captured.",
+      "state_before": "",
+      "state_after": "",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "low",
+      "tags": [
+        "btc",
+        "command_execution_feedback",
+        "soxl",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-05-ldd-post-close-checkpoint-0813-0814-sgt-json",
+      "event_time": "2026-06-05T08:14:00+08:00",
+      "event_type": "sync_delta",
+      "source_file": "records/ldd/2026-06-05/ldd_post_close_checkpoint_0813_0814_sgt.json",
+      "source_record_type": "sync_delta_update",
+      "asset_or_module": "llm-daredevil-desk",
+      "title": "Sync delta: ldd-post-close-checkpoint-20260605-0813-0814-sgt",
+      "summary": "Post-close screenshots confirm the 2026-06-04 SOXL execution has propagated into both position size and cash balance. This becomes the latest active LDD checkpoint.",
+      "state_before": "prior sync or strategy-state assumption",
+      "state_after": "latest_active_checkpoint: 2026-06-04T08:13:00+08:00 -> 2026-06-05T08:14:00+08:00; soxl_position: 5_shares -> 2_shares; soxl_execution_status: pending_confirmation -> confirmed_and_reconciled; broker_cash: about_3511.18_usd -> about_4255.18_usd; cash_reconciliation: 3_x_248_usd_equals_744_usd; total_account_day_pl: positive_to_negative_due_to_hong_kong_weakness; us_equity_day_pl: negative_to_positive; main_us_risk_valves: GGLL_UGL_residual_SOXL; product_requirements: confirmed_execution_reconciliation_realized_vs_unrealized_risk_tracking_section_attribution_residual_risk_valve_state",
+      "supersedes_or_updates": [
+        "records/ldd/2026-06-04/ldd_post_close_runtime_delta_0812_0813_sgt.json",
+        "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json",
+        "records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json",
+        "cockpit/ldd/latest_state.json prior generated state"
+      ],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "critical",
+      "tags": [
+        "btc",
+        "gld",
+        "goog",
+        "latest_active_checkpoint",
+        "nvda",
+        "quote_source_reconciliation",
+        "soxl",
+        "sync_delta_update",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-05-residual-risk-valve-state-0813-0814-sgt-json",
+      "event_time": "2026-06-05T08:14:00+08:00",
+      "event_type": "trigger_rule_update",
+      "source_file": "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json",
+      "source_record_type": "rule_ledger_snapshot",
+      "asset_or_module": "llm-daredevil-desk",
+      "title": "Runtime rule trigger monitor",
+      "summary": "Rule trigger monitor captured 8 active rules, including near-trigger states and execution-confirmation requirements.",
+      "state_before": "",
+      "state_after": "",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "high",
+      "tags": [
+        "btc",
+        "gld",
+        "goog",
+        "near_trigger",
+        "nvda",
+        "rule_ledger_snapshot",
+        "soxl",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-05-soxl-execution-reconciliation-0813-0814-sgt-json",
+      "event_time": "2026-06-05T08:14:00+08:00",
+      "event_type": "rule_review",
+      "source_file": "records/ldd/2026-06-05/soxl_execution_reconciliation_0813_0814_sgt.json",
+      "source_record_type": "rule_based_execution_review",
+      "asset_or_module": "SOXL",
+      "title": "Rule review: SOXL",
+      "summary": "Confirmed and reconciled. The SOXL sale was rule-compliant risk reduction and is reflected in both position size and cash balance.",
+      "state_before": "",
+      "state_after": "",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "medium",
+      "tags": [
+        "nvda",
+        "rule_based_execution_review",
+        "soxl"
       ]
     }
   ],

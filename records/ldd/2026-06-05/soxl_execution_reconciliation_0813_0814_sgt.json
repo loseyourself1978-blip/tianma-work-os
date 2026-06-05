@@ -1,0 +1,35 @@
+{
+  "review_id": "soxl-execution-reconciliation-20260605-0813-0814-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "account": "longbridge_us_equity",
+  "asset": "SOXL",
+  "position_tag": "reduced_risk_valve_residual_watch_position",
+  "review_time": "2026-06-05T08:14:00+08:00",
+  "related_trigger_rule_id": "soxl-quote-valid-risk-valve-20260604-0813",
+  "related_strategy_state_id": "soxl-residual-risk-valve-state-20260605-0814",
+  "intended_rule": "Reduce SOXL leveraged exposure after executable threshold break; no SOXL re-add allowed.",
+  "actual_execution": "Confirmed sell 3 shares of SOXL at 248.00 USD at 2026-06-04 17:32 SGT/BJT. Position before execution was 5 shares and position after execution is 2 shares.",
+  "execution_evidence": [
+    "user_provided_soxl_order_screenshot_20260604_1732_sgt",
+    "user_provided_longbridge_position_screenshot_20260605_0813_0814_sgt_showing_soxl_2_shares",
+    "user_provided_longbridge_account_screenshot_20260605_0813_0814_sgt_showing_cash_about_4255.18_usd"
+  ],
+  "rule_compliance_score": 0.94,
+  "account_risk_improvement": "SOXL leveraged ETF exposure was reduced by 60%, from 5 shares to 2 shares. Cash increased by about 744 USD, matching 3 x 248.00 USD.",
+  "short_term_price_outcome": "Not the main evaluation metric. Execution correctness is judged by rule compliance, cash improvement, and exposure reduction rather than short-term SOXL price movement after the fill.",
+  "review_conclusion": "Confirmed and reconciled. The SOXL sale was rule-compliant risk reduction and is reflected in both position size and cash balance.",
+  "lessons_learned": [
+    "Confirmed Execution Reconciliation should connect trigger, order fill, position after execution, and cash delta.",
+    "Expected cash delta was 744.00 USD from 3 shares x 248.00 USD.",
+    "Actual cash moved from about 3,511.18 USD to about 4,255.18 USD, consistent with the expected cash delta.",
+    "Realized vs Unrealized Risk Tracking must judge execution by rule compliance and risk reduction, not hindsight price movement.",
+    "SOXL transitioned from primary risk valve to residual watch position."
+  ],
+  "next_rule_update": "Current SOXL position is 2 shares. Do not add. If SOXL falls below 240, sell remaining 2 shares. If SOXL rebounds to 255-260, temporarily hold remaining 2 shares. If SOXL rebounds to 265-270 but NVDA remains weak, consider selling 1-2 shares.",
+  "related_records": [
+    "records/ldd/2026-06-04/soxl_execution_filled_1732_sgt.json",
+    "records/ldd/2026-06-05/account_state_delta_0813_0814_sgt.json",
+    "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
+  ]
+}

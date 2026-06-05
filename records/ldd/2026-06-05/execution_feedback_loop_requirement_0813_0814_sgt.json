@@ -1,0 +1,38 @@
+{
+  "review_id": "execution-feedback-loop-requirement-20260605-0813-0814-sgt",
+  "project": "tianma-work-os",
+  "snapshot_time": "2026-06-05T08:14:00+08:00",
+  "account": "runtime_execution_feedback_loop",
+  "structure_score": 82,
+  "cash_pressure": "improved on broker side; cash increased about 744 USD after SOXL sale",
+  "leverage_risk": "reduced; SOXL exposure moved from 5 shares primary risk valve to 2 shares residual watch position",
+  "opposite_exposure_risk": "low; SOXS, TSLQ, and GDXU remain closed with no reopening",
+  "weak_position_drag": "medium; remaining GGLL, UGL, INTC, and residual SOXL require rule monitoring",
+  "legacy_position_risk": "medium; historical cleanup remains active but SOXL risk was materially reduced",
+  "bot_strategy_risk": "low; ZEC grid remains closed/profit-locked based on prior confirmed execution",
+  "rule_compliance": "strong; SOXL order progressed from signal to trigger to order fill to cash and position reconciliation",
+  "redeployment_readiness": "moderate; broker cash improved but no new buying is allowed and BTC buyback remains inactive",
+  "key_findings": [
+    "Confirmed Execution Reconciliation is required: order_filled_quantity, cash_change, position_before, position_after, expected_cash_delta, actual_cash_delta, and reconciliation_status.",
+    "SOXL order filled quantity was 3 shares.",
+    "SOXL position moved from 5 shares to 2 shares.",
+    "Expected cash delta was 744.00 USD from 3 x 248.00 USD.",
+    "Broker cash increased from about 3,511.18 USD to about 4,255.18 USD, consistent with the expected delta.",
+    "Realized vs Unrealized Risk Tracking is required: execution correctness is judged by rule compliance, risk reduction, cash improvement, and exposure reduction, not short-term price after execution.",
+    "Section-Level Account Attribution is required because total account day P/L was negative while U.S. equity section day P/L was positive.",
+    "Residual Risk Valve State is required because SOXL moved from primary_risk_valve to residual_watch_position."
+  ],
+  "recommended_next_actions": [
+    "Track SOXL as residual 2-share watch position with no re-add allowed.",
+    "Make 2026-06-05T08:14:00+08:00 the latest active checkpoint in cockpit summaries.",
+    "Keep confirmed execution reconciliation visible in timeline, reports, and cockpit JSON.",
+    "Separate total account, U.S. equity, Hong Kong equity, crypto, cash/stablecoin, and leveraged exposure attribution.",
+    "Preserve rule-based execution review principle: do not judge the SOXL sale by short-term price hindsight alone."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-04/soxl_execution_filled_1732_sgt.json",
+    "records/ldd/2026-06-05/soxl_execution_reconciliation_0813_0814_sgt.json",
+    "records/ldd/2026-06-05/account_state_delta_0813_0814_sgt.json",
+    "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
+  ]
+}

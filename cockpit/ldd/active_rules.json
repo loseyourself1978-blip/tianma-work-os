@@ -1,88 +1,104 @@
 {
-  "generated_at": "2026-06-04T08:13:00+08:00",
+  "generated_at": "2026-06-05T08:14:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "cockpit_active_rules",
   "version": "0.1",
-  "latest_active_checkpoint": "2026-06-04T08:13:00+08:00",
+  "latest_active_checkpoint": "2026-06-05T08:14:00+08:00",
   "source_files": [
-    "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json"
+    "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
   ],
   "rules": [
     {
-      "rule_id": "nvda-hold-risk-monitor-20260604-0813",
-      "asset_or_module": "NVDA",
-      "rule_type": "historical_position_cleanup_strong_position_hold",
-      "status": "near_trigger",
-      "trigger_state": "near_trigger",
-      "trigger_condition": "Hold 20 shares; do not add. If NVDA reclaims 218-220, continue holding. If NVDA breaks below 212, reassess whether to reduce 5 shares or reduce SOXL further.",
-      "current_action": "hold unless 212 break forces risk review",
-      "source_files": [
-        "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json"
-      ],
-      "last_updated": "2026-06-04T08:13:00+08:00",
-      "cockpit_priority": "high",
-      "requires_execution_price_confirmation": false,
-      "tags": [
-        "near_trigger",
-        "nvda",
-        "order_ticket_required",
-        "risk_control"
-      ]
-    },
-    {
-      "rule_id": "soxl-quote-valid-risk-valve-20260604-0813",
+      "rule_id": "soxl-residual-watch-rule-20260605-0814",
       "asset_or_module": "SOXL",
-      "rule_type": "leveraged_historical_profit_risk_valve",
-      "status": "awaiting_execution_confirmation",
-      "trigger_state": "near_trigger_quote_conflict",
-      "trigger_condition": "No new add. Because of quote-source conflict, action must use executable order-ticket bid/ask only. If executable SOXL price is below 270, sell 2 shares. If executable SOXL price is below 260, close remaining SOXL. If SOXL rebounds strongly but NVDA remains weak, consider selling 2 shares to lock historical leveraged profit.",
-      "current_action": "use SOXL as main U.S. risk-reduction valve after executable quote confirmation",
+      "rule_type": "residual_risk_valve_state",
+      "status": "active",
+      "trigger_state": "residual_watch_position",
+      "trigger_condition": "Do not add. If SOXL falls below 240, sell remaining 2 shares. If NVDA breaks below 212 and SOXL fails to recover, sell remaining 2 shares. If SOXL rebounds to 255-260, temporarily hold remaining 2 shares. If SOXL rebounds to 265-270 but NVDA remains weak, consider selling 1-2 shares.",
+      "current_action": "monitor residual 2 shares under strict no-readd rule",
       "source_files": [
-        "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json"
+        "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
       ],
-      "last_updated": "2026-06-04T08:13:00+08:00",
+      "last_updated": "2026-06-05T08:14:00+08:00",
       "cockpit_priority": "high",
       "requires_execution_price_confirmation": true,
       "tags": [
-        "awaiting_execution_confirmation",
-        "order_ticket_required",
-        "quote_source_conflict",
+        "active",
         "risk_control",
         "soxl"
       ]
     },
     {
-      "rule_id": "goog-ggll-risk-monitor-20260604-0813",
-      "asset_or_module": "GOOG/GGLL",
-      "rule_type": "weak_position_drag_control",
+      "rule_id": "nvda-confirmation-monitor-20260605-0814",
+      "asset_or_module": "NVDA",
+      "rule_type": "core_ai_exposure_monitor",
       "status": "near_trigger",
       "trigger_state": "near_trigger",
-      "trigger_condition": "No GOOG add and no GGLL add. GOOG around/below 355 triggers GGLL caution. If GOOG cannot reclaim 358-360, prepare to sell 5 shares of GGLL. If GOOG breaks below 352, sell 5-10 shares of GGLL. If GOOG rebounds to 365-370, consider selling 5 shares of GGLL on strength.",
-      "current_action": "prepare GGLL risk reduction only after confirmation",
+      "trigger_condition": "Hold 20 shares. Do not add while below 218-220 confirmation. If NVDA reclaims and holds 218-220, continue holding. If NVDA breaks below 212, reduce risk through remaining SOXL first and reassess NVDA.",
+      "current_action": "hold and use residual SOXL first for risk reduction if NVDA breaks 212",
       "source_files": [
-        "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json"
+        "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
       ],
-      "last_updated": "2026-06-04T08:13:00+08:00",
+      "last_updated": "2026-06-05T08:14:00+08:00",
       "cockpit_priority": "high",
       "requires_execution_price_confirmation": false,
       "tags": [
-        "goog_ggll",
         "near_trigger",
+        "nvda",
         "risk_control"
       ]
     },
     {
-      "rule_id": "intc-cleanup-monitor-20260604-0813",
+      "rule_id": "goog-ggll-rebound-monitor-20260605-0814",
+      "asset_or_module": "GOOG/GGLL",
+      "rule_type": "ggll_profit_lock_candidate",
+      "status": "active",
+      "trigger_state": "monitoring_rebound",
+      "trigger_condition": "Hold GOOG 14. Hold GGLL 10 for now after GOOG rebound. If GOOG falls below 360, prepare to sell 5 shares of GGLL. If GOOG breaks below 355, sell 5-10 shares of GGLL. If GOOG rallies to 372-380 but fails to hold, consider selling 5 shares of GGLL to lock rebound profit. No GGLL add.",
+      "current_action": "hold for now; treat GGLL as profit-lock candidate if GOOG rebound fails",
+      "source_files": [
+        "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
+      ],
+      "last_updated": "2026-06-05T08:14:00+08:00",
+      "cockpit_priority": "medium",
+      "requires_execution_price_confirmation": false,
+      "tags": [
+        "active",
+        "goog_ggll"
+      ]
+    },
+    {
+      "rule_id": "gld-ugl-cleanup-monitor-20260605-0814",
+      "asset_or_module": "GLD/UGL",
+      "rule_type": "gold_cleanup_monitor",
+      "status": "active",
+      "trigger_state": "active",
+      "trigger_condition": "Hold GLD 20. No GLD add. GLD 405 remains the risk line. If GLD breaks below 405, sell UGL first. If GLD rallies to 412-416, consider selling UGL on strength. No UGL add.",
+      "current_action": "hold and monitor UGL as cleanup candidate",
+      "source_files": [
+        "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
+      ],
+      "last_updated": "2026-06-05T08:14:00+08:00",
+      "cockpit_priority": "medium",
+      "requires_execution_price_confirmation": false,
+      "tags": [
+        "active",
+        "gld_ugl",
+        "risk_control"
+      ]
+    },
+    {
+      "rule_id": "intc-cleanup-monitor-20260605-0814",
       "asset_or_module": "INTC",
       "rule_type": "historical_position_cleanup",
       "status": "active",
-      "trigger_state": "not_triggered",
-      "trigger_condition": "No add. If INTC rebounds to 116, consider selling 5 shares. If INTC rebounds to 118-120, sell 5 or all. If INTC falls below 108, reassess direct cleanup.",
+      "trigger_state": "active",
+      "trigger_condition": "Hold 10 shares. No add. If INTC rebounds to 116, consider selling 5 shares. If INTC rebounds to 118-120, sell 5 or all. If INTC breaks below 108, reassess direct cleanup.",
       "current_action": "observe until rebound or weakness line confirms cleanup",
       "source_files": [
-        "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json"
+        "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
       ],
-      "last_updated": "2026-06-04T08:13:00+08:00",
+      "last_updated": "2026-06-05T08:14:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
@@ -92,38 +108,17 @@
       ]
     },
     {
-      "rule_id": "gld-ugl-risk-line-monitor-20260604-0813",
-      "asset_or_module": "GLD/UGL",
-      "rule_type": "gold_position_monitor",
-      "status": "near_trigger",
-      "trigger_state": "near_trigger",
-      "trigger_condition": "No add. GLD 405 remains the risk line. If GLD breaks below 405, close UGL first. If GLD rebounds to 410-412, consider selling UGL on strength.",
-      "current_action": "use UGL as gold-risk reduction valve if GLD loses 405",
-      "source_files": [
-        "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json"
-      ],
-      "last_updated": "2026-06-04T08:13:00+08:00",
-      "cockpit_priority": "high",
-      "requires_execution_price_confirmation": false,
-      "tags": [
-        "gld_ugl",
-        "near_trigger",
-        "no_add",
-        "risk_control"
-      ]
-    },
-    {
-      "rule_id": "btc-staged-buyback-monitor-20260604-0813",
+      "rule_id": "btc-buyback-monitor-20260605-0814",
       "asset_or_module": "BTC",
       "rule_type": "staged_buyback_watch",
       "status": "active",
       "trigger_state": "not_triggered",
-      "trigger_condition": "No buy below 75,500. If BTC stabilizes above 75,500-76,000, buy first 300 USDT. If confirmation holds, buy second 300 USDT. If breakout fails, cancel buyback.",
-      "current_action": "no BTC buyback until stabilization and confirmation",
+      "trigger_condition": "No BTC buyback below 75,500. If BTC stabilizes above 75,500-76,000, buy first 300 USDT. If confirmation holds, buy second 300 USDT.",
+      "current_action": "no BTC buyback",
       "source_files": [
-        "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json"
+        "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
       ],
-      "last_updated": "2026-06-04T08:13:00+08:00",
+      "last_updated": "2026-06-05T08:14:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
@@ -132,17 +127,17 @@
       ]
     },
     {
-      "rule_id": "eth-sol-doge-no-add-monitor-20260604-0813",
+      "rule_id": "eth-sol-doge-no-add-monitor-20260605-0814",
       "asset_or_module": "ETH/SOL/DOGE",
       "rule_type": "crypto_defensive_hold",
       "status": "active",
-      "trigger_state": "not_triggered",
-      "trigger_condition": "No add to ETH, SOL, or DOGE.",
-      "current_action": "observe only",
+      "trigger_state": "active",
+      "trigger_condition": "No ETH, SOL, or DOGE adds.",
+      "current_action": "preserve USDT-dominant crypto defense",
       "source_files": [
-        "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json"
+        "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
       ],
-      "last_updated": "2026-06-04T08:13:00+08:00",
+      "last_updated": "2026-06-05T08:14:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
@@ -153,17 +148,17 @@
       ]
     },
     {
-      "rule_id": "zec-closed-profit-locked-monitor-20260604-0813",
+      "rule_id": "zec-no-reopen-monitor-20260605-0814",
       "asset_or_module": "ZEC",
       "rule_type": "closed_grid_profit_lock",
       "status": "executed",
       "trigger_state": "executed",
-      "trigger_condition": "No grid reopening, no chase, residual ZEC can be converted later if needed.",
-      "current_action": "preserve closed/profit-locked state",
+      "trigger_condition": "No ZEC grid reopening and no ZEC chase. ZEC grid remains closed/profit-locked based on prior confirmed execution.",
+      "current_action": "preserve closed/profit-locked ZEC grid state",
       "source_files": [
-        "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json"
+        "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
       ],
-      "last_updated": "2026-06-04T08:13:00+08:00",
+      "last_updated": "2026-06-05T08:14:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
@@ -174,9 +169,9 @@
   ],
   "summary": {
     "rule_count": 8,
-    "near_trigger_count": 3,
-    "not_triggered_count": 3,
-    "awaiting_execution_confirmation_count": 1,
+    "near_trigger_count": 1,
+    "not_triggered_count": 1,
+    "awaiting_execution_confirmation_count": 0,
     "executed_count": 1
   },
   "warnings": []

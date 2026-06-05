@@ -1,70 +1,72 @@
 {
-  "generated_at": "2026-06-04T08:13:00+08:00",
+  "generated_at": "2026-06-05T08:14:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "cockpit_latest_state",
   "version": "0.1",
-  "latest_active_checkpoint": "2026-06-04T08:13:00+08:00",
+  "latest_active_checkpoint": "2026-06-05T08:14:00+08:00",
   "source_files": [
-    "records/ldd/2026-06-04/account_state_delta_0812_0813_sgt.json",
-    "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json",
+    "records/ldd/2026-06-05/account_state_delta_0813_0814_sgt.json",
+    "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json",
     "records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json",
-    "records/ldd/2026-06-04/section_level_account_structure_requirement_0812_0813_sgt.json",
-    "records/ldd/2026-06-04/ldd_post_close_runtime_delta_0812_0813_sgt.json",
+    "records/ldd/2026-06-05/execution_feedback_loop_requirement_0813_0814_sgt.json",
+    "records/ldd/2026-06-05/ldd_post_close_checkpoint_0813_0814_sgt.json",
+    "records/ldd/2026-06-04/soxl_execution_filled_1732_sgt.json",
+    "records/ldd/2026-06-05/soxl_execution_reconciliation_0813_0814_sgt.json",
     "cockpit/ldd/runtime_timeline.json"
   ],
   "state_summary": {
     "total_account": {
-      "broker_total_assets_usd": "approximately 43727.82",
-      "cash_usd": "approximately 3511.18",
-      "total_holding_value_usd": "approximately 40216.64",
-      "total_holding_pl_usd": "approximately +20727.78",
-      "total_day_pl_usd": "approximately +323.45",
-      "note": "Total-account positive day P/L was supported by Hong Kong holding 02513 Zhipu; U.S. equity section itself was negative."
+      "broker_total_assets_usd": "approximately 43500.82",
+      "cash_usd": "approximately 4255.18",
+      "total_holding_value_usd": "approximately 39245.64",
+      "total_holding_pl_usd": "approximately +20500.77",
+      "total_day_pl_usd": "approximately -346.7",
+      "note": "Total-account day P/L was negative mainly due to Hong Kong holding weakness; U.S. equity section itself was positive."
     },
     "hong_kong_equities": {
       "02513_zhipu": {
         "shares": 100,
-        "market_value_hkd": "approximately 146200",
-        "latest_price_hkd": "approximately 1462",
-        "day_pl_hkd": "approximately +5000",
-        "holding_pl_hkd": "approximately +134580"
+        "market_value_hkd": "approximately 142600",
+        "latest_price_hkd": "approximately 1426",
+        "day_pl_hkd": "approximately -3600",
+        "holding_pl_hkd": "approximately +130980"
       }
     },
     "us_equities": {
-      "section_value_usd": "approximately 25072.7",
-      "holding_market_value_usd": "approximately 21561.52",
-      "holding_pl_usd": "approximately +3555.37",
-      "day_pl_usd": "approximately -314.54",
+      "section_value_usd": "approximately 25305.06",
+      "holding_market_value_usd": "approximately 21049.88",
+      "holding_pl_usd": "approximately +3787.73",
+      "day_pl_usd": "approximately +112.65",
       "historical_cleanup_status": "SOXS, TSLQ, and GDXU closed; no reopening.",
       "new_ldd_model_strategy_status": "No new LDD U.S. model strategy position.",
       "key_positions": [
         "GLD 20",
         "GOOG 14",
         "NVDA 20",
-        "SOXL 5",
+        "SOXL 2",
         "GGLL 10",
         "INTC 10",
         "UGL 10",
         "tiny TSLA residual"
       ],
       "open_risks": [
-        "SOXL leveraged exposure",
+        "Residual SOXL 2-share leveraged exposure",
         "GGLL leveraged GOOG exposure",
         "UGL leveraged gold exposure",
-        "SOXL quote-source conflict"
+        "SOXL realized-vs-unrealized execution review"
       ]
     },
     "crypto": {
-      "binance_total_assets_usdt": "approximately 8425.94",
-      "usdt": "5936.00171992",
+      "binance_total_assets_usdt": "approximately 8371.43",
+      "usdt": "5936",
       "eth": "0.8070416",
       "doge": "8400.535",
       "sol": "2.931163",
       "btc": "0.00055762",
-      "zec_residual": "0.012974, approximately 7.85 USDT",
+      "zec_residual": "0.012974, approximately 6.77 USDT",
       "cash_posture": "USDT-dominant defensive posture",
       "btc_buyback_status": "Not triggered below 75,500-76,000",
-      "zec_bot_status": "Closed / profit-locked based on prior execution state; no latest bot page screenshot in 2026-06-04 update",
+      "zec_bot_status": "Closed / profit-locked based on prior confirmed execution state; no running ZEC bot screenshot in 2026-06-05 update",
       "open_risks": [
         "Crypto market weakness",
         "BTC still below buyback trigger",
@@ -72,10 +74,14 @@
       ]
     },
     "runtime": {
-      "latest_timeline_event_time": "2026-06-04T08:13:00+08:00",
-      "timeline_event_count": 21,
+      "latest_timeline_event_time": "2026-06-05T08:14:00+08:00",
+      "timeline_event_count": 27,
       "warning_count": 0,
-      "no_new_execution_confirmed": true
+      "no_new_execution_confirmed": false,
+      "confirmed_execution_reconciled": true,
+      "latest_confirmed_execution": "SOXL sell 3 shares at 248.00 USD",
+      "soxl_position_after_execution": "2",
+      "cash_change_reconciliation": "Broker cash increased by about 744 USD, matching 3 x 248.00 USD."
     }
   },
   "warnings": []

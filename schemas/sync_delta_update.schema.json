@@ -89,6 +89,7 @@
         "supersedes_prior",
         "delta_update",
         "delta_update_required",
+        "execution_confirmed_and_checkpoint_updated",
         "archived"
       ]
     }

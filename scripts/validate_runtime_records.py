@@ -71,6 +71,16 @@ COCKPIT_SUMMARY_FILES = {
 
 
 def schema_for_filename(filename: str) -> tuple[str, str] | None:
+    if "soxl_execution_filled" in filename:
+        return "execution_event", SCHEMA_FILES["execution_event"]
+    if "ldd_post_close_checkpoint" in filename:
+        return "sync_delta_update", SCHEMA_FILES["sync_delta_update"]
+    if "soxl_execution_reconciliation" in filename:
+        return "rule_based_execution_review", SCHEMA_FILES["rule_based_execution_review"]
+    if "execution_feedback_loop_requirement" in filename:
+        return "account_structure_review", SCHEMA_FILES["account_structure_review"]
+    if "residual_risk_valve_state" in filename:
+        return "rule_ledger_snapshot", SCHEMA_FILES["rule_ledger_snapshot"]
     if filename == "manifest.json":
         return "cockpit_manifest", SCHEMA_FILES["cockpit_manifest"]
     if filename in COCKPIT_SUMMARY_FILES:

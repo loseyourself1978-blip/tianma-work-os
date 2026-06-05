@@ -1,0 +1,66 @@
+{
+  "delta_id": "ldd-post-close-checkpoint-20260605-0813-0814-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "sync_time": "2026-06-05T08:14:00+08:00",
+  "source_cutoff_time": "2026-06-05T08:14:00+08:00",
+  "source_of_truth": [
+    "user_provided_longbridge_broker_screenshots_20260605_0813_0814_sgt",
+    "user_provided_binance_screenshots_20260605_0813_0814_sgt",
+    "user_provided_soxl_order_screenshot_20260604_1732_sgt",
+    "external_market_data_cross_check_market_context_only"
+  ],
+  "updates_or_supersedes": [
+    "records/ldd/2026-06-04/ldd_post_close_runtime_delta_0812_0813_sgt.json",
+    "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json",
+    "records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json",
+    "cockpit/ldd/latest_state.json prior generated state"
+  ],
+  "included_events": [
+    "Confirmed SOXL sell order at 2026-06-04 17:32 SGT/BJT: sold 3 shares at 248.00 USD.",
+    "SOXL position is now 2 shares, reduced from 5 shares.",
+    "Broker cash increased from about 3,511.18 USD to about 4,255.18 USD.",
+    "The approximate 744 USD cash increase matches 3 x 248.00 USD.",
+    "Broker total assets were about 43,500.82 USD with broker day P/L about -346.70 USD.",
+    "U.S. equity section was positive with day P/L about +112.65 USD.",
+    "Hong Kong 02513 Zhipu weakened and drove total-account day P/L negative.",
+    "Binance visible assets were about 8,371.43 USDT and remained USDT-dominant.",
+    "ZEC grid remains closed/profit-locked based on prior confirmed execution; no running bot screenshot was provided.",
+    "Runtime requirements strengthened: Confirmed Execution Reconciliation, Realized vs Unrealized Risk Tracking, Section-Level Account Attribution, and Residual Risk Valve State."
+  ],
+  "pending_events": [
+    "Confirm whether NVDA reclaims and holds 218-220.",
+    "Confirm whether SOXL remains below 250 or rebounds to 255-260.",
+    "Confirm whether GOOG holds 365-370 or falls below 360.",
+    "Confirm whether GGLL should be partially locked if GOOG fails near 372-380.",
+    "Confirm whether GLD holds above 405 and whether UGL can be sold into strength around GLD 412-416.",
+    "Confirm whether BTC remains below 75,500-76,000.",
+    "Wait for any new order screenshots before recording additional execution.",
+    "Wait for any new ZEC bot screenshot before changing closed/profit-locked state."
+  ],
+  "delta_reason": "Post-close screenshots confirm the 2026-06-04 SOXL execution has propagated into both position size and cash balance. This becomes the latest active LDD checkpoint.",
+  "changed_fields": [
+    "latest_active_checkpoint: 2026-06-04T08:13:00+08:00 -> 2026-06-05T08:14:00+08:00",
+    "soxl_position: 5_shares -> 2_shares",
+    "soxl_execution_status: pending_confirmation -> confirmed_and_reconciled",
+    "broker_cash: about_3511.18_usd -> about_4255.18_usd",
+    "cash_reconciliation: 3_x_248_usd_equals_744_usd",
+    "total_account_day_pl: positive_to_negative_due_to_hong_kong_weakness",
+    "us_equity_day_pl: negative_to_positive",
+    "main_us_risk_valves: GGLL_UGL_residual_SOXL",
+    "product_requirements: confirmed_execution_reconciliation_realized_vs_unrealized_risk_tracking_section_attribution_residual_risk_valve_state"
+  ],
+  "new_records": [
+    "records/ldd/2026-06-04/soxl_execution_filled_1732_sgt.json",
+    "records/ldd/2026-06-05/soxl_execution_reconciliation_0813_0814_sgt.json",
+    "records/ldd/2026-06-05/account_state_delta_0813_0814_sgt.json",
+    "records/ldd/2026-06-05/execution_feedback_loop_requirement_0813_0814_sgt.json",
+    "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json",
+    "docs/runtime/COCKPIT_READY_SUMMARY_LAYER_v0.1.md",
+    "docs/runtime/RUNTIME_TIMELINE_LAYER_v0.1.md"
+  ],
+  "sync_status": "execution_confirmed_and_checkpoint_updated"
+}

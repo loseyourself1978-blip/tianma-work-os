@@ -141,6 +141,15 @@ def find_record(records: list[RuntimeRecord], needle: str) -> RuntimeRecord | No
     return latest(matches)
 
 
+def find_latest(records: list[RuntimeRecord], needles: list[str]) -> RuntimeRecord | None:
+    matches = [
+        record
+        for record in records
+        if any(needle in record.relpath for needle in needles)
+    ]
+    return latest(matches)
+
+
 def timeline_payload(warnings: list[str]) -> dict[str, Any]:
     if not TIMELINE_PATH.exists():
         warnings.append(f"{relpath(TIMELINE_PATH)} is missing")
@@ -245,12 +254,19 @@ def build_active_rules(rule_monitor: RuntimeRecord | None) -> list[dict[str, Any
     return rules
 
 
-def build_strategy_states(latest_checkpoint: str) -> list[dict[str, Any]]:
-    source = [
-        "records/ldd/2026-06-04/account_state_delta_0812_0813_sgt.json",
-        "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json",
-        "records/ldd/2026-06-03/zec_bot_strategy_state_closed_20260603_0839.json",
-    ]
+def build_strategy_states(
+    latest_checkpoint: str,
+    account_source: str,
+    rule_source: str,
+    zec_source: str,
+    soxl_reconciliation_source: str,
+    soxl_quantity: str,
+) -> list[dict[str, Any]]:
+    soxl_summary = (
+        f"SOXL is now a residual {soxl_quantity}-share watch position after confirmed execution reconciliation."
+        if soxl_quantity != "unknown"
+        else "SOXL remains a leveraged risk valve under monitoring."
+    )
     return [
         {
             "strategy_id": "us-historical-position-management",
@@ -258,7 +274,7 @@ def build_strategy_states(latest_checkpoint: str) -> list[dict[str, Any]]:
             "status": "active",
             "summary": "Historical-position cleanup and risk-control phase remains active.",
             "next_required_action": "Use SOXL, GGLL, and UGL as risk-reduction valves when rules confirm.",
-            "source_files": source[:2],
+            "source_files": [account_source, rule_source],
             "last_updated": latest_checkpoint,
             "cockpit_priority": "high",
             "tags": ["historical_cleanup", "risk_control"],
@@ -269,7 +285,7 @@ def build_strategy_states(latest_checkpoint: str) -> list[dict[str, Any]]:
             "status": "not_opened",
             "summary": "No new LDD U.S. model strategy position is open.",
             "next_required_action": "Do not open a new model position from this checkpoint.",
-            "source_files": [source[0]],
+            "source_files": [account_source],
             "last_updated": latest_checkpoint,
             "cockpit_priority": "medium",
             "tags": ["new_strategy_separation", "no_new_buying"],
@@ -280,7 +296,7 @@ def build_strategy_states(latest_checkpoint: str) -> list[dict[str, Any]]:
             "status": "closed",
             "summary": "SOXS remains closed with no reopening.",
             "next_required_action": "No reopening.",
-            "source_files": [source[0]],
+            "source_files": [account_source],
             "last_updated": latest_checkpoint,
             "cockpit_priority": "low",
             "tags": ["closed", "historical_cleanup"],
@@ -291,7 +307,7 @@ def build_strategy_states(latest_checkpoint: str) -> list[dict[str, Any]]:
             "status": "closed",
             "summary": "TSLQ remains closed with no reopening.",
             "next_required_action": "No reopening.",
-            "source_files": [source[0]],
+            "source_files": [account_source],
             "last_updated": latest_checkpoint,
             "cockpit_priority": "low",
             "tags": ["closed", "historical_cleanup"],
@@ -302,7 +318,7 @@ def build_strategy_states(latest_checkpoint: str) -> list[dict[str, Any]]:
             "status": "closed",
             "summary": "GDXU remains closed with no reopening.",
             "next_required_action": "No reopening.",
-            "source_files": [source[0]],
+            "source_files": [account_source],
             "last_updated": latest_checkpoint,
             "cockpit_priority": "low",
             "tags": ["closed", "historical_cleanup"],
@@ -311,9 +327,9 @@ def build_strategy_states(latest_checkpoint: str) -> list[dict[str, Any]]:
             "strategy_id": "soxl-risk-valve",
             "asset_or_module": "SOXL",
             "status": "monitoring",
-            "summary": "SOXL remains a leveraged risk valve with quote-source conflict requiring order-ticket confirmation.",
-            "next_required_action": "Use executable order-ticket bid/ask before any sell or close decision.",
-            "source_files": [source[1], "records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json"],
+            "summary": soxl_summary,
+            "next_required_action": "Do not re-add SOXL; monitor residual shares under strict risk-valve rules.",
+            "source_files": [rule_source, soxl_reconciliation_source],
             "last_updated": latest_checkpoint,
             "cockpit_priority": "high",
             "tags": ["soxl", "quote_source_conflict", "risk_valve"],
@@ -324,7 +340,7 @@ def build_strategy_states(latest_checkpoint: str) -> list[dict[str, Any]]:
             "status": "monitoring",
             "summary": "GGLL is governed by GOOG weakness and rebound rules.",
             "next_required_action": "Prepare reduction only after GOOG confirmation lines are observed.",
-            "source_files": [source[1]],
+            "source_files": [rule_source],
             "last_updated": latest_checkpoint,
             "cockpit_priority": "high",
             "tags": ["goog", "ggll", "risk_valve"],
@@ -335,7 +351,7 @@ def build_strategy_states(latest_checkpoint: str) -> list[dict[str, Any]]:
             "status": "monitoring",
             "summary": "UGL is the first gold-risk valve if GLD breaks 405.",
             "next_required_action": "Monitor GLD 405 and require order evidence before action.",
-            "source_files": [source[1]],
+            "source_files": [rule_source],
             "last_updated": latest_checkpoint,
             "cockpit_priority": "high",
             "tags": ["gld", "ugl", "risk_valve"],
@@ -346,7 +362,7 @@ def build_strategy_states(latest_checkpoint: str) -> list[dict[str, Any]]:
             "status": "monitoring",
             "summary": "NVDA remains held but is near the 215/212 risk area.",
             "next_required_action": "Hold unless 212 break requires SOXL or NVDA risk reassessment.",
-            "source_files": [source[1]],
+            "source_files": [rule_source],
             "last_updated": latest_checkpoint,
             "cockpit_priority": "high",
             "tags": ["nvda", "ai_exposure", "near_trigger"],
@@ -357,7 +373,7 @@ def build_strategy_states(latest_checkpoint: str) -> list[dict[str, Any]]:
             "status": "active",
             "summary": "Crypto remains USDT-dominant and defensive.",
             "next_required_action": "Do not add ETH, SOL, DOGE, or ZEC; wait for BTC trigger.",
-            "source_files": [source[0]],
+            "source_files": [account_source],
             "last_updated": latest_checkpoint,
             "cockpit_priority": "medium",
             "tags": ["crypto", "usdt_defensive"],
@@ -368,7 +384,7 @@ def build_strategy_states(latest_checkpoint: str) -> list[dict[str, Any]]:
             "status": "waiting_for_trigger",
             "summary": "BTC buyback is not triggered below 75,500-76,000.",
             "next_required_action": "Wait for stabilization and confirmation before staged buyback.",
-            "source_files": [source[1]],
+            "source_files": [rule_source],
             "last_updated": latest_checkpoint,
             "cockpit_priority": "medium",
             "tags": ["btc", "waiting_for_trigger"],
@@ -379,7 +395,7 @@ def build_strategy_states(latest_checkpoint: str) -> list[dict[str, Any]]:
             "status": "closed",
             "summary": "ZEC grid remains closed / profit locked based on prior execution state.",
             "next_required_action": "Do not reopen grid or chase; residual ZEC can be converted later if needed.",
-            "source_files": [source[2], source[1]],
+            "source_files": [zec_source, rule_source],
             "last_updated": latest_checkpoint,
             "cockpit_priority": "medium",
             "tags": ["zec", "closed_profit_locked", "no_reopen"],
@@ -418,15 +434,18 @@ def write_json(path: Path, payload: dict[str, Any]) -> None:
 
 def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
     timeline = timeline_payload(warnings)
-    portfolio_record = find_record(records, "account_state_delta_0812_0813_sgt")
-    rule_monitor = find_record(records, "rule_trigger_monitor_0812_0813_sgt")
-    quote_conflict = find_record(records, "quote_source_conflict_soxl_0812_0813_sgt")
-    section_review = find_record(records, "section_level_account_structure_requirement_0812_0813_sgt")
-    delta_record = find_record(records, "ldd_post_close_runtime_delta_0812_0813_sgt")
+    portfolio_record = find_latest(records, ["account_state_delta"])
+    rule_monitor = find_latest(records, ["rule_trigger_monitor", "residual_risk_valve_state"])
+    quote_conflict = find_latest(records, ["quote_source_conflict_soxl"])
+    section_review = find_latest(records, ["section_level_account_structure_requirement", "execution_feedback_loop_requirement"])
+    delta_record = find_latest(records, ["ldd_post_close_checkpoint", "ldd_post_close_runtime_delta", "sync_block_delta_protocol"])
+    soxl_execution = find_latest(records, ["soxl_execution_filled"])
+    soxl_reconciliation = find_latest(records, ["soxl_execution_reconciliation"])
+    zec_state = find_latest(records, ["zec_bot_strategy_state_closed"])
     pending_records = [record for record in records if "pending_" in record.relpath or "pending_command" in record.relpath]
 
     if portfolio_record is None:
-        warnings.append("Latest 2026-06-04 account-state delta record is missing")
+        warnings.append("Latest account-state delta record is missing")
         portfolio_data: dict[str, Any] = {}
     else:
         portfolio_data = portfolio_record.data
@@ -438,7 +457,7 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
     )
     source_files = [
         item.relpath
-        for item in [portfolio_record, rule_monitor, quote_conflict, section_review, delta_record]
+        for item in [portfolio_record, rule_monitor, quote_conflict, section_review, delta_record, soxl_execution, soxl_reconciliation]
         if item is not None
     ]
 
@@ -446,9 +465,19 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
     cash = portfolio_data.get("cash_balance", {}) if isinstance(portfolio_data.get("cash_balance"), dict) else {}
     hk = holding_contains(portfolio_data, "02513")
     zec = holding_by_asset(portfolio_data, "ZEC")
+    soxl = holding_by_asset(portfolio_data, "SOXL")
+    soxl_quantity = scalar(soxl.get("quantity"))
+    execution_confirmed = soxl_execution is not None and soxl_reconciliation is not None and soxl_quantity == "2"
 
     active_rules = build_active_rules(rule_monitor)
-    strategy_states = build_strategy_states(latest_checkpoint)
+    strategy_states = build_strategy_states(
+        latest_checkpoint,
+        portfolio_record.relpath if portfolio_record else "unknown",
+        rule_monitor.relpath if rule_monitor else "unknown",
+        zec_state.relpath if zec_state else "records/ldd/2026-06-03/zec_bot_strategy_state_closed_20260603_0839.json",
+        soxl_reconciliation.relpath if soxl_reconciliation else "unknown",
+        soxl_quantity,
+    )
 
     command_items: list[dict[str, Any]] = []
     command_counts = {
@@ -457,7 +486,8 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
         "superseded_count": 0,
         "historical_count": 0,
         "unknown_count": 0,
-        "no_new_execution_confirmed": True,
+        "no_new_execution_confirmed": not execution_confirmed,
+        "confirmed_execution_reconciled": execution_confirmed,
     }
     for record in pending_records:
         status = command_status(
@@ -501,8 +531,8 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
                 "cash_usd": approx(assets.get("cash_usd") or cash.get("broker_cash_usd")),
                 "total_holding_value_usd": approx(assets.get("total_holding_value_usd")),
                 "total_holding_pl_usd": approx_signed(assets.get("total_holding_pl_usd")),
-                "total_day_pl_usd": approx_signed(assets.get("total_account_day_pl_usd")),
-                "note": "Total-account positive day P/L was supported by Hong Kong holding 02513 Zhipu; U.S. equity section itself was negative.",
+                "total_day_pl_usd": approx_signed(assets.get("total_account_day_pl_usd") or assets.get("broker_day_pl_usd")),
+                "note": "Total-account day P/L was negative mainly due to Hong Kong holding weakness; U.S. equity section itself was positive.",
             },
             "hong_kong_equities": {
                 "02513_zhipu": {
@@ -524,17 +554,17 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
                     "GLD 20",
                     "GOOG 14",
                     "NVDA 20",
-                    "SOXL 5",
+                    f"SOXL {soxl_quantity}",
                     "GGLL 10",
                     "INTC 10",
                     "UGL 10",
                     "tiny TSLA residual",
                 ],
                 "open_risks": [
-                    "SOXL leveraged exposure",
+                    "Residual SOXL 2-share leveraged exposure",
                     "GGLL leveraged GOOG exposure",
                     "UGL leveraged gold exposure",
-                    "SOXL quote-source conflict",
+                    "SOXL realized-vs-unrealized execution review",
                 ],
             },
             "crypto": {
@@ -547,7 +577,7 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
                 "zec_residual": f"{scalar(zec.get('quantity'))}, approximately {scalar(zec.get('approx_value_usdt'))} USDT",
                 "cash_posture": "USDT-dominant defensive posture",
                 "btc_buyback_status": "Not triggered below 75,500-76,000",
-                "zec_bot_status": "Closed / profit-locked based on prior execution state; no latest bot page screenshot in 2026-06-04 update",
+                "zec_bot_status": "Closed / profit-locked based on prior confirmed execution state; no running ZEC bot screenshot in 2026-06-05 update",
                 "open_risks": [
                     "Crypto market weakness",
                     "BTC still below buyback trigger",
@@ -558,7 +588,11 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
                 "latest_timeline_event_time": scalar(timeline.get("generated_at"), latest_checkpoint),
                 "timeline_event_count": timeline.get("event_count", 0),
                 "warning_count": len(timeline.get("warnings", [])) if isinstance(timeline.get("warnings"), list) else 0,
-                "no_new_execution_confirmed": True,
+                "no_new_execution_confirmed": not execution_confirmed,
+                "confirmed_execution_reconciled": execution_confirmed,
+                "latest_confirmed_execution": "SOXL sell 3 shares at 248.00 USD" if execution_confirmed else "none",
+                "soxl_position_after_execution": soxl_quantity,
+                "cash_change_reconciliation": "Broker cash increased by about 744 USD, matching 3 x 248.00 USD." if execution_confirmed else "not available",
             },
         },
         "warnings": [],
@@ -605,25 +639,33 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
         "runtime_layer": "cockpit_account_structure",
         "version": VERSION,
         "latest_active_checkpoint": latest_checkpoint,
-        "source_files": [item for item in source_files if "account_state_delta" in item or "section_level" in item or "quote_source" in item],
+        "source_files": [
+            item
+            for item in source_files
+            if "account_state_delta" in item
+            or "section_level" in item
+            or "quote_source" in item
+            or "execution_feedback_loop" in item
+            or "soxl_execution" in item
+        ],
         "sections": {
             "total_account": {
-                "status": "positive_total_day_pl_but_section_divergence",
+                "status": "negative_total_day_pl_but_us_section_positive",
                 "broker_total_assets_usd": approx(assets.get("broker_total_assets_usd") or assets.get("us_broker_total_assets_usd")),
-                "total_day_pl_usd": approx(assets.get("total_account_day_pl_usd")),
-                "note": "Total-account day P/L was positive, but U.S. equity section was negative.",
+                "total_day_pl_usd": approx_signed(assets.get("total_account_day_pl_usd") or assets.get("broker_day_pl_usd")),
+                "note": "Total-account day P/L was negative mainly due to Hong Kong holding weakness, while U.S. equity section day P/L was positive.",
             },
             "us_equities": {
-                "status": "negative_day_pl_risk_control_active",
+                "status": "positive_day_pl_after_soxl_risk_reduction",
                 "section_value_usd": approx(assets.get("us_equity_section_usd") or assets.get("us_stock_section_usd")),
-                "day_pl_usd": approx(assets.get("us_day_pl_usd")),
-                "main_risk_valves": ["SOXL", "GGLL", "UGL"],
+                "day_pl_usd": approx_signed(assets.get("us_day_pl_usd")),
+                "main_risk_valves": ["residual SOXL", "GGLL", "UGL"],
             },
             "hong_kong_equities": {
-                "status": "positive_contributor",
+                "status": "negative_day_pl_primary_total_account_drag",
                 "primary_holding": "02513 Zhipu",
-                "day_pl_hkd": approx(hk.get("day_pl_hkd")),
-                "holding_pl_hkd": approx(hk.get("holding_pl_hkd")),
+                "day_pl_hkd": approx_signed(hk.get("day_pl_hkd")),
+                "holding_pl_hkd": approx_signed(hk.get("holding_pl_hkd")),
             },
             "crypto_spot": {
                 "status": "defensive_usdt_dominant",
@@ -638,42 +680,53 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
                 "binance_usdt": approx(cash.get("binance_usdt"), ""),
             },
             "leveraged_exposure": {
-                "status": "risk_controls_active",
-                "open_exposures": ["SOXL 5", "GGLL 10", "UGL 10"],
+                "status": "risk_controls_active_soxl_major_reduction_complete",
+                "open_exposures": [f"SOXL {soxl_quantity}", "GGLL 10", "UGL 10"],
                 "no_reopen": ["SOXS", "TSLQ", "GDXU"],
             },
             "historical_cleanup": {
                 "status": "active",
                 "closed": ["SOXS", "TSLQ", "GDXU"],
-                "watch": ["SOXL", "GGLL", "INTC", "UGL"],
+                "watch": ["residual SOXL", "GGLL", "INTC", "UGL"],
             },
             "quote_quality": {
-                "status": "quote_source_conflict_requires_confirmation",
+                "status": "execution_price_confirmed_for_soxl_sale",
                 "symbol": "SOXL",
-                "holding_page_price": "approximately 261.550",
-                "watchlist_or_external_quote": "approximately 280.54",
-                "execution_validity": "order-ticket bid/ask required",
+                "filled_price": "248.00 USD",
+                "filled_quantity": 3,
+                "execution_validity": "confirmed by user-provided order screenshot and reconciled against cash/position state",
+            },
+            "execution_reconciliation": {
+                "status": "confirmed_and_reconciled" if execution_confirmed else "not_confirmed",
+                "order_filled_quantity": 3 if execution_confirmed else 0,
+                "position_before": 5 if execution_confirmed else "unknown",
+                "position_after": soxl_quantity,
+                "expected_cash_delta_usd": approx(assets.get("expected_soxl_cash_delta_usd")),
+                "actual_cash_delta_usd": approx(assets.get("cash_change_usd") or cash.get("broker_cash_change_usd")),
             },
         },
         "quality_assessment": {
-            "overall_status": "improved_but_risk_controls_active",
+            "overall_status": "execution_reconciled_but_risk_controls_active",
             "positive_factors": [
-                "Hong Kong 02513 Zhipu supported total-account day P/L.",
+                "SOXL exposure was reduced by 60%, from 5 shares to 2 shares.",
+                "Broker cash increased by about 744 USD, matching the confirmed SOXL sale.",
+                "U.S. equity section day P/L was positive.",
                 "USDT remains dominant in crypto.",
                 "ZEC grid remains closed / profit locked.",
                 "SOXS, TSLQ, and GDXU remain closed.",
             ],
             "risk_factors": [
-                "U.S. equity section day P/L was negative.",
-                "SOXL quote-source conflict blocks execution validity until order-ticket confirmation.",
-                "GOOG, NVDA, SOXL, and GLD are close to runtime trigger lines.",
+                "Total account day P/L was negative due to Hong Kong holding weakness.",
+                "Residual SOXL 2-share leveraged exposure remains.",
+                "GGLL and UGL remain cleanup/risk-valve candidates.",
                 "BTC buyback remains inactive below 75,500-76,000.",
             ],
             "next_required_confirmations": [
-                "Whether GOOG reclaims 358-360 or remains below 355.",
-                "Whether NVDA reclaims 218-220 or breaks below 212.",
-                "Which SOXL quote is execution-valid on the order ticket.",
-                "Whether GLD holds 405.",
+                "Whether NVDA can reclaim and hold 218-220.",
+                "Whether SOXL remains below 250 or rebounds to 255-260.",
+                "Whether GOOG holds 365-370 or falls below 360.",
+                "Whether GGLL should be partially locked if GOOG fails near 372-380.",
+                "Whether GLD holds above 405 and whether UGL can be sold into strength around GLD 412-416.",
                 "Whether BTC remains below 75,500-76,000.",
                 "Whether any new order screenshots confirm actual execution.",
                 "Whether a latest ZEC bot page screenshot is provided.",
@@ -706,7 +759,7 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
             "reports/ldd/memory_cleanup_recommendations.md",
             "records/ldd/2026-06-04/ldd_post_close_runtime_delta_0812_0813_sgt.json",
         ],
-        "active_memory_status": "Keep durable rules and latest 2026-06-04 active checkpoint; archive older detailed snapshots in records/reports.",
+        "active_memory_status": f"Keep durable rules and latest {latest_checkpoint} active checkpoint; archive older detailed snapshots in records/reports.",
         "durable_rules": [
             "User-provided broker/Binance screenshots remain execution source of truth.",
             "Do not execute stale command drafts; execute latest valid command.",
@@ -714,12 +767,12 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
             "No external API connection without an explicit implementation phase.",
             "BTC buyback waits for 75,500-76,000 stabilization/confirmation.",
             "ZEC grid should not be reopened or chased after profit lock.",
-            "SOXL execution requires order-ticket quote confirmation while quote conflict exists.",
+            "Confirmed SOXL execution should be reconciled against position size and cash delta.",
         ],
         "current_checkpoint": latest_checkpoint,
         "superseded_snapshot_candidates": [
             "Old 2026-05 detailed LDD account snapshot memories.",
-            "2026-06-03 premarket/intraday assumptions where superseded by 2026-06-04 post-close state.",
+            "2026-06-04 post-close checkpoint now superseded by the 2026-06-05 confirmed execution reconciliation checkpoint.",
             "Phase 2 v1/v2 drafted command memories.",
             "Phase 3 v1 still-running ZEC bot assumption.",
         ],
@@ -764,7 +817,7 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
             "ui_ready": True,
             "external_api_connected": False,
             "trading_automation_enabled": False,
-            "latest_checkpoint_confirmed": latest_checkpoint == "2026-06-04T08:13:00+08:00",
+            "latest_checkpoint_confirmed": latest_checkpoint == "2026-06-05T08:14:00+08:00",
         },
         "warnings": warnings,
     }

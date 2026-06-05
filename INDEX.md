@@ -160,6 +160,15 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `scripts/generate_cockpit_summary.py`
 - `scripts/generate_cockpit_summary.sh`
 
+## Vol.4 Phase 4.2c / SOXL Execution Reconciliation Checkpoint
+
+- `records/ldd/2026-06-04/soxl_execution_filled_1732_sgt.json`
+- `records/ldd/2026-06-05/ldd_post_close_checkpoint_0813_0814_sgt.json`
+- `records/ldd/2026-06-05/soxl_execution_reconciliation_0813_0814_sgt.json`
+- `records/ldd/2026-06-05/account_state_delta_0813_0814_sgt.json`
+- `records/ldd/2026-06-05/execution_feedback_loop_requirement_0813_0814_sgt.json`
+- `records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json`
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

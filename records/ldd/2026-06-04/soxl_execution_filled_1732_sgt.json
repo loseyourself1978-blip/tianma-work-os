@@ -1,0 +1,32 @@
+{
+  "event_id": "soxl-execution-filled-20260604-1732-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "event_time": "2026-06-04T17:32:00+08:00",
+  "account": "longbridge_us_equity",
+  "asset": "SOXL",
+  "execution_type": "confirmed_sell_order",
+  "execution_nature": "rule_compliant_risk_reduction_historical_leveraged_etf_cleanup_not_new_position",
+  "action": "sell_3_shares",
+  "closing_method": "manual_confirmed_order_fill",
+  "trade": {
+    "symbol": "SOXL",
+    "time": "2026-06-04T17:32:00+08:00",
+    "side": "sell",
+    "price": 248,
+    "quantity": 3,
+    "amount": 744,
+    "fee": 0,
+    "fee_asset": "USD",
+    "role": "manual_order"
+  },
+  "source_of_truth": [
+    "user_provided_longbridge_order_screenshot_20260604_1732_sgt",
+    "user_provided_execution_confirmation"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json",
+    "records/ldd/2026-06-05/soxl_execution_reconciliation_0813_0814_sgt.json",
+    "records/ldd/2026-06-05/account_state_delta_0813_0814_sgt.json"
+  ]
+}
