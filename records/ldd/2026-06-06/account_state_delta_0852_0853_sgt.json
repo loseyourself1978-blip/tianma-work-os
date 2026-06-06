@@ -1,0 +1,79 @@
+{
+  "record_id": "ldd-account-state-delta-20260606-0852-0853-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "account_type": "multi_section_post_close_cleanup_snapshot",
+  "snapshot_time": "2026-06-06T08:53:00+08:00",
+  "source_of_truth": [
+    "user_provided_longbridge_broker_screenshots_20260606_0852_0853_sgt",
+    "user_provided_binance_screenshots_20260606_0852_0853_sgt",
+    "user_provided_soxl_ugl_intc_order_detail_screenshots"
+  ],
+  "base_currency": "mixed_usd_usdt",
+  "total_visible_assets": {
+    "broker_total_assets_usd": 41146.12,
+    "us_broker_total_assets_usd": 41146.12,
+    "us_equity_section_usd": 24591.21,
+    "us_stock_section_usd": 24591.21,
+    "us_holdings_market_value_usd": 18287.05,
+    "us_holding_pl_usd": 3074.93,
+    "us_day_pl_usd": -890.94,
+    "cash_usd": 6304.16,
+    "inferred_us_cash_equivalent_usd": 6304.16,
+    "latest_cleanup_cash_impact_usd": 2050.03,
+    "total_soxl_cleanup_cash_impact_usd": 1222.68,
+    "binance_visible_assets_usdt": 8145.8,
+    "binance_day_pl_usdt": -210.85,
+    "binance_day_pl_pct": -2.52,
+    "binance_usdt_defense_ratio_pct": 72.9
+  },
+  "cash_balance": {
+    "broker_cash_usd": 6304.16,
+    "cash_calculation": "24591.21 us_section_value - 18287.05 us_holding_value",
+    "latest_cleanup_cash_impact_usd": 2050.03,
+    "binance_usdt": 5936,
+    "binance_usdt_defense_ratio_pct": 72.9,
+    "crypto_account_posture": "USDT defensive / cash dominant"
+  },
+  "holdings": [
+    {"account": "us_equity", "asset": "GLD", "quantity": 20, "approx_price": 396.911, "runtime_note": "Below 405; under review. Consider reduction below 395 if recovery fails."},
+    {"account": "us_equity", "asset": "GOOG", "quantity": 14, "approx_price": 361.61, "runtime_note": "Above 355 but below stronger 365-370 zone."},
+    {"account": "us_equity", "asset": "NVDA", "quantity": 20, "approx_price": 204.038, "runtime_note": "Main core-risk watch after break below 212."},
+    {"account": "us_equity", "asset": "GGLL", "quantity": 10, "approx_price": 120.1, "runtime_note": "Main remaining leveraged ETF risk valve."},
+    {"account": "us_equity", "asset": "TSLA", "quantity": 0.0116, "approx_price": 391.323, "runtime_note": "Tiny residual."},
+    {"account": "closed_us_equity", "asset": "SOXL", "quantity": 0, "position_state": "closed_position", "runtime_note": "Do not re-add; historical leveraged-risk cleanup complete."},
+    {"account": "closed_us_equity", "asset": "UGL", "quantity": 0, "position_state": "closed_position", "runtime_note": "Do not re-add; leveraged gold risk valve closed."},
+    {"account": "closed_us_equity", "asset": "INTC", "quantity": 0, "position_state": "closed_position", "runtime_note": "Do not re-add; weak historical position closed."},
+    {"account": "crypto_spot", "asset": "USDT", "quantity": 5936, "defense_ratio_pct": 72.9},
+    {"account": "crypto_spot", "asset": "ETH", "quantity": 0.8070416, "approx_value_usdt": 1284.83},
+    {"account": "crypto_spot", "asset": "DOGE", "quantity": 8400.535, "approx_value_usdt": 693.71},
+    {"account": "crypto_spot", "asset": "SOL", "quantity": 2.931163, "approx_value_usdt": 190.55},
+    {"account": "crypto_spot", "asset": "BTC", "quantity": 0.00055762, "approx_value_usdt": 33.9},
+    {"account": "crypto_spot", "asset": "ZEC", "quantity": 0.012974, "approx_value_usdt": 4.39}
+  ],
+  "strategy_tags": [
+    "latest_active_checkpoint",
+    "post_close_cleanup_review",
+    "core_position_defense_mode",
+    "soxl_closed_position",
+    "ugl_closed_position",
+    "intc_closed_position",
+    "ggll_main_remaining_leveraged_risk_valve",
+    "nvda_main_core_risk_watch",
+    "gld_below_405_under_review",
+    "usdt_defense_ratio_72_9_pct",
+    "no_new_buying"
+  ],
+  "notes": [
+    "Core U.S. holdings after cleanup are GLD, GOOG, NVDA, GGLL, and a tiny TSLA residual.",
+    "SOXL, UGL, and INTC are confirmed closed at 0 shares.",
+    "Latest cleanup cash impact was about 2,050.03 USD before fees.",
+    "Total SOXL cleanup cash impact was about 1,222.68 USD before fees.",
+    "ZEC grid remains closed/profit-locked and no reopening is allowed."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-06/ldd_post_close_cleanup_review_0852_0853_sgt.json",
+    "records/ldd/2026-06-06/portfolio_mode_transition_0852_0853_sgt.json",
+    "records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json"
+  ]
+}

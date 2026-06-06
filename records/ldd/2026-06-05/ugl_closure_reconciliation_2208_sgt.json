@@ -1,0 +1,29 @@
+{
+  "review_id": "ugl-closure-reconciliation-20260605-2208-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "account": "longbridge_us_equity",
+  "asset": "UGL",
+  "position_tag": "closed_leveraged_gold_risk_valve",
+  "review_time": "2026-06-05T22:08:11+08:00",
+  "related_trigger_rule_id": "gld-ugl-monitor-20260605-1704",
+  "related_strategy_state_id": "portfolio-mode-transition-20260606-0853",
+  "intended_rule": "Remove UGL leveraged gold downside exposure as the cleanup risk valve; do not re-add.",
+  "actual_execution": "Confirmed market sell of all 10 UGL shares at 52.385 USD for 523.85 USD. Position transitioned from 10 shares to 0 shares.",
+  "execution_evidence": [
+    "user_provided_longbridge_ugl_order_detail_screenshot_20260605_2208_sgt"
+  ],
+  "rule_compliance_score": 0.96,
+  "account_risk_improvement": "Removed the remaining leveraged gold ETF exposure before subsequent UGL weakness.",
+  "short_term_price_outcome": "UGL later traded around 51.18-51.38. This supports effectiveness but is not the primary correctness criterion.",
+  "review_conclusion": "UGL cleanup completed and the GLD-405 forced UGL cleanup rule is retired because UGL is closed.",
+  "lessons_learned": [
+    "Leveraged exposure cleanup should record position-before, position-after, fill amount, and rule retirement.",
+    "Execution correctness is based on risk removal rather than best-price hindsight."
+  ],
+  "next_rule_update": "Set UGL position to 0 shares, state to closed_position, and remove UGL from active risk valves.",
+  "related_records": [
+    "records/ldd/2026-06-05/ugl_cleanup_execution_2208_sgt.json",
+    "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json"
+  ]
+}

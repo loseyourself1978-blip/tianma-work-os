@@ -93,7 +93,8 @@
         "downside_protection_triggered",
         "closed_profit_locked",
         "closed",
-        "profit_locked"
+        "profit_locked",
+        "core_position_defense"
       ]
     },
     "recommended_action": {

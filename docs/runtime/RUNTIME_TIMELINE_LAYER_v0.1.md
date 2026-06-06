@@ -61,6 +61,8 @@ Later delta records can update the active checkpoint while preserving the prior 
 
 Confirmed execution reconciliation events should appear as order lifecycle events in the timeline: trigger context, order fill, position update, cash delta, rule-based review, and active checkpoint update.
 
+Cleanup effectiveness reviews should follow closure events in the timeline. They preserve subsequent market context without turning hindsight into the execution rule, record the account-structure effect, retire closed-position rules, and explain portfolio-mode transitions such as `historical_risk_cleanup_mode` to `core_position_defense_mode`.
+
 ## Non-Goals
 
 Vol.4 Phase 4.1 does not implement:

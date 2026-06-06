@@ -1,0 +1,36 @@
+{
+  "review_id": "cleanup-effectiveness-review-20260606-0852-0853-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "account": "longbridge_us_equity_cleanup_cycle",
+  "asset": "SOXL/UGL/INTC",
+  "position_tag": "closed_historical_risk_cleanup_cycle",
+  "review_time": "2026-06-06T08:53:00+08:00",
+  "related_trigger_rule_id": "consolidated-cleanup-rules-20260605",
+  "related_strategy_state_id": "portfolio-mode-transition-20260606-0853",
+  "intended_rule": "Remove residual leveraged and weak historical positions when cleanup triggers confirm, then evaluate effectiveness by rule compliance and avoided downside exposure.",
+  "actual_execution": "SOXL sold 2 at 239.34 for 478.68 USD, UGL sold 10 at 52.385 for 523.85 USD, and INTC sold 10 at 104.75 for 1,047.50 USD. Latest cleanup cash impact was about 2,050.03 USD before fees.",
+  "execution_evidence": [
+    "user_provided_longbridge_soxl_order_detail_screenshot_20260605_1951_sgt",
+    "user_provided_longbridge_ugl_order_detail_screenshot_20260605_2208_sgt",
+    "user_provided_longbridge_intc_order_detail_screenshot_20260605_2301_sgt",
+    "user_provided_longbridge_post_close_screenshots_20260606_0852_0853_sgt"
+  ],
+  "rule_compliance_score": 0.97,
+  "account_risk_improvement": "SOXL, UGL, and INTC exposure was reduced to zero; cash/cash-equivalent increased materially; remaining risk is concentrated in core positions and GGLL.",
+  "short_term_price_outcome": "Subsequent prices were SOXL around 176.98-182.54, UGL around 51.18-51.38, and INTC around 96.90-99.17. These moves support effectiveness but do not define correctness.",
+  "review_conclusion": "Cleanup was highly effective and rule-compliant. The portfolio can transition from historical_risk_cleanup_mode to core_position_defense_mode.",
+  "lessons_learned": [
+    "Cleanup Effectiveness Review should store symbol, cleanup execution price, subsequent market price, avoided exposure estimate, cleanup effectiveness score, rule compliance score, and account structure impact.",
+    "Latest cleanup cycle cash impact was approximately 2,050.03 USD before fees.",
+    "Total SOXL cleanup cash impact was approximately 1,222.68 USD before fees across both SOXL fills.",
+    "Execution correctness is based on rule compliance and risk reduction, not best possible exit price."
+  ],
+  "next_rule_update": "Retire SOXL, UGL, and INTC active cleanup rules; activate core-position defense rules for NVDA, GGLL, and GLD.",
+  "related_records": [
+    "records/ldd/2026-06-05/soxl_full_cleanup_reconciliation_1951_sgt.json",
+    "records/ldd/2026-06-05/ugl_closure_reconciliation_2208_sgt.json",
+    "records/ldd/2026-06-05/intc_closure_reconciliation_2301_sgt.json",
+    "records/ldd/2026-06-06/account_state_delta_0852_0853_sgt.json"
+  ]
+}

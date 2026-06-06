@@ -1,0 +1,30 @@
+{
+  "event_id": "soxl-residual-closure-execution-20260605-1951-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "event_time": "2026-06-05T19:51:00+08:00",
+  "account": "longbridge_us_equity",
+  "asset": "SOXL",
+  "execution_type": "confirmed_limit_sell_filled",
+  "execution_nature": "residual_risk_cleanup_position_closure; created 2026-06-05 07:50:53 ET; day order with regular_premarket_after_hours enabled",
+  "action": "sell_remaining_2_shares_close_position",
+  "closing_method": "manual_limit_order_filled_at_239.34_usd",
+  "trade": {
+    "symbol": "SOXL",
+    "time": "2026-06-05T19:51:00+08:00",
+    "side": "sell",
+    "price": 239.34,
+    "quantity": 2,
+    "amount": 478.68,
+    "fee": 0,
+    "fee_asset": "USD",
+    "role": "manual_limit_order"
+  },
+  "source_of_truth": [
+    "user_provided_longbridge_soxl_order_detail_screenshot_20260605_1951_sgt"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-05/soxl_residual_risk_monitor_1703_1704_sgt.json",
+    "records/ldd/2026-06-05/soxl_full_cleanup_reconciliation_1951_sgt.json"
+  ]
+}

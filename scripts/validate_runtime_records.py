@@ -71,6 +71,18 @@ COCKPIT_SUMMARY_FILES = {
 
 
 def schema_for_filename(filename: str) -> tuple[str, str] | None:
+    if "ldd_premarket_checkpoint" in filename or "ldd_post_close_cleanup_review" in filename:
+        return "sync_delta_update", SCHEMA_FILES["sync_delta_update"]
+    if "soxl_residual_risk_monitor" in filename or "portfolio_mode_transition" in filename:
+        return "strategy_state", SCHEMA_FILES["strategy_state"]
+    if "cleanup_effectiveness_review" in filename:
+        return "rule_based_execution_review", SCHEMA_FILES["rule_based_execution_review"]
+    if "remaining_risk_concentration_monitor" in filename:
+        return "rule_ledger_snapshot", SCHEMA_FILES["rule_ledger_snapshot"]
+    if "full_cleanup_reconciliation" in filename or "closure_reconciliation" in filename:
+        return "rule_based_execution_review", SCHEMA_FILES["rule_based_execution_review"]
+    if "cleanup_execution" in filename or "residual_closure_execution" in filename:
+        return "execution_event", SCHEMA_FILES["execution_event"]
     if "soxl_execution_filled" in filename:
         return "execution_event", SCHEMA_FILES["execution_event"]
     if "ldd_post_close_checkpoint" in filename:

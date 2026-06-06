@@ -169,6 +169,24 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `records/ldd/2026-06-05/execution_feedback_loop_requirement_0813_0814_sgt.json`
 - `records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json`
 
+## Vol.4 Phase 4.2d / Cleanup Review & Core-Position Defense
+
+- `records/ldd/2026-06-05/ldd_premarket_checkpoint_1703_1704_sgt.json`
+- `records/ldd/2026-06-05/account_state_delta_1703_1704_sgt.json`
+- `records/ldd/2026-06-05/soxl_residual_risk_monitor_1703_1704_sgt.json`
+- `records/ldd/2026-06-05/rule_trigger_monitor_1703_1704_sgt.json`
+- `records/ldd/2026-06-05/soxl_residual_closure_execution_1951_sgt.json`
+- `records/ldd/2026-06-05/soxl_full_cleanup_reconciliation_1951_sgt.json`
+- `records/ldd/2026-06-05/ugl_cleanup_execution_2208_sgt.json`
+- `records/ldd/2026-06-05/ugl_closure_reconciliation_2208_sgt.json`
+- `records/ldd/2026-06-05/intc_cleanup_execution_2301_sgt.json`
+- `records/ldd/2026-06-05/intc_closure_reconciliation_2301_sgt.json`
+- `records/ldd/2026-06-06/ldd_post_close_cleanup_review_0852_0853_sgt.json`
+- `records/ldd/2026-06-06/account_state_delta_0852_0853_sgt.json`
+- `records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json`
+- `records/ldd/2026-06-06/portfolio_mode_transition_0852_0853_sgt.json`
+- `records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json`
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

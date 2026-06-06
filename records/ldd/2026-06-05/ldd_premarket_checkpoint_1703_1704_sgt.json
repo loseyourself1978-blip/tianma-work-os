@@ -1,0 +1,44 @@
+{
+  "delta_id": "ldd-premarket-checkpoint-20260605-1703-1704-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "sync_time": "2026-06-05T17:04:00+08:00",
+  "source_cutoff_time": "2026-06-05T17:04:00+08:00",
+  "source_of_truth": [
+    "user_provided_longbridge_broker_screenshots_20260605_1703_1704_sgt",
+    "user_provided_binance_screenshots_20260605_1703_1704_sgt",
+    "external_market_data_cross_check_market_context_only"
+  ],
+  "updates_or_supersedes": [
+    "records/ldd/2026-06-05/ldd_post_close_checkpoint_0813_0814_sgt.json",
+    "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
+  ],
+  "included_events": [
+    "SOXL remained at 2 shares around 240.393.",
+    "SOXL residual watch position moved near the 240 cleanup trigger.",
+    "Broker cash remained about 4,255.18 USD.",
+    "No new buying or confirmed execution was visible.",
+    "Binance visible assets were about 8,220.07 USDT with USDT remaining dominant."
+  ],
+  "pending_events": [
+    "Confirm whether executable SOXL price breaks the 240 cleanup trigger.",
+    "Require order-detail evidence before recording a SOXL closure.",
+    "Continue monitoring NVDA, GOOG/GGLL, GLD/UGL, INTC, and BTC rules."
+  ],
+  "delta_reason": "Premarket residual-risk monitoring showed SOXL near its 240 cleanup trigger while the position remained open at 2 shares.",
+  "changed_fields": [
+    "latest_active_checkpoint: 2026-06-05T08:14:00+08:00 -> 2026-06-05T17:04:00+08:00",
+    "soxl_observed_price: about_248.099 -> about_240.393",
+    "soxl_trigger_state: residual_watch_position -> near_cleanup_trigger",
+    "execution_status: no_new_execution_visible"
+  ],
+  "new_records": [
+    "records/ldd/2026-06-05/account_state_delta_1703_1704_sgt.json",
+    "records/ldd/2026-06-05/soxl_residual_risk_monitor_1703_1704_sgt.json",
+    "records/ldd/2026-06-05/rule_trigger_monitor_1703_1704_sgt.json"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-05/soxl_execution_reconciliation_0813_0814_sgt.json"
+  ],
+  "sync_status": "delta_update_required"
+}

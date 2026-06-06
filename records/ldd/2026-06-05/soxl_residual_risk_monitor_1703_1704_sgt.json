@@ -1,0 +1,52 @@
+{
+  "strategy_id": "soxl-residual-risk-monitor-20260605-1704-sgt",
+  "project_id": "tianma-work-os",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "strategy_type": "manual_position_strategy",
+  "linked_asset": "SOXL",
+  "account_ref": "longbridge_us_equity",
+  "initial_capital": 0,
+  "current_value": 480.786,
+  "current_return_pct": 0,
+  "peak_return_pct": 0,
+  "profit_drawdown_pct": 0,
+  "soft_warning_threshold_pct": 0,
+  "hard_protection_threshold_pct": 0,
+  "market_state_context": "SOXL remained at 2 shares around 240.393, near the 240 residual cleanup trigger. No execution was visible at this checkpoint.",
+  "health_state": "near_protection_threshold",
+  "recommended_action": "Do not add. Require confirmed order evidence before marking the residual position closed.",
+  "last_review_time": "2026-06-05T17:04:00+08:00",
+  "source_of_truth": [
+    "user_provided_longbridge_broker_screenshot_20260605_1703_1704_sgt"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-05/account_state_delta_1703_1704_sgt.json",
+    "records/ldd/2026-06-05/rule_trigger_monitor_1703_1704_sgt.json"
+  ],
+  "previous_state": "residual_watch_position",
+  "trigger": "soxl_observed_around_240.393_near_240_cleanup_trigger",
+  "new_state": "near_cleanup_trigger",
+  "execution_status": "waiting_for_execution_confirmation",
+  "recommended_action_after_execution": "If filled, transition to closed_position and retire active SOXL monitoring.",
+  "residual_position": {
+    "asset": "SOXL",
+    "quantity": 2,
+    "approx_price_usd": 240.393,
+    "state": "residual_watch_position"
+  },
+  "status_transition_history": [
+    {
+      "time": "2026-06-05T08:14:00+08:00",
+      "from_state": "reduced_risk_valve",
+      "to_state": "residual_watch_position",
+      "reason": "SOXL was reduced from 5 shares to 2 shares."
+    },
+    {
+      "time": "2026-06-05T17:04:00+08:00",
+      "from_state": "residual_watch_position",
+      "to_state": "near_cleanup_trigger",
+      "reason": "SOXL was observed around 240.393 near the 240 cleanup trigger."
+    }
+  ]
+}

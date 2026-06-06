@@ -1,72 +1,83 @@
 {
-  "generated_at": "2026-06-05T08:14:00+08:00",
+  "generated_at": "2026-06-06T08:53:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "cockpit_latest_state",
   "version": "0.1",
-  "latest_active_checkpoint": "2026-06-05T08:14:00+08:00",
+  "latest_active_checkpoint": "2026-06-06T08:53:00+08:00",
   "source_files": [
-    "records/ldd/2026-06-05/account_state_delta_0813_0814_sgt.json",
-    "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json",
+    "records/ldd/2026-06-06/account_state_delta_0852_0853_sgt.json",
+    "records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json",
     "records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json",
     "records/ldd/2026-06-05/execution_feedback_loop_requirement_0813_0814_sgt.json",
-    "records/ldd/2026-06-05/ldd_post_close_checkpoint_0813_0814_sgt.json",
-    "records/ldd/2026-06-04/soxl_execution_filled_1732_sgt.json",
-    "records/ldd/2026-06-05/soxl_execution_reconciliation_0813_0814_sgt.json",
+    "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json",
+    "records/ldd/2026-06-06/portfolio_mode_transition_0852_0853_sgt.json",
+    "records/ldd/2026-06-06/ldd_post_close_cleanup_review_0852_0853_sgt.json",
+    "records/ldd/2026-06-05/soxl_residual_closure_execution_1951_sgt.json",
+    "records/ldd/2026-06-05/soxl_full_cleanup_reconciliation_1951_sgt.json",
+    "records/ldd/2026-06-05/ugl_cleanup_execution_2208_sgt.json",
+    "records/ldd/2026-06-05/ugl_closure_reconciliation_2208_sgt.json",
+    "records/ldd/2026-06-05/intc_cleanup_execution_2301_sgt.json",
+    "records/ldd/2026-06-05/intc_closure_reconciliation_2301_sgt.json",
     "cockpit/ldd/runtime_timeline.json"
   ],
   "state_summary": {
     "total_account": {
-      "broker_total_assets_usd": "approximately 43500.82",
-      "cash_usd": "approximately 4255.18",
-      "total_holding_value_usd": "approximately 39245.64",
-      "total_holding_pl_usd": "approximately +20500.77",
-      "total_day_pl_usd": "approximately -346.7",
-      "note": "Total-account day P/L was negative mainly due to Hong Kong holding weakness; U.S. equity section itself was positive."
+      "broker_total_assets_usd": "approximately 41146.12",
+      "cash_usd": "approximately 6304.16",
+      "total_holding_value_usd": "unknown",
+      "total_holding_pl_usd": "unknown",
+      "total_day_pl_usd": "unknown",
+      "note": "The latest checkpoint focuses on the U.S. post-close cleanup state; U.S. equity day P/L was approximately -890.94 USD."
     },
     "hong_kong_equities": {
+      "latest_checkpoint_status": "No updated Hong Kong holding detail was encoded in the 2026-06-06 checkpoint.",
       "02513_zhipu": {
         "shares": 100,
-        "market_value_hkd": "approximately 142600",
-        "latest_price_hkd": "approximately 1426",
-        "day_pl_hkd": "approximately -3600",
-        "holding_pl_hkd": "approximately +130980"
+        "market_value_hkd": "unknown",
+        "latest_price_hkd": "unknown",
+        "day_pl_hkd": "unknown",
+        "holding_pl_hkd": "unknown"
       }
     },
     "us_equities": {
-      "section_value_usd": "approximately 25305.06",
-      "holding_market_value_usd": "approximately 21049.88",
-      "holding_pl_usd": "approximately +3787.73",
-      "day_pl_usd": "approximately +112.65",
-      "historical_cleanup_status": "SOXS, TSLQ, and GDXU closed; no reopening.",
+      "section_value_usd": "approximately 24591.21",
+      "holding_market_value_usd": "approximately 18287.05",
+      "holding_pl_usd": "approximately +3074.93",
+      "day_pl_usd": "approximately -890.94",
+      "historical_cleanup_status": "SOXS, TSLQ, GDXU, SOXL, UGL, and INTC are closed; no reopening.",
       "new_ldd_model_strategy_status": "No new LDD U.S. model strategy position.",
       "key_positions": [
         "GLD 20",
         "GOOG 14",
         "NVDA 20",
-        "SOXL 2",
         "GGLL 10",
-        "INTC 10",
-        "UGL 10",
         "tiny TSLA residual"
       ],
+      "closed_positions": [
+        "SOXL 0",
+        "UGL 0",
+        "INTC 0"
+      ],
       "open_risks": [
-        "Residual SOXL 2-share leveraged exposure",
-        "GGLL leveraged GOOG exposure",
-        "UGL leveraged gold exposure",
-        "SOXL realized-vs-unrealized execution review"
-      ]
+        "NVDA main core-risk watch after break below 212",
+        "GGLL main remaining leveraged ETF risk valve",
+        "GLD below 405 under review",
+        "Hong Kong equity volatility"
+      ],
+      "portfolio_mode": "core_position_defense_mode"
     },
     "crypto": {
-      "binance_total_assets_usdt": "approximately 8371.43",
+      "binance_total_assets_usdt": "approximately 8145.8",
       "usdt": "5936",
       "eth": "0.8070416",
       "doge": "8400.535",
       "sol": "2.931163",
       "btc": "0.00055762",
-      "zec_residual": "0.012974, approximately 6.77 USDT",
+      "zec_residual": "0.012974, approximately 4.39 USDT",
       "cash_posture": "USDT-dominant defensive posture",
       "btc_buyback_status": "Not triggered below 75,500-76,000",
       "zec_bot_status": "Closed / profit-locked based on prior confirmed execution state; no running ZEC bot screenshot in 2026-06-05 update",
+      "usdt_defense_ratio_pct": 72.9,
       "open_risks": [
         "Crypto market weakness",
         "BTC still below buyback trigger",
@@ -74,14 +85,23 @@
       ]
     },
     "runtime": {
-      "latest_timeline_event_time": "2026-06-05T08:14:00+08:00",
-      "timeline_event_count": 27,
+      "latest_timeline_event_time": "2026-06-06T08:53:00+08:00",
+      "timeline_event_count": 42,
       "warning_count": 0,
       "no_new_execution_confirmed": false,
       "confirmed_execution_reconciled": true,
-      "latest_confirmed_execution": "SOXL sell 3 shares at 248.00 USD",
-      "soxl_position_after_execution": "2",
-      "cash_change_reconciliation": "Broker cash increased by about 744 USD, matching 3 x 248.00 USD."
+      "latest_confirmed_execution": "INTC sell 10 shares at 104.75 USD; SOXL, UGL, and INTC cleanup cycle confirmed",
+      "soxl_position_after_execution": "0",
+      "ugl_position_after_execution": "0",
+      "intc_position_after_execution": "0",
+      "position_states": {
+        "SOXL": "closed_position",
+        "UGL": "closed_position",
+        "INTC": "closed_position"
+      },
+      "latest_cleanup_cash_impact": "approximately 2050.03 USD before fees",
+      "total_soxl_cleanup_cash_impact": "approximately 1222.68 USD before fees",
+      "portfolio_mode": "core_position_defense_mode"
     }
   },
   "warnings": []

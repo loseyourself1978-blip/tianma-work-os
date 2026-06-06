@@ -1,0 +1,54 @@
+{
+  "record_id": "ldd-account-state-delta-20260605-1703-1704-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "account_type": "multi_section_premarket_snapshot",
+  "snapshot_time": "2026-06-05T17:04:00+08:00",
+  "source_of_truth": [
+    "user_provided_longbridge_broker_screenshots_20260605_1703_1704_sgt",
+    "user_provided_binance_screenshots_20260605_1703_1704_sgt"
+  ],
+  "base_currency": "mixed_usd_usdt",
+  "total_visible_assets": {
+    "broker_cash_usd": 4255.18,
+    "binance_visible_assets_usdt": 8220.07
+  },
+  "cash_balance": {
+    "broker_cash_usd": 4255.18,
+    "binance_usdt": 5936,
+    "crypto_account_posture": "USDT defensive / cash dominant"
+  },
+  "holdings": [
+    {"account": "us_equity", "asset": "GLD", "quantity": 20, "approx_price": 409.69},
+    {"account": "us_equity", "asset": "GOOG", "quantity": 14, "approx_price": 367.6},
+    {"account": "us_equity", "asset": "NVDA", "quantity": 20, "approx_price": 215.453},
+    {"account": "us_equity", "asset": "GGLL", "quantity": 10, "approx_price": 125.225},
+    {"account": "us_equity", "asset": "INTC", "quantity": 10, "approx_price": 108.438},
+    {"account": "us_equity", "asset": "UGL", "quantity": 10, "approx_price": 54.74},
+    {"account": "us_equity", "asset": "SOXL", "quantity": 2, "approx_price": 240.393, "runtime_note": "Residual watch position near the 240 cleanup trigger; no confirmed execution yet."},
+    {"account": "us_equity", "asset": "TSLA", "quantity": 0.0116, "approx_price": 417.36},
+    {"account": "crypto_spot", "asset": "USDT", "quantity": 5936},
+    {"account": "crypto_spot", "asset": "ETH", "quantity": 0.8070416, "approx_value_usdt": 1347.38},
+    {"account": "crypto_spot", "asset": "DOGE", "quantity": 8400.535, "approx_value_usdt": 705.47},
+    {"account": "crypto_spot", "asset": "SOL", "quantity": 2.931163, "approx_value_usdt": 192.25},
+    {"account": "crypto_spot", "asset": "BTC", "quantity": 0.00055762, "approx_value_usdt": 34.9},
+    {"account": "crypto_spot", "asset": "ZEC", "quantity": 0.012974, "approx_value_usdt": 4.03}
+  ],
+  "strategy_tags": [
+    "premarket_delta",
+    "residual_risk_monitoring",
+    "soxl_near_240_cleanup_trigger",
+    "no_new_execution_visible",
+    "no_new_buying",
+    "usdt_defensive_crypto"
+  ],
+  "notes": [
+    "SOXL remained reduced to 2 shares around 240.393.",
+    "Cash remained about 4,255.18 USD.",
+    "No new buying or confirmed execution was visible."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-05/ldd_premarket_checkpoint_1703_1704_sgt.json",
+    "records/ldd/2026-06-05/soxl_residual_risk_monitor_1703_1704_sgt.json"
+  ]
+}

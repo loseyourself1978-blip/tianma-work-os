@@ -1,124 +1,84 @@
 {
-  "generated_at": "2026-06-05T08:14:00+08:00",
+  "generated_at": "2026-06-06T08:53:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "cockpit_active_rules",
   "version": "0.1",
-  "latest_active_checkpoint": "2026-06-05T08:14:00+08:00",
+  "latest_active_checkpoint": "2026-06-06T08:53:00+08:00",
   "source_files": [
-    "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
+    "records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json"
   ],
   "rules": [
     {
-      "rule_id": "soxl-residual-watch-rule-20260605-0814",
-      "asset_or_module": "SOXL",
-      "rule_type": "residual_risk_valve_state",
-      "status": "active",
-      "trigger_state": "residual_watch_position",
-      "trigger_condition": "Do not add. If SOXL falls below 240, sell remaining 2 shares. If NVDA breaks below 212 and SOXL fails to recover, sell remaining 2 shares. If SOXL rebounds to 255-260, temporarily hold remaining 2 shares. If SOXL rebounds to 265-270 but NVDA remains weak, consider selling 1-2 shares.",
-      "current_action": "monitor residual 2 shares under strict no-readd rule",
+      "rule_id": "nvda-core-defense-rule-20260606-0853",
+      "asset_or_module": "NVDA",
+      "rule_type": "main_core_risk_watch",
+      "status": "triggered",
+      "trigger_state": "triggered",
+      "trigger_condition": "Hold and do not add. If NVDA fails to reclaim 208-212 next session or breaks below 200, reassess reducing 5 shares. If it reclaims 212 then 218-220, continue holding.",
+      "current_action": "core-position defense review",
       "source_files": [
-        "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
+        "records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json"
       ],
-      "last_updated": "2026-06-05T08:14:00+08:00",
+      "last_updated": "2026-06-06T08:53:00+08:00",
       "cockpit_priority": "high",
-      "requires_execution_price_confirmation": true,
+      "requires_execution_price_confirmation": false,
       "tags": [
-        "active",
+        "nvda",
         "risk_control",
-        "soxl"
+        "triggered"
       ]
     },
     {
-      "rule_id": "nvda-confirmation-monitor-20260605-0814",
-      "asset_or_module": "NVDA",
-      "rule_type": "core_ai_exposure_monitor",
+      "rule_id": "goog-ggll-core-defense-rule-20260606-0853",
+      "asset_or_module": "GOOG/GGLL",
+      "rule_type": "main_remaining_leveraged_etf_risk_valve",
       "status": "near_trigger",
       "trigger_state": "near_trigger",
-      "trigger_condition": "Hold 20 shares. Do not add while below 218-220 confirmation. If NVDA reclaims and holds 218-220, continue holding. If NVDA breaks below 212, reduce risk through remaining SOXL first and reassess NVDA.",
-      "current_action": "hold and use residual SOXL first for risk reduction if NVDA breaks 212",
+      "trigger_condition": "No GGLL add. Prepare to sell 5 GGLL below GOOG 360; sell 5-10 below 355; consider selling 5 if GOOG fails after rebound to 370-380.",
+      "current_action": "use GGLL as main remaining leveraged ETF risk valve",
       "source_files": [
-        "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
+        "records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json"
       ],
-      "last_updated": "2026-06-05T08:14:00+08:00",
+      "last_updated": "2026-06-06T08:53:00+08:00",
       "cockpit_priority": "high",
       "requires_execution_price_confirmation": false,
       "tags": [
+        "goog_ggll",
         "near_trigger",
-        "nvda",
         "risk_control"
       ]
     },
     {
-      "rule_id": "goog-ggll-rebound-monitor-20260605-0814",
-      "asset_or_module": "GOOG/GGLL",
-      "rule_type": "ggll_profit_lock_candidate",
-      "status": "active",
-      "trigger_state": "monitoring_rebound",
-      "trigger_condition": "Hold GOOG 14. Hold GGLL 10 for now after GOOG rebound. If GOOG falls below 360, prepare to sell 5 shares of GGLL. If GOOG breaks below 355, sell 5-10 shares of GGLL. If GOOG rallies to 372-380 but fails to hold, consider selling 5 shares of GGLL to lock rebound profit. No GGLL add.",
-      "current_action": "hold for now; treat GGLL as profit-lock candidate if GOOG rebound fails",
+      "rule_id": "gld-core-defense-rule-20260606-0853",
+      "asset_or_module": "GLD",
+      "rule_type": "core_gold_position_review",
+      "status": "triggered",
+      "trigger_state": "triggered",
+      "trigger_condition": "Do not add. If GLD breaks below 395 and fails to recover, consider reducing 5-10 GLD. If GLD reclaims 405-410, continue monitoring.",
+      "current_action": "review GLD core position; UGL rule retired",
       "source_files": [
-        "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
+        "records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json"
       ],
-      "last_updated": "2026-06-05T08:14:00+08:00",
-      "cockpit_priority": "medium",
+      "last_updated": "2026-06-06T08:53:00+08:00",
+      "cockpit_priority": "high",
       "requires_execution_price_confirmation": false,
       "tags": [
-        "active",
-        "goog_ggll"
+        "gld",
+        "triggered"
       ]
     },
     {
-      "rule_id": "gld-ugl-cleanup-monitor-20260605-0814",
-      "asset_or_module": "GLD/UGL",
-      "rule_type": "gold_cleanup_monitor",
-      "status": "active",
-      "trigger_state": "active",
-      "trigger_condition": "Hold GLD 20. No GLD add. GLD 405 remains the risk line. If GLD breaks below 405, sell UGL first. If GLD rallies to 412-416, consider selling UGL on strength. No UGL add.",
-      "current_action": "hold and monitor UGL as cleanup candidate",
-      "source_files": [
-        "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
-      ],
-      "last_updated": "2026-06-05T08:14:00+08:00",
-      "cockpit_priority": "medium",
-      "requires_execution_price_confirmation": false,
-      "tags": [
-        "active",
-        "gld_ugl",
-        "risk_control"
-      ]
-    },
-    {
-      "rule_id": "intc-cleanup-monitor-20260605-0814",
-      "asset_or_module": "INTC",
-      "rule_type": "historical_position_cleanup",
-      "status": "active",
-      "trigger_state": "active",
-      "trigger_condition": "Hold 10 shares. No add. If INTC rebounds to 116, consider selling 5 shares. If INTC rebounds to 118-120, sell 5 or all. If INTC breaks below 108, reassess direct cleanup.",
-      "current_action": "observe until rebound or weakness line confirms cleanup",
-      "source_files": [
-        "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
-      ],
-      "last_updated": "2026-06-05T08:14:00+08:00",
-      "cockpit_priority": "medium",
-      "requires_execution_price_confirmation": false,
-      "tags": [
-        "active",
-        "intc",
-        "no_add"
-      ]
-    },
-    {
-      "rule_id": "btc-buyback-monitor-20260605-0814",
+      "rule_id": "btc-buyback-core-defense-rule-20260606-0853",
       "asset_or_module": "BTC",
       "rule_type": "staged_buyback_watch",
       "status": "active",
       "trigger_state": "not_triggered",
-      "trigger_condition": "No BTC buyback below 75,500. If BTC stabilizes above 75,500-76,000, buy first 300 USDT. If confirmation holds, buy second 300 USDT.",
-      "current_action": "no BTC buyback",
+      "trigger_condition": "No buy below 75,500. Buy first 300 USDT only after stability above 75,500-76,000 and second 300 after confirmation.",
+      "current_action": "maintain USDT-dominant defense",
       "source_files": [
-        "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
+        "records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json"
       ],
-      "last_updated": "2026-06-05T08:14:00+08:00",
+      "last_updated": "2026-06-06T08:53:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
@@ -127,52 +87,32 @@
       ]
     },
     {
-      "rule_id": "eth-sol-doge-no-add-monitor-20260605-0814",
-      "asset_or_module": "ETH/SOL/DOGE",
-      "rule_type": "crypto_defensive_hold",
+      "rule_id": "crypto-no-add-defense-rule-20260606-0853",
+      "asset_or_module": "ETH/SOL/DOGE/ZEC",
+      "rule_type": "usdt_dominant_defense",
       "status": "active",
       "trigger_state": "active",
-      "trigger_condition": "No ETH, SOL, or DOGE adds.",
-      "current_action": "preserve USDT-dominant crypto defense",
+      "trigger_condition": "No ETH, SOL, DOGE, or ZEC adds. No ZEC grid reopening or chase.",
+      "current_action": "preserve stablecoin defense",
       "source_files": [
-        "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
+        "records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json"
       ],
-      "last_updated": "2026-06-05T08:14:00+08:00",
+      "last_updated": "2026-06-06T08:53:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
         "active",
-        "eth_sol_doge",
-        "no_add",
-        "risk_control"
-      ]
-    },
-    {
-      "rule_id": "zec-no-reopen-monitor-20260605-0814",
-      "asset_or_module": "ZEC",
-      "rule_type": "closed_grid_profit_lock",
-      "status": "executed",
-      "trigger_state": "executed",
-      "trigger_condition": "No ZEC grid reopening and no ZEC chase. ZEC grid remains closed/profit-locked based on prior confirmed execution.",
-      "current_action": "preserve closed/profit-locked ZEC grid state",
-      "source_files": [
-        "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
-      ],
-      "last_updated": "2026-06-05T08:14:00+08:00",
-      "cockpit_priority": "medium",
-      "requires_execution_price_confirmation": false,
-      "tags": [
-        "executed",
-        "zec"
+        "eth_sol_doge_zec",
+        "no_add"
       ]
     }
   ],
   "summary": {
-    "rule_count": 8,
+    "rule_count": 5,
     "near_trigger_count": 1,
     "not_triggered_count": 1,
     "awaiting_execution_confirmation_count": 0,
-    "executed_count": 1
+    "executed_count": 0
   },
   "warnings": []
 }

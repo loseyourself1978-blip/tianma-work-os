@@ -1,0 +1,93 @@
+{
+  "snapshot_id": "remaining-risk-concentration-monitor-20260606-0852-0853-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "snapshot_time": "2026-06-06T08:53:00+08:00",
+  "source_of_truth": [
+    "user_provided_longbridge_broker_screenshots_20260606_0852_0853_sgt",
+    "user_provided_binance_screenshots_20260606_0852_0853_sgt",
+    "confirmed_soxl_ugl_intc_order_detail_screenshots"
+  ],
+  "rules": [
+    {
+      "rule_id": "nvda-core-defense-rule-20260606-0853",
+      "asset": "NVDA",
+      "account": "us_equity",
+      "strategy": "main_core_risk_watch",
+      "current_observed_value": "20 shares around 204.038 after break below 212",
+      "trigger_condition": "Hold and do not add. If NVDA fails to reclaim 208-212 next session or breaks below 200, reassess reducing 5 shares. If it reclaims 212 then 218-220, continue holding.",
+      "trigger_level": "208-212 recovery / 200 reduction reassessment / 218-220 confirmation",
+      "trigger_status": "triggered",
+      "execution_status": "waiting",
+      "intended_action": "core-position defense review",
+      "execution_evidence_requirement": "order-detail screenshot required for reduction",
+      "next_review_time": "next broker sync",
+      "rule_drift_prevention": "No NVDA add while below confirmation."
+    },
+    {
+      "rule_id": "goog-ggll-core-defense-rule-20260606-0853",
+      "asset": "GOOG/GGLL",
+      "account": "us_equity",
+      "strategy": "main_remaining_leveraged_etf_risk_valve",
+      "current_observed_value": "GOOG around 361.610; GGLL 10 shares around 120.100",
+      "trigger_condition": "No GGLL add. Prepare to sell 5 GGLL below GOOG 360; sell 5-10 below 355; consider selling 5 if GOOG fails after rebound to 370-380.",
+      "trigger_level": "GOOG 360 caution / 355 reduction / 370-380 failed rebound",
+      "trigger_status": "near_trigger",
+      "execution_status": "waiting",
+      "intended_action": "use GGLL as main remaining leveraged ETF risk valve",
+      "execution_evidence_requirement": "order-detail screenshot required for GGLL sale",
+      "next_review_time": "next broker sync",
+      "rule_drift_prevention": "No GGLL add."
+    },
+    {
+      "rule_id": "gld-core-defense-rule-20260606-0853",
+      "asset": "GLD",
+      "account": "us_equity",
+      "strategy": "core_gold_position_review",
+      "current_observed_value": "20 shares around 396.911; UGL already closed",
+      "trigger_condition": "Do not add. If GLD breaks below 395 and fails to recover, consider reducing 5-10 GLD. If GLD reclaims 405-410, continue monitoring.",
+      "trigger_level": "395 downside review / 405-410 recovery",
+      "trigger_status": "triggered",
+      "execution_status": "waiting",
+      "intended_action": "review GLD core position; UGL rule retired",
+      "execution_evidence_requirement": "order-detail screenshot required for GLD reduction",
+      "next_review_time": "next broker sync",
+      "rule_drift_prevention": "UGL is closed and must not be re-added."
+    },
+    {
+      "rule_id": "btc-buyback-core-defense-rule-20260606-0853",
+      "asset": "BTC",
+      "account": "binance_spot",
+      "strategy": "staged_buyback_watch",
+      "current_observed_value": "below 75,500-76,000 trigger zone",
+      "trigger_condition": "No buy below 75,500. Buy first 300 USDT only after stability above 75,500-76,000 and second 300 after confirmation.",
+      "trigger_level": "75,500 stability / 76,000 confirmation",
+      "trigger_status": "not_triggered",
+      "execution_status": "waiting",
+      "intended_action": "maintain USDT-dominant defense",
+      "execution_evidence_requirement": "manual confirmation and order screenshot",
+      "next_review_time": "next crypto sync",
+      "rule_drift_prevention": "Do not buy below trigger zone."
+    },
+    {
+      "rule_id": "crypto-no-add-defense-rule-20260606-0853",
+      "asset": "ETH/SOL/DOGE/ZEC",
+      "account": "binance_spot",
+      "strategy": "usdt_dominant_defense",
+      "current_observed_value": "USDT approximately 72.9% of Binance visible assets",
+      "trigger_condition": "No ETH, SOL, DOGE, or ZEC adds. No ZEC grid reopening or chase.",
+      "trigger_level": "no-add defense",
+      "trigger_status": "active",
+      "execution_status": "waiting",
+      "intended_action": "preserve stablecoin defense",
+      "execution_evidence_requirement": "new order or bot screenshot required before changing state",
+      "next_review_time": "next Binance sync",
+      "rule_drift_prevention": "ZEC grid remains closed/profit-locked."
+    }
+  ],
+  "related_records": [
+    "records/ldd/2026-06-06/account_state_delta_0852_0853_sgt.json",
+    "records/ldd/2026-06-06/portfolio_mode_transition_0852_0853_sgt.json",
+    "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json"
+  ]
+}

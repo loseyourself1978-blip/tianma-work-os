@@ -1,0 +1,64 @@
+{
+  "delta_id": "ldd-post-close-cleanup-review-20260606-0852-0853-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "sync_time": "2026-06-06T08:53:00+08:00",
+  "source_cutoff_time": "2026-06-06T08:53:00+08:00",
+  "source_of_truth": [
+    "user_provided_longbridge_broker_screenshots_20260606_0852_0853_sgt",
+    "user_provided_binance_screenshots_20260606_0852_0853_sgt",
+    "user_provided_soxl_ugl_intc_order_detail_screenshots",
+    "external_market_data_cross_check_market_context_only"
+  ],
+  "updates_or_supersedes": [
+    "records/ldd/2026-06-05/ldd_premarket_checkpoint_1703_1704_sgt.json",
+    "records/ldd/2026-06-05/soxl_residual_risk_monitor_1703_1704_sgt.json",
+    "records/ldd/2026-06-05/rule_trigger_monitor_1703_1704_sgt.json",
+    "cockpit/ldd/latest_state.json prior generated state"
+  ],
+  "included_events": [
+    "SOXL residual cleanup sold 2 shares at 239.34 USD for 478.68 USD and closed the position.",
+    "UGL cleanup sold 10 shares at 52.385 USD for 523.85 USD and closed the position.",
+    "INTC cleanup sold 10 shares at 104.75 USD for 1,047.50 USD and closed the position.",
+    "Latest cleanup cycle cash impact was approximately 2,050.03 USD before fees.",
+    "Total SOXL cleanup cash impact was approximately 1,222.68 USD before fees across both fills.",
+    "SOXL, UGL, and INTC are confirmed at 0 shares.",
+    "U.S. cash/cash-equivalent increased to approximately 6,304.16 USD.",
+    "Portfolio mode transitioned from historical_risk_cleanup_mode to core_position_defense_mode.",
+    "Binance remained USDT-dominant with an approximate 72.9% stablecoin ratio."
+  ],
+  "pending_events": [
+    "Confirm whether NVDA reclaims 208-212 or breaks below 200.",
+    "Confirm whether GOOG holds above 360 and whether GGLL requires reduction.",
+    "Confirm whether GLD recovers 405-410 or fails below 395.",
+    "Keep BTC buyback inactive below 75,500-76,000.",
+    "Require order-detail evidence before recording further execution."
+  ],
+  "delta_reason": "Post-close evidence confirms completion of the SOXL, UGL, and INTC cleanup cycle and shifts the portfolio from historical-risk cleanup into core-position defense.",
+  "changed_fields": [
+    "latest_active_checkpoint: 2026-06-05T17:04:00+08:00 -> 2026-06-06T08:53:00+08:00",
+    "soxl_position: 2_shares -> 0_shares_closed_position",
+    "ugl_position: 10_shares -> 0_shares_closed_position",
+    "intc_position: 10_shares -> 0_shares_closed_position",
+    "us_cash_equivalent: about_4255.18_usd -> about_6304.16_usd",
+    "latest_cleanup_cash_impact: about_2050.03_usd_before_fees",
+    "total_soxl_cleanup_cash_impact: about_1222.68_usd_before_fees",
+    "portfolio_mode: historical_risk_cleanup_mode -> core_position_defense_mode",
+    "main_remaining_leveraged_risk_valve: GGLL",
+    "main_core_risk_watch: NVDA",
+    "gld_state: below_405_under_review",
+    "binance_usdt_defense_ratio: about_72.9_percent"
+  ],
+  "new_records": [
+    "records/ldd/2026-06-06/account_state_delta_0852_0853_sgt.json",
+    "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json",
+    "records/ldd/2026-06-06/portfolio_mode_transition_0852_0853_sgt.json",
+    "records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-05/soxl_residual_closure_execution_1951_sgt.json",
+    "records/ldd/2026-06-05/ugl_cleanup_execution_2208_sgt.json",
+    "records/ldd/2026-06-05/intc_cleanup_execution_2301_sgt.json"
+  ],
+  "sync_status": "checkpoint_updated_after_confirmed_cleanups"
+}

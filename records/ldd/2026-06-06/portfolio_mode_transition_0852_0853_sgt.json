@@ -1,0 +1,55 @@
+{
+  "strategy_id": "portfolio-mode-transition-20260606-0853",
+  "project_id": "tianma-work-os",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "strategy_type": "model_portfolio_strategy",
+  "linked_asset": "LDD portfolio",
+  "account_ref": "longbridge_us_equity_and_binance_spot",
+  "initial_capital": 0,
+  "current_value": 0,
+  "current_return_pct": 0,
+  "peak_return_pct": 0,
+  "profit_drawdown_pct": 0,
+  "soft_warning_threshold_pct": 0,
+  "hard_protection_threshold_pct": 0,
+  "market_state_context": "SOXL, UGL, and INTC are closed. Remaining risk is concentrated in NVDA, GGLL, GLD, Hong Kong equity, and crypto residual holdings.",
+  "health_state": "core_position_defense",
+  "recommended_action": "No new buying. Defend core positions, use GGLL as the main remaining leveraged risk valve, and maintain USDT-dominant crypto defense.",
+  "last_review_time": "2026-06-06T08:53:00+08:00",
+  "source_of_truth": [
+    "user_provided_longbridge_broker_screenshots_20260606_0852_0853_sgt",
+    "user_provided_binance_screenshots_20260606_0852_0853_sgt",
+    "confirmed_soxl_ugl_intc_order_detail_screenshots"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-06/account_state_delta_0852_0853_sgt.json",
+    "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json",
+    "records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json"
+  ],
+  "previous_state": "historical_risk_cleanup_mode",
+  "trigger": "soxl_ugl_intc_confirmed_closed_and_cleanup_cycle_reviewed",
+  "new_state": "core_position_defense_mode",
+  "execution_status": "completed",
+  "recommended_action_after_execution": "Protect NVDA core exposure, monitor GGLL and GLD, prohibit re-adds of closed cleanup positions, and retain crypto defense.",
+  "residual_position": {
+    "closed_positions": ["SOXL", "UGL", "INTC"],
+    "core_us_holdings": ["GLD", "GOOG", "NVDA", "GGLL", "tiny TSLA residual"],
+    "main_remaining_leveraged_risk_valve": "GGLL",
+    "main_core_risk_watch": "NVDA"
+  },
+  "status_transition_history": [
+    {
+      "time": "2026-06-05T08:14:00+08:00",
+      "from_state": "historical_position_cleanup",
+      "to_state": "historical_risk_cleanup_mode",
+      "reason": "SOXL remained a residual risk valve and UGL/INTC remained cleanup candidates."
+    },
+    {
+      "time": "2026-06-06T08:53:00+08:00",
+      "from_state": "historical_risk_cleanup_mode",
+      "to_state": "core_position_defense_mode",
+      "reason": "SOXL, UGL, and INTC were confirmed closed and cleanup effectiveness was reviewed."
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "snapshot_id": "rule-trigger-monitor-20260605-1703-1704-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "snapshot_time": "2026-06-05T17:04:00+08:00",
+  "source_of_truth": [
+    "user_provided_longbridge_broker_screenshots_20260605_1703_1704_sgt",
+    "user_provided_binance_screenshots_20260605_1703_1704_sgt"
+  ],
+  "rules": [
+    {
+      "rule_id": "soxl-residual-cleanup-rule-20260605-1704",
+      "asset": "SOXL",
+      "account": "us_equity",
+      "strategy": "residual_risk_cleanup",
+      "current_observed_value": "2 shares around 240.393",
+      "trigger_condition": "Do not add. If executable SOXL price breaks below 240, sell remaining 2 shares.",
+      "trigger_level": "240 cleanup trigger",
+      "trigger_status": "near_trigger",
+      "execution_status": "waiting",
+      "intended_action": "close residual 2 shares after executable trigger confirmation",
+      "execution_evidence_requirement": "Longbridge order-detail screenshot",
+      "next_review_time": "next execution screenshot or broker sync",
+      "rule_drift_prevention": "Do not record closure without filled-order evidence."
+    },
+    {
+      "rule_id": "nvda-core-risk-monitor-20260605-1704",
+      "asset": "NVDA",
+      "account": "us_equity",
+      "strategy": "core_ai_exposure_monitor",
+      "current_observed_value": "20 shares around 215.453",
+      "trigger_condition": "Hold and do not add; reassess below 212.",
+      "trigger_level": "212 risk line",
+      "trigger_status": "near_trigger",
+      "execution_status": "waiting",
+      "intended_action": "continue monitoring",
+      "execution_evidence_requirement": "order-detail screenshot for any reduction",
+      "next_review_time": "next broker sync",
+      "rule_drift_prevention": "No NVDA add below confirmation."
+    },
+    {
+      "rule_id": "goog-ggll-monitor-20260605-1704",
+      "asset": "GOOG/GGLL",
+      "account": "us_equity",
+      "strategy": "leveraged_goog_risk_valve",
+      "current_observed_value": "GOOG around 367.600; GGLL 10 shares",
+      "trigger_condition": "No GGLL add; prepare reduction below GOOG 360 and sell 5-10 GGLL below GOOG 355.",
+      "trigger_level": "GOOG 360 caution / 355 reduction",
+      "trigger_status": "active",
+      "execution_status": "waiting",
+      "intended_action": "hold and monitor",
+      "execution_evidence_requirement": "order-detail screenshot for any GGLL sale",
+      "next_review_time": "next broker sync",
+      "rule_drift_prevention": "No GGLL add."
+    },
+    {
+      "rule_id": "gld-ugl-monitor-20260605-1704",
+      "asset": "GLD/UGL",
+      "account": "us_equity",
+      "strategy": "gold_cleanup_monitor",
+      "current_observed_value": "GLD around 409.690; UGL 10 shares",
+      "trigger_condition": "No add; close UGL first if GLD breaks 405.",
+      "trigger_level": "GLD 405 risk line",
+      "trigger_status": "active",
+      "execution_status": "waiting",
+      "intended_action": "monitor UGL cleanup candidate",
+      "execution_evidence_requirement": "order-detail screenshot for UGL sale",
+      "next_review_time": "next broker sync",
+      "rule_drift_prevention": "No GLD or UGL add."
+    },
+    {
+      "rule_id": "intc-cleanup-monitor-20260605-1704",
+      "asset": "INTC",
+      "account": "us_equity",
+      "strategy": "historical_position_cleanup",
+      "current_observed_value": "10 shares around 108.438",
+      "trigger_condition": "No add; reassess direct cleanup below 108.",
+      "trigger_level": "108 weakness line",
+      "trigger_status": "near_trigger",
+      "execution_status": "waiting",
+      "intended_action": "prepare cleanup review",
+      "execution_evidence_requirement": "order-detail screenshot for INTC sale",
+      "next_review_time": "next broker sync",
+      "rule_drift_prevention": "No INTC add."
+    },
+    {
+      "rule_id": "btc-buyback-monitor-20260605-1704",
+      "asset": "BTC",
+      "account": "binance_spot",
+      "strategy": "staged_buyback_watch",
+      "current_observed_value": "below 75,500-76,000 trigger zone",
+      "trigger_condition": "No buy below 75,500; staged 300 USDT buyback only after stability and confirmation.",
+      "trigger_level": "75,500 stability / 76,000 confirmation",
+      "trigger_status": "not_triggered",
+      "execution_status": "waiting",
+      "intended_action": "no buyback",
+      "execution_evidence_requirement": "manual confirmation and order evidence",
+      "next_review_time": "next crypto sync",
+      "rule_drift_prevention": "Do not buy below trigger zone."
+    }
+  ],
+  "related_records": [
+    "records/ldd/2026-06-05/ldd_premarket_checkpoint_1703_1704_sgt.json",
+    "records/ldd/2026-06-05/soxl_residual_risk_monitor_1703_1704_sgt.json"
+  ]
+}

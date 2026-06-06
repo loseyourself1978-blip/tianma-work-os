@@ -79,7 +79,7 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
     name = path.name
     if "account_state_delta" in name:
         return "portfolio_state"
-    if "rule_trigger_monitor" in name:
+    if "rule_trigger_monitor" in name or "remaining_risk_concentration_monitor" in name:
         return "rule_ledger_snapshot"
     if "post_close_runtime_delta" in name:
         return "delta_sync"
@@ -99,7 +99,7 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "delta_sync"
     if "rule_ledger_snapshot" in name:
         return "rule_ledger_snapshot"
-    if "closure_execution" in name or "execution_filled" in name:
+    if "closure_execution" in name or "cleanup_execution" in name or "execution_filled" in name:
         return "execution_event"
     if "strategy_state" in name:
         return "strategy_state"
@@ -116,6 +116,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "account_structure_review"
     if "review_id" in data and "actual_execution" in data:
         return "execution_review"
+    if "event_id" in data and "execution_type" in data:
+        return "execution_event"
     if "delta_id" in data:
         return "delta_sync"
     if "snapshot_id" in data and "rules" in data:
@@ -302,6 +304,13 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
     crypto_account = latest_account_review(records, "binance")
     delta = latest(by_kind(records, "delta_sync"))
     pending = by_kind(records, "pending_command")
+    cleanup_review = latest(
+        [
+            record
+            for record in by_kind(records, "execution_review")
+            if "cleanup-effectiveness" in scalar(record.data.get("review_id")).lower()
+        ]
+    )
 
     lines.extend(["## Latest Record Dates", ""])
     lines.extend(md_list([f"`{item}`" for item in date_folders(records)]))
@@ -436,7 +445,23 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
     lines.append("")
 
     lines.extend(["## Latest Account Structure Conclusion", ""])
-    if account:
+    portfolio_tags = portfolio.data.get("strategy_tags", []) if portfolio else []
+    if portfolio and "core_position_defense_mode" in portfolio_tags:
+        lines.extend(
+            [
+                "- Account: post-cleanup U.S. portfolio",
+                "- Portfolio mode: `core_position_defense_mode`",
+                "- Closed cleanup positions: `SOXL`, `UGL`, `INTC`",
+                "- Main remaining leveraged ETF risk valve: `GGLL`",
+                "- Main core-risk watch: `NVDA`",
+                "- GLD state: below 405 and under review; UGL already closed",
+                f"- Cleanup rule compliance score: `{scalar(cleanup_review.data.get('rule_compliance_score')) if cleanup_review else 'unknown'}`",
+                f"- Source: `{portfolio.relpath}`",
+            ]
+        )
+        if cleanup_review:
+            lines.append(f"- Cleanup review: `{cleanup_review.relpath}`")
+    elif account:
         lines.extend(
             [
                 f"- Account: {scalar(account.data.get('account'))}",
@@ -470,6 +495,7 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
 
 def generate_active_trigger_rules(records: list[RuntimeRecord]) -> list[str]:
     lines = common_header("Active Trigger Rules", records)
+    latest_monitor = latest(by_kind(records, "rule_ledger_snapshot"))
     lines.extend(
         [
             "This report includes active and recently relevant trigger rules. Executed rules remain listed when they define the latest known state.",
@@ -477,10 +503,16 @@ def generate_active_trigger_rules(records: list[RuntimeRecord]) -> list[str]:
         ]
     )
     for entry in trigger_entries(records):
+        record_status = (
+            "latest rule monitor"
+            if latest_monitor and entry["source"].startswith(latest_monitor.relpath)
+            else "historical / retained for traceability"
+        )
         lines.extend(
             [
                 f"## {entry['asset']}",
                 "",
+                f"- Record status: {record_status}",
                 f"- Trigger condition: {entry['condition']}",
                 f"- Rule status: `{entry['status']}`",
                 f"- Intended action: {entry['intended_action']}",
@@ -500,6 +532,14 @@ def generate_strategy_state_summary(records: list[RuntimeRecord]) -> list[str]:
     zec_state = latest([record for record in strategy_states if "zec" in scalar(record.data.get("linked_asset")).lower()])
     account = latest_account_review(records, "binance")
     portfolio = latest(by_kind(records, "portfolio_state"))
+    portfolio_tags = portfolio.data.get("strategy_tags", []) if portfolio else []
+    closed_assets = {
+        scalar(item.get("asset")).lower()
+        for item in (portfolio.data.get("holdings", []) if portfolio else [])
+        if isinstance(item, dict)
+        and item.get("quantity") == 0
+        and item.get("position_state") == "closed_position"
+    }
 
     lines.extend(["## Current Highlights", ""])
     if zec_state:
@@ -511,7 +551,12 @@ def generate_strategy_state_summary(records: list[RuntimeRecord]) -> list[str]:
         )
     lines.append("- BTC: waiting for the 75,500-76,000 stabilization/confirmation trigger; no buyback record exists.")
     lines.append("- Crypto account: USDT defensive / cash dominant according to account structure records.")
-    lines.append("- U.S. historical positions: cleanup and risk-control phase remains active.")
+    if "core_position_defense_mode" in portfolio_tags:
+        lines.append("- U.S. historical cleanup cycle: completed for SOXL, UGL, and INTC.")
+        lines.append("- Portfolio mode: `core_position_defense_mode`.")
+        lines.append("- Remaining focus: NVDA core-risk watch, GGLL leveraged risk valve, and GLD below-405 review.")
+    else:
+        lines.append("- U.S. historical positions: cleanup and risk-control phase remains active.")
     lines.append("- LDD new U.S. model strategy: no new position opened in current records.")
     lines.append("")
 
@@ -531,6 +576,9 @@ def generate_strategy_state_summary(records: list[RuntimeRecord]) -> list[str]:
             if current_for_asset is not None and current_for_asset.relpath != record.relpath:
                 record_status = f"historical / superseded by `{current_for_asset.relpath}`"
                 recommended_action = "Superseded; see latest strategy-state record above."
+            elif asset in closed_assets:
+                record_status = f"historical / superseded by closed position in `{portfolio.relpath}`"
+                recommended_action = "Position is closed; do not re-add."
             lines.extend(
                 [
                     f"### {scalar(record.data.get('strategy_id'))}",
@@ -604,6 +652,7 @@ def generate_pending_commands_summary(records: list[RuntimeRecord]) -> list[str]
 def generate_account_structure_summary(records: list[RuntimeRecord]) -> list[str]:
     lines = common_header("Account Structure Summary", records)
     reviews = by_kind(records, "account_structure_review")
+    portfolio = latest(by_kind(records, "portfolio_state"))
 
     lines.extend(
         [
@@ -613,6 +662,28 @@ def generate_account_structure_summary(records: list[RuntimeRecord]) -> list[str
             "",
         ]
     )
+
+    if portfolio and "core_position_defense_mode" in portfolio.data.get("strategy_tags", []):
+        assets = portfolio.data.get("total_visible_assets", {})
+        lines.extend(
+            [
+                "## Latest Post-Cleanup Structure State",
+                "",
+                "- Portfolio mode: `core_position_defense_mode`",
+                "- Closed cleanup positions: `SOXL`, `UGL`, `INTC`",
+                "- Main remaining leveraged ETF risk valve: `GGLL`",
+                "- Main core-risk watch: `NVDA`",
+                "- GLD: below 405 and under review; UGL already closed",
+                f"- U.S. cash/cash-equivalent: `{scalar(assets.get('inferred_us_cash_equivalent_usd'))} USD`",
+                f"- Latest cleanup cash impact: `{scalar(assets.get('latest_cleanup_cash_impact_usd'))} USD` before fees",
+                f"- Total SOXL cleanup cash impact: `{scalar(assets.get('total_soxl_cleanup_cash_impact_usd'))} USD` before fees",
+                f"- Binance USDT defense ratio: `{scalar(assets.get('binance_usdt_defense_ratio_pct'))}%`",
+                f"- Source: `{portfolio.relpath}`",
+                "",
+                "Older reviews below are retained for traceability and may describe superseded pre-cleanup conditions.",
+                "",
+            ]
+        )
 
     if reviews:
         for record in reversed(reviews):
@@ -835,7 +906,7 @@ def generate_latest_active_memory_checkpoint(records: list[RuntimeRecord]) -> li
     lines.extend(["## Latest Project Checkpoint", ""])
     lines.extend(
         [
-            "- Tianma Work OS Vol.3 now has runtime records, validation, report generation, Command Intelligence, rule ledger, strategy-state monitoring, delta sync, and memory-retention planning.",
+            "- Tianma Work OS now has runtime records, validation, report generation, Command Intelligence, rule ledger, strategy-state monitoring, delta sync, cockpit summaries, and memory-retention planning.",
             "- Active memory should keep durable rules and latest valid checkpoint while detailed historical snapshots live in records/reports.",
             "",
         ]
@@ -905,7 +976,9 @@ def generate_latest_active_memory_checkpoint(records: list[RuntimeRecord]) -> li
         md_list(
             [
                 "DOGE remains a weak-risk holding.",
-                "Residual SOXL 2-share leveraged exposure remains under the 240 close / 255-260 hold / 265-270 strength-review rule.",
+                "NVDA is the main core-risk watch after breaking below 212.",
+                "GGLL is the main remaining leveraged ETF risk valve.",
+                "GLD is under review below 405 while UGL is already closed.",
                 "Memory cleanup requires human approval before active saved-memory removal.",
             ]
         )

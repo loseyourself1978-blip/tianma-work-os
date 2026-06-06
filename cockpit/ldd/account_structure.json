@@ -1,116 +1,143 @@
 {
-  "generated_at": "2026-06-05T08:14:00+08:00",
+  "generated_at": "2026-06-06T08:53:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "cockpit_account_structure",
   "version": "0.1",
-  "latest_active_checkpoint": "2026-06-05T08:14:00+08:00",
+  "latest_active_checkpoint": "2026-06-06T08:53:00+08:00",
   "source_files": [
-    "records/ldd/2026-06-05/account_state_delta_0813_0814_sgt.json",
+    "records/ldd/2026-06-06/account_state_delta_0852_0853_sgt.json",
+    "records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json",
     "records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json",
     "records/ldd/2026-06-05/execution_feedback_loop_requirement_0813_0814_sgt.json",
-    "records/ldd/2026-06-04/soxl_execution_filled_1732_sgt.json",
-    "records/ldd/2026-06-05/soxl_execution_reconciliation_0813_0814_sgt.json"
+    "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json",
+    "records/ldd/2026-06-06/portfolio_mode_transition_0852_0853_sgt.json"
   ],
   "sections": {
     "total_account": {
-      "status": "negative_total_day_pl_but_us_section_positive",
-      "broker_total_assets_usd": "approximately 43500.82",
-      "total_day_pl_usd": "approximately -346.7",
-      "note": "Total-account day P/L was negative mainly due to Hong Kong holding weakness, while U.S. equity section day P/L was positive."
+      "status": "post_cleanup_core_position_defense",
+      "broker_total_assets_usd": "approximately 41146.12",
+      "total_day_pl_usd": "unknown",
+      "note": "Latest encoded account state confirms the cleanup cycle and a shift to core-position defense."
     },
     "us_equities": {
-      "status": "positive_day_pl_after_soxl_risk_reduction",
-      "section_value_usd": "approximately 25305.06",
-      "day_pl_usd": "approximately +112.65",
-      "main_risk_valves": [
-        "residual SOXL",
-        "GGLL",
-        "UGL"
+      "status": "core_position_defense_after_cleanup",
+      "section_value_usd": "approximately 24591.21",
+      "day_pl_usd": "approximately -890.94",
+      "main_remaining_leveraged_risk_valve": "GGLL",
+      "main_core_risk_watch": "NVDA",
+      "gld_status": "below 405 under review; UGL already closed",
+      "closed_cleanup_positions": [
+        "SOXL",
+        "UGL",
+        "INTC"
       ]
     },
     "hong_kong_equities": {
-      "status": "negative_day_pl_primary_total_account_drag",
-      "primary_holding": "02513 Zhipu",
-      "day_pl_hkd": "approximately -3600",
-      "holding_pl_hkd": "approximately +130980"
+      "status": "remaining_risk_concentration_no_new_detail_in_latest_checkpoint",
+      "primary_holding": "02513 Zhipu remains a concentration watch from prior records"
     },
     "crypto_spot": {
       "status": "defensive_usdt_dominant",
-      "binance_total_assets_usdt": "approximately 8371.43",
-      "day_pl_usdt": "approximately -50.17",
+      "binance_total_assets_usdt": "approximately 8145.8",
+      "day_pl_usdt": "approximately -210.85",
       "btc_trigger_status": "not_triggered",
-      "zec_grid_status": "closed_profit_locked"
+      "zec_grid_status": "closed_profit_locked",
+      "usdt_defense_ratio_pct": 72.9
     },
     "cash_and_stablecoins": {
-      "status": "defensive_cash_available",
-      "broker_cash_usd": "approximately 4255.18",
-      "binance_usdt": "5936"
+      "status": "materially_increased_after_cleanup",
+      "broker_cash_usd": "approximately 6304.16",
+      "binance_usdt": "5936",
+      "binance_usdt_defense_ratio_pct": 72.9,
+      "latest_cleanup_cash_impact_usd": "approximately 2050.03"
     },
     "leveraged_exposure": {
-      "status": "risk_controls_active_soxl_major_reduction_complete",
+      "status": "concentrated_in_ggll_after_cleanup",
       "open_exposures": [
-        "SOXL 2",
-        "GGLL 10",
-        "UGL 10"
+        "GGLL 10"
+      ],
+      "closed_exposures": [
+        "SOXL 0",
+        "UGL 0"
       ],
       "no_reopen": [
         "SOXS",
         "TSLQ",
-        "GDXU"
-      ]
-    },
-    "historical_cleanup": {
-      "status": "active",
-      "closed": [
-        "SOXS",
-        "TSLQ",
-        "GDXU"
-      ],
-      "watch": [
-        "residual SOXL",
-        "GGLL",
-        "INTC",
+        "GDXU",
+        "SOXL",
         "UGL"
       ]
     },
+    "historical_cleanup": {
+      "status": "cleanup_cycle_completed",
+      "closed": [
+        "SOXS",
+        "TSLQ",
+        "GDXU",
+        "SOXL",
+        "UGL",
+        "INTC"
+      ],
+      "watch": []
+    },
     "quote_quality": {
-      "status": "execution_price_confirmed_for_soxl_sale",
+      "status": "historical_soxl_quote_conflict_resolved_by_filled_order_evidence",
       "symbol": "SOXL",
-      "filled_price": "248.00 USD",
-      "filled_quantity": 3,
-      "execution_validity": "confirmed by user-provided order screenshot and reconciled against cash/position state"
+      "filled_prices": [
+        "248.00 USD x 3",
+        "239.34 USD x 2"
+      ],
+      "filled_quantity": 5,
+      "execution_validity": "confirmed by user-provided order-detail screenshots and final zero-share position state"
     },
     "execution_reconciliation": {
-      "status": "confirmed_and_reconciled",
-      "order_filled_quantity": 3,
-      "position_before": 5,
-      "position_after": "2",
-      "expected_cash_delta_usd": "approximately 744",
-      "actual_cash_delta_usd": "approximately 744"
+      "status": "cleanup_cycle_confirmed_and_reconciled",
+      "latest_cleanup_fills": {
+        "SOXL": {
+          "quantity": 2,
+          "price_usd": 239.34,
+          "amount_usd": 478.68,
+          "position_after": "0"
+        },
+        "UGL": {
+          "quantity": 10,
+          "price_usd": 52.385,
+          "amount_usd": 523.85,
+          "position_after": "0"
+        },
+        "INTC": {
+          "quantity": 10,
+          "price_usd": 104.75,
+          "amount_usd": 1047.5,
+          "position_after": "0"
+        }
+      },
+      "latest_cleanup_cash_impact_usd": "approximately 2050.03",
+      "total_soxl_cleanup_cash_impact_usd": "approximately 1222.68"
     }
   },
   "quality_assessment": {
-    "overall_status": "execution_reconciled_but_risk_controls_active",
+    "overall_status": "cleanup_completed_core_position_defense_active",
     "positive_factors": [
-      "SOXL exposure was reduced by 60%, from 5 shares to 2 shares.",
-      "Broker cash increased by about 744 USD, matching the confirmed SOXL sale.",
-      "U.S. equity section day P/L was positive.",
-      "USDT remains dominant in crypto.",
+      "SOXL, UGL, and INTC are closed at 0 shares.",
+      "Latest cleanup cycle added approximately 2,050.03 USD before fees.",
+      "Total SOXL cleanup added approximately 1,222.68 USD before fees.",
+      "U.S. cash/cash-equivalent is approximately 6,304.16 USD.",
+      "USDT is approximately 72.9% of Binance visible assets.",
       "ZEC grid remains closed / profit locked.",
-      "SOXS, TSLQ, and GDXU remain closed."
+      "Portfolio mode transitioned to core_position_defense_mode."
     ],
     "risk_factors": [
-      "Total account day P/L was negative due to Hong Kong holding weakness.",
-      "Residual SOXL 2-share leveraged exposure remains.",
-      "GGLL and UGL remain cleanup/risk-valve candidates.",
+      "NVDA is below 212 and is the main core-risk watch.",
+      "GGLL is the main remaining leveraged ETF risk valve.",
+      "GLD is below 405 and under review.",
+      "Hong Kong equity concentration remains a watch item.",
       "BTC buyback remains inactive below 75,500-76,000."
     ],
     "next_required_confirmations": [
-      "Whether NVDA can reclaim and hold 218-220.",
-      "Whether SOXL remains below 250 or rebounds to 255-260.",
-      "Whether GOOG holds 365-370 or falls below 360.",
-      "Whether GGLL should be partially locked if GOOG fails near 372-380.",
-      "Whether GLD holds above 405 and whether UGL can be sold into strength around GLD 412-416.",
+      "Whether NVDA reclaims 208-212 or breaks below 200.",
+      "Whether GOOG holds above 360 or triggers GGLL reduction.",
+      "Whether GLD recovers 405-410 or fails below 395.",
       "Whether BTC remains below 75,500-76,000.",
       "Whether any new order screenshots confirm actual execution.",
       "Whether a latest ZEC bot page screenshot is provided."

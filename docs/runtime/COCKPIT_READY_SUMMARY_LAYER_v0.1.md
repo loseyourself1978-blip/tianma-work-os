@@ -15,9 +15,11 @@ The cockpit summary layer depends on two earlier steps:
 - Runtime Timeline Layer: provides chronological event context and a cockpit-readable timeline file.
 - Delta ingestion: ensures the latest active checkpoint is current before any cockpit summary is generated.
 
-For the current LDD pilot, the summary layer uses the newest validated active checkpoint. As of the SOXL reconciliation update, that checkpoint is `2026-06-05T08:14:00+08:00`. Older records remain available as history, but they should not override the latest post-close state.
+For the current LDD pilot, the summary layer uses the newest validated active checkpoint. As of the consolidated cleanup review, that checkpoint is `2026-06-06T08:53:00+08:00`. Older records remain available as history, but they should not override the latest post-close state.
 
 After confirmed execution reconciliation events, cockpit summaries must be regenerated before cockpit work continues. For example, the 2026-06-05 SOXL reconciliation updates latest state, active rules, strategy states, account structure, pending-command status, and memory checkpoint display from the confirmed fill and post-close account state.
+
+The 2026-06-06 cleanup review demonstrates the next transition. Once SOXL, UGL, and INTC were confirmed closed, the cockpit removed them from active risk-valve and cleanup-candidate lists, retained them as closed historical states, and moved the portfolio from `historical_risk_cleanup_mode` to `core_position_defense_mode`. The current summary surfaces NVDA as the main core-risk watch, GGLL as the main remaining leveraged ETF risk valve, GLD below 405 under review, and the approximately 72.9% Binance USDT defense ratio.
 
 ## Data Layers
 

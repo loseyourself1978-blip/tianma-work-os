@@ -1,0 +1,29 @@
+{
+  "review_id": "intc-closure-reconciliation-20260605-2301-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "account": "longbridge_us_equity",
+  "asset": "INTC",
+  "position_tag": "closed_weak_historical_position",
+  "review_time": "2026-06-05T23:01:43+08:00",
+  "related_trigger_rule_id": "intc-cleanup-monitor-20260605-1704",
+  "related_strategy_state_id": "portfolio-mode-transition-20260606-0853",
+  "intended_rule": "Remove the weak historical INTC position when cleanup risk is confirmed; do not re-add.",
+  "actual_execution": "Confirmed market sell of all 10 INTC shares at 104.75 USD for 1,047.50 USD. Position transitioned from 10 shares to 0 shares.",
+  "execution_evidence": [
+    "user_provided_longbridge_intc_order_detail_screenshot_20260605_2301_sgt"
+  ],
+  "rule_compliance_score": 0.96,
+  "account_risk_improvement": "Removed weak-position drag and increased U.S. cash/cash-equivalent by approximately 1,047.50 USD before fees.",
+  "short_term_price_outcome": "INTC later traded around 96.90-99.17. This supports effectiveness but does not replace rule-compliance review.",
+  "review_conclusion": "INTC cleanup completed. Remove INTC from active cleanup candidates and track it in the closed weak-position ledger.",
+  "lessons_learned": [
+    "Historical weak-position cleanup should persist fill evidence and state transition.",
+    "Post-cleanup review should measure avoided downside exposure without relying on hindsight as the execution rule."
+  ],
+  "next_rule_update": "Set INTC position to 0 shares, state to closed_position, and enforce do_not_readd.",
+  "related_records": [
+    "records/ldd/2026-06-05/intc_cleanup_execution_2301_sgt.json",
+    "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "review_id": "soxl-full-cleanup-reconciliation-20260605-1951-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "account": "longbridge_us_equity",
+  "asset": "SOXL",
+  "position_tag": "closed_historical_leveraged_risk_position",
+  "review_time": "2026-06-05T19:51:00+08:00",
+  "related_trigger_rule_id": "soxl-residual-cleanup-rule-20260605-1704",
+  "related_strategy_state_id": "soxl-residual-risk-monitor-20260605-1704-sgt",
+  "intended_rule": "Close the remaining 2 SOXL shares when the executable price breaks the residual 240 cleanup trigger; do not re-add.",
+  "actual_execution": "Confirmed sell of remaining 2 SOXL shares at 239.34 USD for 478.68 USD. Position transitioned from 2 shares to 0 shares.",
+  "execution_evidence": [
+    "user_provided_longbridge_soxl_order_detail_screenshot_20260605_1951_sgt"
+  ],
+  "rule_compliance_score": 0.98,
+  "account_risk_improvement": "SOXL leveraged exposure was fully removed. Across both cleanup fills, 5 shares were sold for approximately 1,222.68 USD before fees.",
+  "short_term_price_outcome": "Subsequent SOXL market prices around 176.98-182.54 support the cleanup effectiveness, but correctness remains based on rule compliance and risk reduction.",
+  "review_conclusion": "SOXL cleanup completed. Position state changed from residual_watch_position to closed_position and active SOXL risk monitoring should be retired.",
+  "lessons_learned": [
+    "First SOXL cleanup sold 3 shares at 248.00 USD for about 744.00 USD.",
+    "Residual cleanup sold 2 shares at 239.34 USD for about 478.68 USD.",
+    "Total SOXL cleanup sold 5 shares for about 1,222.68 USD before fees.",
+    "Closed positions belong in the historical cleanup ledger, not the active risk-valve list."
+  ],
+  "next_rule_update": "Set SOXL position to 0 shares, state to closed_position, and enforce do_not_readd.",
+  "related_records": [
+    "records/ldd/2026-06-04/soxl_execution_filled_1732_sgt.json",
+    "records/ldd/2026-06-05/soxl_residual_closure_execution_1951_sgt.json",
+    "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json"
+  ]
+}

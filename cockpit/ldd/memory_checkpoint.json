@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-06-05T08:14:00+08:00",
+  "generated_at": "2026-06-06T08:53:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "cockpit_memory_checkpoint",
   "version": "0.1",
-  "latest_active_checkpoint": "2026-06-05T08:14:00+08:00",
+  "latest_active_checkpoint": "2026-06-06T08:53:00+08:00",
   "source_files": [
     "reports/ldd/latest_active_memory_checkpoint.md",
     "reports/ldd/memory_cleanup_recommendations.md",
-    "records/ldd/2026-06-04/ldd_post_close_runtime_delta_0812_0813_sgt.json"
+    "records/ldd/2026-06-06/ldd_post_close_cleanup_review_0852_0853_sgt.json"
   ],
-  "active_memory_status": "Keep durable rules and latest 2026-06-05T08:14:00+08:00 active checkpoint; archive older detailed snapshots in records/reports.",
+  "active_memory_status": "Keep durable rules and latest 2026-06-06T08:53:00+08:00 active checkpoint; archive older detailed snapshots in records/reports.",
   "durable_rules": [
     "User-provided broker/Binance screenshots remain execution source of truth.",
     "Do not execute stale command drafts; execute latest valid command.",
@@ -17,12 +17,13 @@
     "No external API connection without an explicit implementation phase.",
     "BTC buyback waits for 75,500-76,000 stabilization/confirmation.",
     "ZEC grid should not be reopened or chased after profit lock.",
-    "Confirmed SOXL execution should be reconciled against position size and cash delta."
+    "Confirmed cleanup executions should reconcile fills, position state, cash impact, and closed-rule retirement.",
+    "Core-position defense is active after SOXL, UGL, and INTC cleanup."
   ],
-  "current_checkpoint": "2026-06-05T08:14:00+08:00",
+  "current_checkpoint": "2026-06-06T08:53:00+08:00",
   "superseded_snapshot_candidates": [
     "Old 2026-05 detailed LDD account snapshot memories.",
-    "2026-06-04 post-close checkpoint now superseded by the 2026-06-05 confirmed execution reconciliation checkpoint.",
+    "2026-06-05 residual monitoring and partial-cleanup checkpoints are superseded by the 2026-06-06 post-close cleanup checkpoint.",
     "Phase 2 v1/v2 drafted command memories.",
     "Phase 3 v1 still-running ZEC bot assumption."
   ],

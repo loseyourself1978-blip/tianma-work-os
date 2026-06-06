@@ -1,0 +1,30 @@
+{
+  "event_id": "intc-cleanup-execution-20260605-2301-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "event_time": "2026-06-05T23:01:43+08:00",
+  "account": "longbridge_us_equity",
+  "asset": "INTC",
+  "execution_type": "confirmed_market_sell_filled",
+  "execution_nature": "historical_weak_position_cleanup_closure; created 2026-06-05 11:01:43 ET; regular session day order",
+  "action": "sell_all_10_shares_close_position",
+  "closing_method": "manual_market_order_filled_at_104.75_usd",
+  "trade": {
+    "symbol": "INTC",
+    "time": "2026-06-05T23:01:43+08:00",
+    "side": "sell",
+    "price": 104.75,
+    "quantity": 10,
+    "amount": 1047.5,
+    "fee": 0,
+    "fee_asset": "USD",
+    "role": "manual_market_order"
+  },
+  "source_of_truth": [
+    "user_provided_longbridge_intc_order_detail_screenshot_20260605_2301_sgt"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-05/intc_closure_reconciliation_2301_sgt.json",
+    "records/ldd/2026-06-06/account_state_delta_0852_0853_sgt.json"
+  ]
+}
