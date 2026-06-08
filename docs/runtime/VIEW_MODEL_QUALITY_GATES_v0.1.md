@@ -103,9 +103,17 @@ calls.
 
 ## Recommended Next Phase
 
+Phase 5.5 implements the recommended consumer-readiness review in:
+
 ```text
-Vol.5 Phase 5.5 - Cockpit Consumer Readiness Review
+docs/runtime/COCKPIT_CONSUMER_READINESS_REVIEW_v0.1.md
 ```
 
-The next non-UI phase should test whether a downstream read-only consumer can
-interpret the validated view model without private implementation knowledge.
+Next:
+
+```text
+Vol.5 Phase 5.6 - Mock Consumer Package / UI Boundary Sample
+```
+
+That phase should create mock/sample consumer payloads or static boundary
+examples while still avoiding a real UI app.

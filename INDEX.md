@@ -68,6 +68,7 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `docs/runtime/COCKPIT_VIEW_MODEL_CONTRACT_v0.1.md`
 - `docs/runtime/COCKPIT_VIEW_MODEL_GENERATOR_v0.1.md`
 - `docs/runtime/VIEW_MODEL_QUALITY_GATES_v0.1.md`
+- `docs/runtime/COCKPIT_CONSUMER_READINESS_REVIEW_v0.1.md`
 - `docs/runtime/VOL3_RUNTIME_REVIEW_AND_PHASE4_ROADMAP_v0.1.md`
 - `docs/runtime/VOL3_HANDOFF_SUMMARY_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
@@ -232,6 +233,13 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `scripts/validate_cockpit_view_model_quality.sh`
 - `records/ldd/2026-06-08/view_model_quality_gate_review_0844_sgt.json`
 - `reports/ldd/view_model_quality_gates.md`
+
+## Vol.5 Phase 5.5 / Cockpit Consumer Readiness Review
+
+- `docs/runtime/COCKPIT_CONSUMER_READINESS_REVIEW_v0.1.md`
+- `schemas/cockpit_consumer_readiness_review.schema.json`
+- `records/ldd/2026-06-08/cockpit_consumer_readiness_review_0844_sgt.json`
+- `reports/ldd/cockpit_consumer_readiness_review.md`
 
 ## Product Principles
 

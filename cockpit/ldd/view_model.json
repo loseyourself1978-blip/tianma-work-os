@@ -864,7 +864,7 @@
   ],
   "timeline": {
     "generated_at": "2026-06-08T08:44:00+08:00",
-    "event_count": 52,
+    "event_count": 53,
     "warning_count": 0,
     "date_range": {
       "start": "2026-06-02T08:22:00+08:00",
@@ -1854,6 +1854,33 @@
           "nvda",
           "soxl",
           "ui_readiness_review",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-08-cockpit-consumer-readiness-review-0844-sgt-json",
+        "event_time": "2026-06-08T08:44:00+08:00",
+        "event_type": "report_generation",
+        "source_file": "records/ldd/2026-06-08/cockpit_consumer_readiness_review_0844_sgt.json",
+        "source_record_type": "cockpit_consumer_readiness_review",
+        "asset_or_module": "LLM Daredevil Desk",
+        "title": "Cockpit consumer readiness review",
+        "summary": "Consumer readiness result: ready_with_limits; reviewed 6 consumer types.",
+        "state_before": "",
+        "state_after": "consumer_readiness_result=ready_with_limits; recommended_next_phase=Vol.5 Phase 5.6 - Mock Consumer Package / UI Boundary Sample",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "btc",
+          "cockpit_consumer_readiness",
+          "cockpit_consumer_readiness_review",
+          "consumer_contract_boundary",
+          "gld",
+          "latest_active_checkpoint",
+          "non_trading_runtime_event",
+          "nvda",
+          "soxl",
           "zec"
         ]
       },

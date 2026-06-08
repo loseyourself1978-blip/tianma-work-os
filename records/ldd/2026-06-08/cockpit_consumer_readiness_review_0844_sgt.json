@@ -1,0 +1,168 @@
+{
+  "schema_type": "cockpit_consumer_readiness_review",
+  "review_id": "ldd-cockpit-consumer-readiness-20260608-0844",
+  "project": "Tianma Work OS",
+  "subproject": "LLM Daredevil Desk",
+  "review_time": "2026-06-08T08:44:00+08:00",
+  "baseline_checkpoint": "2026-06-08T08:44:00+08:00",
+  "baseline_commit": "63b073d7f00dfd80026b0ce9d4b9b055bd7721c4",
+  "portfolio_mode": "core_position_defense_mode",
+  "view_model_file": "cockpit/ldd/view_model.json",
+  "consumer_readiness_result": "ready_with_limits",
+  "consumer_map": [
+    "future UI consumer",
+    "generated report consumer",
+    "API layer consumer",
+    "mobile display consumer",
+    "AI Board / role-based review consumer",
+    "future customer-facing cockpit consumer"
+  ],
+  "consumer_contract_boundaries": [
+    "Consumers should read cockpit/ldd/view_model.json first.",
+    "Consumers should not reconstruct current state from raw records unless doing audit or debug work.",
+    "Consumers should not infer live prices from the view model.",
+    "Consumers should not execute trades or turn rule text into automation.",
+    "Consumers should not treat watch, risk, prohibition, or no-reentry rules as buy or sell automation.",
+    "Consumers should preserve warnings, data_quality, source_files, and portfolio_mode in any rendering.",
+    "Consumers should treat user-provided broker and Binance screenshots as the execution source of truth."
+  ],
+  "required_consumer_safety_fields": [
+    "checkpoint.latest_active_checkpoint",
+    "portfolio_mode.current",
+    "account_overview",
+    "account_sections",
+    "positions",
+    "closed_positions",
+    "risk_summary",
+    "active_rules",
+    "strategy_states",
+    "timeline",
+    "pending_commands",
+    "memory_checkpoint",
+    "warnings",
+    "data_quality"
+  ],
+  "consumer_specific_readiness": [
+    {
+      "consumer": "generated_reports",
+      "status": "ready",
+      "rationale": "Reports already consume local runtime records and generated cockpit summaries; view_model.json gives them a safer single-file input.",
+      "limits": [
+        "Reports remain local and file-based.",
+        "Reports are not live dashboards."
+      ]
+    },
+    {
+      "consumer": "future_ui",
+      "status": "ready_with_limits",
+      "rationale": "The view model has stable sections, source references, warnings, and quality flags suitable for a read-only UI prototype.",
+      "limits": [
+        "No UI exists yet.",
+        "No masking, role permission, or interaction policy exists yet.",
+        "Future UI must be read-only until a separate execution-safety design exists."
+      ]
+    },
+    {
+      "consumer": "api_layer",
+      "status": "ready_with_limits",
+      "rationale": "The view model can be served as a static payload, but no API endpoint, authentication, authorization, or privacy layer exists.",
+      "limits": [
+        "No API endpoint exists.",
+        "No external service or live sync should be added in this phase.",
+        "API consumers must not mutate runtime records."
+      ]
+    },
+    {
+      "consumer": "mobile_display",
+      "status": "ready_with_limits",
+      "rationale": "The top-level sections are compact enough for mobile cards, but no mobile-specific compression or masking policy exists.",
+      "limits": [
+        "No mobile UI exists.",
+        "Dense timeline events may need a later compact summary.",
+        "Private account values require masking before customer-facing use."
+      ]
+    },
+    {
+      "consumer": "ai_board_review_layer",
+      "status": "ready_with_limits",
+      "rationale": "AI Board roles can read the view model for current state, risk roles, rules, and timeline context.",
+      "limits": [
+        "AI Board automation is not implemented.",
+        "Any recommendation must still respect Command Intelligence and human execution control.",
+        "The view model is not a live market data feed."
+      ]
+    },
+    {
+      "consumer": "future_customer_facing_cockpit",
+      "status": "ready_with_limits",
+      "rationale": "The view model shape is useful, but customer-facing use requires privacy masking, permission rules, and copy/interaction design.",
+      "limits": [
+        "No customer-facing privacy layer exists.",
+        "No account-value masking policy exists.",
+        "No role-based display policy exists.",
+        "No UI has been built."
+      ]
+    }
+  ],
+  "privacy_and_safety_review": {
+    "credentials_or_api_keys_present": false,
+    "external_api_connected": false,
+    "trading_automation_instruction_present": false,
+    "live_order_execution_path_present": false,
+    "customer_facing_privacy_layer_present": false,
+    "ui_masking_policy_present": false,
+    "summary": "The current view model is safe for local read-only development consumers, but not yet ready for customer-facing exposure without masking and permission controls."
+  },
+  "current_ldd_consumer_interpretation": {
+    "portfolio_mode": "core_position_defense_mode",
+    "latest_checkpoint": "2026-06-08T08:44:00+08:00",
+    "closed_positions": [
+      "SOXL",
+      "UGL",
+      "INTC"
+    ],
+    "main_remaining_leveraged_etf_risk_valve": "GGLL",
+    "main_core_risk_watch": "NVDA",
+    "gld_rule": "ordinary GLD concentration / risk-line protection",
+    "crypto_posture": "Binance remains USDT-dominant defense",
+    "btc_buyback_trigger": "inactive below 75,500-76,000",
+    "zec_grid": "closed / profit-locked / do not reopen",
+    "timeline_warnings": 0,
+    "quality_gate_blocking_failures": 0
+  },
+  "known_limitations": [
+    "No live market connection exists.",
+    "No UI exists yet.",
+    "No API endpoint exists yet.",
+    "No user or role permission system exists yet.",
+    "No customer-facing privacy masking layer exists yet.",
+    "The current view model is single-project / LDD pilot focused.",
+    "Multi-project cockpit consumption remains future work."
+  ],
+  "blocking_issues": [],
+  "warnings": [
+    "Customer-facing use requires privacy masking and permission controls before publication.",
+    "Future API consumers need authentication and read-only boundaries before exposure."
+  ],
+  "recommended_next_phase": "Vol.5 Phase 5.6 - Mock Consumer Package / UI Boundary Sample",
+  "non_goals": [
+    "No UI or frontend application is created.",
+    "No API endpoint is created.",
+    "No external API is connected.",
+    "No trading automation is added.",
+    "No GitHub Projects board is created.",
+    "No GitHub Issues are created.",
+    "No 2026-06-08 checkpoint is re-ingested."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-08/cockpit_consistency_review_0844_sgt.json",
+    "records/ldd/2026-06-08/cockpit_view_model_contract_0844_sgt.json",
+    "records/ldd/2026-06-08/cockpit_view_model_generation_0844_sgt.json",
+    "records/ldd/2026-06-08/view_model_quality_gate_review_0844_sgt.json"
+  ],
+  "related_reports": [
+    "reports/ldd/cockpit_view_model_summary.md",
+    "reports/ldd/view_model_quality_gates.md",
+    "reports/ldd/cockpit_consumer_readiness_review.md"
+  ]
+}

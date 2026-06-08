@@ -83,6 +83,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "cockpit_view_model_generation"
     if "view_model_quality_gate_review" in name:
         return "view_model_quality_gate_review"
+    if "cockpit_consumer_readiness_review" in name:
+        return "cockpit_consumer_readiness_review"
     if "cockpit_view_model_contract" in name:
         return "cockpit_view_model_contract"
     if "cockpit_consistency_review" in name:
@@ -140,6 +142,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "cockpit_view_model_generation"
     if data.get("schema_type") == "view_model_quality_gate_review":
         return "view_model_quality_gate_review"
+    if data.get("schema_type") == "cockpit_consumer_readiness_review":
+        return "cockpit_consumer_readiness_review"
     return None
 
 
@@ -843,6 +847,7 @@ def generated_report_paths() -> list[str]:
         "reports/ldd/cockpit_view_model_contract.md",
         "reports/ldd/cockpit_view_model_summary.md",
         "reports/ldd/view_model_quality_gates.md",
+        "reports/ldd/cockpit_consumer_readiness_review.md",
     ]
 
 
@@ -1004,6 +1009,92 @@ def generate_view_model_quality_gates(records: list[RuntimeRecord]) -> list[str]
     lines.extend(md_list([str(item) for item in data.get("warnings", [])], "No warnings."))
     lines.extend(["", "## Non-Goals", ""])
     lines.extend(md_list([str(item) for item in data.get("non_goals", [])]))
+    lines.extend(["", "## Recommended Next Phase", ""])
+    lines.append(f"- {scalar(data.get('recommended_next_phase'))}")
+    return lines
+
+
+def generate_cockpit_consumer_readiness_review(records: list[RuntimeRecord]) -> list[str]:
+    lines = common_header("Cockpit Consumer Readiness Review", records)
+    review = latest(by_kind(records, "cockpit_consumer_readiness_review"))
+
+    lines.extend(
+        [
+            "This report summarizes whether future consumers can safely use `cockpit/ldd/view_model.json`. It is read-only consumer guidance; it does not create a UI, API, or trading automation.",
+            "",
+        ]
+    )
+
+    if review is None:
+        lines.append("- No cockpit consumer-readiness review record found.")
+        return lines
+
+    data = review.data
+    lines.extend(
+        [
+            "## Review",
+            "",
+            f"- Review ID: `{scalar(data.get('review_id'))}`",
+            f"- Review time: `{scalar(data.get('review_time'))}`",
+            f"- Baseline checkpoint: `{scalar(data.get('baseline_checkpoint'))}`",
+            f"- Baseline commit: `{scalar(data.get('baseline_commit'))}`",
+            f"- Portfolio mode: `{scalar(data.get('portfolio_mode'))}`",
+            f"- View model file: `{scalar(data.get('view_model_file'))}`",
+            f"- Consumer readiness result: `{scalar(data.get('consumer_readiness_result'))}`",
+            f"- Source: `{review.relpath}`",
+            "",
+            "## Consumer Contract Boundaries",
+            "",
+        ]
+    )
+    lines.extend(md_list([str(item) for item in data.get("consumer_contract_boundaries", [])]))
+
+    lines.extend(["", "## Consumer-Specific Readiness", ""])
+    for item in data.get("consumer_specific_readiness", []):
+        if isinstance(item, dict):
+            lines.extend(
+                [
+                    f"### {scalar(item.get('consumer'))}",
+                    "",
+                    f"- Status: `{scalar(item.get('status'))}`",
+                    f"- Rationale: {scalar(item.get('rationale'))}",
+                    "- Limits:",
+                ]
+            )
+            lines.extend([f"  - {limit}" for limit in item.get("limits", [])])
+            lines.append("")
+
+    privacy = data.get("privacy_and_safety_review", {}) if isinstance(data.get("privacy_and_safety_review"), dict) else {}
+    lines.extend(["## Privacy And Safety", ""])
+    for key in [
+        "credentials_or_api_keys_present",
+        "external_api_connected",
+        "trading_automation_instruction_present",
+        "live_order_execution_path_present",
+        "customer_facing_privacy_layer_present",
+        "ui_masking_policy_present",
+    ]:
+        value = privacy.get(key)
+        rendered = str(value).lower() if isinstance(value, bool) else scalar(value)
+        lines.append(f"- {key}: `{rendered}`")
+    if privacy.get("summary"):
+        lines.append(f"- Summary: {privacy.get('summary')}")
+
+    interpretation = data.get("current_ldd_consumer_interpretation", {}) if isinstance(data.get("current_ldd_consumer_interpretation"), dict) else {}
+    lines.extend(["", "## Current LDD Consumer Interpretation", ""])
+    for key, value in interpretation.items():
+        if isinstance(value, list):
+            lines.append(f"- {key}:")
+            lines.extend([f"  - {item}" for item in value])
+        else:
+            lines.append(f"- {key}: {value}")
+
+    lines.extend(["", "## Blocking Issues", ""])
+    lines.extend(md_list([str(item) for item in data.get("blocking_issues", [])], "No blocking issues."))
+    lines.extend(["", "## Warnings", ""])
+    lines.extend(md_list([str(item) for item in data.get("warnings", [])], "No warnings."))
+    lines.extend(["", "## Known Limitations", ""])
+    lines.extend(md_list([str(item) for item in data.get("known_limitations", [])]))
     lines.extend(["", "## Recommended Next Phase", ""])
     lines.append(f"- {scalar(data.get('recommended_next_phase'))}")
     return lines
@@ -1188,6 +1279,7 @@ def main() -> int:
         "cockpit_view_model_contract.md": generate_cockpit_view_model_contract(records),
         "cockpit_view_model_summary.md": generate_cockpit_view_model_summary(records),
         "view_model_quality_gates.md": generate_view_model_quality_gates(records),
+        "cockpit_consumer_readiness_review.md": generate_cockpit_consumer_readiness_review(records),
     }
 
     for filename, lines in reports.items():
