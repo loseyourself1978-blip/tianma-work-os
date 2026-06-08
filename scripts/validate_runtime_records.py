@@ -56,7 +56,8 @@ SCHEMA_FILES = {
     "memory_cleanup_recommendation": "memory_cleanup_recommendation.schema.json",
     "active_memory_checkpoint": "active_memory_checkpoint.schema.json",
     "cockpit_manifest": "cockpit_manifest.schema.json",
-    "cockpit_summary": "cockpit_summary.schema.json"
+    "cockpit_summary": "cockpit_summary.schema.json",
+    "cockpit_consistency_review": "cockpit_consistency_review.schema.json"
 }
 
 
@@ -71,6 +72,8 @@ COCKPIT_SUMMARY_FILES = {
 
 
 def schema_for_filename(filename: str) -> tuple[str, str] | None:
+    if "cockpit_consistency_review" in filename:
+        return "cockpit_consistency_review", SCHEMA_FILES["cockpit_consistency_review"]
     if "ldd_core_position_defense_checkpoint" in filename:
         return "sync_delta_update", SCHEMA_FILES["sync_delta_update"]
     if "core_position_defense_monitor" in filename:

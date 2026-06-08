@@ -109,6 +109,8 @@ def event_time_for(path: Path, data: dict[str, Any]) -> tuple[str, datetime | No
 
 def classify_record(path: Path, data: dict[str, Any]) -> str:
     name = path.name
+    if "cockpit_consistency_review" in name:
+        return "cockpit_consistency_review"
     if "account_state_delta" in name:
         return "portfolio_state"
     if "rule_trigger_monitor" in name or "remaining_leveraged_risk_monitor" in name:
@@ -164,6 +166,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str:
         return "rule_based_execution_review"
     if "snapshot_id" in data and "rules" in data:
         return "rule_ledger_snapshot"
+    if data.get("schema_type") == "cockpit_consistency_review":
+        return "cockpit_consistency_review"
     if "command_id" in data:
         return "pending_command"
     return "unknown"
@@ -221,6 +225,7 @@ def event_type(record_type: str) -> str:
         "active_memory_checkpoint": "memory_checkpoint",
         "memory_cleanup_recommendation": "memory_checkpoint",
         "memory_retention_policy": "memory_checkpoint",
+        "cockpit_consistency_review": "report_generation",
     }
     return mapping.get(record_type, "unknown")
 
@@ -231,6 +236,8 @@ def evidence_level(data: dict[str, Any], record_type: str) -> str:
         return "user_screenshot_source_of_truth"
     if record_type in {"active_memory_checkpoint", "memory_cleanup_recommendation", "memory_retention_policy"}:
         return "generated_report"
+    if record_type == "cockpit_consistency_review":
+        return "runtime_record"
     if record_type == "unknown":
         return "unknown"
     return "runtime_record"
@@ -249,6 +256,8 @@ def priority(record_type: str, data: dict[str, Any], tags: list[str]) -> str:
     if "executed" in scalar(data.get("execution_status")):
         return "high"
     if record_type in {"strategy_state", "trigger_execution_rule", "rule_based_execution_review", "account_structure_review"}:
+        return "medium"
+    if record_type == "cockpit_consistency_review":
         return "medium"
     if "superseded" in tags:
         return "low"
@@ -346,6 +355,11 @@ def title_and_summary(record: LoadedRecord) -> tuple[str, str]:
             f"Account structure review: score {scalar(data.get('structure_score'))}",
             f"Cash pressure: {scalar(data.get('cash_pressure'))}; redeployment readiness: {scalar(data.get('redeployment_readiness'))}.",
         )
+    if rt == "cockpit_consistency_review":
+        return (
+            "Cockpit consistency review",
+            f"Consistency status: {scalar(data.get('consistency_status'))}; UI readiness score: {scalar(data.get('ui_readiness_score'))}.",
+        )
     if rt == "sync_delta_update":
         if "post-close-runtime-delta" in scalar(data.get("delta_id")):
             return (
@@ -382,6 +396,8 @@ def state_before_after(record: LoadedRecord) -> tuple[str, str]:
         return "prior sync or strategy-state assumption", "; ".join(list_of_strings(data.get("changed_fields")))
     if rt == "account_structure_review":
         return "", f"structure_score={scalar(data.get('structure_score'))}"
+    if rt == "cockpit_consistency_review":
+        return "", f"{scalar(data.get('consistency_status'))}; ui_readiness_score={scalar(data.get('ui_readiness_score'))}"
     if rt == "pending_command":
         return "", f"{scalar(data.get('status'))}/{scalar(data.get('final_status'))}"
     return "", ""
@@ -413,6 +429,8 @@ def tags_for(record: LoadedRecord, zec_closure_exists: bool) -> list[str]:
         tags.append("gld")
     if "quote_source" in text:
         tags.append("quote_source_reconciliation")
+    if record.record_type == "cockpit_consistency_review":
+        tags.extend(["cockpit_consistency_review", "ui_readiness_review"])
     if "near_trigger" in text:
         tags.append("near_trigger")
     if "latest_active_checkpoint" in text:

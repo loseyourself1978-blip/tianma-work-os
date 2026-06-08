@@ -1,0 +1,81 @@
+{
+  "schema_type": "cockpit_consistency_review",
+  "review_id": "ldd-cockpit-consistency-review-20260608-0844-sgt",
+  "project": "Tianma Work OS",
+  "subproject": "LLM Daredevil Desk",
+  "review_time": "2026-06-08T08:44:00+08:00",
+  "baseline_checkpoint": "2026-06-08T08:44:00+08:00",
+  "baseline_commit": "838de562d2ef3febb20e052a23d44347745a3244",
+  "portfolio_mode": "core_position_defense_mode",
+  "cockpit_files_reviewed": [
+    "cockpit/ldd/latest_state.json",
+    "cockpit/ldd/manifest.json",
+    "cockpit/ldd/account_structure.json",
+    "cockpit/ldd/active_rules.json",
+    "cockpit/ldd/strategy_states.json",
+    "cockpit/ldd/pending_commands.json",
+    "cockpit/ldd/memory_checkpoint.json",
+    "cockpit/ldd/runtime_timeline.json"
+  ],
+  "report_files_reviewed": [
+    "reports/ldd/latest_runtime_report.md",
+    "reports/ldd/account_structure_summary.md",
+    "reports/ldd/active_trigger_rules.md",
+    "reports/ldd/strategy_state_summary.md",
+    "reports/ldd/runtime_timeline.md"
+  ],
+  "consistency_status": "passed_with_observations",
+  "latest_active_checkpoint": "2026-06-08T08:44:00+08:00",
+  "timeline_warning_count": 0,
+  "active_rule_count": 6,
+  "strategy_state_count": 16,
+  "warnings": [],
+  "blocking_issues": [],
+  "non_blocking_observations": [
+    "The cockpit JSON files are suitable for a future UI prototype but should first be normalized into a stricter view-model contract.",
+    "Generated reports are useful for human review but are not a stable UI API.",
+    "Quote Type Tagging is represented, but executable quote validation is not automated.",
+    "The current cockpit layer depends on local regeneration after new runtime records are added."
+  ],
+  "consistency_findings": [
+    "latest_state.json exposes the latest active checkpoint, core_position_defense_mode, account posture, closed cleanup positions, and Binance USDT defense ratio.",
+    "manifest.json points to all current cockpit summary files and includes runtime_timeline.json in the recommended read order.",
+    "account_structure.json separates U.S. equities, crypto spot, cash and stablecoin posture, leveraged exposure, closed cleanup positions, historical cleanup, quote quality, and execution reconciliation.",
+    "active_rules.json distinguishes main_core_risk_watch, main_remaining_leveraged_etf_risk_valve, ordinary_gld_concentration_risk_line_protection, closed_position_guardrail, staged_buyback_watch, and usdt_dominant_defense rule types.",
+    "strategy_states.json keeps 16 states and consistently marks SOXL, UGL, INTC, ZEC grid, SOXS, TSLQ, and GDXU as closed or historical where appropriate.",
+    "runtime_timeline.json has zero warnings and includes chronological source files, event types, summaries, priorities, and tags.",
+    "SOXL, UGL, and INTC remain closed_position and are not treated as active positions.",
+    "GGLL remains the main remaining leveraged ETF risk valve.",
+    "NVDA remains the main core-risk watch.",
+    "GLD is represented as ordinary GLD concentration and risk-line protection rather than only UGL-linked protection.",
+    "BTC buyback remains inactive below 75,500-76,000.",
+    "ZEC grid remains closed / no reopen.",
+    "Binance remains USDT-dominant with approximately 71.7% USDT defense ratio in the latest checkpoint."
+  ],
+  "ui_readiness_score": 82,
+  "recommended_next_phase": "Vol.5 Phase 5.2 - Cockpit View Model Contract",
+  "explicit_confirmations": [
+    "No UI was created.",
+    "No external APIs were connected.",
+    "No trading automation was added.",
+    "No GitHub Projects board was created.",
+    "No new GitHub Issues were created.",
+    "The 2026-06-08 checkpoint was not re-ingested."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-08/ldd_core_position_defense_checkpoint_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/core_position_defense_monitor_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/gld_concentration_risk_rule_update_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/quote_type_tagging_reinforcement_0843_0844_sgt.json"
+  ],
+  "related_reports": [
+    "docs/runtime/DEFENSE_COCKPIT_CONSISTENCY_REVIEW_v0.1.md",
+    "reports/ldd/latest_runtime_report.md",
+    "reports/ldd/account_structure_summary.md",
+    "reports/ldd/active_trigger_rules.md",
+    "reports/ldd/strategy_state_summary.md",
+    "reports/ldd/runtime_timeline.md"
+  ]
+}

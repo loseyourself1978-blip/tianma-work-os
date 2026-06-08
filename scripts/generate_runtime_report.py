@@ -77,6 +77,8 @@ def first_timestamp(data: dict[str, Any]) -> tuple[str, datetime | None]:
 
 def classify_record(path: Path, data: dict[str, Any]) -> str | None:
     name = path.name
+    if "cockpit_consistency_review" in name:
+        return "cockpit_consistency_review"
     if "account_state_delta" in name:
         return "portfolio_state"
     if "rule_trigger_monitor" in name or "remaining_risk_concentration_monitor" in name or "remaining_leveraged_risk_monitor" in name:
@@ -122,6 +124,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "delta_sync"
     if "snapshot_id" in data and "rules" in data:
         return "rule_ledger_snapshot"
+    if data.get("schema_type") == "cockpit_consistency_review":
+        return "cockpit_consistency_review"
     return None
 
 

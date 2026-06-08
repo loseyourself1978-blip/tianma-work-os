@@ -64,6 +64,7 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `docs/runtime/MEMORY_CAPACITY_AND_RETENTION_MANAGEMENT_v0.1.md`
 - `docs/runtime/RUNTIME_REPORT_QUALITY_REVIEW_v0.1.md`
 - `docs/runtime/RUNTIME_TIMELINE_LAYER_v0.1.md`
+- `docs/runtime/DEFENSE_COCKPIT_CONSISTENCY_REVIEW_v0.1.md`
 - `docs/runtime/VOL3_RUNTIME_REVIEW_AND_PHASE4_ROADMAP_v0.1.md`
 - `docs/runtime/VOL3_HANDOFF_SUMMARY_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
@@ -195,6 +196,12 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json`
 - `records/ldd/2026-06-08/gld_concentration_risk_rule_update_0843_0844_sgt.json`
 - `records/ldd/2026-06-08/quote_type_tagging_reinforcement_0843_0844_sgt.json`
+
+## Vol.5 Phase 5.1 / Defense Cockpit Consistency Review
+
+- `docs/runtime/DEFENSE_COCKPIT_CONSISTENCY_REVIEW_v0.1.md`
+- `schemas/cockpit_consistency_review.schema.json`
+- `records/ldd/2026-06-08/cockpit_consistency_review_0844_sgt.json`
 
 ## Product Principles
 
