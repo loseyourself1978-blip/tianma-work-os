@@ -1,0 +1,33 @@
+{
+  "review_id": "quote-type-tagging-reinforcement-20260608-0843-0844-sgt",
+  "project": "tianma-work-os",
+  "snapshot_time": "2026-06-08T08:44:00+08:00",
+  "account": "quote_type_tagging_and_execution_validity",
+  "structure_score": 74,
+  "cash_pressure": "not_applicable; this is quote quality and execution-validity review",
+  "leverage_risk": "medium; GGLL remains the active leveraged ETF risk valve and requires executable quote validation",
+  "opposite_exposure_risk": "low; SOXS, SOXL, UGL, INTC, TSLQ, and GDXU are closed or no-reentry without a new rule",
+  "weak_position_drag": "medium; NVDA and GLD require quote-type-aware defense checks",
+  "legacy_position_risk": "low-to-medium; cleanup positions remain closed but quote confusion can create stale execution pressure",
+  "bot_strategy_risk": "low; ZEC grid remains closed and no reopening is allowed",
+  "rule_compliance": "quote type tagging remains mandatory before treating a price as trigger-valid or execution-valid",
+  "redeployment_readiness": "blocked_for_new_buying; no new U.S. equity or crypto buying in this checkpoint",
+  "key_findings": [
+    "Quote Type Tagging remains critical for regular close, night-session quote, premarket executable quote, and regular-session executable quote.",
+    "Night-session or watchlist quotes can inform monitoring but should not automatically trigger execution.",
+    "GGLL, NVDA, and GLD rules require quote type and execution validity before action.",
+    "SOXL, INTC, and UGL are closed_position and should not be reopened without a new approved rule.",
+    "Broker/Binance screenshots remain source of truth; external market data is cross-check context only."
+  ],
+  "recommended_next_actions": [
+    "Tag every rule input with quote_type before deriving execution intent.",
+    "Keep closed positions separated from active risk valves.",
+    "Use regular-session executable quotes for actual order decisions.",
+    "Show quote-type warnings in future cockpit summaries."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-08/ldd_core_position_defense_checkpoint_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/gld_concentration_risk_rule_update_0843_0844_sgt.json"
+  ]
+}

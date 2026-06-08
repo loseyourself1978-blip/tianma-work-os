@@ -1,0 +1,37 @@
+{
+  "rule_id": "gld-concentration-risk-rule-update-20260608-0844",
+  "project_id": "tianma-work-os",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "position_id": "longbridge-us-equity-gld-20",
+  "asset": "GLD",
+  "current_quantity": 20,
+  "trigger_condition": "GLD rule moves from UGL-linked protection only to ordinary GLD concentration and risk-line protection.",
+  "trigger_level": "If GLD cannot reclaim 400-405, reduce 5 GLD; if GLD breaks below 392-395, reduce another 5 GLD.",
+  "execution_status": "waiting",
+  "executed_quantity": 0,
+  "remaining_quantity": 20,
+  "execution_price": null,
+  "trade_intent": "risk_reduction",
+  "next_trigger_line": "400-405 reclaim check, then 392-395 downside line",
+  "next_action": "Monitor GLD as ordinary core-position concentration risk; UGL is closed and must not be re-opened.",
+  "reminder_required": true,
+  "last_review_time": "2026-06-08T08:44:00+08:00",
+  "source_of_truth": [
+    "user_provided_broker_watchlist_and_holding_screenshots_20260608_0843_0844_sgt",
+    "external_gld_cross_check_context_only"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json"
+  ],
+  "current_observed_value": "GLD below 405 risk line in checkpoint context",
+  "trigger_status": "triggered",
+  "intended_action": "ordinary_gld_concentration_risk_line_protection",
+  "execution_evidence_requirement": "regular-session executable quote and order-detail screenshot required",
+  "next_review_time": "next regular-session broker sync",
+  "rule_drift_prevention": "Do not collapse GLD risk back into UGL-linked logic because UGL is already closed.",
+  "execution_result": "No execution recorded in this checkpoint.",
+  "review_conclusion": "GLD requires direct concentration-risk monitoring.",
+  "account_structure_impact": "GLD remains a core U.S. holding; risk control now applies directly to GLD size rather than UGL liquidation."
+}

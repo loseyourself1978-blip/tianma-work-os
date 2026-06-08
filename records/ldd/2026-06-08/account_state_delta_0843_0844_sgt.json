@@ -1,0 +1,125 @@
+{
+  "record_id": "ldd-account-state-delta-20260608-0843-0844-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "account_type": "core_position_defense_checkpoint",
+  "snapshot_time": "2026-06-08T08:44:00+08:00",
+  "source_of_truth": [
+    "user_provided_broker_overnight_watchlist_and_account_holding_screenshots_20260608_0843_0844_sgt",
+    "user_provided_binance_spot_account_overview_and_coin_list_20260608_0843_0844_sgt"
+  ],
+  "base_currency": "mixed_usd_usdt",
+  "total_visible_assets": {
+    "total_app_assets_usd": 41147.42,
+    "broker_total_assets_usd": 41147.42,
+    "us_equity_section_usd": 24591.21,
+    "us_stock_section_usd": 24591.21,
+    "us_holdings_market_value_usd": 18287.05,
+    "us_holding_pl_usd": 3074.93,
+    "us_day_pl_usd": -890.94,
+    "cash_usd": 6304.16,
+    "inferred_us_cash_equivalent_usd": 6304.16,
+    "binance_visible_assets_usdt": 8275.96,
+    "binance_day_pl_usdt": 15.75,
+    "binance_day_pl_pct": 0.19,
+    "binance_usdt_defense_ratio_pct": 71.7
+  },
+  "cash_balance": {
+    "broker_cash_usd": 6304.16,
+    "cash_calculation": "24591.21 us_section_value - 18287.05 us_holding_value",
+    "binance_usdt": 5936,
+    "binance_usdt_defense_ratio_pct": 71.7,
+    "crypto_account_posture": "USDT defensive / cash dominant"
+  },
+  "holdings": [
+    {
+      "account": "us_equity",
+      "asset": "GLD",
+      "quantity": 20,
+      "runtime_note": "Core GLD position under ordinary concentration and risk-line protection; no longer UGL-linked because UGL is closed."
+    },
+    {
+      "account": "us_equity",
+      "asset": "GOOG",
+      "quantity": 14,
+      "runtime_note": "Hold for now; GGLL risk depends on GOOG 355 and 365-370 behavior."
+    },
+    {
+      "account": "us_equity",
+      "asset": "NVDA",
+      "quantity": 20,
+      "runtime_note": "Main core-risk watch; hold only if recovery is confirmed around 210-212."
+    },
+    {
+      "account": "us_equity",
+      "asset": "GGLL",
+      "quantity": 10,
+      "runtime_note": "Main remaining active leveraged ETF risk valve."
+    },
+    {
+      "account": "us_equity",
+      "asset": "TSLA",
+      "quantity": 0.0116,
+      "runtime_note": "Tiny residual."
+    },
+    {
+      "account": "closed_us_equity",
+      "asset": "SOXL",
+      "quantity": 0,
+      "position_state": "closed_position",
+      "runtime_note": "Do not re-enter until a new rule is approved."
+    },
+    {
+      "account": "closed_us_equity",
+      "asset": "UGL",
+      "quantity": 0,
+      "position_state": "closed_position",
+      "runtime_note": "Do not re-enter; GLD protection is now ordinary GLD concentration/risk-line protection."
+    },
+    {
+      "account": "closed_us_equity",
+      "asset": "INTC",
+      "quantity": 0,
+      "position_state": "closed_position",
+      "runtime_note": "Do not re-enter until a new rule is approved."
+    },
+    {"account": "crypto_spot", "asset": "USDT", "quantity": 5936, "defense_ratio_pct": 71.7},
+    {"account": "crypto_spot", "asset": "ETH", "quantity": 0.8070416},
+    {"account": "crypto_spot", "asset": "DOGE", "quantity": 8400.535},
+    {"account": "crypto_spot", "asset": "SOL", "quantity": 2.931163},
+    {"account": "crypto_spot", "asset": "BTC", "quantity": 0.00055762},
+    {"account": "crypto_spot", "asset": "ZEC", "quantity": 0.012974}
+  ],
+  "strategy_tags": [
+    "latest_active_checkpoint",
+    "core_position_defense_checkpoint",
+    "core_position_defense_mode",
+    "core_position_defense_mode_validated",
+    "no_new_execution_visible",
+    "no_new_us_equity_buying",
+    "no_new_crypto_buying",
+    "soxl_closed_position",
+    "ugl_closed_position",
+    "intc_closed_position",
+    "ggll_main_remaining_leveraged_risk_valve",
+    "nvda_main_core_risk_watch",
+    "gld_ordinary_concentration_risk_line_protection",
+    "quote_type_tagging_reinforced",
+    "usdt_defense_ratio_71_7_pct"
+  ],
+  "notes": [
+    "This checkpoint validates core_position_defense_mode after historical-risk cleanup.",
+    "SOXL, UGL, and INTC remain closed at 0 shares.",
+    "No new U.S. equity buying and no new crypto buying.",
+    "GGLL remains the main remaining leveraged ETF risk valve.",
+    "NVDA remains the main core-risk watch.",
+    "GLD risk moved from UGL-linked protection to ordinary GLD concentration and risk-line protection.",
+    "Binance USDT defense ratio is approximately 71.7%."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-08/ldd_core_position_defense_checkpoint_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/core_position_defense_monitor_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/gld_concentration_risk_rule_update_0843_0844_sgt.json"
+  ]
+}

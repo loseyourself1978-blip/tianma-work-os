@@ -1,0 +1,62 @@
+{
+  "delta_id": "ldd-core-position-defense-checkpoint-20260608-0843-0844-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "sync_time": "2026-06-08T08:44:00+08:00",
+  "source_cutoff_time": "2026-06-08T08:44:00+08:00",
+  "source_of_truth": [
+    "user_provided_broker_overnight_watchlist_and_holding_screenshots_20260608_0843_0844_sgt",
+    "user_provided_binance_spot_account_screenshots_20260608_0843_0844_sgt",
+    "external_market_cross_check_qqq_nvda_amd_soxl_smh_gld_goog_btc_eth_context_only"
+  ],
+  "updates_or_supersedes": [
+    "records/ldd/2026-06-06/ldd_post_close_cleanup_review_0852_0853_sgt.json",
+    "records/ldd/2026-06-06/account_state_delta_0852_0853_sgt.json",
+    "records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json",
+    "cockpit/ldd/latest_state.json prior generated state"
+  ],
+  "included_events": [
+    "Core-position defense mode remains active after historical-risk cleanup.",
+    "SOXL, UGL, and INTC remain closed at 0 shares.",
+    "Core U.S. holdings are GLD 20, GOOG 14, NVDA 20, GGLL 10, and a tiny TSLA residual.",
+    "Total app assets were about 41,147.42 USD.",
+    "U.S. section remained about 24,591.21 USD with implied U.S. cash about 6,304.16 USD.",
+    "Binance visible assets were about 8,275.96 USDT and the USDT defense ratio was about 71.7%.",
+    "GGLL remains the main active leveraged ETF risk valve.",
+    "NVDA remains the main core-risk watch.",
+    "GLD rule moved from UGL-linked protection to ordinary GLD concentration and risk-line protection.",
+    "Quote Type Tagging remains critical across regular close, night-session quote, premarket executable quote, and regular-session executable quote."
+  ],
+  "pending_events": [
+    "Confirm whether NVDA regular session reclaims 210-212 or weakens below 200-204.",
+    "Confirm whether GOOG breaks 355 or rebounds to 365-370 and fails to continue.",
+    "Confirm whether GLD reclaims 400-405 or breaks 392-395.",
+    "Keep BTC buyback inactive below 75,500-76,000.",
+    "Require order-detail screenshots before recording any new execution."
+  ],
+  "delta_reason": "The 2026-06-08 checkpoint validates that LDD has moved from historical_risk_cleanup_mode into core_position_defense_mode while preserving closed SOXL, UGL, and INTC states.",
+  "changed_fields": [
+    "latest_active_checkpoint: 2026-06-06T08:53:00+08:00 -> 2026-06-08T08:44:00+08:00",
+    "portfolio_mode: core_position_defense_mode_validated",
+    "soxl_position: 0_shares_closed_position",
+    "ugl_position: 0_shares_closed_position",
+    "intc_position: 0_shares_closed_position",
+    "main_remaining_leveraged_risk_valve: GGLL",
+    "main_core_risk_watch: NVDA",
+    "gld_rule: ugl_linked_protection -> ordinary_gld_concentration_risk_line_protection",
+    "binance_usdt_defense_ratio: about_72.9_percent -> about_71.7_percent",
+    "quote_type_tagging: reinforced"
+  ],
+  "new_records": [
+    "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/core_position_defense_monitor_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/gld_concentration_risk_rule_update_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/quote_type_tagging_reinforcement_0843_0844_sgt.json"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-06/portfolio_mode_transition_0852_0853_sgt.json",
+    "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json"
+  ],
+  "sync_status": "delta_update"
+}

@@ -187,6 +187,15 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `records/ldd/2026-06-06/portfolio_mode_transition_0852_0853_sgt.json`
 - `records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json`
 
+## Vol.4 Phase 4.2e / Core Position Defense Checkpoint Validation
+
+- `records/ldd/2026-06-08/ldd_core_position_defense_checkpoint_0843_0844_sgt.json`
+- `records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json`
+- `records/ldd/2026-06-08/core_position_defense_monitor_0843_0844_sgt.json`
+- `records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json`
+- `records/ldd/2026-06-08/gld_concentration_risk_rule_update_0843_0844_sgt.json`
+- `records/ldd/2026-06-08/quote_type_tagging_reinforcement_0843_0844_sgt.json`
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

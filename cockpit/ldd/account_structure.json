@@ -1,31 +1,32 @@
 {
-  "generated_at": "2026-06-06T08:53:00+08:00",
+  "generated_at": "2026-06-08T08:44:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "cockpit_account_structure",
   "version": "0.1",
-  "latest_active_checkpoint": "2026-06-06T08:53:00+08:00",
+  "latest_active_checkpoint": "2026-06-08T08:44:00+08:00",
   "source_files": [
-    "records/ldd/2026-06-06/account_state_delta_0852_0853_sgt.json",
-    "records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json",
-    "records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json",
-    "records/ldd/2026-06-05/execution_feedback_loop_requirement_0813_0814_sgt.json",
+    "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/quote_type_tagging_reinforcement_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/quote_type_tagging_reinforcement_0843_0844_sgt.json",
     "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json",
-    "records/ldd/2026-06-06/portfolio_mode_transition_0852_0853_sgt.json"
+    "records/ldd/2026-06-08/core_position_defense_monitor_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/ldd_core_position_defense_checkpoint_0843_0844_sgt.json"
   ],
   "sections": {
     "total_account": {
-      "status": "post_cleanup_core_position_defense",
-      "broker_total_assets_usd": "approximately 41146.12",
+      "status": "core_position_defense_validated",
+      "broker_total_assets_usd": "approximately 41147.42",
       "total_day_pl_usd": "unknown",
-      "note": "Latest encoded account state confirms the cleanup cycle and a shift to core-position defense."
+      "note": "Latest encoded account state validates core_position_defense_mode."
     },
     "us_equities": {
-      "status": "core_position_defense_after_cleanup",
+      "status": "core_position_defense_validated",
       "section_value_usd": "approximately 24591.21",
       "day_pl_usd": "approximately -890.94",
       "main_remaining_leveraged_risk_valve": "GGLL",
       "main_core_risk_watch": "NVDA",
-      "gld_status": "below 405 under review; UGL already closed",
+      "gld_status": "ordinary GLD concentration and risk-line protection; UGL already closed",
       "closed_cleanup_positions": [
         "SOXL",
         "UGL",
@@ -38,18 +39,18 @@
     },
     "crypto_spot": {
       "status": "defensive_usdt_dominant",
-      "binance_total_assets_usdt": "approximately 8145.8",
-      "day_pl_usdt": "approximately -210.85",
+      "binance_total_assets_usdt": "approximately 8275.96",
+      "day_pl_usdt": "approximately 15.75",
       "btc_trigger_status": "not_triggered",
       "zec_grid_status": "closed_profit_locked",
-      "usdt_defense_ratio_pct": 72.9
+      "usdt_defense_ratio_pct": 71.7
     },
     "cash_and_stablecoins": {
-      "status": "materially_increased_after_cleanup",
+      "status": "defensive_cash_and_stablecoin_posture",
       "broker_cash_usd": "approximately 6304.16",
       "binance_usdt": "5936",
-      "binance_usdt_defense_ratio_pct": 72.9,
-      "latest_cleanup_cash_impact_usd": "approximately 2050.03"
+      "binance_usdt_defense_ratio_pct": 71.7,
+      "latest_cleanup_cash_impact_usd": "unknown"
     },
     "leveraged_exposure": {
       "status": "concentrated_in_ggll_after_cleanup",
@@ -81,14 +82,14 @@
       "watch": []
     },
     "quote_quality": {
-      "status": "historical_soxl_quote_conflict_resolved_by_filled_order_evidence",
-      "symbol": "SOXL",
-      "filled_prices": [
-        "248.00 USD x 3",
-        "239.34 USD x 2"
+      "status": "quote_type_tagging_reinforced",
+      "required_quote_types": [
+        "regular_close",
+        "night_session_quote",
+        "premarket_executable_quote",
+        "regular_session_executable_quote"
       ],
-      "filled_quantity": 5,
-      "execution_validity": "confirmed by user-provided order-detail screenshots and final zero-share position state"
+      "execution_validity": "night-session/watchlist quotes may inform monitoring but should not automatically trigger execution."
     },
     "execution_reconciliation": {
       "status": "cleanup_cycle_confirmed_and_reconciled",
@@ -112,32 +113,33 @@
           "position_after": "0"
         }
       },
-      "latest_cleanup_cash_impact_usd": "approximately 2050.03",
-      "total_soxl_cleanup_cash_impact_usd": "approximately 1222.68"
+      "latest_cleanup_cash_impact_usd": "unknown",
+      "total_soxl_cleanup_cash_impact_usd": "unknown"
     }
   },
   "quality_assessment": {
-    "overall_status": "cleanup_completed_core_position_defense_active",
+    "overall_status": "core_position_defense_validated",
     "positive_factors": [
       "SOXL, UGL, and INTC are closed at 0 shares.",
       "Latest cleanup cycle added approximately 2,050.03 USD before fees.",
       "Total SOXL cleanup added approximately 1,222.68 USD before fees.",
       "U.S. cash/cash-equivalent is approximately 6,304.16 USD.",
-      "USDT is approximately 72.9% of Binance visible assets.",
+      "USDT is approximately 71.7% of Binance visible assets.",
       "ZEC grid remains closed / profit locked.",
-      "Portfolio mode transitioned to core_position_defense_mode."
+      "Portfolio mode remains core_position_defense_mode.",
+      "Quote Type Tagging is reinforced for rule validity."
     ],
     "risk_factors": [
-      "NVDA is below 212 and is the main core-risk watch.",
+      "NVDA is the main core-risk watch.",
       "GGLL is the main remaining leveraged ETF risk valve.",
-      "GLD is below 405 and under review.",
+      "GLD requires ordinary concentration/risk-line protection.",
       "Hong Kong equity concentration remains a watch item.",
       "BTC buyback remains inactive below 75,500-76,000."
     ],
     "next_required_confirmations": [
-      "Whether NVDA reclaims 208-212 or breaks below 200.",
+      "Whether NVDA regular session reclaims 210-212 or weakens below 200-204.",
       "Whether GOOG holds above 360 or triggers GGLL reduction.",
-      "Whether GLD recovers 405-410 or fails below 395.",
+      "Whether GLD reclaims 400-405 or breaks below 392-395.",
       "Whether BTC remains below 75,500-76,000.",
       "Whether any new order screenshots confirm actual execution.",
       "Whether a latest ZEC bot page screenshot is provided."

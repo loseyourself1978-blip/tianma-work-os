@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-06-06T08:53:00+08:00",
+  "generated_at": "2026-06-08T08:44:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "runtime_timeline",
   "version": "0.1",
   "source_root": "records/ldd",
-  "event_count": 42,
+  "event_count": 48,
   "date_range": {
     "start": "2026-06-02T08:22:00+08:00",
-    "end": "2026-06-06T08:53:00+08:00"
+    "end": "2026-06-08T08:44:00+08:00"
   },
   "events": [
     {
@@ -930,6 +930,148 @@
       "asset_or_module": "llm-daredevil-desk",
       "title": "Runtime rule trigger monitor",
       "summary": "Rule trigger monitor captured 5 active rules, including near-trigger states and execution-confirmation requirements.",
+      "state_before": "",
+      "state_after": "",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "high",
+      "tags": [
+        "btc",
+        "gld",
+        "goog",
+        "near_trigger",
+        "nvda",
+        "rule_ledger_snapshot",
+        "soxl",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-08-account-state-delta-0843-0844-sgt-json",
+      "event_time": "2026-06-08T08:44:00+08:00",
+      "event_type": "portfolio_snapshot",
+      "source_file": "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+      "source_record_type": "portfolio_state",
+      "asset_or_module": "core_position_defense_checkpoint",
+      "title": "Portfolio snapshot: latest active LDD checkpoint",
+      "summary": "Post-close account state recorded with broker total assets about 41147.42 USD and Binance visible assets about 8275.96 USDT.",
+      "state_before": "",
+      "state_after": "",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "low",
+      "tags": [
+        "btc",
+        "gld",
+        "goog",
+        "latest_active_checkpoint",
+        "nvda",
+        "portfolio_state",
+        "soxl",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-08-core-position-defense-monitor-0843-0844-sgt-json",
+      "event_time": "2026-06-08T08:44:00+08:00",
+      "event_type": "strategy_state_update",
+      "source_file": "records/ldd/2026-06-08/core_position_defense_monitor_0843_0844_sgt.json",
+      "source_record_type": "strategy_state",
+      "asset_or_module": "LDD portfolio",
+      "title": "Strategy state: LDD portfolio core_position_defense",
+      "summary": "The account remains in core_position_defense_mode after SOXL, UGL, and INTC cleanup. Held U.S. positions are GLD, GOOG, NVDA, GGLL, and tiny TSLA residual.",
+      "state_before": "core_position_defense_mode",
+      "state_after": "core_position_defense_mode_validated",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "medium",
+      "tags": [
+        "gld",
+        "goog",
+        "nvda",
+        "soxl",
+        "strategy_state"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-08-gld-concentration-risk-rule-update-0843-0844-sgt-json",
+      "event_time": "2026-06-08T08:44:00+08:00",
+      "event_type": "trigger_rule_update",
+      "source_file": "records/ldd/2026-06-08/gld_concentration_risk_rule_update_0843_0844_sgt.json",
+      "source_record_type": "trigger_execution_rule",
+      "asset_or_module": "GLD",
+      "title": "Trigger rule: GLD",
+      "summary": "GLD rule moves from UGL-linked protection only to ordinary GLD concentration and risk-line protection.",
+      "state_before": "triggered",
+      "state_after": "waiting",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "medium",
+      "tags": [
+        "gld",
+        "trigger_execution_rule"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-08-ldd-core-position-defense-checkpoint-0843-0844-sgt-json",
+      "event_time": "2026-06-08T08:44:00+08:00",
+      "event_type": "sync_delta",
+      "source_file": "records/ldd/2026-06-08/ldd_core_position_defense_checkpoint_0843_0844_sgt.json",
+      "source_record_type": "sync_delta_update",
+      "asset_or_module": "llm-daredevil-desk",
+      "title": "Sync delta: ldd-core-position-defense-checkpoint-20260608-0843-0844-sgt",
+      "summary": "The 2026-06-08 checkpoint validates that LDD has moved from historical_risk_cleanup_mode into core_position_defense_mode while preserving closed SOXL, UGL, and INTC states.",
+      "state_before": "prior sync or strategy-state assumption",
+      "state_after": "latest_active_checkpoint: 2026-06-06T08:53:00+08:00 -> 2026-06-08T08:44:00+08:00; portfolio_mode: core_position_defense_mode_validated; soxl_position: 0_shares_closed_position; ugl_position: 0_shares_closed_position; intc_position: 0_shares_closed_position; main_remaining_leveraged_risk_valve: GGLL; main_core_risk_watch: NVDA; gld_rule: ugl_linked_protection -> ordinary_gld_concentration_risk_line_protection; binance_usdt_defense_ratio: about_72.9_percent -> about_71.7_percent; quote_type_tagging: reinforced",
+      "supersedes_or_updates": [
+        "records/ldd/2026-06-06/ldd_post_close_cleanup_review_0852_0853_sgt.json",
+        "records/ldd/2026-06-06/account_state_delta_0852_0853_sgt.json",
+        "records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json",
+        "cockpit/ldd/latest_state.json prior generated state"
+      ],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "critical",
+      "tags": [
+        "btc",
+        "gld",
+        "goog",
+        "latest_active_checkpoint",
+        "nvda",
+        "soxl",
+        "sync_delta_update"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-08-quote-type-tagging-reinforcement-0843-0844-sgt-json",
+      "event_time": "2026-06-08T08:44:00+08:00",
+      "event_type": "account_structure_review",
+      "source_file": "records/ldd/2026-06-08/quote_type_tagging_reinforcement_0843_0844_sgt.json",
+      "source_record_type": "account_structure_review",
+      "asset_or_module": "quote_type_tagging_and_execution_validity",
+      "title": "Account structure review: score 74",
+      "summary": "Cash pressure: not_applicable; this is quote quality and execution-validity review; redeployment readiness: blocked_for_new_buying; no new U.S. equity or crypto buying in this checkpoint.",
+      "state_before": "",
+      "state_after": "structure_score=74",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "medium",
+      "tags": [
+        "account_structure_review",
+        "gld",
+        "nvda",
+        "soxl",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-08-remaining-leveraged-risk-monitor-0843-0844-sgt-json",
+      "event_time": "2026-06-08T08:44:00+08:00",
+      "event_type": "trigger_rule_update",
+      "source_file": "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json",
+      "source_record_type": "rule_ledger_snapshot",
+      "asset_or_module": "llm-daredevil-desk",
+      "title": "Runtime rule trigger monitor",
+      "summary": "Rule trigger monitor captured 6 active rules, including near-trigger states and execution-confirmation requirements.",
       "state_before": "",
       "state_after": "",
       "supersedes_or_updates": [],

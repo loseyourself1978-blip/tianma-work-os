@@ -1,0 +1,107 @@
+{
+  "snapshot_id": "remaining-leveraged-risk-monitor-20260608-0843-0844-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "snapshot_time": "2026-06-08T08:44:00+08:00",
+  "source_of_truth": [
+    "user_provided_broker_overnight_watchlist_and_holding_screenshots_20260608_0843_0844_sgt",
+    "user_provided_binance_screenshots_20260608_0843_0844_sgt"
+  ],
+  "rules": [
+    {
+      "rule_id": "nvda-core-defense-rule-20260608-0844",
+      "asset": "NVDA",
+      "account": "us_equity",
+      "strategy": "main_core_risk_watch",
+      "current_observed_value": "20 shares; night-session / checkpoint context requires quote-type tagging",
+      "trigger_condition": "Hold if regular session reclaims 210-212. Protect if below 200-204. No add unless recovery is confirmed.",
+      "trigger_level": "210-212 reclaim / 200-204 protection",
+      "trigger_status": "near_trigger",
+      "execution_status": "waiting",
+      "intended_action": "hold for now, no add, reassess only after regular-session confirmation",
+      "execution_evidence_requirement": "quote type must be tagged; order-detail screenshot required for any reduction",
+      "next_review_time": "next regular-session broker sync",
+      "rule_drift_prevention": "Do not treat night-session quote as automatic execution trigger."
+    },
+    {
+      "rule_id": "goog-ggll-risk-valve-rule-20260608-0844",
+      "asset": "GOOG/GGLL",
+      "account": "us_equity",
+      "strategy": "main_remaining_leveraged_etf_risk_valve",
+      "current_observed_value": "GOOG 14 shares and GGLL 10 shares remain held",
+      "trigger_condition": "Reduce or clean GGLL if GOOG breaks 355. Consider selling 5 GGLL if GOOG rebounds to 365-370 but fails to continue. No GGLL add.",
+      "trigger_level": "GOOG 355 downside / 365-370 failed rebound",
+      "trigger_status": "active",
+      "execution_status": "waiting",
+      "intended_action": "treat GGLL as the main remaining leveraged ETF risk valve",
+      "execution_evidence_requirement": "regular-session executable quote and order-detail screenshot required",
+      "next_review_time": "next broker sync",
+      "rule_drift_prevention": "No GGLL add."
+    },
+    {
+      "rule_id": "gld-concentration-risk-line-rule-20260608-0844",
+      "asset": "GLD",
+      "account": "us_equity",
+      "strategy": "ordinary_gld_concentration_risk_line_protection",
+      "current_observed_value": "GLD 20 shares; GLD below 405 risk line",
+      "trigger_condition": "If GLD cannot reclaim 400-405, reduce 5 GLD. If GLD breaks below 392-395, reduce another 5 GLD.",
+      "trigger_level": "400-405 reclaim / 392-395 second reduction",
+      "trigger_status": "triggered",
+      "execution_status": "waiting",
+      "intended_action": "manage GLD as ordinary concentration and risk-line exposure; UGL is already closed",
+      "execution_evidence_requirement": "regular-session executable quote and order-detail screenshot required",
+      "next_review_time": "next regular-session broker sync",
+      "rule_drift_prevention": "Do not re-open UGL; GLD rule is no longer UGL-linked."
+    },
+    {
+      "rule_id": "closed-cleanup-positions-no-reentry-20260608-0844",
+      "asset": "SOXL/INTC/UGL",
+      "account": "us_equity",
+      "strategy": "closed_position_guardrail",
+      "current_observed_value": "SOXL 0, INTC 0, UGL 0",
+      "trigger_condition": "Closed positions require a new approved rule before any re-entry.",
+      "trigger_level": "new_rule_required",
+      "trigger_status": "executed",
+      "execution_status": "closed",
+      "intended_action": "do not chase SOXL, SOXS, NVDD, NVDS, GDXU, TSLQ, INTC, or UGL",
+      "execution_evidence_requirement": "new decision record required before re-entry",
+      "next_review_time": "only if a new rule is explicitly approved",
+      "rule_drift_prevention": "Closed cleanup positions stay closed."
+    },
+    {
+      "rule_id": "btc-buyback-defense-rule-20260608-0844",
+      "asset": "BTC",
+      "account": "binance_spot",
+      "strategy": "staged_buyback_watch",
+      "current_observed_value": "BTC buyback trigger remains inactive",
+      "trigger_condition": "No BTC buyback below 75,500-76,000.",
+      "trigger_level": "75,500 stability / 76,000 confirmation",
+      "trigger_status": "not_triggered",
+      "execution_status": "waiting",
+      "intended_action": "maintain USDT-dominant defense",
+      "execution_evidence_requirement": "manual confirmation and order screenshot required",
+      "next_review_time": "next crypto sync",
+      "rule_drift_prevention": "Do not buy BTC below trigger zone."
+    },
+    {
+      "rule_id": "crypto-no-add-defense-rule-20260608-0844",
+      "asset": "ETH/SOL/DOGE/ZEC",
+      "account": "binance_spot",
+      "strategy": "usdt_dominant_defense",
+      "current_observed_value": "USDT approximately 71.7% of Binance visible assets",
+      "trigger_condition": "No ETH, SOL, DOGE, or ZEC adds. No ZEC grid reopening.",
+      "trigger_level": "no-add defense",
+      "trigger_status": "active",
+      "execution_status": "waiting",
+      "intended_action": "preserve USDT-dominant crypto defense",
+      "execution_evidence_requirement": "new order or bot screenshot required before changing state",
+      "next_review_time": "next Binance sync",
+      "rule_drift_prevention": "ZEC grid remains closed."
+    }
+  ],
+  "related_records": [
+    "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/gld_concentration_risk_rule_update_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/quote_type_tagging_reinforcement_0843_0844_sgt.json"
+  ]
+}

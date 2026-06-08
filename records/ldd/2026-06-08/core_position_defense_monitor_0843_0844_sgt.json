@@ -1,0 +1,55 @@
+{
+  "strategy_id": "core-position-defense-monitor-20260608-0844",
+  "project_id": "tianma-work-os",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "strategy_type": "model_portfolio_strategy",
+  "linked_asset": "LDD portfolio",
+  "account_ref": "longbridge_us_equity_and_binance_spot",
+  "initial_capital": 0,
+  "current_value": 41147.42,
+  "current_return_pct": 0,
+  "peak_return_pct": 0,
+  "profit_drawdown_pct": 0,
+  "soft_warning_threshold_pct": 0,
+  "hard_protection_threshold_pct": 0,
+  "market_state_context": "The account remains in core_position_defense_mode after SOXL, UGL, and INTC cleanup. Held U.S. positions are GLD, GOOG, NVDA, GGLL, and tiny TSLA residual.",
+  "health_state": "core_position_defense",
+  "recommended_action": "No new buying. Hold NVDA and GOOG for now, use GGLL as the main remaining leveraged ETF risk valve, manage GLD as ordinary concentration/risk-line exposure, and maintain USDT-dominant crypto defense.",
+  "last_review_time": "2026-06-08T08:44:00+08:00",
+  "source_of_truth": [
+    "user_provided_broker_screenshots_20260608_0843_0844_sgt",
+    "user_provided_binance_screenshots_20260608_0843_0844_sgt"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json",
+    "records/ldd/2026-06-06/portfolio_mode_transition_0852_0853_sgt.json"
+  ],
+  "previous_state": "core_position_defense_mode",
+  "trigger": "2026-06-08_checkpoint_validates_cleanup_state_and_remaining_core_risk_focus",
+  "new_state": "core_position_defense_mode_validated",
+  "execution_status": "monitoring",
+  "recommended_action_after_execution": "Continue core-position defense; do not chase SOXL, SOXS, NVDD, NVDS, GDXU, or TSLQ.",
+  "residual_position": {
+    "closed_positions": ["SOXL", "UGL", "INTC"],
+    "core_us_holdings": ["GLD", "GOOG", "NVDA", "GGLL", "tiny TSLA residual"],
+    "main_remaining_leveraged_risk_valve": "GGLL",
+    "main_core_risk_watch": "NVDA",
+    "gld_rule_state": "ordinary_gld_concentration_risk_line_protection"
+  },
+  "status_transition_history": [
+    {
+      "time": "2026-06-06T08:53:00+08:00",
+      "from_state": "historical_risk_cleanup_mode",
+      "to_state": "core_position_defense_mode",
+      "reason": "SOXL, UGL, and INTC were confirmed closed."
+    },
+    {
+      "time": "2026-06-08T08:44:00+08:00",
+      "from_state": "core_position_defense_mode",
+      "to_state": "core_position_defense_mode_validated",
+      "reason": "New checkpoint confirmed closed cleanup positions and remaining risk concentration."
+    }
+  ]
+}

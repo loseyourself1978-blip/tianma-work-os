@@ -71,6 +71,16 @@ COCKPIT_SUMMARY_FILES = {
 
 
 def schema_for_filename(filename: str) -> tuple[str, str] | None:
+    if "ldd_core_position_defense_checkpoint" in filename:
+        return "sync_delta_update", SCHEMA_FILES["sync_delta_update"]
+    if "core_position_defense_monitor" in filename:
+        return "strategy_state", SCHEMA_FILES["strategy_state"]
+    if "remaining_leveraged_risk_monitor" in filename:
+        return "rule_ledger_snapshot", SCHEMA_FILES["rule_ledger_snapshot"]
+    if "gld_concentration_risk_rule_update" in filename:
+        return "trigger_execution_rule", SCHEMA_FILES["trigger_execution_rule"]
+    if "quote_type_tagging_reinforcement" in filename:
+        return "account_structure_review", SCHEMA_FILES["account_structure_review"]
     if "ldd_premarket_checkpoint" in filename or "ldd_post_close_cleanup_review" in filename:
         return "sync_delta_update", SCHEMA_FILES["sync_delta_update"]
     if "soxl_residual_risk_monitor" in filename or "portfolio_mode_transition" in filename:

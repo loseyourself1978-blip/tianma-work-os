@@ -111,11 +111,11 @@ def classify_record(path: Path, data: dict[str, Any]) -> str:
     name = path.name
     if "account_state_delta" in name:
         return "portfolio_state"
-    if "rule_trigger_monitor" in name:
+    if "rule_trigger_monitor" in name or "remaining_leveraged_risk_monitor" in name:
         return "rule_ledger_snapshot"
     if "post_close_runtime_delta" in name:
         return "sync_delta_update"
-    if "quote_source_conflict" in name or "section_level_account_structure_requirement" in name:
+    if "quote_source_conflict" in name or "quote_type_tagging_reinforcement" in name or "section_level_account_structure_requirement" in name:
         return "account_structure_review"
     if "portfolio_state" in name:
         return "portfolio_state"

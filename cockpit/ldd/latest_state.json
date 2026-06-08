@@ -1,17 +1,17 @@
 {
-  "generated_at": "2026-06-06T08:53:00+08:00",
+  "generated_at": "2026-06-08T08:44:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "cockpit_latest_state",
   "version": "0.1",
-  "latest_active_checkpoint": "2026-06-06T08:53:00+08:00",
+  "latest_active_checkpoint": "2026-06-08T08:44:00+08:00",
   "source_files": [
-    "records/ldd/2026-06-06/account_state_delta_0852_0853_sgt.json",
-    "records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json",
-    "records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json",
-    "records/ldd/2026-06-05/execution_feedback_loop_requirement_0813_0814_sgt.json",
+    "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/quote_type_tagging_reinforcement_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/quote_type_tagging_reinforcement_0843_0844_sgt.json",
     "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json",
-    "records/ldd/2026-06-06/portfolio_mode_transition_0852_0853_sgt.json",
-    "records/ldd/2026-06-06/ldd_post_close_cleanup_review_0852_0853_sgt.json",
+    "records/ldd/2026-06-08/core_position_defense_monitor_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/ldd_core_position_defense_checkpoint_0843_0844_sgt.json",
     "records/ldd/2026-06-05/soxl_residual_closure_execution_1951_sgt.json",
     "records/ldd/2026-06-05/soxl_full_cleanup_reconciliation_1951_sgt.json",
     "records/ldd/2026-06-05/ugl_cleanup_execution_2208_sgt.json",
@@ -22,15 +22,15 @@
   ],
   "state_summary": {
     "total_account": {
-      "broker_total_assets_usd": "approximately 41146.12",
+      "broker_total_assets_usd": "approximately 41147.42",
       "cash_usd": "approximately 6304.16",
       "total_holding_value_usd": "unknown",
       "total_holding_pl_usd": "unknown",
       "total_day_pl_usd": "unknown",
-      "note": "The latest checkpoint focuses on the U.S. post-close cleanup state; U.S. equity day P/L was approximately -890.94 USD."
+      "note": "The latest checkpoint validates core_position_defense_mode after historical-risk cleanup."
     },
     "hong_kong_equities": {
-      "latest_checkpoint_status": "No updated Hong Kong holding detail was encoded in the 2026-06-06 checkpoint.",
+      "latest_checkpoint_status": "No updated Hong Kong holding detail was encoded in the latest checkpoint.",
       "02513_zhipu": {
         "shares": 100,
         "market_value_hkd": "unknown",
@@ -59,25 +59,25 @@
         "INTC 0"
       ],
       "open_risks": [
-        "NVDA main core-risk watch after break below 212",
+        "NVDA main core-risk watch",
         "GGLL main remaining leveraged ETF risk valve",
-        "GLD below 405 under review",
+        "GLD ordinary concentration/risk-line protection",
         "Hong Kong equity volatility"
       ],
       "portfolio_mode": "core_position_defense_mode"
     },
     "crypto": {
-      "binance_total_assets_usdt": "approximately 8145.8",
+      "binance_total_assets_usdt": "approximately 8275.96",
       "usdt": "5936",
       "eth": "0.8070416",
       "doge": "8400.535",
       "sol": "2.931163",
       "btc": "0.00055762",
-      "zec_residual": "0.012974, approximately 4.39 USDT",
+      "zec_residual": "0.012974, approximately unknown USDT",
       "cash_posture": "USDT-dominant defensive posture",
       "btc_buyback_status": "Not triggered below 75,500-76,000",
-      "zec_bot_status": "Closed / profit-locked based on prior confirmed execution state; no running ZEC bot screenshot in 2026-06-05 update",
-      "usdt_defense_ratio_pct": 72.9,
+      "zec_bot_status": "Closed / profit-locked based on prior confirmed execution state; no ZEC grid reopening.",
+      "usdt_defense_ratio_pct": 71.7,
       "open_risks": [
         "Crypto market weakness",
         "BTC still below buyback trigger",
@@ -85,12 +85,12 @@
       ]
     },
     "runtime": {
-      "latest_timeline_event_time": "2026-06-06T08:53:00+08:00",
-      "timeline_event_count": 42,
+      "latest_timeline_event_time": "2026-06-08T08:44:00+08:00",
+      "timeline_event_count": 48,
       "warning_count": 0,
-      "no_new_execution_confirmed": false,
+      "no_new_execution_confirmed": true,
       "confirmed_execution_reconciled": true,
-      "latest_confirmed_execution": "INTC sell 10 shares at 104.75 USD; SOXL, UGL, and INTC cleanup cycle confirmed",
+      "latest_confirmed_execution": "No new execution visible in latest checkpoint; prior SOXL, UGL, and INTC cleanup cycle remains reconciled.",
       "soxl_position_after_execution": "0",
       "ugl_position_after_execution": "0",
       "intc_position_after_execution": "0",
