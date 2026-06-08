@@ -4,7 +4,7 @@
   "runtime_layer": "runtime_timeline",
   "version": "0.1",
   "source_root": "records/ldd",
-  "event_count": 49,
+  "event_count": 50,
   "date_range": {
     "start": "2026-06-02T08:22:00+08:00",
     "end": "2026-06-08T08:44:00+08:00"
@@ -993,6 +993,32 @@
         "nvda",
         "soxl",
         "ui_readiness_review",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-08-cockpit-view-model-contract-0844-sgt-json",
+      "event_time": "2026-06-08T08:44:00+08:00",
+      "event_type": "report_generation",
+      "source_file": "records/ldd/2026-06-08/cockpit_view_model_contract_0844_sgt.json",
+      "source_record_type": "cockpit_view_model_contract",
+      "asset_or_module": "LDD Runtime",
+      "title": "Cockpit view model contract",
+      "summary": "Contract version 0.1 defines 15 top-level sections for future UI and downstream consumers.",
+      "state_before": "",
+      "state_after": "contract_version=0.1; validation_status=contract_defined_and_validated_locally",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "medium",
+      "tags": [
+        "btc",
+        "cockpit_view_model_contract",
+        "frontend_ready_contract",
+        "gld",
+        "latest_active_checkpoint",
+        "non_trading_runtime_event",
+        "nvda",
+        "soxl",
         "zec"
       ]
     },

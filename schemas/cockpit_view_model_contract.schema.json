@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/cockpit_view_model_contract.schema.json",
+  "title": "Cockpit View Model Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_type",
+    "contract_version",
+    "contract_time",
+    "baseline_commit",
+    "baseline_checkpoint",
+    "portfolio_mode",
+    "source_cockpit_files",
+    "view_model_sections",
+    "required_fields",
+    "optional_fields",
+    "state_vocabularies",
+    "current_ldd_example",
+    "validation_status",
+    "non_goals",
+    "recommended_next_phase"
+  ],
+  "properties": {
+    "schema_type": {
+      "type": "string",
+      "enum": [
+        "cockpit_view_model_contract"
+      ]
+    },
+    "contract_version": {
+      "type": "string"
+    },
+    "contract_time": {
+      "type": "string"
+    },
+    "baseline_commit": {
+      "type": "string"
+    },
+    "baseline_checkpoint": {
+      "type": "string"
+    },
+    "portfolio_mode": {
+      "type": "string"
+    },
+    "source_cockpit_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "view_model_sections": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "required_fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "type",
+          "meaning"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "meaning": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "optional_fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "type",
+          "meaning"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "meaning": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "state_vocabularies": {
+      "type": "object",
+      "required": [
+        "risk_states",
+        "position_states",
+        "rule_states",
+        "strategy_states",
+        "timeline_event_types",
+        "cockpit_priorities"
+      ],
+      "properties": {
+        "risk_states": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "position_states": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rule_states": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "strategy_states": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "timeline_event_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cockpit_priorities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "current_ldd_example": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "validation_status": {
+      "type": "string"
+    },
+    "non_goals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recommended_next_phase": {
+      "type": "string"
+    },
+    "related_documents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

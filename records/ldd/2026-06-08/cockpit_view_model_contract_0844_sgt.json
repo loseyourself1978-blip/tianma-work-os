@@ -1,0 +1,261 @@
+{
+  "schema_type": "cockpit_view_model_contract",
+  "contract_version": "0.1",
+  "contract_time": "2026-06-08T08:44:00+08:00",
+  "baseline_commit": "c91d13faa268d8f6cbafdfc9281d12f1857e679d",
+  "baseline_checkpoint": "2026-06-08T08:44:00+08:00",
+  "portfolio_mode": "core_position_defense_mode",
+  "source_cockpit_files": [
+    "cockpit/ldd/manifest.json",
+    "cockpit/ldd/latest_state.json",
+    "cockpit/ldd/account_structure.json",
+    "cockpit/ldd/active_rules.json",
+    "cockpit/ldd/strategy_states.json",
+    "cockpit/ldd/pending_commands.json",
+    "cockpit/ldd/memory_checkpoint.json",
+    "cockpit/ldd/runtime_timeline.json"
+  ],
+  "view_model_sections": [
+    "meta",
+    "checkpoint",
+    "portfolio_mode",
+    "account_overview",
+    "account_sections",
+    "positions",
+    "closed_positions",
+    "risk_summary",
+    "active_rules",
+    "strategy_states",
+    "timeline",
+    "pending_commands",
+    "memory_checkpoint",
+    "warnings",
+    "data_quality"
+  ],
+  "required_fields": [
+    {
+      "path": "meta.project",
+      "type": "string",
+      "meaning": "Human-readable project name for the cockpit context.",
+      "source": "manifest.json/project"
+    },
+    {
+      "path": "meta.contract_version",
+      "type": "string",
+      "meaning": "View model contract version used by downstream consumers.",
+      "source": "contract record"
+    },
+    {
+      "path": "checkpoint.latest_active_checkpoint",
+      "type": "string",
+      "meaning": "Latest active LDD checkpoint that current-state panels should treat as authoritative.",
+      "source": "manifest.json/latest_active_checkpoint"
+    },
+    {
+      "path": "portfolio_mode.current",
+      "type": "string",
+      "meaning": "Current portfolio operating mode.",
+      "source": "latest_state.json/state_summary/runtime/portfolio_mode"
+    },
+    {
+      "path": "account_overview.total_account",
+      "type": "object",
+      "meaning": "Total account summary for the latest checkpoint.",
+      "source": "latest_state.json/state_summary/total_account"
+    },
+    {
+      "path": "account_sections.us_equities",
+      "type": "object",
+      "meaning": "Section-level U.S. equity state and risk posture.",
+      "source": "account_structure.json/sections/us_equities"
+    },
+    {
+      "path": "account_sections.crypto_spot",
+      "type": "object",
+      "meaning": "Binance spot and USDT defensive posture.",
+      "source": "account_structure.json/sections/crypto_spot"
+    },
+    {
+      "path": "closed_positions",
+      "type": "array",
+      "meaning": "Positions that must render as closed or historical, not active trading candidates.",
+      "source": "latest_state.json/state_summary/runtime/position_states"
+    },
+    {
+      "path": "active_rules",
+      "type": "array",
+      "meaning": "Renderable rule rows or cards for watch, risk-line, prohibition, execution, and staged-trigger rules.",
+      "source": "active_rules.json/rules"
+    },
+    {
+      "path": "strategy_states",
+      "type": "array",
+      "meaning": "Renderable strategy-state rows or cards.",
+      "source": "strategy_states.json/strategy_states"
+    },
+    {
+      "path": "timeline.events",
+      "type": "array",
+      "meaning": "Chronological runtime events for timeline display.",
+      "source": "runtime_timeline.json/events"
+    },
+    {
+      "path": "warnings",
+      "type": "array",
+      "meaning": "Warnings surfaced from cockpit files, runtime timeline, or data-quality checks.",
+      "source": "all cockpit files/warnings"
+    },
+    {
+      "path": "data_quality.execution_source_of_truth",
+      "type": "string",
+      "meaning": "Reminder that user-provided broker and Binance screenshots remain execution source of truth.",
+      "source": "runtime docs and reports"
+    }
+  ],
+  "optional_fields": [
+    {
+      "path": "account_sections.hong_kong_equities",
+      "type": "object",
+      "meaning": "Hong Kong equity state when the latest checkpoint includes updated Hong Kong detail.",
+      "source": "latest_state.json/state_summary/hong_kong_equities"
+    },
+    {
+      "path": "positions.active",
+      "type": "array",
+      "meaning": "Open position list normalized from current account and strategy state.",
+      "source": "latest_state.json/state_summary/us_equities/key_positions"
+    },
+    {
+      "path": "risk_summary.open_risks",
+      "type": "array",
+      "meaning": "Current open risks suitable for dashboard badges.",
+      "source": "latest_state.json and account_structure.json"
+    },
+    {
+      "path": "pending_commands.commands",
+      "type": "array",
+      "meaning": "Command status rows if command records exist.",
+      "source": "pending_commands.json/commands"
+    },
+    {
+      "path": "memory_checkpoint.superseded_snapshot_candidates",
+      "type": "array",
+      "meaning": "Saved-memory cleanup candidates for human review.",
+      "source": "memory_checkpoint.json/superseded_snapshot_candidates"
+    },
+    {
+      "path": "data_quality.quote_type_tags",
+      "type": "array",
+      "meaning": "Quote type categories needed before executable-trigger display.",
+      "source": "account_structure.json/sections/quote_quality"
+    },
+    {
+      "path": "timeline.filters",
+      "type": "array",
+      "meaning": "Future UI grouping or filter options derived from event_type, tags, priority, and source file.",
+      "source": "runtime_timeline.json/events"
+    }
+  ],
+  "state_vocabularies": {
+    "risk_states": [
+      "normal",
+      "watch",
+      "near_trigger",
+      "triggered",
+      "protect",
+      "reduce",
+      "closed",
+      "prohibited",
+      "unknown"
+    ],
+    "position_states": [
+      "active_position",
+      "core_position",
+      "watch_position",
+      "risk_valve",
+      "residual_watch_position",
+      "closed_position",
+      "historical_position",
+      "prohibited_reentry",
+      "unknown"
+    ],
+    "rule_states": [
+      "active",
+      "near_trigger",
+      "triggered",
+      "awaiting_execution_confirmation",
+      "executed",
+      "stale",
+      "superseded",
+      "historical",
+      "prohibited"
+    ],
+    "strategy_states": [
+      "active",
+      "monitoring",
+      "closed",
+      "superseded",
+      "historical",
+      "waiting_for_trigger",
+      "not_opened"
+    ],
+    "timeline_event_types": [
+      "portfolio_snapshot",
+      "strategy_state_update",
+      "trigger_rule_update",
+      "execution_event",
+      "rule_review",
+      "account_structure_review",
+      "sync_delta",
+      "pending_command",
+      "command_intelligence",
+      "memory_checkpoint",
+      "report_generation",
+      "unknown"
+    ],
+    "cockpit_priorities": [
+      "critical",
+      "high",
+      "medium",
+      "low"
+    ]
+  },
+  "current_ldd_example": {
+    "latest_active_checkpoint": "2026-06-08T08:44:00+08:00",
+    "portfolio_mode": "core_position_defense_mode",
+    "closed_positions": [
+      "SOXL closed_position; no re-add",
+      "UGL closed_position; no re-add",
+      "INTC closed_position; no re-add"
+    ],
+    "main_remaining_leveraged_etf_risk_valve": "GGLL",
+    "main_core_risk_watch": "NVDA",
+    "gld_rule": "ordinary GLD concentration / risk-line protection",
+    "crypto_defense": "Binance remains USDT-dominant defense",
+    "btc_buyback_trigger": "75,500-76,000 trigger inactive",
+    "zec_grid": "closed / profit-locked / do not reopen",
+    "new_execution_status": "No new execution was reported at the 2026-06-08 08:43-08:44 checkpoint"
+  },
+  "validation_status": "contract_defined_and_validated_locally",
+  "non_goals": [
+    "No UI was built.",
+    "No frontend app files were created.",
+    "No external APIs were connected.",
+    "No trading automation was added.",
+    "No GitHub Projects board was created.",
+    "No new GitHub Issues were created.",
+    "The 2026-06-08 checkpoint was not re-ingested.",
+    "No historical runtime facts were changed."
+  ],
+  "recommended_next_phase": "Vol.5 Phase 5.3 - Cockpit View Model Generator",
+  "related_documents": [
+    "docs/runtime/COCKPIT_VIEW_MODEL_CONTRACT_v0.1.md",
+    "docs/runtime/COCKPIT_READY_SUMMARY_LAYER_v0.1.md",
+    "docs/runtime/DEFENSE_COCKPIT_CONSISTENCY_REVIEW_v0.1.md"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-08/cockpit_consistency_review_0844_sgt.json",
+    "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+    "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+  ]
+}

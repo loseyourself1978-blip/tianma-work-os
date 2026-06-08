@@ -81,8 +81,10 @@ This should define a stable non-UI JSON contract for future cockpit panels befor
 Suggested outputs:
 
 - `docs/runtime/COCKPIT_VIEW_MODEL_CONTRACT_v0.1.md`
-- `schemas/cockpit_view_model.schema.json`
-- `cockpit/ldd/view_model.json`
+- `schemas/cockpit_view_model_contract.schema.json`
+- `records/ldd/2026-06-08/cockpit_view_model_contract_0844_sgt.json`
+
+Vol.5 Phase 5.2 implements this recommendation as a contract-only phase. The next non-UI step should generate a concrete `cockpit/ldd/view_model.json` from the existing cockpit summaries and timeline.
 
 ## Explicit Confirmations
 

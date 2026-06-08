@@ -57,6 +57,8 @@ Generated cockpit files:
 
 `manifest.json` is the entrypoint. Future cockpit prototypes should read it first, then follow the recommended read order.
 
+Vol.5 Phase 5.2 adds `docs/runtime/COCKPIT_VIEW_MODEL_CONTRACT_v0.1.md`, which defines how future non-UI generators and eventual UI prototypes should interpret the current cockpit summary files. The contract should be treated as the bridge between multi-file cockpit summaries and a future single view-model payload.
+
 ## Non-Goals
 
 Vol.4 Phase 4.2b does not implement:
@@ -74,7 +76,7 @@ Vol.4 Phase 4.2b does not implement:
 Recommended next phase:
 
 ```text
-Vol.4 Phase 4.3 - Lightweight LDD Cockpit Prototype
+Vol.5 Phase 5.3 - Cockpit View Model Generator
 ```
 
-The prototype should read `cockpit/ldd/manifest.json` and summary JSON files instead of rebuilding runtime parsing logic inside the UI.
+The next non-UI phase should generate a single local `cockpit/ldd/view_model.json` from existing cockpit summaries and `cockpit/ldd/runtime_timeline.json`. A UI should wait until that view model exists.

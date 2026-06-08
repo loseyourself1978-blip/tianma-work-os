@@ -41,6 +41,7 @@ TIMESTAMP_FIELDS = [
     "created_at",
     "check_time",
     "execution_time",
+    "contract_time",
 ]
 
 
@@ -77,6 +78,8 @@ def first_timestamp(data: dict[str, Any]) -> tuple[str, datetime | None]:
 
 def classify_record(path: Path, data: dict[str, Any]) -> str | None:
     name = path.name
+    if "cockpit_view_model_contract" in name:
+        return "cockpit_view_model_contract"
     if "cockpit_consistency_review" in name:
         return "cockpit_consistency_review"
     if "account_state_delta" in name:
@@ -126,6 +129,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "rule_ledger_snapshot"
     if data.get("schema_type") == "cockpit_consistency_review":
         return "cockpit_consistency_review"
+    if data.get("schema_type") == "cockpit_view_model_contract":
+        return "cockpit_view_model_contract"
     return None
 
 
@@ -826,7 +831,75 @@ def generated_report_paths() -> list[str]:
         "reports/ldd/delta_sync_summary.md",
         "reports/ldd/memory_cleanup_recommendations.md",
         "reports/ldd/latest_active_memory_checkpoint.md",
+        "reports/ldd/cockpit_view_model_contract.md",
     ]
+
+
+def generate_cockpit_view_model_contract(records: list[RuntimeRecord]) -> list[str]:
+    lines = common_header("Cockpit View Model Contract", records)
+    contract = latest(by_kind(records, "cockpit_view_model_contract"))
+
+    lines.extend(
+        [
+            "This report summarizes the frontend-ready data contract for future cockpit, report, and downstream consumers. It is a contract summary only; it does not create a UI, connect external APIs, or add trading automation.",
+            "",
+        ]
+    )
+
+    if contract is None:
+        lines.append("- No cockpit view model contract record found.")
+        return lines
+
+    data = contract.data
+    lines.extend(
+        [
+            "## Contract",
+            "",
+            f"- Contract version: `{scalar(data.get('contract_version'))}`",
+            f"- Contract time: `{scalar(data.get('contract_time'))}`",
+            f"- Baseline checkpoint: `{scalar(data.get('baseline_checkpoint'))}`",
+            f"- Baseline commit: `{scalar(data.get('baseline_commit'))}`",
+            f"- Portfolio mode: `{scalar(data.get('portfolio_mode'))}`",
+            f"- Validation status: `{scalar(data.get('validation_status'))}`",
+            f"- Recommended next phase: {scalar(data.get('recommended_next_phase'))}",
+            f"- Source: `{contract.relpath}`",
+            "",
+            "## Source Cockpit Files",
+            "",
+        ]
+    )
+    lines.extend(md_list([f"`{item}`" for item in data.get("source_cockpit_files", [])]))
+    lines.extend(["", "## View Model Sections", ""])
+    lines.extend(md_list([f"`{item}`" for item in data.get("view_model_sections", [])]))
+
+    lines.extend(["", "## Required Fields", ""])
+    for item in data.get("required_fields", []):
+        if isinstance(item, dict):
+            lines.append(f"- `{scalar(item.get('path'))}`: {scalar(item.get('meaning'))}")
+
+    vocabularies = data.get("state_vocabularies", {})
+    if isinstance(vocabularies, dict):
+        lines.extend(["", "## State Vocabularies", ""])
+        for name, values in vocabularies.items():
+            lines.append(f"### {name}")
+            lines.append("")
+            if isinstance(values, list):
+                lines.extend([f"- `{value}`" for value in values])
+            lines.append("")
+
+    example = data.get("current_ldd_example", {})
+    if isinstance(example, dict):
+        lines.extend(["## Current LDD Defense-Mode Example", ""])
+        for key, value in example.items():
+            if isinstance(value, list):
+                lines.append(f"- {key}:")
+                lines.extend([f"  - {item}" for item in value])
+            else:
+                lines.append(f"- {key}: {value}")
+
+    lines.extend(["", "## Non-Goals", ""])
+    lines.extend(md_list([str(item) for item in data.get("non_goals", [])]))
+    return lines
 
 
 def generate_memory_cleanup_recommendations(records: list[RuntimeRecord]) -> list[str]:
@@ -1005,6 +1078,7 @@ def main() -> int:
         "delta_sync_summary.md": generate_delta_sync_summary(records),
         "memory_cleanup_recommendations.md": generate_memory_cleanup_recommendations(records),
         "latest_active_memory_checkpoint.md": generate_latest_active_memory_checkpoint(records),
+        "cockpit_view_model_contract.md": generate_cockpit_view_model_contract(records),
     }
 
     for filename, lines in reports.items():
