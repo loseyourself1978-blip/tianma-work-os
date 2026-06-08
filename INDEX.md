@@ -67,6 +67,7 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `docs/runtime/DEFENSE_COCKPIT_CONSISTENCY_REVIEW_v0.1.md`
 - `docs/runtime/COCKPIT_VIEW_MODEL_CONTRACT_v0.1.md`
 - `docs/runtime/COCKPIT_VIEW_MODEL_GENERATOR_v0.1.md`
+- `docs/runtime/VIEW_MODEL_QUALITY_GATES_v0.1.md`
 - `docs/runtime/VOL3_RUNTIME_REVIEW_AND_PHASE4_ROADMAP_v0.1.md`
 - `docs/runtime/VOL3_HANDOFF_SUMMARY_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
@@ -222,6 +223,15 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `cockpit/ldd/view_model.json`
 - `records/ldd/2026-06-08/cockpit_view_model_generation_0844_sgt.json`
 - `reports/ldd/cockpit_view_model_summary.md`
+
+## Vol.5 Phase 5.4 / View Model Quality Gates
+
+- `docs/runtime/VIEW_MODEL_QUALITY_GATES_v0.1.md`
+- `schemas/view_model_quality_gate_review.schema.json`
+- `scripts/validate_cockpit_view_model_quality.py`
+- `scripts/validate_cockpit_view_model_quality.sh`
+- `records/ldd/2026-06-08/view_model_quality_gate_review_0844_sgt.json`
+- `reports/ldd/view_model_quality_gates.md`
 
 ## Product Principles
 

@@ -60,7 +60,8 @@ SCHEMA_FILES = {
     "cockpit_consistency_review": "cockpit_consistency_review.schema.json",
     "cockpit_view_model_contract": "cockpit_view_model_contract.schema.json",
     "cockpit_view_model": "cockpit_view_model.schema.json",
-    "cockpit_view_model_generation": "cockpit_view_model_generation.schema.json"
+    "cockpit_view_model_generation": "cockpit_view_model_generation.schema.json",
+    "view_model_quality_gate_review": "view_model_quality_gate_review.schema.json"
 }
 
 
@@ -79,6 +80,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "cockpit_view_model", SCHEMA_FILES["cockpit_view_model"]
     if "cockpit_view_model_generation" in filename:
         return "cockpit_view_model_generation", SCHEMA_FILES["cockpit_view_model_generation"]
+    if "view_model_quality_gate_review" in filename:
+        return "view_model_quality_gate_review", SCHEMA_FILES["view_model_quality_gate_review"]
     if "cockpit_view_model_contract" in filename:
         return "cockpit_view_model_contract", SCHEMA_FILES["cockpit_view_model_contract"]
     if "cockpit_consistency_review" in filename:

@@ -81,6 +81,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
     name = path.name
     if "cockpit_view_model_generation" in name:
         return "cockpit_view_model_generation"
+    if "view_model_quality_gate_review" in name:
+        return "view_model_quality_gate_review"
     if "cockpit_view_model_contract" in name:
         return "cockpit_view_model_contract"
     if "cockpit_consistency_review" in name:
@@ -136,6 +138,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "cockpit_view_model_contract"
     if data.get("schema_type") == "cockpit_view_model_generation":
         return "cockpit_view_model_generation"
+    if data.get("schema_type") == "view_model_quality_gate_review":
+        return "view_model_quality_gate_review"
     return None
 
 
@@ -838,6 +842,7 @@ def generated_report_paths() -> list[str]:
         "reports/ldd/latest_active_memory_checkpoint.md",
         "reports/ldd/cockpit_view_model_contract.md",
         "reports/ldd/cockpit_view_model_summary.md",
+        "reports/ldd/view_model_quality_gates.md",
     ]
 
 
@@ -949,6 +954,58 @@ def generate_cockpit_view_model_summary(records: list[RuntimeRecord]) -> list[st
     lines.extend(md_list([f"`{item}`" for item in data.get("generated_sections", [])]))
     lines.extend(["", "## Non-Goals", ""])
     lines.extend(md_list([str(item) for item in data.get("non_goals", [])]))
+    return lines
+
+
+def generate_view_model_quality_gates(records: list[RuntimeRecord]) -> list[str]:
+    lines = common_header("View Model Quality Gates", records)
+    review = latest(by_kind(records, "view_model_quality_gate_review"))
+
+    lines.extend(
+        [
+            "This report summarizes semantic quality gates for `cockpit/ldd/view_model.json`. It is validation-only: no UI is created, no external APIs are connected, and no trading automation is added.",
+            "",
+        ]
+    )
+
+    if review is None:
+        lines.append("- No view model quality-gate review record found.")
+        return lines
+
+    data = review.data
+    counts = data.get("expected_counts", {}) if isinstance(data.get("expected_counts"), dict) else {}
+    lines.extend(
+        [
+            "## Review",
+            "",
+            f"- Review ID: `{scalar(data.get('review_id'))}`",
+            f"- Review time: `{scalar(data.get('review_time'))}`",
+            f"- Baseline checkpoint: `{scalar(data.get('baseline_checkpoint'))}`",
+            f"- Baseline commit: `{scalar(data.get('baseline_commit'))}`",
+            f"- Portfolio mode: `{scalar(data.get('portfolio_mode'))}`",
+            f"- View model file: `{scalar(data.get('view_model_file'))}`",
+            f"- Validation status: `{scalar(data.get('validation_status'))}`",
+            f"- Active rules expected: `{scalar(counts.get('active_rules'))}`",
+            f"- Strategy states expected: `{scalar(counts.get('strategy_states'))}`",
+            f"- Timeline events expected after this review record: `{scalar(counts.get('timeline_events'))}`",
+            f"- Timeline warnings expected: `{scalar(counts.get('timeline_warnings'))}`",
+            f"- Source: `{review.relpath}`",
+            "",
+            "## Gates Checked",
+            "",
+        ]
+    )
+    lines.extend(md_list([str(item) for item in data.get("gates_checked", [])]))
+    lines.extend(["", "## Findings", ""])
+    lines.extend(md_list([str(item) for item in data.get("findings", [])]))
+    lines.extend(["", "## Blocking Failures", ""])
+    lines.extend(md_list([str(item) for item in data.get("blocking_failures", [])], "No blocking failures."))
+    lines.extend(["", "## Warnings", ""])
+    lines.extend(md_list([str(item) for item in data.get("warnings", [])], "No warnings."))
+    lines.extend(["", "## Non-Goals", ""])
+    lines.extend(md_list([str(item) for item in data.get("non_goals", [])]))
+    lines.extend(["", "## Recommended Next Phase", ""])
+    lines.append(f"- {scalar(data.get('recommended_next_phase'))}")
     return lines
 
 
@@ -1130,6 +1187,7 @@ def main() -> int:
         "latest_active_memory_checkpoint.md": generate_latest_active_memory_checkpoint(records),
         "cockpit_view_model_contract.md": generate_cockpit_view_model_contract(records),
         "cockpit_view_model_summary.md": generate_cockpit_view_model_summary(records),
+        "view_model_quality_gates.md": generate_view_model_quality_gates(records),
     }
 
     for filename, lines in reports.items():

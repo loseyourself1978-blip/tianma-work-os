@@ -1,0 +1,62 @@
+{
+  "schema_type": "view_model_quality_gate_review",
+  "review_id": "ldd-view-model-quality-gates-20260608-0844",
+  "project": "Tianma Work OS",
+  "subproject": "LLM Daredevil Desk",
+  "review_time": "2026-06-08T08:44:00+08:00",
+  "baseline_checkpoint": "2026-06-08T08:44:00+08:00",
+  "baseline_commit": "3f2748c35ffb1759f5da5c0c7593793cd1752b55",
+  "portfolio_mode": "core_position_defense_mode",
+  "view_model_file": "cockpit/ldd/view_model.json",
+  "quality_gate_version": "0.1",
+  "gates_checked": [
+    "required sections",
+    "checkpoint consistency",
+    "portfolio mode",
+    "timeline count and warnings",
+    "closed-position consistency",
+    "no-reentry and prohibition state",
+    "remaining leveraged-risk role",
+    "main core-risk role",
+    "GLD rule semantics",
+    "crypto defense semantics",
+    "data quality and UI safety"
+  ],
+  "validation_status": "passed",
+  "blocking_failures": [],
+  "warnings": [],
+  "expected_counts": {
+    "active_rules": 6,
+    "strategy_states": 16,
+    "timeline_events": 52,
+    "timeline_warnings": 0
+  },
+  "findings": [
+    "The generated view model preserves the latest active checkpoint and core_position_defense_mode.",
+    "SOXL, UGL, and INTC remain closed positions and are absent from active holdings.",
+    "GGLL remains the main remaining leveraged ETF risk valve.",
+    "NVDA remains the main core-risk watch.",
+    "GLD is represented as ordinary concentration and risk-line protection, not UGL-linked protection.",
+    "Crypto remains USDT-dominant, BTC buyback remains inactive, and the ZEC grid remains closed with no reopening.",
+    "The view model does not expose credentials, imply live market connectivity, or enable automated trade execution."
+  ],
+  "non_goals": [
+    "No UI or frontend application is created.",
+    "No external API is connected.",
+    "No trading automation is added.",
+    "No historical checkpoint is re-ingested.",
+    "No trading decision is changed."
+  ],
+  "recommended_next_phase": "Vol.5 Phase 5.5 - Cockpit Consumer Readiness Review",
+  "related_records": [
+    "records/ldd/2026-06-08/cockpit_consistency_review_0844_sgt.json",
+    "records/ldd/2026-06-08/cockpit_view_model_contract_0844_sgt.json",
+    "records/ldd/2026-06-08/cockpit_view_model_generation_0844_sgt.json"
+  ],
+  "related_reports": [
+    "reports/ldd/runtime_timeline.md",
+    "reports/ldd/cockpit_view_model_contract.md",
+    "reports/ldd/cockpit_view_model_summary.md",
+    "reports/ldd/view_model_quality_gates.md"
+  ]
+}

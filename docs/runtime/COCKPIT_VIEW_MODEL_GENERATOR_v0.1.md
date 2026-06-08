@@ -32,6 +32,8 @@ Supporting artifacts:
 - `schemas/cockpit_view_model.schema.json`
 - `scripts/generate_cockpit_view_model.py`
 - `scripts/generate_cockpit_view_model.sh`
+- `scripts/validate_cockpit_view_model_quality.py`
+- `scripts/validate_cockpit_view_model_quality.sh`
 - `records/ldd/2026-06-08/cockpit_view_model_generation_0844_sgt.json`
 - `reports/ldd/cockpit_view_model_summary.md`
 
@@ -101,6 +103,7 @@ Validation should include:
 
 - `cockpit/ldd/view_model.json` against `schemas/cockpit_view_model.schema.json`
 - generation record against `schemas/cockpit_view_model_generation.schema.json`
+- semantic quality gates from `scripts/validate_cockpit_view_model_quality.sh`
 - existing cockpit summary files
 - existing runtime records
 
@@ -114,10 +117,17 @@ Expected current results:
 
 ## Recommended Next Phase
 
+Phase 5.4 implements semantic quality gates in:
+
+```text
+docs/runtime/VIEW_MODEL_QUALITY_GATES_v0.1.md
+```
+
 Recommended next phase:
 
 ```text
-Vol.5 Phase 5.4 - View Model Quality Gates
+Vol.5 Phase 5.5 - Cockpit Consumer Readiness Review
 ```
 
-That phase should add deterministic checks for required view-model sections, status vocabularies, source-file availability, stale-state prevention, and UI-readiness assertions before any frontend prototype is built.
+That phase should test whether a downstream read-only consumer can interpret the
+validated view model without private generator knowledge.

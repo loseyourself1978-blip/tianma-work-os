@@ -864,7 +864,7 @@
   ],
   "timeline": {
     "generated_at": "2026-06-08T08:44:00+08:00",
-    "event_count": 51,
+    "event_count": 52,
     "warning_count": 0,
     "date_range": {
       "start": "2026-06-02T08:22:00+08:00",
@@ -2023,6 +2023,32 @@
           "nvda",
           "rule_ledger_snapshot",
           "soxl",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-08-view-model-quality-gate-review-0844-sgt-json",
+        "event_time": "2026-06-08T08:44:00+08:00",
+        "event_type": "report_generation",
+        "source_file": "records/ldd/2026-06-08/view_model_quality_gate_review_0844_sgt.json",
+        "source_record_type": "view_model_quality_gate_review",
+        "asset_or_module": "LLM Daredevil Desk",
+        "title": "View model quality gates",
+        "summary": "Semantic validation status: passed; expected timeline warnings: 0.",
+        "state_before": "",
+        "state_after": "quality_gate_version=0.1; validation_status=passed",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "btc",
+          "gld",
+          "non_trading_runtime_event",
+          "nvda",
+          "semantic_validation",
+          "soxl",
+          "view_model_quality_gate_review",
+          "view_model_quality_gates",
           "zec"
         ]
       }
