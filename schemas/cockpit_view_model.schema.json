@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/cockpit_view_model.schema.json",
+  "title": "Cockpit View Model",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "meta",
+    "checkpoint",
+    "portfolio_mode",
+    "account_overview",
+    "account_sections",
+    "positions",
+    "closed_positions",
+    "risk_summary",
+    "active_rules",
+    "strategy_states",
+    "timeline",
+    "pending_commands",
+    "memory_checkpoint",
+    "warnings",
+    "data_quality"
+  ],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "project",
+        "view_model_version",
+        "generated_at",
+        "generator",
+        "source_manifest",
+        "source_files"
+      ],
+      "properties": {
+        "project": {
+          "type": "string"
+        },
+        "view_model_version": {
+          "type": "string"
+        },
+        "generated_at": {
+          "type": "string"
+        },
+        "generator": {
+          "type": "string"
+        },
+        "source_manifest": {
+          "type": "string"
+        },
+        "source_files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "checkpoint": {
+      "type": "object",
+      "required": [
+        "latest_active_checkpoint",
+        "source_files"
+      ],
+      "properties": {
+        "latest_active_checkpoint": {
+          "type": "string"
+        },
+        "source_files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "portfolio_mode": {
+      "type": "object"
+    },
+    "account_overview": {
+      "type": "object"
+    },
+    "account_sections": {
+      "type": "object"
+    },
+    "positions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "closed_positions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "risk_summary": {
+      "type": "object"
+    },
+    "active_rules": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "strategy_states": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "timeline": {
+      "type": "object",
+      "required": [
+        "event_count",
+        "warning_count",
+        "events"
+      ],
+      "properties": {
+        "event_count": {
+          "type": "integer"
+        },
+        "warning_count": {
+          "type": "integer"
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "pending_commands": {
+      "type": "object"
+    },
+    "memory_checkpoint": {
+      "type": "object"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "data_quality": {
+      "type": "object",
+      "required": [
+        "external_api_connected",
+        "trading_automation_enabled",
+        "execution_source_of_truth",
+        "latest_checkpoint_confirmed"
+      ],
+      "properties": {
+        "external_api_connected": {
+          "type": "boolean"
+        },
+        "trading_automation_enabled": {
+          "type": "boolean"
+        },
+        "execution_source_of_truth": {
+          "type": "string"
+        },
+        "latest_checkpoint_confirmed": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

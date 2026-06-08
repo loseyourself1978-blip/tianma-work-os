@@ -42,6 +42,7 @@ TIMESTAMP_FIELDS = [
     "check_time",
     "execution_time",
     "contract_time",
+    "generation_time",
 ]
 
 
@@ -78,6 +79,8 @@ def first_timestamp(data: dict[str, Any]) -> tuple[str, datetime | None]:
 
 def classify_record(path: Path, data: dict[str, Any]) -> str | None:
     name = path.name
+    if "cockpit_view_model_generation" in name:
+        return "cockpit_view_model_generation"
     if "cockpit_view_model_contract" in name:
         return "cockpit_view_model_contract"
     if "cockpit_consistency_review" in name:
@@ -131,6 +134,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "cockpit_consistency_review"
     if data.get("schema_type") == "cockpit_view_model_contract":
         return "cockpit_view_model_contract"
+    if data.get("schema_type") == "cockpit_view_model_generation":
+        return "cockpit_view_model_generation"
     return None
 
 
@@ -832,6 +837,7 @@ def generated_report_paths() -> list[str]:
         "reports/ldd/memory_cleanup_recommendations.md",
         "reports/ldd/latest_active_memory_checkpoint.md",
         "reports/ldd/cockpit_view_model_contract.md",
+        "reports/ldd/cockpit_view_model_summary.md",
     ]
 
 
@@ -897,6 +903,50 @@ def generate_cockpit_view_model_contract(records: list[RuntimeRecord]) -> list[s
             else:
                 lines.append(f"- {key}: {value}")
 
+    lines.extend(["", "## Non-Goals", ""])
+    lines.extend(md_list([str(item) for item in data.get("non_goals", [])]))
+    return lines
+
+
+def generate_cockpit_view_model_summary(records: list[RuntimeRecord]) -> list[str]:
+    lines = common_header("Cockpit View Model Summary", records)
+    generation = latest(by_kind(records, "cockpit_view_model_generation"))
+
+    lines.extend(
+        [
+            "This report summarizes the generated single-file cockpit view model. It is generated from local runtime records and reports only; it does not create a UI, connect external APIs, or add trading automation.",
+            "",
+        ]
+    )
+
+    if generation is None:
+        lines.append("- No cockpit view model generation record found.")
+        return lines
+
+    data = generation.data
+    summary = data.get("summary", {}) if isinstance(data.get("summary"), dict) else {}
+    lines.extend(
+        [
+            "## Generated Artifact",
+            "",
+            f"- Output file: `{scalar(data.get('output_file'))}`",
+            f"- Generation time: `{scalar(data.get('generation_time'))}`",
+            f"- Baseline checkpoint: `{scalar(data.get('baseline_checkpoint'))}`",
+            f"- Portfolio mode: `{scalar(data.get('portfolio_mode'))}`",
+            f"- Validation status: `{scalar(data.get('validation_status'))}`",
+            f"- Active rules: `{scalar(summary.get('active_rule_count'))}`",
+            f"- Strategy states: `{scalar(summary.get('strategy_state_count'))}`",
+            f"- Timeline events: `{scalar(summary.get('timeline_event_count'))}`",
+            f"- Timeline warnings: `{scalar(summary.get('timeline_warning_count'))}`",
+            f"- Source: `{generation.relpath}`",
+            "",
+            "## Input Files",
+            "",
+        ]
+    )
+    lines.extend(md_list([f"`{item}`" for item in data.get("input_files", [])]))
+    lines.extend(["", "## Generated Sections", ""])
+    lines.extend(md_list([f"`{item}`" for item in data.get("generated_sections", [])]))
     lines.extend(["", "## Non-Goals", ""])
     lines.extend(md_list([str(item) for item in data.get("non_goals", [])]))
     return lines
@@ -1079,6 +1129,7 @@ def main() -> int:
         "memory_cleanup_recommendations.md": generate_memory_cleanup_recommendations(records),
         "latest_active_memory_checkpoint.md": generate_latest_active_memory_checkpoint(records),
         "cockpit_view_model_contract.md": generate_cockpit_view_model_contract(records),
+        "cockpit_view_model_summary.md": generate_cockpit_view_model_summary(records),
     }
 
     for filename, lines in reports.items():

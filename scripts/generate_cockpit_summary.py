@@ -886,6 +886,7 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
     }
 
     files = {
+        "view_model": "cockpit/ldd/view_model.json",
         "latest_state": "cockpit/ldd/latest_state.json",
         "runtime_timeline": "cockpit/ldd/runtime_timeline.json",
         "active_rules": "cockpit/ldd/active_rules.json",
@@ -906,6 +907,7 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
         "files": files,
         "recommended_read_order": [
             "manifest",
+            "view_model",
             "latest_state",
             "active_rules",
             "strategy_states",
@@ -919,6 +921,7 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
             "external_api_connected": False,
             "trading_automation_enabled": False,
             "latest_checkpoint_confirmed": "latest_active_checkpoint" in portfolio_tags,
+            "view_model_available_after_generation": True,
         },
         "warnings": warnings,
     }

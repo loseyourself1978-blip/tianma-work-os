@@ -1,0 +1,2106 @@
+{
+  "meta": {
+    "project": "LLM Daredevil Desk",
+    "view_model_version": "0.1",
+    "generated_at": "2026-06-08T08:44:00+08:00",
+    "generator": "scripts/generate_cockpit_view_model.py",
+    "source_manifest": "cockpit/ldd/manifest.json",
+    "source_files": [
+      "cockpit/ldd/account_structure.json",
+      "cockpit/ldd/active_rules.json",
+      "cockpit/ldd/latest_state.json",
+      "cockpit/ldd/manifest.json",
+      "cockpit/ldd/memory_checkpoint.json",
+      "cockpit/ldd/pending_commands.json",
+      "cockpit/ldd/runtime_timeline.json",
+      "cockpit/ldd/strategy_states.json"
+    ],
+    "contract_source": "records/ldd/2026-06-08/cockpit_view_model_contract_0844_sgt.json"
+  },
+  "checkpoint": {
+    "latest_active_checkpoint": "2026-06-08T08:44:00+08:00",
+    "status": "latest_active_checkpoint_confirmed",
+    "source_files": [
+      "cockpit/ldd/manifest.json",
+      "cockpit/ldd/latest_state.json"
+    ]
+  },
+  "portfolio_mode": {
+    "current": "core_position_defense_mode",
+    "status": "active",
+    "summary": "Portfolio remains in core_position_defense_mode.",
+    "source_files": [
+      "cockpit/ldd/latest_state.json",
+      "cockpit/ldd/strategy_states.json"
+    ]
+  },
+  "account_overview": {
+    "total_account": {
+      "broker_total_assets_usd": "approximately 41147.42",
+      "cash_usd": "approximately 6304.16",
+      "total_holding_value_usd": "unknown",
+      "total_holding_pl_usd": "unknown",
+      "total_day_pl_usd": "unknown",
+      "note": "The latest checkpoint validates core_position_defense_mode after historical-risk cleanup."
+    },
+    "us_equities": {
+      "section_value_usd": "approximately 24591.21",
+      "holding_market_value_usd": "approximately 18287.05",
+      "holding_pl_usd": "approximately +3074.93",
+      "day_pl_usd": "approximately -890.94",
+      "historical_cleanup_status": "SOXS, TSLQ, GDXU, SOXL, UGL, and INTC are closed; no reopening.",
+      "new_ldd_model_strategy_status": "No new LDD U.S. model strategy position.",
+      "key_positions": [
+        "GLD 20",
+        "GOOG 14",
+        "NVDA 20",
+        "GGLL 10",
+        "tiny TSLA residual"
+      ],
+      "closed_positions": [
+        "SOXL 0",
+        "UGL 0",
+        "INTC 0"
+      ],
+      "open_risks": [
+        "NVDA main core-risk watch",
+        "GGLL main remaining leveraged ETF risk valve",
+        "GLD ordinary concentration/risk-line protection",
+        "Hong Kong equity volatility"
+      ],
+      "portfolio_mode": "core_position_defense_mode"
+    },
+    "crypto": {
+      "binance_total_assets_usdt": "approximately 8275.96",
+      "usdt": "5936",
+      "eth": "0.8070416",
+      "doge": "8400.535",
+      "sol": "2.931163",
+      "btc": "0.00055762",
+      "zec_residual": "0.012974, approximately unknown USDT",
+      "cash_posture": "USDT-dominant defensive posture",
+      "btc_buyback_status": "Not triggered below 75,500-76,000",
+      "zec_bot_status": "Closed / profit-locked based on prior confirmed execution state; no ZEC grid reopening.",
+      "usdt_defense_ratio_pct": 71.7,
+      "open_risks": [
+        "Crypto market weakness",
+        "BTC still below buyback trigger",
+        "ZEC residual only"
+      ]
+    },
+    "hong_kong_equities": {
+      "latest_checkpoint_status": "No updated Hong Kong holding detail was encoded in the latest checkpoint.",
+      "02513_zhipu": {
+        "shares": 100,
+        "market_value_hkd": "unknown",
+        "latest_price_hkd": "unknown",
+        "day_pl_hkd": "unknown",
+        "holding_pl_hkd": "unknown"
+      }
+    },
+    "source_files": [
+      "cockpit/ldd/latest_state.json"
+    ]
+  },
+  "account_sections": {
+    "sections": {
+      "total_account": {
+        "status": "core_position_defense_validated",
+        "broker_total_assets_usd": "approximately 41147.42",
+        "total_day_pl_usd": "unknown",
+        "note": "Latest encoded account state validates core_position_defense_mode."
+      },
+      "us_equities": {
+        "status": "core_position_defense_validated",
+        "section_value_usd": "approximately 24591.21",
+        "day_pl_usd": "approximately -890.94",
+        "main_remaining_leveraged_risk_valve": "GGLL",
+        "main_core_risk_watch": "NVDA",
+        "gld_status": "ordinary GLD concentration and risk-line protection; UGL already closed",
+        "closed_cleanup_positions": [
+          "SOXL",
+          "UGL",
+          "INTC"
+        ]
+      },
+      "hong_kong_equities": {
+        "status": "remaining_risk_concentration_no_new_detail_in_latest_checkpoint",
+        "primary_holding": "02513 Zhipu remains a concentration watch from prior records"
+      },
+      "crypto_spot": {
+        "status": "defensive_usdt_dominant",
+        "binance_total_assets_usdt": "approximately 8275.96",
+        "day_pl_usdt": "approximately 15.75",
+        "btc_trigger_status": "not_triggered",
+        "zec_grid_status": "closed_profit_locked",
+        "usdt_defense_ratio_pct": 71.7
+      },
+      "cash_and_stablecoins": {
+        "status": "defensive_cash_and_stablecoin_posture",
+        "broker_cash_usd": "approximately 6304.16",
+        "binance_usdt": "5936",
+        "binance_usdt_defense_ratio_pct": 71.7,
+        "latest_cleanup_cash_impact_usd": "unknown"
+      },
+      "leveraged_exposure": {
+        "status": "concentrated_in_ggll_after_cleanup",
+        "open_exposures": [
+          "GGLL 10"
+        ],
+        "closed_exposures": [
+          "SOXL 0",
+          "UGL 0"
+        ],
+        "no_reopen": [
+          "SOXS",
+          "TSLQ",
+          "GDXU",
+          "SOXL",
+          "UGL"
+        ]
+      },
+      "historical_cleanup": {
+        "status": "cleanup_cycle_completed",
+        "closed": [
+          "SOXS",
+          "TSLQ",
+          "GDXU",
+          "SOXL",
+          "UGL",
+          "INTC"
+        ],
+        "watch": []
+      },
+      "quote_quality": {
+        "status": "quote_type_tagging_reinforced",
+        "required_quote_types": [
+          "regular_close",
+          "night_session_quote",
+          "premarket_executable_quote",
+          "regular_session_executable_quote"
+        ],
+        "execution_validity": "night-session/watchlist quotes may inform monitoring but should not automatically trigger execution."
+      },
+      "execution_reconciliation": {
+        "status": "cleanup_cycle_confirmed_and_reconciled",
+        "latest_cleanup_fills": {
+          "SOXL": {
+            "quantity": 2,
+            "price_usd": 239.34,
+            "amount_usd": 478.68,
+            "position_after": "0"
+          },
+          "UGL": {
+            "quantity": 10,
+            "price_usd": 52.385,
+            "amount_usd": 523.85,
+            "position_after": "0"
+          },
+          "INTC": {
+            "quantity": 10,
+            "price_usd": 104.75,
+            "amount_usd": 1047.5,
+            "position_after": "0"
+          }
+        },
+        "latest_cleanup_cash_impact_usd": "unknown",
+        "total_soxl_cleanup_cash_impact_usd": "unknown"
+      }
+    },
+    "quality_assessment": {
+      "overall_status": "core_position_defense_validated",
+      "positive_factors": [
+        "SOXL, UGL, and INTC are closed at 0 shares.",
+        "Latest cleanup cycle added approximately 2,050.03 USD before fees.",
+        "Total SOXL cleanup added approximately 1,222.68 USD before fees.",
+        "U.S. cash/cash-equivalent is approximately 6,304.16 USD.",
+        "USDT is approximately 71.7% of Binance visible assets.",
+        "ZEC grid remains closed / profit locked.",
+        "Portfolio mode remains core_position_defense_mode.",
+        "Quote Type Tagging is reinforced for rule validity."
+      ],
+      "risk_factors": [
+        "NVDA is the main core-risk watch.",
+        "GGLL is the main remaining leveraged ETF risk valve.",
+        "GLD requires ordinary concentration/risk-line protection.",
+        "Hong Kong equity concentration remains a watch item.",
+        "BTC buyback remains inactive below 75,500-76,000."
+      ],
+      "next_required_confirmations": [
+        "Whether NVDA regular session reclaims 210-212 or weakens below 200-204.",
+        "Whether GOOG holds above 360 or triggers GGLL reduction.",
+        "Whether GLD reclaims 400-405 or breaks below 392-395.",
+        "Whether BTC remains below 75,500-76,000.",
+        "Whether any new order screenshots confirm actual execution.",
+        "Whether a latest ZEC bot page screenshot is provided."
+      ]
+    },
+    "source_files": [
+      "cockpit/ldd/account_structure.json"
+    ]
+  },
+  "positions": [
+    {
+      "asset_or_position": "GLD 20",
+      "position_state": "active_position",
+      "source_files": [
+        "cockpit/ldd/latest_state.json"
+      ],
+      "tags": [
+        "current_position"
+      ]
+    },
+    {
+      "asset_or_position": "GOOG 14",
+      "position_state": "active_position",
+      "source_files": [
+        "cockpit/ldd/latest_state.json"
+      ],
+      "tags": [
+        "current_position"
+      ]
+    },
+    {
+      "asset_or_position": "NVDA 20",
+      "position_state": "active_position",
+      "source_files": [
+        "cockpit/ldd/latest_state.json"
+      ],
+      "tags": [
+        "current_position"
+      ]
+    },
+    {
+      "asset_or_position": "GGLL 10",
+      "position_state": "active_position",
+      "source_files": [
+        "cockpit/ldd/latest_state.json"
+      ],
+      "tags": [
+        "current_position"
+      ]
+    },
+    {
+      "asset_or_position": "tiny TSLA residual",
+      "position_state": "active_position",
+      "source_files": [
+        "cockpit/ldd/latest_state.json"
+      ],
+      "tags": [
+        "current_position"
+      ]
+    }
+  ],
+  "closed_positions": [
+    {
+      "asset": "INTC",
+      "position_state": "closed_position",
+      "quantity": "0",
+      "current_action": "no_readd",
+      "source_files": [
+        "cockpit/ldd/latest_state.json"
+      ],
+      "tags": [
+        "closed_position",
+        "historical_cleanup",
+        "prohibited_reentry"
+      ]
+    },
+    {
+      "asset": "SOXL",
+      "position_state": "closed_position",
+      "quantity": "0",
+      "current_action": "no_readd",
+      "source_files": [
+        "cockpit/ldd/latest_state.json"
+      ],
+      "tags": [
+        "closed_position",
+        "historical_cleanup",
+        "prohibited_reentry"
+      ]
+    },
+    {
+      "asset": "UGL",
+      "position_state": "closed_position",
+      "quantity": "0",
+      "current_action": "no_readd",
+      "source_files": [
+        "cockpit/ldd/latest_state.json"
+      ],
+      "tags": [
+        "closed_position",
+        "historical_cleanup",
+        "prohibited_reentry"
+      ]
+    },
+    {
+      "asset": "SOXS",
+      "position_state": "closed_position",
+      "quantity": "0_or_not_applicable",
+      "current_action": "No reopening.",
+      "source_files": [
+        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json"
+      ],
+      "tags": [
+        "closed",
+        "closed_position",
+        "historical_cleanup"
+      ]
+    },
+    {
+      "asset": "TSLQ",
+      "position_state": "closed_position",
+      "quantity": "0_or_not_applicable",
+      "current_action": "No reopening.",
+      "source_files": [
+        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json"
+      ],
+      "tags": [
+        "closed",
+        "closed_position",
+        "historical_cleanup"
+      ]
+    },
+    {
+      "asset": "GDXU",
+      "position_state": "closed_position",
+      "quantity": "0_or_not_applicable",
+      "current_action": "No reopening.",
+      "source_files": [
+        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json"
+      ],
+      "tags": [
+        "closed",
+        "closed_position",
+        "historical_cleanup"
+      ]
+    },
+    {
+      "asset": "ZEC grid",
+      "position_state": "closed_position",
+      "quantity": "0_or_not_applicable",
+      "current_action": "Do not reopen grid or chase; residual ZEC can be converted later if needed.",
+      "source_files": [
+        "records/ldd/2026-06-03/zec_bot_strategy_state_closed_20260603_0839.json",
+        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+      ],
+      "tags": [
+        "closed_position",
+        "closed_profit_locked",
+        "no_reopen",
+        "zec"
+      ]
+    }
+  ],
+  "risk_summary": {
+    "overall_status": "core_position_defense_validated",
+    "open_risks": [
+      "NVDA main core-risk watch",
+      "GGLL main remaining leveraged ETF risk valve",
+      "GLD ordinary concentration/risk-line protection",
+      "Hong Kong equity volatility",
+      "Crypto market weakness",
+      "BTC still below buyback trigger",
+      "ZEC residual only"
+    ],
+    "risk_factors": [
+      "NVDA is the main core-risk watch.",
+      "GGLL is the main remaining leveraged ETF risk valve.",
+      "GLD requires ordinary concentration/risk-line protection.",
+      "Hong Kong equity concentration remains a watch item.",
+      "BTC buyback remains inactive below 75,500-76,000."
+    ],
+    "near_trigger_count": 1,
+    "triggered_rules": [
+      {
+        "rule_id": "nvda-core-defense-rule-20260608-0844",
+        "asset_or_module": "NVDA",
+        "rule_type": "main_core_risk_watch",
+        "status": "near_trigger",
+        "trigger_state": "near_trigger",
+        "trigger_condition": "Hold if regular session reclaims 210-212. Protect if below 200-204. No add unless recovery is confirmed.",
+        "current_action": "hold for now, no add, reassess only after regular-session confirmation",
+        "source_files": [
+          "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+        ],
+        "last_updated": "2026-06-08T08:44:00+08:00",
+        "cockpit_priority": "high",
+        "requires_execution_price_confirmation": false,
+        "tags": [
+          "near_trigger",
+          "no_add",
+          "nvda",
+          "quote_source_conflict",
+          "risk_control"
+        ]
+      },
+      {
+        "rule_id": "gld-concentration-risk-line-rule-20260608-0844",
+        "asset_or_module": "GLD",
+        "rule_type": "ordinary_gld_concentration_risk_line_protection",
+        "status": "triggered",
+        "trigger_state": "triggered",
+        "trigger_condition": "If GLD cannot reclaim 400-405, reduce 5 GLD. If GLD breaks below 392-395, reduce another 5 GLD.",
+        "current_action": "manage GLD as ordinary concentration and risk-line exposure; UGL is already closed",
+        "source_files": [
+          "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+        ],
+        "last_updated": "2026-06-08T08:44:00+08:00",
+        "cockpit_priority": "high",
+        "requires_execution_price_confirmation": false,
+        "tags": [
+          "gld",
+          "quote_source_conflict",
+          "risk_control",
+          "triggered"
+        ]
+      }
+    ],
+    "main_remaining_leveraged_etf_risk_valve": "GGLL",
+    "main_core_risk_watch": "NVDA",
+    "gld_status": "ordinary GLD concentration and risk-line protection; UGL already closed",
+    "btc_buyback_status": "Not triggered below 75,500-76,000",
+    "zec_grid_status": "Closed / profit-locked based on prior confirmed execution state; no ZEC grid reopening."
+  },
+  "active_rules": [
+    {
+      "rule_id": "nvda-core-defense-rule-20260608-0844",
+      "asset_or_module": "NVDA",
+      "rule_type": "main_core_risk_watch",
+      "status": "near_trigger",
+      "trigger_state": "near_trigger",
+      "trigger_condition": "Hold if regular session reclaims 210-212. Protect if below 200-204. No add unless recovery is confirmed.",
+      "current_action": "hold for now, no add, reassess only after regular-session confirmation",
+      "source_files": [
+        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "high",
+      "requires_execution_price_confirmation": false,
+      "tags": [
+        "near_trigger",
+        "no_add",
+        "nvda",
+        "quote_source_conflict",
+        "risk_control"
+      ]
+    },
+    {
+      "rule_id": "goog-ggll-risk-valve-rule-20260608-0844",
+      "asset_or_module": "GOOG/GGLL",
+      "rule_type": "main_remaining_leveraged_etf_risk_valve",
+      "status": "active",
+      "trigger_state": "active",
+      "trigger_condition": "Reduce or clean GGLL if GOOG breaks 355. Consider selling 5 GGLL if GOOG rebounds to 365-370 but fails to continue. No GGLL add.",
+      "current_action": "treat GGLL as the main remaining leveraged ETF risk valve",
+      "source_files": [
+        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "medium",
+      "requires_execution_price_confirmation": false,
+      "tags": [
+        "active",
+        "goog_ggll",
+        "quote_source_conflict",
+        "risk_control"
+      ]
+    },
+    {
+      "rule_id": "gld-concentration-risk-line-rule-20260608-0844",
+      "asset_or_module": "GLD",
+      "rule_type": "ordinary_gld_concentration_risk_line_protection",
+      "status": "triggered",
+      "trigger_state": "triggered",
+      "trigger_condition": "If GLD cannot reclaim 400-405, reduce 5 GLD. If GLD breaks below 392-395, reduce another 5 GLD.",
+      "current_action": "manage GLD as ordinary concentration and risk-line exposure; UGL is already closed",
+      "source_files": [
+        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "high",
+      "requires_execution_price_confirmation": false,
+      "tags": [
+        "gld",
+        "quote_source_conflict",
+        "risk_control",
+        "triggered"
+      ]
+    },
+    {
+      "rule_id": "closed-cleanup-positions-no-reentry-20260608-0844",
+      "asset_or_module": "SOXL/INTC/UGL",
+      "rule_type": "closed_position_guardrail",
+      "status": "executed",
+      "trigger_state": "executed",
+      "trigger_condition": "Closed positions require a new approved rule before any re-entry.",
+      "current_action": "do not chase SOXL, SOXS, NVDD, NVDS, GDXU, TSLQ, INTC, or UGL",
+      "source_files": [
+        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "medium",
+      "requires_execution_price_confirmation": false,
+      "tags": [
+        "executed",
+        "soxl_intc_ugl"
+      ]
+    },
+    {
+      "rule_id": "btc-buyback-defense-rule-20260608-0844",
+      "asset_or_module": "BTC",
+      "rule_type": "staged_buyback_watch",
+      "status": "active",
+      "trigger_state": "not_triggered",
+      "trigger_condition": "No BTC buyback below 75,500-76,000.",
+      "current_action": "maintain USDT-dominant defense",
+      "source_files": [
+        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "medium",
+      "requires_execution_price_confirmation": false,
+      "tags": [
+        "active",
+        "btc"
+      ]
+    },
+    {
+      "rule_id": "crypto-no-add-defense-rule-20260608-0844",
+      "asset_or_module": "ETH/SOL/DOGE/ZEC",
+      "rule_type": "usdt_dominant_defense",
+      "status": "active",
+      "trigger_state": "active",
+      "trigger_condition": "No ETH, SOL, DOGE, or ZEC adds. No ZEC grid reopening.",
+      "current_action": "preserve USDT-dominant crypto defense",
+      "source_files": [
+        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "medium",
+      "requires_execution_price_confirmation": false,
+      "tags": [
+        "active",
+        "eth_sol_doge_zec",
+        "no_add"
+      ]
+    }
+  ],
+  "strategy_states": [
+    {
+      "strategy_id": "portfolio-core-position-defense",
+      "asset_or_module": "LDD portfolio",
+      "status": "active",
+      "summary": "Portfolio mode remains core_position_defense_mode after the latest checkpoint validation.",
+      "next_required_action": "Defend NVDA, monitor GGLL and GLD, prohibit re-adds of closed cleanup positions, and maintain USDT defense.",
+      "source_files": [
+        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+        "records/ldd/2026-06-08/core_position_defense_monitor_0843_0844_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "high",
+      "tags": [
+        "core_position_defense_mode",
+        "portfolio_mode_transition"
+      ]
+    },
+    {
+      "strategy_id": "us-historical-position-management",
+      "asset_or_module": "U.S. historical positions",
+      "status": "historical",
+      "summary": "The SOXL, UGL, and INTC cleanup cycle is complete; closed positions remain in the historical cleanup ledger.",
+      "next_required_action": "Do not re-add SOXL, UGL, or INTC.",
+      "source_files": [
+        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+        "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "medium",
+      "tags": [
+        "historical_cleanup",
+        "cleanup_completed"
+      ]
+    },
+    {
+      "strategy_id": "us-new-ldd-model-strategy",
+      "asset_or_module": "U.S. model strategy",
+      "status": "not_opened",
+      "summary": "No new LDD U.S. model strategy position is open.",
+      "next_required_action": "Do not open a new model position from this checkpoint.",
+      "source_files": [
+        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "medium",
+      "tags": [
+        "new_strategy_separation",
+        "no_new_buying"
+      ]
+    },
+    {
+      "strategy_id": "soxs-closed",
+      "asset_or_module": "SOXS",
+      "status": "closed",
+      "summary": "SOXS remains closed with no reopening.",
+      "next_required_action": "No reopening.",
+      "source_files": [
+        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "low",
+      "tags": [
+        "closed",
+        "historical_cleanup"
+      ]
+    },
+    {
+      "strategy_id": "tslq-closed",
+      "asset_or_module": "TSLQ",
+      "status": "closed",
+      "summary": "TSLQ remains closed with no reopening.",
+      "next_required_action": "No reopening.",
+      "source_files": [
+        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "low",
+      "tags": [
+        "closed",
+        "historical_cleanup"
+      ]
+    },
+    {
+      "strategy_id": "gdxu-closed",
+      "asset_or_module": "GDXU",
+      "status": "closed",
+      "summary": "GDXU remains closed with no reopening.",
+      "next_required_action": "No reopening.",
+      "source_files": [
+        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "low",
+      "tags": [
+        "closed",
+        "historical_cleanup"
+      ]
+    },
+    {
+      "strategy_id": "soxl-risk-valve",
+      "asset_or_module": "SOXL",
+      "status": "closed",
+      "summary": "SOXL is closed at 0 shares after the 3-share partial cleanup and 2-share residual cleanup.",
+      "next_required_action": "Do not re-add; retain in the closed historical-risk cleanup ledger.",
+      "source_files": [
+        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+        "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "low",
+      "tags": [
+        "soxl",
+        "closed_position",
+        "historical_cleanup"
+      ]
+    },
+    {
+      "strategy_id": "ggll-risk-valve",
+      "asset_or_module": "GGLL",
+      "status": "monitoring",
+      "summary": "GGLL is the main remaining leveraged ETF risk valve.",
+      "next_required_action": "Prepare to reduce 5 shares below GOOG 360 and 5-10 below 355; no GGLL add.",
+      "source_files": [
+        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "high",
+      "tags": [
+        "goog",
+        "ggll",
+        "risk_valve"
+      ]
+    },
+    {
+      "strategy_id": "ugl-risk-valve",
+      "asset_or_module": "UGL",
+      "status": "closed",
+      "summary": "UGL is closed at 0 shares after the leveraged-gold cleanup execution.",
+      "next_required_action": "Do not re-add; the GLD-405 forced UGL cleanup rule is retired.",
+      "source_files": [
+        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+        "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "low",
+      "tags": [
+        "gld",
+        "ugl",
+        "closed_position",
+        "historical_cleanup"
+      ]
+    },
+    {
+      "strategy_id": "intc-historical-cleanup",
+      "asset_or_module": "INTC",
+      "status": "closed",
+      "summary": "INTC is closed at 0 shares after weak historical-position cleanup.",
+      "next_required_action": "Do not re-add; retain in the closed weak-position cleanup ledger.",
+      "source_files": [
+        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+        "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "low",
+      "tags": [
+        "intc",
+        "closed_position",
+        "historical_cleanup"
+      ]
+    },
+    {
+      "strategy_id": "nvda-core-ai-exposure",
+      "asset_or_module": "NVDA",
+      "status": "monitoring",
+      "summary": "NVDA remains the main core-risk watch.",
+      "next_required_action": "Hold if regular session reclaims 210-212; protect if below 200-204; do not add unless recovery is confirmed.",
+      "source_files": [
+        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "high",
+      "tags": [
+        "nvda",
+        "core_position",
+        "main_core_risk_watch",
+        "triggered"
+      ]
+    },
+    {
+      "strategy_id": "gld-core-position-review",
+      "asset_or_module": "GLD",
+      "status": "monitoring",
+      "summary": "GLD is now managed as ordinary concentration and risk-line exposure, not only UGL-linked protection.",
+      "next_required_action": "Reduce 5 GLD if it cannot reclaim 400-405; reduce another 5 if it breaks below 392-395.",
+      "source_files": [
+        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "high",
+      "tags": [
+        "gld",
+        "core_position",
+        "below_405",
+        "ugl_closed"
+      ]
+    },
+    {
+      "strategy_id": "crypto-defensive-state",
+      "asset_or_module": "Crypto spot",
+      "status": "active",
+      "summary": "Crypto remains USDT-dominant and defensive.",
+      "next_required_action": "Do not add ETH, SOL, DOGE, or ZEC; wait for BTC trigger.",
+      "source_files": [
+        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "medium",
+      "tags": [
+        "crypto",
+        "usdt_defensive"
+      ]
+    },
+    {
+      "strategy_id": "btc-staged-buyback",
+      "asset_or_module": "BTC",
+      "status": "waiting_for_trigger",
+      "summary": "BTC buyback is not triggered below 75,500-76,000.",
+      "next_required_action": "Wait for stabilization and confirmation before staged buyback.",
+      "source_files": [
+        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "medium",
+      "tags": [
+        "btc",
+        "waiting_for_trigger"
+      ]
+    },
+    {
+      "strategy_id": "zec-grid-profit-locked",
+      "asset_or_module": "ZEC grid",
+      "status": "closed",
+      "summary": "ZEC grid remains closed / profit locked based on prior execution state.",
+      "next_required_action": "Do not reopen grid or chase; residual ZEC can be converted later if needed.",
+      "source_files": [
+        "records/ldd/2026-06-03/zec_bot_strategy_state_closed_20260603_0839.json",
+        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "medium",
+      "tags": [
+        "zec",
+        "closed_profit_locked",
+        "no_reopen"
+      ]
+    },
+    {
+      "strategy_id": "runtime-records-latest-checkpoint",
+      "asset_or_module": "Runtime records",
+      "status": "active",
+      "summary": "Latest active checkpoint is 2026-06-08T08:44:00+08:00.",
+      "next_required_action": "Future cockpit work should read manifest.json first.",
+      "source_files": [
+        "cockpit/ldd/manifest.json",
+        "cockpit/ldd/runtime_timeline.json"
+      ],
+      "last_updated": "2026-06-08T08:44:00+08:00",
+      "cockpit_priority": "medium",
+      "tags": [
+        "runtime_records",
+        "latest_active_checkpoint"
+      ]
+    }
+  ],
+  "timeline": {
+    "generated_at": "2026-06-08T08:44:00+08:00",
+    "event_count": 51,
+    "warning_count": 0,
+    "date_range": {
+      "start": "2026-06-02T08:22:00+08:00",
+      "end": "2026-06-08T08:44:00+08:00"
+    },
+    "events": [
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-02-account-structure-review-20260602-0822-json",
+        "event_time": "2026-06-02T08:22:00+08:00",
+        "event_type": "account_structure_review",
+        "source_file": "records/ldd/2026-06-02/account_structure_review_20260602_0822.json",
+        "source_record_type": "account_structure_review",
+        "asset_or_module": "ldd-combined-visible-snapshot",
+        "title": "Account structure review: score 73",
+        "summary": "Cash pressure: low; crypto account remains USDT-cash dominant; redeployment readiness: moderate; cash posture improved but new LDD U.S. model strategy position remains inactive.",
+        "state_before": "",
+        "state_after": "structure_score=73",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "account_structure_review",
+          "btc",
+          "gld",
+          "goog",
+          "nvda",
+          "soxl",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-02-btc-buyback-trigger-rule-20260602-0822-json",
+        "event_time": "2026-06-02T08:22:00+08:00",
+        "event_type": "trigger_rule_update",
+        "source_file": "records/ldd/2026-06-02/btc_buyback_trigger_rule_20260602_0822.json",
+        "source_record_type": "trigger_execution_rule",
+        "asset_or_module": "BTC",
+        "title": "Trigger rule: BTC",
+        "summary": "Do not buy BTC unless BTC stabilizes above 75,500-76,000.",
+        "state_before": "",
+        "state_after": "waiting",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "medium",
+        "tags": [
+          "btc",
+          "trigger_execution_rule"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-02-ldd-portfolio-state-20260602-0822-json",
+        "event_time": "2026-06-02T08:22:00+08:00",
+        "event_type": "portfolio_snapshot",
+        "source_file": "records/ldd/2026-06-02/ldd_portfolio_state_20260602_0822.json",
+        "source_record_type": "portfolio_state",
+        "asset_or_module": "multi_account_visible_snapshot",
+        "title": "Portfolio snapshot: multi_account_visible_snapshot",
+        "summary": "Visible portfolio snapshot recorded with base currency mixed_usd_usdt.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "low",
+        "tags": [
+          "btc",
+          "gld",
+          "goog",
+          "nvda",
+          "portfolio_state",
+          "soxl",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-02-pending-phase2-codex-instruction-20260602-0822-json",
+        "event_time": "2026-06-02T08:22:00+08:00",
+        "event_type": "pending_command",
+        "source_file": "records/ldd/2026-06-02/pending_phase2_codex_instruction_20260602_0822.json",
+        "source_record_type": "pending_command",
+        "asset_or_module": "llm-daredevil-desk",
+        "title": "Pending command: pending-phase2-codex-instruction-20260602-0822",
+        "summary": "Execute Vol.3 Phase 2 v3 runtime data model hardening and LDD pilot records using the 2026-06-02 08:22 post-session sync block. Source status is retained as a Command Intelligence example; later runtime work may have resolved the draft.",
+        "state_before": "",
+        "state_after": "queued/pending_execution",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "low",
+        "tags": [
+          "historical_command_sample",
+          "pending_command",
+          "source_status"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-02-phase3-account-structure-score-20260602-json",
+        "event_time": "2026-06-02T08:22:00+08:00",
+        "event_type": "account_structure_review",
+        "source_file": "records/ldd/2026-06-02/phase3/account_structure_score_20260602.json",
+        "source_record_type": "account_structure_review",
+        "asset_or_module": "ldd-combined-visible-snapshot",
+        "title": "Account structure review: score 73",
+        "summary": "Cash pressure: low; crypto account is USDT-cash dominant; redeployment readiness: moderate; cash is available but BTC buyback and new U.S. model strategy positions remain untriggered.",
+        "state_before": "",
+        "state_after": "structure_score=73",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "account_structure_review",
+          "btc",
+          "gld",
+          "goog",
+          "soxl",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-02-phase3-btc-volatility-execution-split-20260602-json",
+        "event_time": "2026-06-02T08:22:00+08:00",
+        "event_type": "trigger_rule_update",
+        "source_file": "records/ldd/2026-06-02/phase3/btc_volatility_execution_split_20260602.json",
+        "source_record_type": "volatility_execution_split",
+        "asset_or_module": "BTC",
+        "title": "Volatility split plan: BTC",
+        "summary": "Crypto account remains USDT-cash dominant. BTC buyback is not triggered until stabilization above 75,500-76,000.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "low",
+        "tags": [
+          "btc",
+          "volatility_execution_split",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-02-phase3-ldd-rule-ledger-snapshot-20260602-json",
+        "event_time": "2026-06-02T08:22:00+08:00",
+        "event_type": "trigger_rule_update",
+        "source_file": "records/ldd/2026-06-02/phase3/ldd_rule_ledger_snapshot_20260602.json",
+        "source_record_type": "rule_ledger_snapshot",
+        "asset_or_module": "llm-daredevil-desk",
+        "title": "Rule ledger snapshot",
+        "summary": "Rule ledger snapshot captured 7 trigger rules.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "low",
+        "tags": [
+          "btc",
+          "gld",
+          "goog",
+          "nvda",
+          "rule_ledger_snapshot",
+          "soxl",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-02-phase3-soxl-rule-based-execution-review-20260602-json",
+        "event_time": "2026-06-02T08:22:00+08:00",
+        "event_type": "rule_review",
+        "source_file": "records/ldd/2026-06-02/phase3/soxl_rule_based_execution_review_20260602.json",
+        "source_record_type": "rule_based_execution_review",
+        "asset_or_module": "SOXL",
+        "title": "Rule review: SOXL",
+        "summary": "Rule-compliant hold state. Continue monitoring 220 soft line and 210 hard close line.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "rule_based_execution_review",
+          "soxl"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-02-soxl-trigger-rule-20260602-0822-json",
+        "event_time": "2026-06-02T08:22:00+08:00",
+        "event_type": "trigger_rule_update",
+        "source_file": "records/ldd/2026-06-02/soxl_trigger_rule_20260602_0822.json",
+        "source_record_type": "trigger_execution_rule",
+        "asset_or_module": "SOXL",
+        "title": "Trigger rule: SOXL",
+        "summary": "Hold 5-share SOXL remainder while above 220; prepare to close if SOXL loses 220; close if it loses 210.",
+        "state_before": "",
+        "state_after": "waiting",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "medium",
+        "tags": [
+          "soxl",
+          "trigger_execution_rule"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-02-zec-bot-strategy-state-20260602-0822-json",
+        "event_time": "2026-06-02T08:22:00+08:00",
+        "event_type": "strategy_state_update",
+        "source_file": "records/ldd/2026-06-02/zec_bot_strategy_state_20260602_0822.json",
+        "source_record_type": "strategy_state",
+        "asset_or_module": "ZEC",
+        "title": "Strategy state: ZEC profit_surge_observation",
+        "summary": "Historical ZEC state retained for traceability; superseded by the 2026-06-03 ZEC closure event. Original summary: Remaining 500U / 60-grid ZEC bot is profitable but in profit-protection mode after the latest post-U.S.-session review.",
+        "state_before": "",
+        "state_after": "profit_surge_observation; superseded_by=records/ldd/2026-06-03/zec_bot_closure_execution_20260603_0838.json",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "medium",
+        "tags": [
+          "historical",
+          "strategy_state",
+          "superseded",
+          "superseded_by_zec_closure",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-03-zec-bot-closure-execution-20260603-0838-json",
+        "event_time": "2026-06-03T08:38:18+08:00",
+        "event_type": "execution_event",
+        "source_file": "records/ldd/2026-06-03/zec_bot_closure_execution_20260603_0838.json",
+        "source_record_type": "execution_event",
+        "asset_or_module": "ZEC/USDT",
+        "title": "Execution event: close_bot ZEC/USDT",
+        "summary": "bot_closure: sell 0.209 ZEC/USDT at 635.17.",
+        "state_before": "bot_profit_protection_historical_strategy_lock_profit_not_new_position",
+        "state_after": "close_bot",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "critical",
+        "tags": [
+          "closed_profit_locked",
+          "execution_event",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-03-crypto-account-structure-update-20260603-0839-json",
+        "event_time": "2026-06-03T08:39:00+08:00",
+        "event_type": "account_structure_review",
+        "source_file": "records/ldd/2026-06-03/crypto_account_structure_update_20260603_0839.json",
+        "source_record_type": "account_structure_review",
+        "asset_or_module": "binance_visible_snapshot",
+        "title": "Account structure review: score 80",
+        "summary": "Cash pressure: low; USDT balance increased to about 5,936.00171992; redeployment readiness: moderate-to-high; cash dominance strengthened, but BTC buyback has still not triggered.",
+        "state_before": "",
+        "state_after": "structure_score=80",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "account_structure_review",
+          "btc",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-03-sync-block-delta-protocol-feedback-20260603-json",
+        "event_time": "2026-06-03T08:39:00+08:00",
+        "event_type": "sync_delta",
+        "source_file": "records/ldd/2026-06-03/sync_block_delta_protocol_feedback_20260603.json",
+        "source_record_type": "sync_delta_update",
+        "asset_or_module": "llm-daredevil-desk",
+        "title": "Sync delta: sync-block-delta-protocol-feedback-20260603",
+        "summary": "New execution evidence arrived after the prior sync state and has higher priority than the previous still-running bot assumption.",
+        "state_before": "prior sync or strategy-state assumption",
+        "state_after": "zec_bot_state: profit_protection_mode -> closed_profit_locked; zec_bot_execution_status: waiting -> completed; crypto_account_structure: stronger_usdt_cash_dominance; phase3_command: v1_superseded_by_v2",
+        "supersedes_or_updates": [
+          "phase3-v1-drafted-instruction",
+          "records/ldd/2026-06-02/zec_bot_strategy_state_20260602_0822.json",
+          "records/ldd/2026-06-02/phase3/ldd_rule_ledger_snapshot_20260602.json"
+        ],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "critical",
+        "tags": [
+          "btc",
+          "closed_profit_locked",
+          "sync_delta_update",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-03-zec-bot-rule-based-execution-review-20260603-0839-json",
+        "event_time": "2026-06-03T08:39:00+08:00",
+        "event_type": "rule_review",
+        "source_file": "records/ldd/2026-06-03/zec_bot_rule_based_execution_review_20260603_0839.json",
+        "source_record_type": "rule_based_execution_review",
+        "asset_or_module": "ZEC/USDT",
+        "title": "Rule review: ZEC/USDT",
+        "summary": "Execution was rule-compliant and positive for account structure because it locked a high bot return during a defensive phase.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "rule_based_execution_review",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-03-zec-bot-strategy-state-closed-20260603-0839-json",
+        "event_time": "2026-06-03T08:39:00+08:00",
+        "event_type": "strategy_state_update",
+        "source_file": "records/ldd/2026-06-03/zec_bot_strategy_state_closed_20260603_0839.json",
+        "source_record_type": "strategy_state",
+        "asset_or_module": "ZEC",
+        "title": "Strategy state: ZEC closed_profit_locked",
+        "summary": "The remaining 500U / 60-grid ZEC/USDT bot was closed after total return reached about 42.97%. Automatic ZEC-to-USDT sell was selected to lock profit.",
+        "state_before": "profit_protection_mode",
+        "state_after": "closed_profit_locked",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "high",
+        "tags": [
+          "closed_profit_locked",
+          "strategy_state",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-03-zec-profit-surge-trigger-execution-20260603-0839-json",
+        "event_time": "2026-06-03T08:39:00+08:00",
+        "event_type": "trigger_rule_update",
+        "source_file": "records/ldd/2026-06-03/zec_profit_surge_trigger_execution_20260603_0839.json",
+        "source_record_type": "trigger_execution_rule",
+        "asset_or_module": "ZEC/USDT",
+        "title": "Trigger rule: ZEC/USDT",
+        "summary": "Profit Surge Protection triggers when total return reaches the 40%-42%+ lock-profit zone.",
+        "state_before": "triggered_and_executed",
+        "state_after": "executed",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "high",
+        "tags": [
+          "trigger_execution_rule",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-04-account-state-delta-0812-0813-sgt-json",
+        "event_time": "2026-06-04T08:13:00+08:00",
+        "event_type": "portfolio_snapshot",
+        "source_file": "records/ldd/2026-06-04/account_state_delta_0812_0813_sgt.json",
+        "source_record_type": "portfolio_state",
+        "asset_or_module": "multi_section_post_close_snapshot",
+        "title": "Portfolio snapshot: latest active LDD checkpoint",
+        "summary": "Post-close account state recorded with broker total assets about 43727.82 USD and Binance visible assets about 8425.94 USDT.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "high",
+        "tags": [
+          "btc",
+          "closed_profit_locked",
+          "gld",
+          "goog",
+          "latest_active_checkpoint",
+          "nvda",
+          "portfolio_state",
+          "quote_source_reconciliation",
+          "soxl",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-04-ldd-post-close-runtime-delta-0812-0813-sgt-json",
+        "event_time": "2026-06-04T08:13:00+08:00",
+        "event_type": "sync_delta",
+        "source_file": "records/ldd/2026-06-04/ldd_post_close_runtime_delta_0812_0813_sgt.json",
+        "source_record_type": "sync_delta_update",
+        "asset_or_module": "llm-daredevil-desk",
+        "title": "Post-close runtime delta: latest active checkpoint",
+        "summary": "A newer post-close LDD sync block arrived after the earlier intraday and premarket checkpoints. This checkpoint becomes the latest active LDD state where conflicts exist.",
+        "state_before": "prior sync or strategy-state assumption",
+        "state_after": "latest_active_checkpoint: older intraday/premarket state -> 2026-06-04 08:12-08:13 post-close state; total_account_state: broker_total_assets_about_43727.82_usd; hong_kong_equity_state: 02513_zhipu_positive_day_pl_supports_total_account; us_equity_section_state: negative_day_pl_about_-314.54_usd; binance_spot_state: about_8425.94_usdt_usdt_dominant; execution_status: no_new_confirmed_execution_visible; zec_grid_state: remains_closed_profit_locked_based_on_prior_execution; soxl_quote_state: quote_source_conflict_requires_order_ticket_confirmation; runtime_rules: GOOG_NVDA_SOXL_GLD_BTC_trigger_proximity_updated; product_requirements: quote_source_reconciliation_rule_trigger_monitor_section_level_account_structure",
+        "supersedes_or_updates": [
+          "2026-06-04 00:29 intraday checkpoint",
+          "2026-06-03 17:27-17:30 premarket checkpoint",
+          "records/ldd/2026-06-03/sync_block_delta_protocol_feedback_20260603.json",
+          "reports/ldd/latest_active_memory_checkpoint.md prior generated state"
+        ],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "critical",
+        "tags": [
+          "btc",
+          "closed_profit_locked",
+          "gld",
+          "goog",
+          "latest_active_checkpoint",
+          "nvda",
+          "quote_source_reconciliation",
+          "soxl",
+          "sync_delta_update",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-04-quote-source-conflict-soxl-0812-0813-sgt-json",
+        "event_time": "2026-06-04T08:13:00+08:00",
+        "event_type": "account_structure_review",
+        "source_file": "records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json",
+        "source_record_type": "account_structure_review",
+        "asset_or_module": "quote_source_reconciliation_soxl",
+        "title": "Quote source conflict: SOXL",
+        "summary": "symbol: SOXL",
+        "state_before": "",
+        "state_after": "structure_score=58",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "high",
+        "tags": [
+          "account_structure_review",
+          "nvda",
+          "quote_source_reconciliation",
+          "soxl"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-04-rule-trigger-monitor-0812-0813-sgt-json",
+        "event_time": "2026-06-04T08:13:00+08:00",
+        "event_type": "trigger_rule_update",
+        "source_file": "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json",
+        "source_record_type": "rule_ledger_snapshot",
+        "asset_or_module": "llm-daredevil-desk",
+        "title": "Runtime rule trigger monitor",
+        "summary": "Rule trigger monitor captured 8 active rules, including near-trigger states and execution-confirmation requirements.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "high",
+        "tags": [
+          "btc",
+          "gld",
+          "goog",
+          "near_trigger",
+          "nvda",
+          "quote_source_reconciliation",
+          "rule_ledger_snapshot",
+          "soxl",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-04-section-level-account-structure-requirement-0812-0813-sgt-json",
+        "event_time": "2026-06-04T08:13:00+08:00",
+        "event_type": "account_structure_review",
+        "source_file": "records/ldd/2026-06-04/section_level_account_structure_requirement_0812_0813_sgt.json",
+        "source_record_type": "account_structure_review",
+        "asset_or_module": "multi_section_account_structure_quality_score",
+        "title": "Section-level account structure requirement",
+        "summary": "Total account day P/L was positive about +323.45 USD, but this was supported by Hong Kong 02513 Zhipu.",
+        "state_before": "",
+        "state_after": "structure_score=76",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "high",
+        "tags": [
+          "account_structure_review",
+          "btc",
+          "goog",
+          "nvda",
+          "quote_source_reconciliation",
+          "soxl",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-04-soxl-execution-filled-1732-sgt-json",
+        "event_time": "2026-06-04T17:32:00+08:00",
+        "event_type": "execution_event",
+        "source_file": "records/ldd/2026-06-04/soxl_execution_filled_1732_sgt.json",
+        "source_record_type": "execution_event",
+        "asset_or_module": "SOXL",
+        "title": "Execution event: sell_3_shares SOXL",
+        "summary": "confirmed_sell_order: sell 3 SOXL at 248.",
+        "state_before": "rule_compliant_risk_reduction_historical_leveraged_etf_cleanup_not_new_position",
+        "state_after": "sell_3_shares",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "critical",
+        "tags": [
+          "execution_event",
+          "soxl"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-05-account-state-delta-0813-0814-sgt-json",
+        "event_time": "2026-06-05T08:14:00+08:00",
+        "event_type": "portfolio_snapshot",
+        "source_file": "records/ldd/2026-06-05/account_state_delta_0813_0814_sgt.json",
+        "source_record_type": "portfolio_state",
+        "asset_or_module": "multi_section_post_close_snapshot",
+        "title": "Portfolio snapshot: latest active LDD checkpoint",
+        "summary": "Post-close account state recorded with broker total assets about 43500.82 USD and Binance visible assets about 8371.43 USDT.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "low",
+        "tags": [
+          "btc",
+          "closed_profit_locked",
+          "gld",
+          "goog",
+          "latest_active_checkpoint",
+          "nvda",
+          "portfolio_state",
+          "soxl",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-05-execution-feedback-loop-requirement-0813-0814-sgt-json",
+        "event_time": "2026-06-05T08:14:00+08:00",
+        "event_type": "command_intelligence",
+        "source_file": "records/ldd/2026-06-05/execution_feedback_loop_requirement_0813_0814_sgt.json",
+        "source_record_type": "command_execution_feedback",
+        "asset_or_module": "runtime_execution_feedback_loop",
+        "title": "Runtime record: execution_feedback_loop_requirement_0813_0814_sgt.json",
+        "summary": "Runtime record captured.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "low",
+        "tags": [
+          "btc",
+          "command_execution_feedback",
+          "soxl",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-05-ldd-post-close-checkpoint-0813-0814-sgt-json",
+        "event_time": "2026-06-05T08:14:00+08:00",
+        "event_type": "sync_delta",
+        "source_file": "records/ldd/2026-06-05/ldd_post_close_checkpoint_0813_0814_sgt.json",
+        "source_record_type": "sync_delta_update",
+        "asset_or_module": "llm-daredevil-desk",
+        "title": "Sync delta: ldd-post-close-checkpoint-20260605-0813-0814-sgt",
+        "summary": "Post-close screenshots confirm the 2026-06-04 SOXL execution has propagated into both position size and cash balance. This becomes the latest active LDD checkpoint.",
+        "state_before": "prior sync or strategy-state assumption",
+        "state_after": "latest_active_checkpoint: 2026-06-04T08:13:00+08:00 -> 2026-06-05T08:14:00+08:00; soxl_position: 5_shares -> 2_shares; soxl_execution_status: pending_confirmation -> confirmed_and_reconciled; broker_cash: about_3511.18_usd -> about_4255.18_usd; cash_reconciliation: 3_x_248_usd_equals_744_usd; total_account_day_pl: positive_to_negative_due_to_hong_kong_weakness; us_equity_day_pl: negative_to_positive; main_us_risk_valves: GGLL_UGL_residual_SOXL; product_requirements: confirmed_execution_reconciliation_realized_vs_unrealized_risk_tracking_section_attribution_residual_risk_valve_state",
+        "supersedes_or_updates": [
+          "records/ldd/2026-06-04/ldd_post_close_runtime_delta_0812_0813_sgt.json",
+          "records/ldd/2026-06-04/rule_trigger_monitor_0812_0813_sgt.json",
+          "records/ldd/2026-06-04/quote_source_conflict_soxl_0812_0813_sgt.json",
+          "cockpit/ldd/latest_state.json prior generated state"
+        ],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "critical",
+        "tags": [
+          "btc",
+          "gld",
+          "goog",
+          "latest_active_checkpoint",
+          "nvda",
+          "quote_source_reconciliation",
+          "soxl",
+          "sync_delta_update",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-05-residual-risk-valve-state-0813-0814-sgt-json",
+        "event_time": "2026-06-05T08:14:00+08:00",
+        "event_type": "trigger_rule_update",
+        "source_file": "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json",
+        "source_record_type": "rule_ledger_snapshot",
+        "asset_or_module": "llm-daredevil-desk",
+        "title": "Runtime rule trigger monitor",
+        "summary": "Rule trigger monitor captured 8 active rules, including near-trigger states and execution-confirmation requirements.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "high",
+        "tags": [
+          "btc",
+          "gld",
+          "goog",
+          "near_trigger",
+          "nvda",
+          "rule_ledger_snapshot",
+          "soxl",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-05-soxl-execution-reconciliation-0813-0814-sgt-json",
+        "event_time": "2026-06-05T08:14:00+08:00",
+        "event_type": "rule_review",
+        "source_file": "records/ldd/2026-06-05/soxl_execution_reconciliation_0813_0814_sgt.json",
+        "source_record_type": "rule_based_execution_review",
+        "asset_or_module": "SOXL",
+        "title": "Rule review: SOXL",
+        "summary": "Confirmed and reconciled. The SOXL sale was rule-compliant risk reduction and is reflected in both position size and cash balance.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "nvda",
+          "rule_based_execution_review",
+          "soxl"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-05-account-state-delta-1703-1704-sgt-json",
+        "event_time": "2026-06-05T17:04:00+08:00",
+        "event_type": "portfolio_snapshot",
+        "source_file": "records/ldd/2026-06-05/account_state_delta_1703_1704_sgt.json",
+        "source_record_type": "portfolio_state",
+        "asset_or_module": "multi_section_premarket_snapshot",
+        "title": "Portfolio snapshot: multi_section_premarket_snapshot",
+        "summary": "Visible portfolio snapshot recorded with base currency mixed_usd_usdt.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "low",
+        "tags": [
+          "btc",
+          "gld",
+          "goog",
+          "nvda",
+          "portfolio_state",
+          "soxl",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-05-ldd-premarket-checkpoint-1703-1704-sgt-json",
+        "event_time": "2026-06-05T17:04:00+08:00",
+        "event_type": "sync_delta",
+        "source_file": "records/ldd/2026-06-05/ldd_premarket_checkpoint_1703_1704_sgt.json",
+        "source_record_type": "sync_delta_update",
+        "asset_or_module": "llm-daredevil-desk",
+        "title": "Sync delta: ldd-premarket-checkpoint-20260605-1703-1704-sgt",
+        "summary": "Premarket residual-risk monitoring showed SOXL near its 240 cleanup trigger while the position remained open at 2 shares.",
+        "state_before": "prior sync or strategy-state assumption",
+        "state_after": "latest_active_checkpoint: 2026-06-05T08:14:00+08:00 -> 2026-06-05T17:04:00+08:00; soxl_observed_price: about_248.099 -> about_240.393; soxl_trigger_state: residual_watch_position -> near_cleanup_trigger; execution_status: no_new_execution_visible",
+        "supersedes_or_updates": [
+          "records/ldd/2026-06-05/ldd_post_close_checkpoint_0813_0814_sgt.json",
+          "records/ldd/2026-06-05/residual_risk_valve_state_0813_0814_sgt.json"
+        ],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "critical",
+        "tags": [
+          "btc",
+          "gld",
+          "goog",
+          "latest_active_checkpoint",
+          "nvda",
+          "soxl",
+          "sync_delta_update"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-05-rule-trigger-monitor-1703-1704-sgt-json",
+        "event_time": "2026-06-05T17:04:00+08:00",
+        "event_type": "trigger_rule_update",
+        "source_file": "records/ldd/2026-06-05/rule_trigger_monitor_1703_1704_sgt.json",
+        "source_record_type": "rule_ledger_snapshot",
+        "asset_or_module": "llm-daredevil-desk",
+        "title": "Runtime rule trigger monitor",
+        "summary": "Rule trigger monitor captured 6 active rules, including near-trigger states and execution-confirmation requirements.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "high",
+        "tags": [
+          "btc",
+          "gld",
+          "goog",
+          "near_trigger",
+          "nvda",
+          "rule_ledger_snapshot",
+          "soxl"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-05-soxl-residual-risk-monitor-1703-1704-sgt-json",
+        "event_time": "2026-06-05T17:04:00+08:00",
+        "event_type": "strategy_state_update",
+        "source_file": "records/ldd/2026-06-05/soxl_residual_risk_monitor_1703_1704_sgt.json",
+        "source_record_type": "strategy_state",
+        "asset_or_module": "SOXL",
+        "title": "Strategy state: SOXL near_protection_threshold",
+        "summary": "SOXL remained at 2 shares around 240.393, near the 240 residual cleanup trigger. No execution was visible at this checkpoint.",
+        "state_before": "residual_watch_position",
+        "state_after": "near_cleanup_trigger",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "medium",
+        "tags": [
+          "soxl",
+          "strategy_state"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-05-soxl-full-cleanup-reconciliation-1951-sgt-json",
+        "event_time": "2026-06-05T19:51:00+08:00",
+        "event_type": "rule_review",
+        "source_file": "records/ldd/2026-06-05/soxl_full_cleanup_reconciliation_1951_sgt.json",
+        "source_record_type": "rule_based_execution_review",
+        "asset_or_module": "SOXL",
+        "title": "Rule review: SOXL",
+        "summary": "SOXL cleanup completed. Position state changed from residual_watch_position to closed_position and active SOXL risk monitoring should be retired.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "rule_based_execution_review",
+          "soxl"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-05-soxl-residual-closure-execution-1951-sgt-json",
+        "event_time": "2026-06-05T19:51:00+08:00",
+        "event_type": "execution_event",
+        "source_file": "records/ldd/2026-06-05/soxl_residual_closure_execution_1951_sgt.json",
+        "source_record_type": "execution_event",
+        "asset_or_module": "SOXL",
+        "title": "Execution event: sell_remaining_2_shares_close_position SOXL",
+        "summary": "confirmed_limit_sell_filled: sell 2 SOXL at 239.34.",
+        "state_before": "residual_risk_cleanup_position_closure; created 2026-06-05 07:50:53 ET; day order with regular_premarket_after_hours enabled",
+        "state_after": "sell_remaining_2_shares_close_position",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "critical",
+        "tags": [
+          "execution_event",
+          "soxl"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-05-ugl-cleanup-execution-2208-sgt-json",
+        "event_time": "2026-06-05T22:08:11+08:00",
+        "event_type": "execution_event",
+        "source_file": "records/ldd/2026-06-05/ugl_cleanup_execution_2208_sgt.json",
+        "source_record_type": "execution_event",
+        "asset_or_module": "UGL",
+        "title": "Execution event: sell_all_10_shares_close_position UGL",
+        "summary": "confirmed_market_sell_filled: sell 10 UGL at 52.385.",
+        "state_before": "leveraged_gold_risk_valve_cleanup_position_closure; created 2026-06-05 10:08:10 ET; filled 10:08:11 ET; regular session day order",
+        "state_after": "sell_all_10_shares_close_position",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "critical",
+        "tags": [
+          "execution_event"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-05-ugl-closure-reconciliation-2208-sgt-json",
+        "event_time": "2026-06-05T22:08:11+08:00",
+        "event_type": "rule_review",
+        "source_file": "records/ldd/2026-06-05/ugl_closure_reconciliation_2208_sgt.json",
+        "source_record_type": "rule_based_execution_review",
+        "asset_or_module": "UGL",
+        "title": "Rule review: UGL",
+        "summary": "UGL cleanup completed and the GLD-405 forced UGL cleanup rule is retired because UGL is closed.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "gld",
+          "rule_based_execution_review"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-05-intc-cleanup-execution-2301-sgt-json",
+        "event_time": "2026-06-05T23:01:43+08:00",
+        "event_type": "execution_event",
+        "source_file": "records/ldd/2026-06-05/intc_cleanup_execution_2301_sgt.json",
+        "source_record_type": "execution_event",
+        "asset_or_module": "INTC",
+        "title": "Execution event: sell_all_10_shares_close_position INTC",
+        "summary": "confirmed_market_sell_filled: sell 10 INTC at 104.75.",
+        "state_before": "historical_weak_position_cleanup_closure; created 2026-06-05 11:01:43 ET; regular session day order",
+        "state_after": "sell_all_10_shares_close_position",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "critical",
+        "tags": [
+          "execution_event"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-05-intc-closure-reconciliation-2301-sgt-json",
+        "event_time": "2026-06-05T23:01:43+08:00",
+        "event_type": "rule_review",
+        "source_file": "records/ldd/2026-06-05/intc_closure_reconciliation_2301_sgt.json",
+        "source_record_type": "rule_based_execution_review",
+        "asset_or_module": "INTC",
+        "title": "Rule review: INTC",
+        "summary": "INTC cleanup completed. Remove INTC from active cleanup candidates and track it in the closed weak-position ledger.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "rule_based_execution_review"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-06-account-state-delta-0852-0853-sgt-json",
+        "event_time": "2026-06-06T08:53:00+08:00",
+        "event_type": "portfolio_snapshot",
+        "source_file": "records/ldd/2026-06-06/account_state_delta_0852_0853_sgt.json",
+        "source_record_type": "portfolio_state",
+        "asset_or_module": "multi_section_post_close_cleanup_snapshot",
+        "title": "Portfolio snapshot: latest active LDD checkpoint",
+        "summary": "Post-close account state recorded with broker total assets about 41146.12 USD and Binance visible assets about 8145.8 USDT.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "low",
+        "tags": [
+          "btc",
+          "gld",
+          "goog",
+          "latest_active_checkpoint",
+          "nvda",
+          "portfolio_state",
+          "soxl",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-06-cleanup-effectiveness-review-0852-0853-sgt-json",
+        "event_time": "2026-06-06T08:53:00+08:00",
+        "event_type": "rule_review",
+        "source_file": "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json",
+        "source_record_type": "rule_based_execution_review",
+        "asset_or_module": "SOXL/UGL/INTC",
+        "title": "Rule review: SOXL/UGL/INTC",
+        "summary": "Cleanup was highly effective and rule-compliant. The portfolio can transition from historical_risk_cleanup_mode to core_position_defense_mode.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "gld",
+          "nvda",
+          "rule_based_execution_review",
+          "soxl"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-06-ldd-post-close-cleanup-review-0852-0853-sgt-json",
+        "event_time": "2026-06-06T08:53:00+08:00",
+        "event_type": "sync_delta",
+        "source_file": "records/ldd/2026-06-06/ldd_post_close_cleanup_review_0852_0853_sgt.json",
+        "source_record_type": "sync_delta_update",
+        "asset_or_module": "llm-daredevil-desk",
+        "title": "Sync delta: ldd-post-close-cleanup-review-20260606-0852-0853-sgt",
+        "summary": "Post-close evidence confirms completion of the SOXL, UGL, and INTC cleanup cycle and shifts the portfolio from historical-risk cleanup into core-position defense.",
+        "state_before": "prior sync or strategy-state assumption",
+        "state_after": "latest_active_checkpoint: 2026-06-05T17:04:00+08:00 -> 2026-06-06T08:53:00+08:00; soxl_position: 2_shares -> 0_shares_closed_position; ugl_position: 10_shares -> 0_shares_closed_position; intc_position: 10_shares -> 0_shares_closed_position; us_cash_equivalent: about_4255.18_usd -> about_6304.16_usd; latest_cleanup_cash_impact: about_2050.03_usd_before_fees; total_soxl_cleanup_cash_impact: about_1222.68_usd_before_fees; portfolio_mode: historical_risk_cleanup_mode -> core_position_defense_mode; main_remaining_leveraged_risk_valve: GGLL; main_core_risk_watch: NVDA; gld_state: below_405_under_review; binance_usdt_defense_ratio: about_72.9_percent",
+        "supersedes_or_updates": [
+          "records/ldd/2026-06-05/ldd_premarket_checkpoint_1703_1704_sgt.json",
+          "records/ldd/2026-06-05/soxl_residual_risk_monitor_1703_1704_sgt.json",
+          "records/ldd/2026-06-05/rule_trigger_monitor_1703_1704_sgt.json",
+          "cockpit/ldd/latest_state.json prior generated state"
+        ],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "critical",
+        "tags": [
+          "btc",
+          "gld",
+          "goog",
+          "latest_active_checkpoint",
+          "nvda",
+          "soxl",
+          "sync_delta_update"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-06-portfolio-mode-transition-0852-0853-sgt-json",
+        "event_time": "2026-06-06T08:53:00+08:00",
+        "event_type": "strategy_state_update",
+        "source_file": "records/ldd/2026-06-06/portfolio_mode_transition_0852_0853_sgt.json",
+        "source_record_type": "strategy_state",
+        "asset_or_module": "LDD portfolio",
+        "title": "Strategy state: LDD portfolio core_position_defense",
+        "summary": "SOXL, UGL, and INTC are closed. Remaining risk is concentrated in NVDA, GGLL, GLD, Hong Kong equity, and crypto residual holdings.",
+        "state_before": "historical_risk_cleanup_mode",
+        "state_after": "core_position_defense_mode",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "medium",
+        "tags": [
+          "gld",
+          "goog",
+          "nvda",
+          "soxl",
+          "strategy_state"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-06-remaining-risk-concentration-monitor-0852-0853-sgt-json",
+        "event_time": "2026-06-06T08:53:00+08:00",
+        "event_type": "trigger_rule_update",
+        "source_file": "records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json",
+        "source_record_type": "rule_ledger_snapshot",
+        "asset_or_module": "llm-daredevil-desk",
+        "title": "Runtime rule trigger monitor",
+        "summary": "Rule trigger monitor captured 5 active rules, including near-trigger states and execution-confirmation requirements.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "high",
+        "tags": [
+          "btc",
+          "gld",
+          "goog",
+          "near_trigger",
+          "nvda",
+          "rule_ledger_snapshot",
+          "soxl",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-08-account-state-delta-0843-0844-sgt-json",
+        "event_time": "2026-06-08T08:44:00+08:00",
+        "event_type": "portfolio_snapshot",
+        "source_file": "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+        "source_record_type": "portfolio_state",
+        "asset_or_module": "core_position_defense_checkpoint",
+        "title": "Portfolio snapshot: latest active LDD checkpoint",
+        "summary": "Post-close account state recorded with broker total assets about 41147.42 USD and Binance visible assets about 8275.96 USDT.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "low",
+        "tags": [
+          "btc",
+          "gld",
+          "goog",
+          "latest_active_checkpoint",
+          "nvda",
+          "portfolio_state",
+          "soxl",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-08-cockpit-consistency-review-0844-sgt-json",
+        "event_time": "2026-06-08T08:44:00+08:00",
+        "event_type": "report_generation",
+        "source_file": "records/ldd/2026-06-08/cockpit_consistency_review_0844_sgt.json",
+        "source_record_type": "cockpit_consistency_review",
+        "asset_or_module": "LLM Daredevil Desk",
+        "title": "Cockpit consistency review",
+        "summary": "Consistency status: passed_with_observations; UI readiness score: 82.",
+        "state_before": "",
+        "state_after": "passed_with_observations; ui_readiness_score=82",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "btc",
+          "cockpit_consistency_review",
+          "gld",
+          "latest_active_checkpoint",
+          "nvda",
+          "soxl",
+          "ui_readiness_review",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-08-cockpit-view-model-contract-0844-sgt-json",
+        "event_time": "2026-06-08T08:44:00+08:00",
+        "event_type": "report_generation",
+        "source_file": "records/ldd/2026-06-08/cockpit_view_model_contract_0844_sgt.json",
+        "source_record_type": "cockpit_view_model_contract",
+        "asset_or_module": "LDD Runtime",
+        "title": "Cockpit view model contract",
+        "summary": "Contract version 0.1 defines 15 top-level sections for future UI and downstream consumers.",
+        "state_before": "",
+        "state_after": "contract_version=0.1; validation_status=contract_defined_and_validated_locally",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "btc",
+          "cockpit_view_model_contract",
+          "frontend_ready_contract",
+          "gld",
+          "latest_active_checkpoint",
+          "non_trading_runtime_event",
+          "nvda",
+          "soxl",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-08-cockpit-view-model-generation-0844-sgt-json",
+        "event_time": "2026-06-08T08:44:00+08:00",
+        "event_type": "report_generation",
+        "source_file": "records/ldd/2026-06-08/cockpit_view_model_generation_0844_sgt.json",
+        "source_record_type": "cockpit_view_model_generation",
+        "asset_or_module": "LLM Daredevil Desk",
+        "title": "Cockpit view model generated",
+        "summary": "Generated cockpit/ldd/view_model.json with 6 active rules and 16 strategy states.",
+        "state_before": "",
+        "state_after": "output=cockpit/ldd/view_model.json; validation_status=generator_defined_and_validated_locally",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "btc",
+          "cockpit_view_model_generation",
+          "frontend_ready_artifact",
+          "gld",
+          "latest_active_checkpoint",
+          "non_trading_runtime_event",
+          "nvda",
+          "soxl",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-08-core-position-defense-monitor-0843-0844-sgt-json",
+        "event_time": "2026-06-08T08:44:00+08:00",
+        "event_type": "strategy_state_update",
+        "source_file": "records/ldd/2026-06-08/core_position_defense_monitor_0843_0844_sgt.json",
+        "source_record_type": "strategy_state",
+        "asset_or_module": "LDD portfolio",
+        "title": "Strategy state: LDD portfolio core_position_defense",
+        "summary": "The account remains in core_position_defense_mode after SOXL, UGL, and INTC cleanup. Held U.S. positions are GLD, GOOG, NVDA, GGLL, and tiny TSLA residual.",
+        "state_before": "core_position_defense_mode",
+        "state_after": "core_position_defense_mode_validated",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "medium",
+        "tags": [
+          "gld",
+          "goog",
+          "nvda",
+          "soxl",
+          "strategy_state"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-08-gld-concentration-risk-rule-update-0843-0844-sgt-json",
+        "event_time": "2026-06-08T08:44:00+08:00",
+        "event_type": "trigger_rule_update",
+        "source_file": "records/ldd/2026-06-08/gld_concentration_risk_rule_update_0843_0844_sgt.json",
+        "source_record_type": "trigger_execution_rule",
+        "asset_or_module": "GLD",
+        "title": "Trigger rule: GLD",
+        "summary": "GLD rule moves from UGL-linked protection only to ordinary GLD concentration and risk-line protection.",
+        "state_before": "triggered",
+        "state_after": "waiting",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "medium",
+        "tags": [
+          "gld",
+          "trigger_execution_rule"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-08-ldd-core-position-defense-checkpoint-0843-0844-sgt-json",
+        "event_time": "2026-06-08T08:44:00+08:00",
+        "event_type": "sync_delta",
+        "source_file": "records/ldd/2026-06-08/ldd_core_position_defense_checkpoint_0843_0844_sgt.json",
+        "source_record_type": "sync_delta_update",
+        "asset_or_module": "llm-daredevil-desk",
+        "title": "Sync delta: ldd-core-position-defense-checkpoint-20260608-0843-0844-sgt",
+        "summary": "The 2026-06-08 checkpoint validates that LDD has moved from historical_risk_cleanup_mode into core_position_defense_mode while preserving closed SOXL, UGL, and INTC states.",
+        "state_before": "prior sync or strategy-state assumption",
+        "state_after": "latest_active_checkpoint: 2026-06-06T08:53:00+08:00 -> 2026-06-08T08:44:00+08:00; portfolio_mode: core_position_defense_mode_validated; soxl_position: 0_shares_closed_position; ugl_position: 0_shares_closed_position; intc_position: 0_shares_closed_position; main_remaining_leveraged_risk_valve: GGLL; main_core_risk_watch: NVDA; gld_rule: ugl_linked_protection -> ordinary_gld_concentration_risk_line_protection; binance_usdt_defense_ratio: about_72.9_percent -> about_71.7_percent; quote_type_tagging: reinforced",
+        "supersedes_or_updates": [
+          "records/ldd/2026-06-06/ldd_post_close_cleanup_review_0852_0853_sgt.json",
+          "records/ldd/2026-06-06/account_state_delta_0852_0853_sgt.json",
+          "records/ldd/2026-06-06/remaining_risk_concentration_monitor_0852_0853_sgt.json",
+          "cockpit/ldd/latest_state.json prior generated state"
+        ],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "critical",
+        "tags": [
+          "btc",
+          "gld",
+          "goog",
+          "latest_active_checkpoint",
+          "nvda",
+          "soxl",
+          "sync_delta_update"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-08-quote-type-tagging-reinforcement-0843-0844-sgt-json",
+        "event_time": "2026-06-08T08:44:00+08:00",
+        "event_type": "account_structure_review",
+        "source_file": "records/ldd/2026-06-08/quote_type_tagging_reinforcement_0843_0844_sgt.json",
+        "source_record_type": "account_structure_review",
+        "asset_or_module": "quote_type_tagging_and_execution_validity",
+        "title": "Account structure review: score 74",
+        "summary": "Cash pressure: not_applicable; this is quote quality and execution-validity review; redeployment readiness: blocked_for_new_buying; no new U.S. equity or crypto buying in this checkpoint.",
+        "state_before": "",
+        "state_after": "structure_score=74",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "account_structure_review",
+          "gld",
+          "nvda",
+          "soxl",
+          "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-08-remaining-leveraged-risk-monitor-0843-0844-sgt-json",
+        "event_time": "2026-06-08T08:44:00+08:00",
+        "event_type": "trigger_rule_update",
+        "source_file": "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json",
+        "source_record_type": "rule_ledger_snapshot",
+        "asset_or_module": "llm-daredevil-desk",
+        "title": "Runtime rule trigger monitor",
+        "summary": "Rule trigger monitor captured 6 active rules, including near-trigger states and execution-confirmation requirements.",
+        "state_before": "",
+        "state_after": "",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "high",
+        "tags": [
+          "btc",
+          "gld",
+          "goog",
+          "near_trigger",
+          "nvda",
+          "rule_ledger_snapshot",
+          "soxl",
+          "zec"
+        ]
+      }
+    ],
+    "source_files": [
+      "cockpit/ldd/runtime_timeline.json"
+    ]
+  },
+  "pending_commands": {
+    "summary": {
+      "pending_count": 0,
+      "executed_count": 0,
+      "superseded_count": 0,
+      "historical_count": 1,
+      "unknown_count": 0,
+      "no_new_execution_confirmed": true,
+      "confirmed_execution_reconciled": true
+    },
+    "commands": [
+      {
+        "command_id": "pending-phase2-codex-instruction-20260602-0822",
+        "status": "historical_command_example",
+        "source_status": "queued",
+        "final_status": "pending_execution",
+        "summary": "Execute Vol.3 Phase 2 v3 runtime data model hardening and LDD pilot records using the 2026-06-02 08:22 post-session sync block.",
+        "source_files": [
+          "records/ldd/2026-06-02/pending_phase2_codex_instruction_20260602_0822.json"
+        ],
+        "last_updated": "2026-06-02T08:22:00+08:00",
+        "tags": [
+          "command_intelligence",
+          "historical_command_example"
+        ]
+      }
+    ],
+    "execution_recognition_rule": "New orders should only be recognized when broker/Binance order screenshots confirm execution.",
+    "source_files": [
+      "cockpit/ldd/pending_commands.json"
+    ]
+  },
+  "memory_checkpoint": {
+    "active_memory_status": "Keep durable rules and latest 2026-06-08T08:44:00+08:00 active checkpoint; archive older detailed snapshots in records/reports.",
+    "current_checkpoint": "2026-06-08T08:44:00+08:00",
+    "durable_rules": [
+      "User-provided broker/Binance screenshots remain execution source of truth.",
+      "Do not execute stale command drafts; execute latest valid command.",
+      "No automated trading.",
+      "No external API connection without an explicit implementation phase.",
+      "BTC buyback waits for 75,500-76,000 stabilization/confirmation.",
+      "ZEC grid should not be reopened or chased after profit lock.",
+      "Confirmed cleanup executions should reconcile fills, position state, cash impact, and closed-rule retirement.",
+      "Core-position defense remains active after SOXL, UGL, and INTC cleanup.",
+      "Quote Type Tagging is mandatory before treating a price as execution-valid."
+    ],
+    "superseded_snapshot_candidates": [
+      "Old 2026-05 detailed LDD account snapshot memories.",
+      "2026-06-06 post-cleanup checkpoint is superseded as active state by the 2026-06-08 core-position defense validation checkpoint.",
+      "Phase 2 v1/v2 drafted command memories.",
+      "Phase 3 v1 still-running ZEC bot assumption."
+    ],
+    "requires_user_approval": true,
+    "source_files": [
+      "cockpit/ldd/memory_checkpoint.json"
+    ]
+  },
+  "warnings": [],
+  "data_quality": {
+    "external_api_connected": false,
+    "trading_automation_enabled": false,
+    "ui_created": false,
+    "frontend_app_created": false,
+    "execution_source_of_truth": "User-provided broker/Binance screenshots remain authoritative.",
+    "latest_checkpoint_confirmed": true,
+    "timeline_warning_count": 0,
+    "active_rule_count": 6,
+    "strategy_state_count": 16,
+    "quote_type_tagging_required": true,
+    "no_new_execution_reported_at_checkpoint": true,
+    "no_historical_checkpoint_reingested": true
+  }
+}

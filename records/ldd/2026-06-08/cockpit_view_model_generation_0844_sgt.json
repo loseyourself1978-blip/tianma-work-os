@@ -1,0 +1,77 @@
+{
+  "schema_type": "cockpit_view_model_generation",
+  "generation_id": "ldd-cockpit-view-model-generation-20260608-0844-sgt",
+  "project": "Tianma Work OS",
+  "subproject": "LLM Daredevil Desk",
+  "generation_time": "2026-06-08T08:44:00+08:00",
+  "baseline_checkpoint": "2026-06-08T08:44:00+08:00",
+  "baseline_commit": "ec1179906d453ecf36868026da20938275aebf00",
+  "portfolio_mode": "core_position_defense_mode",
+  "generator": "scripts/generate_cockpit_view_model.py",
+  "input_files": [
+    "cockpit/ldd/manifest.json",
+    "cockpit/ldd/latest_state.json",
+    "cockpit/ldd/account_structure.json",
+    "cockpit/ldd/active_rules.json",
+    "cockpit/ldd/strategy_states.json",
+    "cockpit/ldd/pending_commands.json",
+    "cockpit/ldd/memory_checkpoint.json",
+    "cockpit/ldd/runtime_timeline.json"
+  ],
+  "output_file": "cockpit/ldd/view_model.json",
+  "validation_status": "generator_defined_and_validated_locally",
+  "warnings": [],
+  "blocking_issues": [],
+  "generated_sections": [
+    "meta",
+    "checkpoint",
+    "portfolio_mode",
+    "account_overview",
+    "account_sections",
+    "positions",
+    "closed_positions",
+    "risk_summary",
+    "active_rules",
+    "strategy_states",
+    "timeline",
+    "pending_commands",
+    "memory_checkpoint",
+    "warnings",
+    "data_quality"
+  ],
+  "summary": {
+    "latest_active_checkpoint": "2026-06-08T08:44:00+08:00",
+    "portfolio_mode": "core_position_defense_mode",
+    "active_rule_count": 6,
+    "strategy_state_count": 16,
+    "timeline_event_count": 51,
+    "timeline_warning_count": 0,
+    "closed_positions": [
+      "SOXL",
+      "UGL",
+      "INTC"
+    ],
+    "main_remaining_leveraged_etf_risk_valve": "GGLL",
+    "main_core_risk_watch": "NVDA",
+    "gld_rule": "ordinary GLD concentration / risk-line protection",
+    "crypto_defense": "USDT-dominant defense",
+    "btc_buyback_status": "inactive below 75,500-76,000",
+    "zec_grid_status": "closed / profit-locked / do not reopen",
+    "new_execution_status": "No new execution was reported at the 2026-06-08 08:43-08:44 checkpoint"
+  },
+  "non_goals": [
+    "No UI was built.",
+    "No frontend app files were created.",
+    "No external APIs were connected.",
+    "No trading automation was added.",
+    "No GitHub Projects board was created.",
+    "No new GitHub Issues were created.",
+    "The 2026-06-08 checkpoint was not re-ingested.",
+    "No historical runtime facts were changed."
+  ],
+  "recommended_next_phase": "Vol.5 Phase 5.4 - View Model Quality Gates",
+  "related_documents": [
+    "docs/runtime/COCKPIT_VIEW_MODEL_GENERATOR_v0.1.md",
+    "docs/runtime/COCKPIT_VIEW_MODEL_CONTRACT_v0.1.md"
+  ]
+}

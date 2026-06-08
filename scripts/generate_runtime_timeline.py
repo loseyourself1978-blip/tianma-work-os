@@ -36,6 +36,7 @@ TIMESTAMP_FIELDS = [
     "snapshot_time",
     "last_review_time",
     "contract_time",
+    "generation_time",
 ]
 
 
@@ -110,6 +111,8 @@ def event_time_for(path: Path, data: dict[str, Any]) -> tuple[str, datetime | No
 
 def classify_record(path: Path, data: dict[str, Any]) -> str:
     name = path.name
+    if "cockpit_view_model_generation" in name:
+        return "cockpit_view_model_generation"
     if "cockpit_view_model_contract" in name:
         return "cockpit_view_model_contract"
     if "cockpit_consistency_review" in name:
@@ -173,6 +176,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str:
         return "cockpit_consistency_review"
     if data.get("schema_type") == "cockpit_view_model_contract":
         return "cockpit_view_model_contract"
+    if data.get("schema_type") == "cockpit_view_model_generation":
+        return "cockpit_view_model_generation"
     if "command_id" in data:
         return "pending_command"
     return "unknown"
@@ -232,6 +237,7 @@ def event_type(record_type: str) -> str:
         "memory_retention_policy": "memory_checkpoint",
         "cockpit_consistency_review": "report_generation",
         "cockpit_view_model_contract": "report_generation",
+        "cockpit_view_model_generation": "report_generation",
     }
     return mapping.get(record_type, "unknown")
 
@@ -246,13 +252,15 @@ def evidence_level(data: dict[str, Any], record_type: str) -> str:
         return "runtime_record"
     if record_type == "cockpit_view_model_contract":
         return "runtime_record"
+    if record_type == "cockpit_view_model_generation":
+        return "runtime_record"
     if record_type == "unknown":
         return "unknown"
     return "runtime_record"
 
 
 def priority(record_type: str, data: dict[str, Any], tags: list[str]) -> str:
-    if record_type in {"cockpit_consistency_review", "cockpit_view_model_contract"}:
+    if record_type in {"cockpit_consistency_review", "cockpit_view_model_contract", "cockpit_view_model_generation"}:
         return "medium"
     text = json.dumps(data, ensure_ascii=False).lower()
     if record_type == "execution_event":
@@ -375,6 +383,12 @@ def title_and_summary(record: LoadedRecord) -> tuple[str, str]:
             "Cockpit view model contract",
             f"Contract version {scalar(data.get('contract_version'))} defines {count} top-level sections for future UI and downstream consumers.",
         )
+    if rt == "cockpit_view_model_generation":
+        summary = data.get("summary", {}) if isinstance(data.get("summary"), dict) else {}
+        return (
+            "Cockpit view model generated",
+            f"Generated {scalar(data.get('output_file'))} with {scalar(summary.get('active_rule_count'))} active rules and {scalar(summary.get('strategy_state_count'))} strategy states.",
+        )
     if rt == "sync_delta_update":
         if "post-close-runtime-delta" in scalar(data.get("delta_id")):
             return (
@@ -415,6 +429,8 @@ def state_before_after(record: LoadedRecord) -> tuple[str, str]:
         return "", f"{scalar(data.get('consistency_status'))}; ui_readiness_score={scalar(data.get('ui_readiness_score'))}"
     if rt == "cockpit_view_model_contract":
         return "", f"contract_version={scalar(data.get('contract_version'))}; validation_status={scalar(data.get('validation_status'))}"
+    if rt == "cockpit_view_model_generation":
+        return "", f"output={scalar(data.get('output_file'))}; validation_status={scalar(data.get('validation_status'))}"
     if rt == "pending_command":
         return "", f"{scalar(data.get('status'))}/{scalar(data.get('final_status'))}"
     return "", ""
@@ -450,6 +466,8 @@ def tags_for(record: LoadedRecord, zec_closure_exists: bool) -> list[str]:
         tags.extend(["cockpit_consistency_review", "ui_readiness_review"])
     if record.record_type == "cockpit_view_model_contract":
         tags.extend(["cockpit_view_model_contract", "frontend_ready_contract", "non_trading_runtime_event"])
+    if record.record_type == "cockpit_view_model_generation":
+        tags.extend(["cockpit_view_model_generation", "frontend_ready_artifact", "non_trading_runtime_event"])
     if "near_trigger" in text and record.record_type != "cockpit_view_model_contract":
         tags.append("near_trigger")
     if "latest_active_checkpoint" in text:

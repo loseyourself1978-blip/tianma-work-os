@@ -22,6 +22,7 @@
     "cockpit/ldd/runtime_timeline.json"
   ],
   "files": {
+    "view_model": "cockpit/ldd/view_model.json",
     "latest_state": "cockpit/ldd/latest_state.json",
     "runtime_timeline": "cockpit/ldd/runtime_timeline.json",
     "active_rules": "cockpit/ldd/active_rules.json",
@@ -32,6 +33,7 @@
   },
   "recommended_read_order": [
     "manifest",
+    "view_model",
     "latest_state",
     "active_rules",
     "strategy_states",
@@ -44,7 +46,8 @@
     "ui_ready": true,
     "external_api_connected": false,
     "trading_automation_enabled": false,
-    "latest_checkpoint_confirmed": true
+    "latest_checkpoint_confirmed": true,
+    "view_model_available_after_generation": true
   },
   "warnings": []
 }

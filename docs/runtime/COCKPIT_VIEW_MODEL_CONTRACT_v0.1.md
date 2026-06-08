@@ -280,12 +280,23 @@ Validation should confirm:
 - Quote Type Tagging is represented but not programmatically enforced.
 - Future consumers must still handle missing optional fields gracefully.
 
-## 19. Recommended Next Phase
+## 19. Generator Implementation
+
+Vol.5 Phase 5.3 implements this contract with a deterministic local generator:
+
+- `scripts/generate_cockpit_view_model.py`
+- `scripts/generate_cockpit_view_model.sh`
+- `schemas/cockpit_view_model.schema.json`
+- `cockpit/ldd/view_model.json`
+
+The generated artifact merges existing cockpit summaries and the runtime timeline into one file. It remains non-UI and does not connect external APIs or trading systems.
+
+## 20. Recommended Next Phase
 
 Recommended next phase:
 
 ```text
-Vol.5 Phase 5.3 - Cockpit View Model Generator
+Vol.5 Phase 5.4 - View Model Quality Gates
 ```
 
-The next phase should generate a single local, deterministic `cockpit/ldd/view_model.json` from existing cockpit summaries and the runtime timeline, still without building UI or connecting external APIs.
+The next phase should add deterministic checks for the generated view model before any UI is built.
