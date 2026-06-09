@@ -19,6 +19,8 @@ execution instructions.
 - `mobile_consumer_sample.json`: compact display priorities.
 - `ai_board_consumer_sample.json`: role-based review boundaries.
 - `privacy_masking_notes.md`: customer-facing privacy requirements.
+- `consumer_contract_test_matrix.json`: static pass/fail contract cases.
+- `privacy_boundary_sample.json`: privacy field classifications and defaults.
 
 ## Safety
 

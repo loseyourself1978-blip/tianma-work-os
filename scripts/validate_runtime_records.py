@@ -27,6 +27,8 @@ RECORD_DIRS = [
 COCKPIT_DIRS = [
     REPO_ROOT / "cockpit" / "ldd"
 ]
+MOCK_CONSUMER_MATRIX = REPO_ROOT / "mock_consumers" / "ldd" / "consumer_contract_test_matrix.json"
+PRIVACY_BOUNDARY_SAMPLE = REPO_ROOT / "mock_consumers" / "ldd" / "privacy_boundary_sample.json"
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 
@@ -63,7 +65,8 @@ SCHEMA_FILES = {
     "cockpit_view_model_generation": "cockpit_view_model_generation.schema.json",
     "view_model_quality_gate_review": "view_model_quality_gate_review.schema.json",
     "cockpit_consumer_readiness_review": "cockpit_consumer_readiness_review.schema.json",
-    "mock_consumer_package_review": "mock_consumer_package_review.schema.json"
+    "mock_consumer_package_review": "mock_consumer_package_review.schema.json",
+    "consumer_contract_test_matrix": "consumer_contract_test_matrix.schema.json"
 }
 
 
@@ -88,6 +91,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "cockpit_consumer_readiness_review", SCHEMA_FILES["cockpit_consumer_readiness_review"]
     if "mock_consumer_package_review" in filename:
         return "mock_consumer_package_review", SCHEMA_FILES["mock_consumer_package_review"]
+    if "consumer_contract_test_matrix" in filename:
+        return "consumer_contract_test_matrix", SCHEMA_FILES["consumer_contract_test_matrix"]
     if "ldd_post_close_review" in filename:
         return "sync_delta_update", SCHEMA_FILES["sync_delta_update"]
     if "premarket_trigger_to_post_close_outcome_reconciliation" in filename:
@@ -303,7 +308,56 @@ def collect_targets() -> tuple[list[ValidationTarget], list[Path]]:
             schema_key, schema_name = schema_match
             targets.append(ValidationTarget(path, "cockpit", schema_name, schema_key))
 
+    if MOCK_CONSUMER_MATRIX.exists():
+        targets.append(
+            ValidationTarget(
+                MOCK_CONSUMER_MATRIX,
+                "mock_consumers",
+                SCHEMA_FILES["consumer_contract_test_matrix"],
+                "consumer_contract_test_matrix",
+            )
+        )
+
     return targets, unmapped
+
+
+def validate_privacy_boundary_sample() -> list[str]:
+    try:
+        document = load_json(PRIVACY_BOUNDARY_SAMPLE)
+    except (json.JSONDecodeError, OSError) as exc:
+        return [f"cannot load privacy boundary sample: {exc}"]
+
+    if not isinstance(document, dict):
+        return ["privacy boundary sample must be a JSON object"]
+
+    errors: list[str] = []
+    categories = document.get("categories")
+    required_categories = {
+        "public_safe_fields",
+        "internal_only_fields",
+        "sensitive_account_fields",
+        "execution_sensitive_fields",
+        "never_expose_fields",
+    }
+    if not isinstance(categories, dict):
+        errors.append("$.categories must be an object")
+    else:
+        missing = sorted(required_categories - set(categories))
+        if missing:
+            errors.append(f"$.categories missing: {', '.join(missing)}")
+
+    status = document.get("safety_status")
+    if not isinstance(status, dict):
+        errors.append("$.safety_status must be an object")
+    else:
+        if status.get("customer_facing_ready") is not False:
+            errors.append("$.safety_status.customer_facing_ready must be false")
+        if status.get("external_api_connected") is not False:
+            errors.append("$.safety_status.external_api_connected must be false")
+        if status.get("trading_automation_enabled") is not False:
+            errors.append("$.safety_status.trading_automation_enabled must be false")
+
+    return errors
 
 
 def main() -> int:
@@ -312,6 +366,7 @@ def main() -> int:
     examples_checked = 0
     records_checked = 0
     cockpit_checked = 0
+    mock_consumers_checked = 0
     coverage: Counter[str] = Counter()
 
     if unmapped:
@@ -342,6 +397,8 @@ def main() -> int:
             records_checked += 1
         elif target.bucket == "cockpit":
             cockpit_checked += 1
+        elif target.bucket == "mock_consumers":
+            mock_consumers_checked += 1
 
         if errors:
             print(f"FAIL {target.path.relative_to(REPO_ROOT)} against {target.schema_name}")
@@ -351,7 +408,17 @@ def main() -> int:
         else:
             print(f"PASS {target.path.relative_to(REPO_ROOT)} against {target.schema_name}")
 
-    total_checked = examples_checked + records_checked + cockpit_checked
+    privacy_errors = validate_privacy_boundary_sample()
+    mock_consumers_checked += 1
+    if privacy_errors:
+        print(f"FAIL {PRIVACY_BOUNDARY_SAMPLE.relative_to(REPO_ROOT)} against privacy boundary contract")
+        for error in privacy_errors:
+            print(f"  - {error}")
+        failures += 1
+    else:
+        print(f"PASS {PRIVACY_BOUNDARY_SAMPLE.relative_to(REPO_ROOT)} against privacy boundary contract")
+
+    total_checked = examples_checked + records_checked + cockpit_checked + mock_consumers_checked
 
     print()
     if failures:
@@ -362,6 +429,7 @@ def main() -> int:
     print(f"Examples checked: {examples_checked}")
     print(f"Records checked: {records_checked}")
     print(f"Cockpit files checked: {cockpit_checked}")
+    print(f"Mock consumer files checked: {mock_consumers_checked}")
     print(f"Total JSON files checked: {total_checked}")
     print("Schema coverage:")
     for schema_key in sorted(SCHEMA_FILES):

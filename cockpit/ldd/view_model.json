@@ -889,7 +889,7 @@
   ],
   "timeline": {
     "generated_at": "2026-06-09T08:28:00+08:00",
-    "event_count": 66,
+    "event_count": 67,
     "warning_count": 0,
     "date_range": {
       "start": "2026-06-02T08:22:00+08:00",
@@ -2191,6 +2191,34 @@
         "tags": [
           "account_structure_review",
           "soxl"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-09-consumer-contract-test-matrix-0828-sgt-json",
+        "event_time": "2026-06-09T08:28:00+08:00",
+        "event_type": "report_generation",
+        "source_file": "records/ldd/2026-06-09/consumer_contract_test_matrix_0828_sgt.json",
+        "source_record_type": "consumer_contract_test_matrix",
+        "asset_or_module": "LLM Daredevil Desk",
+        "title": "Consumer contract test matrix",
+        "summary": "Consumer contract validation: 16/16 tests passed with 0 blocking failures.",
+        "state_before": "",
+        "state_after": "overall_status=passed; consumer_readiness=ready_with_limits",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "btc",
+          "consumer_contract_test_matrix",
+          "gld",
+          "goog",
+          "latest_active_checkpoint",
+          "non_trading_runtime_event",
+          "nvda",
+          "privacy_boundary",
+          "semantic_validation",
+          "soxl",
+          "zec"
         ]
       },
       {

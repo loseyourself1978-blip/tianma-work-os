@@ -1,0 +1,407 @@
+{
+  "schema_type": "consumer_contract_test_matrix",
+  "matrix_id": "ldd-consumer-contract-test-matrix-20260609-0828",
+  "project": "Tianma Work OS",
+  "subproject": "LLM Daredevil Desk",
+  "review_time": "2026-06-09T08:28:00+08:00",
+  "baseline_checkpoint": "2026-06-09T08:28:00+08:00",
+  "baseline_commit": "d618b47be02fcc09c4b75b0a0bc33f3d703f86da",
+  "portfolio_mode": "core_position_defense_mode",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "source_mock_package": "mock_consumers/ldd/",
+  "consumer_types": [
+    "generated_reports",
+    "future_ui",
+    "api_layer",
+    "mobile_display",
+    "ai_board_role_review",
+    "future_customer_facing_cockpit"
+  ],
+  "test_dimensions": [
+    "checkpoint_integrity",
+    "portfolio_mode_integrity",
+    "active_vs_closed_position_separation",
+    "active_vs_historical_pl_separation",
+    "rule_compliance_vs_opportunity_cost",
+    "quote_type_separation",
+    "gld_active_risk_interpretation",
+    "gld_compliant_non_execution",
+    "nvda_downside_protection",
+    "goog_ggll_risk_valve",
+    "crypto_defense",
+    "hk_high_profit_protection_separation",
+    "warning_and_data_quality_rendering",
+    "no_trading_automation",
+    "mock_vs_live_data",
+    "privacy_and_masking"
+  ],
+  "test_cases": [
+    {
+      "test_id": "CCT-001",
+      "dimension": "checkpoint_integrity",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "checkpoint.latest_active_checkpoint",
+        "data_quality.latest_checkpoint_confirmed"
+      ],
+      "expected_interpretation": "The latest confirmed checkpoint is 2026-06-09T08:28:00+08:00.",
+      "prohibited_interpretation": "An older checkpoint or static sample timestamp is treated as current.",
+      "pass_criteria": [
+        "Checkpoint equals 2026-06-09T08:28:00+08:00.",
+        "Latest-checkpoint confirmation is true."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-002",
+      "dimension": "portfolio_mode_integrity",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "portfolio_mode.current"
+      ],
+      "expected_interpretation": "Portfolio mode is core_position_defense_mode.",
+      "prohibited_interpretation": "Historical cleanup mode or risk-on mode is shown as current.",
+      "pass_criteria": [
+        "Current portfolio mode equals core_position_defense_mode."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-003",
+      "dimension": "active_vs_closed_position_separation",
+      "consumer_types": [
+        "future_ui",
+        "generated_reports",
+        "mobile_display",
+        "api_layer"
+      ],
+      "source_fields": [
+        "positions",
+        "closed_positions"
+      ],
+      "expected_interpretation": "SOXL, UGL, INTC, SOXS, TSLQ, and GDXU are closed or prohibited from re-entry.",
+      "prohibited_interpretation": "A zero-share closed instrument is rendered as an active holding or buy candidate.",
+      "pass_criteria": [
+        "Closed instruments are absent from active positions.",
+        "Closed instruments retain closed/no-reentry state."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-004",
+      "dimension": "active_vs_historical_pl_separation",
+      "consumer_types": [
+        "future_ui",
+        "generated_reports",
+        "api_layer"
+      ],
+      "source_fields": [
+        "account_overview",
+        "account_sections",
+        "closed_positions"
+      ],
+      "expected_interpretation": "Active-position P/L, section P/L, total-account P/L, and historical closed-position outcomes remain separate.",
+      "prohibited_interpretation": "Closed or headline P/L is presented as current active-position P/L.",
+      "pass_criteria": [
+        "Account sections remain distinct.",
+        "Closed positions do not contribute to the active-position list."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-005",
+      "dimension": "rule_compliance_vs_opportunity_cost",
+      "consumer_types": [
+        "generated_reports",
+        "future_ui",
+        "ai_board_role_review"
+      ],
+      "source_fields": [
+        "account_sections.closed_position_opportunity_cost",
+        "risk_summary",
+        "timeline"
+      ],
+      "expected_interpretation": "A later rebound in SOXL is opportunity cost and does not invalidate compliant risk reduction.",
+      "prohibited_interpretation": "SOXL rebound is scored as a rule failure.",
+      "pass_criteria": [
+        "Opportunity cost is labeled separately.",
+        "Rule compliance remains based on evidence and risk reduction."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-006",
+      "dimension": "quote_type_separation",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "account_sections.quote_quality",
+        "data_quality.quote_type_tagging_required"
+      ],
+      "expected_interpretation": "Post-close, after-hours, broker valuation, and executable quotes have different validity.",
+      "prohibited_interpretation": "A static or non-executable quote is treated as a live execution price.",
+      "pass_criteria": [
+        "Quote Type Tagging remains required.",
+        "The current quote is not represented as a live executable quote."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-007",
+      "dimension": "gld_active_risk_interpretation",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "risk_summary.gld_status",
+        "active_rules"
+      ],
+      "expected_interpretation": "GLD remains an active concentration/risk-line watch until recovery to 400-405.",
+      "prohibited_interpretation": "GLD is shown as fully repaired or as UGL-linked protection.",
+      "pass_criteria": [
+        "GLD remains an active risk.",
+        "Full repair zone remains 400-405.",
+        "UGL remains closed."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-008",
+      "dimension": "gld_compliant_non_execution",
+      "consumer_types": [
+        "generated_reports",
+        "future_ui",
+        "ai_board_role_review"
+      ],
+      "source_fields": [
+        "account_sections.active_risk_non_execution",
+        "risk_summary.gld_status"
+      ],
+      "expected_interpretation": "Non-execution was acceptable because GLD recovered above 395 post-close, while the rule remains active.",
+      "prohibited_interpretation": "No trade is labeled a rule violation or proof that risk ended.",
+      "pass_criteria": [
+        "Assessment equals acceptable.",
+        "Compliance result equals compliant_non_execution.",
+        "Rule remains active."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-009",
+      "dimension": "nvda_downside_protection",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "active_rules",
+        "strategy_states",
+        "risk_summary.main_core_risk_watch"
+      ],
+      "expected_interpretation": "NVDA is the main core-risk watch with 204 / 200 downside protection.",
+      "prohibited_interpretation": "The thresholds are presented as automatically submitted orders.",
+      "pass_criteria": [
+        "NVDA is labeled main core-risk watch.",
+        "204 and 200 protection levels are preserved.",
+        "No automated execution implication is present."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-010",
+      "dimension": "goog_ggll_risk_valve",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "active_rules",
+        "risk_summary.main_remaining_leveraged_etf_risk_valve"
+      ],
+      "expected_interpretation": "GOOG 355 is the defense line and GGLL is the main remaining leveraged ETF risk valve.",
+      "prohibited_interpretation": "GGLL is presented as a new buy candidate or automated sell order.",
+      "pass_criteria": [
+        "GOOG 355 defense is preserved.",
+        "GGLL risk-valve role is preserved.",
+        "No GGLL add is implied."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-011",
+      "dimension": "crypto_defense",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "account_overview.crypto",
+        "risk_summary.btc_buyback_status",
+        "risk_summary.zec_grid_status"
+      ],
+      "expected_interpretation": "Crypto remains USDT-dominant; BTC buyback is inactive; ZEC grid remains closed.",
+      "prohibited_interpretation": "The payload is presented as a crypto buy signal or grid-reopen instruction.",
+      "pass_criteria": [
+        "USDT-dominant defense is visible.",
+        "BTC trigger remains inactive below 75,500-76,000.",
+        "ZEC remains closed / do not reopen."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-012",
+      "dimension": "hk_high_profit_protection_separation",
+      "consumer_types": [
+        "generated_reports",
+        "future_ui",
+        "api_layer",
+        "ai_board_role_review"
+      ],
+      "source_fields": [
+        "account_overview.hong_kong_equities",
+        "account_sections.hong_kong_equities"
+      ],
+      "expected_interpretation": "HK Zhipu / 02513 high-profit protection is separate from U.S. risk scoring.",
+      "prohibited_interpretation": "HK P/L or concentration is merged into U.S. equity rule scoring.",
+      "pass_criteria": [
+        "HK section remains distinct.",
+        "Separate high-profit protection requirement is visible."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-013",
+      "dimension": "warning_and_data_quality_rendering",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "warnings",
+        "data_quality"
+      ],
+      "expected_interpretation": "Warnings and data-quality limits remain visible and are never silently discarded.",
+      "prohibited_interpretation": "A consumer hides warnings or presents static data as live.",
+      "pass_criteria": [
+        "Warnings section exists.",
+        "Data-quality section exists.",
+        "Timeline warnings equal 0 at the current checkpoint."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-014",
+      "dimension": "no_trading_automation",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "data_quality.trading_automation_enabled",
+        "active_rules",
+        "pending_commands"
+      ],
+      "expected_interpretation": "All consumers are read-only and human-controlled.",
+      "prohibited_interpretation": "Rules, thresholds, or pending commands become order-submission instructions.",
+      "pass_criteria": [
+        "Trading automation is false.",
+        "No order-submission path exists.",
+        "Active rules remain context rather than commands."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-015",
+      "dimension": "mock_vs_live_data",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "meta",
+        "checkpoint",
+        "data_quality"
+      ],
+      "expected_interpretation": "Mock samples are examples derived from a fixed checkpoint and are not live data.",
+      "prohibited_interpretation": "Mock files are treated as a live feed or a replacement for view_model.json.",
+      "pass_criteria": [
+        "Mock package points to cockpit/ldd/view_model.json.",
+        "No live market connection is claimed.",
+        "Static sample status is explicit."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-016",
+      "dimension": "privacy_and_masking",
+      "consumer_types": [
+        "future_customer_facing_cockpit",
+        "api_layer",
+        "future_ui",
+        "mobile_display"
+      ],
+      "source_fields": [
+        "mock_consumers/ldd/privacy_boundary_sample.json"
+      ],
+      "expected_interpretation": "Internal values and execution-sensitive fields require masking and role permissions before customer exposure.",
+      "prohibited_interpretation": "Credentials, exact account identifiers, or unmasked sensitive account data are published.",
+      "pass_criteria": [
+        "Never-expose fields are prohibited.",
+        "Customer-facing masking is required.",
+        "Role-based permissions remain future work."
+      ],
+      "status": "passed"
+    }
+  ],
+  "privacy_boundary": {
+    "public_safe_fields": [
+      "product concept",
+      "generic portfolio mode labels",
+      "generic risk-state examples"
+    ],
+    "internal_only_fields": [
+      "detailed account values",
+      "position quantities",
+      "P/L values",
+      "rule-state details"
+    ],
+    "sensitive_account_fields": [
+      "broker account identifiers",
+      "Binance account identifiers",
+      "screenshot-derived account values in customer-facing contexts"
+    ],
+    "execution_sensitive_fields": [
+      "executable quote",
+      "pending order instructions",
+      "stop or reduce thresholds"
+    ],
+    "never_expose_fields": [
+      "API keys",
+      "tokens",
+      "login credentials",
+      "exact broker account numbers",
+      "raw customer personal identifiers"
+    ]
+  },
+  "safety_boundary": {
+    "read_only": true,
+    "external_api_connected": false,
+    "broker_api_connected": false,
+    "binance_api_connected": false,
+    "trading_automation_enabled": false,
+    "live_prices_inferred": false,
+    "quality_gates_required": true,
+    "mock_samples_are_live_data": false,
+    "execution_source_of_truth": "User-provided broker/Binance screenshots"
+  },
+  "pass_fail_summary": {
+    "total_tests": 16,
+    "passed": 16,
+    "failed": 0,
+    "warnings": 0,
+    "overall_status": "passed",
+    "consumer_readiness": "ready_with_limits"
+  },
+  "blocking_failures": [],
+  "warnings": [],
+  "recommended_next_phase": "Vol.5 Phase 5.8 - Read-Only Consumer Fixture Validator"
+}

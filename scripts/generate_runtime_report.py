@@ -87,6 +87,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "cockpit_consumer_readiness_review"
     if "mock_consumer_package_review" in name:
         return "mock_consumer_package_review"
+    if "consumer_contract_test_matrix" in name:
+        return "consumer_contract_test_matrix"
     if "ldd_post_close_review" in name:
         return "delta_sync"
     if "premarket_trigger_to_post_close_outcome_reconciliation" in name:
@@ -160,6 +162,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "cockpit_consumer_readiness_review"
     if data.get("schema_type") == "mock_consumer_package_review":
         return "mock_consumer_package_review"
+    if data.get("schema_type") == "consumer_contract_test_matrix":
+        return "consumer_contract_test_matrix"
     return None
 
 
@@ -1184,6 +1188,81 @@ def generate_mock_consumer_package_review(records: list[RuntimeRecord]) -> list[
     return lines
 
 
+def generate_consumer_contract_test_matrix(records: list[RuntimeRecord]) -> list[str]:
+    lines = common_header("Consumer Contract Test Matrix", records)
+    matrix = latest(by_kind(records, "consumer_contract_test_matrix"))
+
+    lines.extend(
+        [
+            "This report summarizes the read-only consumer contract and privacy boundary tests. It does not create a UI, API, live data connection, or trading automation.",
+            "",
+        ]
+    )
+
+    if matrix is None:
+        lines.append("- No consumer contract test matrix record found.")
+        return lines
+
+    data = matrix.data
+    summary = data.get("pass_fail_summary", {}) if isinstance(data.get("pass_fail_summary"), dict) else {}
+    lines.extend(
+        [
+            "## Matrix Summary",
+            "",
+            f"- Matrix ID: `{scalar(data.get('matrix_id'))}`",
+            f"- Review time: `{scalar(data.get('review_time'))}`",
+            f"- Baseline checkpoint: `{scalar(data.get('baseline_checkpoint'))}`",
+            f"- Baseline commit: `{scalar(data.get('baseline_commit'))}`",
+            f"- Portfolio mode: `{scalar(data.get('portfolio_mode'))}`",
+            f"- Source view model: `{scalar(data.get('source_view_model'))}`",
+            f"- Total tests: `{scalar(summary.get('total_tests'))}`",
+            f"- Passed: `{scalar(summary.get('passed'))}`",
+            f"- Failed: `{scalar(summary.get('failed'))}`",
+            f"- Warnings: `{scalar(summary.get('warnings'))}`",
+            f"- Overall status: `{scalar(summary.get('overall_status'))}`",
+            f"- Consumer readiness: `{scalar(summary.get('consumer_readiness'))}`",
+            f"- Source: `{matrix.relpath}`",
+            "",
+            "## Test Cases",
+            "",
+        ]
+    )
+    for item in data.get("test_cases", []):
+        if not isinstance(item, dict):
+            continue
+        lines.extend(
+            [
+                f"### {scalar(item.get('test_id'))} - {scalar(item.get('dimension'))}",
+                "",
+                f"- Status: `{scalar(item.get('status'))}`",
+                f"- Expected: {scalar(item.get('expected_interpretation'))}",
+                f"- Prohibited: {scalar(item.get('prohibited_interpretation'))}",
+                "- Pass criteria:",
+            ]
+        )
+        lines.extend([f"  - {criterion}" for criterion in item.get("pass_criteria", [])])
+        lines.append("")
+
+    privacy = data.get("privacy_boundary", {}) if isinstance(data.get("privacy_boundary"), dict) else {}
+    lines.extend(["## Privacy Boundary", ""])
+    for key, values in privacy.items():
+        lines.append(f"### {key}")
+        lines.append("")
+        if isinstance(values, list):
+            lines.extend(md_list([str(item) for item in values]))
+        else:
+            lines.append(f"- {values}")
+        lines.append("")
+
+    lines.extend(["## Blocking Failures", ""])
+    lines.extend(md_list([str(item) for item in data.get("blocking_failures", [])], "No blocking failures."))
+    lines.extend(["", "## Warnings", ""])
+    lines.extend(md_list([str(item) for item in data.get("warnings", [])], "No warnings."))
+    lines.extend(["", "## Recommended Next Phase", ""])
+    lines.append(f"- {scalar(data.get('recommended_next_phase'))}")
+    return lines
+
+
 def generate_memory_cleanup_recommendations(records: list[RuntimeRecord]) -> list[str]:
     lines = common_header("Memory Cleanup Recommendations", records)
     lines.extend(
@@ -1365,6 +1444,7 @@ def main() -> int:
         "view_model_quality_gates.md": generate_view_model_quality_gates(records),
         "cockpit_consumer_readiness_review.md": generate_cockpit_consumer_readiness_review(records),
         "mock_consumer_package_review.md": generate_mock_consumer_package_review(records),
+        "consumer_contract_test_matrix.md": generate_consumer_contract_test_matrix(records),
     }
 
     for filename, lines in reports.items():

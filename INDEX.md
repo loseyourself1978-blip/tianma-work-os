@@ -271,6 +271,15 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `mock_consumers/ldd/privacy_masking_notes.md`
 - `reports/ldd/mock_consumer_package_review.md`
 
+## Vol.5 Phase 5.7 / Consumer Contract Test Matrix
+
+- `docs/runtime/CONSUMER_CONTRACT_TEST_MATRIX_AND_PRIVACY_BOUNDARY_v0.1.md`
+- `schemas/consumer_contract_test_matrix.schema.json`
+- `records/ldd/2026-06-09/consumer_contract_test_matrix_0828_sgt.json`
+- `mock_consumers/ldd/consumer_contract_test_matrix.json`
+- `mock_consumers/ldd/privacy_boundary_sample.json`
+- `reports/ldd/consumer_contract_test_matrix.md`
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

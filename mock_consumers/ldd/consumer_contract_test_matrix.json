@@ -1,0 +1,341 @@
+{
+  "schema_type": "consumer_contract_test_matrix",
+  "matrix_id": "ldd-static-consumer-contract-matrix-v0.1",
+  "project": "Tianma Work OS",
+  "subproject": "LLM Daredevil Desk",
+  "review_time": "2026-06-09T08:28:00+08:00",
+  "baseline_checkpoint": "2026-06-09T08:28:00+08:00",
+  "baseline_commit": "d618b47be02fcc09c4b75b0a0bc33f3d703f86da",
+  "portfolio_mode": "core_position_defense_mode",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "source_mock_package": "mock_consumers/ldd/",
+  "consumer_types": [
+    "generated_reports",
+    "future_ui",
+    "api_layer",
+    "mobile_display",
+    "ai_board_role_review",
+    "future_customer_facing_cockpit"
+  ],
+  "test_dimensions": [
+    "checkpoint_integrity",
+    "portfolio_mode_integrity",
+    "active_vs_closed_position_separation",
+    "active_vs_historical_pl_separation",
+    "rule_compliance_vs_opportunity_cost",
+    "quote_type_separation",
+    "gld_active_risk_interpretation",
+    "gld_compliant_non_execution",
+    "nvda_downside_protection",
+    "goog_ggll_risk_valve",
+    "crypto_defense",
+    "hk_high_profit_protection_separation",
+    "warning_and_data_quality_rendering",
+    "no_trading_automation",
+    "mock_vs_live_data",
+    "privacy_and_masking"
+  ],
+  "test_cases": [
+    {
+      "test_id": "CCT-001",
+      "dimension": "checkpoint_integrity",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "checkpoint.latest_active_checkpoint"
+      ],
+      "expected_interpretation": "Preserve 2026-06-09T08:28:00+08:00 as the latest checkpoint.",
+      "prohibited_interpretation": "Use an older or mock-only timestamp as current.",
+      "pass_criteria": [
+        "Checkpoint matches the generated view model."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-002",
+      "dimension": "portfolio_mode_integrity",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "portfolio_mode.current"
+      ],
+      "expected_interpretation": "Preserve core_position_defense_mode.",
+      "prohibited_interpretation": "Render a historical mode as current.",
+      "pass_criteria": [
+        "Portfolio mode matches the generated view model."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-003",
+      "dimension": "active_vs_closed_position_separation",
+      "consumer_types": [
+        "future_ui",
+        "generated_reports",
+        "mobile_display"
+      ],
+      "source_fields": [
+        "positions",
+        "closed_positions"
+      ],
+      "expected_interpretation": "Closed cleanup instruments remain separate and prohibited from re-entry.",
+      "prohibited_interpretation": "SOXL, UGL, INTC, SOXS, TSLQ, or GDXU appears as an active holding.",
+      "pass_criteria": [
+        "Active and closed lists are not merged."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-004",
+      "dimension": "active_vs_historical_pl_separation",
+      "consumer_types": [
+        "future_ui",
+        "generated_reports",
+        "api_layer"
+      ],
+      "source_fields": [
+        "account_overview",
+        "account_sections"
+      ],
+      "expected_interpretation": "Section, active-position, historical, and headline P/L remain distinct.",
+      "prohibited_interpretation": "Historical or closed P/L is labeled as current active-position P/L.",
+      "pass_criteria": [
+        "Account sections preserve their attribution boundaries."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-005",
+      "dimension": "rule_compliance_vs_opportunity_cost",
+      "consumer_types": [
+        "generated_reports",
+        "future_ui",
+        "ai_board_role_review"
+      ],
+      "source_fields": [
+        "account_sections.closed_position_opportunity_cost"
+      ],
+      "expected_interpretation": "Opportunity cost remains separate from rule correctness.",
+      "prohibited_interpretation": "SOXL rebound is treated as proof that cleanup failed.",
+      "pass_criteria": [
+        "Opportunity-cost and compliance labels remain separate."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-006",
+      "dimension": "quote_type_separation",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "account_sections.quote_quality",
+        "data_quality.quote_type_tagging_required"
+      ],
+      "expected_interpretation": "Static and post-close quotes are monitoring context, not live execution prices.",
+      "prohibited_interpretation": "Any displayed price is assumed execution-valid.",
+      "pass_criteria": [
+        "Quote Type Tagging is preserved."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-007",
+      "dimension": "gld_active_risk_interpretation",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "risk_summary.gld_status"
+      ],
+      "expected_interpretation": "GLD remains active risk until 400-405 repair.",
+      "prohibited_interpretation": "GLD is fully repaired or UGL-linked.",
+      "pass_criteria": [
+        "GLD active-risk state remains visible."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-008",
+      "dimension": "gld_compliant_non_execution",
+      "consumer_types": [
+        "generated_reports",
+        "future_ui",
+        "ai_board_role_review"
+      ],
+      "source_fields": [
+        "account_sections.active_risk_non_execution"
+      ],
+      "expected_interpretation": "Non-execution was compliant after recovery above 395.",
+      "prohibited_interpretation": "No trade is automatically a violation.",
+      "pass_criteria": [
+        "Compliant non-execution remains explicit."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-009",
+      "dimension": "nvda_downside_protection",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "active_rules",
+        "risk_summary.main_core_risk_watch"
+      ],
+      "expected_interpretation": "NVDA remains the main core-risk watch with 204 / 200 protection.",
+      "prohibited_interpretation": "Thresholds are treated as submitted orders.",
+      "pass_criteria": [
+        "Risk levels are shown as read-only rules."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-010",
+      "dimension": "goog_ggll_risk_valve",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "active_rules",
+        "risk_summary.main_remaining_leveraged_etf_risk_valve"
+      ],
+      "expected_interpretation": "GOOG 355 remains the defense line and GGLL remains the risk valve.",
+      "prohibited_interpretation": "GGLL is a buy candidate or automatic order.",
+      "pass_criteria": [
+        "GOOG/GGLL boundary remains intact."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-011",
+      "dimension": "crypto_defense",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "account_overview.crypto",
+        "risk_summary"
+      ],
+      "expected_interpretation": "USDT defense remains active, BTC trigger inactive, and ZEC grid closed.",
+      "prohibited_interpretation": "The sample is a crypto buy or grid-reopen signal.",
+      "pass_criteria": [
+        "Defensive crypto state is preserved."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-012",
+      "dimension": "hk_high_profit_protection_separation",
+      "consumer_types": [
+        "generated_reports",
+        "future_ui",
+        "api_layer"
+      ],
+      "source_fields": [
+        "account_overview.hong_kong_equities"
+      ],
+      "expected_interpretation": "HK high-profit protection remains separate from U.S. scoring.",
+      "prohibited_interpretation": "HK and U.S. risk scores are merged.",
+      "pass_criteria": [
+        "HK section remains distinct."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-013",
+      "dimension": "warning_and_data_quality_rendering",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "warnings",
+        "data_quality"
+      ],
+      "expected_interpretation": "Warnings and quality limits remain visible.",
+      "prohibited_interpretation": "Warnings are hidden or static data is called live.",
+      "pass_criteria": [
+        "Warning and quality sections are retained."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-014",
+      "dimension": "no_trading_automation",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "data_quality.trading_automation_enabled",
+        "active_rules"
+      ],
+      "expected_interpretation": "Consumers remain read-only.",
+      "prohibited_interpretation": "Rules become order submissions.",
+      "pass_criteria": [
+        "Trading automation remains false."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-015",
+      "dimension": "mock_vs_live_data",
+      "consumer_types": [
+        "all"
+      ],
+      "source_fields": [
+        "source_view_model",
+        "baseline_checkpoint"
+      ],
+      "expected_interpretation": "This file is a fixed example derived from the generated view model.",
+      "prohibited_interpretation": "The sample is treated as a live feed.",
+      "pass_criteria": [
+        "Static sample and source view model are identified."
+      ],
+      "status": "passed"
+    },
+    {
+      "test_id": "CCT-016",
+      "dimension": "privacy_and_masking",
+      "consumer_types": [
+        "future_customer_facing_cockpit",
+        "api_layer",
+        "future_ui",
+        "mobile_display"
+      ],
+      "source_fields": [
+        "mock_consumers/ldd/privacy_boundary_sample.json"
+      ],
+      "expected_interpretation": "Sensitive fields require masking and permissions.",
+      "prohibited_interpretation": "Credentials, identifiers, or unmasked private values are published.",
+      "pass_criteria": [
+        "Privacy categories and never-expose fields are enforced conceptually."
+      ],
+      "status": "passed"
+    }
+  ],
+  "privacy_boundary": {
+    "source": "mock_consumers/ldd/privacy_boundary_sample.json",
+    "customer_facing_masking_required": true,
+    "role_permissions_required": true
+  },
+  "safety_boundary": {
+    "read_only": true,
+    "external_api_connected": false,
+    "trading_automation_enabled": false,
+    "live_prices_inferred": false,
+    "quality_gates_required": true
+  },
+  "pass_fail_summary": {
+    "total_tests": 16,
+    "passed": 16,
+    "failed": 0,
+    "warnings": 0,
+    "overall_status": "passed",
+    "consumer_readiness": "ready_with_limits"
+  },
+  "blocking_failures": [],
+  "warnings": [],
+  "recommended_next_phase": "Vol.5 Phase 5.8 - Read-Only Consumer Fixture Validator"
+}

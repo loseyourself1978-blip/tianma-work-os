@@ -64,6 +64,8 @@ mock_consumers/ldd/
   mobile_consumer_sample.json
   ai_board_consumer_sample.json
   privacy_masking_notes.md
+  consumer_contract_test_matrix.json
+  privacy_boundary_sample.json
 ```
 
 ## UI Boundary Principles
@@ -205,8 +207,14 @@ See `mock_consumers/ldd/privacy_masking_notes.md`.
 ## Recommended Next Phase
 
 ```text
-Vol.5 Phase 5.7 - Consumer Contract Test Matrix and Privacy Boundary
+Vol.5 Phase 5.8 - Read-Only Consumer Fixture Validator
 ```
 
-That phase should test required fields and masking expectations for each
-consumer type while remaining read-only and non-UI.
+Phase 5.7 implements the consumer matrix and privacy boundary in:
+
+- `docs/runtime/CONSUMER_CONTRACT_TEST_MATRIX_AND_PRIVACY_BOUNDARY_v0.1.md`
+- `mock_consumers/ldd/consumer_contract_test_matrix.json`
+- `mock_consumers/ldd/privacy_boundary_sample.json`
+
+The next phase should turn those static expectations into a deterministic local
+fixture validator while remaining read-only and non-UI.

@@ -135,8 +135,14 @@ The recommended static boundary package is implemented in:
 Consumer readiness remains `ready_with_limits`; the package adds examples, not
 a UI, API, permission system, or customer-facing privacy layer.
 
+Phase 5.7 adds the static test matrix and privacy categories in:
+
+- `docs/runtime/CONSUMER_CONTRACT_TEST_MATRIX_AND_PRIVACY_BOUNDARY_v0.1.md`
+- `mock_consumers/ldd/consumer_contract_test_matrix.json`
+- `mock_consumers/ldd/privacy_boundary_sample.json`
+
 ## Recommended Next Phase
 
 ```text
-Vol.5 Phase 5.7 - Consumer Contract Test Matrix and Privacy Boundary
+Vol.5 Phase 5.8 - Read-Only Consumer Fixture Validator
 ```

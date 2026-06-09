@@ -1,0 +1,67 @@
+{
+  "sample_type": "privacy_boundary",
+  "version": "0.1",
+  "scope": "Internal LDD pilot mock consumer package",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "categories": {
+    "public_safe_fields": {
+      "examples": [
+        "product concept",
+        "generic portfolio mode labels",
+        "generic risk-state examples"
+      ],
+      "customer_facing_default": "allowed_after_copy_review"
+    },
+    "internal_only_fields": {
+      "examples": [
+        "detailed account values",
+        "position quantities",
+        "P/L values",
+        "rule-state details"
+      ],
+      "customer_facing_default": "masked_or_omitted"
+    },
+    "sensitive_account_fields": {
+      "examples": [
+        "broker account identifiers",
+        "Binance account identifiers",
+        "screenshot-derived account values"
+      ],
+      "customer_facing_default": "masked",
+      "role_permission_required": true
+    },
+    "execution_sensitive_fields": {
+      "examples": [
+        "executable quote",
+        "pending order instructions",
+        "stop or reduce thresholds"
+      ],
+      "customer_facing_default": "restricted",
+      "execution_boundary": "read_only_context_not_order_instruction"
+    },
+    "never_expose_fields": {
+      "examples": [
+        "API keys",
+        "tokens",
+        "login credentials",
+        "exact broker account numbers",
+        "raw customer personal identifiers"
+      ],
+      "customer_facing_default": "prohibited"
+    }
+  },
+  "current_limitations": [
+    "Current package is internal and LDD-pilot focused.",
+    "Customer-facing cockpit requires a masking policy before launch.",
+    "Role-based permissions are future work.",
+    "API authorization is future work.",
+    "No live broker or Binance connection exists.",
+    "No automated trading path exists."
+  ],
+  "safety_status": {
+    "customer_facing_ready": false,
+    "internal_read_only_ready": true,
+    "external_api_connected": false,
+    "trading_automation_enabled": false
+  }
+}

@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/consumer_contract_test_matrix.schema.json",
+  "title": "Consumer Contract Test Matrix",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_type",
+    "matrix_id",
+    "project",
+    "subproject",
+    "review_time",
+    "baseline_checkpoint",
+    "baseline_commit",
+    "portfolio_mode",
+    "source_view_model",
+    "source_mock_package",
+    "consumer_types",
+    "test_dimensions",
+    "test_cases",
+    "privacy_boundary",
+    "safety_boundary",
+    "pass_fail_summary",
+    "blocking_failures",
+    "warnings",
+    "recommended_next_phase"
+  ],
+  "properties": {
+    "schema_type": {
+      "type": "string",
+      "enum": [
+        "consumer_contract_test_matrix"
+      ]
+    },
+    "matrix_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "subproject": {
+      "type": "string"
+    },
+    "review_time": {
+      "type": "string"
+    },
+    "baseline_checkpoint": {
+      "type": "string"
+    },
+    "baseline_commit": {
+      "type": "string"
+    },
+    "portfolio_mode": {
+      "type": "string"
+    },
+    "source_view_model": {
+      "type": "string"
+    },
+    "source_mock_package": {
+      "type": "string"
+    },
+    "consumer_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "test_dimensions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "test_cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "test_id",
+          "dimension",
+          "consumer_types",
+          "source_fields",
+          "expected_interpretation",
+          "prohibited_interpretation",
+          "pass_criteria",
+          "status"
+        ],
+        "properties": {
+          "test_id": {
+            "type": "string"
+          },
+          "dimension": {
+            "type": "string"
+          },
+          "consumer_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "source_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expected_interpretation": {
+            "type": "string"
+          },
+          "prohibited_interpretation": {
+            "type": "string"
+          },
+          "pass_criteria": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed",
+              "warning"
+            ]
+          }
+        }
+      }
+    },
+    "privacy_boundary": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "safety_boundary": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "pass_fail_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total_tests",
+        "passed",
+        "failed",
+        "warnings",
+        "overall_status",
+        "consumer_readiness"
+      ],
+      "properties": {
+        "total_tests": {
+          "type": "integer"
+        },
+        "passed": {
+          "type": "integer"
+        },
+        "failed": {
+          "type": "integer"
+        },
+        "warnings": {
+          "type": "integer"
+        },
+        "overall_status": {
+          "type": "string",
+          "enum": [
+            "passed",
+            "passed_with_warnings",
+            "failed"
+          ]
+        },
+        "consumer_readiness": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "ready_with_limits",
+            "not_ready"
+          ]
+        }
+      }
+    },
+    "blocking_failures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recommended_next_phase": {
+      "type": "string"
+    }
+  }
+}
