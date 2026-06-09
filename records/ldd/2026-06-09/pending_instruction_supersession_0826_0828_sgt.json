@@ -1,0 +1,28 @@
+{
+  "command_id": "phase5-6a-premarket-delta-20260608-1704-1705",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "created_at": "2026-06-08T17:05:00+08:00",
+  "source_signal_id": "ldd-premarket-sync-20260608-1704-1705",
+  "command_summary": "Earlier premarket-only delta instruction for GLD active risk and account state.",
+  "command_content_reference": "pending instruction: 2026-06-08 17:04-17:05 SGT/BJT premarket-only delta",
+  "intended_executor": "Codex",
+  "status": "superseded",
+  "waiting_for": "none",
+  "blocker_type": "newer_source_of_truth",
+  "blocker_description": "The 2026-06-09 08:26-08:28 post-close sync includes the updated account state and the outcome of the premarket GLD trigger.",
+  "superseded_by_signal_id": "ldd-post-close-sync-20260609-0826-0828",
+  "superseded_by_command_id": "phase5-6a-post-close-defense-reconciliation-20260609-0828",
+  "revision_reason": "Execute the latest valid post-close instruction rather than the stale premarket-only draft.",
+  "latest_valid_version": "2026-06-09T08:28:00+08:00 post-close defense reconciliation",
+  "related_records": [
+    "records/ldd/2026-06-09/ldd_post_close_review_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/premarket_trigger_to_post_close_outcome_reconciliation_0826_0828_sgt.json"
+  ],
+  "execution_feedback": {
+    "older_instruction_executed": false,
+    "newer_instruction_selected": true,
+    "freshness_check": "passed"
+  },
+  "final_status": "superseded_by_post_close_source_of_truth"
+}

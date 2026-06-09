@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-06-08T08:44:00+08:00",
+  "generated_at": "2026-06-09T08:28:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "runtime_timeline",
   "version": "0.1",
   "source_root": "records/ldd",
-  "event_count": 53,
+  "event_count": 65,
   "date_range": {
     "start": "2026-06-02T08:22:00+08:00",
-    "end": "2026-06-08T08:44:00+08:00"
+    "end": "2026-06-09T08:28:00+08:00"
   },
   "events": [
     {
@@ -1215,6 +1215,257 @@
         "soxl",
         "view_model_quality_gate_review",
         "view_model_quality_gates",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-09-pending-instruction-supersession-0826-0828-sgt-json",
+      "event_time": "2026-06-08T17:05:00+08:00",
+      "event_type": "pending_command",
+      "source_file": "records/ldd/2026-06-09/pending_instruction_supersession_0826_0828_sgt.json",
+      "source_record_type": "pending_command",
+      "asset_or_module": "llm-daredevil-desk",
+      "title": "Pending command: phase5-6a-premarket-delta-20260608-1704-1705",
+      "summary": "Earlier premarket-only delta instruction for GLD active risk and account state.",
+      "state_before": "",
+      "state_after": "superseded/superseded_by_post_close_source_of_truth",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "low",
+      "tags": [
+        "gld",
+        "pending_command",
+        "source_status"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-09-account-state-delta-0826-0828-sgt-json",
+      "event_time": "2026-06-09T08:28:00+08:00",
+      "event_type": "portfolio_snapshot",
+      "source_file": "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json",
+      "source_record_type": "portfolio_state",
+      "asset_or_module": "post_close_core_position_defense_checkpoint",
+      "title": "Portfolio snapshot: latest active LDD checkpoint",
+      "summary": "Post-close account state recorded with broker total assets about 41411 USD and Binance visible assets about 8241.71 USDT.",
+      "state_before": "",
+      "state_after": "",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "low",
+      "tags": [
+        "btc",
+        "gld",
+        "goog",
+        "latest_active_checkpoint",
+        "nvda",
+        "portfolio_state",
+        "soxl",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-09-active-risk-non-execution-review-0826-0828-sgt-json",
+      "event_time": "2026-06-09T08:28:00+08:00",
+      "event_type": "trigger_rule_update",
+      "source_file": "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json",
+      "source_record_type": "rule_ledger_snapshot",
+      "asset_or_module": "llm-daredevil-desk",
+      "title": "Runtime rule trigger monitor",
+      "summary": "Rule trigger monitor captured 6 active rules, including near-trigger states and execution-confirmation requirements.",
+      "state_before": "",
+      "state_after": "",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "high",
+      "tags": [
+        "btc",
+        "gld",
+        "goog",
+        "near_trigger",
+        "nvda",
+        "rule_ledger_snapshot",
+        "soxl",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-09-closed-position-opportunity-cost-requirement-0826-0828-sgt-json",
+      "event_time": "2026-06-09T08:28:00+08:00",
+      "event_type": "account_structure_review",
+      "source_file": "records/ldd/2026-06-09/closed_position_opportunity_cost_requirement_0826_0828_sgt.json",
+      "source_record_type": "account_structure_review",
+      "asset_or_module": "us_equity_closed_position_ledger",
+      "title": "Account structure review: score 88",
+      "summary": "Cash pressure: low after historical cleanup; redeployment readiness: No re-entry without a new approved rule..",
+      "state_before": "",
+      "state_after": "structure_score=88",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "medium",
+      "tags": [
+        "account_structure_review",
+        "soxl"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-09-crypto-defense-state-delta-0826-0828-sgt-json",
+      "event_time": "2026-06-09T08:28:00+08:00",
+      "event_type": "strategy_state_update",
+      "source_file": "records/ldd/2026-06-09/crypto_defense_state_delta_0826_0828_sgt.json",
+      "source_record_type": "strategy_state",
+      "asset_or_module": "Binance spot / USDT defense",
+      "title": "Strategy state: Binance spot / USDT defense core_position_defense",
+      "summary": "Crypto remains weak; BTC is far below the 75,500-76,000 buyback trigger. USDT is approximately 72.0% of visible Binance assets.",
+      "state_before": "usdt_dominant_defense",
+      "state_after": "usdt_dominant_defense",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "medium",
+      "tags": [
+        "btc",
+        "closed_profit_locked",
+        "strategy_state",
+        "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-09-gld-active-risk-rule-update-0826-0828-sgt-json",
+      "event_time": "2026-06-09T08:28:00+08:00",
+      "event_type": "trigger_rule_update",
+      "source_file": "records/ldd/2026-06-09/gld_active_risk_rule_update_0826_0828_sgt.json",
+      "source_record_type": "trigger_execution_rule",
+      "asset_or_module": "GLD",
+      "title": "Trigger rule: GLD",
+      "summary": "If GLD loses 395 again or breaks 392, reduce 5 GLD immediately. If weakness continues, reduce another 5 GLD.",
+      "state_before": "near_trigger",
+      "state_after": "waiting",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "high",
+      "tags": [
+        "gld",
+        "near_trigger",
+        "trigger_execution_rule"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-09-goog-ggll-risk-valve-update-0826-0828-sgt-json",
+      "event_time": "2026-06-09T08:28:00+08:00",
+      "event_type": "trigger_rule_update",
+      "source_file": "records/ldd/2026-06-09/goog_ggll_risk_valve_update_0826_0828_sgt.json",
+      "source_record_type": "trigger_execution_rule",
+      "asset_or_module": "GOOG/GGLL",
+      "title": "Trigger rule: GOOG/GGLL",
+      "summary": "If GOOG breaks 355, reduce or clean GGLL. If GOOG reaches 365-370 but fails, sell 5 GGLL.",
+      "state_before": "active",
+      "state_after": "waiting",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "medium",
+      "tags": [
+        "goog",
+        "trigger_execution_rule"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-09-hk-high-profit-protection-requirement-0826-0828-sgt-json",
+      "event_time": "2026-06-09T08:28:00+08:00",
+      "event_type": "account_structure_review",
+      "source_file": "records/ldd/2026-06-09/hk_high_profit_protection_requirement_0826_0828_sgt.json",
+      "source_record_type": "account_structure_review",
+      "asset_or_module": "hong_kong_equity_02513_zhipu",
+      "title": "Account structure review: score 72",
+      "summary": "Cash pressure: not assessed from the HK section alone; redeployment readiness: No action rule is approved in this checkpoint..",
+      "state_before": "",
+      "state_after": "structure_score=72",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "medium",
+      "tags": [
+        "account_structure_review"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-09-ldd-post-close-review-0826-0828-sgt-json",
+      "event_time": "2026-06-09T08:28:00+08:00",
+      "event_type": "sync_delta",
+      "source_file": "records/ldd/2026-06-09/ldd_post_close_review_0826_0828_sgt.json",
+      "source_record_type": "sync_delta_update",
+      "asset_or_module": "llm-daredevil-desk",
+      "title": "Sync delta: ldd-post-close-defense-reconciliation-20260609-0828-sgt",
+      "summary": "The post-close review supersedes the earlier premarket-only instruction because it contains both the updated account state and the observed outcome of the GLD premarket risk trigger.",
+      "state_before": "prior sync or strategy-state assumption",
+      "state_after": "latest_active_checkpoint; broker_and_binance_account_state; gld_active_risk_non_execution_outcome; nvda_core_risk_thresholds; goog_ggll_risk_valve_state; quote_type; pending_instruction_freshness",
+      "supersedes_or_updates": [
+        "records/ldd/2026-06-08/ldd_core_position_defense_checkpoint_0843_0844_sgt.json",
+        "pending_instruction:2026-06-08 17:04-17:05 SGT/BJT premarket-only delta"
+      ],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "critical",
+      "tags": [
+        "btc",
+        "gld",
+        "goog",
+        "latest_active_checkpoint",
+        "nvda",
+        "sync_delta_update"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-09-nvda-core-risk-trigger-update-0826-0828-sgt-json",
+      "event_time": "2026-06-09T08:28:00+08:00",
+      "event_type": "trigger_rule_update",
+      "source_file": "records/ldd/2026-06-09/nvda_core_risk_trigger_update_0826_0828_sgt.json",
+      "source_record_type": "trigger_execution_rule",
+      "asset_or_module": "NVDA",
+      "title": "Trigger rule: NVDA",
+      "summary": "If NVDA breaks below 204, reduce 5 NVDA. If NVDA breaks below 200, reduce another 5 NVDA.",
+      "state_before": "near_trigger",
+      "state_after": "waiting",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "high",
+      "tags": [
+        "near_trigger",
+        "nvda",
+        "trigger_execution_rule"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-09-premarket-trigger-to-post-close-outcome-reconciliation-0826-0828-sgt-json",
+      "event_time": "2026-06-09T08:28:00+08:00",
+      "event_type": "rule_review",
+      "source_file": "records/ldd/2026-06-09/premarket_trigger_to_post_close_outcome_reconciliation_0826_0828_sgt.json",
+      "source_record_type": "rule_based_execution_review",
+      "asset_or_module": "GLD",
+      "title": "Active-risk non-execution review: GLD",
+      "summary": "acceptable non-execution: recovered_above_first_level_risk_band_after_regular_session_close.",
+      "state_before": "",
+      "state_after": "",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "medium",
+      "tags": [
+        "gld",
+        "rule_based_execution_review"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-09-quote-type-tagging-reinforcement-0826-0828-sgt-json",
+      "event_time": "2026-06-09T08:28:00+08:00",
+      "event_type": "account_structure_review",
+      "source_file": "records/ldd/2026-06-09/quote_type_tagging_reinforcement_0826_0828_sgt.json",
+      "source_record_type": "account_structure_review",
+      "asset_or_module": "cross_account_quote_quality",
+      "title": "Account structure review: score 90",
+      "summary": "Cash pressure: not applicable; redeployment readiness: No execution-valid quote is implied by this record..",
+      "state_before": "",
+      "state_after": "structure_score=90",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "medium",
+      "tags": [
+        "account_structure_review",
         "zec"
       ]
     }

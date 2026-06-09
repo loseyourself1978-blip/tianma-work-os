@@ -59,6 +59,34 @@
     "actual_execution": {
       "type": "string"
     },
+    "execution_status": {
+      "type": "string"
+    },
+    "non_execution_reason": {
+      "type": "string"
+    },
+    "non_execution_assessment": {
+      "type": "string",
+      "enum": [
+        "acceptable",
+        "unacceptable",
+        "needs_review",
+        "not_applicable"
+      ]
+    },
+    "rule_compliance_result": {
+      "type": "string",
+      "enum": [
+        "compliant_execution",
+        "compliant_non_execution",
+        "non_compliant_execution",
+        "non_compliant_non_execution",
+        "needs_review"
+      ]
+    },
+    "opportunity_cost_assessment": {
+      "type": "string"
+    },
     "execution_evidence": {
       "type": "array",
       "items": {

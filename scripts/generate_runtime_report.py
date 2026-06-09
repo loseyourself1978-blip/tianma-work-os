@@ -85,6 +85,18 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "view_model_quality_gate_review"
     if "cockpit_consumer_readiness_review" in name:
         return "cockpit_consumer_readiness_review"
+    if "ldd_post_close_review" in name:
+        return "delta_sync"
+    if "premarket_trigger_to_post_close_outcome_reconciliation" in name:
+        return "execution_review"
+    if "active_risk_non_execution_review" in name:
+        return "rule_ledger_snapshot"
+    if "gld_active_risk_rule_update" in name or "nvda_core_risk_trigger_update" in name or "goog_ggll_risk_valve_update" in name:
+        return "trigger_rule"
+    if "closed_position_opportunity_cost_requirement" in name or "hk_high_profit_protection_requirement" in name:
+        return "account_structure_review"
+    if "crypto_defense_state_delta" in name:
+        return "strategy_state"
     if "cockpit_view_model_contract" in name:
         return "cockpit_view_model_contract"
     if "cockpit_consistency_review" in name:
@@ -345,7 +357,7 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
         lines.extend(
             [
                 f"- Snapshot time: `{scalar(portfolio.data.get('snapshot_time'))}`",
-                f"- U.S. broker total assets: `{scalar(assets.get('us_broker_total_assets_usd'))} USD`",
+                f"- U.S. broker total assets: `{scalar(assets.get('broker_total_assets_usd') or assets.get('us_broker_total_assets_usd'))} USD`",
                 f"- U.S. stock section: `{scalar(assets.get('us_stock_section_usd'))} USD`",
                 f"- U.S. holdings market value: `{scalar(assets.get('us_holdings_market_value_usd'))} USD`",
                 f"- U.S. holding P/L: `{scalar(assets.get('us_holding_pl_usd'))} USD`",
@@ -405,7 +417,7 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
     if crypto_account:
         lines.extend(
             [
-                f"- Latest crypto account review: {scalar(crypto_account.data.get('account'))}",
+                f"- Supporting crypto structure review: {scalar(crypto_account.data.get('account'))}",
                 f"- Cash pressure: {scalar(crypto_account.data.get('cash_pressure'))}",
                 f"- Bot strategy risk: {scalar(crypto_account.data.get('bot_strategy_risk'))}",
                 f"- Redeployment readiness: {scalar(crypto_account.data.get('redeployment_readiness'))}",
@@ -431,7 +443,27 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
     lines.append("")
 
     lines.extend(["## Latest Major Execution Event", ""])
-    if execution:
+    portfolio_tags = portfolio.data.get("strategy_tags", []) if portfolio else []
+    latest_has_no_execution = any("no_new_execution" in str(tag) for tag in portfolio_tags)
+    if latest_has_no_execution:
+        lines.extend(
+            [
+                f"- No new execution is visible at the latest checkpoint `{scalar(portfolio.data.get('snapshot_time'))}`.",
+                "- Broker same-day order count: `0/0`.",
+                "- The latest confirmed historical cleanup execution remains retained below for audit context only.",
+            ]
+        )
+        if execution:
+            trade = execution.data.get("trade", {})
+            lines.extend(
+                [
+                    f"- Prior execution: {scalar(execution.data.get('action'))} {scalar(execution.data.get('asset'))}",
+                    f"- Prior execution time: `{scalar(execution.data.get('event_time'))}`",
+                    f"- Prior trade: {scalar(trade.get('side'))} `{scalar(trade.get('quantity'))}` {scalar(trade.get('symbol'))} at `{scalar(trade.get('price'))}`",
+                    f"- Prior execution source: `{execution.relpath}`",
+                ]
+            )
+    elif execution:
         trade = execution.data.get("trade", {})
         lines.extend(
             [
@@ -467,7 +499,6 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
     lines.append("")
 
     lines.extend(["## Latest Account Structure Conclusion", ""])
-    portfolio_tags = portfolio.data.get("strategy_tags", []) if portfolio else []
     if portfolio and "core_position_defense_mode" in portfolio_tags:
         lines.extend(
             [
@@ -476,7 +507,7 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
                 "- Closed cleanup positions: `SOXL`, `UGL`, `INTC`",
                 "- Main remaining leveraged ETF risk valve: `GGLL`",
                 "- Main core-risk watch: `NVDA`",
-                "- GLD state: below 405 and under review; UGL already closed",
+                "- GLD state: recovered above 395 with compliant non-execution, but full repair still requires 400-405; UGL remains closed",
                 f"- Cleanup rule compliance score: `{scalar(cleanup_review.data.get('rule_compliance_score')) if cleanup_review else 'unknown'}`",
                 f"- Source: `{portfolio.relpath}`",
             ]
@@ -578,7 +609,7 @@ def generate_strategy_state_summary(records: list[RuntimeRecord]) -> list[str]:
     if "core_position_defense_mode" in portfolio_tags:
         lines.append("- U.S. historical cleanup cycle: completed for SOXL, UGL, and INTC.")
         lines.append("- Portfolio mode: `core_position_defense_mode`.")
-        lines.append("- Remaining focus: NVDA core-risk watch, GGLL leveraged risk valve, and GLD below-405 review.")
+        lines.append("- Remaining focus: NVDA 204/200 core-risk protection, GGLL leveraged risk valve, and GLD 395/392 active-risk monitoring until 400-405 repair.")
     else:
         lines.append("- U.S. historical positions: cleanup and risk-control phase remains active.")
     lines.append("- LDD new U.S. model strategy: no new position opened in current records.")
@@ -697,7 +728,7 @@ def generate_account_structure_summary(records: list[RuntimeRecord]) -> list[str
                 "- Closed cleanup positions: `SOXL`, `UGL`, `INTC`",
                 "- Main remaining leveraged ETF risk valve: `GGLL`",
                 "- Main core-risk watch: `NVDA`",
-                "- GLD: below 405 and under review; UGL already closed",
+                "- GLD: compliant non-execution after recovery above 395; active risk remains until 400-405 repair; UGL already closed",
                 f"- U.S. cash/cash-equivalent: `{scalar(assets.get('inferred_us_cash_equivalent_usd'))} USD`",
                 f"- Latest cleanup cash impact: `{scalar(assets.get('latest_cleanup_cash_impact_usd'))} USD` before fees",
                 f"- Total SOXL cleanup cash impact: `{scalar(assets.get('total_soxl_cleanup_cash_impact_usd'))} USD` before fees",
@@ -1253,9 +1284,9 @@ def generate_latest_active_memory_checkpoint(records: list[RuntimeRecord]) -> li
         md_list(
             [
                 "DOGE remains a weak-risk holding.",
-                "NVDA is the main core-risk watch after breaking below 212.",
+                "NVDA is the main core-risk watch below the 210-212 reclaim zone and above the 204 first protection level.",
                 "GGLL is the main remaining leveraged ETF risk valve.",
-                "GLD is under review below 405 while UGL is already closed.",
+                "GLD recovered above 395 with compliant non-execution, but active risk remains until 400-405 recovery; UGL is closed.",
                 "Memory cleanup requires human approval before active saved-memory removal.",
             ]
         )

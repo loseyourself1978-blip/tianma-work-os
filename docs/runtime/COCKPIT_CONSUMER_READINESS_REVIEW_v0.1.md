@@ -92,11 +92,11 @@ yet a customer-facing product payload.
 Consumers should render:
 
 - Portfolio mode: `core_position_defense_mode`
-- Latest checkpoint: `2026-06-08T08:44:00+08:00`
+- Latest checkpoint: `2026-06-09T08:28:00+08:00`
 - SOXL / UGL / INTC: `closed_position`
 - GGLL: main remaining leveraged ETF risk valve
 - NVDA: main core-risk watch
-- GLD: ordinary GLD concentration / risk-line protection
+- GLD: ordinary GLD concentration / risk-line protection; compliant non-execution after recovery above 395; full repair remains 400-405
 - Binance: USDT-dominant defense
 - BTC buyback trigger: inactive below 75,500-76,000
 - ZEC grid: closed / no reopen

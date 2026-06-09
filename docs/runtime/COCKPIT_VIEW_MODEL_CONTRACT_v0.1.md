@@ -244,7 +244,7 @@ Until that exists, a future UI prototype should:
 Current checkpoint:
 
 ```text
-2026-06-08T08:44:00+08:00
+2026-06-09T08:28:00+08:00
 ```
 
 Current defense-mode facts:
@@ -253,18 +253,18 @@ Current defense-mode facts:
 - SOXL, UGL, and INTC are `closed_position`; no re-add.
 - GGLL is the main remaining leveraged ETF risk valve.
 - NVDA is the main core-risk watch.
-- GLD is ordinary GLD concentration / risk-line protection.
+- GLD is ordinary GLD concentration / risk-line protection; post-close non-execution was compliant after recovery above 395, while full repair remains 400-405.
 - Binance remains USDT-dominant defense.
 - BTC buyback trigger at 75,500-76,000 remains inactive.
 - ZEC grid is closed / profit-locked / do not reopen.
-- No new execution was reported at the 2026-06-08 08:43-08:44 checkpoint.
+- No new execution was reported at the 2026-06-09 08:26-08:28 checkpoint; broker same-day order count was 0/0.
 
 ## 17. Validation Expectations
 
 Validation should confirm:
 
 - contract record validates against `schemas/cockpit_view_model_contract.schema.json`;
-- latest active checkpoint remains `2026-06-08T08:44:00+08:00`;
+- latest active checkpoint is `2026-06-09T08:28:00+08:00`;
 - timeline warnings remain `0`;
 - timeline event count increases by one when the contract record is included;
 - cockpit remains in `core_position_defense_mode`;
@@ -274,7 +274,7 @@ Validation should confirm:
 
 ## 18. Known Limitations
 
-- The contract is conceptual; it does not yet produce a single normalized `view_model.json`.
+- The contract is implemented by the generated `cockpit/ldd/view_model.json` artifact.
 - No UI rendering has been implemented.
 - No live quote, broker, Binance, or market-data verification is performed.
 - Quote Type Tagging is represented but not programmatically enforced.

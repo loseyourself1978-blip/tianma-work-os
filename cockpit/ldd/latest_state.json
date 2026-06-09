@@ -1,17 +1,21 @@
 {
-  "generated_at": "2026-06-08T08:44:00+08:00",
+  "generated_at": "2026-06-09T08:28:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "cockpit_latest_state",
   "version": "0.1",
-  "latest_active_checkpoint": "2026-06-08T08:44:00+08:00",
+  "latest_active_checkpoint": "2026-06-09T08:28:00+08:00",
   "source_files": [
-    "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
-    "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json",
-    "records/ldd/2026-06-08/quote_type_tagging_reinforcement_0843_0844_sgt.json",
-    "records/ldd/2026-06-08/quote_type_tagging_reinforcement_0843_0844_sgt.json",
+    "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/quote_type_tagging_reinforcement_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/quote_type_tagging_reinforcement_0826_0828_sgt.json",
     "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json",
     "records/ldd/2026-06-08/core_position_defense_monitor_0843_0844_sgt.json",
-    "records/ldd/2026-06-08/ldd_core_position_defense_checkpoint_0843_0844_sgt.json",
+    "records/ldd/2026-06-09/ldd_post_close_review_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/premarket_trigger_to_post_close_outcome_reconciliation_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/closed_position_opportunity_cost_requirement_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/hk_high_profit_protection_requirement_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/crypto_defense_state_delta_0826_0828_sgt.json",
     "records/ldd/2026-06-05/soxl_residual_closure_execution_1951_sgt.json",
     "records/ldd/2026-06-05/soxl_full_cleanup_reconciliation_1951_sgt.json",
     "records/ldd/2026-06-05/ugl_cleanup_execution_2208_sgt.json",
@@ -22,28 +26,28 @@
   ],
   "state_summary": {
     "total_account": {
-      "broker_total_assets_usd": "approximately 41147.42",
+      "broker_total_assets_usd": "approximately 41411",
       "cash_usd": "approximately 6304.16",
       "total_holding_value_usd": "unknown",
       "total_holding_pl_usd": "unknown",
       "total_day_pl_usd": "unknown",
-      "note": "The latest checkpoint validates core_position_defense_mode after historical-risk cleanup."
+      "note": "The latest post-close checkpoint preserves core_position_defense_mode with no visible execution and same-day order count 0/0."
     },
     "hong_kong_equities": {
-      "latest_checkpoint_status": "No updated Hong Kong holding detail was encoded in the latest checkpoint.",
+      "latest_checkpoint_status": "HK high-profit protection is tracked separately from U.S. risk scoring.",
       "02513_zhipu": {
         "shares": 100,
-        "market_value_hkd": "unknown",
+        "market_value_hkd": "approximately 131400",
         "latest_price_hkd": "unknown",
-        "day_pl_hkd": "unknown",
+        "day_pl_hkd": "approximately +1700",
         "holding_pl_hkd": "unknown"
       }
     },
     "us_equities": {
-      "section_value_usd": "approximately 24591.21",
-      "holding_market_value_usd": "approximately 18287.05",
-      "holding_pl_usd": "approximately +3074.93",
-      "day_pl_usd": "approximately -890.94",
+      "section_value_usd": "approximately 24637.79",
+      "holding_market_value_usd": "approximately 18336.8",
+      "holding_pl_usd": "approximately +1715.99",
+      "day_pl_usd": "approximately -45.39",
       "historical_cleanup_status": "SOXS, TSLQ, GDXU, SOXL, UGL, and INTC are closed; no reopening.",
       "new_ldd_model_strategy_status": "No new LDD U.S. model strategy position.",
       "key_positions": [
@@ -61,23 +65,23 @@
       "open_risks": [
         "NVDA main core-risk watch",
         "GGLL main remaining leveraged ETF risk valve",
-        "GLD ordinary concentration/risk-line protection",
-        "Hong Kong equity volatility"
+        "GLD active concentration/risk-line protection after compliant non-execution",
+        "Hong Kong high-profit protection requires a separate module"
       ],
       "portfolio_mode": "core_position_defense_mode"
     },
     "crypto": {
-      "binance_total_assets_usdt": "approximately 8275.96",
+      "binance_total_assets_usdt": "approximately 8241.71",
       "usdt": "5936",
       "eth": "0.8070416",
       "doge": "8400.535",
       "sol": "2.931163",
       "btc": "0.00055762",
-      "zec_residual": "0.012974, approximately unknown USDT",
+      "zec_residual": "0.012974, approximately 5.86 USDT",
       "cash_posture": "USDT-dominant defensive posture",
       "btc_buyback_status": "Not triggered below 75,500-76,000",
       "zec_bot_status": "Closed / profit-locked based on prior confirmed execution state; no ZEC grid reopening.",
-      "usdt_defense_ratio_pct": 71.7,
+      "usdt_defense_ratio_pct": 72,
       "open_risks": [
         "Crypto market weakness",
         "BTC still below buyback trigger",
@@ -85,12 +89,19 @@
       ]
     },
     "runtime": {
-      "latest_timeline_event_time": "2026-06-08T08:44:00+08:00",
-      "timeline_event_count": 53,
+      "latest_timeline_event_time": "2026-06-09T08:28:00+08:00",
+      "timeline_event_count": 65,
       "warning_count": 0,
       "no_new_execution_confirmed": true,
       "confirmed_execution_reconciled": true,
       "latest_confirmed_execution": "No new execution visible in latest checkpoint; prior SOXL, UGL, and INTC cleanup cycle remains reconciled.",
+      "active_risk_non_execution": {
+        "asset": "GLD",
+        "reason": "recovered_above_first_level_risk_band_after_regular_session_close",
+        "assessment": "acceptable",
+        "rule_compliance_result": "compliant_non_execution"
+      },
+      "superseded_pending_instruction": "2026-06-08 17:04-17:05 SGT/BJT premarket-only delta",
       "soxl_position_after_execution": "0",
       "ugl_position_after_execution": "0",
       "intc_position_after_execution": "0",

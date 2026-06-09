@@ -1,0 +1,29 @@
+{
+  "review_id": "quote-type-tagging-reinforcement-20260609-0828",
+  "project": "tianma-work-os",
+  "snapshot_time": "2026-06-09T08:28:00+08:00",
+  "account": "cross_account_quote_quality",
+  "structure_score": 90,
+  "cash_pressure": "not applicable",
+  "leverage_risk": "quote misuse can amplify leveraged-risk decisions",
+  "opposite_exposure_risk": "not applicable",
+  "weak_position_drag": "not applicable",
+  "legacy_position_risk": "stale quote labels can preserve invalid trigger assumptions",
+  "bot_strategy_risk": "no running ZEC bot screenshot was provided",
+  "rule_compliance": "Trigger evaluation must preserve quote type and execution validity.",
+  "redeployment_readiness": "No execution-valid quote is implied by this record.",
+  "key_findings": [
+    "Current sync quote type is us_post_close_after_hours_broker_platform_sot.",
+    "Close price, after-hours price, broker holding valuation, executable quote, and active-position valuation must remain distinct.",
+    "Broker and Binance platform screenshots remain execution source of truth."
+  ],
+  "recommended_next_actions": [
+    "Preserve quote_type on future price observations.",
+    "Require an executable quote or order-ticket evidence before recognizing execution.",
+    "Do not infer live prices from generated reports or cockpit summaries."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/premarket_trigger_to_post_close_outcome_reconciliation_0826_0828_sgt.json"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "rule_id": "nvda-core-defense-rule-20260609-0828",
+  "project_id": "tianma-work-os",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "position_id": "longbridge-us-nvda-20",
+  "asset": "NVDA",
+  "current_quantity": 20,
+  "trigger_condition": "If NVDA breaks below 204, reduce 5 NVDA. If NVDA breaks below 200, reduce another 5 NVDA.",
+  "trigger_level": "210-212 reclaim / 204 first protection / 200 second protection",
+  "execution_status": "waiting",
+  "remaining_quantity": 20,
+  "trade_intent": "risk_reduction",
+  "next_trigger_line": "204 and 200 downside protection",
+  "next_action": "Hold without adding while below the 210-212 reclaim zone.",
+  "reminder_required": true,
+  "last_review_time": "2026-06-09T08:28:00+08:00",
+  "source_of_truth": [
+    "user_provided_longbridge_post_close_broker_screenshots_20260609_0826_0828_sgt"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json"
+  ],
+  "current_observed_value": 207.65,
+  "trigger_status": "near_trigger",
+  "intended_action": "NVDA remains the main core-risk watch; preserve 204/200 downside protection.",
+  "execution_evidence_requirement": "Broker executable quote and order-detail screenshot.",
+  "next_review_time": "next regular-session broker sync",
+  "rule_drift_prevention": "Do not add below the 210-212 reclaim zone.",
+  "execution_result": "No execution visible.",
+  "review_conclusion": "Hold state remains active between the reclaim and protection zones.",
+  "account_structure_impact": "NVDA remains the main core-position downside watch."
+}

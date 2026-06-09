@@ -85,6 +85,26 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "view_model_quality_gate_review", SCHEMA_FILES["view_model_quality_gate_review"]
     if "cockpit_consumer_readiness_review" in filename:
         return "cockpit_consumer_readiness_review", SCHEMA_FILES["cockpit_consumer_readiness_review"]
+    if "ldd_post_close_review" in filename:
+        return "sync_delta_update", SCHEMA_FILES["sync_delta_update"]
+    if "premarket_trigger_to_post_close_outcome_reconciliation" in filename:
+        return "rule_based_execution_review", SCHEMA_FILES["rule_based_execution_review"]
+    if "active_risk_non_execution_review" in filename:
+        return "rule_ledger_snapshot", SCHEMA_FILES["rule_ledger_snapshot"]
+    if "gld_active_risk_rule_update" in filename:
+        return "trigger_execution_rule", SCHEMA_FILES["trigger_execution_rule"]
+    if "nvda_core_risk_trigger_update" in filename:
+        return "trigger_execution_rule", SCHEMA_FILES["trigger_execution_rule"]
+    if "goog_ggll_risk_valve_update" in filename:
+        return "trigger_execution_rule", SCHEMA_FILES["trigger_execution_rule"]
+    if "closed_position_opportunity_cost_requirement" in filename:
+        return "account_structure_review", SCHEMA_FILES["account_structure_review"]
+    if "hk_high_profit_protection_requirement" in filename:
+        return "account_structure_review", SCHEMA_FILES["account_structure_review"]
+    if "crypto_defense_state_delta" in filename:
+        return "strategy_state", SCHEMA_FILES["strategy_state"]
+    if "pending_instruction_supersession" in filename:
+        return "pending_command", SCHEMA_FILES["pending_command"]
     if "cockpit_view_model_contract" in filename:
         return "cockpit_view_model_contract", SCHEMA_FILES["cockpit_view_model_contract"]
     if "cockpit_consistency_review" in filename:

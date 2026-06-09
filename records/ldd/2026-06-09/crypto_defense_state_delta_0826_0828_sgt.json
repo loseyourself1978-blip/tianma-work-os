@@ -1,0 +1,45 @@
+{
+  "strategy_id": "crypto-usdt-defense-20260609-0828",
+  "project_id": "tianma-work-os",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "strategy_type": "cash_defense_strategy",
+  "linked_asset": "Binance spot / USDT defense",
+  "account_ref": "binance_spot",
+  "initial_capital": 8241.71,
+  "current_value": 8241.71,
+  "current_return_pct": 0,
+  "peak_return_pct": 0,
+  "profit_drawdown_pct": 0,
+  "soft_warning_threshold_pct": 0,
+  "hard_protection_threshold_pct": 0,
+  "market_state_context": "Crypto remains weak; BTC is far below the 75,500-76,000 buyback trigger. USDT is approximately 72.0% of visible Binance assets.",
+  "health_state": "core_position_defense",
+  "recommended_action": "No new crypto buying. Keep USDT-dominant defense. Keep ZEC grid closed and require new screenshot evidence before changing bot state.",
+  "last_review_time": "2026-06-09T08:28:00+08:00",
+  "source_of_truth": [
+    "user_provided_binance_spot_overview_and_coin_list_screenshots_20260609_0826_0828_sgt"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json"
+  ],
+  "previous_state": "usdt_dominant_defense",
+  "trigger": "BTC buyback remains inactive; no running ZEC bot screenshot",
+  "new_state": "usdt_dominant_defense",
+  "execution_status": "no_new_execution",
+  "recommended_action_after_execution": "No action; preserve defensive state.",
+  "residual_position": {
+    "zec_quantity": 0.012974,
+    "zec_approx_value_usdt": 5.86,
+    "zec_grid_status": "closed_profit_locked"
+  },
+  "status_transition_history": [
+    {
+      "time": "2026-06-09T08:28:00+08:00",
+      "from": "usdt_dominant_defense",
+      "to": "usdt_dominant_defense",
+      "reason": "No crypto buy trigger and no bot reopening evidence."
+    }
+  ]
+}

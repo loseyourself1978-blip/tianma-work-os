@@ -1,0 +1,29 @@
+{
+  "review_id": "closed-position-opportunity-cost-requirement-20260609-0828",
+  "project": "tianma-work-os",
+  "snapshot_time": "2026-06-09T08:28:00+08:00",
+  "account": "us_equity_closed_position_ledger",
+  "structure_score": 88,
+  "cash_pressure": "low after historical cleanup",
+  "leverage_risk": "reduced; GGLL is the only remaining leveraged ETF risk valve",
+  "opposite_exposure_risk": "low",
+  "weak_position_drag": "SOXL, UGL, INTC, SOXS, TSLQ, and GDXU are closed",
+  "legacy_position_risk": "closed-position history retained for audit only",
+  "bot_strategy_risk": "not applicable",
+  "rule_compliance": "Closed-position opportunity cost must be measured separately from rule-compliance score.",
+  "redeployment_readiness": "No re-entry without a new approved rule.",
+  "key_findings": [
+    "SOXL rebounded after closure, but rebound opportunity cost does not make the cleanup execution incorrect.",
+    "Execution correctness remains based on rule compliance, risk reduction, and account-structure improvement.",
+    "Closed instruments must not be rendered as buy candidates."
+  ],
+  "recommended_next_actions": [
+    "Add an opportunity_cost_after_closure metric separate from execution correctness.",
+    "Keep closed-position guardrails active.",
+    "Require a new decision record before any re-entry."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json",
+    "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "rule_id": "goog-ggll-risk-valve-rule-20260609-0828",
+  "project_id": "tianma-work-os",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "position_id": "longbridge-us-goog-ggll",
+  "asset": "GOOG/GGLL",
+  "current_quantity": 24,
+  "trigger_condition": "If GOOG breaks 355, reduce or clean GGLL. If GOOG reaches 365-370 but fails, sell 5 GGLL.",
+  "trigger_level": "GOOG 355 downside / 365-370 failed rebound",
+  "execution_status": "waiting",
+  "remaining_quantity": 24,
+  "trade_intent": "risk_reduction",
+  "next_trigger_line": "GOOG 355 defense and 365-370 confirmation",
+  "next_action": "Hold GOOG 14 and GGLL 10 for now; no GGLL add.",
+  "reminder_required": true,
+  "last_review_time": "2026-06-09T08:28:00+08:00",
+  "source_of_truth": [
+    "user_provided_longbridge_post_close_broker_screenshots_20260609_0826_0828_sgt"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json"
+  ],
+  "current_observed_value": "GOOG approximately 361.140; GGLL 10 shares",
+  "trigger_status": "active",
+  "intended_action": "GGLL remains the primary leveraged-risk valve.",
+  "execution_evidence_requirement": "Regular-session executable quote and order-detail screenshot.",
+  "next_review_time": "next broker sync",
+  "rule_drift_prevention": "No GGLL add; do not confuse GOOG rebound with confirmation above 365-370.",
+  "execution_result": "No execution visible.",
+  "review_conclusion": "GOOG remains above 355 but below confirmation; GGLL defense rule stays active.",
+  "account_structure_impact": "GGLL remains the main active leveraged ETF exposure."
+}

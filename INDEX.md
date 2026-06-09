@@ -241,6 +241,21 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `records/ldd/2026-06-08/cockpit_consumer_readiness_review_0844_sgt.json`
 - `reports/ldd/cockpit_consumer_readiness_review.md`
 
+## Vol.5 Phase 5.6a / LDD Post-Close Defense Reconciliation
+
+- `records/ldd/2026-06-09/ldd_post_close_review_0826_0828_sgt.json`
+- `records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json`
+- `records/ldd/2026-06-09/premarket_trigger_to_post_close_outcome_reconciliation_0826_0828_sgt.json`
+- `records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json`
+- `records/ldd/2026-06-09/gld_active_risk_rule_update_0826_0828_sgt.json`
+- `records/ldd/2026-06-09/nvda_core_risk_trigger_update_0826_0828_sgt.json`
+- `records/ldd/2026-06-09/goog_ggll_risk_valve_update_0826_0828_sgt.json`
+- `records/ldd/2026-06-09/closed_position_opportunity_cost_requirement_0826_0828_sgt.json`
+- `records/ldd/2026-06-09/hk_high_profit_protection_requirement_0826_0828_sgt.json`
+- `records/ldd/2026-06-09/quote_type_tagging_reinforcement_0826_0828_sgt.json`
+- `records/ldd/2026-06-09/crypto_defense_state_delta_0826_0828_sgt.json`
+- `records/ldd/2026-06-09/pending_instruction_supersession_0826_0828_sgt.json`
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

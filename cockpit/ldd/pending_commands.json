@@ -1,12 +1,13 @@
 {
-  "generated_at": "2026-06-08T08:44:00+08:00",
+  "generated_at": "2026-06-09T08:28:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "cockpit_pending_commands",
   "version": "0.1",
-  "latest_active_checkpoint": "2026-06-08T08:44:00+08:00",
+  "latest_active_checkpoint": "2026-06-09T08:28:00+08:00",
   "source_files": [
     "records/ldd/2026-06-02/pending_phase2_codex_instruction_20260602_0822.json",
-    "records/ldd/2026-06-08/ldd_core_position_defense_checkpoint_0843_0844_sgt.json"
+    "records/ldd/2026-06-09/pending_instruction_supersession_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/ldd_post_close_review_0826_0828_sgt.json"
   ],
   "commands": [
     {
@@ -23,12 +24,27 @@
         "command_intelligence",
         "historical_command_example"
       ]
+    },
+    {
+      "command_id": "phase5-6a-premarket-delta-20260608-1704-1705",
+      "status": "superseded",
+      "source_status": "superseded",
+      "final_status": "superseded_by_post_close_source_of_truth",
+      "summary": "Earlier premarket-only delta instruction for GLD active risk and account state.",
+      "source_files": [
+        "records/ldd/2026-06-09/pending_instruction_supersession_0826_0828_sgt.json"
+      ],
+      "last_updated": "2026-06-08T17:05:00+08:00",
+      "tags": [
+        "command_intelligence",
+        "superseded"
+      ]
     }
   ],
   "summary": {
     "pending_count": 0,
     "executed_count": 0,
-    "superseded_count": 0,
+    "superseded_count": 1,
     "historical_count": 1,
     "unknown_count": 0,
     "no_new_execution_confirmed": true,

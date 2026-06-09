@@ -1,0 +1,38 @@
+{
+  "review_id": "gld-premarket-trigger-post-close-outcome-20260609-0828",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "account": "longbridge_us_equity",
+  "asset": "GLD",
+  "position_tag": "active_core_position_concentration_risk",
+  "review_time": "2026-06-09T08:28:00+08:00",
+  "related_trigger_rule_id": "gld-active-risk-rule-20260609-0828",
+  "related_strategy_state_id": "portfolio-core-position-defense",
+  "intended_rule": "Observe the regular-session outcome after GLD approached the 392-395 risk band; reduce if GLD loses 395 again or breaks 392.",
+  "actual_execution": "No visible execution; broker same-day order count 0/0.",
+  "execution_status": "no_execution",
+  "non_execution_reason": "recovered_above_first_level_risk_band_after_regular_session_close",
+  "non_execution_assessment": "acceptable",
+  "rule_compliance_result": "compliant_non_execution",
+  "opportunity_cost_assessment": "Not applicable to the active GLD position; the review concerns justified non-execution after recovery.",
+  "execution_evidence": [
+    "user_provided_longbridge_post_close_holdings_and_order_count_screenshots_20260609_0826_0828_sgt",
+    "GLD broker valuation approximately 396.110 after approaching the 392-395 band",
+    "no visible buy, sell, reduce, add, stop-loss, or cancel action"
+  ],
+  "rule_compliance_score": 1,
+  "account_risk_improvement": "No exposure change occurred; risk remained controlled by preserving the active 395/392 downside rule after the post-close recovery.",
+  "short_term_price_outcome": "GLD recovered above 395 but remained below the 400-405 full repair zone.",
+  "review_conclusion": "Non-execution was acceptable and rule-compliant for this session. The GLD rule remains active rather than retired or downgraded.",
+  "lessons_learned": [
+    "Premarket trigger state must be reconciled against regular-session and post-close outcomes.",
+    "A recovered first-level risk band can justify non-execution without erasing the active risk rule.",
+    "Rule compliance must distinguish compliant non-execution from missed execution."
+  ],
+  "next_rule_update": "If GLD loses 395 again or breaks 392, reduce 5 GLD immediately; reduce another 5 if weakness continues. Full repair requires 400-405.",
+  "related_records": [
+    "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/gld_active_risk_rule_update_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/pending_instruction_supersession_0826_0828_sgt.json"
+  ]
+}

@@ -72,16 +72,16 @@ Supporting artifacts:
 
 The generated view model preserves the current defense-mode facts:
 
-- Latest active checkpoint remains `2026-06-08T08:44:00+08:00`.
+- Latest active checkpoint is `2026-06-09T08:28:00+08:00`.
 - Portfolio mode remains `core_position_defense_mode`.
 - SOXL, UGL, and INTC remain `closed_position`, 0 shares, no re-add.
 - GGLL remains the main remaining leveraged ETF risk valve.
 - NVDA remains the main core-risk watch.
-- GLD remains ordinary GLD concentration / risk-line protection.
+- GLD remains ordinary GLD concentration / risk-line protection; the current checkpoint records compliant non-execution after recovery above 395.
 - Binance remains USDT-dominant defense.
 - BTC buyback trigger 75,500-76,000 remains inactive.
 - ZEC grid remains closed / profit-locked / do not reopen.
-- No new execution was reported at the 2026-06-08 08:43-08:44 checkpoint.
+- No new execution was reported at the 2026-06-09 08:26-08:28 checkpoint.
 
 ## Data Quality Rules
 
@@ -109,7 +109,7 @@ Validation should include:
 
 Expected current results:
 
-- Latest active checkpoint: `2026-06-08T08:44:00+08:00`
+- Latest active checkpoint: `2026-06-09T08:28:00+08:00`
 - Portfolio mode: `core_position_defense_mode`
 - Active rules: `6`
 - Strategy states: `16`

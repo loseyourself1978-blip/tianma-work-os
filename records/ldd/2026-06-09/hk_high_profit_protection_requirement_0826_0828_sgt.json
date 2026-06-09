@@ -1,0 +1,28 @@
+{
+  "review_id": "hk-high-profit-protection-requirement-20260609-0828",
+  "project": "tianma-work-os",
+  "snapshot_time": "2026-06-09T08:28:00+08:00",
+  "account": "hong_kong_equity_02513_zhipu",
+  "structure_score": 72,
+  "cash_pressure": "not assessed from the HK section alone",
+  "leverage_risk": "none identified in the provided HK holding",
+  "opposite_exposure_risk": "not identified",
+  "weak_position_drag": "not identified; position remains highly profitable",
+  "legacy_position_risk": "large embedded profit requires a dedicated protection framework",
+  "bot_strategy_risk": "not applicable",
+  "rule_compliance": "HK high-profit protection must be evaluated separately from U.S. core-position defense.",
+  "redeployment_readiness": "No action rule is approved in this checkpoint.",
+  "key_findings": [
+    "02513 Zhipu remains 100 shares with market value approximately 131,400 HKD.",
+    "HK day P/L is approximately +1,700 HKD / +1.31%.",
+    "HK high-profit protection should not be mixed into U.S. equity risk scoring."
+  ],
+  "recommended_next_actions": [
+    "Design an HK-specific high-profit protection module.",
+    "Track peak profit, drawdown from peak, liquidity, and staged protection thresholds.",
+    "Keep the current record observational until a separate rule is approved."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json"
+  ]
+}

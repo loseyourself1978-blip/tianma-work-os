@@ -1,47 +1,67 @@
 {
-  "generated_at": "2026-06-08T08:44:00+08:00",
+  "generated_at": "2026-06-09T08:28:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "cockpit_active_rules",
   "version": "0.1",
-  "latest_active_checkpoint": "2026-06-08T08:44:00+08:00",
+  "latest_active_checkpoint": "2026-06-09T08:28:00+08:00",
   "source_files": [
-    "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+    "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json"
   ],
   "rules": [
     {
-      "rule_id": "nvda-core-defense-rule-20260608-0844",
+      "rule_id": "gld-active-risk-rule-20260609-0828",
+      "asset_or_module": "GLD",
+      "rule_type": "ordinary_gld_concentration_risk_line_protection",
+      "status": "near_trigger",
+      "trigger_state": "near_trigger",
+      "trigger_condition": "If GLD loses 395 again or breaks 392, reduce 5 GLD immediately. If weakness continues, reduce another 5 GLD.",
+      "current_action": "keep active risk monitoring; accept current non-execution after recovery above 395",
+      "source_files": [
+        "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json"
+      ],
+      "last_updated": "2026-06-09T08:28:00+08:00",
+      "cockpit_priority": "high",
+      "requires_execution_price_confirmation": false,
+      "tags": [
+        "gld",
+        "near_trigger",
+        "quote_source_conflict",
+        "risk_control"
+      ]
+    },
+    {
+      "rule_id": "nvda-core-defense-rule-20260609-0828",
       "asset_or_module": "NVDA",
       "rule_type": "main_core_risk_watch",
       "status": "near_trigger",
       "trigger_state": "near_trigger",
-      "trigger_condition": "Hold if regular session reclaims 210-212. Protect if below 200-204. No add unless recovery is confirmed.",
-      "current_action": "hold for now, no add, reassess only after regular-session confirmation",
+      "trigger_condition": "If NVDA breaks below 204, reduce 5 NVDA. If NVDA breaks below 200, reduce another 5 NVDA.",
+      "current_action": "hold without adding while preserving 204/200 downside protection",
       "source_files": [
-        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+        "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "high",
       "requires_execution_price_confirmation": false,
       "tags": [
         "near_trigger",
-        "no_add",
         "nvda",
         "quote_source_conflict",
         "risk_control"
       ]
     },
     {
-      "rule_id": "goog-ggll-risk-valve-rule-20260608-0844",
+      "rule_id": "goog-ggll-risk-valve-rule-20260609-0828",
       "asset_or_module": "GOOG/GGLL",
       "rule_type": "main_remaining_leveraged_etf_risk_valve",
       "status": "active",
       "trigger_state": "active",
-      "trigger_condition": "Reduce or clean GGLL if GOOG breaks 355. Consider selling 5 GGLL if GOOG rebounds to 365-370 but fails to continue. No GGLL add.",
-      "current_action": "treat GGLL as the main remaining leveraged ETF risk valve",
+      "trigger_condition": "If GOOG breaks 355, reduce or clean GGLL. If GOOG reaches 365-370 but fails, sell 5 GGLL.",
+      "current_action": "keep GGLL as the primary leveraged-risk valve; no GGLL add",
       "source_files": [
-        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+        "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
@@ -52,47 +72,26 @@
       ]
     },
     {
-      "rule_id": "gld-concentration-risk-line-rule-20260608-0844",
-      "asset_or_module": "GLD",
-      "rule_type": "ordinary_gld_concentration_risk_line_protection",
-      "status": "triggered",
-      "trigger_state": "triggered",
-      "trigger_condition": "If GLD cannot reclaim 400-405, reduce 5 GLD. If GLD breaks below 392-395, reduce another 5 GLD.",
-      "current_action": "manage GLD as ordinary concentration and risk-line exposure; UGL is already closed",
-      "source_files": [
-        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
-      ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
-      "cockpit_priority": "high",
-      "requires_execution_price_confirmation": false,
-      "tags": [
-        "gld",
-        "quote_source_conflict",
-        "risk_control",
-        "triggered"
-      ]
-    },
-    {
-      "rule_id": "closed-cleanup-positions-no-reentry-20260608-0844",
-      "asset_or_module": "SOXL/INTC/UGL",
+      "rule_id": "closed-cleanup-positions-no-reentry-20260609-0828",
+      "asset_or_module": "SOXL/UGL/INTC/SOXS/TSLQ/GDXU",
       "rule_type": "closed_position_guardrail",
       "status": "executed",
       "trigger_state": "executed",
-      "trigger_condition": "Closed positions require a new approved rule before any re-entry.",
-      "current_action": "do not chase SOXL, SOXS, NVDD, NVDS, GDXU, TSLQ, INTC, or UGL",
+      "trigger_condition": "A new approved rule is required before any re-entry.",
+      "current_action": "do not chase SOXL, SOXS, NVDD, NVDS, GDXU, or TSLQ; do not reactivate UGL or INTC",
       "source_files": [
-        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+        "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
         "executed",
-        "soxl_intc_ugl"
+        "soxl_ugl_intc_soxs_tslq_gdxu"
       ]
     },
     {
-      "rule_id": "btc-buyback-defense-rule-20260608-0844",
+      "rule_id": "btc-buyback-defense-rule-20260609-0828",
       "asset_or_module": "BTC",
       "rule_type": "staged_buyback_watch",
       "status": "active",
@@ -100,9 +99,9 @@
       "trigger_condition": "No BTC buyback below 75,500-76,000.",
       "current_action": "maintain USDT-dominant defense",
       "source_files": [
-        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+        "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
@@ -111,7 +110,7 @@
       ]
     },
     {
-      "rule_id": "crypto-no-add-defense-rule-20260608-0844",
+      "rule_id": "crypto-no-add-defense-rule-20260609-0828",
       "asset_or_module": "ETH/SOL/DOGE/ZEC",
       "rule_type": "usdt_dominant_defense",
       "status": "active",
@@ -119,9 +118,9 @@
       "trigger_condition": "No ETH, SOL, DOGE, or ZEC adds. No ZEC grid reopening.",
       "current_action": "preserve USDT-dominant crypto defense",
       "source_files": [
-        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+        "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
@@ -133,7 +132,7 @@
   ],
   "summary": {
     "rule_count": 6,
-    "near_trigger_count": 1,
+    "near_trigger_count": 2,
     "not_triggered_count": 1,
     "awaiting_execution_confirmation_count": 0,
     "executed_count": 1

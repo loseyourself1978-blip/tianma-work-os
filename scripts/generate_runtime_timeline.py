@@ -117,6 +117,18 @@ def classify_record(path: Path, data: dict[str, Any]) -> str:
         return "view_model_quality_gate_review"
     if "cockpit_consumer_readiness_review" in name:
         return "cockpit_consumer_readiness_review"
+    if "ldd_post_close_review" in name:
+        return "sync_delta_update"
+    if "premarket_trigger_to_post_close_outcome_reconciliation" in name:
+        return "rule_based_execution_review"
+    if "active_risk_non_execution_review" in name:
+        return "rule_ledger_snapshot"
+    if "gld_active_risk_rule_update" in name or "nvda_core_risk_trigger_update" in name or "goog_ggll_risk_valve_update" in name:
+        return "trigger_execution_rule"
+    if "closed_position_opportunity_cost_requirement" in name or "hk_high_profit_protection_requirement" in name:
+        return "account_structure_review"
+    if "crypto_defense_state_delta" in name:
+        return "strategy_state"
     if "cockpit_view_model_contract" in name:
         return "cockpit_view_model_contract"
     if "cockpit_consistency_review" in name:
@@ -363,6 +375,11 @@ def title_and_summary(record: LoadedRecord) -> tuple[str, str]:
             f"{scalar(data.get('execution_type'))}: {scalar(trade.get('side'))} {scalar(trade.get('quantity'))} {scalar(trade.get('symbol'))} at {scalar(trade.get('price'))}.",
         )
     if rt == "rule_based_execution_review":
+        if data.get("rule_compliance_result") == "compliant_non_execution":
+            return (
+                f"Active-risk non-execution review: {scalar(data.get('asset'))}",
+                f"{scalar(data.get('non_execution_assessment'))} non-execution: {scalar(data.get('non_execution_reason'))}.",
+            )
         return (
             f"Rule review: {scalar(data.get('asset'))}",
             scalar(data.get("review_conclusion")),

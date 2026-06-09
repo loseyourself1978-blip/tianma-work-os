@@ -275,7 +275,7 @@ def build_view_model(payloads: dict[str, dict[str, Any]], load_warnings: list[st
             "ui_created": False,
             "frontend_app_created": False,
             "execution_source_of_truth": "User-provided broker/Binance screenshots remain authoritative.",
-            "latest_checkpoint_confirmed": latest_checkpoint == "2026-06-08T08:44:00+08:00",
+            "latest_checkpoint_confirmed": latest_checkpoint == "2026-06-09T08:28:00+08:00",
             "timeline_warning_count": len(as_list(timeline.get("warnings"))),
             "active_rule_count": as_dict(active_rules.get("summary")).get("rule_count", len(as_list(active_rules.get("rules")))),
             "strategy_state_count": as_dict(strategy_states.get("summary")).get("strategy_state_count", len(as_list(strategy_states.get("strategy_states")))),

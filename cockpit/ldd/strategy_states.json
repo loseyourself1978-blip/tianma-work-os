@@ -1,17 +1,21 @@
 {
-  "generated_at": "2026-06-08T08:44:00+08:00",
+  "generated_at": "2026-06-09T08:28:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "cockpit_strategy_states",
   "version": "0.1",
-  "latest_active_checkpoint": "2026-06-08T08:44:00+08:00",
+  "latest_active_checkpoint": "2026-06-09T08:28:00+08:00",
   "source_files": [
-    "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
-    "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json",
-    "records/ldd/2026-06-08/quote_type_tagging_reinforcement_0843_0844_sgt.json",
-    "records/ldd/2026-06-08/quote_type_tagging_reinforcement_0843_0844_sgt.json",
+    "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/quote_type_tagging_reinforcement_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/quote_type_tagging_reinforcement_0826_0828_sgt.json",
     "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json",
     "records/ldd/2026-06-08/core_position_defense_monitor_0843_0844_sgt.json",
-    "records/ldd/2026-06-08/ldd_core_position_defense_checkpoint_0843_0844_sgt.json",
+    "records/ldd/2026-06-09/ldd_post_close_review_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/premarket_trigger_to_post_close_outcome_reconciliation_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/closed_position_opportunity_cost_requirement_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/hk_high_profit_protection_requirement_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/crypto_defense_state_delta_0826_0828_sgt.json",
     "records/ldd/2026-06-05/soxl_residual_closure_execution_1951_sgt.json",
     "records/ldd/2026-06-05/soxl_full_cleanup_reconciliation_1951_sgt.json",
     "records/ldd/2026-06-05/ugl_cleanup_execution_2208_sgt.json",
@@ -27,10 +31,10 @@
       "summary": "Portfolio mode remains core_position_defense_mode after the latest checkpoint validation.",
       "next_required_action": "Defend NVDA, monitor GGLL and GLD, prohibit re-adds of closed cleanup positions, and maintain USDT defense.",
       "source_files": [
-        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+        "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json",
         "records/ldd/2026-06-08/core_position_defense_monitor_0843_0844_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "high",
       "tags": [
         "core_position_defense_mode",
@@ -44,10 +48,10 @@
       "summary": "The SOXL, UGL, and INTC cleanup cycle is complete; closed positions remain in the historical cleanup ledger.",
       "next_required_action": "Do not re-add SOXL, UGL, or INTC.",
       "source_files": [
-        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+        "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json",
         "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "medium",
       "tags": [
         "historical_cleanup",
@@ -61,9 +65,9 @@
       "summary": "No new LDD U.S. model strategy position is open.",
       "next_required_action": "Do not open a new model position from this checkpoint.",
       "source_files": [
-        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json"
+        "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "medium",
       "tags": [
         "new_strategy_separation",
@@ -77,9 +81,9 @@
       "summary": "SOXS remains closed with no reopening.",
       "next_required_action": "No reopening.",
       "source_files": [
-        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json"
+        "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "low",
       "tags": [
         "closed",
@@ -93,9 +97,9 @@
       "summary": "TSLQ remains closed with no reopening.",
       "next_required_action": "No reopening.",
       "source_files": [
-        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json"
+        "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "low",
       "tags": [
         "closed",
@@ -109,9 +113,9 @@
       "summary": "GDXU remains closed with no reopening.",
       "next_required_action": "No reopening.",
       "source_files": [
-        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json"
+        "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "low",
       "tags": [
         "closed",
@@ -125,10 +129,10 @@
       "summary": "SOXL is closed at 0 shares after the 3-share partial cleanup and 2-share residual cleanup.",
       "next_required_action": "Do not re-add; retain in the closed historical-risk cleanup ledger.",
       "source_files": [
-        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+        "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json",
         "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "low",
       "tags": [
         "soxl",
@@ -141,11 +145,11 @@
       "asset_or_module": "GGLL",
       "status": "monitoring",
       "summary": "GGLL is the main remaining leveraged ETF risk valve.",
-      "next_required_action": "Prepare to reduce 5 shares below GOOG 360 and 5-10 below 355; no GGLL add.",
+      "next_required_action": "Reduce or clean GGLL if GOOG breaks 355; consider selling 5 GGLL if GOOG reaches 365-370 but fails; no GGLL add.",
       "source_files": [
-        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+        "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "high",
       "tags": [
         "goog",
@@ -160,10 +164,10 @@
       "summary": "UGL is closed at 0 shares after the leveraged-gold cleanup execution.",
       "next_required_action": "Do not re-add; the GLD-405 forced UGL cleanup rule is retired.",
       "source_files": [
-        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+        "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json",
         "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "low",
       "tags": [
         "gld",
@@ -179,10 +183,10 @@
       "summary": "INTC is closed at 0 shares after weak historical-position cleanup.",
       "next_required_action": "Do not re-add; retain in the closed weak-position cleanup ledger.",
       "source_files": [
-        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
+        "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json",
         "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "low",
       "tags": [
         "intc",
@@ -195,11 +199,11 @@
       "asset_or_module": "NVDA",
       "status": "monitoring",
       "summary": "NVDA remains the main core-risk watch.",
-      "next_required_action": "Hold if regular session reclaims 210-212; protect if below 200-204; do not add unless recovery is confirmed.",
+      "next_required_action": "Hold without adding; reduce 5 below 204 and another 5 below 200; full recovery still requires 210-212.",
       "source_files": [
-        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+        "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "high",
       "tags": [
         "nvda",
@@ -212,17 +216,18 @@
       "strategy_id": "gld-core-position-review",
       "asset_or_module": "GLD",
       "status": "monitoring",
-      "summary": "GLD is now managed as ordinary concentration and risk-line exposure, not only UGL-linked protection.",
-      "next_required_action": "Reduce 5 GLD if it cannot reclaim 400-405; reduce another 5 if it breaks below 392-395.",
+      "summary": "GLD remains ordinary concentration and risk-line exposure. Post-close recovery above 395 made non-execution acceptable, but full repair still requires 400-405.",
+      "next_required_action": "Reduce 5 GLD if it loses 395 again or breaks 392; reduce another 5 if weakness continues.",
       "source_files": [
-        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+        "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "high",
       "tags": [
         "gld",
         "core_position",
-        "below_405",
+        "active_risk",
+        "compliant_non_execution",
         "ugl_closed"
       ]
     },
@@ -233,9 +238,9 @@
       "summary": "Crypto remains USDT-dominant and defensive.",
       "next_required_action": "Do not add ETH, SOL, DOGE, or ZEC; wait for BTC trigger.",
       "source_files": [
-        "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json"
+        "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "medium",
       "tags": [
         "crypto",
@@ -249,9 +254,9 @@
       "summary": "BTC buyback is not triggered below 75,500-76,000.",
       "next_required_action": "Wait for stabilization and confirmation before staged buyback.",
       "source_files": [
-        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+        "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "medium",
       "tags": [
         "btc",
@@ -266,9 +271,9 @@
       "next_required_action": "Do not reopen grid or chase; residual ZEC can be converted later if needed.",
       "source_files": [
         "records/ldd/2026-06-03/zec_bot_strategy_state_closed_20260603_0839.json",
-        "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json"
+        "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "medium",
       "tags": [
         "zec",
@@ -280,13 +285,13 @@
       "strategy_id": "runtime-records-latest-checkpoint",
       "asset_or_module": "Runtime records",
       "status": "active",
-      "summary": "Latest active checkpoint is 2026-06-08T08:44:00+08:00.",
+      "summary": "Latest active checkpoint is 2026-06-09T08:28:00+08:00.",
       "next_required_action": "Future cockpit work should read manifest.json first.",
       "source_files": [
         "cockpit/ldd/manifest.json",
         "cockpit/ldd/runtime_timeline.json"
       ],
-      "last_updated": "2026-06-08T08:44:00+08:00",
+      "last_updated": "2026-06-09T08:28:00+08:00",
       "cockpit_priority": "medium",
       "tags": [
         "runtime_records",

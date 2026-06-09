@@ -1,0 +1,34 @@
+{
+  "rule_id": "gld-active-risk-rule-20260609-0828",
+  "project_id": "tianma-work-os",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "position_id": "longbridge-us-gld-20",
+  "asset": "GLD",
+  "current_quantity": 20,
+  "trigger_condition": "If GLD loses 395 again or breaks 392, reduce 5 GLD immediately. If weakness continues, reduce another 5 GLD.",
+  "trigger_level": "395 first-level defense / 392 hard escalation / 400-405 full repair",
+  "execution_status": "waiting",
+  "remaining_quantity": 20,
+  "trade_intent": "risk_reduction",
+  "next_trigger_line": "400-405 full recovery; 395 and 392 downside protection",
+  "next_action": "Continue active monitoring. Current non-execution is acceptable after recovery above 395.",
+  "reminder_required": true,
+  "last_review_time": "2026-06-09T08:28:00+08:00",
+  "source_of_truth": [
+    "user_provided_longbridge_post_close_broker_screenshots_20260609_0826_0828_sgt"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-09/premarket_trigger_to_post_close_outcome_reconciliation_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json"
+  ],
+  "current_observed_value": 396.11,
+  "trigger_status": "near_trigger",
+  "intended_action": "Reduce 5 GLD on renewed loss of 395 or break of 392; retain rule until 400-405 recovery.",
+  "execution_evidence_requirement": "Broker executable quote and order-detail screenshot.",
+  "next_review_time": "next regular-session broker sync",
+  "rule_drift_prevention": "This is ordinary GLD concentration/risk-line protection and must not be represented as UGL-linked.",
+  "execution_result": "No execution; compliant non-execution after recovery above 395.",
+  "review_conclusion": "Active risk remains; first-level recovery occurred but full repair is incomplete.",
+  "account_structure_impact": "GLD remains the largest U.S. holding by weight and requires concentration-risk protection."
+}

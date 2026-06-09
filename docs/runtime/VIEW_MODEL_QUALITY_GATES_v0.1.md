@@ -21,7 +21,7 @@ It does not call external services or change runtime records.
 
 1. Checkpoint consistency
    - The view model, manifest, and latest state must agree on
-     `2026-06-08T08:44:00+08:00`.
+     `2026-06-09T08:28:00+08:00`.
 2. Portfolio mode
    - The current mode must remain `core_position_defense_mode`.
 3. Timeline consistency
@@ -70,7 +70,7 @@ calls.
 
 ## Current Defense-Mode Baseline
 
-- Latest checkpoint: `2026-06-08T08:44:00+08:00`
+- Latest checkpoint: `2026-06-09T08:28:00+08:00`
 - Portfolio mode: `core_position_defense_mode`
 - Active rules: `6`
 - Strategy states: `16`
@@ -78,7 +78,7 @@ calls.
 - SOXL / UGL / INTC: closed, zero shares, no re-add
 - GGLL: main remaining leveraged ETF risk valve
 - NVDA: main core-risk watch
-- GLD: ordinary concentration / risk-line protection
+- GLD: ordinary concentration / risk-line protection with compliant non-execution after recovery above 395; full repair remains 400-405
 - Crypto: USDT-dominant defense
 - BTC buyback: inactive
 - ZEC grid: closed / profit-locked / do not reopen

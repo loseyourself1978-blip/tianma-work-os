@@ -1,32 +1,35 @@
 {
-  "generated_at": "2026-06-08T08:44:00+08:00",
+  "generated_at": "2026-06-09T08:28:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "cockpit_account_structure",
   "version": "0.1",
-  "latest_active_checkpoint": "2026-06-08T08:44:00+08:00",
+  "latest_active_checkpoint": "2026-06-09T08:28:00+08:00",
   "source_files": [
-    "records/ldd/2026-06-08/account_state_delta_0843_0844_sgt.json",
-    "records/ldd/2026-06-08/remaining_leveraged_risk_monitor_0843_0844_sgt.json",
-    "records/ldd/2026-06-08/quote_type_tagging_reinforcement_0843_0844_sgt.json",
-    "records/ldd/2026-06-08/quote_type_tagging_reinforcement_0843_0844_sgt.json",
+    "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/quote_type_tagging_reinforcement_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/quote_type_tagging_reinforcement_0826_0828_sgt.json",
     "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json",
     "records/ldd/2026-06-08/core_position_defense_monitor_0843_0844_sgt.json",
-    "records/ldd/2026-06-08/ldd_core_position_defense_checkpoint_0843_0844_sgt.json"
+    "records/ldd/2026-06-09/premarket_trigger_to_post_close_outcome_reconciliation_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/closed_position_opportunity_cost_requirement_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/hk_high_profit_protection_requirement_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/crypto_defense_state_delta_0826_0828_sgt.json"
   ],
   "sections": {
     "total_account": {
       "status": "core_position_defense_validated",
-      "broker_total_assets_usd": "approximately 41147.42",
+      "broker_total_assets_usd": "approximately 41411",
       "total_day_pl_usd": "unknown",
       "note": "Latest encoded account state validates core_position_defense_mode."
     },
     "us_equities": {
       "status": "core_position_defense_validated",
-      "section_value_usd": "approximately 24591.21",
-      "day_pl_usd": "approximately -890.94",
+      "section_value_usd": "approximately 24637.79",
+      "day_pl_usd": "approximately -45.39",
       "main_remaining_leveraged_risk_valve": "GGLL",
       "main_core_risk_watch": "NVDA",
-      "gld_status": "ordinary GLD concentration and risk-line protection; UGL already closed",
+      "gld_status": "ordinary GLD concentration and risk-line protection; recovered above 395 with compliant non-execution; full repair requires 400-405; UGL already closed",
       "closed_cleanup_positions": [
         "SOXL",
         "UGL",
@@ -34,22 +37,24 @@
       ]
     },
     "hong_kong_equities": {
-      "status": "remaining_risk_concentration_no_new_detail_in_latest_checkpoint",
-      "primary_holding": "02513 Zhipu remains a concentration watch from prior records"
+      "status": "separate_high_profit_protection_required",
+      "primary_holding": "02513 Zhipu 100 shares; approximately 131,400 HKD market value",
+      "day_pl_hkd": "approximately +1700",
+      "scoring_boundary": "Do not mix HK high-profit protection into U.S. risk scoring."
     },
     "crypto_spot": {
       "status": "defensive_usdt_dominant",
-      "binance_total_assets_usdt": "approximately 8275.96",
-      "day_pl_usdt": "approximately 15.75",
+      "binance_total_assets_usdt": "approximately 8241.71",
+      "day_pl_usdt": "approximately -21.02",
       "btc_trigger_status": "not_triggered",
       "zec_grid_status": "closed_profit_locked",
-      "usdt_defense_ratio_pct": 71.7
+      "usdt_defense_ratio_pct": 72
     },
     "cash_and_stablecoins": {
       "status": "defensive_cash_and_stablecoin_posture",
       "broker_cash_usd": "approximately 6304.16",
       "binance_usdt": "5936",
-      "binance_usdt_defense_ratio_pct": 71.7,
+      "binance_usdt_defense_ratio_pct": 72,
       "latest_cleanup_cash_impact_usd": "unknown"
     },
     "leveraged_exposure": {
@@ -83,13 +88,35 @@
     },
     "quote_quality": {
       "status": "quote_type_tagging_reinforced",
+      "current_sync_quote_type": "us_post_close_after_hours_broker_platform_sot",
       "required_quote_types": [
         "regular_close",
-        "night_session_quote",
-        "premarket_executable_quote",
-        "regular_session_executable_quote"
+        "after_hours_price",
+        "broker_holding_valuation",
+        "executable_quote",
+        "active_position_valuation"
       ],
-      "execution_validity": "night-session/watchlist quotes may inform monitoring but should not automatically trigger execution."
+      "execution_validity": "Post-close and broker holding valuations may inform monitoring but must not be treated as live executable quotes."
+    },
+    "active_risk_non_execution": {
+      "status": "compliant_non_execution",
+      "asset": "GLD",
+      "reason": "recovered_above_first_level_risk_band_after_regular_session_close",
+      "assessment": "acceptable",
+      "rule_remains_active": true,
+      "full_repair_zone": "400-405"
+    },
+    "closed_position_opportunity_cost": {
+      "status": "tracked_separately_from_rule_compliance",
+      "example": "SOXL rebounded after closure, but the rebound is not a rule-compliance failure.",
+      "closed_positions": [
+        "SOXL",
+        "UGL",
+        "INTC",
+        "SOXS",
+        "TSLQ",
+        "GDXU"
+      ]
     },
     "execution_reconciliation": {
       "status": "cleanup_cycle_confirmed_and_reconciled",
@@ -124,7 +151,7 @@
       "Latest cleanup cycle added approximately 2,050.03 USD before fees.",
       "Total SOXL cleanup added approximately 1,222.68 USD before fees.",
       "U.S. cash/cash-equivalent is approximately 6,304.16 USD.",
-      "USDT is approximately 71.7% of Binance visible assets.",
+      "USDT is approximately 72% of Binance visible assets.",
       "ZEC grid remains closed / profit locked.",
       "Portfolio mode remains core_position_defense_mode.",
       "Quote Type Tagging is reinforced for rule validity."
@@ -133,13 +160,14 @@
       "NVDA is the main core-risk watch.",
       "GGLL is the main remaining leveraged ETF risk valve.",
       "GLD requires ordinary concentration/risk-line protection.",
-      "Hong Kong equity concentration remains a watch item.",
+      "GLD recovered above 395 but remains below the 400-405 full repair zone.",
+      "Hong Kong high-profit protection requires a separate module.",
       "BTC buyback remains inactive below 75,500-76,000."
     ],
     "next_required_confirmations": [
       "Whether NVDA regular session reclaims 210-212 or weakens below 200-204.",
       "Whether GOOG holds above 360 or triggers GGLL reduction.",
-      "Whether GLD reclaims 400-405 or breaks below 392-395.",
+      "Whether GLD reclaims 400-405 or loses 395 / breaks 392.",
       "Whether BTC remains below 75,500-76,000.",
       "Whether any new order screenshots confirm actual execution.",
       "Whether a latest ZEC bot page screenshot is provided."

@@ -1,0 +1,112 @@
+{
+  "snapshot_id": "active-risk-non-execution-review-20260609-0828",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "snapshot_time": "2026-06-09T08:28:00+08:00",
+  "source_of_truth": [
+    "user_provided_longbridge_post_close_broker_screenshots_20260609_0826_0828_sgt",
+    "user_provided_binance_screenshots_20260609_0826_0828_sgt"
+  ],
+  "rules": [
+    {
+      "rule_id": "gld-active-risk-rule-20260609-0828",
+      "asset": "GLD",
+      "account": "us_equity",
+      "strategy": "ordinary_gld_concentration_risk_line_protection",
+      "current_observed_value": "GLD 20 shares around 396.110; recovered above 395 but below 400-405 full repair zone",
+      "trigger_condition": "If GLD loses 395 again or breaks 392, reduce 5 GLD immediately. If weakness continues, reduce another 5 GLD.",
+      "trigger_level": "395 first-level defense / 392 hard escalation / 400-405 repair",
+      "trigger_status": "near_trigger",
+      "execution_status": "waiting",
+      "intended_action": "keep active risk monitoring; accept current non-execution after recovery above 395",
+      "non_execution_reason": "recovered_above_first_level_risk_band_after_regular_session_close",
+      "non_execution_assessment": "acceptable",
+      "rule_compliance_result": "compliant_non_execution",
+      "execution_evidence_requirement": "broker executable quote and order-detail screenshot required for any reduction",
+      "next_review_time": "next regular-session broker sync",
+      "rule_drift_prevention": "Do not retire the GLD rule until 400-405 recovery; do not relink the rule to closed UGL."
+    },
+    {
+      "rule_id": "nvda-core-defense-rule-20260609-0828",
+      "asset": "NVDA",
+      "account": "us_equity",
+      "strategy": "main_core_risk_watch",
+      "current_observed_value": "NVDA 20 shares around 207.650; below 210-212 reclaim and above 204 protection",
+      "trigger_condition": "If NVDA breaks below 204, reduce 5 NVDA. If NVDA breaks below 200, reduce another 5 NVDA.",
+      "trigger_level": "210-212 reclaim / 204 first protection / 200 second protection",
+      "trigger_status": "near_trigger",
+      "execution_status": "waiting",
+      "intended_action": "hold without adding while preserving 204/200 downside protection",
+      "execution_evidence_requirement": "broker executable quote and order-detail screenshot required",
+      "next_review_time": "next regular-session broker sync",
+      "rule_drift_prevention": "Do not add below the reclaim zone."
+    },
+    {
+      "rule_id": "goog-ggll-risk-valve-rule-20260609-0828",
+      "asset": "GOOG/GGLL",
+      "account": "us_equity",
+      "strategy": "main_remaining_leveraged_etf_risk_valve",
+      "current_observed_value": "GOOG around 361.140; above 355 defense and below 365-370 confirmation",
+      "trigger_condition": "If GOOG breaks 355, reduce or clean GGLL. If GOOG reaches 365-370 but fails, sell 5 GGLL.",
+      "trigger_level": "GOOG 355 downside / 365-370 failed rebound",
+      "trigger_status": "active",
+      "execution_status": "waiting",
+      "intended_action": "keep GGLL as the primary leveraged-risk valve; no GGLL add",
+      "execution_evidence_requirement": "regular-session executable quote and order-detail screenshot required",
+      "next_review_time": "next broker sync",
+      "rule_drift_prevention": "No GGLL add."
+    },
+    {
+      "rule_id": "closed-cleanup-positions-no-reentry-20260609-0828",
+      "asset": "SOXL/UGL/INTC/SOXS/TSLQ/GDXU",
+      "account": "us_equity",
+      "strategy": "closed_position_guardrail",
+      "current_observed_value": "All listed positions remain at 0 shares",
+      "trigger_condition": "A new approved rule is required before any re-entry.",
+      "trigger_level": "new_rule_required",
+      "trigger_status": "executed",
+      "execution_status": "closed",
+      "intended_action": "do not chase SOXL, SOXS, NVDD, NVDS, GDXU, or TSLQ; do not reactivate UGL or INTC",
+      "execution_evidence_requirement": "new decision record required before re-entry",
+      "next_review_time": "only if a new rule is explicitly approved",
+      "rule_drift_prevention": "Opportunity cost from rebound must not be scored as a compliance failure."
+    },
+    {
+      "rule_id": "btc-buyback-defense-rule-20260609-0828",
+      "asset": "BTC",
+      "account": "binance_spot",
+      "strategy": "staged_buyback_watch",
+      "current_observed_value": "BTC remains far below the 75,500-76,000 buyback trigger",
+      "trigger_condition": "No BTC buyback below 75,500-76,000.",
+      "trigger_level": "75,500 stability / 76,000 confirmation",
+      "trigger_status": "not_triggered",
+      "execution_status": "waiting",
+      "intended_action": "maintain USDT-dominant defense",
+      "execution_evidence_requirement": "manual confirmation and order screenshot required",
+      "next_review_time": "next crypto sync",
+      "rule_drift_prevention": "Do not buy BTC below the trigger zone."
+    },
+    {
+      "rule_id": "crypto-no-add-defense-rule-20260609-0828",
+      "asset": "ETH/SOL/DOGE/ZEC",
+      "account": "binance_spot",
+      "strategy": "usdt_dominant_defense",
+      "current_observed_value": "USDT approximately 72.0% of Binance visible assets; ZEC grid closed",
+      "trigger_condition": "No ETH, SOL, DOGE, or ZEC adds. No ZEC grid reopening.",
+      "trigger_level": "no-add defense",
+      "trigger_status": "active",
+      "execution_status": "waiting",
+      "intended_action": "preserve USDT-dominant crypto defense",
+      "execution_evidence_requirement": "new order or bot screenshot required before changing state",
+      "next_review_time": "next Binance sync",
+      "rule_drift_prevention": "ZEC grid remains closed."
+    }
+  ],
+  "related_records": [
+    "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/premarket_trigger_to_post_close_outcome_reconciliation_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/gld_active_risk_rule_update_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/nvda_core_risk_trigger_update_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/goog_ggll_risk_valve_update_0826_0828_sgt.json"
+  ]
+}
