@@ -280,6 +280,15 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `mock_consumers/ldd/privacy_boundary_sample.json`
 - `reports/ldd/consumer_contract_test_matrix.md`
 
+## Vol.5 Phase 5.8 / Read-Only Consumer Fixture Validator
+
+- `docs/runtime/READ_ONLY_CONSUMER_FIXTURE_VALIDATOR_v0.1.md`
+- `schemas/read_only_consumer_fixture_validation.schema.json`
+- `scripts/validate_read_only_consumer_fixtures.py`
+- `scripts/validate_read_only_consumer_fixtures.sh`
+- `records/ldd/2026-06-09/read_only_consumer_fixture_validation_0828_sgt.json`
+- `reports/ldd/read_only_consumer_fixture_validation.md`
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

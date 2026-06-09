@@ -4,7 +4,7 @@
   "runtime_layer": "runtime_timeline",
   "version": "0.1",
   "source_root": "records/ldd",
-  "event_count": 67,
+  "event_count": 68,
   "date_range": {
     "start": "2026-06-02T08:22:00+08:00",
     "end": "2026-06-09T08:28:00+08:00"
@@ -1517,6 +1517,31 @@
       "tags": [
         "account_structure_review",
         "zec"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-09-read-only-consumer-fixture-validation-0828-sgt-json",
+      "event_time": "2026-06-09T08:28:00+08:00",
+      "event_type": "report_generation",
+      "source_file": "records/ldd/2026-06-09/read_only_consumer_fixture_validation_0828_sgt.json",
+      "source_record_type": "read_only_consumer_fixture_validation",
+      "asset_or_module": "LLM Daredevil Desk",
+      "title": "Read-only consumer fixture validation",
+      "summary": "Validated 8 static fixtures with 0 blocking failures and 0 warnings.",
+      "state_before": "",
+      "state_after": "overall_status=passed; read_only_confirmed=True",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "medium",
+      "tags": [
+        "consumer_contract_boundary",
+        "gld",
+        "goog",
+        "non_trading_runtime_event",
+        "nvda",
+        "privacy_boundary",
+        "read_only_consumer_fixture_validation",
+        "read_only_fixture_validation"
       ]
     }
   ],

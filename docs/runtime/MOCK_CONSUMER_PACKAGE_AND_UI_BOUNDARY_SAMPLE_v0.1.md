@@ -216,5 +216,10 @@ Phase 5.7 implements the consumer matrix and privacy boundary in:
 - `mock_consumers/ldd/consumer_contract_test_matrix.json`
 - `mock_consumers/ldd/privacy_boundary_sample.json`
 
-The next phase should turn those static expectations into a deterministic local
-fixture validator while remaining read-only and non-UI.
+Phase 5.8 turns those static expectations into a deterministic local validator:
+
+- `docs/runtime/READ_ONLY_CONSUMER_FIXTURE_VALIDATOR_v0.1.md`
+- `scripts/validate_read_only_consumer_fixtures.sh`
+
+The validator remains read-only and non-UI, and verifies that the package does
+not claim live data, expose credentials, or turn rules into execution calls.

@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/read_only_consumer_fixture_validation.schema.json",
+  "title": "Read-Only Consumer Fixture Validation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_type",
+    "validation_id",
+    "project",
+    "subproject",
+    "validation_time",
+    "baseline_checkpoint",
+    "baseline_commit",
+    "portfolio_mode",
+    "source_view_model",
+    "source_mock_package",
+    "fixture_files_checked",
+    "validation_checks",
+    "pass_fail_summary",
+    "blocking_failures",
+    "warnings",
+    "read_only_confirmed",
+    "privacy_boundary_confirmed",
+    "no_live_api_confirmed",
+    "no_trading_automation_confirmed",
+    "recommended_next_phase"
+  ],
+  "properties": {
+    "schema_type": {
+      "type": "string",
+      "enum": [
+        "read_only_consumer_fixture_validation"
+      ]
+    },
+    "validation_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "subproject": {
+      "type": "string"
+    },
+    "validation_time": {
+      "type": "string"
+    },
+    "baseline_checkpoint": {
+      "type": "string"
+    },
+    "baseline_commit": {
+      "type": "string"
+    },
+    "portfolio_mode": {
+      "type": "string"
+    },
+    "source_view_model": {
+      "type": "string"
+    },
+    "source_mock_package": {
+      "type": "string"
+    },
+    "fixture_files_checked": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "validation_checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "check_id",
+          "status",
+          "summary"
+        ],
+        "properties": {
+          "check_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed",
+              "warning"
+            ]
+          },
+          "summary": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "pass_fail_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total_checks",
+        "passed",
+        "failed",
+        "warnings",
+        "overall_status",
+        "fixture_files_checked",
+        "contract_matrix_result",
+        "consumer_readiness"
+      ],
+      "properties": {
+        "total_checks": {
+          "type": "integer"
+        },
+        "passed": {
+          "type": "integer"
+        },
+        "failed": {
+          "type": "integer"
+        },
+        "warnings": {
+          "type": "integer"
+        },
+        "overall_status": {
+          "type": "string",
+          "enum": [
+            "passed",
+            "passed_with_warnings",
+            "failed"
+          ]
+        },
+        "fixture_files_checked": {
+          "type": "integer"
+        },
+        "contract_matrix_result": {
+          "type": "string"
+        },
+        "consumer_readiness": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "ready_with_limits",
+            "not_ready"
+          ]
+        }
+      }
+    },
+    "blocking_failures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "read_only_confirmed": {
+      "type": "boolean"
+    },
+    "privacy_boundary_confirmed": {
+      "type": "boolean"
+    },
+    "no_live_api_confirmed": {
+      "type": "boolean"
+    },
+    "no_trading_automation_confirmed": {
+      "type": "boolean"
+    },
+    "recommended_next_phase": {
+      "type": "string"
+    }
+  }
+}

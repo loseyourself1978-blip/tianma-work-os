@@ -195,5 +195,12 @@ in an explicit audit or debug mode.
 Vol.5 Phase 5.8 - Read-Only Consumer Fixture Validator
 ```
 
-The next phase should turn the matrix into a local deterministic validator for
-the static mock payloads while preserving the no-UI and no-API boundary.
+Phase 5.8 implements this recommendation in:
+
+- `docs/runtime/READ_ONLY_CONSUMER_FIXTURE_VALIDATOR_v0.1.md`
+- `scripts/validate_read_only_consumer_fixtures.py`
+- `scripts/validate_read_only_consumer_fixtures.sh`
+- `reports/ldd/read_only_consumer_fixture_validation.md`
+
+The validator executes the matrix boundaries locally and confirms source files
+remain unchanged by comparing hashes before and after validation.

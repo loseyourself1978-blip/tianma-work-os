@@ -43,6 +43,7 @@ TIMESTAMP_FIELDS = [
     "execution_time",
     "contract_time",
     "generation_time",
+    "validation_time",
 ]
 
 
@@ -89,6 +90,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "mock_consumer_package_review"
     if "consumer_contract_test_matrix" in name:
         return "consumer_contract_test_matrix"
+    if "read_only_consumer_fixture_validation" in name:
+        return "read_only_consumer_fixture_validation"
     if "ldd_post_close_review" in name:
         return "delta_sync"
     if "premarket_trigger_to_post_close_outcome_reconciliation" in name:
@@ -164,6 +167,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "mock_consumer_package_review"
     if data.get("schema_type") == "consumer_contract_test_matrix":
         return "consumer_contract_test_matrix"
+    if data.get("schema_type") == "read_only_consumer_fixture_validation":
+        return "read_only_consumer_fixture_validation"
     return None
 
 
@@ -885,6 +890,7 @@ def generated_report_paths() -> list[str]:
         "reports/ldd/latest_active_memory_checkpoint.md",
         "reports/ldd/cockpit_view_model_contract.md",
         "reports/ldd/cockpit_view_model_summary.md",
+        "reports/ldd/read_only_consumer_fixture_validation.md",
         "reports/ldd/view_model_quality_gates.md",
         "reports/ldd/cockpit_consumer_readiness_review.md",
     ]
@@ -1263,6 +1269,65 @@ def generate_consumer_contract_test_matrix(records: list[RuntimeRecord]) -> list
     return lines
 
 
+def generate_read_only_consumer_fixture_validation(records: list[RuntimeRecord]) -> list[str]:
+    lines = common_header("Read-Only Consumer Fixture Validation", records)
+    review = latest(by_kind(records, "read_only_consumer_fixture_validation"))
+
+    lines.extend(
+        [
+            "This report summarizes deterministic, local-only checks against the cockpit view model and static mock consumer fixtures. It does not create a UI, connect APIs, mutate runtime records, or add trading automation.",
+            "",
+        ]
+    )
+
+    if review is None:
+        lines.append("- No read-only consumer fixture validation record found.")
+        return lines
+
+    data = review.data
+    summary = data.get("pass_fail_summary", {}) if isinstance(data.get("pass_fail_summary"), dict) else {}
+    lines.extend(
+        [
+            "## Validation Summary",
+            "",
+            f"- Validation ID: `{scalar(data.get('validation_id'))}`",
+            f"- Validation time: `{scalar(data.get('validation_time'))}`",
+            f"- Baseline checkpoint: `{scalar(data.get('baseline_checkpoint'))}`",
+            f"- Baseline commit: `{scalar(data.get('baseline_commit'))}`",
+            f"- Portfolio mode: `{scalar(data.get('portfolio_mode'))}`",
+            f"- Fixture files checked: `{scalar(summary.get('fixture_files_checked'))}`",
+            f"- Checks passed: `{scalar(summary.get('passed'))}/{scalar(summary.get('total_checks'))}`",
+            f"- Blocking failures: `{scalar(summary.get('failed'))}`",
+            f"- Warnings: `{scalar(summary.get('warnings'))}`",
+            f"- Contract matrix: `{scalar(summary.get('contract_matrix_result'))}`",
+            f"- Consumer readiness: `{scalar(summary.get('consumer_readiness'))}`",
+            f"- Read-only confirmed: `{scalar(data.get('read_only_confirmed'))}`",
+            f"- Privacy boundary confirmed: `{scalar(data.get('privacy_boundary_confirmed'))}`",
+            f"- No live API confirmed: `{scalar(data.get('no_live_api_confirmed'))}`",
+            f"- No trading automation confirmed: `{scalar(data.get('no_trading_automation_confirmed'))}`",
+            f"- Source: `{review.relpath}`",
+            "",
+            "## Checks",
+            "",
+        ]
+    )
+    for item in data.get("validation_checks", []):
+        if isinstance(item, dict):
+            lines.append(
+                f"- `{scalar(item.get('check_id'))}`: **{scalar(item.get('status'))}** - {scalar(item.get('summary'))}"
+            )
+
+    lines.extend(["", "## Fixture Files", ""])
+    lines.extend(md_list([f"`{item}`" for item in data.get("fixture_files_checked", [])]))
+    lines.extend(["", "## Blocking Failures", ""])
+    lines.extend(md_list([str(item) for item in data.get("blocking_failures", [])], "No blocking failures."))
+    lines.extend(["", "## Warnings", ""])
+    lines.extend(md_list([str(item) for item in data.get("warnings", [])], "No warnings."))
+    lines.extend(["", "## Recommended Next Phase", ""])
+    lines.append(f"- {scalar(data.get('recommended_next_phase'))}")
+    return lines
+
+
 def generate_memory_cleanup_recommendations(records: list[RuntimeRecord]) -> list[str]:
     lines = common_header("Memory Cleanup Recommendations", records)
     lines.extend(
@@ -1445,6 +1510,7 @@ def main() -> int:
         "cockpit_consumer_readiness_review.md": generate_cockpit_consumer_readiness_review(records),
         "mock_consumer_package_review.md": generate_mock_consumer_package_review(records),
         "consumer_contract_test_matrix.md": generate_consumer_contract_test_matrix(records),
+        "read_only_consumer_fixture_validation.md": generate_read_only_consumer_fixture_validation(records),
     }
 
     for filename, lines in reports.items():
