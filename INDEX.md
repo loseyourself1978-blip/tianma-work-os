@@ -256,6 +256,21 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `records/ldd/2026-06-09/crypto_defense_state_delta_0826_0828_sgt.json`
 - `records/ldd/2026-06-09/pending_instruction_supersession_0826_0828_sgt.json`
 
+## Vol.5 Phase 5.6b / Mock Consumer Package
+
+- `docs/runtime/MOCK_CONSUMER_PACKAGE_AND_UI_BOUNDARY_SAMPLE_v0.1.md`
+- `schemas/mock_consumer_package_review.schema.json`
+- `records/ldd/2026-06-09/mock_consumer_package_review_0828_sgt.json`
+- `mock_consumers/ldd/README.md`
+- `mock_consumers/ldd/view_model_snapshot.json`
+- `mock_consumers/ldd/ui_boundary_sample.json`
+- `mock_consumers/ldd/report_consumer_sample.json`
+- `mock_consumers/ldd/api_consumer_sample.json`
+- `mock_consumers/ldd/mobile_consumer_sample.json`
+- `mock_consumers/ldd/ai_board_consumer_sample.json`
+- `mock_consumers/ldd/privacy_masking_notes.md`
+- `reports/ldd/mock_consumer_package_review.md`
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

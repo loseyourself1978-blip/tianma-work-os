@@ -1,0 +1,90 @@
+{
+  "snapshot_type": "static_mock_consumer_snapshot",
+  "snapshot_version": "0.1",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "latest_checkpoint": "2026-06-09T08:28:00+08:00",
+  "portfolio_mode": "core_position_defense_mode",
+  "consumer_readiness": "ready_with_limits",
+  "active_positions": [
+    "GLD 20",
+    "GOOG 14",
+    "NVDA 20",
+    "GGLL 10",
+    "tiny TSLA residual"
+  ],
+  "closed_positions": [
+    {
+      "asset": "SOXL",
+      "state": "closed_position",
+      "reentry": "prohibited"
+    },
+    {
+      "asset": "UGL",
+      "state": "closed_position",
+      "reentry": "prohibited"
+    },
+    {
+      "asset": "INTC",
+      "state": "closed_position",
+      "reentry": "prohibited"
+    },
+    {
+      "asset": "SOXS",
+      "state": "closed_position",
+      "reentry": "prohibited"
+    },
+    {
+      "asset": "TSLQ",
+      "state": "closed_position",
+      "reentry": "prohibited"
+    },
+    {
+      "asset": "GDXU",
+      "state": "closed_position",
+      "reentry": "prohibited"
+    }
+  ],
+  "risk_summary": {
+    "GLD": {
+      "state": "active_risk",
+      "non_execution_assessment": "acceptable",
+      "rule_compliance_result": "compliant_non_execution",
+      "reason": "recovered above 395 after regular-session close",
+      "full_repair_zone": "400-405"
+    },
+    "NVDA": {
+      "state": "main_core_risk_watch",
+      "protection_levels": [
+        204,
+        200
+      ]
+    },
+    "GOOG_GGLL": {
+      "goog_defense_level": 355,
+      "ggll_role": "main_remaining_leveraged_etf_risk_valve"
+    }
+  },
+  "crypto_defense": {
+    "posture": "USDT-dominant defense",
+    "btc_buyback": "inactive below 75,500-76,000",
+    "zec_grid": "closed / profit-locked / do not reopen"
+  },
+  "hong_kong_equity": {
+    "asset": "Zhipu / 02513",
+    "requirement": "separate high-profit protection module",
+    "scoring_boundary": "Do not mix HK high-profit protection into U.S. risk scoring."
+  },
+  "quote_context": {
+    "current_quote_type": "us_post_close_after_hours_broker_platform_sot",
+    "quote_type_tagging_required": true,
+    "live_execution_quote": false
+  },
+  "safety": {
+    "external_api_connected": false,
+    "trading_automation_enabled": false,
+    "ui_created": false,
+    "frontend_app_created": false,
+    "timeline_warnings": 0,
+    "source_of_truth": "User-provided broker/Binance screenshots"
+  }
+}

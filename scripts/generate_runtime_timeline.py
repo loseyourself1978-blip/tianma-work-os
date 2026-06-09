@@ -117,6 +117,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str:
         return "view_model_quality_gate_review"
     if "cockpit_consumer_readiness_review" in name:
         return "cockpit_consumer_readiness_review"
+    if "mock_consumer_package_review" in name:
+        return "mock_consumer_package_review"
     if "ldd_post_close_review" in name:
         return "sync_delta_update"
     if "premarket_trigger_to_post_close_outcome_reconciliation" in name:
@@ -198,6 +200,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str:
         return "view_model_quality_gate_review"
     if data.get("schema_type") == "cockpit_consumer_readiness_review":
         return "cockpit_consumer_readiness_review"
+    if data.get("schema_type") == "mock_consumer_package_review":
+        return "mock_consumer_package_review"
     if "command_id" in data:
         return "pending_command"
     return "unknown"
@@ -260,6 +264,7 @@ def event_type(record_type: str) -> str:
         "cockpit_view_model_generation": "report_generation",
         "view_model_quality_gate_review": "report_generation",
         "cockpit_consumer_readiness_review": "report_generation",
+        "mock_consumer_package_review": "report_generation",
     }
     return mapping.get(record_type, "unknown")
 
@@ -280,13 +285,15 @@ def evidence_level(data: dict[str, Any], record_type: str) -> str:
         return "runtime_record"
     if record_type == "cockpit_consumer_readiness_review":
         return "runtime_record"
+    if record_type == "mock_consumer_package_review":
+        return "runtime_record"
     if record_type == "unknown":
         return "unknown"
     return "runtime_record"
 
 
 def priority(record_type: str, data: dict[str, Any], tags: list[str]) -> str:
-    if record_type in {"cockpit_consistency_review", "cockpit_view_model_contract", "cockpit_view_model_generation", "view_model_quality_gate_review", "cockpit_consumer_readiness_review"}:
+    if record_type in {"cockpit_consistency_review", "cockpit_view_model_contract", "cockpit_view_model_generation", "view_model_quality_gate_review", "cockpit_consumer_readiness_review", "mock_consumer_package_review"}:
         return "medium"
     text = json.dumps(data, ensure_ascii=False).lower()
     if record_type == "execution_event":
@@ -433,6 +440,13 @@ def title_and_summary(record: LoadedRecord) -> tuple[str, str]:
             "Cockpit consumer readiness review",
             f"Consumer readiness result: {scalar(data.get('consumer_readiness_result'))}; reviewed {count} consumer types.",
         )
+    if rt == "mock_consumer_package_review":
+        consumers = data.get("mock_consumers_created", [])
+        count = len(consumers) if isinstance(consumers, list) else 0
+        return (
+            "Mock consumer package review",
+            f"Validated {count} static consumer examples and UI boundary artifacts without creating a UI or API.",
+        )
     if rt == "sync_delta_update":
         if "post-close-runtime-delta" in scalar(data.get("delta_id")):
             return (
@@ -479,6 +493,8 @@ def state_before_after(record: LoadedRecord) -> tuple[str, str]:
         return "", f"quality_gate_version={scalar(data.get('quality_gate_version'))}; validation_status={scalar(data.get('validation_status'))}"
     if rt == "cockpit_consumer_readiness_review":
         return "", f"consumer_readiness_result={scalar(data.get('consumer_readiness_result'))}; recommended_next_phase={scalar(data.get('recommended_next_phase'))}"
+    if rt == "mock_consumer_package_review":
+        return "", f"validation_status={scalar(data.get('validation_status'))}; recommended_next_phase={scalar(data.get('recommended_next_phase'))}"
     if rt == "pending_command":
         return "", f"{scalar(data.get('status'))}/{scalar(data.get('final_status'))}"
     return "", ""
@@ -520,6 +536,8 @@ def tags_for(record: LoadedRecord, zec_closure_exists: bool) -> list[str]:
         tags.extend(["view_model_quality_gates", "semantic_validation", "non_trading_runtime_event"])
     if record.record_type == "cockpit_consumer_readiness_review":
         tags.extend(["cockpit_consumer_readiness", "consumer_contract_boundary", "non_trading_runtime_event"])
+    if record.record_type == "mock_consumer_package_review":
+        tags.extend(["mock_consumer_package", "ui_boundary_sample", "consumer_contract_boundary", "non_trading_runtime_event"])
     if "near_trigger" in text and record.record_type != "cockpit_view_model_contract":
         tags.append("near_trigger")
     if "latest_active_checkpoint" in text:

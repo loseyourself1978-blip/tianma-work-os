@@ -1,0 +1,112 @@
+{
+  "sample_type": "ui_boundary_only",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "implementation_status": "no_ui_implemented",
+  "interaction_mode": "read_only",
+  "zones": [
+    {
+      "zone": "header_summary",
+      "reads": [
+        "checkpoint",
+        "portfolio_mode",
+        "warnings",
+        "data_quality"
+      ],
+      "must_show": [
+        "latest active checkpoint",
+        "portfolio mode",
+        "warning count",
+        "source freshness"
+      ]
+    },
+    {
+      "zone": "account_overview_card",
+      "reads": [
+        "account_overview",
+        "account_sections"
+      ],
+      "must_show": [
+        "U.S. equities",
+        "Hong Kong equities",
+        "crypto defense",
+        "cash and stablecoin posture"
+      ]
+    },
+    {
+      "zone": "risk_summary_card",
+      "reads": [
+        "risk_summary"
+      ],
+      "must_show": [
+        "GLD active risk and compliant non-execution",
+        "NVDA core-risk watch",
+        "GGLL leveraged-risk valve"
+      ]
+    },
+    {
+      "zone": "active_positions_table",
+      "reads": [
+        "positions"
+      ],
+      "must_not_include": [
+        "zero-share closed positions"
+      ]
+    },
+    {
+      "zone": "closed_positions_table",
+      "reads": [
+        "closed_positions"
+      ],
+      "must_show": [
+        "closed_position",
+        "zero quantity",
+        "no re-entry status"
+      ]
+    },
+    {
+      "zone": "active_rules_panel",
+      "reads": [
+        "active_rules"
+      ],
+      "boundary": "Rules are monitored conditions, not executable controls."
+    },
+    {
+      "zone": "strategy_states_panel",
+      "reads": [
+        "strategy_states"
+      ],
+      "boundary": "States describe current posture and next review, not automated action."
+    },
+    {
+      "zone": "timeline_panel",
+      "reads": [
+        "timeline"
+      ],
+      "boundary": "Chronological audit history, not a live market feed."
+    },
+    {
+      "zone": "data_quality_warnings_panel",
+      "reads": [
+        "warnings",
+        "data_quality"
+      ],
+      "must_remain_visible_when_nonempty": true
+    },
+    {
+      "zone": "consumer_readiness_panel",
+      "reads": [
+        "data_quality",
+        "meta"
+      ],
+      "status": "ready_with_limits"
+    }
+  ],
+  "prohibited_capabilities": [
+    "trade execution",
+    "order submission",
+    "live price inference",
+    "credential entry",
+    "API mutation",
+    "hidden warning suppression"
+  ]
+}

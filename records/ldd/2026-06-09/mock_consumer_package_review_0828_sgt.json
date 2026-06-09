@@ -1,0 +1,62 @@
+{
+  "schema_type": "mock_consumer_package_review",
+  "review_id": "ldd-mock-consumer-package-review-20260609-0828",
+  "project": "Tianma Work OS",
+  "subproject": "LLM Daredevil Desk",
+  "review_time": "2026-06-09T08:28:00+08:00",
+  "baseline_checkpoint": "2026-06-09T08:28:00+08:00",
+  "baseline_commit": "85a6370d91f502b69f6ca5b898e1283e058dacc3",
+  "portfolio_mode": "core_position_defense_mode",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "mock_consumers_created": [
+    "mock_consumers/ldd/view_model_snapshot.json",
+    "mock_consumers/ldd/ui_boundary_sample.json",
+    "mock_consumers/ldd/report_consumer_sample.json",
+    "mock_consumers/ldd/api_consumer_sample.json",
+    "mock_consumers/ldd/mobile_consumer_sample.json",
+    "mock_consumers/ldd/ai_board_consumer_sample.json",
+    "mock_consumers/ldd/privacy_masking_notes.md"
+  ],
+  "consumer_boundaries": [
+    "Consumers read cockpit/ldd/view_model.json as the primary generated artifact.",
+    "Mock payloads are examples and must not replace the generated view model.",
+    "Raw runtime records are reserved for audit and debug workflows.",
+    "Consumers do not infer live prices or execution-valid quotes.",
+    "Active rules are read-only risk context, not automated order instructions.",
+    "Consumers preserve warnings, data_quality, quote types, source references, and portfolio mode.",
+    "Consumers distinguish active positions, closed positions, opportunity cost, rule compliance, risk watch, execution-ready risk rules, and prohibited instruments."
+  ],
+  "privacy_limitations": [
+    "The package is internal and not customer-facing.",
+    "No customer-facing masking policy exists.",
+    "No role-based permission or field-level authorization system exists.",
+    "Exact account identifiers and login details must never be added.",
+    "Account values require a future masking and disclosure policy before customer-facing use."
+  ],
+  "safety_limitations": [
+    "No live API or market-data connection exists.",
+    "No order execution path exists.",
+    "No trading automation exists.",
+    "No frontend application exists.",
+    "User-provided broker and Binance screenshots remain the execution source of truth.",
+    "Consumer readiness remains ready_with_limits."
+  ],
+  "validation_status": "passed",
+  "blocking_issues": [],
+  "warnings": [
+    "Future customer-facing consumers require privacy masking and role permissions.",
+    "Future API consumers require authentication, authorization, and immutable read-only boundaries."
+  ],
+  "recommended_next_phase": "Vol.5 Phase 5.7 - Consumer Contract Test Matrix and Privacy Boundary",
+  "related_records": [
+    "records/ldd/2026-06-08/cockpit_consumer_readiness_review_0844_sgt.json",
+    "records/ldd/2026-06-09/premarket_trigger_to_post_close_outcome_reconciliation_0826_0828_sgt.json",
+    "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json"
+  ],
+  "related_reports": [
+    "reports/ldd/cockpit_consumer_readiness_review.md",
+    "reports/ldd/cockpit_view_model_summary.md",
+    "reports/ldd/view_model_quality_gates.md",
+    "reports/ldd/mock_consumer_package_review.md"
+  ]
+}

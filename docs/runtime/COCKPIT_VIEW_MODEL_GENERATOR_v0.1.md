@@ -115,7 +115,7 @@ Expected current results:
 - Strategy states: `16`
 - Timeline warnings: `0`
 
-## Recommended Next Phase
+## Downstream Validation Layers
 
 Phase 5.4 implements semantic quality gates in:
 
@@ -123,11 +123,13 @@ Phase 5.4 implements semantic quality gates in:
 docs/runtime/VIEW_MODEL_QUALITY_GATES_v0.1.md
 ```
 
-Recommended next phase:
+Phase 5.5 reviews consumer readiness, and Phase 5.6b provides static consumer
+and UI boundary examples in:
 
 ```text
-Vol.5 Phase 5.5 - Cockpit Consumer Readiness Review
+docs/runtime/MOCK_CONSUMER_PACKAGE_AND_UI_BOUNDARY_SAMPLE_v0.1.md
+mock_consumers/ldd/
 ```
 
-That phase should test whether a downstream read-only consumer can interpret the
-validated view model without private generator knowledge.
+These layers remain read-only and do not alter the generated view-model
+contract.

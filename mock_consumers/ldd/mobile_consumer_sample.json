@@ -1,0 +1,59 @@
+{
+  "sample_type": "mobile_display_boundary",
+  "implementation_status": "not_implemented",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "priority_order": [
+    {
+      "section": "top_level_status",
+      "reads": [
+        "checkpoint",
+        "portfolio_mode",
+        "warnings"
+      ]
+    },
+    {
+      "section": "risk_alerts",
+      "reads": [
+        "risk_summary",
+        "active_rules"
+      ],
+      "maximum_initial_items": 3
+    },
+    {
+      "section": "key_positions",
+      "reads": [
+        "positions",
+        "closed_positions"
+      ],
+      "boundary": "Active and closed positions remain separate."
+    },
+    {
+      "section": "strategy_status",
+      "reads": [
+        "strategy_states"
+      ],
+      "maximum_initial_items": 5
+    },
+    {
+      "section": "timeline_highlights",
+      "reads": [
+        "timeline"
+      ],
+      "boundary": "Show recent non-live highlights with source links."
+    },
+    {
+      "section": "data_quality",
+      "reads": [
+        "warnings",
+        "data_quality"
+      ]
+    }
+  ],
+  "required_current_highlights": [
+    "GLD active risk with compliant non-execution",
+    "NVDA 204 / 200 protection",
+    "GGLL main leveraged ETF risk valve",
+    "USDT-dominant crypto defense"
+  ],
+  "privacy_masking_required_before_customer_use": true
+}

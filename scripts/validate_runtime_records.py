@@ -62,7 +62,8 @@ SCHEMA_FILES = {
     "cockpit_view_model": "cockpit_view_model.schema.json",
     "cockpit_view_model_generation": "cockpit_view_model_generation.schema.json",
     "view_model_quality_gate_review": "view_model_quality_gate_review.schema.json",
-    "cockpit_consumer_readiness_review": "cockpit_consumer_readiness_review.schema.json"
+    "cockpit_consumer_readiness_review": "cockpit_consumer_readiness_review.schema.json",
+    "mock_consumer_package_review": "mock_consumer_package_review.schema.json"
 }
 
 
@@ -85,6 +86,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "view_model_quality_gate_review", SCHEMA_FILES["view_model_quality_gate_review"]
     if "cockpit_consumer_readiness_review" in filename:
         return "cockpit_consumer_readiness_review", SCHEMA_FILES["cockpit_consumer_readiness_review"]
+    if "mock_consumer_package_review" in filename:
+        return "mock_consumer_package_review", SCHEMA_FILES["mock_consumer_package_review"]
     if "ldd_post_close_review" in filename:
         return "sync_delta_update", SCHEMA_FILES["sync_delta_update"]
     if "premarket_trigger_to_post_close_outcome_reconciliation" in filename:

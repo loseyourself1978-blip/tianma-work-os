@@ -1,0 +1,61 @@
+{
+  "sample_type": "ai_board_read_only_review",
+  "implementation_status": "not_automated",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "roles": [
+    {
+      "role": "Market Analyst",
+      "reads": [
+        "account_overview",
+        "risk_summary",
+        "timeline"
+      ],
+      "boundary": "Provides context only and does not infer live prices."
+    },
+    {
+      "role": "Risk Officer",
+      "reads": [
+        "risk_summary",
+        "active_rules",
+        "closed_positions"
+      ],
+      "boundary": "Distinguishes risk watch, compliance, opportunity cost, and execution evidence."
+    },
+    {
+      "role": "Data Verifier",
+      "reads": [
+        "warnings",
+        "data_quality",
+        "timeline"
+      ],
+      "boundary": "Verifies quote type, source references, freshness, and contradictions."
+    },
+    {
+      "role": "Strategist",
+      "reads": [
+        "portfolio_mode",
+        "active_rules",
+        "strategy_states"
+      ],
+      "boundary": "Interprets defense posture without turning rules into orders."
+    },
+    {
+      "role": "Final Commander",
+      "reads": [
+        "checkpoint",
+        "portfolio_mode",
+        "risk_summary",
+        "pending_commands",
+        "warnings",
+        "data_quality"
+      ],
+      "boundary": "May frame a human-review recommendation but cannot execute or authorize automated trading."
+    }
+  ],
+  "execution_policy": {
+    "automated_execution": false,
+    "trade_submission": false,
+    "human_control_required": true,
+    "command_intelligence_required": true
+  }
+}

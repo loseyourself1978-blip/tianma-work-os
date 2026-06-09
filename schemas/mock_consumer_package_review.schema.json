@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/mock_consumer_package_review.schema.json",
+  "title": "Mock Consumer Package Review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_type",
+    "review_id",
+    "project",
+    "subproject",
+    "review_time",
+    "baseline_checkpoint",
+    "baseline_commit",
+    "portfolio_mode",
+    "source_view_model",
+    "mock_consumers_created",
+    "consumer_boundaries",
+    "privacy_limitations",
+    "safety_limitations",
+    "validation_status",
+    "blocking_issues",
+    "warnings",
+    "recommended_next_phase",
+    "related_records",
+    "related_reports"
+  ],
+  "properties": {
+    "schema_type": {
+      "type": "string",
+      "enum": [
+        "mock_consumer_package_review"
+      ]
+    },
+    "review_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "subproject": {
+      "type": "string"
+    },
+    "review_time": {
+      "type": "string"
+    },
+    "baseline_checkpoint": {
+      "type": "string"
+    },
+    "baseline_commit": {
+      "type": "string"
+    },
+    "portfolio_mode": {
+      "type": "string"
+    },
+    "source_view_model": {
+      "type": "string"
+    },
+    "mock_consumers_created": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "consumer_boundaries": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "privacy_limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "safety_limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "validation_status": {
+      "type": "string",
+      "enum": [
+        "passed",
+        "passed_with_warnings",
+        "failed"
+      ]
+    },
+    "blocking_issues": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recommended_next_phase": {
+      "type": "string"
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_reports": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

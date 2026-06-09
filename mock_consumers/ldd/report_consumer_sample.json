@@ -1,0 +1,34 @@
+{
+  "sample_type": "report_consumer",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "status": "ready",
+  "read_sections": [
+    "checkpoint",
+    "portfolio_mode",
+    "account_overview",
+    "risk_summary",
+    "active_rules",
+    "strategy_states",
+    "timeline",
+    "warnings",
+    "data_quality"
+  ],
+  "report_sections": [
+    "current checkpoint and operating mode",
+    "account and defense posture",
+    "active and near-trigger rules",
+    "strategy states",
+    "recent timeline events",
+    "warnings and data quality"
+  ],
+  "rules": [
+    "Use summary fields from the view model.",
+    "Use timeline events for chronological context.",
+    "Use source_files for traceability.",
+    "Do not reconstruct current state from raw records unless audit or debug is required.",
+    "Do not describe watch rules as executed orders.",
+    "Preserve quote-type and source-of-truth limitations."
+  ],
+  "external_api_required": false,
+  "trading_automation_enabled": false
+}

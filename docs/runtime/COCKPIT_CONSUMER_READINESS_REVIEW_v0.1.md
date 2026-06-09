@@ -123,11 +123,20 @@ Consumers should render:
 - No GitHub Issues are created.
 - The 2026-06-08 checkpoint is not re-ingested.
 
+## Phase 5.6b Implementation
+
+The recommended static boundary package is implemented in:
+
+- `docs/runtime/MOCK_CONSUMER_PACKAGE_AND_UI_BOUNDARY_SAMPLE_v0.1.md`
+- `mock_consumers/ldd/`
+- `records/ldd/2026-06-09/mock_consumer_package_review_0828_sgt.json`
+- `reports/ldd/mock_consumer_package_review.md`
+
+Consumer readiness remains `ready_with_limits`; the package adds examples, not
+a UI, API, permission system, or customer-facing privacy layer.
+
 ## Recommended Next Phase
 
 ```text
-Vol.5 Phase 5.6 - Mock Consumer Package / UI Boundary Sample
+Vol.5 Phase 5.7 - Consumer Contract Test Matrix and Privacy Boundary
 ```
-
-The next phase should create mock/sample consumer payloads or static boundary
-examples while still avoiding a real UI app.

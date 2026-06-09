@@ -85,6 +85,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "view_model_quality_gate_review"
     if "cockpit_consumer_readiness_review" in name:
         return "cockpit_consumer_readiness_review"
+    if "mock_consumer_package_review" in name:
+        return "mock_consumer_package_review"
     if "ldd_post_close_review" in name:
         return "delta_sync"
     if "premarket_trigger_to_post_close_outcome_reconciliation" in name:
@@ -156,6 +158,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "view_model_quality_gate_review"
     if data.get("schema_type") == "cockpit_consumer_readiness_review":
         return "cockpit_consumer_readiness_review"
+    if data.get("schema_type") == "mock_consumer_package_review":
+        return "mock_consumer_package_review"
     return None
 
 
@@ -1131,6 +1135,55 @@ def generate_cockpit_consumer_readiness_review(records: list[RuntimeRecord]) -> 
     return lines
 
 
+def generate_mock_consumer_package_review(records: list[RuntimeRecord]) -> list[str]:
+    lines = common_header("Mock Consumer Package Review", records)
+    review = latest(by_kind(records, "mock_consumer_package_review"))
+
+    lines.extend(
+        [
+            "This report reviews the static mock consumer package and UI boundary examples. It does not create a UI, API endpoint, live connection, or trading automation.",
+            "",
+        ]
+    )
+
+    if review is None:
+        lines.append("- No mock consumer package review record found.")
+        return lines
+
+    data = review.data
+    lines.extend(
+        [
+            "## Review",
+            "",
+            f"- Review ID: `{scalar(data.get('review_id'))}`",
+            f"- Review time: `{scalar(data.get('review_time'))}`",
+            f"- Baseline checkpoint: `{scalar(data.get('baseline_checkpoint'))}`",
+            f"- Baseline commit: `{scalar(data.get('baseline_commit'))}`",
+            f"- Portfolio mode: `{scalar(data.get('portfolio_mode'))}`",
+            f"- Source view model: `{scalar(data.get('source_view_model'))}`",
+            f"- Validation status: `{scalar(data.get('validation_status'))}`",
+            f"- Source: `{review.relpath}`",
+            "",
+            "## Mock Consumers Created",
+            "",
+        ]
+    )
+    lines.extend(md_list([str(item) for item in data.get("mock_consumers_created", [])]))
+    lines.extend(["", "## Consumer Boundaries", ""])
+    lines.extend(md_list([str(item) for item in data.get("consumer_boundaries", [])]))
+    lines.extend(["", "## Privacy Limitations", ""])
+    lines.extend(md_list([str(item) for item in data.get("privacy_limitations", [])]))
+    lines.extend(["", "## Safety Limitations", ""])
+    lines.extend(md_list([str(item) for item in data.get("safety_limitations", [])]))
+    lines.extend(["", "## Blocking Issues", ""])
+    lines.extend(md_list([str(item) for item in data.get("blocking_issues", [])], "No blocking issues."))
+    lines.extend(["", "## Warnings", ""])
+    lines.extend(md_list([str(item) for item in data.get("warnings", [])], "No warnings."))
+    lines.extend(["", "## Recommended Next Phase", ""])
+    lines.append(f"- {scalar(data.get('recommended_next_phase'))}")
+    return lines
+
+
 def generate_memory_cleanup_recommendations(records: list[RuntimeRecord]) -> list[str]:
     lines = common_header("Memory Cleanup Recommendations", records)
     lines.extend(
@@ -1311,6 +1364,7 @@ def main() -> int:
         "cockpit_view_model_summary.md": generate_cockpit_view_model_summary(records),
         "view_model_quality_gates.md": generate_view_model_quality_gates(records),
         "cockpit_consumer_readiness_review.md": generate_cockpit_consumer_readiness_review(records),
+        "mock_consumer_package_review.md": generate_mock_consumer_package_review(records),
     }
 
     for filename, lines in reports.items():
