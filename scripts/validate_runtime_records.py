@@ -71,7 +71,8 @@ SCHEMA_FILES = {
     "executed_order_writeback": "executed_order_writeback.schema.json",
     "runtime_status_arbitration": "runtime_status_arbitration.schema.json",
     "ui_boundary_architecture_review": "ui_boundary_architecture_review.schema.json",
-    "permission_privacy_masking_review": "permission_privacy_masking_review.schema.json"
+    "permission_privacy_masking_review": "permission_privacy_masking_review.schema.json",
+    "governance_runtime_sync": "governance_runtime_sync.schema.json"
 }
 
 
@@ -108,6 +109,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "ui_boundary_architecture_review", SCHEMA_FILES["ui_boundary_architecture_review"]
     if "permission_privacy_masking_review" in filename:
         return "permission_privacy_masking_review", SCHEMA_FILES["permission_privacy_masking_review"]
+    if "ldd_premarket_runtime_sync_governance_patch" in filename:
+        return "governance_runtime_sync", SCHEMA_FILES["governance_runtime_sync"]
     if "phase5_final_pressure_test_result" in filename:
         return "cockpit_consistency_review", SCHEMA_FILES["cockpit_consistency_review"]
     if "ldd_post_close_execution_review" in filename:

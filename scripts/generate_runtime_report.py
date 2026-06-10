@@ -96,6 +96,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "ui_boundary_architecture_review"
     if "permission_privacy_masking_review" in name:
         return "permission_privacy_masking_review"
+    if "ldd_premarket_runtime_sync_governance_patch" in name:
+        return "governance_runtime_sync"
     if "executed_order_writeback" in name:
         return "executed_order_writeback"
     if "runtime_status_conflict_arbitration" in name:
@@ -193,6 +195,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "ui_boundary_architecture_review"
     if data.get("record_type") == "governance_review" and data.get("phase") == "Vol.6 Phase 6.2":
         return "permission_privacy_masking_review"
+    if data.get("record_type") == "governance_runtime_sync":
+        return "governance_runtime_sync"
     if data.get("schema_type") == "executed_order_writeback":
         return "executed_order_writeback"
     if data.get("schema_type") == "runtime_status_arbitration":

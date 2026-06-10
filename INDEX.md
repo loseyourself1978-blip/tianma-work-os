@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.6 Phase 6.2 - Permission and Privacy Masking Model
+Vol.6 Phase 6.2a - LDD Premarket Runtime Sync Governance Patch
 ```
 
 ## Core Documents
@@ -356,6 +356,14 @@ Vol.6 Phase 6.2 - Permission and Privacy Masking Model
 - `scripts/validate_permission_privacy_masking.sh`
 - `records/ldd/2026-06-10/vol6_phase6_2_permission_privacy_masking_review_0849_sgt.json`
 - `reports/ldd/vol6_phase6_2_permission_privacy_masking_model.md`
+- Next: `Vol.6 Phase 6.3 - Read-only API Contract`
+
+## Vol.6 Phase 6.2a / LDD Premarket Runtime Sync Governance Patch
+
+- `docs/runtime/VOL6_PHASE6_2A_LDD_PREMARKET_RUNTIME_SYNC_GOVERNANCE_PATCH_v0.1.md`
+- `schemas/governance_runtime_sync.schema.json`
+- `records/ldd/2026-06-10/vol6_phase6_2a_ldd_premarket_runtime_sync_governance_patch_1706_sgt.json`
+- `reports/ldd/vol6_phase6_2a_ldd_premarket_runtime_sync_governance_patch.md`
 - Next: `Vol.6 Phase 6.3 - Read-only API Contract`
 
 ## Product Principles

@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/governance_runtime_sync.schema.json",
+  "title": "Governance Runtime Sync",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_type",
+    "phase",
+    "review_type",
+    "timestamp_sgt",
+    "timestamp_range_sgt",
+    "operating_mode",
+    "source_of_truth",
+    "quote_type",
+    "latest_checkpoint_unchanged",
+    "timeline_events_unchanged",
+    "timeline_warnings",
+    "customer_facing_ready",
+    "external_api_connected",
+    "broker_api_connected",
+    "binance_api_connected",
+    "trading_automation_enabled",
+    "credential_handling_enabled",
+    "runtime_mutation_enabled",
+    "account_update",
+    "active_us_positions",
+    "closed_positions",
+    "crypto_positions",
+    "execution_state",
+    "updated_rules",
+    "duxd_twos_feedback",
+    "validation_summary",
+    "explicit_non_goals_confirmed"
+  ],
+  "properties": {
+    "record_type": {
+      "type": "string",
+      "enum": [
+        "governance_runtime_sync"
+      ]
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "Vol.6 Phase 6.2a"
+      ]
+    },
+    "review_type": {
+      "type": "string"
+    },
+    "timestamp_sgt": {
+      "type": "string"
+    },
+    "timestamp_range_sgt": {
+      "type": "string"
+    },
+    "operating_mode": {
+      "type": "string"
+    },
+    "source_of_truth": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "quote_type": {
+      "type": "string"
+    },
+    "latest_checkpoint_unchanged": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
+    },
+    "timeline_events_unchanged": {
+      "type": "integer",
+      "enum": [
+        84
+      ]
+    },
+    "timeline_warnings": {
+      "type": "integer",
+      "enum": [
+        0
+      ]
+    },
+    "customer_facing_ready": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "external_api_connected": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "broker_api_connected": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "binance_api_connected": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "trading_automation_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "credential_handling_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "runtime_mutation_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "account_update": {
+      "type": "object"
+    },
+    "active_us_positions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "closed_positions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "crypto_positions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "execution_state": {
+      "type": "object"
+    },
+    "updated_rules": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "duxd_twos_feedback": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "validation_summary": {
+      "type": "object"
+    },
+    "explicit_non_goals_confirmed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
