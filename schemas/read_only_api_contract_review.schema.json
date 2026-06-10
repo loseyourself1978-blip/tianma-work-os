@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/read_only_api_contract_review.schema.json",
+  "title": "Read-only API Contract Review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_type",
+    "phase",
+    "timestamp",
+    "latest_checkpoint_unchanged",
+    "timeline_events_unchanged",
+    "timeline_warnings",
+    "customer_facing_ready",
+    "read_only_api_contract_created",
+    "actual_api_server_created",
+    "live_endpoint_created",
+    "frontend_app_created",
+    "external_api_connected",
+    "broker_api_connected",
+    "binance_api_connected",
+    "live_market_data_enabled",
+    "trading_automation_enabled",
+    "credential_handling_enabled",
+    "runtime_mutation_enabled",
+    "execution_trigger_enabled",
+    "non_promoted_governance_evidence_supported",
+    "stale_checkpoint_override_metadata_supported",
+    "permission_masking_enforced_by_contract",
+    "validation_summary",
+    "created_artifacts",
+    "explicit_non_goals_confirmed"
+  ],
+  "properties": {
+    "record_type": {
+      "type": "string",
+      "enum": [
+        "governance_review"
+      ]
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "Vol.6 Phase 6.3"
+      ]
+    },
+    "timestamp": {
+      "type": "string"
+    },
+    "latest_checkpoint_unchanged": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
+    },
+    "timeline_events_unchanged": {
+      "type": "integer",
+      "enum": [
+        84
+      ]
+    },
+    "timeline_warnings": {
+      "type": "integer",
+      "enum": [
+        0
+      ]
+    },
+    "customer_facing_ready": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "read_only_api_contract_created": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
+    },
+    "actual_api_server_created": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "live_endpoint_created": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "frontend_app_created": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "external_api_connected": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "broker_api_connected": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "binance_api_connected": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "live_market_data_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "trading_automation_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "credential_handling_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "runtime_mutation_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "execution_trigger_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "non_promoted_governance_evidence_supported": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
+    },
+    "stale_checkpoint_override_metadata_supported": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
+    },
+    "permission_masking_enforced_by_contract": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
+    },
+    "validation_summary": {
+      "type": "object"
+    },
+    "created_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "explicit_non_goals_confirmed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

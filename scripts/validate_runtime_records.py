@@ -29,6 +29,8 @@ COCKPIT_DIRS = [
 ]
 MOCK_CONSUMER_MATRIX = REPO_ROOT / "mock_consumers" / "ldd" / "consumer_contract_test_matrix.json"
 PRIVACY_BOUNDARY_SAMPLE = REPO_ROOT / "mock_consumers" / "ldd" / "privacy_boundary_sample.json"
+READ_ONLY_API_CONTRACT = REPO_ROOT / "mock_consumers" / "ldd" / "read_only_api_contract.json"
+READ_ONLY_API_RESPONSES = REPO_ROOT / "mock_consumers" / "ldd" / "read_only_api_response_examples.json"
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 
@@ -72,7 +74,10 @@ SCHEMA_FILES = {
     "runtime_status_arbitration": "runtime_status_arbitration.schema.json",
     "ui_boundary_architecture_review": "ui_boundary_architecture_review.schema.json",
     "permission_privacy_masking_review": "permission_privacy_masking_review.schema.json",
-    "governance_runtime_sync": "governance_runtime_sync.schema.json"
+    "governance_runtime_sync": "governance_runtime_sync.schema.json",
+    "read_only_api_contract": "read_only_api_contract.schema.json",
+    "read_only_api_response_envelope": "read_only_api_response_envelope.schema.json",
+    "read_only_api_contract_review": "read_only_api_contract_review.schema.json"
 }
 
 
@@ -111,6 +116,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "permission_privacy_masking_review", SCHEMA_FILES["permission_privacy_masking_review"]
     if "ldd_premarket_runtime_sync_governance_patch" in filename:
         return "governance_runtime_sync", SCHEMA_FILES["governance_runtime_sync"]
+    if "read_only_api_contract_review" in filename:
+        return "read_only_api_contract_review", SCHEMA_FILES["read_only_api_contract_review"]
     if "phase5_final_pressure_test_result" in filename:
         return "cockpit_consistency_review", SCHEMA_FILES["cockpit_consistency_review"]
     if "ldd_post_close_execution_review" in filename:
@@ -349,6 +356,26 @@ def collect_targets() -> tuple[list[ValidationTarget], list[Path]]:
                 "mock_consumers",
                 SCHEMA_FILES["consumer_contract_test_matrix"],
                 "consumer_contract_test_matrix",
+            )
+        )
+
+    if READ_ONLY_API_CONTRACT.exists():
+        targets.append(
+            ValidationTarget(
+                READ_ONLY_API_CONTRACT,
+                "mock_consumers",
+                SCHEMA_FILES["read_only_api_contract"],
+                "read_only_api_contract",
+            )
+        )
+
+    if READ_ONLY_API_RESPONSES.exists():
+        targets.append(
+            ValidationTarget(
+                READ_ONLY_API_RESPONSES,
+                "mock_consumers",
+                SCHEMA_FILES["read_only_api_response_envelope"],
+                "read_only_api_response_envelope",
             )
         )
 

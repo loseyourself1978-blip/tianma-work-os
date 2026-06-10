@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.6 Phase 6.2a - LDD Premarket Runtime Sync Governance Patch
+Vol.6 Phase 6.3 - Read-only API Contract
 ```
 
 ## Core Documents
@@ -365,6 +365,22 @@ Vol.6 Phase 6.2a - LDD Premarket Runtime Sync Governance Patch
 - `records/ldd/2026-06-10/vol6_phase6_2a_ldd_premarket_runtime_sync_governance_patch_1706_sgt.json`
 - `reports/ldd/vol6_phase6_2a_ldd_premarket_runtime_sync_governance_patch.md`
 - Next: `Vol.6 Phase 6.3 - Read-only API Contract`
+
+## Vol.6 Phase 6.3 / Read-only API Contract
+
+- `docs/runtime/VOL6_PHASE6_3_READ_ONLY_API_CONTRACT_v0.1.md`
+- `schemas/read_only_api_contract.schema.json`
+- `schemas/read_only_api_response_envelope.schema.json`
+- `schemas/read_only_api_contract_review.schema.json`
+- `mock_consumers/ldd/read_only_api_contract.json`
+- `mock_consumers/ldd/read_only_api_endpoint_catalog.json`
+- `mock_consumers/ldd/read_only_api_response_examples.json`
+- `mock_consumers/ldd/read_only_api_forbidden_capabilities.json`
+- `scripts/validate_read_only_api_contract.py`
+- `scripts/validate_read_only_api_contract.sh`
+- `records/ldd/2026-06-10/vol6_phase6_3_read_only_api_contract_review_0849_sgt.json`
+- `reports/ldd/vol6_phase6_3_read_only_api_contract.md`
+- Next: `Vol.6 Phase 6.4 - Static Cockpit Prototype Boundary Review`
 
 ## Product Principles
 

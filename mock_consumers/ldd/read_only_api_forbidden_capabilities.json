@@ -1,0 +1,166 @@
+{
+  "catalog_type": "read_only_api_forbidden_capabilities",
+  "contract_version": "0.1",
+  "capabilities": [
+    {
+      "capability_id": "place_order",
+      "description": "Place a broker, exchange, or simulated order.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "The contract is read-only and has no execution path.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "cancel_order",
+      "description": "Cancel an order.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Order mutation is outside the contract.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "modify_order",
+      "description": "Modify price, quantity, session, or order state.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Order mutation is prohibited.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "execute_trade",
+      "description": "Execute a trade or trigger execution.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Trading automation and execution are prohibited.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "start_bot",
+      "description": "Start any trading bot.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Bot control is prohibited.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "stop_bot",
+      "description": "Stop or modify any trading bot.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Bot control is prohibited.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "reopen_grid",
+      "description": "Reopen a grid strategy.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "The ZEC grid remains closed and this contract cannot control it.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "connect_broker_api",
+      "description": "Connect to a broker API.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "No broker connector exists or is authorized.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "connect_binance_api",
+      "description": "Connect to Binance APIs.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "No Binance connector exists or is authorized.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "connect_external_market_api",
+      "description": "Connect to an external market-data API.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "External data connections are prohibited.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "fetch_live_market_data",
+      "description": "Fetch or stream live market data.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Static evidence must not be represented as live.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "mutate_runtime_record",
+      "description": "Create, update, or delete runtime state through the API contract.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "The contract is read-only.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "promote_checkpoint",
+      "description": "Promote governance evidence to the active checkpoint.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Checkpoint promotion requires separate runtime governance.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "suppress_warning",
+      "description": "Suppress a warning or stale-state banner.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Warnings must remain visible.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "hide_data_quality_flag",
+      "description": "Hide data-quality limitations.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Data-quality flags are mandatory consumer context.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "reveal_never_expose_field",
+      "description": "Reveal a never-expose field.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Never-expose fields are rejected before rendering.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "collect_credential",
+      "description": "Collect a password, token, key, or login value.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Credential handling is prohibited.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "store_credential",
+      "description": "Store a password, token, key, or login value.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Credential storage is prohibited.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "export_sensitive_account_value_to_customer_view",
+      "description": "Export sensitive account values to a customer-facing view.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Customer-facing readiness and masking approval are absent.",
+      "validator_expectation": "Must remain blocked for all roles."
+    },
+    {
+      "capability_id": "enable_customer_facing_ui",
+      "description": "Enable a customer-facing cockpit interface.",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Customer-facing rendering remains blocked.",
+      "validator_expectation": "Must remain blocked for all roles."
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "contract_id": "ldd-read-only-api-contract-v0.1",
+  "contract_version": "0.1",
+  "phase": "Vol.6 Phase 6.3",
+  "status": "static_contract_ready",
+  "generated_for": "future LDD Cockpit read-only consumers",
+  "customer_facing_ready": false,
+  "read_only_only": true,
+  "runtime_mutation_allowed": false,
+  "execution_trigger_allowed": false,
+  "external_api_connection_allowed": false,
+  "broker_api_connection_allowed": false,
+  "binance_api_connection_allowed": false,
+  "live_market_data_allowed": false,
+  "credential_handling_allowed": false,
+  "source_layers": [
+    {
+      "layer_id": "active_checkpoint",
+      "source": [
+        "cockpit/ldd/view_model.json",
+        "cockpit/ldd/latest_state.json"
+      ],
+      "checkpoint": "2026-06-10T08:49:00+08:00",
+      "timeline_events": 84,
+      "timeline_warnings": 0,
+      "promoted": true,
+      "purpose": "Promoted current-state data for approved read-only consumers."
+    },
+    {
+      "layer_id": "non_promoted_governance_evidence",
+      "source": [
+        "records/ldd/2026-06-10/vol6_phase6_2a_ldd_premarket_runtime_sync_governance_patch_1706_sgt.json"
+      ],
+      "timestamp": "2026-06-10T17:06:00+08:00",
+      "promoted": false,
+      "execution_event": false,
+      "purpose": "Stale-checkpoint override evidence and future reconciliation context."
+    },
+    {
+      "layer_id": "permission_privacy_masking_contract",
+      "source": [
+        "mock_consumers/ldd/permission_role_taxonomy.json",
+        "mock_consumers/ldd/privacy_masking_policy.json",
+        "mock_consumers/ldd/field_permission_matrix.json",
+        "mock_consumers/ldd/customer_facing_unblock_criteria.json"
+      ],
+      "promoted": false,
+      "customer_facing_ready": false,
+      "deny_by_default": true,
+      "purpose": "Role, visibility, masking, and customer-facing block policy."
+    },
+    {
+      "layer_id": "ui_boundary_contract",
+      "source": [
+        "mock_consumers/ldd/ui_boundary_contract.json",
+        "mock_consumers/ldd/ui_boundary_surface_map.json",
+        "mock_consumers/ldd/ui_visibility_matrix.json"
+      ],
+      "promoted": false,
+      "customer_facing_view": "blocked",
+      "internal_read_only": "allowed",
+      "purpose": "Static consumer-surface and rendering boundary."
+    }
+  ],
+  "response_envelope": {
+    "schema_ref": "schemas/read_only_api_response_envelope.schema.json",
+    "examples_ref": "mock_consumers/ldd/read_only_api_response_examples.json",
+    "active_checkpoint_is_primary": true,
+    "non_promoted_evidence_requires_banner": true,
+    "silent_override_allowed": false
+  },
+  "endpoint_catalog_ref": "mock_consumers/ldd/read_only_api_endpoint_catalog.json",
+  "permission_masking_ref": [
+    "mock_consumers/ldd/permission_role_taxonomy.json",
+    "mock_consumers/ldd/privacy_masking_policy.json",
+    "mock_consumers/ldd/field_permission_matrix.json"
+  ],
+  "forbidden_capabilities_ref": "mock_consumers/ldd/read_only_api_forbidden_capabilities.json",
+  "validation_expectations": {
+    "every_endpoint_contract_only": true,
+    "every_endpoint_read_only": true,
+    "every_endpoint_external_connection_denied": true,
+    "every_endpoint_credentials_denied": true,
+    "forbidden_capabilities_blocked": true,
+    "customer_facing_status_remains_blocked": true,
+    "no_server_implementation": true,
+    "no_live_endpoint": true
+  }
+}

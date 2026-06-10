@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/read_only_api_contract.schema.json",
+  "title": "Read-only API Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_id",
+    "contract_version",
+    "phase",
+    "status",
+    "generated_for",
+    "customer_facing_ready",
+    "read_only_only",
+    "runtime_mutation_allowed",
+    "execution_trigger_allowed",
+    "external_api_connection_allowed",
+    "broker_api_connection_allowed",
+    "binance_api_connection_allowed",
+    "live_market_data_allowed",
+    "credential_handling_allowed",
+    "source_layers",
+    "response_envelope",
+    "endpoint_catalog_ref",
+    "permission_masking_ref",
+    "forbidden_capabilities_ref",
+    "validation_expectations"
+  ],
+  "properties": {
+    "contract_id": {
+      "type": "string"
+    },
+    "contract_version": {
+      "type": "string"
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "Vol.6 Phase 6.3"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "static_contract_ready"
+      ]
+    },
+    "generated_for": {
+      "type": "string"
+    },
+    "customer_facing_ready": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "read_only_only": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
+    },
+    "runtime_mutation_allowed": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "execution_trigger_allowed": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "external_api_connection_allowed": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "broker_api_connection_allowed": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "binance_api_connection_allowed": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "live_market_data_allowed": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "credential_handling_allowed": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "source_layers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "layer_id",
+          "source",
+          "promoted",
+          "purpose"
+        ],
+        "properties": {
+          "layer_id": {
+            "type": "string"
+          },
+          "source": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "checkpoint": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          },
+          "timeline_events": {
+            "type": "integer"
+          },
+          "timeline_warnings": {
+            "type": "integer"
+          },
+          "promoted": {
+            "type": "boolean"
+          },
+          "execution_event": {
+            "type": "boolean"
+          },
+          "customer_facing_ready": {
+            "type": "boolean"
+          },
+          "deny_by_default": {
+            "type": "boolean"
+          },
+          "customer_facing_view": {
+            "type": "string"
+          },
+          "internal_read_only": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "response_envelope": {
+      "type": "object"
+    },
+    "endpoint_catalog_ref": {
+      "type": "string"
+    },
+    "permission_masking_ref": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "forbidden_capabilities_ref": {
+      "type": "string"
+    },
+    "validation_expectations": {
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,225 @@
+{
+  "catalog_type": "read_only_api_endpoint_catalog",
+  "contract_version": "0.1",
+  "contract_only": true,
+  "runnable_urls_present": false,
+  "endpoints": [
+    {
+      "endpoint_id": "cockpit_snapshot_read",
+      "display_name": "Cockpit Snapshot Read",
+      "purpose": "Read the promoted current cockpit snapshot.",
+      "contract_only": true,
+      "allowed_methods": [
+        "READ_CONTRACT_ONLY"
+      ],
+      "source_layer": "active_checkpoint",
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator",
+        "ai_board_reviewer",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "demo_viewer",
+        "customer_facing_viewer_blocked"
+      ],
+      "masking_required": true,
+      "warnings_visible": true,
+      "quote_type_visible": true,
+      "source_traceability_visible": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "external_connection_allowed": false,
+      "credential_required": false,
+      "customer_facing_allowed": false,
+      "validation_rule": "Read promoted snapshot only; apply role and masking policy."
+    },
+    {
+      "endpoint_id": "cockpit_positions_read",
+      "display_name": "Cockpit Positions Read",
+      "purpose": "Read current position views from the cockpit view model.",
+      "contract_only": true,
+      "allowed_methods": [
+        "READ_CONTRACT_ONLY"
+      ],
+      "source_layer": "active_checkpoint",
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "ai_board_reviewer",
+        "demo_viewer",
+        "customer_facing_viewer_blocked"
+      ],
+      "masking_required": true,
+      "warnings_visible": true,
+      "quote_type_visible": true,
+      "source_traceability_visible": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "external_connection_allowed": false,
+      "credential_required": false,
+      "customer_facing_allowed": false,
+      "validation_rule": "Sensitive account values require approved internal role and masking."
+    },
+    {
+      "endpoint_id": "cockpit_rules_read",
+      "display_name": "Cockpit Rules Read",
+      "purpose": "Read risk rules as non-interactive decision-support records.",
+      "contract_only": true,
+      "allowed_methods": [
+        "READ_CONTRACT_ONLY"
+      ],
+      "source_layer": "active_checkpoint",
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator",
+        "ai_board_reviewer",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "demo_viewer",
+        "customer_facing_viewer_blocked"
+      ],
+      "masking_required": true,
+      "warnings_visible": true,
+      "quote_type_visible": true,
+      "source_traceability_visible": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "external_connection_allowed": false,
+      "credential_required": false,
+      "customer_facing_allowed": false,
+      "execution_sensitive": true,
+      "interactive_controls_allowed": false,
+      "validation_rule": "Rules must display non-automation labels and no execution controls."
+    },
+    {
+      "endpoint_id": "governance_evidence_read",
+      "display_name": "Governance Evidence Read",
+      "purpose": "Read non-promoted governance evidence with reconciliation metadata.",
+      "contract_only": true,
+      "allowed_methods": [
+        "READ_CONTRACT_ONLY"
+      ],
+      "source_layer": "non_promoted_governance_evidence",
+      "allowed_roles": [
+        "system_admin",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "internal_operator",
+        "ai_board_reviewer",
+        "demo_viewer",
+        "customer_facing_viewer_blocked"
+      ],
+      "masking_required": true,
+      "warnings_visible": true,
+      "quote_type_visible": true,
+      "source_traceability_visible": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "external_connection_allowed": false,
+      "credential_required": false,
+      "customer_facing_allowed": false,
+      "promoted_to_checkpoint": false,
+      "execution_event": false,
+      "validation_rule": "Evidence must remain non-promoted and visibly separate from active state."
+    },
+    {
+      "endpoint_id": "cockpit_warnings_read",
+      "display_name": "Cockpit Warnings Read",
+      "purpose": "Read stale-state, warning, and data-quality metadata.",
+      "contract_only": true,
+      "allowed_methods": [
+        "READ_CONTRACT_ONLY"
+      ],
+      "source_layer": "active_checkpoint",
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator",
+        "ai_board_reviewer",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "demo_viewer",
+        "customer_facing_viewer_blocked"
+      ],
+      "masking_required": false,
+      "warnings_visible": true,
+      "quote_type_visible": true,
+      "source_traceability_visible": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "external_connection_allowed": false,
+      "credential_required": false,
+      "customer_facing_allowed": false,
+      "suppression_allowed": false,
+      "validation_rule": "Warnings and data-quality flags must remain visible and unsuppressed."
+    },
+    {
+      "endpoint_id": "permission_masking_policy_read",
+      "display_name": "Permission Masking Policy Read",
+      "purpose": "Read the effective static role, field, and masking policies.",
+      "contract_only": true,
+      "allowed_methods": [
+        "READ_CONTRACT_ONLY"
+      ],
+      "source_layer": "permission_privacy_masking_contract",
+      "allowed_roles": [
+        "system_admin",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "internal_operator",
+        "ai_board_reviewer",
+        "demo_viewer",
+        "customer_facing_viewer_blocked"
+      ],
+      "masking_required": false,
+      "warnings_visible": true,
+      "quote_type_visible": false,
+      "source_traceability_visible": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "external_connection_allowed": false,
+      "credential_required": false,
+      "customer_facing_allowed": false,
+      "validation_rule": "Policy reads are audit-only and cannot change effective permissions."
+    },
+    {
+      "endpoint_id": "customer_facing_view_status_read",
+      "display_name": "Customer-facing View Status Read",
+      "purpose": "Read why customer-facing rendering remains blocked.",
+      "contract_only": true,
+      "allowed_methods": [
+        "READ_CONTRACT_ONLY"
+      ],
+      "source_layer": "permission_privacy_masking_contract",
+      "allowed_roles": [
+        "system_admin",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "internal_operator",
+        "ai_board_reviewer",
+        "demo_viewer",
+        "customer_facing_viewer_blocked"
+      ],
+      "masking_required": false,
+      "warnings_visible": true,
+      "quote_type_visible": false,
+      "source_traceability_visible": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "external_connection_allowed": false,
+      "credential_required": false,
+      "customer_facing_allowed": false,
+      "customer_facing_ready": false,
+      "unblock_requires_governance_approval": true,
+      "validation_rule": "Status read may explain blockers but cannot unblock the customer-facing surface."
+    }
+  ]
+}

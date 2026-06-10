@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/read_only_api_response_envelope.schema.json",
+  "title": "Read-only API Response Examples",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_type",
+    "contract_version",
+    "examples"
+  ],
+  "properties": {
+    "schema_type": {
+      "type": "string",
+      "enum": [
+        "read_only_api_response_examples"
+      ]
+    },
+    "contract_version": {
+      "type": "string"
+    },
+    "examples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "example_id",
+          "contract_version",
+          "endpoint_id",
+          "generated_at",
+          "data_source_layer",
+          "active_checkpoint_timestamp",
+          "non_promoted_evidence_available",
+          "non_promoted_evidence_timestamp",
+          "promoted_to_checkpoint",
+          "source_of_truth",
+          "quote_type",
+          "permission_role",
+          "masking_profile",
+          "customer_facing_ready",
+          "warnings",
+          "data_quality",
+          "stale_checkpoint_overrides",
+          "payload",
+          "forbidden_actions"
+        ],
+        "properties": {
+          "example_id": {
+            "type": "string"
+          },
+          "contract_version": {
+            "type": "string"
+          },
+          "endpoint_id": {
+            "type": "string"
+          },
+          "generated_at": {
+            "type": "string"
+          },
+          "data_source_layer": {
+            "type": "string"
+          },
+          "active_checkpoint_timestamp": {
+            "type": "string"
+          },
+          "non_promoted_evidence_available": {
+            "type": "boolean"
+          },
+          "non_promoted_evidence_timestamp": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "promoted_to_checkpoint": {
+            "type": "boolean"
+          },
+          "source_of_truth": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "quote_type": {
+            "type": "string"
+          },
+          "permission_role": {
+            "type": "string"
+          },
+          "masking_profile": {
+            "type": "string"
+          },
+          "customer_facing_ready": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "data_quality": {
+            "type": "object"
+          },
+          "stale_checkpoint_overrides": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "payload": {
+            "type": "object"
+          },
+          "forbidden_actions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,294 @@
+{
+  "schema_type": "read_only_api_response_examples",
+  "contract_version": "0.1",
+  "examples": [
+    {
+      "example_id": "internal_operator_cockpit_snapshot",
+      "contract_version": "0.1",
+      "endpoint_id": "cockpit_snapshot_read",
+      "generated_at": "2026-06-10T08:49:00+08:00",
+      "data_source_layer": "active_checkpoint",
+      "active_checkpoint_timestamp": "2026-06-10T08:49:00+08:00",
+      "non_promoted_evidence_available": true,
+      "non_promoted_evidence_timestamp": "2026-06-10T17:06:00+08:00",
+      "promoted_to_checkpoint": true,
+      "source_of_truth": [
+        "cockpit/ldd/view_model.json",
+        "user-provided broker and Binance screenshot-derived runtime records"
+      ],
+      "quote_type": "U.S. post-close / after-hours / broker platform SoT",
+      "permission_role": "internal_operator",
+      "masking_profile": "internal_sensitive_values_visible_read_only",
+      "customer_facing_ready": false,
+      "warnings": [
+        "Newer non-promoted governance evidence exists for selected position fields.",
+        "Static response contract; values are not live or execution-valid."
+      ],
+      "data_quality": {
+        "timeline_warnings": 0,
+        "active_checkpoint_confirmed": true,
+        "non_promoted_evidence_requires_reconciliation": true,
+        "live_data_connected": false
+      },
+      "stale_checkpoint_overrides": [
+        {
+          "override_available": true,
+          "override_source": "records/ldd/2026-06-10/vol6_phase6_2a_ldd_premarket_runtime_sync_governance_patch_1706_sgt.json",
+          "override_timestamp": "2026-06-10T17:06:00+08:00",
+          "affected_fields": [
+            "positions.GLD.quantity"
+          ],
+          "active_checkpoint_value": "GLD 20 may appear in a stale checkpoint field",
+          "newer_evidence_value": "GLD 10",
+          "promoted_to_checkpoint": false,
+          "reconciliation_required": true,
+          "consumer_display_policy": "Show active checkpoint with newer evidence banner, not silent overwrite."
+        },
+        {
+          "override_available": true,
+          "override_source": "records/ldd/2026-06-10/vol6_phase6_2a_ldd_premarket_runtime_sync_governance_patch_1706_sgt.json",
+          "override_timestamp": "2026-06-10T17:06:00+08:00",
+          "affected_fields": [
+            "positions.NVDA.quantity"
+          ],
+          "active_checkpoint_value": "NVDA 20 may appear in a stale checkpoint field",
+          "newer_evidence_value": "NVDA 15",
+          "promoted_to_checkpoint": false,
+          "reconciliation_required": true,
+          "consumer_display_policy": "Show active checkpoint with newer evidence banner, not silent overwrite."
+        },
+        {
+          "override_available": true,
+          "override_source": "records/ldd/2026-06-10/vol6_phase6_2a_ldd_premarket_runtime_sync_governance_patch_1706_sgt.json",
+          "override_timestamp": "2026-06-10T17:06:00+08:00",
+          "affected_fields": [
+            "closed_positions.SOXL",
+            "closed_positions.UGL",
+            "closed_positions.INTC"
+          ],
+          "active_checkpoint_value": "Use promoted checkpoint history.",
+          "newer_evidence_value": "SOXL, UGL, and INTC remain closed.",
+          "promoted_to_checkpoint": false,
+          "reconciliation_required": true,
+          "consumer_display_policy": "Display as non-promoted evidence only."
+        }
+      ],
+      "payload": {
+        "portfolio_mode": "core_position_defense_mode",
+        "active_checkpoint": "2026-06-10T08:49:00+08:00",
+        "timeline_events": 84,
+        "timeline_warnings": 0,
+        "consumer_readiness": "ready_with_limits"
+      },
+      "forbidden_actions": [
+        "place_order",
+        "execute_trade",
+        "mutate_runtime_record",
+        "promote_checkpoint",
+        "connect_broker_api",
+        "connect_binance_api",
+        "collect_credential",
+        "enable_customer_facing_ui"
+      ]
+    },
+    {
+      "example_id": "ai_board_reviewer_rules_read",
+      "contract_version": "0.1",
+      "endpoint_id": "cockpit_rules_read",
+      "generated_at": "2026-06-10T08:49:00+08:00",
+      "data_source_layer": "active_checkpoint",
+      "active_checkpoint_timestamp": "2026-06-10T08:49:00+08:00",
+      "non_promoted_evidence_available": true,
+      "non_promoted_evidence_timestamp": "2026-06-10T17:06:00+08:00",
+      "promoted_to_checkpoint": true,
+      "source_of_truth": [
+        "cockpit/ldd/view_model.json",
+        "validated local runtime records"
+      ],
+      "quote_type": "Static rule context with tagged broker-platform evidence",
+      "permission_role": "ai_board_reviewer",
+      "masking_profile": "execution_sensitive_read_only_account_values_omitted",
+      "customer_facing_ready": false,
+      "warnings": [
+        "Rules are decision-support context and not automated order instructions.",
+        "Newer governance evidence may rebase remaining position quantities."
+      ],
+      "data_quality": {
+        "timeline_warnings": 0,
+        "quote_type_visible": true,
+        "execution_controls_available": false,
+        "non_promoted_evidence_requires_reconciliation": true
+      },
+      "stale_checkpoint_overrides": [
+        {
+          "override_available": true,
+          "override_source": "records/ldd/2026-06-10/vol6_phase6_2a_ldd_premarket_runtime_sync_governance_patch_1706_sgt.json",
+          "override_timestamp": "2026-06-10T17:06:00+08:00",
+          "affected_fields": [
+            "active_rules.GLD.rule_base_quantity",
+            "active_rules.NVDA.rule_base_quantity"
+          ],
+          "active_checkpoint_value": "Rules may retain earlier position bases.",
+          "newer_evidence_value": "GLD rules bind to 10 shares; NVDA rules bind to 15 shares.",
+          "promoted_to_checkpoint": false,
+          "reconciliation_required": true,
+          "consumer_display_policy": "Show a newer-evidence banner and keep rules non-interactive."
+        }
+      ],
+      "payload": {
+        "rule_display_mode": "read_only_non_interactive",
+        "main_core_risk_watch": "NVDA",
+        "main_leveraged_risk_valve": "GGLL",
+        "btc_buyback_status": "inactive",
+        "zec_grid_status": "closed_do_not_reopen"
+      },
+      "forbidden_actions": [
+        "place_order",
+        "cancel_order",
+        "execute_trade",
+        "reopen_grid",
+        "mutate_runtime_record",
+        "suppress_warning",
+        "fetch_live_market_data",
+        "collect_credential"
+      ]
+    },
+    {
+      "example_id": "audit_reviewer_governance_evidence_read",
+      "contract_version": "0.1",
+      "endpoint_id": "governance_evidence_read",
+      "generated_at": "2026-06-10T17:06:00+08:00",
+      "data_source_layer": "non_promoted_governance_evidence",
+      "active_checkpoint_timestamp": "2026-06-10T08:49:00+08:00",
+      "non_promoted_evidence_available": true,
+      "non_promoted_evidence_timestamp": "2026-06-10T17:06:00+08:00",
+      "promoted_to_checkpoint": false,
+      "source_of_truth": [
+        "user_broker_screenshots",
+        "user_binance_screenshots",
+        "user_provided_ldd_review_sync"
+      ],
+      "quote_type": "U.S. premarket / broker platform SoT",
+      "permission_role": "audit_reviewer",
+      "masking_profile": "audit_source_trace_sensitive_values_read_only",
+      "customer_facing_ready": false,
+      "warnings": [
+        "Evidence is newer than the active checkpoint but is not promoted.",
+        "Evidence is not an execution event.",
+        "Consumers must not silently overwrite active checkpoint fields."
+      ],
+      "data_quality": {
+        "timeline_warnings": 0,
+        "source_traceability_visible": true,
+        "execution_event": false,
+        "reconciliation_required": true,
+        "external_cross_check_is_source_of_truth": false
+      },
+      "stale_checkpoint_overrides": [
+        {
+          "override_available": true,
+          "override_source": "records/ldd/2026-06-10/vol6_phase6_2a_ldd_premarket_runtime_sync_governance_patch_1706_sgt.json",
+          "override_timestamp": "2026-06-10T17:06:00+08:00",
+          "affected_fields": [
+            "positions.GLD.quantity"
+          ],
+          "active_checkpoint_value": "GLD 20 may appear in a stale checkpoint field",
+          "newer_evidence_value": "GLD 10",
+          "promoted_to_checkpoint": false,
+          "reconciliation_required": true,
+          "consumer_display_policy": "Show active checkpoint with newer evidence banner, not silent overwrite."
+        },
+        {
+          "override_available": true,
+          "override_source": "records/ldd/2026-06-10/vol6_phase6_2a_ldd_premarket_runtime_sync_governance_patch_1706_sgt.json",
+          "override_timestamp": "2026-06-10T17:06:00+08:00",
+          "affected_fields": [
+            "positions.NVDA.quantity"
+          ],
+          "active_checkpoint_value": "NVDA 20 may appear in a stale checkpoint field",
+          "newer_evidence_value": "NVDA 15",
+          "promoted_to_checkpoint": false,
+          "reconciliation_required": true,
+          "consumer_display_policy": "Show active checkpoint with newer evidence banner, not silent overwrite."
+        },
+        {
+          "override_available": true,
+          "override_source": "records/ldd/2026-06-10/vol6_phase6_2a_ldd_premarket_runtime_sync_governance_patch_1706_sgt.json",
+          "override_timestamp": "2026-06-10T17:06:00+08:00",
+          "affected_fields": [
+            "closed_positions.SOXL",
+            "closed_positions.UGL",
+            "closed_positions.INTC"
+          ],
+          "active_checkpoint_value": "Use promoted checkpoint history.",
+          "newer_evidence_value": "SOXL, UGL, and INTC remain closed.",
+          "promoted_to_checkpoint": false,
+          "reconciliation_required": true,
+          "consumer_display_policy": "Display as non-promoted evidence only."
+        }
+      ],
+      "payload": {
+        "evidence_timestamp": "2026-06-10T17:06:00+08:00",
+        "execution_event": false,
+        "promoted": false,
+        "purpose": "stale-checkpoint override evidence and future reconciliation context"
+      },
+      "forbidden_actions": [
+        "promote_checkpoint",
+        "mutate_runtime_record",
+        "place_order",
+        "execute_trade",
+        "suppress_warning",
+        "hide_data_quality_flag",
+        "reveal_never_expose_field",
+        "store_credential"
+      ]
+    },
+    {
+      "example_id": "customer_facing_viewer_blocked_status",
+      "contract_version": "0.1",
+      "endpoint_id": "customer_facing_view_status_read",
+      "generated_at": "2026-06-10T08:49:00+08:00",
+      "data_source_layer": "permission_privacy_masking_contract",
+      "active_checkpoint_timestamp": "2026-06-10T08:49:00+08:00",
+      "non_promoted_evidence_available": true,
+      "non_promoted_evidence_timestamp": "2026-06-10T17:06:00+08:00",
+      "promoted_to_checkpoint": false,
+      "source_of_truth": [
+        "mock_consumers/ldd/customer_facing_unblock_criteria.json",
+        "mock_consumers/ldd/permission_role_taxonomy.json"
+      ],
+      "quote_type": "not_applicable_policy_status",
+      "permission_role": "customer_facing_viewer_blocked",
+      "masking_profile": "blocked_no_cockpit_payload",
+      "customer_facing_ready": false,
+      "warnings": [
+        "Customer-facing rendering is blocked.",
+        "Governance approval, privacy review, authentication, and authorization remain absent."
+      ],
+      "data_quality": {
+        "policy_contract_valid": true,
+        "customer_payload_returned": false,
+        "never_expose_rejected": true,
+        "live_connection_available": false
+      },
+      "stale_checkpoint_overrides": [],
+      "payload": {
+        "status": "blocked",
+        "customer_facing_ready": false,
+        "unblock_requires_governance_approval": true,
+        "reason": "Permission, masking, disclosure, authentication, authorization, and privacy approval are incomplete."
+      },
+      "forbidden_actions": [
+        "enable_customer_facing_ui",
+        "export_sensitive_account_value_to_customer_view",
+        "reveal_never_expose_field",
+        "collect_credential",
+        "connect_broker_api",
+        "connect_binance_api",
+        "fetch_live_market_data",
+        "execute_trade"
+      ]
+    }
+  ]
+}

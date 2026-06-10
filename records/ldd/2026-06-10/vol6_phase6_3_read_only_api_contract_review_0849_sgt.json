@@ -1,0 +1,53 @@
+{
+  "record_type": "governance_review",
+  "phase": "Vol.6 Phase 6.3",
+  "timestamp": "2026-06-10T08:49:00+08:00",
+  "latest_checkpoint_unchanged": true,
+  "timeline_events_unchanged": 84,
+  "timeline_warnings": 0,
+  "customer_facing_ready": false,
+  "read_only_api_contract_created": true,
+  "actual_api_server_created": false,
+  "live_endpoint_created": false,
+  "frontend_app_created": false,
+  "external_api_connected": false,
+  "broker_api_connected": false,
+  "binance_api_connected": false,
+  "live_market_data_enabled": false,
+  "trading_automation_enabled": false,
+  "credential_handling_enabled": false,
+  "runtime_mutation_enabled": false,
+  "execution_trigger_enabled": false,
+  "non_promoted_governance_evidence_supported": true,
+  "stale_checkpoint_override_metadata_supported": true,
+  "permission_masking_enforced_by_contract": true,
+  "validation_summary": {
+    "status": "passed",
+    "checks": 21,
+    "blocking_failures": 0,
+    "warnings": 0
+  },
+  "created_artifacts": [
+    "docs/runtime/VOL6_PHASE6_3_READ_ONLY_API_CONTRACT_v0.1.md",
+    "schemas/read_only_api_contract.schema.json",
+    "schemas/read_only_api_response_envelope.schema.json",
+    "schemas/read_only_api_contract_review.schema.json",
+    "mock_consumers/ldd/read_only_api_contract.json",
+    "mock_consumers/ldd/read_only_api_endpoint_catalog.json",
+    "mock_consumers/ldd/read_only_api_response_examples.json",
+    "mock_consumers/ldd/read_only_api_forbidden_capabilities.json",
+    "scripts/validate_read_only_api_contract.py",
+    "scripts/validate_read_only_api_contract.sh",
+    "reports/ldd/vol6_phase6_3_read_only_api_contract.md"
+  ],
+  "explicit_non_goals_confirmed": [
+    "No frontend application or customer-facing UI was created.",
+    "No API server, HTTP listener, route handler, or live endpoint was created.",
+    "No external, broker, Binance, or live market-data connection was added.",
+    "No trading automation, runtime mutation, or execution trigger was added.",
+    "No authentication or credential handling was implemented.",
+    "The 17:06 governance evidence was not promoted to the active checkpoint.",
+    "No historical record or trading record was mutated.",
+    "No GitHub Issue or Projects board was created."
+  ]
+}
