@@ -92,6 +92,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "consumer_contract_test_matrix"
     if "read_only_consumer_fixture_validation" in name:
         return "read_only_consumer_fixture_validation"
+    if "ui_boundary_architecture_review" in name:
+        return "ui_boundary_architecture_review"
     if "executed_order_writeback" in name:
         return "executed_order_writeback"
     if "runtime_status_conflict_arbitration" in name:
@@ -185,6 +187,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "consumer_contract_test_matrix"
     if data.get("schema_type") == "read_only_consumer_fixture_validation":
         return "read_only_consumer_fixture_validation"
+    if data.get("schema_type") == "ui_boundary_architecture_review":
+        return "ui_boundary_architecture_review"
     if data.get("schema_type") == "executed_order_writeback":
         return "executed_order_writeback"
     if data.get("schema_type") == "runtime_status_arbitration":

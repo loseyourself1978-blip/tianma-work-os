@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.6 Phase 6.0 - Baseline Verification
+Vol.6 Phase 6.1 - UI Boundary Architecture
 ```
 
 ## Core Documents
@@ -73,6 +73,7 @@ Vol.6 Phase 6.0 - Baseline Verification
 - `docs/runtime/VOL3_HANDOFF_SUMMARY_v0.1.md`
 - `docs/runtime/VOL5_HANDOFF_SUMMARY_v0.1.md`
 - `docs/runtime/VOL6_PHASE6_0_BASELINE_VERIFICATION_v0.1.md`
+- `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
 ## Vol.3 Phase 2 / Runtime Records
@@ -321,6 +322,21 @@ Vol.6 Phase 6.0 - Baseline Verification
 - `records/ldd/2026-06-10/vol6_phase6_0_baseline_verification_cockpit_consistency_review_0849_sgt.json`
 - `reports/ldd/vol6_phase6_0_baseline_verification.md`
 - Next: `Vol.6 Phase 6.1 - UI Boundary Architecture`
+
+## Vol.6 Phase 6.1 / UI Boundary Architecture
+
+- `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
+- `schemas/ui_boundary_contract.schema.json`
+- `schemas/ui_boundary_architecture_review.schema.json`
+- `mock_consumers/ldd/ui_boundary_contract.json`
+- `mock_consumers/ldd/ui_field_visibility_matrix.json`
+- `mock_consumers/ldd/ui_surface_map.json`
+- `mock_consumers/ldd/ui_state_taxonomy.json`
+- `scripts/validate_ui_boundary_contract.py`
+- `scripts/validate_ui_boundary_contract.sh`
+- `records/ldd/2026-06-10/vol6_phase6_1_ui_boundary_architecture_review_0849_sgt.json`
+- `reports/ldd/vol6_phase6_1_ui_boundary_architecture.md`
+- Next: `Vol.6 Phase 6.2 - Permission and Privacy Masking Model`
 
 ## Product Principles
 

@@ -1,0 +1,76 @@
+{
+  "matrix_type": "ui_field_visibility",
+  "version": "0.1",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "classes": [
+    {
+      "visibility_class": "public_safe",
+      "examples": [
+        "product concept",
+        "contract version",
+        "generic portfolio mode label",
+        "generic risk-state vocabulary"
+      ],
+      "internal_default": "visible",
+      "customer_facing_default": "review_required"
+    },
+    {
+      "visibility_class": "internal_only",
+      "examples": [
+        "detailed account values",
+        "position quantities",
+        "P/L values",
+        "source file paths",
+        "operational notes"
+      ],
+      "internal_default": "visible",
+      "customer_facing_default": "masked_or_omitted"
+    },
+    {
+      "visibility_class": "sensitive_account",
+      "examples": [
+        "broker account identifiers",
+        "Binance account identifiers",
+        "screenshot-derived financial values",
+        "source evidence"
+      ],
+      "internal_default": "permission_required",
+      "customer_facing_default": "masked",
+      "permission_required": true
+    },
+    {
+      "visibility_class": "execution_sensitive",
+      "examples": [
+        "executable quote context",
+        "pending order content",
+        "stop thresholds",
+        "reduce thresholds",
+        "execution evidence"
+      ],
+      "internal_default": "restricted_read_only",
+      "customer_facing_default": "prohibited",
+      "must_not_be_interactive": true
+    },
+    {
+      "visibility_class": "never_expose",
+      "examples": [
+        "API keys",
+        "tokens",
+        "passwords",
+        "login credentials",
+        "exact account numbers",
+        "raw personal identifiers",
+        "secrets"
+      ],
+      "internal_default": "prohibited",
+      "customer_facing_default": "prohibited",
+      "reject_before_render": true
+    }
+  ],
+  "policy_status": {
+    "permission_model_implemented": false,
+    "masking_engine_implemented": false,
+    "customer_facing_ready": false,
+    "deny_by_default_required": true
+  }
+}

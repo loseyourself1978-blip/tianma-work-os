@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/ui_boundary_contract.schema.json",
+  "title": "UI Boundary Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_type",
+    "version",
+    "source_view_model",
+    "baseline_checkpoint",
+    "consumer_mode",
+    "artifact_references",
+    "allowed_view_model_sections",
+    "allowed_interactions",
+    "prohibited_capabilities",
+    "boundary_invariants",
+    "status"
+  ],
+  "properties": {
+    "contract_type": {
+      "type": "string",
+      "enum": [
+        "read_only_ui_boundary"
+      ]
+    },
+    "version": {
+      "type": "string"
+    },
+    "source_view_model": {
+      "type": "string"
+    },
+    "baseline_checkpoint": {
+      "type": "string"
+    },
+    "consumer_mode": {
+      "type": "string",
+      "enum": [
+        "internal_read_only"
+      ]
+    },
+    "artifact_references": {
+      "type": "object"
+    },
+    "allowed_view_model_sections": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "allowed_interactions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "prohibited_capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "boundary_invariants": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "taxonomy_type": "ui_state_taxonomy",
+  "version": "0.1",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "taxonomies": {
+    "data_states": [
+      "current",
+      "stale",
+      "superseded",
+      "unknown",
+      "warning",
+      "blocked"
+    ],
+    "position_states": [
+      "active_position",
+      "core_position",
+      "watch_position",
+      "risk_valve",
+      "residual_watch_position",
+      "closed_position",
+      "historical_position",
+      "prohibited_reentry",
+      "unknown"
+    ],
+    "rule_states": [
+      "active",
+      "near_trigger",
+      "triggered",
+      "awaiting_execution_confirmation",
+      "executed",
+      "stale",
+      "superseded",
+      "historical",
+      "prohibited"
+    ],
+    "strategy_states": [
+      "active",
+      "monitoring",
+      "closed",
+      "superseded",
+      "historical",
+      "waiting_for_trigger",
+      "not_opened",
+      "unknown"
+    ],
+    "interaction_states": [
+      "read_only",
+      "filterable",
+      "sortable",
+      "expandable",
+      "source_traceable",
+      "disabled",
+      "unavailable"
+    ]
+  },
+  "rendering_rules": [
+    "Closed positions never render as active holdings.",
+    "Prohibited reentry never renders as a buy candidate.",
+    "Triggered rules do not imply that execution occurred.",
+    "Executed state requires execution evidence.",
+    "Stale and superseded states remain visibly labeled.",
+    "Unknown state never defaults to current.",
+    "Warnings remain visible when non-empty."
+  ],
+  "forbidden_interaction_states": [
+    "execute",
+    "submit_order",
+    "place_order",
+    "buy",
+    "sell",
+    "cancel_order",
+    "connect_account"
+  ]
+}

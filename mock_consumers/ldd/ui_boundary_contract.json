@@ -1,0 +1,72 @@
+{
+  "contract_type": "read_only_ui_boundary",
+  "version": "0.1",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "baseline_checkpoint": "2026-06-10T08:49:00+08:00",
+  "consumer_mode": "internal_read_only",
+  "artifact_references": {
+    "surface_map": "mock_consumers/ldd/ui_surface_map.json",
+    "field_visibility_matrix": "mock_consumers/ldd/ui_field_visibility_matrix.json",
+    "state_taxonomy": "mock_consumers/ldd/ui_state_taxonomy.json"
+  },
+  "allowed_view_model_sections": [
+    "meta",
+    "checkpoint",
+    "portfolio_mode",
+    "account_overview",
+    "account_sections",
+    "positions",
+    "closed_positions",
+    "risk_summary",
+    "active_rules",
+    "strategy_states",
+    "timeline",
+    "pending_commands",
+    "memory_checkpoint",
+    "warnings",
+    "data_quality"
+  ],
+  "allowed_interactions": [
+    "filter_local_rows",
+    "sort_local_rows",
+    "expand_read_only_details",
+    "select_timeline_range",
+    "inspect_source_reference",
+    "switch_read_only_section",
+    "display_warning_detail"
+  ],
+  "prohibited_capabilities": [
+    "customer_facing_rendering",
+    "runtime_record_mutation",
+    "command_status_mutation",
+    "order_submission",
+    "order_cancellation",
+    "trade_execution",
+    "credential_entry",
+    "live_price_inference",
+    "live_api_connection",
+    "broker_api_connection",
+    "binance_api_connection",
+    "warning_suppression",
+    "raw_record_state_reconstruction"
+  ],
+  "boundary_invariants": [
+    "The view model is the primary consumer artifact.",
+    "Raw records are audit and debugging inputs only.",
+    "All interactions are local and read-only.",
+    "Warnings and data-quality state remain visible.",
+    "Rules never become execution controls.",
+    "Customer-facing readiness remains false until permissions and masking exist."
+  ],
+  "status": {
+    "contract_ready": true,
+    "internal_read_only_ready": true,
+    "customer_facing_ready": false,
+    "frontend_implemented": false,
+    "api_server_present": false,
+    "external_api_connected": false,
+    "broker_api_connected": false,
+    "binance_api_connected": false,
+    "trading_automation_enabled": false
+  }
+}

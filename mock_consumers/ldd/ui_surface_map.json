@@ -1,0 +1,116 @@
+{
+  "map_type": "ui_surface_map",
+  "version": "0.1",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "surfaces": [
+    {
+      "surface_id": "header_status",
+      "reads": [
+        "meta",
+        "checkpoint",
+        "portfolio_mode"
+      ],
+      "interaction_state": "read_only"
+    },
+    {
+      "surface_id": "data_quality_banner",
+      "reads": [
+        "warnings",
+        "data_quality"
+      ],
+      "interaction_state": "expandable",
+      "must_remain_visible_when_nonempty": true
+    },
+    {
+      "surface_id": "account_overview",
+      "reads": [
+        "account_overview",
+        "account_sections"
+      ],
+      "interaction_state": "read_only"
+    },
+    {
+      "surface_id": "active_positions",
+      "reads": [
+        "positions"
+      ],
+      "interaction_state": "filterable_sortable",
+      "must_not_include": [
+        "closed_positions"
+      ]
+    },
+    {
+      "surface_id": "closed_positions",
+      "reads": [
+        "closed_positions"
+      ],
+      "interaction_state": "filterable_sortable",
+      "must_show": [
+        "position_state",
+        "quantity",
+        "no_reentry"
+      ]
+    },
+    {
+      "surface_id": "risk_summary",
+      "reads": [
+        "risk_summary"
+      ],
+      "interaction_state": "read_only"
+    },
+    {
+      "surface_id": "active_rules",
+      "reads": [
+        "active_rules"
+      ],
+      "interaction_state": "expandable",
+      "boundary": "Rules are monitored conditions and never executable controls."
+    },
+    {
+      "surface_id": "strategy_states",
+      "reads": [
+        "strategy_states"
+      ],
+      "interaction_state": "filterable_sortable"
+    },
+    {
+      "surface_id": "runtime_timeline",
+      "reads": [
+        "timeline"
+      ],
+      "interaction_state": "filterable_sortable",
+      "boundary": "Timeline is audit history and not a live event feed."
+    },
+    {
+      "surface_id": "pending_commands",
+      "reads": [
+        "pending_commands"
+      ],
+      "interaction_state": "read_only",
+      "boundary": "Command status is visible but cannot be mutated."
+    },
+    {
+      "surface_id": "memory_checkpoint",
+      "reads": [
+        "memory_checkpoint"
+      ],
+      "interaction_state": "read_only"
+    },
+    {
+      "surface_id": "source_trace",
+      "reads": [
+        "source_files"
+      ],
+      "interaction_state": "source_traceable",
+      "boundary": "Source paths support internal audit only."
+    }
+  ],
+  "prohibited_surface_types": [
+    "order_ticket",
+    "trade_button",
+    "credential_form",
+    "live_quote_stream",
+    "account_connection_dialog",
+    "runtime_record_editor"
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "schema_type": "ui_boundary_architecture_review",
+  "review_id": "vol6-phase6-1-ui-boundary-architecture-20260610-0849",
+  "project": "Tianma Work OS",
+  "subproject": "LLM Daredevil Desk",
+  "review_time": "2026-06-10T08:49:00+08:00",
+  "baseline_checkpoint": "2026-06-10T08:49:00+08:00",
+  "baseline_commit": "494b07b644d146afa8c937305cda74b1b7676c02",
+  "portfolio_mode": "core_position_defense_mode",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "boundary_artifacts": [
+    "mock_consumers/ldd/ui_boundary_contract.json",
+    "mock_consumers/ldd/ui_field_visibility_matrix.json",
+    "mock_consumers/ldd/ui_surface_map.json",
+    "mock_consumers/ldd/ui_state_taxonomy.json"
+  ],
+  "surface_ids": [
+    "header_status",
+    "data_quality_banner",
+    "account_overview",
+    "active_positions",
+    "closed_positions",
+    "risk_summary",
+    "active_rules",
+    "strategy_states",
+    "runtime_timeline",
+    "pending_commands",
+    "memory_checkpoint",
+    "source_trace"
+  ],
+  "visibility_classes": [
+    "public_safe",
+    "internal_only",
+    "sensitive_account",
+    "execution_sensitive",
+    "never_expose"
+  ],
+  "state_taxonomies": [
+    "data_states",
+    "position_states",
+    "rule_states",
+    "strategy_states",
+    "interaction_states"
+  ],
+  "allowed_interactions": [
+    "filter_local_rows",
+    "sort_local_rows",
+    "expand_read_only_details",
+    "select_timeline_range",
+    "inspect_source_reference",
+    "switch_read_only_section",
+    "display_warning_detail"
+  ],
+  "prohibited_capabilities": [
+    "frontend_application",
+    "customer_facing_ui",
+    "api_server",
+    "live_endpoint",
+    "external_api_connection",
+    "broker_api_connection",
+    "binance_api_connection",
+    "trade_execution",
+    "trading_automation",
+    "runtime_record_mutation",
+    "credential_entry"
+  ],
+  "validation_status": "passed",
+  "blocking_issues": [],
+  "warnings": [],
+  "customer_facing_ready": false,
+  "recommended_next_phase": "Vol.6 Phase 6.2 - Permission and Privacy Masking Model",
+  "explicit_confirmations": [
+    "No frontend app or customer-facing UI was created.",
+    "No API server or live endpoint was created.",
+    "No external, broker, or Binance API was connected.",
+    "No trading automation or execution path was added.",
+    "The latest checkpoint and runtime facts remain unchanged.",
+    "The cockpit view model remains the primary read-only consumer artifact."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-10/vol6_phase6_0_baseline_verification_cockpit_consistency_review_0849_sgt.json"
+  ],
+  "related_reports": [
+    "docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md",
+    "reports/ldd/vol6_phase6_1_ui_boundary_architecture.md"
+  ]
+}
