@@ -7,7 +7,7 @@
   "sample_response": {
     "api_version": "0.1",
     "project": "LLM Daredevil Desk",
-    "source_checkpoint": "2026-06-09T08:28:00+08:00",
+    "source_checkpoint": "2026-06-10T08:49:00+08:00",
     "portfolio_mode": "core_position_defense_mode",
     "payload_reference": "cockpit/ldd/view_model.json",
     "consumer_readiness": "ready_with_limits",

@@ -1,0 +1,55 @@
+{
+  "schema_type": "view_model_quality_gate_review",
+  "review_id": "ldd-view-model-quality-gates-20260610-0849",
+  "project": "Tianma Work OS",
+  "subproject": "LLM Daredevil Desk",
+  "review_time": "2026-06-10T08:49:00+08:00",
+  "baseline_checkpoint": "2026-06-10T08:49:00+08:00",
+  "baseline_commit": "c537a9fb36d58894de4cd4ac8e28fb375dfc3e87",
+  "portfolio_mode": "core_position_defense_mode",
+  "view_model_file": "cockpit/ldd/view_model.json",
+  "quality_gate_version": "0.1",
+  "gates_checked": [
+    "required sections",
+    "checkpoint consistency",
+    "portfolio mode",
+    "timeline count and warnings",
+    "closed-position consistency",
+    "execution writeback consistency",
+    "GLD and NVDA post-sale quantities",
+    "rule-compliance vs price-outcome separation",
+    "crypto defense semantics",
+    "data quality and UI safety"
+  ],
+  "validation_status": "passed",
+  "blocking_failures": [],
+  "warnings": [],
+  "expected_counts": {
+    "active_rules": 6,
+    "strategy_states": 16,
+    "timeline_events": 84,
+    "timeline_warnings": 0
+  },
+  "findings": [
+    "The view model advances to the 2026-06-10T08:49:00+08:00 checkpoint.",
+    "GLD is reduced from 20 to 10 and NVDA from 20 to 15.",
+    "Rule compliance remains separate from price outcome quality.",
+    "Runtime status conflict is non-blocking and resolved in favor of the actual Phase 5.8 baseline.",
+    "No live connectivity or automated execution path is present."
+  ],
+  "non_goals": [
+    "No UI or frontend application is created.",
+    "No external API is connected.",
+    "No trading automation is added.",
+    "No historical checkpoint is re-ingested."
+  ],
+  "recommended_next_phase": "Vol.5 Handoff Summary -> Open Vol.6",
+  "related_records": [
+    "records/ldd/2026-06-10/phase5_final_pressure_test_result_0848_0849_sgt.json",
+    "records/ldd/2026-06-10/executed_order_writeback_0848_0849_sgt.json"
+  ],
+  "related_reports": [
+    "reports/ldd/runtime_timeline.md",
+    "reports/ldd/view_model_quality_gates.md"
+  ]
+}

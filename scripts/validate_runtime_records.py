@@ -67,7 +67,9 @@ SCHEMA_FILES = {
     "cockpit_consumer_readiness_review": "cockpit_consumer_readiness_review.schema.json",
     "mock_consumer_package_review": "mock_consumer_package_review.schema.json",
     "consumer_contract_test_matrix": "consumer_contract_test_matrix.schema.json",
-    "read_only_consumer_fixture_validation": "read_only_consumer_fixture_validation.schema.json"
+    "read_only_consumer_fixture_validation": "read_only_consumer_fixture_validation.schema.json",
+    "executed_order_writeback": "executed_order_writeback.schema.json",
+    "runtime_status_arbitration": "runtime_status_arbitration.schema.json"
 }
 
 
@@ -96,6 +98,26 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "consumer_contract_test_matrix", SCHEMA_FILES["consumer_contract_test_matrix"]
     if "read_only_consumer_fixture_validation" in filename:
         return "read_only_consumer_fixture_validation", SCHEMA_FILES["read_only_consumer_fixture_validation"]
+    if "executed_order_writeback" in filename:
+        return "executed_order_writeback", SCHEMA_FILES["executed_order_writeback"]
+    if "runtime_status_conflict_arbitration" in filename:
+        return "runtime_status_arbitration", SCHEMA_FILES["runtime_status_arbitration"]
+    if "phase5_final_pressure_test_result" in filename:
+        return "cockpit_consistency_review", SCHEMA_FILES["cockpit_consistency_review"]
+    if "ldd_post_close_execution_review" in filename:
+        return "sync_delta_update", SCHEMA_FILES["sync_delta_update"]
+    if "rule_compliance_vs_price_outcome_review" in filename:
+        return "rule_based_execution_review", SCHEMA_FILES["rule_based_execution_review"]
+    if "gld_rule_execution_review" in filename or "nvda_rule_execution_review" in filename:
+        return "rule_based_execution_review", SCHEMA_FILES["rule_based_execution_review"]
+    if "post_sale_cost_basis_interpretation" in filename:
+        return "account_structure_review", SCHEMA_FILES["account_structure_review"]
+    if "us_cash_ratio_quality_score" in filename:
+        return "account_structure_review", SCHEMA_FILES["account_structure_review"]
+    if "hk_high_profit_protection_escalation" in filename:
+        return "account_structure_review", SCHEMA_FILES["account_structure_review"]
+    if "closed_position_discipline_validation" in filename:
+        return "account_structure_review", SCHEMA_FILES["account_structure_review"]
     if "ldd_post_close_review" in filename:
         return "sync_delta_update", SCHEMA_FILES["sync_delta_update"]
     if "premarket_trigger_to_post_close_outcome_reconciliation" in filename:

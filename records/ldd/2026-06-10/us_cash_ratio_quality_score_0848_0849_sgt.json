@@ -1,0 +1,29 @@
+{
+  "review_id": "us-cash-ratio-quality-score-20260610-0849",
+  "project": "tianma-work-os",
+  "snapshot_time": "2026-06-10T08:49:00+08:00",
+  "account": "longbridge_us_equity_section",
+  "structure_score": 88,
+  "cash_pressure": "low; approximately 11220.14 USD cash and 45.8 percent U.S. cash ratio",
+  "leverage_risk": "reduced; GGLL remains the main leveraged ETF risk valve",
+  "opposite_exposure_risk": "low",
+  "weak_position_drag": "reduced",
+  "legacy_position_risk": "controlled; historical cleanup positions remain closed",
+  "bot_strategy_risk": "not applicable",
+  "rule_compliance": "GLD and NVDA reductions were confirmed and reconciled",
+  "redeployment_readiness": "improved structurally but intentionally blocked by defense-mode no-new-buying rule",
+  "key_findings": [
+    "U.S. section assets are approximately 24476.07 USD.",
+    "Implied U.S. cash is approximately 11220.14 USD.",
+    "U.S. cash ratio is approximately 45.8 percent.",
+    "Account structure is more defensive after GLD and NVDA reductions."
+  ],
+  "recommended_next_actions": [
+    "Preserve cash while core-position defense remains active.",
+    "Do not treat improved cash capacity as permission for immediate redeployment."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-10/account_state_delta_0848_0849_sgt.json",
+    "records/ldd/2026-06-10/rule_compliance_vs_price_outcome_review_0848_0849_sgt.json"
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "schema_type": "cockpit_consistency_review",
+  "review_id": "phase5-final-pressure-test-20260610-0849",
+  "project": "Tianma Work OS",
+  "subproject": "LLM Daredevil Desk",
+  "review_time": "2026-06-10T08:49:00+08:00",
+  "baseline_checkpoint": "2026-06-10T08:49:00+08:00",
+  "baseline_commit": "c537a9fb36d58894de4cd4ac8e28fb375dfc3e87",
+  "portfolio_mode": "core_position_defense_mode",
+  "cockpit_files_reviewed": [
+    "cockpit/ldd/manifest.json",
+    "cockpit/ldd/latest_state.json",
+    "cockpit/ldd/account_structure.json",
+    "cockpit/ldd/active_rules.json",
+    "cockpit/ldd/strategy_states.json",
+    "cockpit/ldd/runtime_timeline.json",
+    "cockpit/ldd/view_model.json"
+  ],
+  "consistency_status": "passed_with_observations",
+  "latest_active_checkpoint": "2026-06-10T08:49:00+08:00",
+  "timeline_warning_count": 0,
+  "active_rule_count": 6,
+  "strategy_state_count": 16,
+  "warnings": [],
+  "blocking_issues": [],
+  "non_blocking_observations": [
+    "The incoming sync claimed Phase 5.6b, but runtime arbitration preserves the actual Phase 5.8 baseline.",
+    "NVDA execution price quality is imperfect but separate from rule compliance."
+  ],
+  "consistency_findings": [
+    "Executed-order writeback reconciles three fills with post-sale quantities.",
+    "GLD is 10 shares and NVDA is 15 shares.",
+    "U.S. cash ratio is approximately 45.8 percent.",
+    "Closed-position discipline remains valid.",
+    "Consumer readiness remains ready_with_limits."
+  ],
+  "ui_readiness_score": 0.9,
+  "recommended_next_phase": "Vol.5 Handoff Summary -> Open Vol.6",
+  "explicit_confirmations": [
+    "No UI or frontend app created.",
+    "No external, broker, or Binance API connected.",
+    "No trading automation added."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-10/ldd_post_close_execution_review_0848_0849_sgt.json",
+    "records/ldd/2026-06-10/executed_order_writeback_0848_0849_sgt.json",
+    "records/ldd/2026-06-10/runtime_status_conflict_arbitration_0848_0849_sgt.json"
+  ]
+}

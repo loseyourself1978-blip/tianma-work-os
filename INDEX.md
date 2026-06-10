@@ -289,6 +289,24 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `records/ldd/2026-06-09/read_only_consumer_fixture_validation_0828_sgt.json`
 - `reports/ldd/read_only_consumer_fixture_validation.md`
 
+## Vol.5 Phase 5.9 / Real LDD Execution Writeback Pressure Test
+
+- `schemas/executed_order_writeback.schema.json`
+- `schemas/runtime_status_arbitration.schema.json`
+- `records/ldd/2026-06-10/ldd_post_close_execution_review_0848_0849_sgt.json`
+- `records/ldd/2026-06-10/account_state_delta_0848_0849_sgt.json`
+- `records/ldd/2026-06-10/executed_order_writeback_0848_0849_sgt.json`
+- `records/ldd/2026-06-10/rule_compliance_vs_price_outcome_review_0848_0849_sgt.json`
+- `records/ldd/2026-06-10/gld_rule_execution_review_0848_0849_sgt.json`
+- `records/ldd/2026-06-10/nvda_rule_execution_review_0848_0849_sgt.json`
+- `records/ldd/2026-06-10/post_sale_cost_basis_interpretation_0848_0849_sgt.json`
+- `records/ldd/2026-06-10/us_cash_ratio_quality_score_0848_0849_sgt.json`
+- `records/ldd/2026-06-10/hk_high_profit_protection_escalation_0848_0849_sgt.json`
+- `records/ldd/2026-06-10/closed_position_discipline_validation_0848_0849_sgt.json`
+- `records/ldd/2026-06-10/crypto_defense_state_delta_0848_0849_sgt.json`
+- `records/ldd/2026-06-10/runtime_status_conflict_arbitration_0848_0849_sgt.json`
+- `records/ldd/2026-06-10/phase5_final_pressure_test_result_0848_0849_sgt.json`
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

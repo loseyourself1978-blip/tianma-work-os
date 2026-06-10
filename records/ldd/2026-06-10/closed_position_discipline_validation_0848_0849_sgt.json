@@ -1,0 +1,28 @@
+{
+  "review_id": "closed-position-discipline-validation-20260610-0849",
+  "project": "tianma-work-os",
+  "snapshot_time": "2026-06-10T08:49:00+08:00",
+  "account": "longbridge_us_equity_closed_positions",
+  "structure_score": 96,
+  "cash_pressure": "improved by preserving prior cleanup proceeds",
+  "leverage_risk": "no re-entry into closed SOXL, UGL, SOXS, TSLQ, or GDXU; no chase or activation of NVDD or NVDS",
+  "opposite_exposure_risk": "controlled",
+  "weak_position_drag": "INTC remains closed",
+  "legacy_position_risk": "closed-position discipline validated",
+  "bot_strategy_risk": "not applicable",
+  "rule_compliance": "SOXL, UGL, INTC, SOXS, TSLQ, and GDXU remain closed with no re-entry; NVDD and NVDS remain prohibited no-chase instruments",
+  "redeployment_readiness": "no re-entry allowed without a new approved rule",
+  "key_findings": [
+    "Market volatility and semiconductor rebound did not reactivate closed instruments.",
+    "Closed-position opportunity cost remains separate from rule-compliance score.",
+    "The no-reentry guardrail remains valid."
+  ],
+  "recommended_next_actions": [
+    "Continue rendering closed positions separately from active holdings.",
+    "Require a new decision record before any re-entry."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-10/account_state_delta_0848_0849_sgt.json",
+    "records/ldd/2026-06-09/closed_position_opportunity_cost_requirement_0826_0828_sgt.json"
+  ]
+}

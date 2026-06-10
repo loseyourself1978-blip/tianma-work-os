@@ -1,0 +1,34 @@
+{
+  "review_id": "nvda-rule-execution-review-20260610-0849",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "account": "longbridge_us_equity",
+  "asset": "NVDA",
+  "position_tag": "main_core_risk_watch_partial_reduction",
+  "review_time": "2026-06-10T08:49:00+08:00",
+  "related_trigger_rule_id": "nvda-core-defense-rule-20260609-0828",
+  "related_strategy_state_id": "nvda-core-ai-exposure",
+  "intended_rule": "Reduce 5 NVDA when downside protection is triggered and the 210-212 reclaim fails.",
+  "actual_execution": "A filled sell of 5 shares at displayed price 201.74 reduced NVDA from 20 to 15 shares.",
+  "execution_status": "completed",
+  "rule_compliance_result": "compliant_execution",
+  "execution_evidence": [
+    "user_provided_longbridge_NVDA_order_record_20260610_0848_0849_sgt",
+    "post_sale_holding_NVDA_15"
+  ],
+  "rule_compliance_score": 0.95,
+  "account_risk_improvement": "Core-position exposure was reduced by 25 percent and U.S. cash improved.",
+  "short_term_price_outcome": "The execution price was near the intraday low and NVDA later closed around 208.",
+  "price_outcome_quality": "imperfect",
+  "execution_price_context": "An imperfect execution price does not invalidate a triggered downside-protection rule.",
+  "review_conclusion": "NVDA execution was rule-compliant despite imperfect short-term price outcome.",
+  "lessons_learned": [
+    "Rule compliance and fill quality require separate fields.",
+    "The remaining 15 shares stay under 200 downside protection and 210-212 reclaim monitoring."
+  ],
+  "next_rule_update": "Hold 15; reduce another 5 below 200 with weak QQQ/SMH; hold after a sustained 210-212 reclaim; no buyback yet.",
+  "related_records": [
+    "records/ldd/2026-06-10/executed_order_writeback_0848_0849_sgt.json",
+    "records/ldd/2026-06-10/rule_trigger_monitor_0848_0849_sgt.json"
+  ]
+}

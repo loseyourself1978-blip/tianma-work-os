@@ -1,21 +1,27 @@
 {
-  "generated_at": "2026-06-09T08:28:00+08:00",
+  "generated_at": "2026-06-10T08:49:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "cockpit_latest_state",
   "version": "0.1",
-  "latest_active_checkpoint": "2026-06-09T08:28:00+08:00",
+  "latest_active_checkpoint": "2026-06-10T08:49:00+08:00",
   "source_files": [
-    "records/ldd/2026-06-09/account_state_delta_0826_0828_sgt.json",
-    "records/ldd/2026-06-09/active_risk_non_execution_review_0826_0828_sgt.json",
+    "records/ldd/2026-06-10/account_state_delta_0848_0849_sgt.json",
+    "records/ldd/2026-06-10/rule_trigger_monitor_0848_0849_sgt.json",
     "records/ldd/2026-06-09/quote_type_tagging_reinforcement_0826_0828_sgt.json",
-    "records/ldd/2026-06-09/quote_type_tagging_reinforcement_0826_0828_sgt.json",
+    "records/ldd/2026-06-10/us_cash_ratio_quality_score_0848_0849_sgt.json",
     "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json",
     "records/ldd/2026-06-08/core_position_defense_monitor_0843_0844_sgt.json",
-    "records/ldd/2026-06-09/ldd_post_close_review_0826_0828_sgt.json",
+    "records/ldd/2026-06-10/ldd_post_close_execution_review_0848_0849_sgt.json",
     "records/ldd/2026-06-09/premarket_trigger_to_post_close_outcome_reconciliation_0826_0828_sgt.json",
     "records/ldd/2026-06-09/closed_position_opportunity_cost_requirement_0826_0828_sgt.json",
     "records/ldd/2026-06-09/hk_high_profit_protection_requirement_0826_0828_sgt.json",
-    "records/ldd/2026-06-09/crypto_defense_state_delta_0826_0828_sgt.json",
+    "records/ldd/2026-06-10/crypto_defense_state_delta_0848_0849_sgt.json",
+    "records/ldd/2026-06-10/executed_order_writeback_0848_0849_sgt.json",
+    "records/ldd/2026-06-10/rule_compliance_vs_price_outcome_review_0848_0849_sgt.json",
+    "records/ldd/2026-06-10/us_cash_ratio_quality_score_0848_0849_sgt.json",
+    "records/ldd/2026-06-10/post_sale_cost_basis_interpretation_0848_0849_sgt.json",
+    "records/ldd/2026-06-10/runtime_status_conflict_arbitration_0848_0849_sgt.json",
+    "records/ldd/2026-06-10/closed_position_discipline_validation_0848_0849_sgt.json",
     "records/ldd/2026-06-05/soxl_residual_closure_execution_1951_sgt.json",
     "records/ldd/2026-06-05/soxl_full_cleanup_reconciliation_1951_sgt.json",
     "records/ldd/2026-06-05/ugl_cleanup_execution_2208_sgt.json",
@@ -26,34 +32,34 @@
   ],
   "state_summary": {
     "total_account": {
-      "broker_total_assets_usd": "approximately 41411",
-      "cash_usd": "approximately 6304.16",
+      "broker_total_assets_usd": "approximately 38971.43",
+      "cash_usd": "approximately 11220.14",
       "total_holding_value_usd": "unknown",
       "total_holding_pl_usd": "unknown",
       "total_day_pl_usd": "unknown",
-      "note": "The latest post-close checkpoint preserves core_position_defense_mode with no visible execution and same-day order count 0/0."
+      "note": "The latest post-close checkpoint preserves core_position_defense_mode and reconciles three confirmed risk-reduction fills."
     },
     "hong_kong_equities": {
       "latest_checkpoint_status": "HK high-profit protection is tracked separately from U.S. risk scoring.",
       "02513_zhipu": {
         "shares": 100,
-        "market_value_hkd": "approximately 131400",
+        "market_value_hkd": "approximately 113600",
         "latest_price_hkd": "unknown",
-        "day_pl_hkd": "approximately +1700",
-        "holding_pl_hkd": "unknown"
+        "day_pl_hkd": "approximately -17800",
+        "holding_pl_hkd": "approximately +101980"
       }
     },
     "us_equities": {
-      "section_value_usd": "approximately 24637.79",
-      "holding_market_value_usd": "approximately 18336.8",
-      "holding_pl_usd": "approximately +1715.99",
-      "day_pl_usd": "approximately -45.39",
+      "section_value_usd": "approximately 24476.07",
+      "holding_market_value_usd": "approximately 13255.93",
+      "holding_pl_usd": "approximately +1554.28",
+      "day_pl_usd": "approximately -204.03",
       "historical_cleanup_status": "SOXS, TSLQ, GDXU, SOXL, UGL, and INTC are closed; no reopening.",
       "new_ldd_model_strategy_status": "No new LDD U.S. model strategy position.",
       "key_positions": [
-        "GLD 20",
         "GOOG 14",
-        "NVDA 20",
+        "GLD 10",
+        "NVDA 15",
         "GGLL 10",
         "tiny TSLA residual"
       ],
@@ -63,25 +69,25 @@
         "INTC 0"
       ],
       "open_risks": [
-        "NVDA main core-risk watch",
+        "NVDA main core-risk watch after first protection reduction",
         "GGLL main remaining leveraged ETF risk valve",
-        "GLD active concentration/risk-line protection after compliant non-execution",
-        "Hong Kong high-profit protection requires a separate module"
+        "GLD residual concentration/risk-line protection after compliant execution",
+        "Hong Kong high-profit drawdown protection is escalated"
       ],
       "portfolio_mode": "core_position_defense_mode"
     },
     "crypto": {
-      "binance_total_assets_usdt": "approximately 8241.71",
+      "binance_total_assets_usdt": "approximately 8197.31",
       "usdt": "5936",
       "eth": "0.8070416",
       "doge": "8400.535",
       "sol": "2.931163",
       "btc": "0.00055762",
-      "zec_residual": "0.012974, approximately 5.86 USDT",
+      "zec_residual": "0.012974, approximately 5.57 USDT",
       "cash_posture": "USDT-dominant defensive posture",
       "btc_buyback_status": "Not triggered below 75,500-76,000",
       "zec_bot_status": "Closed / profit-locked based on prior confirmed execution state; no ZEC grid reopening.",
-      "usdt_defense_ratio_pct": 72,
+      "usdt_defense_ratio_pct": 72.4,
       "open_risks": [
         "Crypto market weakness",
         "BTC still below buyback trigger",
@@ -89,19 +95,32 @@
       ]
     },
     "runtime": {
-      "latest_timeline_event_time": "2026-06-09T08:28:00+08:00",
-      "timeline_event_count": 68,
+      "latest_timeline_event_time": "2026-06-10T08:49:00+08:00",
+      "timeline_event_count": 84,
       "warning_count": 0,
-      "no_new_execution_confirmed": true,
+      "no_new_execution_confirmed": false,
       "confirmed_execution_reconciled": true,
-      "latest_confirmed_execution": "No new execution visible in latest checkpoint; prior SOXL, UGL, and INTC cleanup cycle remains reconciled.",
-      "active_risk_non_execution": {
-        "asset": "GLD",
-        "reason": "recovered_above_first_level_risk_band_after_regular_session_close",
-        "assessment": "acceptable",
-        "rule_compliance_result": "compliant_non_execution"
+      "latest_confirmed_execution": "GLD sell 5 at 390.91, GLD sell 5 at 391.05, and NVDA sell 5 at 201.74; all filled and reconciled.",
+      "execution_writeback": {
+        "order_count": 3,
+        "estimated_gross_proceeds_usd": 4918.5,
+        "GLD_position_before": 20,
+        "GLD_position_after": 10,
+        "NVDA_position_before": 20,
+        "NVDA_position_after": 15,
+        "status": "confirmed_against_post_sale_holdings_and_cash"
       },
-      "superseded_pending_instruction": "2026-06-08 17:04-17:05 SGT/BJT premarket-only delta",
+      "rule_compliance_vs_price_outcome": {
+        "GLD": "compliant_execution",
+        "NVDA": "compliant_execution_with_imperfect_price_outcome",
+        "scoring_boundary": "Rule compliance and price outcome quality are separate."
+      },
+      "runtime_status_arbitration": {
+        "severity": "non_blocking",
+        "actual_latest_phase": "Vol.5 Phase 5.8 Read-Only Consumer Fixture Validator",
+        "result": "use_latest_actual_twos_runtime_baseline_and_latest_ldd_market_order_source"
+      },
+      "superseded_pending_instruction": "2026-06-09 17:26-17:27 SGT/BJT premarket-only Phase 5.9 instruction",
       "soxl_position_after_execution": "0",
       "ugl_position_after_execution": "0",
       "intc_position_after_execution": "0",

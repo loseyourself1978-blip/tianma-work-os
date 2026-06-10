@@ -57,7 +57,7 @@ Artifacts:
 5. Rule compliance versus opportunity cost
 6. Quote type separation
 7. GLD active-risk interpretation
-8. GLD compliant non-execution interpretation
+8. GLD rule-compliant execution interpretation
 9. NVDA 204 / 200 downside protection
 10. GOOG / GGLL risk-valve interpretation
 11. Crypto defense interpretation
@@ -147,7 +147,7 @@ in an explicit audit or debug mode.
 - Rendering SOXL, UGL, INTC, SOXS, TSLQ, or GDXU as active positions.
 - Combining total-account, U.S., HK, crypto, active, or historical P/L.
 - Calling a post-close or static price executable.
-- Treating GLD non-execution as either a rule violation or full repair.
+- Treating GLD execution price outcome as identical to rule compliance.
 - Treating NVDA or GOOG/GGLL thresholds as automated orders.
 - Treating mock files as a live market feed.
 - Publishing private values or identifiers without masking.
@@ -159,7 +159,7 @@ in an explicit audit or debug mode.
 - Blocking failures equal `0`.
 - Test warnings equal `0`.
 - Consumer readiness remains `ready_with_limits`.
-- Latest checkpoint remains `2026-06-09T08:28:00+08:00`.
+- Latest checkpoint remains `2026-06-10T08:49:00+08:00`.
 - Portfolio mode remains `core_position_defense_mode`.
 - Timeline warnings remain `0`.
 - View-model quality gates remain passed.
@@ -167,9 +167,10 @@ in an explicit audit or debug mode.
 
 ## Current LDD Defense-Mode Test Cases
 
-- GLD remains active risk after compliant non-execution above 395; full repair
-  remains 400-405.
-- NVDA remains the main core-risk watch with 204 / 200 protection.
+- GLD has two confirmed 5-share reductions, remains at 10 shares, and retains
+  385 / 380 downside protection.
+- NVDA has one confirmed 5-share reduction, remains at 15 shares, and retains
+  200 downside protection.
 - GOOG 355 defense and GGLL risk-valve roles remain distinct.
 - SOXL / UGL / INTC / SOXS / TSLQ / GDXU remain closed or no-reentry.
 - SOXL rebound remains opportunity cost, not rule failure.
@@ -192,7 +193,7 @@ in an explicit audit or debug mode.
 ## Recommended Next Phase
 
 ```text
-Vol.5 Phase 5.8 - Read-Only Consumer Fixture Validator
+Vol.5 Handoff Summary -> Open Vol.6
 ```
 
 Phase 5.8 implements this recommendation in:
@@ -204,3 +205,7 @@ Phase 5.8 implements this recommendation in:
 
 The validator executes the matrix boundaries locally and confirms source files
 remain unchanged by comparing hashes before and after validation.
+
+Phase 5.9 additionally confirms that consumers preserve executed-order
+writeback, distinguish rule compliance from price outcome, and honor the
+resolved runtime baseline without rolling back Phase 5.7 or Phase 5.8.

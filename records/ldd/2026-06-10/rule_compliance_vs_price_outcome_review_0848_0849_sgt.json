@@ -1,0 +1,35 @@
+{
+  "review_id": "rule-compliance-vs-price-outcome-20260610-0849",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "account": "longbridge_us_equity",
+  "asset": "GLD/NVDA",
+  "position_tag": "core_position_defense_partial_reductions",
+  "review_time": "2026-06-10T08:49:00+08:00",
+  "related_trigger_rule_id": "gld-active-risk-rule-20260609-0828; nvda-core-defense-rule-20260609-0828",
+  "related_strategy_state_id": "portfolio-core-position-defense",
+  "intended_rule": "Reduce GLD after renewed downside breach and reduce NVDA after downside-protection trigger; score compliance separately from immediate price outcome.",
+  "actual_execution": "GLD sold 10 shares across two filled orders and NVDA sold 5 shares in one filled order.",
+  "execution_status": "completed",
+  "rule_compliance_result": "compliant_execution",
+  "execution_evidence": [
+    "user_provided_longbridge_order_records_20260610_0848_0849_sgt",
+    "post_sale_holdings_show_GLD_10_and_NVDA_15"
+  ],
+  "rule_compliance_score": 0.97,
+  "account_risk_improvement": "U.S. cash increased to approximately 11220.14 USD and the U.S. cash ratio improved to approximately 45.8 percent.",
+  "short_term_price_outcome": "NVDA execution was near the intraday low; GLD remained weak after the risk line break.",
+  "price_outcome_quality": "mixed; GLD execution aligned with continuing weakness, while NVDA execution price was imperfect",
+  "execution_price_context": "Displayed filled prices are execution evidence, but price quality does not replace rule-compliance scoring.",
+  "review_conclusion": "Both reductions were rule-compliant and account-structure-improving even though the NVDA price outcome was not ideal.",
+  "lessons_learned": [
+    "Execution correctness is based on rule compliance and risk reduction.",
+    "Short-term rebound or an imperfect fill must be scored separately.",
+    "Post-sale cash and position reconciliation are required."
+  ],
+  "next_rule_update": "Track GLD 10-share residual and NVDA 15-share residual under their updated downside rules.",
+  "related_records": [
+    "records/ldd/2026-06-10/executed_order_writeback_0848_0849_sgt.json",
+    "records/ldd/2026-06-10/us_cash_ratio_quality_score_0848_0849_sgt.json"
+  ]
+}

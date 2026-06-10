@@ -92,6 +92,22 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "consumer_contract_test_matrix"
     if "read_only_consumer_fixture_validation" in name:
         return "read_only_consumer_fixture_validation"
+    if "executed_order_writeback" in name:
+        return "executed_order_writeback"
+    if "runtime_status_conflict_arbitration" in name:
+        return "runtime_status_arbitration"
+    if "phase5_final_pressure_test_result" in name:
+        return "cockpit_consistency_review"
+    if "ldd_post_close_execution_review" in name:
+        return "delta_sync"
+    if "rule_compliance_vs_price_outcome_review" in name:
+        return "execution_review"
+    if "gld_rule_execution_review" in name or "nvda_rule_execution_review" in name:
+        return "execution_review"
+    if "post_sale_cost_basis_interpretation" in name or "us_cash_ratio_quality_score" in name:
+        return "account_structure_review"
+    if "hk_high_profit_protection_escalation" in name or "closed_position_discipline_validation" in name:
+        return "account_structure_review"
     if "ldd_post_close_review" in name:
         return "delta_sync"
     if "premarket_trigger_to_post_close_outcome_reconciliation" in name:
@@ -169,6 +185,10 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "consumer_contract_test_matrix"
     if data.get("schema_type") == "read_only_consumer_fixture_validation":
         return "read_only_consumer_fixture_validation"
+    if data.get("schema_type") == "executed_order_writeback":
+        return "executed_order_writeback"
+    if data.get("schema_type") == "runtime_status_arbitration":
+        return "runtime_status_arbitration"
     return None
 
 
@@ -347,6 +367,7 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
         ]
     )
     execution = latest(by_kind(records, "execution_event"))
+    writeback = latest(by_kind(records, "executed_order_writeback"))
     account = latest_account_review(records)
     crypto_account = latest_account_review(records, "binance")
     delta = latest(by_kind(records, "delta_sync"))
@@ -476,6 +497,18 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
                     f"- Prior execution source: `{execution.relpath}`",
                 ]
             )
+    elif writeback:
+        reconciliation = writeback.data.get("reconciliation", {})
+        lines.extend(
+            [
+                "- Event: confirmed executed-order writeback",
+                f"- Time: `{scalar(writeback.data.get('review_time'))}`",
+                f"- Filled orders: `{scalar(reconciliation.get('filled_order_count'))}`",
+                f"- Estimated gross proceeds: `{scalar(reconciliation.get('estimated_gross_proceeds_usd'))} USD` before fees",
+                "- Position changes: GLD `20 -> 10`; NVDA `20 -> 15`",
+                f"- Source: `{writeback.relpath}`",
+            ]
+        )
     elif execution:
         trade = execution.data.get("trade", {})
         lines.extend(
@@ -520,7 +553,7 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
                 "- Closed cleanup positions: `SOXL`, `UGL`, `INTC`",
                 "- Main remaining leveraged ETF risk valve: `GGLL`",
                 "- Main core-risk watch: `NVDA`",
-                "- GLD state: recovered above 395 with compliant non-execution, but full repair still requires 400-405; UGL remains closed",
+                "- GLD state: first two risk-control tranches executed; 10 shares remain under 385/380 downside protection; UGL remains closed",
                 f"- Cleanup rule compliance score: `{scalar(cleanup_review.data.get('rule_compliance_score')) if cleanup_review else 'unknown'}`",
                 f"- Source: `{portfolio.relpath}`",
             ]
@@ -622,7 +655,7 @@ def generate_strategy_state_summary(records: list[RuntimeRecord]) -> list[str]:
     if "core_position_defense_mode" in portfolio_tags:
         lines.append("- U.S. historical cleanup cycle: completed for SOXL, UGL, and INTC.")
         lines.append("- Portfolio mode: `core_position_defense_mode`.")
-        lines.append("- Remaining focus: NVDA 204/200 core-risk protection, GGLL leveraged risk valve, and GLD 395/392 active-risk monitoring until 400-405 repair.")
+        lines.append("- Remaining focus: NVDA residual 15-share downside protection, GGLL leveraged risk valve, and GLD residual 10-share protection at 385/380.")
     else:
         lines.append("- U.S. historical positions: cleanup and risk-control phase remains active.")
     lines.append("- LDD new U.S. model strategy: no new position opened in current records.")
@@ -721,6 +754,7 @@ def generate_account_structure_summary(records: list[RuntimeRecord]) -> list[str
     lines = common_header("Account Structure Summary", records)
     reviews = by_kind(records, "account_structure_review")
     portfolio = latest(by_kind(records, "portfolio_state"))
+    writeback = latest(by_kind(records, "executed_order_writeback"))
 
     lines.extend(
         [
@@ -741,10 +775,10 @@ def generate_account_structure_summary(records: list[RuntimeRecord]) -> list[str
                 "- Closed cleanup positions: `SOXL`, `UGL`, `INTC`",
                 "- Main remaining leveraged ETF risk valve: `GGLL`",
                 "- Main core-risk watch: `NVDA`",
-                "- GLD: compliant non-execution after recovery above 395; active risk remains until 400-405 repair; UGL already closed",
+                "- GLD: two rule-compliant reduction tranches executed; 10 shares remain under 385/380 downside protection; UGL already closed",
                 f"- U.S. cash/cash-equivalent: `{scalar(assets.get('inferred_us_cash_equivalent_usd'))} USD`",
-                f"- Latest cleanup cash impact: `{scalar(assets.get('latest_cleanup_cash_impact_usd'))} USD` before fees",
-                f"- Total SOXL cleanup cash impact: `{scalar(assets.get('total_soxl_cleanup_cash_impact_usd'))} USD` before fees",
+                f"- Latest confirmed execution proceeds: `{scalar((writeback.data.get('reconciliation') or {}).get('estimated_gross_proceeds_usd')) if writeback else 'unknown'} USD` before fees",
+                "- Current U.S. cash ratio: `45.8%`",
                 f"- Binance USDT defense ratio: `{scalar(assets.get('binance_usdt_defense_ratio_pct'))}%`",
                 f"- Source: `{portfolio.relpath}`",
                 "",
@@ -794,6 +828,7 @@ def generate_account_structure_summary(records: list[RuntimeRecord]) -> list[str
 def generate_execution_review_summary(records: list[RuntimeRecord]) -> list[str]:
     lines = common_header("Execution Review Summary", records)
     reviews = by_kind(records, "execution_review")
+    writebacks = by_kind(records, "executed_order_writeback")
 
     lines.extend(
         [
@@ -801,6 +836,33 @@ def generate_execution_review_summary(records: list[RuntimeRecord]) -> list[str]
             "",
         ]
     )
+
+    if writebacks:
+        lines.extend(["## Confirmed Order Writeback", ""])
+        for record in writebacks:
+            data = record.data
+            reconciliation = data.get("reconciliation", {}) if isinstance(data.get("reconciliation"), dict) else {}
+            lines.extend(
+                [
+                    f"### {scalar(data.get('writeback_id'))}",
+                    "",
+                    f"- Review time: `{scalar(data.get('review_time'))}`",
+                    f"- Order count: `{scalar(reconciliation.get('order_count'))}`",
+                    f"- Filled orders: `{scalar(reconciliation.get('filled_order_count'))}`",
+                    f"- Estimated gross proceeds: `{scalar(reconciliation.get('estimated_gross_proceeds_usd'))} USD`",
+                    f"- Reconciliation status: `{scalar(reconciliation.get('reconciliation_status'))}`",
+                    f"- Source: `{record.relpath}`",
+                    "",
+                ]
+            )
+            for order in data.get("orders", []):
+                if isinstance(order, dict):
+                    lines.append(
+                        f"- {scalar(order.get('symbol'))}: {scalar(order.get('direction'))} "
+                        f"{scalar(order.get('quantity'))} at {scalar(order.get('displayed_price'))} "
+                        f"({scalar(order.get('fill_status'))}, {scalar(order.get('execution_review_status'))})"
+                    )
+            lines.append("")
 
     if reviews:
         for record in reviews:
@@ -817,6 +879,8 @@ def generate_execution_review_summary(records: list[RuntimeRecord]) -> list[str]
                     f"- Rule compliance score: `{scalar(data.get('rule_compliance_score'))}`",
                     f"- Account risk improvement: {scalar(data.get('account_risk_improvement'))}",
                     f"- Short-term price outcome: {scalar(data.get('short_term_price_outcome'))}",
+                    f"- Price outcome quality: {scalar(data.get('price_outcome_quality'))}",
+                    f"- Execution price context: {scalar(data.get('execution_price_context'))}",
                     f"- Review conclusion: {scalar(data.get('review_conclusion'))}",
                     f"- Source: `{record.relpath}`",
                     "",
@@ -1481,9 +1545,9 @@ def generate_latest_active_memory_checkpoint(records: list[RuntimeRecord]) -> li
         md_list(
             [
                 "DOGE remains a weak-risk holding.",
-                "NVDA is the main core-risk watch below the 210-212 reclaim zone and above the 204 first protection level.",
+                "NVDA remains the main core-risk watch after the first 5-share protection reduction; 15 shares remain with 200 downside protection.",
                 "GGLL is the main remaining leveraged ETF risk valve.",
-                "GLD recovered above 395 with compliant non-execution, but active risk remains until 400-405 recovery; UGL is closed.",
+                "GLD has completed two 5-share risk-control reductions; 10 shares remain with 385/380 downside protection and UGL is closed.",
                 "Memory cleanup requires human approval before active saved-memory removal.",
             ]
         )

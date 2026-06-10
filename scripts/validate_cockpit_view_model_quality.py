@@ -21,7 +21,7 @@ MANIFEST_PATH = COCKPIT_DIR / "manifest.json"
 LATEST_STATE_PATH = COCKPIT_DIR / "latest_state.json"
 TIMELINE_PATH = COCKPIT_DIR / "runtime_timeline.json"
 
-EXPECTED_CHECKPOINT = "2026-06-09T08:28:00+08:00"
+EXPECTED_CHECKPOINT = "2026-06-10T08:49:00+08:00"
 EXPECTED_PORTFOLIO_MODE = "core_position_defense_mode"
 REQUIRED_TOP_LEVEL = [
     "meta",
@@ -282,6 +282,60 @@ def check_crypto(view_model: dict[str, Any], results: GateResults) -> None:
     )
 
 
+def check_execution_writeback(view_model: dict[str, Any], results: GateResults) -> None:
+    runtime = as_dict(
+        as_dict(as_dict(view_model.get("account_overview")).get("total_account"))
+    )
+    state_runtime = as_dict(
+        as_dict(
+            as_dict(view_model.get("account_overview"))
+        )
+    )
+    latest_state_runtime = as_dict(
+        as_dict(view_model.get("account_sections")).get("sections")
+    )
+    reconciliation = as_dict(latest_state_runtime.get("execution_reconciliation"))
+    positions = {
+        str(item.get("asset_or_position", "")).split()[0]: str(item.get("asset_or_position", ""))
+        for item in as_list(view_model.get("positions"))
+        if isinstance(item, dict)
+    }
+    quality = as_dict(view_model.get("data_quality"))
+    problems: list[str] = []
+    if positions.get("GLD") != "GLD 10":
+        problems.append(f"GLD active position is {positions.get('GLD')!r}")
+    if positions.get("NVDA") != "NVDA 15":
+        problems.append(f"NVDA active position is {positions.get('NVDA')!r}")
+    if reconciliation.get("status") != "latest_orders_confirmed_and_reconciled":
+        problems.append("latest execution writeback is not reconciled")
+    if quality.get("confirmed_execution_reconciled") is not True:
+        problems.append("data quality does not confirm reconciled execution")
+    results.gate(
+        "execution_writeback",
+        not problems,
+        "GLD 20->10 and NVDA 20->15 are reconciled from confirmed order writeback"
+        if not problems
+        else "; ".join(problems),
+    )
+
+
+def check_compliance_price_separation(view_model: dict[str, Any], results: GateResults) -> None:
+    sections = as_dict(as_dict(view_model.get("account_sections")).get("sections"))
+    review = as_dict(sections.get("rule_compliance_vs_price_outcome"))
+    quality = as_dict(view_model.get("data_quality"))
+    valid = (
+        review.get("GLD_rule_compliance") == "compliant_execution"
+        and review.get("NVDA_rule_compliance") == "compliant_execution"
+        and review.get("NVDA_price_outcome_quality") == "imperfect"
+        and quality.get("rule_compliance_price_outcome_separated") is True
+    )
+    results.gate(
+        "compliance_price_separation",
+        valid,
+        "rule compliance is separate from NVDA's imperfect short-term price outcome",
+    )
+
+
 def check_data_quality(view_model: dict[str, Any], results: GateResults) -> None:
     quality = as_dict(view_model.get("data_quality"))
     problems: list[str] = []
@@ -359,6 +413,8 @@ def main() -> int:
     check_risk_roles(view_model, results)
     check_gld(view_model, results)
     check_crypto(view_model, results)
+    check_execution_writeback(view_model, results)
+    check_compliance_price_separation(view_model, results)
     check_data_quality(view_model, results)
     check_ui_safety(view_model, results)
 

@@ -1,0 +1,29 @@
+{
+  "review_id": "hk-high-profit-protection-escalation-20260610-0849",
+  "project": "tianma-work-os",
+  "snapshot_time": "2026-06-10T08:49:00+08:00",
+  "account": "hong_kong_equity_02513_zhipu",
+  "structure_score": 70,
+  "cash_pressure": "not assessed inside the separate HK protection module",
+  "leverage_risk": "no leveraged ETF classification",
+  "opposite_exposure_risk": "not applicable",
+  "weak_position_drag": "large one-day drawdown despite high remaining holding profit",
+  "legacy_position_risk": "high-profit concentration requires protection",
+  "bot_strategy_risk": "not applicable",
+  "rule_compliance": "separate HK protection assessment maintained outside U.S. scoring",
+  "redeployment_readiness": "not applicable until drawdown protection review",
+  "key_findings": [
+    "02513 Zhipu remains 100 shares with market value approximately 113600 HKD.",
+    "Holding P/L remains approximately +101980 HKD.",
+    "Day P/L is approximately -17800 HKD / -13.54 percent.",
+    "High-profit drawdown protection requires escalation and must remain separate from U.S. risk scoring."
+  ],
+  "recommended_next_actions": [
+    "Create a dedicated HK high-profit drawdown protection rule before any execution decision.",
+    "Keep HK attribution separate from U.S. equity and crypto sections."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-10/account_state_delta_0848_0849_sgt.json",
+    "records/ldd/2026-06-09/hk_high_profit_protection_requirement_0826_0828_sgt.json"
+  ]
+}

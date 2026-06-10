@@ -3,9 +3,9 @@
   "matrix_id": "ldd-static-consumer-contract-matrix-v0.1",
   "project": "Tianma Work OS",
   "subproject": "LLM Daredevil Desk",
-  "review_time": "2026-06-09T08:28:00+08:00",
-  "baseline_checkpoint": "2026-06-09T08:28:00+08:00",
-  "baseline_commit": "d618b47be02fcc09c4b75b0a0bc33f3d703f86da",
+  "review_time": "2026-06-10T08:49:00+08:00",
+  "baseline_checkpoint": "2026-06-10T08:49:00+08:00",
+  "baseline_commit": "c537a9fb36d58894de4cd4ac8e28fb375dfc3e87",
   "portfolio_mode": "core_position_defense_mode",
   "source_view_model": "cockpit/ldd/view_model.json",
   "source_mock_package": "mock_consumers/ldd/",
@@ -45,7 +45,7 @@
       "source_fields": [
         "checkpoint.latest_active_checkpoint"
       ],
-      "expected_interpretation": "Preserve 2026-06-09T08:28:00+08:00 as the latest checkpoint.",
+      "expected_interpretation": "Preserve 2026-06-10T08:49:00+08:00 as the latest checkpoint.",
       "prohibited_interpretation": "Use an older or mock-only timestamp as current.",
       "pass_criteria": [
         "Checkpoint matches the generated view model."
@@ -150,8 +150,8 @@
       "source_fields": [
         "risk_summary.gld_status"
       ],
-      "expected_interpretation": "GLD remains active risk until 400-405 repair.",
-      "prohibited_interpretation": "GLD is fully repaired or UGL-linked.",
+      "expected_interpretation": "GLD first two reduction tranches are completed; residual 10-share risk remains until 400-405 repair.",
+      "prohibited_interpretation": "GLD is fully repaired, UGL-linked, or still a compliant non-execution case.",
       "pass_criteria": [
         "GLD active-risk state remains visible."
       ],
@@ -168,10 +168,10 @@
       "source_fields": [
         "account_sections.active_risk_non_execution"
       ],
-      "expected_interpretation": "Non-execution was compliant after recovery above 395.",
-      "prohibited_interpretation": "No trade is automatically a violation.",
+      "expected_interpretation": "The prior non-execution was historical; the latest GLD state is compliant execution with 10 shares remaining.",
+      "prohibited_interpretation": "The historical non-execution state is rendered as current.",
       "pass_criteria": [
-        "Compliant non-execution remains explicit."
+        "Latest compliant execution supersedes prior non-execution while preserving audit history."
       ],
       "status": "passed"
     },
@@ -185,8 +185,8 @@
         "active_rules",
         "risk_summary.main_core_risk_watch"
       ],
-      "expected_interpretation": "NVDA remains the main core-risk watch with 204 / 200 protection.",
-      "prohibited_interpretation": "Thresholds are treated as submitted orders.",
+      "expected_interpretation": "NVDA remains the main core-risk watch after a compliant 20-to-15 reduction; 200 remains the next protection level.",
+      "prohibited_interpretation": "The imperfect execution price is treated as a compliance failure or the threshold as an automated order.",
       "pass_criteria": [
         "Risk levels are shown as read-only rules."
       ],
@@ -337,5 +337,5 @@
   },
   "blocking_failures": [],
   "warnings": [],
-  "recommended_next_phase": "Vol.5 Phase 5.8 - Read-Only Consumer Fixture Validator"
+  "recommended_next_phase": "Vol.5 Handoff Summary -> Open Vol.6"
 }

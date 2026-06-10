@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/runtime_status_arbitration.schema.json",
+  "title": "Runtime Status Arbitration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_type",
+    "arbitration_id",
+    "project",
+    "subproject",
+    "review_time",
+    "user_sync_claimed_phase",
+    "actual_latest_phase",
+    "actual_latest_commit",
+    "latest_market_source_time",
+    "arbitration_result",
+    "severity",
+    "blocking",
+    "reason",
+    "preserved_artifacts",
+    "related_records"
+  ],
+  "properties": {
+    "schema_type": {
+      "type": "string",
+      "enum": [
+        "runtime_status_arbitration"
+      ]
+    },
+    "arbitration_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "subproject": {
+      "type": "string"
+    },
+    "review_time": {
+      "type": "string"
+    },
+    "user_sync_claimed_phase": {
+      "type": "string"
+    },
+    "actual_latest_phase": {
+      "type": "string"
+    },
+    "actual_latest_commit": {
+      "type": "string"
+    },
+    "latest_market_source_time": {
+      "type": "string"
+    },
+    "arbitration_result": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "non_blocking",
+        "blocking"
+      ]
+    },
+    "blocking": {
+      "type": "boolean"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "preserved_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

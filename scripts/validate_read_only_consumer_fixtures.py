@@ -17,7 +17,7 @@ MOCK_DIR = REPO_ROOT / "mock_consumers" / "ldd"
 MANIFEST_PATH = COCKPIT_DIR / "manifest.json"
 VIEW_MODEL_PATH = COCKPIT_DIR / "view_model.json"
 
-EXPECTED_CHECKPOINT = "2026-06-09T08:28:00+08:00"
+EXPECTED_CHECKPOINT = "2026-06-10T08:49:00+08:00"
 EXPECTED_PORTFOLIO_MODE = "core_position_defense_mode"
 EXPECTED_SOURCE_VIEW_MODEL = "cockpit/ldd/view_model.json"
 
@@ -329,9 +329,10 @@ def check_rule_interpretation(
     view_risk = as_dict(view_model.get("risk_summary"))
     valid = (
         closed_valid
-        and gld.get("rule_compliance_result") == "compliant_non_execution"
-        and gld.get("non_execution_assessment") == "acceptable"
-        and nvda.get("protection_levels") == [204, 200]
+        and gld.get("rule_compliance_result") == "compliant_execution"
+        and gld.get("position_after") == 10
+        and nvda.get("position_after") == 15
+        and nvda.get("next_protection_level") == 200
         and goog.get("goog_defense_level") == 355
         and goog.get("ggll_role") == "main_remaining_leveraged_etf_risk_valve"
         and view_risk.get("main_core_risk_watch") == "NVDA"
@@ -339,7 +340,7 @@ def check_rule_interpretation(
     results.check(
         "rule_interpretation_boundary",
         valid,
-        "closed/no-reentry, GLD compliance, NVDA protection, and GOOG/GGLL risk roles are preserved"
+        "closed/no-reentry, GLD/NVDA execution compliance, and GOOG/GGLL risk roles are preserved"
         if valid
         else "one or more rule-interpretation boundaries are inconsistent",
     )

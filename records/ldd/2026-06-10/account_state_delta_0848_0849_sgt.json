@@ -1,0 +1,191 @@
+{
+  "record_id": "ldd-account-state-delta-20260610-0848-0849-sgt",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "account_type": "post_close_execution_writeback_checkpoint",
+  "snapshot_time": "2026-06-10T08:49:00+08:00",
+  "source_of_truth": [
+    "user_provided_longbridge_broker_screenshots_20260610_0848_0849_sgt",
+    "user_provided_binance_screenshots_20260610_0848_0849_sgt"
+  ],
+  "base_currency": "mixed_usd_hkd_usdt",
+  "total_visible_assets": {
+    "total_app_assets_usd": 38971.43,
+    "broker_total_assets_usd": 38971.43,
+    "us_equity_section_usd": 24476.07,
+    "us_stock_section_usd": 24476.07,
+    "us_holdings_market_value_usd": 13255.93,
+    "us_holding_pl_usd": 1554.28,
+    "us_day_pl_usd": -204.03,
+    "cash_usd": 11220.14,
+    "inferred_us_cash_equivalent_usd": 11220.14,
+    "us_cash_ratio_pct": 45.8,
+    "confirmed_order_gross_proceeds_usd": 4918.5,
+    "binance_visible_assets_usdt": 8197.31,
+    "binance_day_pl_usdt": -14.37,
+    "binance_day_pl_pct": -0.17,
+    "binance_usdt_defense_ratio_pct": 72.4
+  },
+  "cash_balance": {
+    "broker_cash_usd": 11220.14,
+    "us_cash_ratio_pct": 45.8,
+    "cash_calculation": "24476.07 U.S. section assets minus 13255.93 U.S. holding value equals approximately 11220.14 USD",
+    "confirmed_order_gross_proceeds_usd": 4918.5,
+    "binance_usdt": 5936,
+    "binance_usdt_defense_ratio_pct": 72.4,
+    "crypto_account_posture": "USDT defensive / cash dominant"
+  },
+  "holdings": [
+    {
+      "account": "hong_kong_equity",
+      "asset": "02513 Zhipu",
+      "quantity": 100,
+      "market_value_hkd": 113600,
+      "holding_pl_hkd": 101980,
+      "day_pl_hkd": -17800,
+      "day_pl_pct": -13.54,
+      "runtime_note": "High-profit drawdown protection escalated and remains separate from U.S. risk scoring."
+    },
+    {
+      "account": "us_equity",
+      "asset": "GOOG",
+      "quantity": 14,
+      "approx_price_usd": 361.66,
+      "market_value_usd": 5063.24,
+      "runtime_note": "Hold common stock; GOOG 355 defense remains active."
+    },
+    {
+      "account": "us_equity",
+      "asset": "GLD",
+      "quantity": 10,
+      "approx_price_usd": 387.7,
+      "market_value_usd": 3877,
+      "runtime_note": "Reduced from 20 to 10 through two filled five-share sells; residual risk remains."
+    },
+    {
+      "account": "us_equity",
+      "asset": "NVDA",
+      "quantity": 15,
+      "approx_price_usd": 206.427,
+      "market_value_usd": 3096.4,
+      "runtime_note": "Reduced from 20 to 15 after downside-protection execution; first reduction completed."
+    },
+    {
+      "account": "us_equity",
+      "asset": "GGLL",
+      "quantity": 10,
+      "approx_price_usd": 121.47,
+      "market_value_usd": 1214.7,
+      "runtime_note": "Main remaining leveraged ETF risk valve."
+    },
+    {
+      "account": "us_equity",
+      "asset": "TSLA",
+      "quantity": 0.0116,
+      "market_value_usd": 4.59,
+      "runtime_note": "Tiny residual."
+    },
+    {
+      "account": "closed_us_equity",
+      "asset": "SOXL",
+      "quantity": 0,
+      "position_state": "closed_position",
+      "runtime_note": "No re-entry despite rebound opportunity cost."
+    },
+    {
+      "account": "closed_us_equity",
+      "asset": "UGL",
+      "quantity": 0,
+      "position_state": "closed_position"
+    },
+    {
+      "account": "closed_us_equity",
+      "asset": "INTC",
+      "quantity": 0,
+      "position_state": "closed_position"
+    },
+    {
+      "account": "closed_us_equity",
+      "asset": "SOXS",
+      "quantity": 0,
+      "position_state": "closed_position"
+    },
+    {
+      "account": "closed_us_equity",
+      "asset": "TSLQ",
+      "quantity": 0,
+      "position_state": "closed_position"
+    },
+    {
+      "account": "closed_us_equity",
+      "asset": "GDXU",
+      "quantity": 0,
+      "position_state": "closed_position"
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "USDT",
+      "quantity": 5936,
+      "defense_ratio_pct": 72.4
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "ETH",
+      "quantity": 0.8070416,
+      "approx_value_usdt": 1353.87
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "DOGE",
+      "quantity": 8400.535,
+      "approx_value_usdt": 721.52
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "SOL",
+      "quantity": 2.931163,
+      "approx_value_usdt": 189.96
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "BTC",
+      "quantity": 0.00055762,
+      "approx_value_usdt": 34.39
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "ZEC",
+      "quantity": 0.012974,
+      "approx_value_usdt": 5.57,
+      "runtime_note": "Residual only; grid remains closed and no running bot screenshot was provided."
+    }
+  ],
+  "strategy_tags": [
+    "latest_active_checkpoint",
+    "core_position_defense_mode",
+    "post_close_execution_writeback",
+    "confirmed_execution_visible",
+    "no_pending_orders_visible",
+    "no_cancelled_orders_visible",
+    "gld_reduced_20_to_10",
+    "nvda_reduced_20_to_15",
+    "us_cash_ratio_45_8_pct",
+    "ggll_primary_leveraged_risk_valve",
+    "closed_positions_no_reentry",
+    "hk_high_profit_protection_escalated",
+    "quote_type_us_post_close_after_hours_broker_platform_sot",
+    "usdt_defense_ratio_72_4_pct"
+  ],
+  "notes": [
+    "Three executed sell orders are confirmed by user-provided order records.",
+    "Estimated gross proceeds before fees are approximately 4918.50 USD.",
+    "Rule compliance and price outcome quality are scored separately.",
+    "Broker-displayed remaining cost basis may change after partial sales.",
+    "The actual Phase 5.8 commit remains the Tianma Work OS runtime baseline."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-10/executed_order_writeback_0848_0849_sgt.json",
+    "records/ldd/2026-06-10/rule_compliance_vs_price_outcome_review_0848_0849_sgt.json",
+    "records/ldd/2026-06-10/runtime_status_conflict_arbitration_0848_0849_sgt.json"
+  ]
+}

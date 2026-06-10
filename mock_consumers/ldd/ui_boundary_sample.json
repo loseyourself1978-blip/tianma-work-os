@@ -38,8 +38,8 @@
         "risk_summary"
       ],
       "must_show": [
-        "GLD active risk and compliant non-execution",
-        "NVDA core-risk watch",
+        "GLD compliant execution and residual 10-share risk",
+        "NVDA compliant execution, imperfect price outcome, and residual core-risk watch",
         "GGLL leveraged-risk valve"
       ]
     },

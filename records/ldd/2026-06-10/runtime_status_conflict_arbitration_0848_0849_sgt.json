@@ -1,0 +1,25 @@
+{
+  "schema_type": "runtime_status_arbitration",
+  "arbitration_id": "runtime-status-conflict-20260610-0849",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "review_time": "2026-06-10T08:49:00+08:00",
+  "user_sync_claimed_phase": "Vol.5 Phase 5.6b Mock Consumer Package / UI Boundary Sample",
+  "actual_latest_phase": "Vol.5 Phase 5.8 Read-Only Consumer Fixture Validator",
+  "actual_latest_commit": "c537a9fb36d58894de4cd4ac8e28fb375dfc3e87",
+  "latest_market_source_time": "2026-06-10T08:49:00+08:00",
+  "arbitration_result": "use_latest_actual_twos_runtime_baseline_and_latest_ldd_market_order_source",
+  "severity": "non_blocking",
+  "blocking": false,
+  "reason": "The sync's phase label is stale, while its market/account/order content is newer. Runtime artifacts from Phases 5.7 and 5.8 remain authoritative and must not be rolled back.",
+  "preserved_artifacts": [
+    "Vol.5 Phase 5.7 consumer contract test matrix",
+    "Vol.5 Phase 5.8 read-only consumer fixture validator",
+    "cockpit/ldd/view_model.json",
+    "mock_consumers/ldd/"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-10/ldd_post_close_execution_review_0848_0849_sgt.json",
+    "records/ldd/2026-06-09/read_only_consumer_fixture_validation_0828_sgt.json"
+  ]
+}

@@ -92,11 +92,11 @@ yet a customer-facing product payload.
 Consumers should render:
 
 - Portfolio mode: `core_position_defense_mode`
-- Latest checkpoint: `2026-06-09T08:28:00+08:00`
+- Latest checkpoint: `2026-06-10T08:49:00+08:00`
 - SOXL / UGL / INTC: `closed_position`
 - GGLL: main remaining leveraged ETF risk valve
-- NVDA: main core-risk watch
-- GLD: ordinary GLD concentration / risk-line protection; compliant non-execution after recovery above 395; full repair remains 400-405
+- NVDA: main core-risk watch; 15 shares remain after a rule-compliant 5-share reduction
+- GLD: ordinary GLD concentration / risk-line protection; 10 shares remain after two rule-compliant reductions
 - Binance: USDT-dominant defense
 - BTC buyback trigger: inactive below 75,500-76,000
 - ZEC grid: closed / no reopen
@@ -144,5 +144,5 @@ Phase 5.7 adds the static test matrix and privacy categories in:
 ## Recommended Next Phase
 
 ```text
-Vol.5 Phase 5.8 - Read-Only Consumer Fixture Validator
+Vol.5 Handoff Summary -> Open Vol.6
 ```

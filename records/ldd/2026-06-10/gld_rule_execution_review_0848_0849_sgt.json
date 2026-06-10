@@ -1,0 +1,34 @@
+{
+  "review_id": "gld-rule-execution-review-20260610-0849",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "account": "longbridge_us_equity",
+  "asset": "GLD",
+  "position_tag": "ordinary_gld_concentration_risk_line_protection",
+  "review_time": "2026-06-10T08:49:00+08:00",
+  "related_trigger_rule_id": "gld-active-risk-rule-20260609-0828",
+  "related_strategy_state_id": "gld-core-position-review",
+  "intended_rule": "Reduce GLD when renewed weakness confirms the active 395/392 risk band.",
+  "actual_execution": "Two filled sells of 5 shares each at displayed prices 390.91 and 391.05 reduced GLD from 20 to 10 shares.",
+  "execution_status": "completed",
+  "rule_compliance_result": "compliant_execution",
+  "execution_evidence": [
+    "user_provided_longbridge_GLD_order_records_20260610_0848_0849_sgt",
+    "post_sale_holding_GLD_10"
+  ],
+  "rule_compliance_score": 0.99,
+  "account_risk_improvement": "GLD concentration was halved and cash increased.",
+  "short_term_price_outcome": "GLD remained weak near 387.70 after the fills.",
+  "price_outcome_quality": "supportive_of_risk_reduction",
+  "execution_price_context": "The displayed filled prices are broker order-record evidence.",
+  "review_conclusion": "The first two GLD reduction tranches are completed and rule-compliant; residual 10-share risk remains.",
+  "lessons_learned": [
+    "Ordinary GLD concentration protection operated independently of the already closed UGL position.",
+    "Residual GLD needs a new 385/380 staged defense."
+  ],
+  "next_rule_update": "Hold 10; reduce 5 below 385; consider clearing remaining 5 below 380; downgrade alert after 400-405 recovery.",
+  "related_records": [
+    "records/ldd/2026-06-10/executed_order_writeback_0848_0849_sgt.json",
+    "records/ldd/2026-06-10/rule_trigger_monitor_0848_0849_sgt.json"
+  ]
+}

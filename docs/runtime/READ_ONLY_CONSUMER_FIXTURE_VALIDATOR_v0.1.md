@@ -8,8 +8,8 @@ read `cockpit/ldd/view_model.json` and the static files under
 `mock_consumers/ldd/` without mutating runtime state, implying live data, or
 turning risk guidance into automated execution.
 
-This is the first of the final two Vol.5 pressure tests. The second is the real
-LDD premarket and crypto sync pressure test.
+This was the first of the final two Vol.5 pressure tests. Phase 5.9 is the
+second: a real post-close executed-order writeback pressure test.
 
 ## Scope
 
@@ -39,7 +39,7 @@ The validator:
 
 ## Blocking Checks
 
-1. Latest checkpoint remains `2026-06-09T08:28:00+08:00`.
+1. Latest checkpoint remains `2026-06-10T08:49:00+08:00`.
 2. Portfolio mode remains `core_position_defense_mode`.
 3. The cockpit manifest references the existing view model.
 4. All eight required fixtures exist and contain JSON objects.
@@ -56,8 +56,11 @@ The validator:
 
 ## Current LDD Assertions
 
-- GLD compliant non-execution remains acceptable while active risk continues.
-- NVDA 204 / 200 protection remains risk guidance, not automation.
+- GLD reductions from 20 to 10 shares remain rule-compliant writebacks; the
+  residual 10 shares remain under 385 / 380 protection.
+- NVDA reduction from 20 to 15 shares remains rule-compliant despite an
+  imperfect short-term price outcome; the residual position retains 200
+  downside protection.
 - GOOG 355 defense and GGLL risk-valve roles remain read-only.
 - SOXL / UGL / INTC / SOXS / TSLQ / GDXU remain closed or no-reentry.
 - SOXL rebound opportunity cost remains separate from rule compliance.
@@ -95,5 +98,9 @@ separately.
 ## Recommended Next Phase
 
 ```text
-Vol.5 Phase 5.9 - Real LDD Premarket + Crypto Sync Pressure Test
+Vol.5 Handoff Summary -> Open Vol.6
 ```
+
+Phase 5.9 confirms that the same read-only fixtures remain valid after real
+executed-order writeback, account-structure improvement, and non-blocking
+runtime-status arbitration.

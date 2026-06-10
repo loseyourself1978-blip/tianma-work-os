@@ -1,0 +1,28 @@
+{
+  "review_id": "post-sale-cost-basis-interpretation-20260610-0849",
+  "project": "tianma-work-os",
+  "snapshot_time": "2026-06-10T08:49:00+08:00",
+  "account": "longbridge_us_equity",
+  "structure_score": 82,
+  "cash_pressure": "reduced after GLD and NVDA partial sales",
+  "leverage_risk": "GGLL remains the principal leveraged ETF exposure",
+  "opposite_exposure_risk": "low",
+  "weak_position_drag": "reduced through prior cleanup and current core-risk reductions",
+  "legacy_position_risk": "closed cleanup positions remain closed",
+  "bot_strategy_risk": "not applicable to U.S. cost basis",
+  "rule_compliance": "partial sales were reconciled against order records and remaining quantities",
+  "redeployment_readiness": "cash improved, but new buying remains prohibited",
+  "key_findings": [
+    "Broker-displayed remaining cost basis may change after partial sales.",
+    "A changed remaining cost basis must not be interpreted as a new purchase or unrecorded execution.",
+    "Cockpit consumers should use order writeback plus before/after quantity for reconciliation."
+  ],
+  "recommended_next_actions": [
+    "Label post-sale cost basis as broker-calculated remaining-position metadata.",
+    "Keep execution history and remaining cost basis as separate fields."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-10/executed_order_writeback_0848_0849_sgt.json",
+    "records/ldd/2026-06-10/account_state_delta_0848_0849_sgt.json"
+  ]
+}

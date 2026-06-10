@@ -1,0 +1,27 @@
+{
+  "strategy_id": "crypto-defense-state-20260610-0849",
+  "project_id": "tianma-work-os",
+  "project": "tianma-work-os",
+  "subproject": "llm-daredevil-desk",
+  "strategy_type": "cash_defense_strategy",
+  "linked_asset": "Crypto spot / USDT defense",
+  "account_ref": "binance_spot",
+  "initial_capital": 8197.31,
+  "current_value": 8197.31,
+  "current_return_pct": -0.17,
+  "peak_return_pct": 0,
+  "profit_drawdown_pct": 0.17,
+  "soft_warning_threshold_pct": -1,
+  "hard_protection_threshold_pct": -3,
+  "market_state_context": "Crypto remains weak; USDT is approximately 72.4 percent of Binance visible assets; BTC remains below the 75,500-76,000 trigger.",
+  "health_state": "core_position_defense",
+  "recommended_action": "No BTC buyback; no ETH, SOL, DOGE, or ZEC adds; keep ZEC grid closed.",
+  "last_review_time": "2026-06-10T08:49:00+08:00",
+  "source_of_truth": [
+    "user_provided_binance_screenshots_20260610_0848_0849_sgt"
+  ],
+  "related_records": [
+    "records/ldd/2026-06-10/account_state_delta_0848_0849_sgt.json",
+    "records/ldd/2026-06-09/crypto_defense_state_delta_0826_0828_sgt.json"
+  ]
+}

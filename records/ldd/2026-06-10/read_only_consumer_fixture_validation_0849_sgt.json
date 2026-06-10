@@ -1,0 +1,71 @@
+{
+  "schema_type": "read_only_consumer_fixture_validation",
+  "validation_id": "ldd-read-only-consumer-fixture-validation-20260610-0849",
+  "project": "Tianma Work OS",
+  "subproject": "LLM Daredevil Desk",
+  "validation_time": "2026-06-10T08:49:00+08:00",
+  "baseline_checkpoint": "2026-06-10T08:49:00+08:00",
+  "baseline_commit": "c537a9fb36d58894de4cd4ac8e28fb375dfc3e87",
+  "portfolio_mode": "core_position_defense_mode",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "source_mock_package": "mock_consumers/ldd/",
+  "fixture_files_checked": [
+    "mock_consumers/ldd/view_model_snapshot.json",
+    "mock_consumers/ldd/ui_boundary_sample.json",
+    "mock_consumers/ldd/report_consumer_sample.json",
+    "mock_consumers/ldd/api_consumer_sample.json",
+    "mock_consumers/ldd/mobile_consumer_sample.json",
+    "mock_consumers/ldd/ai_board_consumer_sample.json",
+    "mock_consumers/ldd/consumer_contract_test_matrix.json",
+    "mock_consumers/ldd/privacy_boundary_sample.json"
+  ],
+  "validation_checks": [
+    {
+      "check_id": "fixture_presence",
+      "status": "passed",
+      "summary": "All eight static fixtures remain present."
+    },
+    {
+      "check_id": "checkpoint_and_mode_integrity",
+      "status": "passed",
+      "summary": "Fixtures preserve the June 10 checkpoint and core_position_defense_mode."
+    },
+    {
+      "check_id": "execution_writeback_interpretation",
+      "status": "passed",
+      "summary": "Confirmed fills are rendered as historical writeback evidence, not automated trade instructions."
+    },
+    {
+      "check_id": "privacy_and_live_data_boundary",
+      "status": "passed",
+      "summary": "No credentials, live API claims, or automated execution paths are present."
+    },
+    {
+      "check_id": "consumer_contract_matrix",
+      "status": "passed",
+      "summary": "The contract matrix remains 16/16 passed with ready_with_limits readiness."
+    },
+    {
+      "check_id": "read_only_hash_integrity",
+      "status": "passed",
+      "summary": "Source fixture hashes remain unchanged during validation."
+    }
+  ],
+  "pass_fail_summary": {
+    "total_checks": 11,
+    "passed": 11,
+    "failed": 0,
+    "warnings": 0,
+    "overall_status": "passed",
+    "fixture_files_checked": 8,
+    "contract_matrix_result": "16/16 passed",
+    "consumer_readiness": "ready_with_limits"
+  },
+  "blocking_failures": [],
+  "warnings": [],
+  "read_only_confirmed": true,
+  "privacy_boundary_confirmed": true,
+  "no_live_api_confirmed": true,
+  "no_trading_automation_confirmed": true,
+  "recommended_next_phase": "Vol.5 Handoff Summary -> Open Vol.6"
+}

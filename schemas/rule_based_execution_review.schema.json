@@ -102,6 +102,12 @@
     "short_term_price_outcome": {
       "type": "string"
     },
+    "price_outcome_quality": {
+      "type": "string"
+    },
+    "execution_price_context": {
+      "type": "string"
+    },
     "review_conclusion": {
       "type": "string"
     },

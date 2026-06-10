@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/executed_order_writeback.schema.json",
+  "title": "Executed Order Writeback",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_type",
+    "writeback_id",
+    "project",
+    "subproject",
+    "review_time",
+    "account",
+    "quote_type",
+    "source_of_truth",
+    "orders",
+    "reconciliation",
+    "related_records"
+  ],
+  "properties": {
+    "schema_type": {
+      "type": "string",
+      "enum": [
+        "executed_order_writeback"
+      ]
+    },
+    "writeback_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "subproject": {
+      "type": "string"
+    },
+    "review_time": {
+      "type": "string"
+    },
+    "account": {
+      "type": "string"
+    },
+    "quote_type": {
+      "type": "string"
+    },
+    "source_of_truth": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "orders": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "symbol",
+          "direction",
+          "quantity",
+          "displayed_price",
+          "estimated_gross_proceeds",
+          "fill_status",
+          "linked_rule_id",
+          "order_source",
+          "quote_type",
+          "execution_review_status"
+        ],
+        "properties": {
+          "symbol": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "buy",
+              "sell"
+            ]
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "displayed_price": {
+            "type": "number"
+          },
+          "estimated_gross_proceeds": {
+            "type": "number"
+          },
+          "fill_status": {
+            "type": "string",
+            "enum": [
+              "filled",
+              "partially_filled",
+              "cancelled",
+              "unknown"
+            ]
+          },
+          "linked_rule_id": {
+            "type": "string"
+          },
+          "order_source": {
+            "type": "string"
+          },
+          "quote_type": {
+            "type": "string"
+          },
+          "execution_review_status": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "reconciliation": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "related_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

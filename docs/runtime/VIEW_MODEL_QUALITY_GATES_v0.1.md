@@ -70,15 +70,15 @@ calls.
 
 ## Current Defense-Mode Baseline
 
-- Latest checkpoint: `2026-06-09T08:28:00+08:00`
+- Latest checkpoint: `2026-06-10T08:49:00+08:00`
 - Portfolio mode: `core_position_defense_mode`
 - Active rules: `6`
 - Strategy states: `16`
 - Timeline warnings: `0`
 - SOXL / UGL / INTC: closed, zero shares, no re-add
 - GGLL: main remaining leveraged ETF risk valve
-- NVDA: main core-risk watch
-- GLD: ordinary concentration / risk-line protection with compliant non-execution after recovery above 395; full repair remains 400-405
+- NVDA: main core-risk watch; first 5-share reduction executed, 15 shares remain
+- GLD: ordinary concentration / risk-line protection; two 5-share reductions executed, 10 shares remain
 - Crypto: USDT-dominant defense
 - BTC buyback: inactive
 - ZEC grid: closed / profit-locked / do not reopen
@@ -112,8 +112,9 @@ docs/runtime/COCKPIT_CONSUMER_READINESS_REVIEW_v0.1.md
 Next:
 
 ```text
-Vol.5 Phase 5.6 - Mock Consumer Package / UI Boundary Sample
+Vol.5 Handoff Summary -> Open Vol.6
 ```
 
-That phase should create mock/sample consumer payloads or static boundary
-examples while still avoiding a real UI app.
+Phase 5.9 passed the gates with real executed-order writeback. The handoff
+should preserve the current checkpoint, quality-gate expectations, and
+read-only consumer boundaries.
