@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.1 — GitHub Docs & Product Blueprint
+Vol.5 Handoff Summary - Prepare for Vol.6
 ```
 
 ## Core Documents
@@ -71,6 +71,7 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `docs/runtime/COCKPIT_CONSUMER_READINESS_REVIEW_v0.1.md`
 - `docs/runtime/VOL3_RUNTIME_REVIEW_AND_PHASE4_ROADMAP_v0.1.md`
 - `docs/runtime/VOL3_HANDOFF_SUMMARY_v0.1.md`
+- `docs/runtime/VOL5_HANDOFF_SUMMARY_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
 ## Vol.3 Phase 2 / Runtime Records
@@ -306,6 +307,12 @@ Vol.1 — GitHub Docs & Product Blueprint
 - `records/ldd/2026-06-10/crypto_defense_state_delta_0848_0849_sgt.json`
 - `records/ldd/2026-06-10/runtime_status_conflict_arbitration_0848_0849_sgt.json`
 - `records/ldd/2026-06-10/phase5_final_pressure_test_result_0848_0849_sgt.json`
+
+## Vol.5 Handoff / Prepare for Vol.6
+
+- `docs/runtime/VOL5_HANDOFF_SUMMARY_v0.1.md`
+- `reports/ldd/vol5_handoff_summary.md`
+- Next: `Tianma Work OS Vol.6 - Cockpit UI / Permission / API Boundary`
 
 ## Product Principles
 
