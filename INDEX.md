@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.6 Phase 6.1 - UI Boundary Architecture
+Vol.6 Phase 6.2 - Permission and Privacy Masking Model
 ```
 
 ## Core Documents
@@ -74,6 +74,7 @@ Vol.6 Phase 6.1 - UI Boundary Architecture
 - `docs/runtime/VOL5_HANDOFF_SUMMARY_v0.1.md`
 - `docs/runtime/VOL6_PHASE6_0_BASELINE_VERIFICATION_v0.1.md`
 - `docs/runtime/VOL6_PHASE6_1_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
+- `docs/runtime/VOL6_PHASE6_2_PERMISSION_PRIVACY_MASKING_MODEL_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
@@ -341,6 +342,21 @@ Vol.6 Phase 6.1 - UI Boundary Architecture
 - `records/ldd/2026-06-10/vol6_phase6_1_ui_boundary_architecture_review_0849_sgt.json`
 - `reports/ldd/vol6_phase6_1_ui_boundary_architecture.md`
 - Next: `Vol.6 Phase 6.2 - Permission and Privacy Masking Model`
+
+## Vol.6 Phase 6.2 / Permission and Privacy Masking Model
+
+- `docs/runtime/VOL6_PHASE6_2_PERMISSION_PRIVACY_MASKING_MODEL_v0.1.md`
+- `schemas/permission_privacy_masking_contract.schema.json`
+- `schemas/permission_privacy_masking_review.schema.json`
+- `mock_consumers/ldd/permission_role_taxonomy.json`
+- `mock_consumers/ldd/privacy_masking_policy.json`
+- `mock_consumers/ldd/field_permission_matrix.json`
+- `mock_consumers/ldd/customer_facing_unblock_criteria.json`
+- `scripts/validate_permission_privacy_masking.py`
+- `scripts/validate_permission_privacy_masking.sh`
+- `records/ldd/2026-06-10/vol6_phase6_2_permission_privacy_masking_review_0849_sgt.json`
+- `reports/ldd/vol6_phase6_2_permission_privacy_masking_model.md`
+- Next: `Vol.6 Phase 6.3 - Read-only API Contract`
 
 ## Product Principles
 

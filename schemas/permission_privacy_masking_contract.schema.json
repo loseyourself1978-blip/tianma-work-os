@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/permission_privacy_masking_contract.schema.json",
+  "title": "Permission Privacy Masking Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_type",
+    "version",
+    "source_view_model",
+    "baseline_checkpoint",
+    "role_taxonomy",
+    "masking_policy",
+    "field_permission_matrix",
+    "customer_facing_unblock_criteria",
+    "required_roles",
+    "required_field_classes",
+    "required_masking_actions",
+    "global_invariants",
+    "customer_facing_ready"
+  ],
+  "properties": {
+    "contract_type": {
+      "type": "string",
+      "enum": [
+        "permission_privacy_masking_contract"
+      ]
+    },
+    "version": {
+      "type": "string"
+    },
+    "source_view_model": {
+      "type": "string"
+    },
+    "baseline_checkpoint": {
+      "type": "string"
+    },
+    "role_taxonomy": {
+      "type": "string"
+    },
+    "masking_policy": {
+      "type": "string"
+    },
+    "field_permission_matrix": {
+      "type": "string"
+    },
+    "customer_facing_unblock_criteria": {
+      "type": "string"
+    },
+    "required_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "required_field_classes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "required_masking_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "global_invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "every_role_has_explicit_access_decisions",
+        "every_field_class_has_explicit_masking_and_access_decisions",
+        "no_role_can_access_never_expose",
+        "no_role_can_mutate_runtime",
+        "no_role_can_trigger_execution"
+      ],
+      "properties": {
+        "every_role_has_explicit_access_decisions": {
+          "type": "boolean",
+          "enum": [
+            true
+          ]
+        },
+        "every_field_class_has_explicit_masking_and_access_decisions": {
+          "type": "boolean",
+          "enum": [
+            true
+          ]
+        },
+        "no_role_can_access_never_expose": {
+          "type": "boolean",
+          "enum": [
+            true
+          ]
+        },
+        "no_role_can_mutate_runtime": {
+          "type": "boolean",
+          "enum": [
+            true
+          ]
+        },
+        "no_role_can_trigger_execution": {
+          "type": "boolean",
+          "enum": [
+            true
+          ]
+        }
+      }
+    },
+    "customer_facing_ready": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    }
+  }
+}

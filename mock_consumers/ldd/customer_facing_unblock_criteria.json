@@ -1,0 +1,31 @@
+{
+  "criteria_type": "customer_facing_unblock_criteria",
+  "version": "0.1",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "baseline_checkpoint": "2026-06-10T08:49:00+08:00",
+  "customer_facing_ready": false,
+  "unblock_requires_governance_approval": true,
+  "permission_model_present": true,
+  "masking_policy_present": true,
+  "field_permission_matrix_present": true,
+  "never_expose_validator_present": true,
+  "execution_sensitive_fields_non_interactive": true,
+  "warnings_visible": true,
+  "data_quality_visible": true,
+  "source_traceability_visible": true,
+  "no_credentials_or_tokens": true,
+  "no_account_identifiers": true,
+  "no_live_api_connection": true,
+  "no_broker_connection": true,
+  "no_binance_connection": true,
+  "no_trading_automation": true,
+  "no_runtime_mutation": true,
+  "remaining_blockers": [
+    "governance_approval_not_granted",
+    "real_authentication_not_implemented",
+    "real_authorization_not_implemented",
+    "customer_disclosure_policy_not_approved",
+    "privacy_review_not_completed",
+    "customer_surface_not_implemented"
+  ]
+}

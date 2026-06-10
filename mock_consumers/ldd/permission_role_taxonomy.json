@@ -1,0 +1,160 @@
+{
+  "taxonomy_type": "permission_role_taxonomy",
+  "version": "0.1",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "baseline_checkpoint": "2026-06-10T08:49:00+08:00",
+  "roles": [
+    {
+      "role_id": "system_admin",
+      "display_name": "System Administrator",
+      "purpose": "Govern static contracts and inspect approved internal and audit surfaces without runtime mutation.",
+      "allowed_surfaces": [
+        "internal_operator_cockpit",
+        "ai_board_review",
+        "audit_debug_view"
+      ],
+      "blocked_surfaces": [
+        "public_demo_view",
+        "customer_facing_view_blocked"
+      ],
+      "can_view_public_safe": true,
+      "can_view_internal_read_only": true,
+      "can_view_sensitive_account_value": true,
+      "can_view_execution_sensitive": true,
+      "can_view_audit_only": true,
+      "can_view_never_expose": false,
+      "can_export": true,
+      "can_mutate_runtime": false,
+      "can_trigger_execution": false,
+      "notes": "Administrative scope does not override never-expose, mutation, or execution prohibitions."
+    },
+    {
+      "role_id": "internal_operator",
+      "display_name": "Internal Operator",
+      "purpose": "Monitor the internal read-only cockpit and current operational posture.",
+      "allowed_surfaces": [
+        "internal_operator_cockpit"
+      ],
+      "blocked_surfaces": [
+        "ai_board_review",
+        "audit_debug_view",
+        "public_demo_view",
+        "customer_facing_view_blocked"
+      ],
+      "can_view_public_safe": true,
+      "can_view_internal_read_only": true,
+      "can_view_sensitive_account_value": true,
+      "can_view_execution_sensitive": true,
+      "can_view_audit_only": false,
+      "can_view_never_expose": false,
+      "can_export": false,
+      "can_mutate_runtime": false,
+      "can_trigger_execution": false,
+      "notes": "Execution-sensitive context remains non-interactive and read-only."
+    },
+    {
+      "role_id": "ai_board_reviewer",
+      "display_name": "AI Board Reviewer",
+      "purpose": "Review risk, strategy, rules, warnings, and data quality without receiving an execution path.",
+      "allowed_surfaces": [
+        "ai_board_review"
+      ],
+      "blocked_surfaces": [
+        "internal_operator_cockpit",
+        "audit_debug_view",
+        "public_demo_view",
+        "customer_facing_view_blocked"
+      ],
+      "can_view_public_safe": true,
+      "can_view_internal_read_only": true,
+      "can_view_sensitive_account_value": false,
+      "can_view_execution_sensitive": true,
+      "can_view_audit_only": false,
+      "can_view_never_expose": false,
+      "can_export": false,
+      "can_mutate_runtime": false,
+      "can_trigger_execution": false,
+      "notes": "Role recommendations are decision support, not automated instructions."
+    },
+    {
+      "role_id": "audit_reviewer",
+      "display_name": "Audit Reviewer",
+      "purpose": "Inspect source traceability, validation evidence, and reconciliation history.",
+      "allowed_surfaces": [
+        "audit_debug_view"
+      ],
+      "blocked_surfaces": [
+        "internal_operator_cockpit",
+        "ai_board_review",
+        "public_demo_view",
+        "customer_facing_view_blocked"
+      ],
+      "can_view_public_safe": true,
+      "can_view_internal_read_only": true,
+      "can_view_sensitive_account_value": true,
+      "can_view_execution_sensitive": true,
+      "can_view_audit_only": true,
+      "can_view_never_expose": false,
+      "can_export": true,
+      "can_mutate_runtime": false,
+      "can_trigger_execution": false,
+      "notes": "Exports require separate approval and remain subject to masking policy."
+    },
+    {
+      "role_id": "demo_viewer",
+      "display_name": "Demo Viewer",
+      "purpose": "Future viewer of approved public-safe synthetic or masked demo content.",
+      "allowed_surfaces": [],
+      "blocked_surfaces": [
+        "internal_operator_cockpit",
+        "ai_board_review",
+        "audit_debug_view",
+        "public_demo_view",
+        "customer_facing_view_blocked"
+      ],
+      "can_view_public_safe": true,
+      "can_view_internal_read_only": false,
+      "can_view_sensitive_account_value": false,
+      "can_view_execution_sensitive": false,
+      "can_view_audit_only": false,
+      "can_view_never_expose": false,
+      "can_export": false,
+      "can_mutate_runtime": false,
+      "can_trigger_execution": false,
+      "notes": "Public demo surface remains blocked until masking and demo-data governance are approved."
+    },
+    {
+      "role_id": "customer_facing_viewer_blocked",
+      "display_name": "Customer-facing Viewer Blocked",
+      "purpose": "Explicitly represent the unavailable customer-facing consumer role.",
+      "allowed_surfaces": [],
+      "blocked_surfaces": [
+        "internal_operator_cockpit",
+        "ai_board_review",
+        "audit_debug_view",
+        "public_demo_view",
+        "customer_facing_view_blocked"
+      ],
+      "can_view_public_safe": false,
+      "can_view_internal_read_only": false,
+      "can_view_sensitive_account_value": false,
+      "can_view_execution_sensitive": false,
+      "can_view_audit_only": false,
+      "can_view_never_expose": false,
+      "can_export": false,
+      "can_mutate_runtime": false,
+      "can_trigger_execution": false,
+      "notes": "No cockpit surface is available until explicit governance approval and all unblock criteria pass."
+    }
+  ],
+  "global_prohibitions": {
+    "live_api_access": false,
+    "broker_connection": false,
+    "binance_connection": false,
+    "live_market_data": false,
+    "credential_entry": false,
+    "trading_automation": false,
+    "runtime_mutation": false,
+    "execution_trigger": false
+  }
+}

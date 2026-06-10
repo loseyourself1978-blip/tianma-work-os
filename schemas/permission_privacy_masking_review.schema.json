@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/permission_privacy_masking_review.schema.json",
+  "title": "Permission Privacy Masking Review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_type",
+    "phase",
+    "timestamp",
+    "latest_checkpoint_unchanged",
+    "timeline_events_unchanged",
+    "timeline_warnings",
+    "customer_facing_ready",
+    "external_api_connected",
+    "broker_api_connected",
+    "binance_api_connected",
+    "trading_automation_enabled",
+    "credential_handling_enabled",
+    "runtime_mutation_enabled",
+    "validation_summary",
+    "created_artifacts",
+    "explicit_non_goals_confirmed"
+  ],
+  "properties": {
+    "record_type": {
+      "type": "string",
+      "enum": [
+        "governance_review"
+      ]
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "Vol.6 Phase 6.2"
+      ]
+    },
+    "timestamp": {
+      "type": "string"
+    },
+    "latest_checkpoint_unchanged": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
+    },
+    "timeline_events_unchanged": {
+      "type": "integer",
+      "enum": [
+        84
+      ]
+    },
+    "timeline_warnings": {
+      "type": "integer",
+      "enum": [
+        0
+      ]
+    },
+    "customer_facing_ready": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "external_api_connected": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "broker_api_connected": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "binance_api_connected": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "trading_automation_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "credential_handling_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "runtime_mutation_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "validation_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "checks",
+        "blocking_failures",
+        "warnings"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "passed"
+          ]
+        },
+        "checks": {
+          "type": "integer"
+        },
+        "blocking_failures": {
+          "type": "integer",
+          "enum": [
+            0
+          ]
+        },
+        "warnings": {
+          "type": "integer",
+          "enum": [
+            0
+          ]
+        }
+      }
+    },
+    "created_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "explicit_non_goals_confirmed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

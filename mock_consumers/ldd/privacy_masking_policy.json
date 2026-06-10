@@ -1,0 +1,70 @@
+{
+  "policy_type": "privacy_masking_policy",
+  "version": "0.1",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "baseline_checkpoint": "2026-06-10T08:49:00+08:00",
+  "actions": [
+    {
+      "action_id": "visible",
+      "description": "Render the approved value without transformation.",
+      "allowed_for_customer_facing": false,
+      "allowed_for_internal_read_only": true,
+      "example_before": "core_position_defense_mode",
+      "example_after": "core_position_defense_mode",
+      "validation_rule": "Allowed only when the role and surface permit the field class."
+    },
+    {
+      "action_id": "masked_partial",
+      "description": "Render a reduced-precision or partially hidden representation.",
+      "allowed_for_customer_facing": false,
+      "allowed_for_internal_read_only": true,
+      "example_before": "12345.67 USD",
+      "example_after": "approximately 12.3k USD",
+      "validation_rule": "The result must not preserve a prohibited exact identifier or exact sensitive value."
+    },
+    {
+      "action_id": "masked_full",
+      "description": "Replace the source value with a non-reversible category label.",
+      "allowed_for_customer_facing": false,
+      "allowed_for_internal_read_only": true,
+      "example_before": "detailed account value",
+      "example_after": "masked account value",
+      "validation_rule": "No source substring may remain in the rendered value."
+    },
+    {
+      "action_id": "omitted",
+      "description": "Exclude the field from the consumer payload or surface.",
+      "allowed_for_customer_facing": true,
+      "allowed_for_internal_read_only": true,
+      "example_before": "internal operational note",
+      "example_after": "field omitted",
+      "validation_rule": "The field key and value must not be present in the rendered payload."
+    },
+    {
+      "action_id": "blocked",
+      "description": "Block the field or surface and return a policy-state explanation.",
+      "allowed_for_customer_facing": true,
+      "allowed_for_internal_read_only": true,
+      "example_before": "restricted execution-sensitive detail",
+      "example_after": "blocked by permission policy",
+      "validation_rule": "No restricted source value may be returned with the block response."
+    },
+    {
+      "action_id": "reject_before_render",
+      "description": "Reject prohibited material before it enters a consumer payload.",
+      "allowed_for_customer_facing": true,
+      "allowed_for_internal_read_only": true,
+      "example_before": "prohibited secret-like field",
+      "example_after": "rejected before render",
+      "validation_rule": "Validation must fail if any role or surface receives the source value."
+    }
+  ],
+  "precedence": [
+    "reject_before_render",
+    "blocked",
+    "omitted",
+    "masked_full",
+    "masked_partial",
+    "visible"
+  ]
+}

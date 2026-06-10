@@ -1,0 +1,121 @@
+{
+  "matrix_type": "field_permission_matrix",
+  "version": "0.1",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "baseline_checkpoint": "2026-06-10T08:49:00+08:00",
+  "field_classes": [
+    {
+      "field_class": "public_safe",
+      "default_access": "copy_review_required",
+      "masking_action": "visible",
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator",
+        "ai_board_reviewer",
+        "audit_reviewer",
+        "demo_viewer"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "customer_facing_policy": "May be visible in a future demo only after copy and governance review; current customer-facing role remains blocked.",
+      "export_policy": "Export only approved generic or synthetic content.",
+      "mutation_policy": "read_only",
+      "validator_expectation": "Public-safe access must not imply live data, account connectivity, or customer readiness."
+    },
+    {
+      "field_class": "internal_read_only",
+      "default_access": "approved_internal_roles",
+      "masking_action": "visible",
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator",
+        "ai_board_reviewer",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "demo_viewer",
+        "customer_facing_viewer_blocked"
+      ],
+      "customer_facing_policy": "Blocked by default.",
+      "export_policy": "Internal export requires explicit approval.",
+      "mutation_policy": "read_only",
+      "validator_expectation": "Customer and demo roles must not receive internal read-only fields."
+    },
+    {
+      "field_class": "sensitive_account_value",
+      "default_access": "permission_required",
+      "masking_action": "masked_partial",
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "ai_board_reviewer",
+        "demo_viewer",
+        "customer_facing_viewer_blocked"
+      ],
+      "customer_facing_policy": "Masked or omitted outside specifically authorized internal roles; currently blocked.",
+      "export_policy": "Blocked unless separately approved and masked.",
+      "mutation_policy": "read_only",
+      "validator_expectation": "Sensitive values require authorized internal role and may not reach customer-facing surfaces."
+    },
+    {
+      "field_class": "execution_sensitive",
+      "default_access": "restricted_read_only",
+      "masking_action": "blocked",
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator",
+        "ai_board_reviewer",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "demo_viewer",
+        "customer_facing_viewer_blocked"
+      ],
+      "customer_facing_policy": "Blocked and non-interactive.",
+      "export_policy": "Blocked by default.",
+      "mutation_policy": "read_only_non_interactive",
+      "validator_expectation": "No order, execution trigger, mutation, live quote, or credential interaction may be attached."
+    },
+    {
+      "field_class": "audit_only",
+      "default_access": "audit_permission_required",
+      "masking_action": "omitted",
+      "allowed_roles": [
+        "system_admin",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "internal_operator",
+        "ai_board_reviewer",
+        "demo_viewer",
+        "customer_facing_viewer_blocked"
+      ],
+      "customer_facing_policy": "Omitted.",
+      "export_policy": "Audit export requires separate approval and source controls.",
+      "mutation_policy": "read_only",
+      "validator_expectation": "Audit-only fields must remain restricted to audit/debug contexts."
+    },
+    {
+      "field_class": "never_expose",
+      "default_access": "prohibited",
+      "masking_action": "reject_before_render",
+      "allowed_roles": [],
+      "blocked_roles": [
+        "system_admin",
+        "internal_operator",
+        "ai_board_reviewer",
+        "audit_reviewer",
+        "demo_viewer",
+        "customer_facing_viewer_blocked"
+      ],
+      "customer_facing_policy": "Always rejected before rendering.",
+      "export_policy": "Never export.",
+      "mutation_policy": "not_applicable",
+      "validator_expectation": "Every role must be blocked and any access grant must fail validation."
+    }
+  ]
+}
