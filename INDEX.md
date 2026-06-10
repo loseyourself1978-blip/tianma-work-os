@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.5 Handoff Summary - Prepare for Vol.6
+Vol.6 Phase 6.0 - Baseline Verification
 ```
 
 ## Core Documents
@@ -72,6 +72,7 @@ Vol.5 Handoff Summary - Prepare for Vol.6
 - `docs/runtime/VOL3_RUNTIME_REVIEW_AND_PHASE4_ROADMAP_v0.1.md`
 - `docs/runtime/VOL3_HANDOFF_SUMMARY_v0.1.md`
 - `docs/runtime/VOL5_HANDOFF_SUMMARY_v0.1.md`
+- `docs/runtime/VOL6_PHASE6_0_BASELINE_VERIFICATION_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
 ## Vol.3 Phase 2 / Runtime Records
@@ -313,6 +314,13 @@ Vol.5 Handoff Summary - Prepare for Vol.6
 - `docs/runtime/VOL5_HANDOFF_SUMMARY_v0.1.md`
 - `reports/ldd/vol5_handoff_summary.md`
 - Next: `Tianma Work OS Vol.6 - Cockpit UI / Permission / API Boundary`
+
+## Vol.6 Phase 6.0 / Baseline Verification
+
+- `docs/runtime/VOL6_PHASE6_0_BASELINE_VERIFICATION_v0.1.md`
+- `records/ldd/2026-06-10/vol6_phase6_0_baseline_verification_cockpit_consistency_review_0849_sgt.json`
+- `reports/ldd/vol6_phase6_0_baseline_verification.md`
+- Next: `Vol.6 Phase 6.1 - UI Boundary Architecture`
 
 ## Product Principles
 

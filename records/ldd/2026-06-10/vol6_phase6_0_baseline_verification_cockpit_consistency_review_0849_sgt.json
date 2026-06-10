@@ -1,0 +1,71 @@
+{
+  "schema_type": "cockpit_consistency_review",
+  "review_id": "vol6-phase6-0-baseline-verification-20260610-0849",
+  "project": "Tianma Work OS",
+  "subproject": "LLM Daredevil Desk",
+  "review_time": "2026-06-10T08:49:00+08:00",
+  "baseline_checkpoint": "2026-06-10T08:49:00+08:00",
+  "baseline_commit": "8c0ff77831e816702fff7983375965c2004e6466",
+  "portfolio_mode": "core_position_defense_mode",
+  "cockpit_files_reviewed": [
+    "cockpit/ldd/manifest.json",
+    "cockpit/ldd/view_model.json",
+    "cockpit/ldd/latest_state.json",
+    "cockpit/ldd/account_structure.json",
+    "cockpit/ldd/active_rules.json",
+    "cockpit/ldd/strategy_states.json",
+    "cockpit/ldd/pending_commands.json",
+    "cockpit/ldd/memory_checkpoint.json",
+    "cockpit/ldd/runtime_timeline.json"
+  ],
+  "report_files_reviewed": [
+    "reports/ldd/latest_runtime_report.md",
+    "reports/ldd/runtime_timeline.md",
+    "reports/ldd/view_model_quality_gates.md",
+    "reports/ldd/read_only_consumer_fixture_validation.md",
+    "reports/ldd/vol5_handoff_summary.md"
+  ],
+  "consistency_status": "passed_with_observations",
+  "latest_active_checkpoint": "2026-06-10T08:49:00+08:00",
+  "timeline_warning_count": 0,
+  "active_rule_count": 6,
+  "strategy_state_count": 16,
+  "warnings": [],
+  "blocking_issues": [],
+  "non_blocking_observations": [
+    "Consumer readiness remains ready_with_limits because privacy masking, permissions, and a read-only API boundary are not yet defined.",
+    "The verification record is governance metadata and does not create a new market checkpoint or timeline event.",
+    "The baseline runtime inventory was 84 records before this Phase 6.0 governance record was added."
+  ],
+  "consistency_findings": [
+    "The latest active checkpoint remains 2026-06-10T08:49:00+08:00.",
+    "The baseline runtime timeline remains 84 events with zero warnings.",
+    "The cockpit view model remains the primary read-only consumer artifact.",
+    "Raw records remain audit and debug inputs only.",
+    "View-model quality gates pass with zero blocking failures and zero warnings.",
+    "Read-only consumer fixtures pass with a 16/16 contract matrix.",
+    "No runtime facts, trading rules, position states, or historical records changed.",
+    "Customer-facing work remains blocked pending privacy, masking, and permission boundaries."
+  ],
+  "ui_readiness_score": 0.9,
+  "recommended_next_phase": "Vol.6 Phase 6.1 - UI Boundary Architecture",
+  "explicit_confirmations": [
+    "No customer-facing UI or frontend app was created.",
+    "No API server or endpoint was created.",
+    "No external, broker, or Binance API was connected.",
+    "No trading automation or automatic execution was added.",
+    "No GitHub Issues or GitHub Projects board were created.",
+    "No runtime facts, trading rules, historical records, or checkpoint values were modified."
+  ],
+  "related_records": [
+    "records/ldd/2026-06-10/phase5_final_pressure_test_result_0848_0849_sgt.json",
+    "records/ldd/2026-06-10/view_model_quality_gate_review_0849_sgt.json",
+    "records/ldd/2026-06-10/read_only_consumer_fixture_validation_0849_sgt.json"
+  ],
+  "related_reports": [
+    "docs/runtime/VOL5_HANDOFF_SUMMARY_v0.1.md",
+    "docs/runtime/VOL6_PHASE6_0_BASELINE_VERIFICATION_v0.1.md",
+    "reports/ldd/vol5_handoff_summary.md",
+    "reports/ldd/vol6_phase6_0_baseline_verification.md"
+  ]
+}
