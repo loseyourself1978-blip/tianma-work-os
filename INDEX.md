@@ -73,6 +73,7 @@ Vol.6 Phase 6.1 - UI Boundary Architecture
 - `docs/runtime/VOL3_HANDOFF_SUMMARY_v0.1.md`
 - `docs/runtime/VOL5_HANDOFF_SUMMARY_v0.1.md`
 - `docs/runtime/VOL6_PHASE6_0_BASELINE_VERIFICATION_v0.1.md`
+- `docs/runtime/VOL6_PHASE6_1_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
@@ -325,10 +326,13 @@ Vol.6 Phase 6.1 - UI Boundary Architecture
 
 ## Vol.6 Phase 6.1 / UI Boundary Architecture
 
+- `docs/runtime/VOL6_PHASE6_1_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `schemas/ui_boundary_contract.schema.json`
 - `schemas/ui_boundary_architecture_review.schema.json`
 - `mock_consumers/ldd/ui_boundary_contract.json`
+- `mock_consumers/ldd/ui_boundary_surface_map.json`
+- `mock_consumers/ldd/ui_visibility_matrix.json`
 - `mock_consumers/ldd/ui_field_visibility_matrix.json`
 - `mock_consumers/ldd/ui_surface_map.json`
 - `mock_consumers/ldd/ui_state_taxonomy.json`

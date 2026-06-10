@@ -8,8 +8,9 @@ Phase 6.1 defines a static read-only boundary for future Cockpit consumers.
 - Latest checkpoint: `2026-06-10T08:49:00+08:00`
 - Consumer mode: `internal_read_only`
 - Customer-facing readiness: `false`
-- Surface definitions: `12`
-- Visibility classes: `5`
+- Consumer surfaces: `5` (`3` allowed, `2` blocked)
+- Component surface definitions: `12`
+- Visibility classes: `6`
 - State-taxonomy groups: `5`
 - Frontend implementation: absent
 - API server: absent
@@ -19,6 +20,8 @@ Phase 6.1 defines a static read-only boundary for future Cockpit consumers.
 ## Boundary Artifacts
 
 - `mock_consumers/ldd/ui_boundary_contract.json`
+- `mock_consumers/ldd/ui_boundary_surface_map.json`
+- `mock_consumers/ldd/ui_visibility_matrix.json`
 - `mock_consumers/ldd/ui_field_visibility_matrix.json`
 - `mock_consumers/ldd/ui_surface_map.json`
 - `mock_consumers/ldd/ui_state_taxonomy.json`
@@ -30,4 +33,4 @@ Vol.6 Phase 6.2 - Permission and Privacy Masking Model
 ```
 
 Canonical specification:
-`docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
+`docs/runtime/VOL6_PHASE6_1_UI_BOUNDARY_ARCHITECTURE_v0.1.md`

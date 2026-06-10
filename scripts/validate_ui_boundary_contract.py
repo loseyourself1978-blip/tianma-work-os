@@ -18,6 +18,8 @@ CONTRACT_PATH = MOCK_DIR / "ui_boundary_contract.json"
 SURFACE_MAP_PATH = MOCK_DIR / "ui_surface_map.json"
 VISIBILITY_PATH = MOCK_DIR / "ui_field_visibility_matrix.json"
 TAXONOMY_PATH = MOCK_DIR / "ui_state_taxonomy.json"
+CONSUMER_SURFACE_MAP_PATH = MOCK_DIR / "ui_boundary_surface_map.json"
+CANONICAL_VISIBILITY_PATH = MOCK_DIR / "ui_visibility_matrix.json"
 
 EXPECTED_CHECKPOINT = "2026-06-10T08:49:00+08:00"
 EXPECTED_SOURCE = "cockpit/ldd/view_model.json"
@@ -28,6 +30,8 @@ BOUNDARY_PATHS = [
     SURFACE_MAP_PATH,
     VISIBILITY_PATH,
     TAXONOMY_PATH,
+    CONSUMER_SURFACE_MAP_PATH,
+    CANONICAL_VISIBILITY_PATH,
 ]
 
 REQUIRED_SECTIONS = {
@@ -62,6 +66,23 @@ REQUIRED_TAXONOMIES = {
     "rule_states",
     "strategy_states",
     "interaction_states",
+}
+
+REQUIRED_CONSUMER_SURFACES = {
+    "internal_operator_cockpit",
+    "ai_board_review",
+    "audit_debug_view",
+    "public_demo_view",
+    "customer_facing_view_blocked",
+}
+
+REQUIRED_CANONICAL_FIELD_CLASSES = {
+    "public_safe",
+    "internal_read_only",
+    "sensitive_account_value",
+    "execution_sensitive",
+    "audit_only",
+    "never_expose",
 }
 
 REQUIRED_PROHIBITIONS = {
@@ -149,6 +170,8 @@ def main() -> int:
         surface_map = documents[SURFACE_MAP_PATH]
         visibility = documents[VISIBILITY_PATH]
         taxonomy = documents[TAXONOMY_PATH]
+        consumer_surface_map = documents[CONSUMER_SURFACE_MAP_PATH]
+        canonical_visibility = documents[CANONICAL_VISIBILITY_PATH]
 
         checkpoint = (
             view_model.get("checkpoint", {}).get("latest_active_checkpoint")
@@ -167,7 +190,9 @@ def main() -> int:
             contract.get("source_view_model") == EXPECTED_SOURCE
             and surface_map.get("source_view_model") == EXPECTED_SOURCE
             and visibility.get("source_view_model") == EXPECTED_SOURCE
-            and taxonomy.get("source_view_model") == EXPECTED_SOURCE,
+            and taxonomy.get("source_view_model") == EXPECTED_SOURCE
+            and consumer_surface_map.get("source_view_model") == EXPECTED_SOURCE
+            and canonical_visibility.get("source_view_model") == EXPECTED_SOURCE,
             "all boundary artifacts reference cockpit/ldd/view_model.json",
         )
 
@@ -199,6 +224,35 @@ def main() -> int:
             else f"invalid reads={sorted(invalid_reads)}; raw record reads={raw_record_reads}",
         )
 
+        consumer_surfaces = {
+            item.get("surface_id"): item
+            for item in consumer_surface_map.get("surfaces", [])
+            if isinstance(item, dict)
+        }
+        invalid_surface_statuses = {
+            surface_id: surface.get("status")
+            for surface_id, surface in consumer_surfaces.items()
+            if surface.get("status") not in {"allowed", "blocked"}
+        }
+        results.check(
+            "consumer_surface_status",
+            set(consumer_surfaces) == REQUIRED_CONSUMER_SURFACES
+            and not invalid_surface_statuses,
+            "all five consumer surfaces have explicit allowed or blocked status"
+            if not invalid_surface_statuses
+            else f"invalid statuses: {invalid_surface_statuses}",
+        )
+
+        customer_surface = consumer_surfaces.get(
+            "customer_facing_view_blocked", {}
+        )
+        results.check(
+            "customer_facing_surface_blocked",
+            customer_surface.get("status") == "blocked"
+            and bool(customer_surface.get("blocked_reasons")),
+            "customer_facing_view_blocked remains blocked with explicit reasons",
+        )
+
         classes = {
             item.get("visibility_class")
             for item in visibility.get("classes", [])
@@ -208,6 +262,25 @@ def main() -> int:
             "visibility_classes",
             classes == REQUIRED_VISIBILITY_CLASSES,
             "all five visibility classes are defined",
+        )
+
+        canonical_classes = {
+            item.get("field_class"): item
+            for item in canonical_visibility.get("field_classes", [])
+            if isinstance(item, dict)
+        }
+        classes_without_policy = [
+            field_class
+            for field_class, item in canonical_classes.items()
+            if not item.get("rendering_policy")
+        ]
+        results.check(
+            "canonical_visibility_policies",
+            set(canonical_classes) == REQUIRED_CANONICAL_FIELD_CLASSES
+            and not classes_without_policy,
+            "all six canonical field classes define a rendering policy"
+            if not classes_without_policy
+            else f"missing rendering policy: {classes_without_policy}",
         )
 
         never_expose = next(

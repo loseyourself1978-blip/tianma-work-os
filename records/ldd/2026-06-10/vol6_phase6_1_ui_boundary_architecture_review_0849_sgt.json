@@ -10,29 +10,25 @@
   "source_view_model": "cockpit/ldd/view_model.json",
   "boundary_artifacts": [
     "mock_consumers/ldd/ui_boundary_contract.json",
+    "mock_consumers/ldd/ui_boundary_surface_map.json",
+    "mock_consumers/ldd/ui_visibility_matrix.json",
     "mock_consumers/ldd/ui_field_visibility_matrix.json",
     "mock_consumers/ldd/ui_surface_map.json",
     "mock_consumers/ldd/ui_state_taxonomy.json"
   ],
   "surface_ids": [
-    "header_status",
-    "data_quality_banner",
-    "account_overview",
-    "active_positions",
-    "closed_positions",
-    "risk_summary",
-    "active_rules",
-    "strategy_states",
-    "runtime_timeline",
-    "pending_commands",
-    "memory_checkpoint",
-    "source_trace"
+    "internal_operator_cockpit",
+    "ai_board_review",
+    "audit_debug_view",
+    "public_demo_view",
+    "customer_facing_view_blocked"
   ],
   "visibility_classes": [
     "public_safe",
-    "internal_only",
-    "sensitive_account",
+    "internal_read_only",
+    "sensitive_account_value",
     "execution_sensitive",
+    "audit_only",
     "never_expose"
   ],
   "state_taxonomies": [
@@ -81,6 +77,7 @@
     "records/ldd/2026-06-10/vol6_phase6_0_baseline_verification_cockpit_consistency_review_0849_sgt.json"
   ],
   "related_reports": [
+    "docs/runtime/VOL6_PHASE6_1_UI_BOUNDARY_ARCHITECTURE_v0.1.md",
     "docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md",
     "reports/ldd/vol6_phase6_1_ui_boundary_architecture.md"
   ]

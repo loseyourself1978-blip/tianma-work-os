@@ -5,8 +5,10 @@
   "baseline_checkpoint": "2026-06-10T08:49:00+08:00",
   "consumer_mode": "internal_read_only",
   "artifact_references": {
-    "surface_map": "mock_consumers/ldd/ui_surface_map.json",
-    "field_visibility_matrix": "mock_consumers/ldd/ui_field_visibility_matrix.json",
+    "component_surface_map": "mock_consumers/ldd/ui_surface_map.json",
+    "consumer_surface_map": "mock_consumers/ldd/ui_boundary_surface_map.json",
+    "legacy_field_visibility_matrix": "mock_consumers/ldd/ui_field_visibility_matrix.json",
+    "visibility_matrix": "mock_consumers/ldd/ui_visibility_matrix.json",
     "state_taxonomy": "mock_consumers/ldd/ui_state_taxonomy.json"
   },
   "allowed_view_model_sections": [

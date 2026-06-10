@@ -1,0 +1,98 @@
+{
+  "map_type": "ui_boundary_surface_map",
+  "version": "0.1",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "baseline_checkpoint": "2026-06-10T08:49:00+08:00",
+  "surfaces": [
+    {
+      "surface_id": "internal_operator_cockpit",
+      "status": "allowed",
+      "audience": "approved_internal_operator",
+      "purpose": "Read-only monitoring of checkpoint, account sections, positions, risks, rules, strategies, timeline, commands, and memory state.",
+      "allowed_field_classes": [
+        "public_safe",
+        "internal_read_only",
+        "sensitive_account_value",
+        "execution_sensitive"
+      ],
+      "restrictions": [
+        "permission_required_for_sensitive_account_value",
+        "execution_sensitive_fields_are_read_only",
+        "warnings_and_data_quality_must_remain_visible",
+        "no_order_or_record_mutation"
+      ]
+    },
+    {
+      "surface_id": "ai_board_review",
+      "status": "allowed",
+      "audience": "approved_ai_board_roles",
+      "purpose": "Read-only role-based review of risk, strategy, rules, source quality, and command boundaries.",
+      "allowed_field_classes": [
+        "public_safe",
+        "internal_read_only",
+        "execution_sensitive"
+      ],
+      "restrictions": [
+        "no_automated_execution",
+        "no_live_price_inference",
+        "role_scoped_sensitive_access",
+        "recommendations_remain_non_executable"
+      ]
+    },
+    {
+      "surface_id": "audit_debug_view",
+      "status": "allowed",
+      "audience": "approved_auditor_or_maintainer",
+      "purpose": "Inspect source trace, validation results, reconciliation evidence, and generated artifact consistency.",
+      "allowed_field_classes": [
+        "public_safe",
+        "internal_read_only",
+        "sensitive_account_value",
+        "execution_sensitive",
+        "audit_only"
+      ],
+      "restrictions": [
+        "least_privilege_required",
+        "read_only_source_access",
+        "never_expose_fields_rejected",
+        "no_runtime_record_mutation"
+      ]
+    },
+    {
+      "surface_id": "public_demo_view",
+      "status": "blocked",
+      "audience": "public_demo",
+      "purpose": "Future masked demonstration surface using synthetic or approved data.",
+      "allowed_field_classes": [
+        "public_safe"
+      ],
+      "blocked_reasons": [
+        "masking_policy_not_implemented",
+        "demo_data_policy_not_defined",
+        "privacy_review_not_completed"
+      ]
+    },
+    {
+      "surface_id": "customer_facing_view_blocked",
+      "status": "blocked",
+      "audience": "customer",
+      "purpose": "Reserved customer-facing surface; no rendering is currently permitted.",
+      "allowed_field_classes": [],
+      "blocked_reasons": [
+        "permission_model_not_implemented",
+        "privacy_masking_not_implemented",
+        "customer_disclosure_policy_not_defined",
+        "authentication_and_authorization_not_defined",
+        "execution_sensitive_suppression_not_approved"
+      ]
+    }
+  ],
+  "prohibited_surface_types": [
+    "order_ticket",
+    "trade_button",
+    "credential_form",
+    "live_quote_stream",
+    "account_connection_dialog",
+    "runtime_record_editor"
+  ]
+}

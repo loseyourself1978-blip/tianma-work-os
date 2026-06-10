@@ -1,0 +1,84 @@
+{
+  "matrix_type": "ui_visibility_matrix",
+  "version": "0.1",
+  "source_view_model": "cockpit/ldd/view_model.json",
+  "baseline_checkpoint": "2026-06-10T08:49:00+08:00",
+  "field_classes": [
+    {
+      "field_class": "public_safe",
+      "view_model_examples": [
+        "meta.version",
+        "portfolio_mode.current",
+        "generic state vocabulary"
+      ],
+      "rendering_policy": "Render only after content review; never imply live data or account connectivity.",
+      "default_visibility": "review_required"
+    },
+    {
+      "field_class": "internal_read_only",
+      "view_model_examples": [
+        "checkpoint",
+        "risk_summary",
+        "strategy_states",
+        "warnings",
+        "data_quality"
+      ],
+      "rendering_policy": "Render to approved internal roles with checkpoint, warning, and source context; no mutation controls.",
+      "default_visibility": "approved_internal_roles"
+    },
+    {
+      "field_class": "sensitive_account_value",
+      "view_model_examples": [
+        "account_overview",
+        "account_sections",
+        "positions.quantity",
+        "positions.market_value",
+        "section P/L values"
+      ],
+      "rendering_policy": "Require explicit permission; mask or aggregate outside approved internal contexts; keep account sections separate.",
+      "default_visibility": "permission_required"
+    },
+    {
+      "field_class": "execution_sensitive",
+      "view_model_examples": [
+        "active_rules.trigger_condition",
+        "active_rules.current_action",
+        "pending_commands",
+        "executable quote context",
+        "execution evidence"
+      ],
+      "rendering_policy": "Render as restricted read-only guidance with non-automation labels; never attach order, buy, sell, submit, or cancel controls.",
+      "default_visibility": "restricted_read_only"
+    },
+    {
+      "field_class": "audit_only",
+      "view_model_examples": [
+        "source_files",
+        "timeline source references",
+        "validation details",
+        "reconciliation evidence"
+      ],
+      "rendering_policy": "Render only to approved audit or debugging roles; preserve exact source trace; omit from public and customer surfaces.",
+      "default_visibility": "audit_permission_required"
+    },
+    {
+      "field_class": "never_expose",
+      "view_model_examples": [
+        "API keys",
+        "tokens",
+        "passwords",
+        "login credentials",
+        "exact account identifiers",
+        "raw personal identifiers"
+      ],
+      "rendering_policy": "Reject before rendering, logging, caching, or transmission.",
+      "default_visibility": "prohibited"
+    }
+  ],
+  "policy_status": {
+    "permission_model_implemented": false,
+    "masking_engine_implemented": false,
+    "customer_facing_ready": false,
+    "unclassified_field_policy": "deny_by_default"
+  }
+}
