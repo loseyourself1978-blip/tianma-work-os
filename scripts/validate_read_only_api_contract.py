@@ -33,7 +33,7 @@ REQUIRED_SCHEMAS = [
     SCHEMA_DIR / "read_only_api_contract_review.schema.json",
 ]
 
-EXPECTED_CHECKPOINT = "2026-06-10T08:49:00+08:00"
+EXPECTED_CHECKPOINT = "2026-06-11T08:10:00+08:00"
 EXPECTED_EVIDENCE_TIMESTAMP = "2026-06-10T17:06:00+08:00"
 
 REQUIRED_ENDPOINTS = {
@@ -335,10 +335,10 @@ def main() -> int:
             and "NVDA" in override_text
             and all(
                 item.get("promoted_to_checkpoint") is False
-                and item.get("reconciliation_required") is True
+                and item.get("reconciliation_required") is False
                 for item in override_items
             ),
-            "GLD and NVDA overrides exist and remain non-promoted",
+            "GLD and NVDA historical override evidence exists, remains non-promoted, and is reconciled by the promoted checkpoint",
         )
 
         results.check(

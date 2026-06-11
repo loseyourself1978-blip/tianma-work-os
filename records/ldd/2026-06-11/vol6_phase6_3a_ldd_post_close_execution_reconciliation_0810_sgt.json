@@ -1,0 +1,516 @@
+{
+  "record_type": "runtime_execution_reconciliation",
+  "phase": "Vol.6 Phase 6.3a",
+  "sync_type": "ldd_post_close_review",
+  "timestamp_sgt": "2026-06-11T08:10:00+08:00",
+  "timestamp_range_sgt_bjt": "2026-06-11 08:09-08:10",
+  "snapshot_time": "2026-06-11T08:10:00+08:00",
+  "source_priority": [
+    "user_broker_screenshots",
+    "user_binance_screenshots",
+    "actual_order_screenshots",
+    "external_market_data_for_validation_only"
+  ],
+  "source_of_truth": [
+    "user_broker_screenshots",
+    "user_binance_screenshots",
+    "actual_order_screenshots"
+  ],
+  "quote_type": "us_post_close_after_hours_broker_platform_sot",
+  "portfolio_mode": "core_position_defense_mode",
+  "runtime_baseline_correction": {
+    "user_sync_claimed_phase": "Vol.6 Phase 6.2a",
+    "user_sync_claimed_commit": "244986a25007884f2518639ea1f8871acbfb0ea5",
+    "actual_baseline_phase": "Vol.6 Phase 6.3",
+    "actual_baseline_commit": "a627c3467f3486ce9e0767ecdc2100e0dd4b0862",
+    "market_account_order_facts_accepted": true,
+    "stale_runtime_status_rejected": true
+  },
+  "active_checkpoint_before_this_review": "2026-06-10T08:49:00+08:00",
+  "active_checkpoint_after_this_review": "2026-06-11T08:10:00+08:00",
+  "checkpoint_promoted": true,
+  "promotion_reason": "actual_order_screenshots_confirmed_execution_and_new_post_close_account_state",
+  "customer_facing_ready": false,
+  "external_api_connected": false,
+  "broker_api_connected": false,
+  "binance_api_connected": false,
+  "live_market_data_enabled": false,
+  "trading_automation_enabled": false,
+  "credential_handling_enabled": false,
+  "runtime_mutation_enabled_by_user_interface": false,
+  "execution_trigger_enabled_by_system": false,
+  "broker_state_update": {
+    "total_assets_usd": 37368.51,
+    "us_section_usd": 23997.08,
+    "us_holding_value_usd": 7494.11,
+    "implied_us_cash_usd": 16502.97,
+    "us_cash_ratio_pct": 68.8,
+    "us_day_pnl_usd": -529.64,
+    "us_holding_pnl_usd": 1078.51
+  },
+  "current_us_positions": [
+    {
+      "symbol": "GOOG",
+      "quantity": 14,
+      "position_state": "active_position"
+    },
+    {
+      "symbol": "NVDA",
+      "quantity": 10,
+      "position_state": "active_position"
+    },
+    {
+      "symbol": "GGLL",
+      "quantity": 5,
+      "position_state": "active_position"
+    },
+    {
+      "symbol": "TSLA",
+      "quantity": 0.0116,
+      "position_state": "residual_position"
+    },
+    {
+      "symbol": "GLD",
+      "quantity": 0,
+      "position_state": "closed_position"
+    }
+  ],
+  "confirmed_today_orders": [
+    {
+      "order_type": "sell",
+      "symbol": "GGLL",
+      "quantity": 5,
+      "price": 114.1,
+      "currency": "USD",
+      "source": "actual_order_screenshots",
+      "execution_state": "executed",
+      "contributes_to_position_reconciliation": true
+    },
+    {
+      "order_type": "sell",
+      "symbol": "NVDA",
+      "quantity": 5,
+      "price": 199.68,
+      "currency": "USD",
+      "source": "actual_order_screenshots",
+      "execution_state": "executed",
+      "contributes_to_position_reconciliation": true
+    },
+    {
+      "order_type": "sell",
+      "symbol": "GLD",
+      "quantity": 5,
+      "price": 371.83,
+      "currency": "USD",
+      "source": "actual_order_screenshots",
+      "execution_state": "executed",
+      "contributes_to_position_reconciliation": true
+    },
+    {
+      "order_type": "sell",
+      "symbol": "GLD",
+      "quantity": 5,
+      "price": 371.6,
+      "currency": "USD",
+      "source": "actual_order_screenshots",
+      "execution_state": "executed",
+      "contributes_to_position_reconciliation": true
+    },
+    {
+      "order_type": "cancel",
+      "symbol": "GLD",
+      "quantity": 5,
+      "price": 385,
+      "currency": "USD",
+      "source": "actual_order_screenshots",
+      "execution_state": "canceled",
+      "contributes_to_position_reconciliation": false
+    }
+  ],
+  "binance_state_update": {
+    "total_assets_usdt": 8170.32,
+    "usdt_balance": 5936,
+    "usdt_defense_ratio_pct": 72.7,
+    "ETH": 0.8070416,
+    "DOGE": 8400.535,
+    "SOL": 2.931163,
+    "BTC": 0.00055762,
+    "ZEC": 0.012974,
+    "zec_grid_state": "closed_profit_locked",
+    "new_buying": false
+  },
+  "active_rules_after_review": [
+    {
+      "rule_id": "no-new-buying-after-close-20260611-0810",
+      "asset": "U.S./Crypto",
+      "strategy": "prohibition_rule",
+      "trigger_status": "active",
+      "trigger_condition": "No new buying after the confirmed post-close risk reductions.",
+      "intended_action": "Preserve cash defense and wait for a new approved decision."
+    },
+    {
+      "rule_id": "no-soxl-reentry-20260611-0810",
+      "asset": "SOXL",
+      "strategy": "no_reentry_rule",
+      "trigger_status": "active",
+      "trigger_condition": "SOXL remains closed and requires a new approved rule before re-entry.",
+      "intended_action": "Do not re-add SOXL."
+    },
+    {
+      "rule_id": "no-ugl-reentry-20260611-0810",
+      "asset": "UGL",
+      "strategy": "no_reentry_rule",
+      "trigger_status": "active",
+      "trigger_condition": "UGL remains closed and requires a new approved rule before re-entry.",
+      "intended_action": "Do not re-add UGL."
+    },
+    {
+      "rule_id": "no-intc-reentry-20260611-0810",
+      "asset": "INTC",
+      "strategy": "no_reentry_rule",
+      "trigger_status": "active",
+      "trigger_condition": "INTC remains closed and requires a new approved rule before re-entry.",
+      "intended_action": "Do not re-add INTC."
+    },
+    {
+      "rule_id": "no-zec-grid-reopen-20260611-0810",
+      "asset": "ZEC",
+      "strategy": "closed_bot_guardrail",
+      "trigger_status": "active",
+      "trigger_condition": "ZEC grid remains closed and must not be reopened.",
+      "intended_action": "Do not reopen or chase ZEC."
+    },
+    {
+      "rule_id": "btc-no-buyback-until-75500-76000-20260611-0810",
+      "asset": "BTC",
+      "strategy": "staged_buyback_watch",
+      "trigger_status": "not_triggered",
+      "trigger_condition": "No BTC buyback until stabilization above 75,500-76,000.",
+      "intended_action": "Maintain USDT-dominant defense."
+    },
+    {
+      "rule_id": "nvda-below-198-defense-20260611-0810",
+      "asset": "NVDA",
+      "strategy": "main_core_risk_watch",
+      "trigger_status": "active",
+      "trigger_condition": "If NVDA is below 198 with QQQ and SMH weak, reduce 5 NVDA.",
+      "intended_action": "Hold 10 under rebased downside protection; no mechanical buyback."
+    },
+    {
+      "rule_id": "goog-355-ggll-clear-20260611-0810",
+      "asset": "GOOG/GGLL",
+      "strategy": "leveraged_residual_risk_valve",
+      "trigger_status": "active",
+      "trigger_condition": "If GOOG cannot reclaim 355, clear the remaining 5 GGLL.",
+      "intended_action": "Use residual GGLL as the main leveraged risk valve."
+    },
+    {
+      "rule_id": "goog-below-350-common-stock-defense-20260611-0810",
+      "asset": "GOOG",
+      "strategy": "core_position_defense",
+      "trigger_status": "active",
+      "trigger_condition": "If GOOG is below 350 without recovery, reduce GOOG by 4 to 5 shares.",
+      "intended_action": "Defend the common-stock core position without adding."
+    },
+    {
+      "rule_id": "gld-closed-no-reentry-until-380-reclaim-20260611-0810",
+      "asset": "GLD",
+      "strategy": "closed_position_guardrail",
+      "trigger_status": "executed",
+      "trigger_condition": "GLD position is closed; no re-entry until a 380 reclaim and a new approved rule.",
+      "intended_action": "Keep GLD at 0 shares."
+    }
+  ],
+  "product_feedback": [
+    {
+      "requirement_id": "execution_ledger_gap_detector",
+      "summary": "Detect confirmed order screenshots that are missing from the active runtime execution ledger."
+    },
+    {
+      "requirement_id": "broker_screenshot_supersedes_runtime_state",
+      "summary": "A later broker screenshot with confirmed holdings supersedes stale runtime position quantities through checkpoint promotion."
+    },
+    {
+      "requirement_id": "cross_timezone_order_reconciliation",
+      "summary": "Preserve local review time and broker order context without confusing market-session dates."
+    },
+    {
+      "requirement_id": "leveraged_residual_risk_valve",
+      "summary": "Track GGLL as a reduced five-share residual leveraged-risk valve."
+    },
+    {
+      "requirement_id": "cash_defense_ratio_cockpit",
+      "summary": "Surface the 68.8 percent U.S. cash ratio and 72.7 percent Binance USDT defense ratio."
+    }
+  ],
+  "validation_summary": {
+    "record_schema_validation": "pending_final_validation",
+    "checkpoint_promotion_expected": true,
+    "timeline_event_expected": true,
+    "safety_boundaries_preserved": true
+  },
+  "explicit_non_goals_confirmed": {
+    "frontend_app_created": false,
+    "customer_facing_ui_created": false,
+    "api_server_created": false,
+    "live_endpoint_created": false,
+    "external_api_connected": false,
+    "broker_api_connected": false,
+    "binance_api_connected": false,
+    "live_market_data_enabled": false,
+    "trading_automation_enabled": false,
+    "credential_handling_enabled": false,
+    "github_issues_created": false,
+    "github_projects_board_created": false
+  },
+  "total_visible_assets": {
+    "total_app_assets_usd": 37368.51,
+    "broker_total_assets_usd": 37368.51,
+    "us_equity_section_usd": 23997.08,
+    "us_stock_section_usd": 23997.08,
+    "us_holdings_market_value_usd": 7494.11,
+    "us_holding_pl_usd": 1078.51,
+    "us_day_pl_usd": -529.64,
+    "cash_usd": 16502.97,
+    "inferred_us_cash_equivalent_usd": 16502.97,
+    "us_cash_ratio_pct": 68.8,
+    "confirmed_order_gross_proceeds_usd": 5286.05,
+    "binance_visible_assets_usdt": 8170.32,
+    "binance_usdt_defense_ratio_pct": 72.7
+  },
+  "cash_balance": {
+    "broker_cash_usd": 16502.97,
+    "us_cash_ratio_pct": 68.8,
+    "cash_calculation": "23997.08 U.S. section assets minus 7494.11 U.S. holding value equals approximately 16502.97 USD",
+    "confirmed_order_gross_proceeds_usd": 5286.05,
+    "binance_usdt": 5936,
+    "binance_usdt_defense_ratio_pct": 72.7,
+    "crypto_account_posture": "USDT defensive / cash dominant"
+  },
+  "holdings": [
+    {
+      "account": "hong_kong_equity",
+      "asset": "02513 Zhipu",
+      "quantity": 100,
+      "market_value_hkd": 113600,
+      "holding_pl_hkd": 101980,
+      "day_pl_hkd": -17800,
+      "runtime_note": "Latest available HK state is retained from the prior promoted checkpoint because this review did not provide replacement HK values."
+    },
+    {
+      "account": "us_equity",
+      "asset": "GOOG",
+      "quantity": 14
+    },
+    {
+      "account": "us_equity",
+      "asset": "NVDA",
+      "quantity": 10,
+      "runtime_note": "Reduced from 15 to 10 by confirmed order screenshot."
+    },
+    {
+      "account": "us_equity",
+      "asset": "GGLL",
+      "quantity": 5,
+      "runtime_note": "Reduced from 10 to 5; residual leveraged-risk valve."
+    },
+    {
+      "account": "us_equity",
+      "asset": "TSLA",
+      "quantity": 0.0116,
+      "runtime_note": "Tiny residual."
+    },
+    {
+      "account": "closed_us_equity",
+      "asset": "GLD",
+      "quantity": 0,
+      "position_state": "closed_position",
+      "runtime_note": "Remaining 10 shares sold through two confirmed five-share fills."
+    },
+    {
+      "account": "closed_us_equity",
+      "asset": "SOXL",
+      "quantity": 0,
+      "position_state": "closed_position"
+    },
+    {
+      "account": "closed_us_equity",
+      "asset": "UGL",
+      "quantity": 0,
+      "position_state": "closed_position"
+    },
+    {
+      "account": "closed_us_equity",
+      "asset": "INTC",
+      "quantity": 0,
+      "position_state": "closed_position"
+    },
+    {
+      "account": "closed_us_equity",
+      "asset": "SOXS",
+      "quantity": 0,
+      "position_state": "closed_position"
+    },
+    {
+      "account": "closed_us_equity",
+      "asset": "TSLQ",
+      "quantity": 0,
+      "position_state": "closed_position"
+    },
+    {
+      "account": "closed_us_equity",
+      "asset": "GDXU",
+      "quantity": 0,
+      "position_state": "closed_position"
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "USDT",
+      "quantity": 5936,
+      "defense_ratio_pct": 72.7
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "ETH",
+      "quantity": 0.8070416
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "DOGE",
+      "quantity": 8400.535
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "SOL",
+      "quantity": 2.931163
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "BTC",
+      "quantity": 0.00055762
+    },
+    {
+      "account": "crypto_spot",
+      "asset": "ZEC",
+      "quantity": 0.012974,
+      "runtime_note": "Residual only; grid remains closed."
+    }
+  ],
+  "strategy_tags": [
+    "latest_active_checkpoint",
+    "core_position_defense_mode",
+    "post_close_execution_reconciliation",
+    "confirmed_execution_visible",
+    "gld_closed_10_to_0",
+    "nvda_reduced_15_to_10",
+    "ggll_reduced_10_to_5",
+    "us_cash_ratio_68_8_pct",
+    "binance_usdt_defense_ratio_72_7_pct",
+    "customer_facing_ready_false"
+  ],
+  "rules": [
+    {
+      "rule_id": "no-new-buying-after-close-20260611-0810",
+      "asset": "U.S./Crypto",
+      "strategy": "prohibition_rule",
+      "trigger_status": "active",
+      "trigger_condition": "No new buying after the confirmed post-close risk reductions.",
+      "intended_action": "Preserve cash defense and wait for a new approved decision."
+    },
+    {
+      "rule_id": "no-soxl-reentry-20260611-0810",
+      "asset": "SOXL",
+      "strategy": "no_reentry_rule",
+      "trigger_status": "active",
+      "trigger_condition": "SOXL remains closed and requires a new approved rule before re-entry.",
+      "intended_action": "Do not re-add SOXL."
+    },
+    {
+      "rule_id": "no-ugl-reentry-20260611-0810",
+      "asset": "UGL",
+      "strategy": "no_reentry_rule",
+      "trigger_status": "active",
+      "trigger_condition": "UGL remains closed and requires a new approved rule before re-entry.",
+      "intended_action": "Do not re-add UGL."
+    },
+    {
+      "rule_id": "no-intc-reentry-20260611-0810",
+      "asset": "INTC",
+      "strategy": "no_reentry_rule",
+      "trigger_status": "active",
+      "trigger_condition": "INTC remains closed and requires a new approved rule before re-entry.",
+      "intended_action": "Do not re-add INTC."
+    },
+    {
+      "rule_id": "no-zec-grid-reopen-20260611-0810",
+      "asset": "ZEC",
+      "strategy": "closed_bot_guardrail",
+      "trigger_status": "active",
+      "trigger_condition": "ZEC grid remains closed and must not be reopened.",
+      "intended_action": "Do not reopen or chase ZEC."
+    },
+    {
+      "rule_id": "btc-no-buyback-until-75500-76000-20260611-0810",
+      "asset": "BTC",
+      "strategy": "staged_buyback_watch",
+      "trigger_status": "not_triggered",
+      "trigger_condition": "No BTC buyback until stabilization above 75,500-76,000.",
+      "intended_action": "Maintain USDT-dominant defense."
+    },
+    {
+      "rule_id": "nvda-below-198-defense-20260611-0810",
+      "asset": "NVDA",
+      "strategy": "main_core_risk_watch",
+      "trigger_status": "active",
+      "trigger_condition": "If NVDA is below 198 with QQQ and SMH weak, reduce 5 NVDA.",
+      "intended_action": "Hold 10 under rebased downside protection; no mechanical buyback."
+    },
+    {
+      "rule_id": "goog-355-ggll-clear-20260611-0810",
+      "asset": "GOOG/GGLL",
+      "strategy": "leveraged_residual_risk_valve",
+      "trigger_status": "active",
+      "trigger_condition": "If GOOG cannot reclaim 355, clear the remaining 5 GGLL.",
+      "intended_action": "Use residual GGLL as the main leveraged risk valve."
+    },
+    {
+      "rule_id": "goog-below-350-common-stock-defense-20260611-0810",
+      "asset": "GOOG",
+      "strategy": "core_position_defense",
+      "trigger_status": "active",
+      "trigger_condition": "If GOOG is below 350 without recovery, reduce GOOG by 4 to 5 shares.",
+      "intended_action": "Defend the common-stock core position without adding."
+    },
+    {
+      "rule_id": "gld-closed-no-reentry-until-380-reclaim-20260611-0810",
+      "asset": "GLD",
+      "strategy": "closed_position_guardrail",
+      "trigger_status": "executed",
+      "trigger_condition": "GLD position is closed; no re-entry until a 380 reclaim and a new approved rule.",
+      "intended_action": "Keep GLD at 0 shares."
+    }
+  ],
+  "reconciliation": {
+    "order_count": 5,
+    "executed_order_count": 4,
+    "canceled_order_count": 1,
+    "estimated_gross_proceeds_usd": 5286.05,
+    "GLD_position_before": 10,
+    "GLD_position_after": 0,
+    "NVDA_position_before": 15,
+    "NVDA_position_after": 10,
+    "GGLL_position_before": 10,
+    "GGLL_position_after": 5,
+    "reconciliation_status": "confirmed_against_actual_order_screenshots_and_post_close_holdings"
+  },
+  "notes": [
+    "Phase 6.2a remains non-promoted governance evidence.",
+    "The new checkpoint is promoted because actual order screenshots and post-close holdings confirm execution.",
+    "The canceled GLD order does not contribute to position reconciliation.",
+    "No UI, API server, live connection, or automated execution capability was added."
+  ],
+  "updates_or_supersedes": [
+    "cockpit active checkpoint 2026-06-10T08:49:00+08:00",
+    "Phase 6.2a stale-checkpoint evidence for GLD 10 and NVDA 15 is reconciled by later confirmed execution, but the evidence record remains non-promoted"
+  ]
+}

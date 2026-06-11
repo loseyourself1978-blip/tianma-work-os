@@ -6,9 +6,9 @@
       "example_id": "internal_operator_cockpit_snapshot",
       "contract_version": "0.1",
       "endpoint_id": "cockpit_snapshot_read",
-      "generated_at": "2026-06-10T08:49:00+08:00",
+      "generated_at": "2026-06-11T08:10:00+08:00",
       "data_source_layer": "active_checkpoint",
-      "active_checkpoint_timestamp": "2026-06-10T08:49:00+08:00",
+      "active_checkpoint_timestamp": "2026-06-11T08:10:00+08:00",
       "non_promoted_evidence_available": true,
       "non_promoted_evidence_timestamp": "2026-06-10T17:06:00+08:00",
       "promoted_to_checkpoint": true,
@@ -21,13 +21,13 @@
       "masking_profile": "internal_sensitive_values_visible_read_only",
       "customer_facing_ready": false,
       "warnings": [
-        "Newer non-promoted governance evidence exists for selected position fields.",
+        "Historical non-promoted governance evidence remains available for audit.",
         "Static response contract; values are not live or execution-valid."
       ],
       "data_quality": {
         "timeline_warnings": 0,
         "active_checkpoint_confirmed": true,
-        "non_promoted_evidence_requires_reconciliation": true,
+        "non_promoted_evidence_requires_reconciliation": false,
         "live_data_connected": false
       },
       "stale_checkpoint_overrides": [
@@ -38,11 +38,11 @@
           "affected_fields": [
             "positions.GLD.quantity"
           ],
-          "active_checkpoint_value": "GLD 20 may appear in a stale checkpoint field",
-          "newer_evidence_value": "GLD 10",
+          "active_checkpoint_value": "GLD 0 after promoted 2026-06-11 execution reconciliation",
+          "newer_evidence_value": "Historical non-promoted Phase 6.2a evidence showed GLD 10",
           "promoted_to_checkpoint": false,
-          "reconciliation_required": true,
-          "consumer_display_policy": "Show active checkpoint with newer evidence banner, not silent overwrite."
+          "reconciliation_required": false,
+          "consumer_display_policy": "Show promoted active checkpoint; retain Phase 6.2a evidence only as historical audit context."
         },
         {
           "override_available": true,
@@ -51,11 +51,11 @@
           "affected_fields": [
             "positions.NVDA.quantity"
           ],
-          "active_checkpoint_value": "NVDA 20 may appear in a stale checkpoint field",
-          "newer_evidence_value": "NVDA 15",
+          "active_checkpoint_value": "NVDA 10 after promoted 2026-06-11 execution reconciliation",
+          "newer_evidence_value": "Historical non-promoted Phase 6.2a evidence showed NVDA 15",
           "promoted_to_checkpoint": false,
-          "reconciliation_required": true,
-          "consumer_display_policy": "Show active checkpoint with newer evidence banner, not silent overwrite."
+          "reconciliation_required": false,
+          "consumer_display_policy": "Show promoted active checkpoint; retain Phase 6.2a evidence only as historical audit context."
         },
         {
           "override_available": true,
@@ -66,17 +66,17 @@
             "closed_positions.UGL",
             "closed_positions.INTC"
           ],
-          "active_checkpoint_value": "Use promoted checkpoint history.",
-          "newer_evidence_value": "SOXL, UGL, and INTC remain closed.",
+          "active_checkpoint_value": "SOXL, UGL, INTC, and GLD are closed in the promoted checkpoint.",
+          "newer_evidence_value": "Historical non-promoted Phase 6.2a evidence confirmed SOXL, UGL, and INTC remained closed.",
           "promoted_to_checkpoint": false,
-          "reconciliation_required": true,
-          "consumer_display_policy": "Display as non-promoted evidence only."
+          "reconciliation_required": false,
+          "consumer_display_policy": "Display Phase 6.2a evidence as non-promoted historical context only."
         }
       ],
       "payload": {
         "portfolio_mode": "core_position_defense_mode",
-        "active_checkpoint": "2026-06-10T08:49:00+08:00",
-        "timeline_events": 84,
+        "active_checkpoint": "2026-06-11T08:10:00+08:00",
+        "timeline_events": 90,
         "timeline_warnings": 0,
         "consumer_readiness": "ready_with_limits"
       },
@@ -95,9 +95,9 @@
       "example_id": "ai_board_reviewer_rules_read",
       "contract_version": "0.1",
       "endpoint_id": "cockpit_rules_read",
-      "generated_at": "2026-06-10T08:49:00+08:00",
+      "generated_at": "2026-06-11T08:10:00+08:00",
       "data_source_layer": "active_checkpoint",
-      "active_checkpoint_timestamp": "2026-06-10T08:49:00+08:00",
+      "active_checkpoint_timestamp": "2026-06-11T08:10:00+08:00",
       "non_promoted_evidence_available": true,
       "non_promoted_evidence_timestamp": "2026-06-10T17:06:00+08:00",
       "promoted_to_checkpoint": true,
@@ -111,13 +111,13 @@
       "customer_facing_ready": false,
       "warnings": [
         "Rules are decision-support context and not automated order instructions.",
-        "Newer governance evidence may rebase remaining position quantities."
+        "Latest promoted checkpoint already rebases remaining position quantities."
       ],
       "data_quality": {
         "timeline_warnings": 0,
         "quote_type_visible": true,
         "execution_controls_available": false,
-        "non_promoted_evidence_requires_reconciliation": true
+        "non_promoted_evidence_requires_reconciliation": false
       },
       "stale_checkpoint_overrides": [
         {
@@ -128,11 +128,11 @@
             "active_rules.GLD.rule_base_quantity",
             "active_rules.NVDA.rule_base_quantity"
           ],
-          "active_checkpoint_value": "Rules may retain earlier position bases.",
-          "newer_evidence_value": "GLD rules bind to 10 shares; NVDA rules bind to 15 shares.",
+          "active_checkpoint_value": "GLD closed at 0 shares; NVDA rules bind to 10 shares; GGLL rules bind to 5 shares.",
+          "newer_evidence_value": "Historical non-promoted Phase 6.2a evidence showed GLD 10 and NVDA 15.",
           "promoted_to_checkpoint": false,
-          "reconciliation_required": true,
-          "consumer_display_policy": "Show a newer-evidence banner and keep rules non-interactive."
+          "reconciliation_required": false,
+          "consumer_display_policy": "Show promoted active rules; expose Phase 6.2a evidence only in audit/debug context."
         }
       ],
       "payload": {
@@ -159,7 +159,7 @@
       "endpoint_id": "governance_evidence_read",
       "generated_at": "2026-06-10T17:06:00+08:00",
       "data_source_layer": "non_promoted_governance_evidence",
-      "active_checkpoint_timestamp": "2026-06-10T08:49:00+08:00",
+      "active_checkpoint_timestamp": "2026-06-11T08:10:00+08:00",
       "non_promoted_evidence_available": true,
       "non_promoted_evidence_timestamp": "2026-06-10T17:06:00+08:00",
       "promoted_to_checkpoint": false,
@@ -173,15 +173,15 @@
       "masking_profile": "audit_source_trace_sensitive_values_read_only",
       "customer_facing_ready": false,
       "warnings": [
-        "Evidence is newer than the active checkpoint but is not promoted.",
+        "Evidence predates the promoted 2026-06-11 active checkpoint and remains non-promoted.",
         "Evidence is not an execution event.",
-        "Consumers must not silently overwrite active checkpoint fields."
+        "Consumers must not overwrite the promoted active checkpoint with historical governance evidence."
       ],
       "data_quality": {
         "timeline_warnings": 0,
         "source_traceability_visible": true,
         "execution_event": false,
-        "reconciliation_required": true,
+        "reconciliation_required": false,
         "external_cross_check_is_source_of_truth": false
       },
       "stale_checkpoint_overrides": [
@@ -192,11 +192,11 @@
           "affected_fields": [
             "positions.GLD.quantity"
           ],
-          "active_checkpoint_value": "GLD 20 may appear in a stale checkpoint field",
-          "newer_evidence_value": "GLD 10",
+          "active_checkpoint_value": "GLD 0 after promoted 2026-06-11 execution reconciliation",
+          "newer_evidence_value": "Historical non-promoted Phase 6.2a evidence showed GLD 10",
           "promoted_to_checkpoint": false,
-          "reconciliation_required": true,
-          "consumer_display_policy": "Show active checkpoint with newer evidence banner, not silent overwrite."
+          "reconciliation_required": false,
+          "consumer_display_policy": "Display as historical non-promoted evidence only; do not overwrite active checkpoint."
         },
         {
           "override_available": true,
@@ -205,11 +205,11 @@
           "affected_fields": [
             "positions.NVDA.quantity"
           ],
-          "active_checkpoint_value": "NVDA 20 may appear in a stale checkpoint field",
-          "newer_evidence_value": "NVDA 15",
+          "active_checkpoint_value": "NVDA 10 after promoted 2026-06-11 execution reconciliation",
+          "newer_evidence_value": "Historical non-promoted Phase 6.2a evidence showed NVDA 15",
           "promoted_to_checkpoint": false,
-          "reconciliation_required": true,
-          "consumer_display_policy": "Show active checkpoint with newer evidence banner, not silent overwrite."
+          "reconciliation_required": false,
+          "consumer_display_policy": "Display as historical non-promoted evidence only; do not overwrite active checkpoint."
         },
         {
           "override_available": true,
@@ -220,18 +220,18 @@
             "closed_positions.UGL",
             "closed_positions.INTC"
           ],
-          "active_checkpoint_value": "Use promoted checkpoint history.",
-          "newer_evidence_value": "SOXL, UGL, and INTC remain closed.",
+          "active_checkpoint_value": "SOXL, UGL, INTC, and GLD are closed in the promoted checkpoint.",
+          "newer_evidence_value": "Historical non-promoted Phase 6.2a evidence confirmed SOXL, UGL, and INTC remained closed.",
           "promoted_to_checkpoint": false,
-          "reconciliation_required": true,
-          "consumer_display_policy": "Display as non-promoted evidence only."
+          "reconciliation_required": false,
+          "consumer_display_policy": "Display as non-promoted historical evidence only."
         }
       ],
       "payload": {
         "evidence_timestamp": "2026-06-10T17:06:00+08:00",
         "execution_event": false,
         "promoted": false,
-        "purpose": "stale-checkpoint override evidence and future reconciliation context"
+        "purpose": "historical stale-checkpoint override evidence retained after promoted 2026-06-11 execution reconciliation"
       },
       "forbidden_actions": [
         "promote_checkpoint",
@@ -248,9 +248,9 @@
       "example_id": "customer_facing_viewer_blocked_status",
       "contract_version": "0.1",
       "endpoint_id": "customer_facing_view_status_read",
-      "generated_at": "2026-06-10T08:49:00+08:00",
+      "generated_at": "2026-06-11T08:10:00+08:00",
       "data_source_layer": "permission_privacy_masking_contract",
-      "active_checkpoint_timestamp": "2026-06-10T08:49:00+08:00",
+      "active_checkpoint_timestamp": "2026-06-11T08:10:00+08:00",
       "non_promoted_evidence_available": true,
       "non_promoted_evidence_timestamp": "2026-06-10T17:06:00+08:00",
       "promoted_to_checkpoint": false,

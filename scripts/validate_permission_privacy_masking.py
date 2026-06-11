@@ -18,7 +18,7 @@ MASKING_PATH = MOCK_DIR / "privacy_masking_policy.json"
 FIELD_MATRIX_PATH = MOCK_DIR / "field_permission_matrix.json"
 UNBLOCK_PATH = MOCK_DIR / "customer_facing_unblock_criteria.json"
 
-EXPECTED_CHECKPOINT = "2026-06-10T08:49:00+08:00"
+EXPECTED_CHECKPOINT = "2026-06-11T08:10:00+08:00"
 EXPECTED_SOURCE = "cockpit/ldd/view_model.json"
 
 CONTRACT_PATHS = [

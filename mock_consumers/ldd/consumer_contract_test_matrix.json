@@ -3,9 +3,9 @@
   "matrix_id": "ldd-static-consumer-contract-matrix-v0.1",
   "project": "Tianma Work OS",
   "subproject": "LLM Daredevil Desk",
-  "review_time": "2026-06-10T08:49:00+08:00",
-  "baseline_checkpoint": "2026-06-10T08:49:00+08:00",
-  "baseline_commit": "c537a9fb36d58894de4cd4ac8e28fb375dfc3e87",
+  "review_time": "2026-06-11T08:10:00+08:00",
+  "baseline_checkpoint": "2026-06-11T08:10:00+08:00",
+  "baseline_commit": "a627c3467f3486ce9e0767ecdc2100e0dd4b0862",
   "portfolio_mode": "core_position_defense_mode",
   "source_view_model": "cockpit/ldd/view_model.json",
   "source_mock_package": "mock_consumers/ldd/",
@@ -45,7 +45,7 @@
       "source_fields": [
         "checkpoint.latest_active_checkpoint"
       ],
-      "expected_interpretation": "Preserve 2026-06-10T08:49:00+08:00 as the latest checkpoint.",
+      "expected_interpretation": "Preserve 2026-06-11T08:10:00+08:00 as the latest checkpoint.",
       "prohibited_interpretation": "Use an older or mock-only timestamp as current.",
       "pass_criteria": [
         "Checkpoint matches the generated view model."
@@ -80,8 +80,8 @@
         "positions",
         "closed_positions"
       ],
-      "expected_interpretation": "Closed cleanup instruments remain separate and prohibited from re-entry.",
-      "prohibited_interpretation": "SOXL, UGL, INTC, SOXS, TSLQ, or GDXU appears as an active holding.",
+      "expected_interpretation": "Closed cleanup instruments and newly closed GLD remain separate and prohibited from re-entry.",
+      "prohibited_interpretation": "GLD, SOXL, UGL, INTC, SOXS, TSLQ, or GDXU appears as an active holding.",
       "pass_criteria": [
         "Active and closed lists are not merged."
       ],
@@ -150,10 +150,10 @@
       "source_fields": [
         "risk_summary.gld_status"
       ],
-      "expected_interpretation": "GLD first two reduction tranches are completed; residual 10-share risk remains until 400-405 repair.",
-      "prohibited_interpretation": "GLD is fully repaired, UGL-linked, or still a compliant non-execution case.",
+      "expected_interpretation": "GLD is closed at 0 shares and should not be re-entered until a 380 reclaim and a new approved rule.",
+      "prohibited_interpretation": "GLD is active, UGL-linked, or still a compliant non-execution case.",
       "pass_criteria": [
-        "GLD active-risk state remains visible."
+        "GLD closed/no-reentry state remains visible."
       ],
       "status": "passed"
     },
@@ -168,7 +168,7 @@
       "source_fields": [
         "account_sections.active_risk_non_execution"
       ],
-      "expected_interpretation": "The prior non-execution was historical; the latest GLD state is compliant execution with 10 shares remaining.",
+      "expected_interpretation": "The prior non-execution was historical; the latest GLD state is confirmed execution with 0 shares remaining.",
       "prohibited_interpretation": "The historical non-execution state is rendered as current.",
       "pass_criteria": [
         "Latest compliant execution supersedes prior non-execution while preserving audit history."
@@ -185,8 +185,8 @@
         "active_rules",
         "risk_summary.main_core_risk_watch"
       ],
-      "expected_interpretation": "NVDA remains the main core-risk watch after a compliant 20-to-15 reduction; 200 remains the next protection level.",
-      "prohibited_interpretation": "The imperfect execution price is treated as a compliance failure or the threshold as an automated order.",
+      "expected_interpretation": "NVDA remains the main core-risk watch after a confirmed 15-to-10 reduction; 198 is the next downside review level.",
+      "prohibited_interpretation": "The execution price is treated as a compliance failure or the threshold as an automated order.",
       "pass_criteria": [
         "Risk levels are shown as read-only rules."
       ],
@@ -202,7 +202,7 @@
         "active_rules",
         "risk_summary.main_remaining_leveraged_etf_risk_valve"
       ],
-      "expected_interpretation": "GOOG 355 remains the defense line and GGLL remains the risk valve.",
+      "expected_interpretation": "GOOG 355 remains the defense line and GGLL remains a 5-share residual risk valve.",
       "prohibited_interpretation": "GGLL is a buy candidate or automatic order.",
       "pass_criteria": [
         "GOOG/GGLL boundary remains intact."

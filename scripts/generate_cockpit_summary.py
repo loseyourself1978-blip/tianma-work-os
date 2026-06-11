@@ -53,6 +53,7 @@ TIMESTAMP_FIELDS = [
     "validation_time",
     "created_at",
     "updated_at",
+    "timestamp_sgt",
 ]
 
 
@@ -248,7 +249,10 @@ def build_active_rules(rule_monitor: RuntimeRecord | None) -> list[dict[str, Any
                 "trigger_condition": scalar(item.get("trigger_condition")),
                 "current_action": scalar(item.get("intended_action")),
                 "source_files": [rule_monitor.relpath],
-                "last_updated": scalar(rule_monitor.data.get("snapshot_time")),
+                "last_updated": scalar(
+                    rule_monitor.data.get("snapshot_time")
+                    or rule_monitor.data.get("timestamp_sgt")
+                ),
                 "cockpit_priority": priority_for_rule(asset, status),
                 "requires_execution_price_confirmation": asset == "SOXL",
                 "tags": tags_for_rule(asset, status, text),
@@ -266,6 +270,7 @@ def build_strategy_states(
     mode_source: str,
     gld_quantity: str,
     nvda_quantity: str,
+    ggll_quantity: str,
 ) -> list[dict[str, Any]]:
     return [
         {
@@ -273,7 +278,7 @@ def build_strategy_states(
             "asset_or_module": "LDD portfolio",
             "status": "active",
             "summary": "Portfolio mode remains core_position_defense_mode after the latest checkpoint validation.",
-            "next_required_action": "Defend NVDA, monitor GGLL and GLD, prohibit re-adds of closed cleanup positions, and maintain USDT defense.",
+            "next_required_action": "Defend NVDA, monitor residual GGLL, preserve GLD closure, prohibit re-adds, and maintain USDT defense.",
             "source_files": [account_source, mode_source],
             "last_updated": latest_checkpoint,
             "cockpit_priority": "high",
@@ -349,8 +354,8 @@ def build_strategy_states(
             "strategy_id": "ggll-risk-valve",
             "asset_or_module": "GGLL",
             "status": "monitoring",
-            "summary": "GGLL is the main remaining leveraged ETF risk valve.",
-            "next_required_action": "Reduce or clean GGLL if GOOG breaks 355; consider selling 5 GGLL if GOOG reaches 365-370 but fails; no GGLL add.",
+            "summary": f"GGLL is the main remaining leveraged ETF risk valve at {ggll_quantity} shares.",
+            "next_required_action": "Clear the remaining 5 GGLL if GOOG cannot reclaim 355; no GGLL add.",
             "source_files": [rule_source],
             "last_updated": latest_checkpoint,
             "cockpit_priority": "high",
@@ -382,8 +387,8 @@ def build_strategy_states(
             "strategy_id": "nvda-core-ai-exposure",
             "asset_or_module": "NVDA",
             "status": "monitoring",
-            "summary": f"NVDA remains the main core-risk watch at {nvda_quantity} shares after the first downside-protection reduction.",
-            "next_required_action": "Hold without adding; reduce another 5 below 200 with weak QQQ/SMH; hold after a sustained 210-212 reclaim.",
+            "summary": f"NVDA remains the main core-risk watch at {nvda_quantity} shares after confirmed protection reductions.",
+            "next_required_action": "Hold without adding; reduce another 5 below 198 with weak QQQ/SMH.",
             "source_files": [rule_source],
             "last_updated": latest_checkpoint,
             "cockpit_priority": "high",
@@ -392,13 +397,13 @@ def build_strategy_states(
         {
             "strategy_id": "gld-core-position-review",
             "asset_or_module": "GLD",
-            "status": "monitoring",
-            "summary": f"GLD remains ordinary concentration and risk-line exposure at {gld_quantity} shares after two completed reduction tranches.",
-            "next_required_action": "Reduce 5 below 385; consider clearing the remaining 5 below 380; downgrade alert after 400-405 recovery.",
+            "status": "closed" if gld_quantity == "0" else "monitoring",
+            "summary": f"GLD is closed at {gld_quantity} shares after confirmed post-close execution reconciliation.",
+            "next_required_action": "Do not re-enter until a 380 reclaim and a new approved rule.",
             "source_files": [rule_source],
             "last_updated": latest_checkpoint,
             "cockpit_priority": "high",
-            "tags": ["gld", "core_position", "active_risk", "compliant_execution", "ugl_closed"],
+            "tags": ["gld", "closed_position", "no_reentry", "confirmed_execution", "ugl_closed"],
         },
         {
             "strategy_id": "crypto-defensive-state",
@@ -467,18 +472,40 @@ def write_json(path: Path, payload: dict[str, Any]) -> None:
 
 def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
     timeline = timeline_payload(warnings)
-    portfolio_record = find_latest(records, ["account_state_delta"])
-    rule_monitor = find_latest(records, ["active_risk_non_execution_review", "rule_trigger_monitor", "residual_risk_valve_state", "remaining_risk_concentration_monitor", "remaining_leveraged_risk_monitor"])
+    portfolio_record = find_latest(
+        records,
+        [
+            "vol6_phase6_3a_ldd_post_close_execution_reconciliation",
+            "account_state_delta",
+        ],
+    )
+    rule_monitor = find_latest(
+        records,
+        [
+            "vol6_phase6_3a_ldd_post_close_execution_reconciliation",
+            "active_risk_non_execution_review",
+            "rule_trigger_monitor",
+            "residual_risk_valve_state",
+            "remaining_risk_concentration_monitor",
+            "remaining_leveraged_risk_monitor",
+        ],
+    )
     quote_conflict = find_latest(records, ["quote_type_tagging_reinforcement", "quote_source_conflict_soxl"])
     section_review = find_latest(records, ["hk_high_profit_protection_escalation", "us_cash_ratio_quality_score", "post_sale_cost_basis_interpretation", "closed_position_discipline_validation", "hk_high_profit_protection_requirement", "closed_position_opportunity_cost_requirement", "quote_type_tagging_reinforcement", "section_level_account_structure_requirement", "execution_feedback_loop_requirement"])
     cleanup_effectiveness = find_latest(records, ["cleanup_effectiveness_review"])
     mode_transition = find_latest(records, ["core_position_defense_monitor", "portfolio_mode_transition"])
-    delta_record = find_latest(records, ["ldd_post_close_execution_review", "ldd_post_close_review", "ldd_core_position_defense_checkpoint", "ldd_post_close_cleanup_review", "ldd_premarket_checkpoint", "ldd_post_close_checkpoint", "ldd_post_close_runtime_delta", "sync_block_delta_protocol"])
+    delta_record = find_latest(records, ["vol6_phase6_3a_ldd_post_close_execution_reconciliation", "ldd_post_close_execution_review", "ldd_post_close_review", "ldd_core_position_defense_checkpoint", "ldd_post_close_cleanup_review", "ldd_premarket_checkpoint", "ldd_post_close_checkpoint", "ldd_post_close_runtime_delta", "sync_block_delta_protocol"])
     non_execution_review = find_latest(records, ["premarket_trigger_to_post_close_outcome_reconciliation"])
     opportunity_cost_review = find_latest(records, ["closed_position_opportunity_cost_requirement"])
     hk_protection_review = find_latest(records, ["hk_high_profit_protection_requirement"])
     crypto_defense_state = find_latest(records, ["crypto_defense_state_delta"])
-    execution_writeback = find_latest(records, ["executed_order_writeback"])
+    execution_writeback = find_latest(
+        records,
+        [
+            "vol6_phase6_3a_ldd_post_close_execution_reconciliation",
+            "executed_order_writeback",
+        ],
+    )
     compliance_price_review = find_latest(records, ["rule_compliance_vs_price_outcome_review"])
     cash_ratio_review = find_latest(records, ["us_cash_ratio_quality_score"])
     cost_basis_review = find_latest(records, ["post_sale_cost_basis_interpretation"])
@@ -500,7 +527,8 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
         portfolio_data = portfolio_record.data
 
     latest_checkpoint = scalar(
-        portfolio_data.get("snapshot_time")
+        portfolio_data.get("active_checkpoint_after_this_review")
+        or portfolio_data.get("snapshot_time")
         or timeline.get("generated_at")
         or (delta_record.data.get("sync_time") if delta_record else None)
     )
@@ -544,11 +572,13 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
     intc = holding_by_asset(portfolio_data, "INTC")
     gld = holding_by_asset(portfolio_data, "GLD")
     nvda = holding_by_asset(portfolio_data, "NVDA")
+    ggll = holding_by_asset(portfolio_data, "GGLL")
     soxl_quantity = scalar(soxl.get("quantity"))
     ugl_quantity = scalar(ugl.get("quantity"))
     intc_quantity = scalar(intc.get("quantity"))
     gld_quantity = scalar(gld.get("quantity"))
     nvda_quantity = scalar(nvda.get("quantity"))
+    ggll_quantity = scalar(ggll.get("quantity"))
     usdt_defense_ratio = assets.get("binance_usdt_defense_ratio_pct", cash.get("binance_usdt_defense_ratio_pct", 72.9))
     cleanup_confirmed = all(
         [
@@ -578,6 +608,7 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
         mode_transition.relpath if mode_transition else "unknown",
         gld_quantity,
         nvda_quantity,
+        ggll_quantity,
     )
 
     command_items: list[dict[str, Any]] = []
@@ -619,6 +650,48 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
             }
         )
 
+    active_us_position_labels: list[str] = []
+    closed_position_labels: list[str] = []
+    for item in portfolio_data.get("holdings", []):
+        if not isinstance(item, dict):
+            continue
+        asset = scalar(item.get("asset"))
+        quantity = scalar(item.get("quantity"))
+        account = scalar(item.get("account")).lower()
+        state = scalar(item.get("position_state")).lower()
+        if account == "us_equity" and state != "closed_position":
+            if asset == "TSLA":
+                active_us_position_labels.append("tiny TSLA residual")
+            else:
+                active_us_position_labels.append(f"{asset} {quantity}")
+        if state == "closed_position":
+            closed_position_labels.append(f"{asset} {quantity}")
+    for prohibited_symbol in ["SOXS", "TSLQ", "GDXU", "NVDD", "NVDS"]:
+        if not any(label.startswith(f"{prohibited_symbol} ") for label in closed_position_labels):
+            closed_position_labels.append(f"{prohibited_symbol} 0_or_not_applicable")
+
+    order_entries = [
+        item
+        for item in portfolio_data.get("confirmed_today_orders", [])
+        if isinstance(item, dict)
+    ]
+    executed_orders = [item for item in order_entries if item.get("execution_state") == "executed"]
+    canceled_orders = [item for item in order_entries if item.get("execution_state") == "canceled"]
+    reconciliation = portfolio_data.get("reconciliation", {}) if isinstance(portfolio_data.get("reconciliation"), dict) else {}
+    latest_fills = {
+        f"{scalar(item.get('symbol'))}_{index + 1}": {
+            "quantity": item.get("quantity"),
+            "price_usd": item.get("price"),
+            "execution_state": item.get("execution_state"),
+        }
+        for index, item in enumerate(order_entries)
+    }
+    latest_execution_text = (
+        "GGLL sell 5 at 114.10, NVDA sell 5 at 199.68, GLD sell 5 at 371.83, GLD sell 5 at 371.60; all executed. GLD sell 5 at 385.00 was canceled."
+        if portfolio_data.get("record_type") == "runtime_execution_reconciliation"
+        else "GLD sell 5 at 390.91, GLD sell 5 at 391.05, and NVDA sell 5 at 201.74; all filled and reconciled."
+    )
+
     latest_state = {
         "generated_at": latest_checkpoint,
         "project": PROJECT,
@@ -633,7 +706,7 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
                 "total_holding_value_usd": approx(assets.get("total_holding_value_usd")),
                 "total_holding_pl_usd": approx_signed(assets.get("total_holding_pl_usd")),
                 "total_day_pl_usd": approx_signed(assets.get("total_account_day_pl_usd") or assets.get("broker_day_pl_usd")),
-                "note": "The latest post-close checkpoint preserves core_position_defense_mode and reconciles three confirmed risk-reduction fills.",
+                "note": "The latest post-close checkpoint preserves core_position_defense_mode and reconciles four executed risk-reduction orders plus one canceled order.",
             },
             "hong_kong_equities": {
                 "latest_checkpoint_status": "HK high-profit protection is tracked separately from U.S. risk scoring." if hk else "No updated Hong Kong holding detail was encoded in the latest checkpoint.",
@@ -650,24 +723,23 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
                 "holding_market_value_usd": approx(assets.get("us_holdings_market_value_usd")),
                 "holding_pl_usd": approx_signed(assets.get("us_holding_pl_usd")),
                 "day_pl_usd": approx_signed(assets.get("us_day_pl_usd")),
-                "historical_cleanup_status": "SOXS, TSLQ, GDXU, SOXL, UGL, and INTC are closed; no reopening.",
+                "historical_cleanup_status": "SOXS, TSLQ, GDXU, NVDD, NVDS, SOXL, UGL, and INTC are closed or prohibited; no reopening/no chase.",
                 "new_ldd_model_strategy_status": "No new LDD U.S. model strategy position.",
                 "key_positions": [
                     f"GOOG {scalar(holding_by_asset(portfolio_data, 'GOOG').get('quantity'))}",
-                    f"GLD {gld_quantity}",
                     f"NVDA {nvda_quantity}",
-                    f"GGLL {scalar(holding_by_asset(portfolio_data, 'GGLL').get('quantity'))}",
-                    "tiny TSLA residual",
-                ],
-                "closed_positions": [
+                    f"GGLL {ggll_quantity}",
+                ] if not active_us_position_labels else active_us_position_labels,
+                "closed_positions": closed_position_labels or [
                     f"SOXL {soxl_quantity}",
                     f"UGL {ugl_quantity}",
                     f"INTC {intc_quantity}",
+                    f"GLD {gld_quantity}",
                 ],
                 "open_risks": [
-                    "NVDA main core-risk watch after first protection reduction",
-                    "GGLL main remaining leveraged ETF risk valve",
-                    "GLD residual concentration/risk-line protection after compliant execution",
+                    f"NVDA main core-risk watch at {nvda_quantity} shares",
+                    f"GGLL main remaining leveraged ETF risk valve at {ggll_quantity} shares",
+                    "GLD is closed and should not be re-entered until a 380 reclaim plus a new approved rule",
                     "Hong Kong high-profit drawdown protection is escalated",
                 ],
                 "portfolio_mode": "core_position_defense_mode",
@@ -696,25 +768,30 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
                 "warning_count": len(timeline.get("warnings", [])) if isinstance(timeline.get("warnings"), list) else 0,
                 "no_new_execution_confirmed": latest_no_new_execution and not latest_execution_confirmed,
                 "confirmed_execution_reconciled": cleanup_confirmed or latest_execution_confirmed,
-                "latest_confirmed_execution": "GLD sell 5 at 390.91, GLD sell 5 at 391.05, and NVDA sell 5 at 201.74; all filled and reconciled.",
+                "latest_confirmed_execution": latest_execution_text,
                 "execution_writeback": {
-                    "order_count": 3,
-                    "estimated_gross_proceeds_usd": 4918.5,
-                    "GLD_position_before": 20,
-                    "GLD_position_after": 10,
-                    "NVDA_position_before": 20,
-                    "NVDA_position_after": 15,
-                    "status": "confirmed_against_post_sale_holdings_and_cash"
+                    "order_count": reconciliation.get("order_count", 3),
+                    "executed_order_count": reconciliation.get("executed_order_count", 3),
+                    "canceled_order_count": reconciliation.get("canceled_order_count", 0),
+                    "estimated_gross_proceeds_usd": reconciliation.get("estimated_gross_proceeds_usd", 4918.5),
+                    "GLD_position_before": reconciliation.get("GLD_position_before", 20),
+                    "GLD_position_after": reconciliation.get("GLD_position_after", 10),
+                    "NVDA_position_before": reconciliation.get("NVDA_position_before", 20),
+                    "NVDA_position_after": reconciliation.get("NVDA_position_after", 15),
+                    "GGLL_position_before": reconciliation.get("GGLL_position_before"),
+                    "GGLL_position_after": reconciliation.get("GGLL_position_after"),
+                    "status": scalar(reconciliation.get("reconciliation_status"), "confirmed_against_post_sale_holdings_and_cash")
                 },
                 "rule_compliance_vs_price_outcome": {
-                    "GLD": "compliant_execution",
-                    "NVDA": "compliant_execution_with_imperfect_price_outcome",
+                    "GLD": "closed_by_confirmed_execution",
+                    "NVDA": "confirmed_execution_rebased_to_10_shares",
+                    "GGLL": "confirmed_execution_rebased_to_5_shares",
                     "scoring_boundary": "Rule compliance and price outcome quality are separate."
                 },
                 "runtime_status_arbitration": {
                     "severity": "non_blocking",
-                    "actual_latest_phase": "Vol.5 Phase 5.8 Read-Only Consumer Fixture Validator",
-                    "result": "use_latest_actual_twos_runtime_baseline_and_latest_ldd_market_order_source"
+                    "actual_latest_phase": "Vol.6 Phase 6.3 Read-only API Contract",
+                    "result": "use_current_phase_6_3_baseline_and_latest_ldd_order_source"
                 },
                 "superseded_pending_instruction": "2026-06-09 17:26-17:27 SGT/BJT premarket-only Phase 5.9 instruction",
                 "soxl_position_after_execution": soxl_quantity,
@@ -724,6 +801,7 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
                     "SOXL": "closed_position" if soxl_quantity == "0" else "open",
                     "UGL": "closed_position" if ugl_quantity == "0" else "open",
                     "INTC": "closed_position" if intc_quantity == "0" else "open",
+                    "GLD": "closed_position" if gld_quantity == "0" else "open",
                 },
                 "latest_cleanup_cash_impact": "approximately 2050.03 USD before fees" if cleanup_confirmed else "not available",
                 "total_soxl_cleanup_cash_impact": "approximately 1222.68 USD before fees" if cleanup_confirmed else "not available",
@@ -778,6 +856,7 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
             item
             for item in source_files
             if "account_state_delta" in item
+            or "execution_reconciliation" in item
             or "section_level" in item
             or "quote_source" in item
             or "execution_feedback_loop" in item
@@ -808,8 +887,8 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
                 "day_pl_usd": approx_signed(assets.get("us_day_pl_usd")),
                 "main_remaining_leveraged_risk_valve": "GGLL",
                 "main_core_risk_watch": "NVDA",
-                "gld_status": "ordinary GLD concentration and risk-line protection; two reduction tranches executed; 10 shares remain with 385/380 downside protection; UGL already closed",
-                "closed_cleanup_positions": ["SOXL", "UGL", "INTC"],
+                "gld_status": "GLD closed at 0 shares; no re-entry until a 380 reclaim and a new approved rule",
+                "closed_cleanup_positions": ["GLD", "SOXL", "UGL", "INTC"],
             },
             "hong_kong_equities": {
                 "status": "separate_high_profit_protection_required",
@@ -836,14 +915,14 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
                 "latest_execution_gross_proceeds_usd": approx(cash.get("confirmed_order_gross_proceeds_usd")),
             },
             "leveraged_exposure": {
-                "status": "concentrated_in_ggll_after_cleanup",
-                "open_exposures": ["GGLL 10"],
-                "closed_exposures": [f"SOXL {soxl_quantity}", f"UGL {ugl_quantity}"],
-                "no_reopen": ["SOXS", "TSLQ", "GDXU", "SOXL", "UGL"],
+                "status": "reduced_to_residual_ggll_risk_valve",
+                "open_exposures": [f"GGLL {ggll_quantity}"],
+                "closed_exposures": [f"GLD {gld_quantity}", f"SOXL {soxl_quantity}", f"UGL {ugl_quantity}"],
+                "no_reopen": ["GLD", "SOXS", "TSLQ", "GDXU", "NVDD", "NVDS", "SOXL", "UGL"],
             },
             "historical_cleanup": {
                 "status": "cleanup_cycle_completed",
-                "closed": ["SOXS", "TSLQ", "GDXU", "SOXL", "UGL", "INTC"],
+                "closed": ["GLD", "SOXS", "TSLQ", "GDXU", "NVDD", "NVDS", "SOXL", "UGL", "INTC"],
                 "watch": [],
             },
             "quote_quality": {
@@ -869,24 +948,23 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
             "closed_position_opportunity_cost": {
                 "status": "tracked_separately_from_rule_compliance",
                 "example": "SOXL rebounded after closure, but the rebound is not a rule-compliance failure.",
-                "closed_positions": ["SOXL", "UGL", "INTC", "SOXS", "TSLQ", "GDXU"]
+                "closed_positions": ["SOXL", "UGL", "INTC", "SOXS", "TSLQ", "GDXU", "NVDD", "NVDS"]
             },
             "execution_reconciliation": {
                 "status": "latest_orders_confirmed_and_reconciled" if latest_execution_confirmed else "not_confirmed",
-                "latest_fills": {
-                    "GLD_tranche_1": {"quantity": 5, "price_usd": 390.91, "position_after_batch": gld_quantity},
-                    "GLD_tranche_2": {"quantity": 5, "price_usd": 391.05, "position_after_batch": gld_quantity},
-                    "NVDA": {"quantity": 5, "price_usd": 201.74, "position_after": nvda_quantity}
-                },
+                "latest_fills": latest_fills,
+                "executed_order_count": reconciliation.get("executed_order_count", len(executed_orders)),
+                "canceled_order_count": reconciliation.get("canceled_order_count", len(canceled_orders)),
                 "estimated_gross_proceeds_usd": approx(assets.get("confirmed_order_gross_proceeds_usd")),
                 "us_cash_ratio_pct": assets.get("us_cash_ratio_pct"),
             },
             "rule_compliance_vs_price_outcome": {
                 "status": "separate_scores_required",
-                "GLD_rule_compliance": "compliant_execution",
-                "NVDA_rule_compliance": "compliant_execution",
-                "NVDA_price_outcome_quality": "imperfect",
-                "account_structure_impact": "U.S. cash ratio improved to approximately 45.8 percent"
+                "GLD_rule_compliance": "confirmed_execution_closed_position",
+                "NVDA_rule_compliance": "confirmed_execution_rebased_to_10",
+                "GGLL_rule_compliance": "confirmed_execution_rebased_to_5",
+                "price_outcome_quality": "tracked_separately",
+                "account_structure_impact": f"U.S. cash ratio improved to approximately {scalar(assets.get('us_cash_ratio_pct'))} percent"
             },
             "post_sale_cost_basis": {
                 "status": "broker_remaining_cost_basis_may_change_after_partial_sale",
@@ -895,15 +973,15 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
             "runtime_status_arbitration": {
                 "status": "resolved",
                 "severity": "non_blocking",
-                "actual_latest_phase": "Vol.5 Phase 5.8 Read-Only Consumer Fixture Validator",
+                "actual_latest_phase": "Vol.6 Phase 6.3 Read-only API Contract",
                 "latest_market_source_time": latest_checkpoint
             },
         },
         "quality_assessment": {
             "overall_status": "core_position_defense_validated",
             "positive_factors": [
-                "SOXL, UGL, and INTC are closed at 0 shares.",
-                "Three confirmed GLD/NVDA sells generated approximately 4,918.50 USD before fees.",
+                "GLD, SOXL, UGL, and INTC are closed at 0 shares.",
+                f"Four executed sells generated approximately {scalar(reconciliation.get('estimated_gross_proceeds_usd'))} USD before fees; one GLD order was canceled.",
                 f"U.S. cash/cash-equivalent is {approx(cash.get('broker_cash_usd'))} USD.",
                 f"U.S. cash ratio is approximately {scalar(assets.get('us_cash_ratio_pct'))} percent.",
                 f"USDT is approximately {usdt_defense_ratio}% of Binance visible assets.",
@@ -912,17 +990,16 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
                 "Quote Type Tagging is reinforced for rule validity.",
             ],
             "risk_factors": [
-                "NVDA is the main core-risk watch.",
-                "GGLL is the main remaining leveraged ETF risk valve.",
-                "GLD residual 10-share position requires 385/380 downside protection.",
-                "NVDA residual 15-share position remains the main core-risk watch.",
+                f"NVDA is the main core-risk watch at {nvda_quantity} shares.",
+                f"GGLL is the main remaining leveraged ETF risk valve at {ggll_quantity} shares.",
+                "GLD is closed and remains a no-reentry position until a 380 reclaim and a new approved rule.",
                 "Hong Kong high-profit drawdown protection is escalated after a -13.54 percent day.",
                 "BTC buyback remains inactive below 75,500-76,000.",
             ],
             "next_required_confirmations": [
-                "Whether NVDA reclaims 210-212 or weakens below 200.",
-                "Whether GOOG holds above 360 or triggers GGLL reduction.",
-                "Whether GLD reclaims 400-405 or loses 385 / breaks 380.",
+                "Whether NVDA falls below 198 with weak QQQ/SMH.",
+                "Whether GOOG reclaims 355 or triggers removal of the remaining GGLL.",
+                "Whether GLD reclaims 380 and receives a new approved re-entry rule.",
                 "Whether BTC remains below 75,500-76,000.",
                 "Whether any new order screenshots confirm actual execution.",
                 "Whether a latest ZEC bot page screenshot is provided.",
@@ -965,6 +1042,7 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
             "ZEC grid should not be reopened or chased after profit lock.",
             "Confirmed cleanup executions should reconcile fills, position state, cash impact, and closed-rule retirement.",
             "Core-position defense remains active after SOXL, UGL, and INTC cleanup.",
+            "Confirmed post-close execution reconciliation can promote a newer active checkpoint when order screenshots and account state agree.",
             "Quote Type Tagging is mandatory before treating a price as execution-valid.",
         ],
         "current_checkpoint": latest_checkpoint,
@@ -972,6 +1050,7 @@ def build_payloads(records: list[RuntimeRecord], warnings: list[str]) -> tuple[d
             "Old 2026-05 detailed LDD account snapshot memories.",
             "2026-06-06 post-cleanup checkpoint is superseded as active state by the 2026-06-08 core-position defense validation checkpoint.",
             "2026-06-09 17:26-17:27 premarket-only Phase 5.9 instruction is superseded by the 2026-06-10 post-close execution writeback.",
+            "2026-06-10 17:06 Phase 6.2a premarket governance evidence remains non-promoted and is superseded as active state by the 2026-06-11 post-close execution reconciliation.",
             "Phase 2 v1/v2 drafted command memories.",
             "Phase 3 v1 still-running ZEC bot assumption.",
         ],

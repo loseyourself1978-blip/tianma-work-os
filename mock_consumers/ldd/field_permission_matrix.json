@@ -2,7 +2,7 @@
   "matrix_type": "field_permission_matrix",
   "version": "0.1",
   "source_view_model": "cockpit/ldd/view_model.json",
-  "baseline_checkpoint": "2026-06-10T08:49:00+08:00",
+  "baseline_checkpoint": "2026-06-11T08:10:00+08:00",
   "field_classes": [
     {
       "field_class": "public_safe",

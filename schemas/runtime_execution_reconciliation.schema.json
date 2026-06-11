@@ -1,0 +1,276 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/runtime_execution_reconciliation.schema.json",
+  "title": "Runtime Execution Reconciliation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_type",
+    "phase",
+    "sync_type",
+    "timestamp_sgt",
+    "timestamp_range_sgt_bjt",
+    "source_priority",
+    "runtime_baseline_correction",
+    "active_checkpoint_before_this_review",
+    "active_checkpoint_after_this_review",
+    "checkpoint_promoted",
+    "promotion_reason",
+    "customer_facing_ready",
+    "external_api_connected",
+    "broker_api_connected",
+    "binance_api_connected",
+    "live_market_data_enabled",
+    "trading_automation_enabled",
+    "credential_handling_enabled",
+    "runtime_mutation_enabled_by_user_interface",
+    "execution_trigger_enabled_by_system",
+    "broker_state_update",
+    "current_us_positions",
+    "confirmed_today_orders",
+    "binance_state_update",
+    "active_rules_after_review",
+    "product_feedback",
+    "validation_summary",
+    "explicit_non_goals_confirmed"
+  ],
+  "properties": {
+    "record_type": {
+      "type": "string",
+      "enum": [
+        "runtime_execution_reconciliation"
+      ]
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "Vol.6 Phase 6.3a"
+      ]
+    },
+    "sync_type": {
+      "type": "string",
+      "enum": [
+        "ldd_post_close_review"
+      ]
+    },
+    "timestamp_sgt": {
+      "type": "string"
+    },
+    "timestamp_range_sgt_bjt": {
+      "type": "string"
+    },
+    "snapshot_time": {
+      "type": "string"
+    },
+    "source_priority": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_of_truth": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "quote_type": {
+      "type": "string"
+    },
+    "portfolio_mode": {
+      "type": "string"
+    },
+    "runtime_baseline_correction": {
+      "type": "object"
+    },
+    "active_checkpoint_before_this_review": {
+      "type": "string"
+    },
+    "active_checkpoint_after_this_review": {
+      "type": "string"
+    },
+    "checkpoint_promoted": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
+    },
+    "promotion_reason": {
+      "type": "string"
+    },
+    "customer_facing_ready": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "external_api_connected": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "broker_api_connected": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "binance_api_connected": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "live_market_data_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "trading_automation_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "credential_handling_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "runtime_mutation_enabled_by_user_interface": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "execution_trigger_enabled_by_system": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "broker_state_update": {
+      "type": "object"
+    },
+    "current_us_positions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "confirmed_today_orders": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "order_type",
+          "symbol",
+          "quantity",
+          "price",
+          "currency",
+          "source",
+          "execution_state",
+          "contributes_to_position_reconciliation"
+        ],
+        "properties": {
+          "order_type": {
+            "type": "string",
+            "enum": [
+              "sell",
+              "cancel"
+            ]
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "price": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "execution_state": {
+            "type": "string",
+            "enum": [
+              "executed",
+              "canceled"
+            ]
+          },
+          "contributes_to_position_reconciliation": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "binance_state_update": {
+      "type": "object"
+    },
+    "active_rules_after_review": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "product_feedback": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "validation_summary": {
+      "type": "object"
+    },
+    "explicit_non_goals_confirmed": {
+      "type": "object"
+    },
+    "total_visible_assets": {
+      "type": "object"
+    },
+    "cash_balance": {
+      "type": "object"
+    },
+    "holdings": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "strategy_tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "reconciliation": {
+      "type": "object"
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "updates_or_supersedes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

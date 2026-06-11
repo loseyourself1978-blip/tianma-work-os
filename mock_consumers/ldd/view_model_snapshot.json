@@ -2,17 +2,21 @@
   "snapshot_type": "static_mock_consumer_snapshot",
   "snapshot_version": "0.1",
   "source_view_model": "cockpit/ldd/view_model.json",
-  "latest_checkpoint": "2026-06-10T08:49:00+08:00",
+  "latest_checkpoint": "2026-06-11T08:10:00+08:00",
   "portfolio_mode": "core_position_defense_mode",
   "consumer_readiness": "ready_with_limits",
   "active_positions": [
-    "GLD 10",
     "GOOG 14",
-    "NVDA 15",
-    "GGLL 10",
+    "NVDA 10",
+    "GGLL 5",
     "tiny TSLA residual"
   ],
   "closed_positions": [
+    {
+      "asset": "GLD",
+      "state": "closed_position",
+      "reentry": "prohibited"
+    },
     {
       "asset": "SOXL",
       "state": "closed_position",
@@ -46,27 +50,28 @@
   ],
   "risk_summary": {
     "GLD": {
-      "state": "active_risk",
-      "rule_compliance_result": "compliant_execution",
-      "position_before": 20,
-      "position_after": 10,
+      "state": "closed_position",
+      "rule_compliance_result": "confirmed_execution_closed_position",
+      "position_before": 10,
+      "position_after": 0,
       "next_protection_levels": [
-        385,
         380
       ],
-      "full_repair_zone": "400-405"
+      "reentry_condition": "380 reclaim plus new approved rule"
     },
     "NVDA": {
       "state": "main_core_risk_watch",
-      "rule_compliance_result": "compliant_execution",
-      "price_outcome_quality": "imperfect",
-      "position_before": 20,
-      "position_after": 15,
-      "next_protection_level": 200
+      "rule_compliance_result": "confirmed_execution_rebased_to_10",
+      "price_outcome_quality": "tracked_separately",
+      "position_before": 15,
+      "position_after": 10,
+      "next_protection_level": 198
     },
     "GOOG_GGLL": {
       "goog_defense_level": 355,
-      "ggll_role": "main_remaining_leveraged_etf_risk_valve"
+      "ggll_role": "main_remaining_leveraged_etf_risk_valve",
+      "ggll_position_before": 10,
+      "ggll_position_after": 5
     }
   },
   "crypto_defense": {
@@ -85,9 +90,11 @@
     "live_execution_quote": false
   },
   "execution_writeback": {
-    "order_count": 3,
-    "estimated_gross_proceeds_usd": 4918.5,
-    "us_cash_ratio_pct": 45.8,
+    "order_count": 5,
+    "executed_order_count": 4,
+    "canceled_order_count": 1,
+    "estimated_gross_proceeds_usd": 5286.05,
+    "us_cash_ratio_pct": 68.8,
     "status": "confirmed_and_reconciled"
   },
   "safety": {

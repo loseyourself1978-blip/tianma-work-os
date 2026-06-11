@@ -38,6 +38,8 @@ TIMESTAMP_FIELDS = [
     "contract_time",
     "generation_time",
     "validation_time",
+    "timestamp",
+    "timestamp_sgt",
 ]
 
 
@@ -124,6 +126,16 @@ def classify_record(path: Path, data: dict[str, Any]) -> str:
         return "consumer_contract_test_matrix"
     if "read_only_consumer_fixture_validation" in name:
         return "read_only_consumer_fixture_validation"
+    if "vol6_phase6_1_ui_boundary_architecture" in name:
+        return "governance_review"
+    if "vol6_phase6_2_permission_privacy_masking_review" in name:
+        return "governance_review"
+    if "vol6_phase6_3_read_only_api_contract_review" in name:
+        return "governance_review"
+    if "vol6_phase6_2a_ldd_premarket_runtime_sync_governance_patch" in name:
+        return "governance_runtime_sync"
+    if "vol6_phase6_3a_ldd_post_close_execution_reconciliation" in name:
+        return "runtime_execution_reconciliation"
     if "executed_order_writeback" in name:
         return "executed_order_writeback"
     if "runtime_status_conflict_arbitration" in name:
@@ -227,6 +239,12 @@ def classify_record(path: Path, data: dict[str, Any]) -> str:
         return "consumer_contract_test_matrix"
     if data.get("schema_type") == "read_only_consumer_fixture_validation":
         return "read_only_consumer_fixture_validation"
+    if data.get("schema_type") == "ui_boundary_architecture_review":
+        return "governance_review"
+    if data.get("record_type") == "governance_review":
+        return "governance_review"
+    if data.get("record_type") == "governance_runtime_sync":
+        return "governance_runtime_sync"
     if data.get("schema_type") == "executed_order_writeback":
         return "executed_order_writeback"
     if data.get("schema_type") == "runtime_status_arbitration":
@@ -296,8 +314,11 @@ def event_type(record_type: str) -> str:
         "mock_consumer_package_review": "report_generation",
         "consumer_contract_test_matrix": "report_generation",
         "read_only_consumer_fixture_validation": "report_generation",
+        "governance_review": "report_generation",
+        "governance_runtime_sync": "sync_delta",
         "executed_order_writeback": "execution_event",
         "runtime_status_arbitration": "command_intelligence",
+        "runtime_execution_reconciliation": "execution_event",
     }
     return mapping.get(record_type, "unknown")
 
@@ -324,7 +345,7 @@ def evidence_level(data: dict[str, Any], record_type: str) -> str:
         return "runtime_record"
     if record_type == "read_only_consumer_fixture_validation":
         return "runtime_record"
-    if record_type in {"executed_order_writeback", "runtime_status_arbitration"}:
+    if record_type in {"governance_review", "governance_runtime_sync", "executed_order_writeback", "runtime_status_arbitration", "runtime_execution_reconciliation"}:
         return "runtime_record"
     if record_type == "unknown":
         return "unknown"
@@ -332,10 +353,10 @@ def evidence_level(data: dict[str, Any], record_type: str) -> str:
 
 
 def priority(record_type: str, data: dict[str, Any], tags: list[str]) -> str:
-    if record_type in {"cockpit_consistency_review", "cockpit_view_model_contract", "cockpit_view_model_generation", "view_model_quality_gate_review", "cockpit_consumer_readiness_review", "mock_consumer_package_review", "consumer_contract_test_matrix", "read_only_consumer_fixture_validation"}:
+    if record_type in {"cockpit_consistency_review", "cockpit_view_model_contract", "cockpit_view_model_generation", "view_model_quality_gate_review", "cockpit_consumer_readiness_review", "mock_consumer_package_review", "consumer_contract_test_matrix", "read_only_consumer_fixture_validation", "governance_review"}:
         return "medium"
     text = json.dumps(data, ensure_ascii=False).lower()
-    if record_type in {"execution_event", "executed_order_writeback"}:
+    if record_type in {"execution_event", "executed_order_writeback", "runtime_execution_reconciliation"}:
         return "critical"
     if record_type == "sync_delta_update":
         return "critical"
@@ -348,6 +369,8 @@ def priority(record_type: str, data: dict[str, Any], tags: list[str]) -> str:
     if record_type in {"strategy_state", "trigger_execution_rule", "rule_based_execution_review", "account_structure_review"}:
         return "medium"
     if "superseded" in tags:
+        return "low"
+    if record_type == "governance_runtime_sync":
         return "low"
     return "low"
 
@@ -498,6 +521,17 @@ def title_and_summary(record: LoadedRecord) -> tuple[str, str]:
             "Read-only consumer fixture validation",
             f"Validated {scalar(summary.get('fixture_files_checked'))} static fixtures with {scalar(summary.get('failed'))} blocking failures and {scalar(summary.get('warnings'))} warnings.",
         )
+    if rt == "governance_review":
+        phase = scalar(data.get("phase") or data.get("review_phase"), "Vol.6 governance review")
+        return (
+            phase,
+            f"Governance review recorded with customer-facing ready={scalar(data.get('customer_facing_ready'))}, runtime_mutation_flag={scalar(data.get('runtime_mutation_enabled'))}, and trading_automation_flag={scalar(data.get('trading_automation_enabled'))}.",
+        )
+    if rt == "governance_runtime_sync":
+        return (
+            "Non-promoted LDD governance runtime sync",
+            f"Recorded {scalar(data.get('phase'))} as governance evidence while latest checkpoint unchanged={scalar(data.get('latest_checkpoint_unchanged'))}.",
+        )
     if rt == "executed_order_writeback":
         orders = data.get("orders", []) if isinstance(data.get("orders"), list) else []
         reconciliation = data.get("reconciliation", {}) if isinstance(data.get("reconciliation"), dict) else {}
@@ -509,6 +543,12 @@ def title_and_summary(record: LoadedRecord) -> tuple[str, str]:
         return (
             "Runtime status conflict arbitration",
             f"Non-blocking arbitration preserved {scalar(data.get('actual_latest_phase'))} and used the latest market source.",
+        )
+    if rt == "runtime_execution_reconciliation":
+        reconciliation = data.get("reconciliation", {}) if isinstance(data.get("reconciliation"), dict) else {}
+        return (
+            "Post-close execution reconciliation and checkpoint promotion",
+            f"Reconciled {scalar(reconciliation.get('executed_order_count'))} executed orders and {scalar(reconciliation.get('canceled_order_count'))} canceled order; promoted checkpoint to {scalar(data.get('active_checkpoint_after_this_review'))}.",
         )
     if rt == "sync_delta_update":
         if "post-close-runtime-delta" in scalar(data.get("delta_id")):
@@ -564,11 +604,20 @@ def state_before_after(record: LoadedRecord) -> tuple[str, str]:
     if rt == "read_only_consumer_fixture_validation":
         summary = data.get("pass_fail_summary", {}) if isinstance(data.get("pass_fail_summary"), dict) else {}
         return "", f"overall_status={scalar(summary.get('overall_status'))}; read_only_confirmed={scalar(data.get('read_only_confirmed'))}"
+    if rt == "governance_review":
+        return "", f"phase={scalar(data.get('phase') or data.get('review_phase'))}; customer_facing_ready={scalar(data.get('customer_facing_ready'))}"
+    if rt == "governance_runtime_sync":
+        return "active_checkpoint_unchanged", f"latest_checkpoint_unchanged={scalar(data.get('latest_checkpoint_unchanged'))}; promoted=false"
     if rt == "executed_order_writeback":
         reconciliation = data.get("reconciliation", {}) if isinstance(data.get("reconciliation"), dict) else {}
         return "", f"reconciliation_status={scalar(reconciliation.get('reconciliation_status'))}"
     if rt == "runtime_status_arbitration":
         return scalar(data.get("user_sync_claimed_phase"), ""), scalar(data.get("actual_latest_phase"), "")
+    if rt == "runtime_execution_reconciliation":
+        return (
+            scalar(data.get("active_checkpoint_before_this_review"), ""),
+            scalar(data.get("active_checkpoint_after_this_review"), ""),
+        )
     if rt == "pending_command":
         return "", f"{scalar(data.get('status'))}/{scalar(data.get('final_status'))}"
     return "", ""
@@ -616,10 +665,16 @@ def tags_for(record: LoadedRecord, zec_closure_exists: bool) -> list[str]:
         tags.extend(["consumer_contract_test_matrix", "privacy_boundary", "semantic_validation", "non_trading_runtime_event"])
     if record.record_type == "read_only_consumer_fixture_validation":
         tags.extend(["read_only_fixture_validation", "consumer_contract_boundary", "privacy_boundary", "non_trading_runtime_event"])
+    if record.record_type == "governance_review":
+        tags.extend(["governance_review", "non_trading_runtime_event"])
+    if record.record_type == "governance_runtime_sync":
+        tags.extend(["governance_runtime_sync", "non_promoted_evidence", "non_trading_runtime_event"])
     if record.record_type == "executed_order_writeback":
         tags.extend(["executed_order_writeback", "confirmed_execution", "rule_linked_writeback"])
     if record.record_type == "runtime_status_arbitration":
         tags.extend(["runtime_status_conflict", "latest_source_arbitration", "non_blocking", "non_trading_runtime_event"])
+    if record.record_type == "runtime_execution_reconciliation":
+        tags.extend(["confirmed_execution", "checkpoint_promoted", "execution_reconciliation", "latest_active_checkpoint"])
     if "near_trigger" in text and record.record_type != "cockpit_view_model_contract":
         tags.append("near_trigger")
     if "latest_active_checkpoint" in text:

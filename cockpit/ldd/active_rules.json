@@ -1,105 +1,121 @@
 {
-  "generated_at": "2026-06-10T08:49:00+08:00",
+  "generated_at": "2026-06-11T08:10:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "cockpit_active_rules",
   "version": "0.1",
-  "latest_active_checkpoint": "2026-06-10T08:49:00+08:00",
+  "latest_active_checkpoint": "2026-06-11T08:10:00+08:00",
   "source_files": [
-    "records/ldd/2026-06-10/rule_trigger_monitor_0848_0849_sgt.json"
+    "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
   ],
   "rules": [
     {
-      "rule_id": "gld-residual-risk-rule-20260610-0849",
-      "asset_or_module": "GLD",
-      "rule_type": "ordinary_gld_concentration_risk_line_protection",
-      "status": "executed",
-      "trigger_state": "partially_executed",
-      "trigger_condition": "If GLD falls below 385, reduce 5. If GLD falls below 380, consider clearing the remaining 5. Downgrade alert after 400-405 recovery.",
-      "current_action": "hold residual 10 under staged downside protection",
-      "source_files": [
-        "records/ldd/2026-06-10/rule_trigger_monitor_0848_0849_sgt.json"
-      ],
-      "last_updated": "2026-06-10T08:49:00+08:00",
-      "cockpit_priority": "medium",
-      "requires_execution_price_confirmation": false,
-      "tags": [
-        "executed",
-        "gld",
-        "risk_control"
-      ]
-    },
-    {
-      "rule_id": "nvda-residual-core-defense-rule-20260610-0849",
-      "asset_or_module": "NVDA",
-      "rule_type": "main_core_risk_watch",
-      "status": "executed",
-      "trigger_state": "partially_executed",
-      "trigger_condition": "If below 200 with weak QQQ/SMH, reduce another 5. If 210-212 is reclaimed for 30-60 minutes, hold. No buyback yet.",
-      "current_action": "hold 15 under continued downside protection",
-      "source_files": [
-        "records/ldd/2026-06-10/rule_trigger_monitor_0848_0849_sgt.json"
-      ],
-      "last_updated": "2026-06-10T08:49:00+08:00",
-      "cockpit_priority": "medium",
-      "requires_execution_price_confirmation": false,
-      "tags": [
-        "executed",
-        "nvda",
-        "risk_control"
-      ]
-    },
-    {
-      "rule_id": "goog-ggll-risk-valve-rule-20260610-0849",
-      "asset_or_module": "GOOG/GGLL",
-      "rule_type": "main_remaining_leveraged_etf_risk_valve",
+      "rule_id": "no-new-buying-after-close-20260611-0810",
+      "asset_or_module": "U.S./Crypto",
+      "rule_type": "prohibition_rule",
       "status": "active",
       "trigger_state": "active",
-      "trigger_condition": "If GOOG breaks 355 and cannot reclaim, sell 5 GGLL. If GOOG falls below 350, clear remaining GGLL.",
-      "current_action": "hold GOOG 14 and monitor GGLL as the main leveraged-risk valve",
+      "trigger_condition": "No new buying after the confirmed post-close risk reductions.",
+      "current_action": "Preserve cash defense and wait for a new approved decision.",
       "source_files": [
-        "records/ldd/2026-06-10/rule_trigger_monitor_0848_0849_sgt.json"
+        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
       ],
-      "last_updated": "2026-06-10T08:49:00+08:00",
+      "last_updated": "2026-06-11T08:10:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
         "active",
-        "goog_ggll",
-        "quote_source_conflict",
-        "risk_control"
+        "risk_control",
+        "u.s._crypto"
       ]
     },
     {
-      "rule_id": "closed-cleanup-positions-no-reentry-20260610-0849",
-      "asset_or_module": "SOXL/UGL/INTC/SOXS/TSLQ/GDXU/NVDD/NVDS",
-      "rule_type": "closed_position_guardrail",
-      "status": "executed",
-      "trigger_state": "executed",
-      "trigger_condition": "A new approved rule is required before any re-entry.",
-      "current_action": "preserve no-reentry discipline",
+      "rule_id": "no-soxl-reentry-20260611-0810",
+      "asset_or_module": "SOXL",
+      "rule_type": "no_reentry_rule",
+      "status": "active",
+      "trigger_state": "active",
+      "trigger_condition": "SOXL remains closed and requires a new approved rule before re-entry.",
+      "current_action": "Do not re-add SOXL.",
       "source_files": [
-        "records/ldd/2026-06-10/rule_trigger_monitor_0848_0849_sgt.json"
+        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
       ],
-      "last_updated": "2026-06-10T08:49:00+08:00",
+      "last_updated": "2026-06-11T08:10:00+08:00",
+      "cockpit_priority": "high",
+      "requires_execution_price_confirmation": true,
+      "tags": [
+        "active",
+        "soxl"
+      ]
+    },
+    {
+      "rule_id": "no-ugl-reentry-20260611-0810",
+      "asset_or_module": "UGL",
+      "rule_type": "no_reentry_rule",
+      "status": "active",
+      "trigger_state": "active",
+      "trigger_condition": "UGL remains closed and requires a new approved rule before re-entry.",
+      "current_action": "Do not re-add UGL.",
+      "source_files": [
+        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+      ],
+      "last_updated": "2026-06-11T08:10:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
-        "executed",
-        "soxl_ugl_intc_soxs_tslq_gdxu_nvdd_nvds"
+        "active",
+        "ugl"
       ]
     },
     {
-      "rule_id": "btc-buyback-defense-rule-20260610-0849",
+      "rule_id": "no-intc-reentry-20260611-0810",
+      "asset_or_module": "INTC",
+      "rule_type": "no_reentry_rule",
+      "status": "active",
+      "trigger_state": "active",
+      "trigger_condition": "INTC remains closed and requires a new approved rule before re-entry.",
+      "current_action": "Do not re-add INTC.",
+      "source_files": [
+        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+      ],
+      "last_updated": "2026-06-11T08:10:00+08:00",
+      "cockpit_priority": "medium",
+      "requires_execution_price_confirmation": false,
+      "tags": [
+        "active",
+        "intc"
+      ]
+    },
+    {
+      "rule_id": "no-zec-grid-reopen-20260611-0810",
+      "asset_or_module": "ZEC",
+      "rule_type": "closed_bot_guardrail",
+      "status": "active",
+      "trigger_state": "active",
+      "trigger_condition": "ZEC grid remains closed and must not be reopened.",
+      "current_action": "Do not reopen or chase ZEC.",
+      "source_files": [
+        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+      ],
+      "last_updated": "2026-06-11T08:10:00+08:00",
+      "cockpit_priority": "medium",
+      "requires_execution_price_confirmation": false,
+      "tags": [
+        "active",
+        "zec"
+      ]
+    },
+    {
+      "rule_id": "btc-no-buyback-until-75500-76000-20260611-0810",
       "asset_or_module": "BTC",
       "rule_type": "staged_buyback_watch",
       "status": "active",
       "trigger_state": "not_triggered",
-      "trigger_condition": "No BTC buyback below 75,500-76,000.",
-      "current_action": "maintain USDT-dominant defense",
+      "trigger_condition": "No BTC buyback until stabilization above 75,500-76,000.",
+      "current_action": "Maintain USDT-dominant defense.",
       "source_files": [
-        "records/ldd/2026-06-10/rule_trigger_monitor_0848_0849_sgt.json"
+        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
       ],
-      "last_updated": "2026-06-10T08:49:00+08:00",
+      "last_updated": "2026-06-11T08:10:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
@@ -108,32 +124,90 @@
       ]
     },
     {
-      "rule_id": "crypto-no-add-defense-rule-20260610-0849",
-      "asset_or_module": "ETH/SOL/DOGE/ZEC",
-      "rule_type": "usdt_dominant_defense",
+      "rule_id": "nvda-below-198-defense-20260611-0810",
+      "asset_or_module": "NVDA",
+      "rule_type": "main_core_risk_watch",
       "status": "active",
       "trigger_state": "active",
-      "trigger_condition": "No ETH, SOL, DOGE, or ZEC adds. No ZEC grid reopening.",
-      "current_action": "preserve USDT-dominant crypto defense",
+      "trigger_condition": "If NVDA is below 198 with QQQ and SMH weak, reduce 5 NVDA.",
+      "current_action": "Hold 10 under rebased downside protection; no mechanical buyback.",
       "source_files": [
-        "records/ldd/2026-06-10/rule_trigger_monitor_0848_0849_sgt.json"
+        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
       ],
-      "last_updated": "2026-06-10T08:49:00+08:00",
+      "last_updated": "2026-06-11T08:10:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
         "active",
-        "eth_sol_doge_zec",
-        "no_add"
+        "nvda",
+        "risk_control"
+      ]
+    },
+    {
+      "rule_id": "goog-355-ggll-clear-20260611-0810",
+      "asset_or_module": "GOOG/GGLL",
+      "rule_type": "leveraged_residual_risk_valve",
+      "status": "active",
+      "trigger_state": "active",
+      "trigger_condition": "If GOOG cannot reclaim 355, clear the remaining 5 GGLL.",
+      "current_action": "Use residual GGLL as the main leveraged risk valve.",
+      "source_files": [
+        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+      ],
+      "last_updated": "2026-06-11T08:10:00+08:00",
+      "cockpit_priority": "medium",
+      "requires_execution_price_confirmation": false,
+      "tags": [
+        "active",
+        "goog_ggll",
+        "risk_control"
+      ]
+    },
+    {
+      "rule_id": "goog-below-350-common-stock-defense-20260611-0810",
+      "asset_or_module": "GOOG",
+      "rule_type": "core_position_defense",
+      "status": "active",
+      "trigger_state": "active",
+      "trigger_condition": "If GOOG is below 350 without recovery, reduce GOOG by 4 to 5 shares.",
+      "current_action": "Defend the common-stock core position without adding.",
+      "source_files": [
+        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+      ],
+      "last_updated": "2026-06-11T08:10:00+08:00",
+      "cockpit_priority": "medium",
+      "requires_execution_price_confirmation": false,
+      "tags": [
+        "active",
+        "goog"
+      ]
+    },
+    {
+      "rule_id": "gld-closed-no-reentry-until-380-reclaim-20260611-0810",
+      "asset_or_module": "GLD",
+      "rule_type": "closed_position_guardrail",
+      "status": "executed",
+      "trigger_state": "executed",
+      "trigger_condition": "GLD position is closed; no re-entry until a 380 reclaim and a new approved rule.",
+      "current_action": "Keep GLD at 0 shares.",
+      "source_files": [
+        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+      ],
+      "last_updated": "2026-06-11T08:10:00+08:00",
+      "cockpit_priority": "medium",
+      "requires_execution_price_confirmation": false,
+      "tags": [
+        "executed",
+        "gld"
       ]
     }
   ],
   "summary": {
-    "rule_count": 6,
+    "rule_count": 10,
     "near_trigger_count": 0,
     "not_triggered_count": 1,
     "awaiting_execution_confirmation_count": 0,
-    "executed_count": 3
+    "executed_count": 1
   },
   "warnings": []
 }

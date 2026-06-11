@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.6 Phase 6.3 - Read-only API Contract
+Vol.6 Phase 6.3a - LDD Post-close Execution Reconciliation and Checkpoint Update
 ```
 
 ## Core Documents
@@ -75,6 +75,8 @@ Vol.6 Phase 6.3 - Read-only API Contract
 - `docs/runtime/VOL6_PHASE6_0_BASELINE_VERIFICATION_v0.1.md`
 - `docs/runtime/VOL6_PHASE6_1_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/VOL6_PHASE6_2_PERMISSION_PRIVACY_MASKING_MODEL_v0.1.md`
+- `docs/runtime/VOL6_PHASE6_3_READ_ONLY_API_CONTRACT_v0.1.md`
+- `docs/runtime/VOL6_PHASE6_3A_LDD_POST_CLOSE_EXECUTION_RECONCILIATION_AND_CHECKPOINT_UPDATE_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
@@ -380,6 +382,14 @@ Vol.6 Phase 6.3 - Read-only API Contract
 - `scripts/validate_read_only_api_contract.sh`
 - `records/ldd/2026-06-10/vol6_phase6_3_read_only_api_contract_review_0849_sgt.json`
 - `reports/ldd/vol6_phase6_3_read_only_api_contract.md`
+- Next: `Vol.6 Phase 6.4 - Static Cockpit Prototype Boundary Review`
+
+## Vol.6 Phase 6.3a / LDD Post-close Execution Reconciliation and Checkpoint Update
+
+- `docs/runtime/VOL6_PHASE6_3A_LDD_POST_CLOSE_EXECUTION_RECONCILIATION_AND_CHECKPOINT_UPDATE_v0.1.md`
+- `schemas/runtime_execution_reconciliation.schema.json`
+- `records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json`
+- `reports/ldd/vol6_phase6_3a_ldd_post_close_execution_reconciliation.md`
 - Next: `Vol.6 Phase 6.4 - Static Cockpit Prototype Boundary Review`
 
 ## Product Principles

@@ -21,7 +21,7 @@ TAXONOMY_PATH = MOCK_DIR / "ui_state_taxonomy.json"
 CONSUMER_SURFACE_MAP_PATH = MOCK_DIR / "ui_boundary_surface_map.json"
 CANONICAL_VISIBILITY_PATH = MOCK_DIR / "ui_visibility_matrix.json"
 
-EXPECTED_CHECKPOINT = "2026-06-10T08:49:00+08:00"
+EXPECTED_CHECKPOINT = "2026-06-11T08:10:00+08:00"
 EXPECTED_SOURCE = "cockpit/ldd/view_model.json"
 
 BOUNDARY_PATHS = [

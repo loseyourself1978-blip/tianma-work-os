@@ -44,6 +44,7 @@ TIMESTAMP_FIELDS = [
     "contract_time",
     "generation_time",
     "validation_time",
+    "timestamp_sgt",
 ]
 
 
@@ -100,6 +101,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "governance_runtime_sync"
     if "read_only_api_contract_review" in name:
         return "read_only_api_contract_review"
+    if "vol6_phase6_3a_ldd_post_close_execution_reconciliation" in name:
+        return "runtime_execution_reconciliation"
     if "executed_order_writeback" in name:
         return "executed_order_writeback"
     if "runtime_status_conflict_arbitration" in name:
@@ -201,6 +204,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "governance_runtime_sync"
     if data.get("record_type") == "governance_review" and data.get("phase") == "Vol.6 Phase 6.3":
         return "read_only_api_contract_review"
+    if data.get("record_type") == "runtime_execution_reconciliation":
+        return "runtime_execution_reconciliation"
     if data.get("schema_type") == "executed_order_writeback":
         return "executed_order_writeback"
     if data.get("schema_type") == "runtime_status_arbitration":
@@ -251,6 +256,20 @@ def latest(records: list[RuntimeRecord]) -> RuntimeRecord | None:
     if not records:
         return None
     return sorted(records, key=lambda item: (item.timestamp or datetime.min, item.relpath))[-1]
+
+
+def latest_portfolio_state(records: list[RuntimeRecord]) -> RuntimeRecord | None:
+    return latest(
+        by_kind(records, "portfolio_state")
+        + by_kind(records, "runtime_execution_reconciliation")
+    )
+
+
+def latest_rule_monitor(records: list[RuntimeRecord]) -> RuntimeRecord | None:
+    return latest(
+        by_kind(records, "rule_ledger_snapshot")
+        + by_kind(records, "runtime_execution_reconciliation")
+    )
 
 
 def latest_timestamp(records: list[RuntimeRecord]) -> str:
@@ -321,7 +340,14 @@ def trigger_entries(records: list[RuntimeRecord]) -> list[dict[str, Any]]:
             }
         )
 
-    for record in by_kind(records, "rule_ledger_snapshot"):
+    rule_monitor_records = (
+        by_kind(records, "rule_ledger_snapshot")
+        + by_kind(records, "runtime_execution_reconciliation")
+    )
+    for record in sorted(
+        rule_monitor_records,
+        key=lambda item: (item.timestamp or datetime.min, item.relpath),
+    ):
         for rule in record.data.get("rules", []):
             if not isinstance(rule, dict):
                 continue
@@ -374,7 +400,7 @@ def local_git_log(limit: int = 5) -> list[str]:
 
 def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
     lines = common_header("Latest LDD Runtime Report", records)
-    portfolio = latest(by_kind(records, "portfolio_state"))
+    portfolio = latest_portfolio_state(records)
     zec_state = latest(
         [
             record
@@ -384,6 +410,7 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
     )
     execution = latest(by_kind(records, "execution_event"))
     writeback = latest(by_kind(records, "executed_order_writeback"))
+    reconciliation = latest(by_kind(records, "runtime_execution_reconciliation"))
     account = latest_account_review(records)
     crypto_account = latest_account_review(records, "binance")
     delta = latest(by_kind(records, "delta_sync"))
@@ -495,7 +522,30 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
     lines.extend(["## Latest Major Execution Event", ""])
     portfolio_tags = portfolio.data.get("strategy_tags", []) if portfolio else []
     latest_has_no_execution = any("no_new_execution" in str(tag) for tag in portfolio_tags)
-    if latest_has_no_execution:
+    if reconciliation and portfolio and reconciliation.relpath == portfolio.relpath:
+        reconciliation_data = reconciliation.data.get("reconciliation", {})
+        executed_orders = [
+            item
+            for item in reconciliation.data.get("confirmed_today_orders", [])
+            if isinstance(item, dict) and item.get("execution_state") == "executed"
+        ]
+        canceled_orders = [
+            item
+            for item in reconciliation.data.get("confirmed_today_orders", [])
+            if isinstance(item, dict) and item.get("execution_state") == "canceled"
+        ]
+        lines.extend(
+            [
+                "- Event: confirmed post-close execution reconciliation",
+                f"- Time: `{scalar(reconciliation.data.get('timestamp_sgt'))}`",
+                f"- Executed orders: `{len(executed_orders)}`",
+                f"- Canceled orders: `{len(canceled_orders)}`",
+                f"- Estimated gross executed proceeds: `{scalar(reconciliation_data.get('estimated_gross_proceeds_usd'))} USD` before fees",
+                "- Position changes: GLD `10 -> 0`; NVDA `15 -> 10`; GGLL `10 -> 5`",
+                f"- Source: `{reconciliation.relpath}`",
+            ]
+        )
+    elif latest_has_no_execution:
         lines.extend(
             [
                 f"- No new execution is visible at the latest checkpoint `{scalar(portfolio.data.get('snapshot_time'))}`.",
@@ -542,7 +592,17 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
     lines.append("")
 
     lines.extend(["## Latest Delta Sync / Execution Status", ""])
-    if delta:
+    if reconciliation and portfolio and reconciliation.relpath == portfolio.relpath:
+        lines.extend(
+            [
+                "- Delta: `Vol.6 Phase 6.3a execution reconciliation`",
+                f"- Sync time: `{scalar(reconciliation.data.get('timestamp_sgt'))}`",
+                "- Sync status: `execution_reconciled_and_checkpoint_promoted`",
+                f"- Reason: {scalar(reconciliation.data.get('promotion_reason'))}",
+                f"- Source: `{reconciliation.relpath}`",
+            ]
+        )
+    elif delta:
         lines.extend(
             [
                 f"- Delta: `{scalar(delta.data.get('delta_id'))}`",
@@ -562,14 +622,24 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
 
     lines.extend(["## Latest Account Structure Conclusion", ""])
     if portfolio and "core_position_defense_mode" in portfolio_tags:
+        holdings = {
+            scalar(item.get("asset")): item
+            for item in portfolio.data.get("holdings", [])
+            if isinstance(item, dict)
+        }
+        gld_quantity = scalar((holdings.get("GLD") or {}).get("quantity"))
+        nvda_quantity = scalar((holdings.get("NVDA") or {}).get("quantity"))
+        ggll_quantity = scalar((holdings.get("GGLL") or {}).get("quantity"))
+        assets = portfolio.data.get("total_visible_assets", {})
         lines.extend(
             [
                 "- Account: post-cleanup U.S. portfolio",
                 "- Portfolio mode: `core_position_defense_mode`",
-                "- Closed cleanup positions: `SOXL`, `UGL`, `INTC`",
-                "- Main remaining leveraged ETF risk valve: `GGLL`",
-                "- Main core-risk watch: `NVDA`",
-                "- GLD state: first two risk-control tranches executed; 10 shares remain under 385/380 downside protection; UGL remains closed",
+                "- Closed cleanup positions: `GLD`, `SOXL`, `UGL`, `INTC`",
+                f"- Main remaining leveraged ETF risk valve: `GGLL {ggll_quantity}`",
+                f"- Main core-risk watch: `NVDA {nvda_quantity}`",
+                f"- GLD state: closed at `{gld_quantity}` shares; no re-entry until a 380 reclaim and a new approved rule",
+                f"- U.S. cash ratio: `{scalar(assets.get('us_cash_ratio_pct'))}%`",
                 f"- Cleanup rule compliance score: `{scalar(cleanup_review.data.get('rule_compliance_score')) if cleanup_review else 'unknown'}`",
                 f"- Source: `{portfolio.relpath}`",
             ]
@@ -610,7 +680,7 @@ def generate_latest_runtime_report(records: list[RuntimeRecord]) -> list[str]:
 
 def generate_active_trigger_rules(records: list[RuntimeRecord]) -> list[str]:
     lines = common_header("Active Trigger Rules", records)
-    latest_monitor = latest(by_kind(records, "rule_ledger_snapshot"))
+    latest_monitor = latest_rule_monitor(records)
     lines.extend(
         [
             "This report includes active and recently relevant trigger rules. Executed rules remain listed when they define the latest known state.",
@@ -648,7 +718,7 @@ def generate_strategy_state_summary(records: list[RuntimeRecord]) -> list[str]:
     strategy_states = by_kind(records, "strategy_state")
     zec_state = latest([record for record in strategy_states if "zec" in scalar(record.data.get("linked_asset")).lower()])
     account = latest_account_review(records, "binance")
-    portfolio = latest(by_kind(records, "portfolio_state"))
+    portfolio = latest_portfolio_state(records)
     portfolio_tags = portfolio.data.get("strategy_tags", []) if portfolio else []
     closed_assets = {
         scalar(item.get("asset")).lower()
@@ -671,7 +741,7 @@ def generate_strategy_state_summary(records: list[RuntimeRecord]) -> list[str]:
     if "core_position_defense_mode" in portfolio_tags:
         lines.append("- U.S. historical cleanup cycle: completed for SOXL, UGL, and INTC.")
         lines.append("- Portfolio mode: `core_position_defense_mode`.")
-        lines.append("- Remaining focus: NVDA residual 15-share downside protection, GGLL leveraged risk valve, and GLD residual 10-share protection at 385/380.")
+        lines.append("- Remaining focus: NVDA 10-share downside protection and GGLL 5-share leveraged residual risk valve; GLD is closed.")
     else:
         lines.append("- U.S. historical positions: cleanup and risk-control phase remains active.")
     lines.append("- LDD new U.S. model strategy: no new position opened in current records.")
@@ -769,8 +839,9 @@ def generate_pending_commands_summary(records: list[RuntimeRecord]) -> list[str]
 def generate_account_structure_summary(records: list[RuntimeRecord]) -> list[str]:
     lines = common_header("Account Structure Summary", records)
     reviews = by_kind(records, "account_structure_review")
-    portfolio = latest(by_kind(records, "portfolio_state"))
+    portfolio = latest_portfolio_state(records)
     writeback = latest(by_kind(records, "executed_order_writeback"))
+    reconciliation = latest(by_kind(records, "runtime_execution_reconciliation"))
 
     lines.extend(
         [
@@ -783,18 +854,23 @@ def generate_account_structure_summary(records: list[RuntimeRecord]) -> list[str
 
     if portfolio and "core_position_defense_mode" in portfolio.data.get("strategy_tags", []):
         assets = portfolio.data.get("total_visible_assets", {})
+        reconciliation_data = (
+            reconciliation.data.get("reconciliation", {})
+            if reconciliation and reconciliation.relpath == portfolio.relpath
+            else {}
+        )
         lines.extend(
             [
                 "## Latest Post-Cleanup Structure State",
                 "",
                 "- Portfolio mode: `core_position_defense_mode`",
-                "- Closed cleanup positions: `SOXL`, `UGL`, `INTC`",
-                "- Main remaining leveraged ETF risk valve: `GGLL`",
-                "- Main core-risk watch: `NVDA`",
-                "- GLD: two rule-compliant reduction tranches executed; 10 shares remain under 385/380 downside protection; UGL already closed",
+                "- Closed cleanup positions: `GLD`, `SOXL`, `UGL`, `INTC`",
+                "- Main remaining leveraged ETF risk valve: `GGLL 5`",
+                "- Main core-risk watch: `NVDA 10`",
+                "- GLD: closed at 0 shares after two confirmed five-share sells; no re-entry until a 380 reclaim and a new approved rule",
                 f"- U.S. cash/cash-equivalent: `{scalar(assets.get('inferred_us_cash_equivalent_usd'))} USD`",
-                f"- Latest confirmed execution proceeds: `{scalar((writeback.data.get('reconciliation') or {}).get('estimated_gross_proceeds_usd')) if writeback else 'unknown'} USD` before fees",
-                "- Current U.S. cash ratio: `45.8%`",
+                f"- Latest confirmed execution proceeds: `{scalar(reconciliation_data.get('estimated_gross_proceeds_usd') or ((writeback.data.get('reconciliation') or {}).get('estimated_gross_proceeds_usd') if writeback else None))} USD` before fees",
+                f"- Current U.S. cash ratio: `{scalar(assets.get('us_cash_ratio_pct'))}%`",
                 f"- Binance USDT defense ratio: `{scalar(assets.get('binance_usdt_defense_ratio_pct'))}%`",
                 f"- Source: `{portfolio.relpath}`",
                 "",
@@ -845,6 +921,7 @@ def generate_execution_review_summary(records: list[RuntimeRecord]) -> list[str]
     lines = common_header("Execution Review Summary", records)
     reviews = by_kind(records, "execution_review")
     writebacks = by_kind(records, "executed_order_writeback")
+    reconciliations = by_kind(records, "runtime_execution_reconciliation")
 
     lines.extend(
         [
@@ -879,6 +956,25 @@ def generate_execution_review_summary(records: list[RuntimeRecord]) -> list[str]
                         f"({scalar(order.get('fill_status'))}, {scalar(order.get('execution_review_status'))})"
                     )
             lines.append("")
+
+    if reconciliations:
+        lines.extend(["## Latest Post-close Execution Reconciliation", ""])
+        for record in reconciliations:
+            data = record.data
+            reconciliation = data.get("reconciliation", {}) if isinstance(data.get("reconciliation"), dict) else {}
+            lines.extend(
+                [
+                    f"### {scalar(data.get('phase'))}",
+                    "",
+                    f"- Review time: `{scalar(data.get('timestamp_sgt'))}`",
+                    f"- Executed orders: `{scalar(reconciliation.get('executed_order_count'))}`",
+                    f"- Canceled orders: `{scalar(reconciliation.get('canceled_order_count'))}`",
+                    f"- Estimated gross proceeds: `{scalar(reconciliation.get('estimated_gross_proceeds_usd'))} USD`",
+                    f"- Reconciliation status: `{scalar(reconciliation.get('reconciliation_status'))}`",
+                    f"- Source: `{record.relpath}`",
+                    "",
+                ]
+            )
 
     if reviews:
         for record in reviews:

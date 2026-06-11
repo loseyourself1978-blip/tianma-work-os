@@ -117,6 +117,26 @@ def build_positions(latest_state: dict[str, Any], strategy_states: dict[str, Any
                 }
             )
 
+    for label in as_list(us_equities.get("closed_positions")):
+        text = str(label).strip()
+        if not text:
+            continue
+        parts = text.split(maxsplit=1)
+        asset = parts[0]
+        quantity = parts[1] if len(parts) > 1 else "0_or_not_applicable"
+        if any(entry.get("asset") == asset for entry in closed_positions):
+            continue
+        closed_positions.append(
+            {
+                "asset": asset,
+                "position_state": "closed_position",
+                "quantity": quantity,
+                "current_action": "no_readd / no reopening / no re-entry without a new approved rule",
+                "source_files": ["cockpit/ldd/latest_state.json"],
+                "tags": ["closed_position", "historical_cleanup", "prohibited_reentry"],
+            }
+        )
+
     active_positions: list[dict[str, Any]] = []
     for label in as_list(us_equities.get("key_positions")):
         text = str(label)

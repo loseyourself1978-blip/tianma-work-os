@@ -20,8 +20,8 @@
         "cockpit/ldd/view_model.json",
         "cockpit/ldd/latest_state.json"
       ],
-      "checkpoint": "2026-06-10T08:49:00+08:00",
-      "timeline_events": 84,
+      "checkpoint": "2026-06-11T08:10:00+08:00",
+      "timeline_events": 90,
       "timeline_warnings": 0,
       "promoted": true,
       "purpose": "Promoted current-state data for approved read-only consumers."
@@ -34,7 +34,7 @@
       "timestamp": "2026-06-10T17:06:00+08:00",
       "promoted": false,
       "execution_event": false,
-      "purpose": "Stale-checkpoint override evidence and future reconciliation context."
+      "purpose": "Historical stale-checkpoint override evidence retained for audit after the promoted 2026-06-11 post-close execution reconciliation."
     },
     {
       "layer_id": "permission_privacy_masking_contract",

@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-06-10T08:49:00+08:00",
+  "generated_at": "2026-06-11T08:10:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "cockpit_memory_checkpoint",
   "version": "0.1",
-  "latest_active_checkpoint": "2026-06-10T08:49:00+08:00",
+  "latest_active_checkpoint": "2026-06-11T08:10:00+08:00",
   "source_files": [
     "reports/ldd/latest_active_memory_checkpoint.md",
     "reports/ldd/memory_cleanup_recommendations.md",
-    "records/ldd/2026-06-10/account_state_delta_0848_0849_sgt.json"
+    "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
   ],
-  "active_memory_status": "Keep durable rules and latest 2026-06-10T08:49:00+08:00 active checkpoint; archive older detailed snapshots in records/reports.",
+  "active_memory_status": "Keep durable rules and latest 2026-06-11T08:10:00+08:00 active checkpoint; archive older detailed snapshots in records/reports.",
   "durable_rules": [
     "User-provided broker/Binance screenshots remain execution source of truth.",
     "Do not execute stale command drafts; execute latest valid command.",
@@ -19,13 +19,15 @@
     "ZEC grid should not be reopened or chased after profit lock.",
     "Confirmed cleanup executions should reconcile fills, position state, cash impact, and closed-rule retirement.",
     "Core-position defense remains active after SOXL, UGL, and INTC cleanup.",
+    "Confirmed post-close execution reconciliation can promote a newer active checkpoint when order screenshots and account state agree.",
     "Quote Type Tagging is mandatory before treating a price as execution-valid."
   ],
-  "current_checkpoint": "2026-06-10T08:49:00+08:00",
+  "current_checkpoint": "2026-06-11T08:10:00+08:00",
   "superseded_snapshot_candidates": [
     "Old 2026-05 detailed LDD account snapshot memories.",
     "2026-06-06 post-cleanup checkpoint is superseded as active state by the 2026-06-08 core-position defense validation checkpoint.",
     "2026-06-09 17:26-17:27 premarket-only Phase 5.9 instruction is superseded by the 2026-06-10 post-close execution writeback.",
+    "2026-06-10 17:06 Phase 6.2a premarket governance evidence remains non-promoted and is superseded as active state by the 2026-06-11 post-close execution reconciliation.",
     "Phase 2 v1/v2 drafted command memories.",
     "Phase 3 v1 still-running ZEC bot assumption."
   ],

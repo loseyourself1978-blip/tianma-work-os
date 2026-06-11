@@ -21,7 +21,7 @@ MANIFEST_PATH = COCKPIT_DIR / "manifest.json"
 LATEST_STATE_PATH = COCKPIT_DIR / "latest_state.json"
 TIMELINE_PATH = COCKPIT_DIR / "runtime_timeline.json"
 
-EXPECTED_CHECKPOINT = "2026-06-10T08:49:00+08:00"
+EXPECTED_CHECKPOINT = "2026-06-11T08:10:00+08:00"
 EXPECTED_PORTFOLIO_MODE = "core_position_defense_mode"
 REQUIRED_TOP_LEVEL = [
     "meta",
@@ -197,7 +197,7 @@ def check_closed_positions(view_model: dict[str, Any], results: GateResults) -> 
         if isinstance(item, dict)
     )
     problems: list[str] = []
-    for symbol in ["SOXL", "UGL", "INTC"]:
+    for symbol in ["SOXL", "UGL", "INTC", "GLD"]:
         item = closed.get(symbol)
         if not item:
             problems.append(f"{symbol} missing from closed_positions")
@@ -211,7 +211,7 @@ def check_closed_positions(view_model: dict[str, Any], results: GateResults) -> 
     results.gate(
         "closed_positions",
         not problems,
-        "SOXL, UGL, and INTC remain closed at zero and absent from active positions"
+        "GLD, SOXL, UGL, and INTC remain closed at zero and absent from active positions"
         if not problems
         else "; ".join(problems),
     )
@@ -251,8 +251,8 @@ def check_risk_roles(view_model: dict[str, Any], results: GateResults) -> None:
 def check_gld(view_model: dict[str, Any], results: GateResults) -> None:
     value = str(as_dict(view_model.get("risk_summary")).get("gld_status", ""))
     lower = value.lower()
-    required = all(term in lower for term in ["ordinary", "concentration", "risk-line"])
-    stale = "ugl-linked protection" in lower and "not" not in lower and "no longer" not in lower
+    required = all(term in lower for term in ["closed", "no re-entry", "380"])
+    stale = "10 shares remain" in lower or "ugl-linked protection" in lower
     results.gate(
         "gld_rule",
         required and not stale,
@@ -302,10 +302,19 @@ def check_execution_writeback(view_model: dict[str, Any], results: GateResults) 
     }
     quality = as_dict(view_model.get("data_quality"))
     problems: list[str] = []
-    if positions.get("GLD") != "GLD 10":
-        problems.append(f"GLD active position is {positions.get('GLD')!r}")
-    if positions.get("NVDA") != "NVDA 15":
+    closed = {
+        str(item.get("asset", "")).upper(): item
+        for item in as_list(view_model.get("closed_positions"))
+        if isinstance(item, dict)
+    }
+    if positions.get("GLD") is not None:
+        problems.append(f"GLD should not appear as an active position: {positions.get('GLD')!r}")
+    if closed.get("GLD", {}).get("position_state") != "closed_position":
+        problems.append("GLD is not represented as a closed position")
+    if positions.get("NVDA") != "NVDA 10":
         problems.append(f"NVDA active position is {positions.get('NVDA')!r}")
+    if positions.get("GGLL") != "GGLL 5":
+        problems.append(f"GGLL active position is {positions.get('GGLL')!r}")
     if reconciliation.get("status") != "latest_orders_confirmed_and_reconciled":
         problems.append("latest execution writeback is not reconciled")
     if quality.get("confirmed_execution_reconciled") is not True:
@@ -313,7 +322,7 @@ def check_execution_writeback(view_model: dict[str, Any], results: GateResults) 
     results.gate(
         "execution_writeback",
         not problems,
-        "GLD 20->10 and NVDA 20->15 are reconciled from confirmed order writeback"
+        "GLD 10->0, NVDA 15->10, and GGLL 10->5 are reconciled from confirmed order screenshots"
         if not problems
         else "; ".join(problems),
     )
@@ -324,9 +333,10 @@ def check_compliance_price_separation(view_model: dict[str, Any], results: GateR
     review = as_dict(sections.get("rule_compliance_vs_price_outcome"))
     quality = as_dict(view_model.get("data_quality"))
     valid = (
-        review.get("GLD_rule_compliance") == "compliant_execution"
-        and review.get("NVDA_rule_compliance") == "compliant_execution"
-        and review.get("NVDA_price_outcome_quality") == "imperfect"
+        review.get("GLD_rule_compliance") == "confirmed_execution_closed_position"
+        and review.get("NVDA_rule_compliance") == "confirmed_execution_rebased_to_10"
+        and review.get("GGLL_rule_compliance") == "confirmed_execution_rebased_to_5"
+        and review.get("price_outcome_quality") == "tracked_separately"
         and quality.get("rule_compliance_price_outcome_separated") is True
     )
     results.gate(

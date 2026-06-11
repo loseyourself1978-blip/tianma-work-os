@@ -17,7 +17,7 @@ MOCK_DIR = REPO_ROOT / "mock_consumers" / "ldd"
 MANIFEST_PATH = COCKPIT_DIR / "manifest.json"
 VIEW_MODEL_PATH = COCKPIT_DIR / "view_model.json"
 
-EXPECTED_CHECKPOINT = "2026-06-10T08:49:00+08:00"
+EXPECTED_CHECKPOINT = "2026-06-11T08:10:00+08:00"
 EXPECTED_PORTFOLIO_MODE = "core_position_defense_mode"
 EXPECTED_SOURCE_VIEW_MODEL = "cockpit/ldd/view_model.json"
 
@@ -316,7 +316,7 @@ def check_rule_interpretation(
         for item in as_list(snapshot.get("closed_positions"))
         if isinstance(item, dict)
     }
-    required_closed = {"SOXL", "UGL", "INTC", "SOXS", "TSLQ", "GDXU"}
+    required_closed = {"GLD", "SOXL", "UGL", "INTC", "SOXS", "TSLQ", "GDXU"}
     closed_valid = required_closed.issubset(closed) and all(
         closed[symbol].get("state") == "closed_position"
         and closed[symbol].get("reentry") == "prohibited"
@@ -329,18 +329,19 @@ def check_rule_interpretation(
     view_risk = as_dict(view_model.get("risk_summary"))
     valid = (
         closed_valid
-        and gld.get("rule_compliance_result") == "compliant_execution"
-        and gld.get("position_after") == 10
-        and nvda.get("position_after") == 15
-        and nvda.get("next_protection_level") == 200
+        and gld.get("rule_compliance_result") == "confirmed_execution_closed_position"
+        and gld.get("position_after") == 0
+        and nvda.get("position_after") == 10
+        and nvda.get("next_protection_level") == 198
         and goog.get("goog_defense_level") == 355
         and goog.get("ggll_role") == "main_remaining_leveraged_etf_risk_valve"
+        and goog.get("ggll_position_after") == 5
         and view_risk.get("main_core_risk_watch") == "NVDA"
     )
     results.check(
         "rule_interpretation_boundary",
         valid,
-        "closed/no-reentry, GLD/NVDA execution compliance, and GOOG/GGLL risk roles are preserved"
+        "closed/no-reentry, GLD/NVDA/GGLL execution reconciliation, and GOOG/GGLL risk roles are preserved"
         if valid
         else "one or more rule-interpretation boundaries are inconsistent",
     )

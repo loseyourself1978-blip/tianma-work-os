@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-06-10T08:49:00+08:00",
+  "generated_at": "2026-06-11T08:10:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "cockpit_pending_commands",
   "version": "0.1",
-  "latest_active_checkpoint": "2026-06-10T08:49:00+08:00",
+  "latest_active_checkpoint": "2026-06-11T08:10:00+08:00",
   "source_files": [
     "records/ldd/2026-06-02/pending_phase2_codex_instruction_20260602_0822.json",
     "records/ldd/2026-06-09/pending_instruction_supersession_0826_0828_sgt.json",
-    "records/ldd/2026-06-10/ldd_post_close_execution_review_0848_0849_sgt.json"
+    "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
   ],
   "commands": [
     {

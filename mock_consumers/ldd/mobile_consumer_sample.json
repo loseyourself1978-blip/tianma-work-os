@@ -50,9 +50,9 @@
     }
   ],
   "required_current_highlights": [
-    "GLD 20 to 10 compliant execution with 385 / 380 residual protection",
-    "NVDA 20 to 15 compliant execution with 200 residual protection",
-    "GGLL main leveraged ETF risk valve",
+    "GLD closed to 0 shares; no re-entry until 380 reclaim and new approved rule",
+    "NVDA reduced to 10 shares with 198 downside protection",
+    "GGLL reduced to 5 shares and remains the main leveraged ETF risk valve",
     "USDT-dominant crypto defense"
   ],
   "privacy_masking_required_before_customer_use": true
