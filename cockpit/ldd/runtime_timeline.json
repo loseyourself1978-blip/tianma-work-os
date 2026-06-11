@@ -4,7 +4,7 @@
   "runtime_layer": "runtime_timeline",
   "version": "0.1",
   "source_root": "records/ldd",
-  "event_count": 91,
+  "event_count": 92,
   "date_range": {
     "start": "2026-06-02T08:22:00+08:00",
     "end": "2026-06-11T08:10:00+08:00"
@@ -2033,6 +2033,25 @@
       "summary": "Governance review recorded with customer-facing ready=False, runtime_mutation_flag=False, and trading_automation_flag=False.",
       "state_before": "",
       "state_after": "phase=Vol.6 Phase 6.4; customer_facing_ready=False",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "medium",
+      "tags": [
+        "governance_review",
+        "non_trading_runtime_event"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-11-vol6-phase6-5-internal-operator-cockpit-static-spec-review-0810-sgt-json",
+      "event_time": "2026-06-11T08:10:00+08:00",
+      "event_type": "report_generation",
+      "source_file": "records/ldd/2026-06-11/vol6_phase6_5_internal_operator_cockpit_static_spec_review_0810_sgt.json",
+      "source_record_type": "governance_review",
+      "asset_or_module": "LDD Runtime",
+      "title": "Vol.6 Phase 6.5",
+      "summary": "Governance review recorded with customer-facing ready=False, runtime_mutation_flag=False, and trading_automation_flag=False.",
+      "state_before": "",
+      "state_after": "phase=Vol.6 Phase 6.5; customer_facing_ready=False",
       "supersedes_or_updates": [],
       "execution_evidence_level": "runtime_record",
       "cockpit_priority": "medium",

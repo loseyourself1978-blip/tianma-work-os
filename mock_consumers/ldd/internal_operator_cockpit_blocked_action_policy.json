@@ -1,0 +1,176 @@
+{
+  "contract_id": "ldd_internal_operator_cockpit_blocked_action_policy",
+  "contract_version": "0.1",
+  "phase": "Vol.6 Phase 6.5",
+  "status": "static_contract_only",
+  "source_checkpoint": "2026-06-11T08:10:00+08:00",
+  "blocked_actions": [
+    {
+      "action_id": "place_order",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Order placement is outside the internal operator read-only cockpit boundary.",
+      "related_contract": "mock_consumers/ldd/read_only_api_forbidden_capabilities.json",
+      "validation_rule": "Internal operator cannot place orders."
+    },
+    {
+      "action_id": "cancel_order",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Order cancellation is outside the internal operator read-only cockpit boundary.",
+      "related_contract": "mock_consumers/ldd/read_only_api_forbidden_capabilities.json",
+      "validation_rule": "Internal operator cannot cancel orders."
+    },
+    {
+      "action_id": "modify_order",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Order modification is outside the internal operator read-only cockpit boundary.",
+      "related_contract": "mock_consumers/ldd/read_only_api_forbidden_capabilities.json",
+      "validation_rule": "Internal operator cannot modify orders."
+    },
+    {
+      "action_id": "execute_trade",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Trade execution is prohibited.",
+      "related_contract": "mock_consumers/ldd/read_only_api_forbidden_capabilities.json",
+      "validation_rule": "Internal operator cannot execute trades."
+    },
+    {
+      "action_id": "start_bot",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Bot control is prohibited.",
+      "related_contract": "mock_consumers/ldd/read_only_api_forbidden_capabilities.json",
+      "validation_rule": "Internal operator cannot start bots."
+    },
+    {
+      "action_id": "stop_bot",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Bot control is prohibited.",
+      "related_contract": "mock_consumers/ldd/read_only_api_forbidden_capabilities.json",
+      "validation_rule": "Internal operator cannot stop bots."
+    },
+    {
+      "action_id": "reopen_grid",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Grid reopening is prohibited and no bot controls are allowed.",
+      "related_contract": "mock_consumers/ldd/read_only_api_forbidden_capabilities.json",
+      "validation_rule": "Internal operator cannot reopen grids."
+    },
+    {
+      "action_id": "connect_broker_api",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Broker API connection is prohibited.",
+      "related_contract": "mock_consumers/ldd/read_only_api_contract.json",
+      "validation_rule": "Internal operator cannot connect broker APIs."
+    },
+    {
+      "action_id": "connect_binance_api",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Binance API connection is prohibited.",
+      "related_contract": "mock_consumers/ldd/read_only_api_contract.json",
+      "validation_rule": "Internal operator cannot connect Binance APIs."
+    },
+    {
+      "action_id": "connect_external_market_api",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "External market-data API connection is prohibited.",
+      "related_contract": "mock_consumers/ldd/read_only_api_contract.json",
+      "validation_rule": "Internal operator cannot connect external market APIs."
+    },
+    {
+      "action_id": "fetch_live_market_data",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Live market data is prohibited.",
+      "related_contract": "mock_consumers/ldd/read_only_api_contract.json",
+      "validation_rule": "Internal operator cannot fetch live market data."
+    },
+    {
+      "action_id": "refresh_live_price",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Live price refresh is prohibited.",
+      "related_contract": "mock_consumers/ldd/static_cockpit_blocked_controls.json",
+      "validation_rule": "Internal operator cannot refresh live prices."
+    },
+    {
+      "action_id": "mutate_runtime_record",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Runtime records are immutable audit artifacts in this boundary.",
+      "related_contract": "mock_consumers/ldd/read_only_api_forbidden_capabilities.json",
+      "validation_rule": "Internal operator cannot mutate runtime records."
+    },
+    {
+      "action_id": "promote_checkpoint",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Checkpoint promotion is governance/process only, not a UI action.",
+      "related_contract": "mock_consumers/ldd/static_cockpit_blocked_controls.json",
+      "validation_rule": "Internal operator cannot promote checkpoints through UI."
+    },
+    {
+      "action_id": "suppress_warning",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Warnings must remain visible.",
+      "related_contract": "mock_consumers/ldd/static_cockpit_blocked_controls.json",
+      "validation_rule": "Internal operator cannot suppress warnings."
+    },
+    {
+      "action_id": "hide_data_quality_flag",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Data-quality flags must remain visible.",
+      "related_contract": "mock_consumers/ldd/static_cockpit_blocked_controls.json",
+      "validation_rule": "Internal operator cannot hide data-quality flags."
+    },
+    {
+      "action_id": "reveal_sensitive_value",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Sensitive values must follow masking policy and cannot be revealed through ad hoc controls.",
+      "related_contract": "mock_consumers/ldd/privacy_masking_policy.json",
+      "validation_rule": "Internal operator cannot use reveal controls for sensitive values."
+    },
+    {
+      "action_id": "reveal_never_expose_field",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Never-expose fields must be rejected before render.",
+      "related_contract": "mock_consumers/ldd/field_permission_matrix.json",
+      "validation_rule": "Internal operator cannot reveal never-expose fields."
+    },
+    {
+      "action_id": "enable_customer_facing_view",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Customer-facing cockpit remains blocked pending future governance approval.",
+      "related_contract": "mock_consumers/ldd/customer_facing_unblock_criteria.json",
+      "validation_rule": "Internal operator cannot enable customer-facing view."
+    },
+    {
+      "action_id": "export_sensitive_customer_data",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Sensitive customer-facing data export is blocked.",
+      "related_contract": "mock_consumers/ldd/privacy_boundary_sample.json",
+      "validation_rule": "Internal operator cannot export sensitive data to customer-facing contexts."
+    }
+  ],
+  "validation_expectations": [
+    "all_blocked_actions_exist",
+    "every_blocked_action_has_blocked_true",
+    "every_blocked_action_has_allowed_roles_empty",
+    "internal_operator_not_allowed_for_any_blocked_action",
+    "promote_checkpoint_blocked_from_ui"
+  ]
+}

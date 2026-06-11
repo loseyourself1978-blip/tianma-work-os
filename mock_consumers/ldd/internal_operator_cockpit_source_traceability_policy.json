@@ -1,0 +1,123 @@
+{
+  "contract_id": "ldd_internal_operator_cockpit_source_traceability_policy",
+  "contract_version": "0.1",
+  "phase": "Vol.6 Phase 6.5",
+  "status": "static_contract_only",
+  "source_checkpoint": "2026-06-11T08:10:00+08:00",
+  "source_items": [
+    {
+      "source_id": "user_broker_screenshots",
+      "display_name": "User Broker Screenshots",
+      "priority": 1,
+      "source_type": "source_of_truth",
+      "display_required": true,
+      "may_hide": false,
+      "customer_facing_policy": "blocked_internal_only",
+      "validation_rule": "Broker screenshots outrank external market validation data."
+    },
+    {
+      "source_id": "user_binance_screenshots",
+      "display_name": "User Binance Screenshots",
+      "priority": 2,
+      "source_type": "source_of_truth",
+      "display_required": true,
+      "may_hide": false,
+      "customer_facing_policy": "blocked_internal_only",
+      "validation_rule": "Binance screenshots outrank external market validation data."
+    },
+    {
+      "source_id": "actual_order_screenshots",
+      "display_name": "Actual Order Screenshots",
+      "priority": 1,
+      "source_type": "source_of_truth",
+      "display_required": true,
+      "may_hide": false,
+      "customer_facing_policy": "blocked_internal_only",
+      "validation_rule": "Actual order screenshots are Source of Truth for execution reconciliation."
+    },
+    {
+      "source_id": "external_market_data_for_validation_only",
+      "display_name": "External Market Data for Validation Only",
+      "priority": 9,
+      "source_type": "validation_only",
+      "display_required": true,
+      "may_hide": false,
+      "customer_facing_policy": "blocked",
+      "validation_rule": "External market data must be labeled validation_only and never treated as Source of Truth."
+    },
+    {
+      "source_id": "active_checkpoint_record",
+      "display_name": "Active Checkpoint Record",
+      "priority": 3,
+      "source_type": "active_checkpoint",
+      "display_required": true,
+      "may_hide": false,
+      "checkpoint": "2026-06-11T08:10:00+08:00",
+      "source_ref": "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json",
+      "customer_facing_policy": "blocked_internal_only",
+      "validation_rule": "Active checkpoint record must reference 2026-06-11T08:10:00+08:00."
+    },
+    {
+      "source_id": "cockpit_view_model",
+      "display_name": "Cockpit View Model",
+      "priority": 4,
+      "source_type": "primary_read_only_artifact",
+      "display_required": true,
+      "may_hide": false,
+      "source_ref": "cockpit/ldd/view_model.json",
+      "customer_facing_policy": "blocked_until_customer_ready",
+      "validation_rule": "View model is the primary read-only consumer artifact."
+    },
+    {
+      "source_id": "read_only_api_contract",
+      "display_name": "Read-only API Contract",
+      "priority": 5,
+      "source_type": "static_contract",
+      "display_required": true,
+      "may_hide": false,
+      "source_ref": "mock_consumers/ldd/read_only_api_contract.json",
+      "customer_facing_policy": "blocked",
+      "validation_rule": "API contract is static only and does not create a live endpoint."
+    },
+    {
+      "source_id": "permission_privacy_masking_contract",
+      "display_name": "Permission Privacy Masking Contract",
+      "priority": 6,
+      "source_type": "static_contract",
+      "display_required": true,
+      "may_hide": false,
+      "source_ref": "mock_consumers/ldd/field_permission_matrix.json",
+      "customer_facing_policy": "blocked_until_customer_ready",
+      "validation_rule": "Permission and masking contract controls field visibility."
+    },
+    {
+      "source_id": "static_cockpit_prototype_boundary",
+      "display_name": "Static Cockpit Prototype Boundary",
+      "priority": 7,
+      "source_type": "static_contract",
+      "display_required": true,
+      "may_hide": false,
+      "source_ref": "mock_consumers/ldd/static_cockpit_surface_layout.json",
+      "customer_facing_policy": "blocked",
+      "validation_rule": "Static cockpit prototype boundary is not an implementation."
+    },
+    {
+      "source_id": "non_promoted_governance_evidence",
+      "display_name": "Non-promoted Governance Evidence",
+      "priority": 8,
+      "source_type": "non_promoted",
+      "display_required": true,
+      "may_hide": false,
+      "source_ref": "records/ldd/2026-06-10/vol6_phase6_2a_ldd_premarket_runtime_sync_governance_patch_1706_sgt.json",
+      "customer_facing_policy": "blocked",
+      "validation_rule": "Non-promoted governance evidence must be labeled non_promoted."
+    }
+  ],
+  "validation_expectations": [
+    "all_source_items_exist",
+    "user_sources_rank_above_external_validation_data",
+    "external_market_data_for_validation_only_source_type_validation_only",
+    "active_checkpoint_record_references_2026_06_11T08_10_00_plus_08_00",
+    "non_promoted_governance_evidence_source_type_non_promoted"
+  ]
+}

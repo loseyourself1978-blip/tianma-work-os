@@ -1,0 +1,239 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Internal Operator Cockpit Static Spec Review Record",
+  "type": "object",
+  "required": [
+    "record_type",
+    "phase",
+    "timestamp",
+    "latest_checkpoint",
+    "timeline_events_before_review",
+    "timeline_warnings",
+    "customer_facing_ready",
+    "actual_ui_created",
+    "frontend_app_created",
+    "html_css_js_ui_created",
+    "api_server_created",
+    "live_endpoint_created",
+    "external_api_connected",
+    "broker_api_connected",
+    "binance_api_connected",
+    "live_market_data_enabled",
+    "trading_automation_enabled",
+    "credential_handling_enabled",
+    "runtime_mutation_ui_enabled",
+    "execution_trigger_enabled",
+    "internal_operator_static_spec_created",
+    "section_order_created",
+    "card_field_map_created",
+    "warning_policy_created",
+    "source_traceability_policy_created",
+    "blocked_action_policy_created",
+    "validation_summary",
+    "created_artifacts",
+    "explicit_non_goals_confirmed"
+  ],
+  "properties": {
+    "record_type": {
+      "type": "string",
+      "enum": [
+        "governance_review"
+      ]
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "Vol.6 Phase 6.5"
+      ]
+    },
+    "timestamp": {
+      "type": "string",
+      "enum": [
+        "2026-06-11T08:10:00+08:00"
+      ]
+    },
+    "latest_checkpoint": {
+      "type": "string",
+      "enum": [
+        "2026-06-11T08:10:00+08:00"
+      ]
+    },
+    "timeline_events_before_review": {
+      "type": "integer",
+      "enum": [
+        91
+      ]
+    },
+    "timeline_warnings": {
+      "type": "integer",
+      "enum": [
+        0
+      ]
+    },
+    "customer_facing_ready": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "actual_ui_created": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "frontend_app_created": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "html_css_js_ui_created": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "api_server_created": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "live_endpoint_created": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "external_api_connected": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "broker_api_connected": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "binance_api_connected": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "live_market_data_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "trading_automation_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "credential_handling_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "runtime_mutation_ui_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "execution_trigger_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "internal_operator_static_spec_created": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
+    },
+    "section_order_created": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
+    },
+    "card_field_map_created": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
+    },
+    "warning_policy_created": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
+    },
+    "source_traceability_policy_created": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
+    },
+    "blocked_action_policy_created": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
+    },
+    "validation_summary": {
+      "type": "object",
+      "required": [
+        "status",
+        "blocking_failures",
+        "warnings"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "passed"
+          ]
+        },
+        "checks": {
+          "type": "integer"
+        },
+        "blocking_failures": {
+          "type": "integer",
+          "enum": [
+            0
+          ]
+        },
+        "warnings": {
+          "type": "integer",
+          "enum": [
+            0
+          ]
+        }
+      },
+      "additionalProperties": true
+    },
+    "created_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "explicit_non_goals_confirmed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,331 @@
+{
+  "contract_id": "ldd_internal_operator_cockpit_section_order",
+  "contract_version": "0.1",
+  "phase": "Vol.6 Phase 6.5",
+  "status": "static_contract_only",
+  "source_checkpoint": "2026-06-11T08:10:00+08:00",
+  "sections": [
+    {
+      "section_id": "system_status_header",
+      "display_name": "System Status Header",
+      "order": 1,
+      "purpose": "Show cockpit mode, customer-facing blocked state, and no-live-service status.",
+      "required": true,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "source_layer": "active_checkpoint",
+      "cards_in_section": [
+        "system_status_header_card"
+      ],
+      "warnings_required": true,
+      "data_quality_required": true,
+      "source_traceability_required": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "customer_facing_allowed": false,
+      "implementation_status": "static_spec_only",
+      "validation_rule": "Header is required and must declare read-only, no-live-service status."
+    },
+    {
+      "section_id": "active_checkpoint_banner",
+      "display_name": "Active Checkpoint Banner",
+      "order": 2,
+      "purpose": "Show the active checkpoint timestamp before any account or rule data.",
+      "required": true,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "source_layer": "active_checkpoint",
+      "cards_in_section": [
+        "active_checkpoint_card"
+      ],
+      "warnings_required": true,
+      "data_quality_required": true,
+      "source_traceability_required": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "customer_facing_allowed": false,
+      "implementation_status": "static_spec_only",
+      "validation_rule": "Checkpoint banner must show 2026-06-11T08:10:00+08:00."
+    },
+    {
+      "section_id": "account_snapshot_section",
+      "display_name": "Account Snapshot Section",
+      "order": 3,
+      "purpose": "Summarize current account state from the active checkpoint.",
+      "required": true,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "source_layer": "active_checkpoint",
+      "cards_in_section": [
+        "account_snapshot_card"
+      ],
+      "warnings_required": true,
+      "data_quality_required": true,
+      "source_traceability_required": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "customer_facing_allowed": false,
+      "implementation_status": "static_spec_only",
+      "validation_rule": "Account snapshot is read-only and internal-only."
+    },
+    {
+      "section_id": "cash_defense_section",
+      "display_name": "Cash Defense Section",
+      "order": 4,
+      "purpose": "Show U.S. cash defense and Binance USDT defense ratios.",
+      "required": true,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "source_layer": "active_checkpoint",
+      "cards_in_section": [
+        "us_cash_defense_card",
+        "binance_usdt_defense_card"
+      ],
+      "warnings_required": true,
+      "data_quality_required": true,
+      "source_traceability_required": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "customer_facing_allowed": false,
+      "implementation_status": "static_spec_only",
+      "validation_rule": "Cash defense ratios are display-only account-structure quality indicators."
+    },
+    {
+      "section_id": "active_positions_section",
+      "display_name": "Active Positions Section",
+      "order": 5,
+      "purpose": "Show active and closed positions separately.",
+      "required": true,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "source_layer": "active_checkpoint",
+      "cards_in_section": [
+        "active_us_positions_card",
+        "closed_positions_card"
+      ],
+      "warnings_required": true,
+      "data_quality_required": true,
+      "source_traceability_required": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "customer_facing_allowed": false,
+      "implementation_status": "static_spec_only",
+      "validation_rule": "Active positions must not include trade controls and closed positions must not be treated as holdings."
+    },
+    {
+      "section_id": "execution_ledger_section",
+      "display_name": "Execution Ledger Section",
+      "order": 6,
+      "purpose": "Show confirmed and canceled execution records as read-only reconciliation history.",
+      "required": true,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "source_layer": "active_checkpoint",
+      "cards_in_section": [
+        "confirmed_execution_ledger_card"
+      ],
+      "warnings_required": true,
+      "data_quality_required": true,
+      "source_traceability_required": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "customer_facing_allowed": false,
+      "implementation_status": "static_spec_only",
+      "validation_rule": "Execution ledger is read-only and must not include replay, order, cancel, or modify controls."
+    },
+    {
+      "section_id": "active_rules_section",
+      "display_name": "Active Rules Section",
+      "order": 7,
+      "purpose": "Show active rules as non-interactive risk rules.",
+      "required": true,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "source_layer": "active_checkpoint",
+      "cards_in_section": [
+        "active_rules_card"
+      ],
+      "warnings_required": true,
+      "data_quality_required": true,
+      "source_traceability_required": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "customer_facing_allowed": false,
+      "implementation_status": "static_spec_only",
+      "validation_rule": "Active rules are read-only guidance and not automated trade instructions."
+    },
+    {
+      "section_id": "strategy_states_section",
+      "display_name": "Strategy States Section",
+      "order": 8,
+      "purpose": "Show portfolio mode and strategy states.",
+      "required": true,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "source_layer": "active_checkpoint",
+      "cards_in_section": [
+        "strategy_states_card"
+      ],
+      "warnings_required": true,
+      "data_quality_required": true,
+      "source_traceability_required": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "customer_facing_allowed": false,
+      "implementation_status": "static_spec_only",
+      "validation_rule": "Strategy states must preserve active, closed, prohibited, and no-reentry meanings."
+    },
+    {
+      "section_id": "warning_data_quality_section",
+      "display_name": "Warning and Data-quality Section",
+      "order": 9,
+      "purpose": "Show warnings, data-quality flags, and safety boundary notices.",
+      "required": true,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "source_layer": "active_checkpoint",
+      "cards_in_section": [
+        "warning_data_quality_card"
+      ],
+      "warnings_required": true,
+      "data_quality_required": true,
+      "source_traceability_required": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "customer_facing_allowed": false,
+      "implementation_status": "static_spec_only",
+      "validation_rule": "Warnings and data-quality flags are mandatory and may not be hidden."
+    },
+    {
+      "section_id": "source_traceability_section",
+      "display_name": "Source Traceability Section",
+      "order": 10,
+      "purpose": "Show source priority, quote type, and source-of-truth contracts.",
+      "required": true,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "source_layer": "active_checkpoint",
+      "cards_in_section": [
+        "source_traceability_card"
+      ],
+      "warnings_required": true,
+      "data_quality_required": true,
+      "source_traceability_required": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "customer_facing_allowed": false,
+      "implementation_status": "static_spec_only",
+      "validation_rule": "Source traceability is mandatory and cannot be replaced by live market inference."
+    },
+    {
+      "section_id": "non_promoted_evidence_section",
+      "display_name": "Non-promoted Evidence Section",
+      "order": 11,
+      "purpose": "Show Phase 6.2a evidence only as non-promoted governance evidence.",
+      "required": true,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "source_layer": "non_promoted_governance_evidence",
+      "cards_in_section": [
+        "non_promoted_evidence_card"
+      ],
+      "warnings_required": true,
+      "data_quality_required": true,
+      "source_traceability_required": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "customer_facing_allowed": false,
+      "implementation_status": "static_spec_only",
+      "validation_rule": "Non-promoted evidence must be labeled non-promoted and non-executing."
+    },
+    {
+      "section_id": "customer_facing_blocked_status_section",
+      "display_name": "Customer-facing Blocked Status Section",
+      "order": 12,
+      "purpose": "Show why customer-facing cockpit display remains blocked.",
+      "required": true,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "source_layer": "permission_privacy_masking_contract",
+      "cards_in_section": [
+        "customer_facing_blocked_status_card"
+      ],
+      "warnings_required": true,
+      "data_quality_required": true,
+      "source_traceability_required": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "customer_facing_allowed": false,
+      "implementation_status": "static_spec_only",
+      "validation_rule": "Customer-facing blocked status must remain visible."
+    }
+  ],
+  "validation_expectations": [
+    "section_order_unique_and_sequential_1_to_12",
+    "all_sections_static_spec_only",
+    "all_sections_mutation_allowed_false",
+    "all_sections_execution_allowed_false",
+    "all_sections_customer_facing_allowed_false",
+    "warning_data_quality_source_traceability_sections_required"
+  ]
+}

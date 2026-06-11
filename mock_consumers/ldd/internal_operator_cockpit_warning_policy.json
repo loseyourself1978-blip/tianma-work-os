@@ -1,0 +1,124 @@
+{
+  "contract_id": "ldd_internal_operator_cockpit_warning_policy",
+  "contract_version": "0.1",
+  "phase": "Vol.6 Phase 6.5",
+  "status": "static_contract_only",
+  "source_checkpoint": "2026-06-11T08:10:00+08:00",
+  "warning_items": [
+    {
+      "warning_id": "customer_facing_blocked",
+      "display_required": true,
+      "may_hide": false,
+      "severity": "high",
+      "display_surface": "internal_operator_cockpit_static",
+      "related_policy": "mock_consumers/ldd/customer_facing_unblock_criteria.json",
+      "validation_rule": "Customer-facing blocked status must be displayed with high severity."
+    },
+    {
+      "warning_id": "no_live_api_connection",
+      "display_required": true,
+      "may_hide": false,
+      "severity": "medium",
+      "display_surface": "internal_operator_cockpit_static",
+      "related_policy": "mock_consumers/ldd/read_only_api_contract.json",
+      "validation_rule": "Internal operator cockpit must show that no live API connection exists."
+    },
+    {
+      "warning_id": "no_broker_connection",
+      "display_required": true,
+      "may_hide": false,
+      "severity": "medium",
+      "display_surface": "internal_operator_cockpit_static",
+      "related_policy": "mock_consumers/ldd/read_only_api_forbidden_capabilities.json",
+      "validation_rule": "Broker connection absence must be visible."
+    },
+    {
+      "warning_id": "no_binance_connection",
+      "display_required": true,
+      "may_hide": false,
+      "severity": "medium",
+      "display_surface": "internal_operator_cockpit_static",
+      "related_policy": "mock_consumers/ldd/read_only_api_forbidden_capabilities.json",
+      "validation_rule": "Binance connection absence must be visible."
+    },
+    {
+      "warning_id": "no_trading_automation",
+      "display_required": true,
+      "may_hide": false,
+      "severity": "high",
+      "display_surface": "internal_operator_cockpit_static",
+      "related_policy": "mock_consumers/ldd/internal_operator_cockpit_blocked_action_policy.json",
+      "validation_rule": "No trading automation status must be displayed."
+    },
+    {
+      "warning_id": "checkpoint_timestamp_visible",
+      "display_required": true,
+      "may_hide": false,
+      "severity": "medium",
+      "display_surface": "internal_operator_cockpit_static",
+      "related_policy": "mock_consumers/ldd/internal_operator_cockpit_section_order.json",
+      "validation_rule": "Active checkpoint timestamp must be visible."
+    },
+    {
+      "warning_id": "source_priority_visible",
+      "display_required": true,
+      "may_hide": false,
+      "severity": "medium",
+      "display_surface": "internal_operator_cockpit_static",
+      "related_policy": "mock_consumers/ldd/internal_operator_cockpit_source_traceability_policy.json",
+      "validation_rule": "Source priority must be visible."
+    },
+    {
+      "warning_id": "quote_type_visible",
+      "display_required": true,
+      "may_hide": false,
+      "severity": "medium",
+      "display_surface": "internal_operator_cockpit_static",
+      "related_policy": "mock_consumers/ldd/internal_operator_cockpit_source_traceability_policy.json",
+      "validation_rule": "Quote type must be visible so static values are not mistaken for executable prices."
+    },
+    {
+      "warning_id": "non_promoted_evidence_labeled",
+      "display_required": true,
+      "may_hide": false,
+      "severity": "medium",
+      "display_surface": "internal_operator_cockpit_static",
+      "related_policy": "records/ldd/2026-06-10/vol6_phase6_2a_ldd_premarket_runtime_sync_governance_patch_1706_sgt.json",
+      "validation_rule": "Phase 6.2a evidence must be labeled non-promoted."
+    },
+    {
+      "warning_id": "execution_ledger_read_only",
+      "display_required": true,
+      "may_hide": false,
+      "severity": "high",
+      "display_surface": "internal_operator_cockpit_static",
+      "related_policy": "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json",
+      "validation_rule": "Execution ledger must be read-only and contain no execution controls."
+    },
+    {
+      "warning_id": "sensitive_fields_masked",
+      "display_required": true,
+      "may_hide": false,
+      "severity": "high",
+      "display_surface": "internal_operator_cockpit_static",
+      "related_policy": "mock_consumers/ldd/field_permission_matrix.json",
+      "validation_rule": "Sensitive field masking status must be visible."
+    },
+    {
+      "warning_id": "never_expose_fields_rejected",
+      "display_required": true,
+      "may_hide": false,
+      "severity": "high",
+      "display_surface": "internal_operator_cockpit_static",
+      "related_policy": "mock_consumers/ldd/privacy_masking_policy.json",
+      "validation_rule": "Never-expose fields must be rejected before render."
+    }
+  ],
+  "validation_expectations": [
+    "all_warning_items_exist",
+    "all_warning_items_display_required_true",
+    "all_warning_items_may_hide_false",
+    "customer_facing_blocked_severity_high",
+    "never_expose_fields_rejected_severity_high"
+  ]
+}

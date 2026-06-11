@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Internal Operator Cockpit Static Spec",
+  "type": "object",
+  "required": [
+    "spec_id",
+    "spec_version",
+    "phase",
+    "status",
+    "actual_ui_created",
+    "customer_facing_ready",
+    "target_surface",
+    "allowed_roles",
+    "blocked_roles",
+    "source_checkpoint",
+    "source_contracts",
+    "section_order_ref",
+    "card_field_map_ref",
+    "warning_policy_ref",
+    "source_traceability_policy_ref",
+    "blocked_action_policy_ref",
+    "allowed_interactions",
+    "blocked_interactions",
+    "validation_expectations"
+  ],
+  "properties": {
+    "spec_id": {
+      "type": "string"
+    },
+    "spec_version": {
+      "type": "string"
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "Vol.6 Phase 6.5"
+      ]
+    },
+    "status": {
+      "type": "string"
+    },
+    "actual_ui_created": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "customer_facing_ready": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "target_surface": {
+      "type": "string",
+      "enum": [
+        "internal_operator_cockpit_static"
+      ]
+    },
+    "allowed_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blocked_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_checkpoint": {
+      "type": "string",
+      "enum": [
+        "2026-06-11T08:10:00+08:00"
+      ]
+    },
+    "source_contracts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "section_order_ref": {
+      "type": "string"
+    },
+    "card_field_map_ref": {
+      "type": "string"
+    },
+    "warning_policy_ref": {
+      "type": "string"
+    },
+    "source_traceability_policy_ref": {
+      "type": "string"
+    },
+    "blocked_action_policy_ref": {
+      "type": "string"
+    },
+    "allowed_interactions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blocked_interactions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "validation_expectations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,78 @@
+{
+  "spec_id": "ldd_internal_operator_cockpit_static_spec",
+  "spec_version": "0.1",
+  "phase": "Vol.6 Phase 6.5",
+  "status": "static_contract_only_not_implemented",
+  "actual_ui_created": false,
+  "customer_facing_ready": false,
+  "target_surface": "internal_operator_cockpit_static",
+  "allowed_roles": [
+    "system_admin",
+    "internal_operator"
+  ],
+  "blocked_roles": [
+    "demo_viewer",
+    "customer_facing_viewer_blocked"
+  ],
+  "source_checkpoint": "2026-06-11T08:10:00+08:00",
+  "source_contracts": [
+    "cockpit/ldd/view_model.json",
+    "cockpit/ldd/manifest.json",
+    "cockpit/ldd/active_rules.json",
+    "cockpit/ldd/strategy_states.json",
+    "mock_consumers/ldd/static_cockpit_surface_layout.json",
+    "mock_consumers/ldd/field_permission_matrix.json",
+    "mock_consumers/ldd/read_only_api_contract.json"
+  ],
+  "section_order_ref": "mock_consumers/ldd/internal_operator_cockpit_section_order.json",
+  "card_field_map_ref": "mock_consumers/ldd/internal_operator_cockpit_card_field_map.json",
+  "warning_policy_ref": "mock_consumers/ldd/internal_operator_cockpit_warning_policy.json",
+  "source_traceability_policy_ref": "mock_consumers/ldd/internal_operator_cockpit_source_traceability_policy.json",
+  "blocked_action_policy_ref": "mock_consumers/ldd/internal_operator_cockpit_blocked_action_policy.json",
+  "allowed_interactions": [
+    "read_static_snapshot",
+    "expand_card_details",
+    "collapse_card_details",
+    "filter_static_table",
+    "sort_static_table",
+    "switch_read_only_surface",
+    "inspect_source_traceability",
+    "inspect_data_quality_warning",
+    "inspect_checkpoint_status",
+    "inspect_non_promoted_evidence_banner"
+  ],
+  "blocked_interactions": [
+    "place_order",
+    "cancel_order",
+    "modify_order",
+    "execute_trade",
+    "start_bot",
+    "stop_bot",
+    "reopen_grid",
+    "connect_broker_api",
+    "connect_binance_api",
+    "connect_external_market_api",
+    "fetch_live_market_data",
+    "refresh_live_price",
+    "mutate_runtime_record",
+    "promote_checkpoint",
+    "suppress_warning",
+    "hide_data_quality_flag",
+    "reveal_sensitive_value",
+    "reveal_never_expose_field",
+    "enable_customer_facing_view",
+    "export_sensitive_customer_data"
+  ],
+  "validation_expectations": [
+    "actual_ui_created_false",
+    "customer_facing_ready_false",
+    "target_surface_internal_operator_cockpit_static",
+    "internal_operator_allowed",
+    "customer_facing_viewer_blocked",
+    "source_checkpoint_2026_06_11T08_10_00_plus_08_00",
+    "all_sections_static_spec_only",
+    "all_cards_static_spec_only",
+    "all_actions_read_only_or_blocked",
+    "no_frontend_api_or_trading_implementation"
+  ]
+}
