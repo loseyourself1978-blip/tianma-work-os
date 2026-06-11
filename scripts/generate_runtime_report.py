@@ -44,6 +44,7 @@ TIMESTAMP_FIELDS = [
     "contract_time",
     "generation_time",
     "validation_time",
+    "timestamp",
     "timestamp_sgt",
 ]
 
@@ -103,6 +104,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "read_only_api_contract_review"
     if "vol6_phase6_3a_ldd_post_close_execution_reconciliation" in name:
         return "runtime_execution_reconciliation"
+    if "static_cockpit_prototype_boundary_review" in name:
+        return "static_cockpit_prototype_review"
     if "executed_order_writeback" in name:
         return "executed_order_writeback"
     if "runtime_status_conflict_arbitration" in name:
@@ -206,6 +209,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "read_only_api_contract_review"
     if data.get("record_type") == "runtime_execution_reconciliation":
         return "runtime_execution_reconciliation"
+    if data.get("record_type") == "governance_review" and data.get("phase") == "Vol.6 Phase 6.4":
+        return "static_cockpit_prototype_review"
     if data.get("schema_type") == "executed_order_writeback":
         return "executed_order_writeback"
     if data.get("schema_type") == "runtime_status_arbitration":

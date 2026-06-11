@@ -1,0 +1,300 @@
+{
+  "contract_id": "ldd_static_cockpit_surface_layout",
+  "contract_version": "0.1",
+  "phase": "Vol.6 Phase 6.4",
+  "status": "static_contract_only",
+  "actual_ui_created": false,
+  "customer_facing_ready": false,
+  "source_checkpoint": "2026-06-11T08:10:00+08:00",
+  "source_contracts": [
+    "cockpit/ldd/view_model.json",
+    "mock_consumers/ldd/ui_boundary_contract.json",
+    "mock_consumers/ldd/field_permission_matrix.json",
+    "mock_consumers/ldd/read_only_api_contract.json",
+    "mock_consumers/ldd/read_only_api_endpoint_catalog.json"
+  ],
+  "surfaces": [
+    {
+      "surface_id": "internal_operator_cockpit_static",
+      "display_name": "Internal Operator Cockpit Static Surface",
+      "purpose": "Describe a future internal read-only cockpit surface for LDD operators without implementing UI.",
+      "surface_status": "allowed_static_contract",
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator"
+      ],
+      "blocked_roles": [
+        "demo_viewer",
+        "customer_facing_viewer_blocked"
+      ],
+      "source_contract_refs": [
+        "cockpit/ldd/view_model.json",
+        "mock_consumers/ldd/read_only_api_contract.json",
+        "mock_consumers/ldd/permission_role_taxonomy.json"
+      ],
+      "allowed_cards": [
+        "account_snapshot_card",
+        "cash_defense_ratio_card",
+        "active_positions_card",
+        "closed_positions_card",
+        "active_rules_card",
+        "execution_ledger_card",
+        "strategy_state_card",
+        "warning_data_quality_card",
+        "source_traceability_card",
+        "checkpoint_status_card",
+        "non_promoted_evidence_card",
+        "customer_facing_blocked_status_card"
+      ],
+      "blocked_cards": [],
+      "allowed_interactions": [
+        "read_static_snapshot",
+        "expand_card_details",
+        "collapse_card_details",
+        "filter_static_table",
+        "sort_static_table",
+        "inspect_source_traceability",
+        "inspect_data_quality_warning",
+        "inspect_checkpoint_status",
+        "inspect_non_promoted_evidence_banner"
+      ],
+      "blocked_interactions": [
+        "execute_trade",
+        "connect_broker_api",
+        "connect_binance_api",
+        "refresh_live_price",
+        "promote_checkpoint",
+        "edit_runtime_record"
+      ],
+      "masking_profile": "internal_read_only_with_sensitive_values_allowed_for_authorized_roles",
+      "source_traceability_required": true,
+      "warnings_required": true,
+      "data_quality_required": true,
+      "quote_type_required": true,
+      "customer_facing_allowed": false,
+      "implementation_status": "contract_only_not_implemented",
+      "validation_rule": "May be described as an internal static surface only; no UI implementation, external connection, mutation, or execution is allowed."
+    },
+    {
+      "surface_id": "ai_board_review_static",
+      "display_name": "AI Board Review Static Surface",
+      "purpose": "Describe a future read-only AI Board review surface with role-focused risk, data, and strategy cards.",
+      "surface_status": "allowed_static_contract",
+      "allowed_roles": [
+        "system_admin",
+        "ai_board_reviewer",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "demo_viewer",
+        "customer_facing_viewer_blocked"
+      ],
+      "source_contract_refs": [
+        "cockpit/ldd/view_model.json",
+        "mock_consumers/ldd/ai_board_consumer_sample.json",
+        "mock_consumers/ldd/read_only_api_contract.json"
+      ],
+      "allowed_cards": [
+        "active_rules_card",
+        "strategy_state_card",
+        "warning_data_quality_card",
+        "source_traceability_card",
+        "checkpoint_status_card",
+        "non_promoted_evidence_card",
+        "customer_facing_blocked_status_card"
+      ],
+      "blocked_cards": [
+        "account_snapshot_card"
+      ],
+      "allowed_interactions": [
+        "read_static_snapshot",
+        "expand_card_details",
+        "collapse_card_details",
+        "inspect_source_traceability",
+        "inspect_data_quality_warning",
+        "inspect_checkpoint_status",
+        "inspect_non_promoted_evidence_banner"
+      ],
+      "blocked_interactions": [
+        "execute_trade",
+        "connect_broker_api",
+        "connect_binance_api",
+        "refresh_live_price",
+        "promote_checkpoint",
+        "edit_runtime_record"
+      ],
+      "masking_profile": "role_scoped_internal_read_only",
+      "source_traceability_required": true,
+      "warnings_required": true,
+      "data_quality_required": true,
+      "quote_type_required": true,
+      "customer_facing_allowed": false,
+      "implementation_status": "contract_only_not_implemented",
+      "validation_rule": "AI Board role review is a static spec only and must not expose interactive execution controls."
+    },
+    {
+      "surface_id": "audit_debug_static",
+      "display_name": "Audit Debug Static Surface",
+      "purpose": "Describe a future audit/debug surface that can inspect source traceability and non-promoted evidence without mutating records.",
+      "surface_status": "allowed_static_contract",
+      "allowed_roles": [
+        "system_admin",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "demo_viewer",
+        "customer_facing_viewer_blocked"
+      ],
+      "source_contract_refs": [
+        "cockpit/ldd/runtime_timeline.json",
+        "records/ldd/2026-06-10/vol6_phase6_2a_ldd_premarket_runtime_sync_governance_patch_1706_sgt.json",
+        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+      ],
+      "allowed_cards": [
+        "execution_ledger_card",
+        "warning_data_quality_card",
+        "source_traceability_card",
+        "checkpoint_status_card",
+        "non_promoted_evidence_card",
+        "customer_facing_blocked_status_card"
+      ],
+      "blocked_cards": [],
+      "allowed_interactions": [
+        "read_static_snapshot",
+        "expand_card_details",
+        "collapse_card_details",
+        "filter_static_table",
+        "sort_static_table",
+        "inspect_source_traceability",
+        "inspect_data_quality_warning",
+        "inspect_checkpoint_status",
+        "inspect_non_promoted_evidence_banner"
+      ],
+      "blocked_interactions": [
+        "execute_trade",
+        "connect_broker_api",
+        "connect_binance_api",
+        "refresh_live_price",
+        "promote_checkpoint",
+        "edit_runtime_record"
+      ],
+      "masking_profile": "audit_only_internal",
+      "source_traceability_required": true,
+      "warnings_required": true,
+      "data_quality_required": true,
+      "quote_type_required": true,
+      "customer_facing_allowed": false,
+      "implementation_status": "contract_only_not_implemented",
+      "validation_rule": "Audit/debug access may read source evidence but must remain read-only and non-customer-facing."
+    },
+    {
+      "surface_id": "public_demo_static_blocked",
+      "display_name": "Public Demo Static Blocked Surface",
+      "purpose": "Record that a public demo surface is blocked until copy review, privacy masking, and governance approval exist.",
+      "surface_status": "blocked",
+      "allowed_roles": [],
+      "blocked_roles": [
+        "demo_viewer",
+        "customer_facing_viewer_blocked",
+        "internal_operator",
+        "ai_board_reviewer",
+        "audit_reviewer"
+      ],
+      "source_contract_refs": [
+        "mock_consumers/ldd/customer_facing_unblock_criteria.json",
+        "mock_consumers/ldd/privacy_masking_policy.json"
+      ],
+      "allowed_cards": [
+        "customer_facing_blocked_status_card"
+      ],
+      "blocked_cards": [
+        "account_snapshot_card",
+        "cash_defense_ratio_card",
+        "active_positions_card",
+        "closed_positions_card",
+        "active_rules_card",
+        "execution_ledger_card",
+        "strategy_state_card"
+      ],
+      "allowed_interactions": [
+        "inspect_data_quality_warning"
+      ],
+      "blocked_interactions": [
+        "read_static_snapshot",
+        "execute_trade",
+        "connect_broker_api",
+        "connect_binance_api",
+        "refresh_live_price",
+        "promote_checkpoint",
+        "edit_runtime_record"
+      ],
+      "masking_profile": "blocked_public_demo",
+      "source_traceability_required": true,
+      "warnings_required": true,
+      "data_quality_required": true,
+      "quote_type_required": true,
+      "customer_facing_allowed": false,
+      "implementation_status": "contract_only_not_implemented",
+      "validation_rule": "Public demo is blocked and must not expose LDD pilot account data."
+    },
+    {
+      "surface_id": "customer_facing_static_blocked",
+      "display_name": "Customer-facing Static Blocked Surface",
+      "purpose": "Record that customer-facing cockpit display is blocked until permission, masking, and governance unblock criteria pass.",
+      "surface_status": "blocked",
+      "allowed_roles": [],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked",
+        "demo_viewer",
+        "internal_operator",
+        "ai_board_reviewer",
+        "audit_reviewer",
+        "system_admin"
+      ],
+      "source_contract_refs": [
+        "mock_consumers/ldd/customer_facing_unblock_criteria.json",
+        "mock_consumers/ldd/field_permission_matrix.json"
+      ],
+      "allowed_cards": [
+        "customer_facing_blocked_status_card"
+      ],
+      "blocked_cards": [
+        "account_snapshot_card",
+        "cash_defense_ratio_card",
+        "active_positions_card",
+        "closed_positions_card",
+        "active_rules_card",
+        "execution_ledger_card",
+        "strategy_state_card",
+        "source_traceability_card"
+      ],
+      "allowed_interactions": [
+        "inspect_data_quality_warning"
+      ],
+      "blocked_interactions": [
+        "read_static_snapshot",
+        "execute_trade",
+        "connect_broker_api",
+        "connect_binance_api",
+        "refresh_live_price",
+        "promote_checkpoint",
+        "edit_runtime_record"
+      ],
+      "masking_profile": "customer_facing_blocked",
+      "source_traceability_required": true,
+      "warnings_required": true,
+      "data_quality_required": true,
+      "quote_type_required": true,
+      "customer_facing_allowed": false,
+      "implementation_status": "contract_only_not_implemented",
+      "validation_rule": "Customer-facing cockpit remains blocked; this entry only defines the blocked state."
+    }
+  ],
+  "validation_expectations": [
+    "all_surfaces_are_contract_only_not_implemented",
+    "all_surfaces_customer_facing_allowed_false",
+    "public_demo_static_blocked_has_surface_status_blocked",
+    "customer_facing_static_blocked_has_surface_status_blocked",
+    "no_surface_implies_runnable_ui"
+  ]
+}

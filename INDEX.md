@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.6 Phase 6.3a - LDD Post-close Execution Reconciliation and Checkpoint Update
+Vol.6 Phase 6.4 - Static Cockpit Prototype Boundary Review
 ```
 
 ## Core Documents
@@ -77,6 +77,7 @@ Vol.6 Phase 6.3a - LDD Post-close Execution Reconciliation and Checkpoint Update
 - `docs/runtime/VOL6_PHASE6_2_PERMISSION_PRIVACY_MASKING_MODEL_v0.1.md`
 - `docs/runtime/VOL6_PHASE6_3_READ_ONLY_API_CONTRACT_v0.1.md`
 - `docs/runtime/VOL6_PHASE6_3A_LDD_POST_CLOSE_EXECUTION_RECONCILIATION_AND_CHECKPOINT_UPDATE_v0.1.md`
+- `docs/runtime/VOL6_PHASE6_4_STATIC_COCKPIT_PROTOTYPE_BOUNDARY_REVIEW_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
@@ -391,6 +392,22 @@ Vol.6 Phase 6.3a - LDD Post-close Execution Reconciliation and Checkpoint Update
 - `records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json`
 - `reports/ldd/vol6_phase6_3a_ldd_post_close_execution_reconciliation.md`
 - Next: `Vol.6 Phase 6.4 - Static Cockpit Prototype Boundary Review`
+
+## Vol.6 Phase 6.4 / Static Cockpit Prototype Boundary Review
+
+- `docs/runtime/VOL6_PHASE6_4_STATIC_COCKPIT_PROTOTYPE_BOUNDARY_REVIEW_v0.1.md`
+- `schemas/static_cockpit_prototype_boundary.schema.json`
+- `schemas/static_cockpit_prototype_review.schema.json`
+- `mock_consumers/ldd/static_cockpit_surface_layout.json`
+- `mock_consumers/ldd/static_cockpit_card_catalog.json`
+- `mock_consumers/ldd/static_cockpit_interaction_policy.json`
+- `mock_consumers/ldd/static_cockpit_blocked_controls.json`
+- `mock_consumers/ldd/static_cockpit_data_quality_display_policy.json`
+- `scripts/validate_static_cockpit_prototype_boundary.py`
+- `scripts/validate_static_cockpit_prototype_boundary.sh`
+- `records/ldd/2026-06-11/vol6_phase6_4_static_cockpit_prototype_boundary_review_0810_sgt.json`
+- `reports/ldd/vol6_phase6_4_static_cockpit_prototype_boundary_review.md`
+- Next: `Vol.6 Phase 6.5 - Internal Operator Cockpit Static Spec`
 
 ## Product Principles
 

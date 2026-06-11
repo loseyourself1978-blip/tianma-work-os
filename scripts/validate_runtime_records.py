@@ -78,7 +78,8 @@ SCHEMA_FILES = {
     "read_only_api_contract": "read_only_api_contract.schema.json",
     "read_only_api_response_envelope": "read_only_api_response_envelope.schema.json",
     "read_only_api_contract_review": "read_only_api_contract_review.schema.json",
-    "runtime_execution_reconciliation": "runtime_execution_reconciliation.schema.json"
+    "runtime_execution_reconciliation": "runtime_execution_reconciliation.schema.json",
+    "static_cockpit_prototype_review": "static_cockpit_prototype_review.schema.json"
 }
 
 
@@ -121,6 +122,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "read_only_api_contract_review", SCHEMA_FILES["read_only_api_contract_review"]
     if "vol6_phase6_3a_ldd_post_close_execution_reconciliation" in filename:
         return "runtime_execution_reconciliation", SCHEMA_FILES["runtime_execution_reconciliation"]
+    if "static_cockpit_prototype_boundary_review" in filename:
+        return "static_cockpit_prototype_review", SCHEMA_FILES["static_cockpit_prototype_review"]
     if "phase5_final_pressure_test_result" in filename:
         return "cockpit_consistency_review", SCHEMA_FILES["cockpit_consistency_review"]
     if "ldd_post_close_execution_review" in filename:

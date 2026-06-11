@@ -1,0 +1,210 @@
+{
+  "contract_id": "ldd_static_cockpit_interaction_policy",
+  "contract_version": "0.1",
+  "phase": "Vol.6 Phase 6.4",
+  "status": "static_contract_only",
+  "actual_ui_created": false,
+  "customer_facing_ready": false,
+  "source_checkpoint": "2026-06-11T08:10:00+08:00",
+  "interactions": [
+    {
+      "interaction_id": "read_static_snapshot",
+      "description": "Read the current static cockpit snapshot from the generated view model.",
+      "read_only": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "external_connection_allowed": false,
+      "credential_required": false,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator",
+        "ai_board_reviewer",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "demo_viewer",
+        "customer_facing_viewer_blocked"
+      ],
+      "validation_rule": "Reading a static snapshot cannot mutate runtime, connect externally, or execute actions."
+    },
+    {
+      "interaction_id": "expand_card_details",
+      "description": "Expand details already present in a static card payload.",
+      "read_only": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "external_connection_allowed": false,
+      "credential_required": false,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator",
+        "ai_board_reviewer",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "validation_rule": "Expansion reveals only already-authorized static fields."
+    },
+    {
+      "interaction_id": "collapse_card_details",
+      "description": "Collapse details in a static card payload.",
+      "read_only": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "external_connection_allowed": false,
+      "credential_required": false,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator",
+        "ai_board_reviewer",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "validation_rule": "Collapse is a display-only operation."
+    },
+    {
+      "interaction_id": "filter_static_table",
+      "description": "Filter a static table already included in the payload.",
+      "read_only": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "external_connection_allowed": false,
+      "credential_required": false,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "validation_rule": "Filtering cannot fetch live data or mutate records."
+    },
+    {
+      "interaction_id": "sort_static_table",
+      "description": "Sort a static table already included in the payload.",
+      "read_only": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "external_connection_allowed": false,
+      "credential_required": false,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "validation_rule": "Sorting cannot fetch live data or mutate records."
+    },
+    {
+      "interaction_id": "switch_read_only_surface",
+      "description": "Switch between allowed static surfaces without changing source data.",
+      "read_only": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "external_connection_allowed": false,
+      "credential_required": false,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator",
+        "ai_board_reviewer",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "demo_viewer",
+        "customer_facing_viewer_blocked"
+      ],
+      "validation_rule": "Surface switching is read-only and cannot enable blocked customer-facing access."
+    },
+    {
+      "interaction_id": "inspect_source_traceability",
+      "description": "Inspect source-of-truth and quote-type references.",
+      "read_only": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "external_connection_allowed": false,
+      "credential_required": false,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator",
+        "ai_board_reviewer",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "validation_rule": "Traceability inspection cannot connect to external sources."
+    },
+    {
+      "interaction_id": "inspect_data_quality_warning",
+      "description": "Inspect warnings and data-quality flags.",
+      "read_only": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "external_connection_allowed": false,
+      "credential_required": false,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator",
+        "ai_board_reviewer",
+        "audit_reviewer",
+        "demo_viewer"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "validation_rule": "Warning inspection must not include suppression or hide controls."
+    },
+    {
+      "interaction_id": "inspect_checkpoint_status",
+      "description": "Inspect active checkpoint and non-promoted evidence status.",
+      "read_only": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "external_connection_allowed": false,
+      "credential_required": false,
+      "allowed_roles": [
+        "system_admin",
+        "internal_operator",
+        "ai_board_reviewer",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "customer_facing_viewer_blocked"
+      ],
+      "validation_rule": "Checkpoint inspection must not include checkpoint promotion controls."
+    },
+    {
+      "interaction_id": "inspect_non_promoted_evidence_banner",
+      "description": "Inspect labeled non-promoted governance evidence.",
+      "read_only": true,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "external_connection_allowed": false,
+      "credential_required": false,
+      "allowed_roles": [
+        "system_admin",
+        "audit_reviewer"
+      ],
+      "blocked_roles": [
+        "internal_operator",
+        "ai_board_reviewer",
+        "demo_viewer",
+        "customer_facing_viewer_blocked"
+      ],
+      "validation_rule": "Non-promoted evidence inspection cannot promote, overwrite, or mutate the active checkpoint."
+    }
+  ],
+  "validation_expectations": [
+    "all_interactions_read_only_true",
+    "all_interactions_mutation_allowed_false",
+    "all_interactions_execution_allowed_false",
+    "all_interactions_external_connection_allowed_false",
+    "all_interactions_credential_required_false"
+  ]
+}

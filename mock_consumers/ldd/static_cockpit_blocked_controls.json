@@ -1,0 +1,196 @@
+{
+  "contract_id": "ldd_static_cockpit_blocked_controls",
+  "contract_version": "0.1",
+  "phase": "Vol.6 Phase 6.4",
+  "status": "static_contract_only",
+  "actual_ui_created": false,
+  "customer_facing_ready": false,
+  "source_checkpoint": "2026-06-11T08:10:00+08:00",
+  "blocked_controls": [
+    {
+      "control_id": "buy_button",
+      "display_name": "Buy Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Future cockpit specs must not create order-entry controls.",
+      "related_forbidden_capability": "place_order",
+      "validation_rule": "No buy control may be present for any role."
+    },
+    {
+      "control_id": "sell_button",
+      "display_name": "Sell Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Future cockpit specs must not create order-entry controls.",
+      "related_forbidden_capability": "execute_trade",
+      "validation_rule": "No sell control may be present for any role."
+    },
+    {
+      "control_id": "cancel_order_button",
+      "display_name": "Cancel Order Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Order cancellation is outside the read-only cockpit boundary.",
+      "related_forbidden_capability": "cancel_order",
+      "validation_rule": "No cancel order control may be present."
+    },
+    {
+      "control_id": "modify_order_button",
+      "display_name": "Modify Order Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Order modification is outside the read-only cockpit boundary.",
+      "related_forbidden_capability": "modify_order",
+      "validation_rule": "No modify order control may be present."
+    },
+    {
+      "control_id": "execute_trade_button",
+      "display_name": "Execute Trade Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Trading automation and manual execution triggers are prohibited.",
+      "related_forbidden_capability": "execute_trade",
+      "validation_rule": "No execution trigger may be present."
+    },
+    {
+      "control_id": "start_bot_button",
+      "display_name": "Start Bot Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Bot control is prohibited.",
+      "related_forbidden_capability": "start_bot",
+      "validation_rule": "No bot start control may be present."
+    },
+    {
+      "control_id": "stop_bot_button",
+      "display_name": "Stop Bot Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Bot control is prohibited.",
+      "related_forbidden_capability": "stop_bot",
+      "validation_rule": "No bot stop control may be present."
+    },
+    {
+      "control_id": "reopen_grid_button",
+      "display_name": "Reopen Grid Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "ZEC grid reopening is prohibited by current rules and no bot control may exist.",
+      "related_forbidden_capability": "reopen_grid",
+      "validation_rule": "No grid reopen control may be present."
+    },
+    {
+      "control_id": "connect_broker_button",
+      "display_name": "Connect Broker Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Broker API connection is explicitly outside Phase 6.4.",
+      "related_forbidden_capability": "connect_broker_api",
+      "validation_rule": "No broker connector control may be present."
+    },
+    {
+      "control_id": "connect_binance_button",
+      "display_name": "Connect Binance Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Binance API connection is explicitly outside Phase 6.4.",
+      "related_forbidden_capability": "connect_binance_api",
+      "validation_rule": "No Binance connector control may be present."
+    },
+    {
+      "control_id": "connect_external_market_data_button",
+      "display_name": "Connect External Market Data Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "External market-data connectors are prohibited.",
+      "related_forbidden_capability": "connect_external_market_api",
+      "validation_rule": "No external data connector control may be present."
+    },
+    {
+      "control_id": "refresh_live_price_button",
+      "display_name": "Refresh Live Price Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Live market data refresh is prohibited.",
+      "related_forbidden_capability": "fetch_live_market_data",
+      "validation_rule": "No live price refresh control may be present."
+    },
+    {
+      "control_id": "promote_checkpoint_button",
+      "display_name": "Promote Checkpoint Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Checkpoint promotion must not be a UI action.",
+      "related_forbidden_capability": "promote_checkpoint",
+      "validation_rule": "No checkpoint promotion control may be present."
+    },
+    {
+      "control_id": "edit_runtime_record_button",
+      "display_name": "Edit Runtime Record Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Runtime records are immutable audit artifacts in this boundary.",
+      "related_forbidden_capability": "mutate_runtime_record",
+      "validation_rule": "No runtime mutation control may be present."
+    },
+    {
+      "control_id": "suppress_warning_button",
+      "display_name": "Suppress Warning Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Warnings must remain visible.",
+      "related_forbidden_capability": "suppress_warning",
+      "validation_rule": "No warning suppression control may be present."
+    },
+    {
+      "control_id": "hide_data_quality_button",
+      "display_name": "Hide Data Quality Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Data-quality flags must remain visible.",
+      "related_forbidden_capability": "hide_data_quality_flag",
+      "validation_rule": "No data-quality hiding control may be present."
+    },
+    {
+      "control_id": "reveal_sensitive_value_button",
+      "display_name": "Reveal Sensitive Value Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Sensitive values require permission and masking enforcement, not ad hoc reveal controls.",
+      "related_forbidden_capability": "export_sensitive_account_value_to_customer_view",
+      "validation_rule": "No reveal-sensitive-value control may be present."
+    },
+    {
+      "control_id": "reveal_never_expose_field_button",
+      "display_name": "Reveal Never-expose Field Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Never-expose fields must be rejected before render.",
+      "related_forbidden_capability": "reveal_never_expose_field",
+      "validation_rule": "No never-expose reveal control may be present."
+    },
+    {
+      "control_id": "export_customer_facing_sensitive_data_button",
+      "display_name": "Export Customer-facing Sensitive Data Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Customer-facing sensitive export is blocked.",
+      "related_forbidden_capability": "export_sensitive_account_value_to_customer_view",
+      "validation_rule": "No sensitive customer-facing export control may be present."
+    },
+    {
+      "control_id": "enable_customer_facing_view_button",
+      "display_name": "Enable Customer-facing View Button",
+      "blocked": true,
+      "allowed_roles": [],
+      "reason": "Customer-facing view requires future governance approval and implementation work.",
+      "related_forbidden_capability": "enable_customer_facing_ui",
+      "validation_rule": "No customer-facing enablement control may be present."
+    }
+  ],
+  "validation_expectations": [
+    "all_required_blocked_controls_exist",
+    "every_blocked_control_has_blocked_true",
+    "every_blocked_control_has_allowed_roles_empty"
+  ]
+}

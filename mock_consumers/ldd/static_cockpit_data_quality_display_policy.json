@@ -1,0 +1,221 @@
+{
+  "contract_id": "ldd_static_cockpit_data_quality_display_policy",
+  "contract_version": "0.1",
+  "phase": "Vol.6 Phase 6.4",
+  "status": "static_contract_only",
+  "actual_ui_created": false,
+  "customer_facing_ready": false,
+  "source_checkpoint": "2026-06-11T08:10:00+08:00",
+  "display_items": [
+    {
+      "item_id": "active_checkpoint_timestamp",
+      "display_required": true,
+      "may_hide": false,
+      "expected_value": "2026-06-11T08:10:00+08:00",
+      "source_contract_ref": "cockpit/ldd/manifest.json",
+      "allowed_surfaces": [
+        "internal_operator_cockpit_static",
+        "ai_board_review_static",
+        "audit_debug_static"
+      ],
+      "blocked_surfaces": [
+        "public_demo_static_blocked",
+        "customer_facing_static_blocked"
+      ],
+      "customer_facing_policy": "blocked_until_customer_facing_ready_true",
+      "validation_rule": "Active checkpoint must show 2026-06-11T08:10:00+08:00 and may not be hidden."
+    },
+    {
+      "item_id": "source_priority",
+      "display_required": true,
+      "may_hide": false,
+      "source_contract_ref": "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json",
+      "allowed_surfaces": [
+        "internal_operator_cockpit_static",
+        "ai_board_review_static",
+        "audit_debug_static"
+      ],
+      "blocked_surfaces": [
+        "public_demo_static_blocked",
+        "customer_facing_static_blocked"
+      ],
+      "customer_facing_policy": "blocked",
+      "validation_rule": "Source priority must be visible for internal traceability."
+    },
+    {
+      "item_id": "quote_type",
+      "display_required": true,
+      "may_hide": false,
+      "source_contract_ref": "cockpit/ldd/view_model.json",
+      "allowed_surfaces": [
+        "internal_operator_cockpit_static",
+        "ai_board_review_static",
+        "audit_debug_static"
+      ],
+      "blocked_surfaces": [
+        "public_demo_static_blocked",
+        "customer_facing_static_blocked"
+      ],
+      "customer_facing_policy": "blocked",
+      "validation_rule": "Quote type may not be hidden because static values must not be mistaken for live executable prices."
+    },
+    {
+      "item_id": "source_of_truth",
+      "display_required": true,
+      "may_hide": false,
+      "source_contract_ref": "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json",
+      "allowed_surfaces": [
+        "internal_operator_cockpit_static",
+        "ai_board_review_static",
+        "audit_debug_static"
+      ],
+      "blocked_surfaces": [
+        "public_demo_static_blocked",
+        "customer_facing_static_blocked"
+      ],
+      "customer_facing_policy": "blocked",
+      "validation_rule": "Source of truth may not be hidden or replaced by external live inference."
+    },
+    {
+      "item_id": "warnings",
+      "display_required": true,
+      "may_hide": false,
+      "source_contract_ref": "cockpit/ldd/view_model.json",
+      "allowed_surfaces": [
+        "internal_operator_cockpit_static",
+        "ai_board_review_static",
+        "audit_debug_static",
+        "public_demo_static_blocked",
+        "customer_facing_static_blocked"
+      ],
+      "blocked_surfaces": [],
+      "customer_facing_policy": "blocked_surface_may_show_blocked_status_warning_only",
+      "validation_rule": "Warnings may not be hidden or suppressed."
+    },
+    {
+      "item_id": "timeline_warning_count",
+      "display_required": true,
+      "may_hide": false,
+      "expected_value": 0,
+      "source_contract_ref": "cockpit/ldd/runtime_timeline.json",
+      "allowed_surfaces": [
+        "internal_operator_cockpit_static",
+        "ai_board_review_static",
+        "audit_debug_static"
+      ],
+      "blocked_surfaces": [
+        "customer_facing_static_blocked"
+      ],
+      "customer_facing_policy": "blocked",
+      "validation_rule": "Timeline warning count must remain visible for internal data quality review."
+    },
+    {
+      "item_id": "stale_checkpoint_evidence",
+      "display_required": true,
+      "may_hide": false,
+      "source_contract_ref": "mock_consumers/ldd/read_only_api_response_examples.json",
+      "allowed_surfaces": [
+        "internal_operator_cockpit_static",
+        "audit_debug_static"
+      ],
+      "blocked_surfaces": [
+        "public_demo_static_blocked",
+        "customer_facing_static_blocked"
+      ],
+      "customer_facing_policy": "blocked",
+      "validation_rule": "Stale checkpoint evidence must be visible when present and must not silently overwrite active state."
+    },
+    {
+      "item_id": "non_promoted_governance_evidence",
+      "display_required": true,
+      "may_hide": false,
+      "label_required": "non_promoted",
+      "source_contract_ref": "records/ldd/2026-06-10/vol6_phase6_2a_ldd_premarket_runtime_sync_governance_patch_1706_sgt.json",
+      "allowed_surfaces": [
+        "audit_debug_static"
+      ],
+      "blocked_surfaces": [
+        "public_demo_static_blocked",
+        "customer_facing_static_blocked"
+      ],
+      "customer_facing_policy": "blocked",
+      "validation_rule": "Non-promoted governance evidence must be labeled as non-promoted."
+    },
+    {
+      "item_id": "execution_reconciliation_status",
+      "display_required": true,
+      "may_hide": false,
+      "source_contract_ref": "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json",
+      "allowed_surfaces": [
+        "internal_operator_cockpit_static",
+        "ai_board_review_static",
+        "audit_debug_static"
+      ],
+      "blocked_surfaces": [
+        "public_demo_static_blocked",
+        "customer_facing_static_blocked"
+      ],
+      "customer_facing_policy": "blocked",
+      "validation_rule": "Execution reconciliation status is read-only history and must not create execution controls."
+    },
+    {
+      "item_id": "customer_facing_blocked_status",
+      "display_required": true,
+      "may_hide": false,
+      "expected_value": false,
+      "source_contract_ref": "mock_consumers/ldd/customer_facing_unblock_criteria.json",
+      "allowed_surfaces": [
+        "internal_operator_cockpit_static",
+        "ai_board_review_static",
+        "audit_debug_static",
+        "public_demo_static_blocked",
+        "customer_facing_static_blocked"
+      ],
+      "blocked_surfaces": [],
+      "customer_facing_policy": "show_blocked_status_only",
+      "validation_rule": "Customer-facing blocked status may not be hidden."
+    },
+    {
+      "item_id": "permission_masking_profile",
+      "display_required": true,
+      "may_hide": false,
+      "source_contract_ref": "mock_consumers/ldd/field_permission_matrix.json",
+      "allowed_surfaces": [
+        "internal_operator_cockpit_static",
+        "ai_board_review_static",
+        "audit_debug_static"
+      ],
+      "blocked_surfaces": [
+        "public_demo_static_blocked",
+        "customer_facing_static_blocked"
+      ],
+      "customer_facing_policy": "blocked",
+      "validation_rule": "Permission and masking profile must remain visible to internal consumers."
+    },
+    {
+      "item_id": "data_freshness_label",
+      "display_required": true,
+      "may_hide": false,
+      "source_contract_ref": "cockpit/ldd/view_model.json",
+      "allowed_surfaces": [
+        "internal_operator_cockpit_static",
+        "ai_board_review_static",
+        "audit_debug_static"
+      ],
+      "blocked_surfaces": [
+        "public_demo_static_blocked",
+        "customer_facing_static_blocked"
+      ],
+      "customer_facing_policy": "blocked",
+      "validation_rule": "Static cockpit specs must label data as generated/static rather than live."
+    }
+  ],
+  "validation_expectations": [
+    "warnings_may_hide_false",
+    "source_of_truth_may_hide_false",
+    "quote_type_may_hide_false",
+    "customer_facing_blocked_status_may_hide_false",
+    "non_promoted_governance_evidence_has_label_required_non_promoted",
+    "active_checkpoint_timestamp_expected_value_2026_06_11T08_10_00_plus_08_00"
+  ]
+}

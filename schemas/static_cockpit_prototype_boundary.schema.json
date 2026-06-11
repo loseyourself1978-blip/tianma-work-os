@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Static Cockpit Prototype Boundary Contract",
+  "type": "object",
+  "required": [
+    "contract_id",
+    "contract_version",
+    "phase",
+    "status",
+    "actual_ui_created",
+    "customer_facing_ready",
+    "source_checkpoint",
+    "source_contracts",
+    "surfaces",
+    "validation_expectations"
+  ],
+  "properties": {
+    "contract_id": {
+      "type": "string"
+    },
+    "contract_version": {
+      "type": "string"
+    },
+    "phase": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "actual_ui_created": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "customer_facing_ready": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "source_checkpoint": {
+      "type": "string",
+      "enum": [
+        "2026-06-11T08:10:00+08:00"
+      ]
+    },
+    "source_contracts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "surfaces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "surface_id",
+          "implementation_status",
+          "customer_facing_allowed"
+        ],
+        "properties": {
+          "surface_id": {
+            "type": "string"
+          },
+          "implementation_status": {
+            "type": "string",
+            "enum": [
+              "contract_only_not_implemented"
+            ]
+          },
+          "customer_facing_allowed": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "validation_expectations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true
+}

@@ -525,7 +525,7 @@ def title_and_summary(record: LoadedRecord) -> tuple[str, str]:
         phase = scalar(data.get("phase") or data.get("review_phase"), "Vol.6 governance review")
         return (
             phase,
-            f"Governance review recorded with customer-facing ready={scalar(data.get('customer_facing_ready'))}, runtime_mutation_flag={scalar(data.get('runtime_mutation_enabled'))}, and trading_automation_flag={scalar(data.get('trading_automation_enabled'))}.",
+            f"Governance review recorded with customer-facing ready={scalar(data.get('customer_facing_ready'))}, runtime_mutation_flag={scalar(data.get('runtime_mutation_enabled', data.get('runtime_mutation_ui_enabled')))}, and trading_automation_flag={scalar(data.get('trading_automation_enabled'))}.",
         )
     if rt == "governance_runtime_sync":
         return (
