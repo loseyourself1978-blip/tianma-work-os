@@ -3,10 +3,10 @@
   "matrix_id": "ldd-static-consumer-contract-matrix-v0.1",
   "project": "Tianma Work OS",
   "subproject": "LLM Daredevil Desk",
-  "review_time": "2026-06-11T08:10:00+08:00",
-  "baseline_checkpoint": "2026-06-11T08:10:00+08:00",
+  "review_time": "2026-06-12T09:18:00+08:00",
+  "baseline_checkpoint": "2026-06-12T09:18:00+08:00",
   "baseline_commit": "a627c3467f3486ce9e0767ecdc2100e0dd4b0862",
-  "portfolio_mode": "core_position_defense_mode",
+  "portfolio_mode": "residual_core_position_mode",
   "source_view_model": "cockpit/ldd/view_model.json",
   "source_mock_package": "mock_consumers/ldd/",
   "consumer_types": [
@@ -45,7 +45,7 @@
       "source_fields": [
         "checkpoint.latest_active_checkpoint"
       ],
-      "expected_interpretation": "Preserve 2026-06-11T08:10:00+08:00 as the latest checkpoint.",
+      "expected_interpretation": "Preserve 2026-06-12T09:18:00+08:00 as the latest checkpoint.",
       "prohibited_interpretation": "Use an older or mock-only timestamp as current.",
       "pass_criteria": [
         "Checkpoint matches the generated view model."
@@ -61,7 +61,7 @@
       "source_fields": [
         "portfolio_mode.current"
       ],
-      "expected_interpretation": "Preserve core_position_defense_mode.",
+      "expected_interpretation": "Preserve residual_core_position_mode.",
       "prohibited_interpretation": "Render a historical mode as current.",
       "pass_criteria": [
         "Portfolio mode matches the generated view model."

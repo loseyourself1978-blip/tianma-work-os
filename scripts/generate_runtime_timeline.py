@@ -136,6 +136,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str:
         return "governance_runtime_sync"
     if "vol6_phase6_3a_ldd_post_close_execution_reconciliation" in name:
         return "runtime_execution_reconciliation"
+    if "vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update" in name:
+        return "runtime_execution_reconciliation"
     if "executed_order_writeback" in name:
         return "executed_order_writeback"
     if "runtime_status_conflict_arbitration" in name:
@@ -245,6 +247,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str:
         return "governance_review"
     if data.get("record_type") == "governance_runtime_sync":
         return "governance_runtime_sync"
+    if data.get("record_type") == "runtime_execution_reconciliation":
+        return "runtime_execution_reconciliation"
     if data.get("schema_type") == "executed_order_writeback":
         return "executed_order_writeback"
     if data.get("schema_type") == "runtime_status_arbitration":

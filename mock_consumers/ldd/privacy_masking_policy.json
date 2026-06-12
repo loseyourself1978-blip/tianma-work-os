@@ -2,15 +2,15 @@
   "policy_type": "privacy_masking_policy",
   "version": "0.1",
   "source_view_model": "cockpit/ldd/view_model.json",
-  "baseline_checkpoint": "2026-06-11T08:10:00+08:00",
+  "baseline_checkpoint": "2026-06-12T09:18:00+08:00",
   "actions": [
     {
       "action_id": "visible",
       "description": "Render the approved value without transformation.",
       "allowed_for_customer_facing": false,
       "allowed_for_internal_read_only": true,
-      "example_before": "core_position_defense_mode",
-      "example_after": "core_position_defense_mode",
+      "example_before": "residual_core_position_mode",
+      "example_after": "residual_core_position_mode",
       "validation_rule": "Allowed only when the role and surface permit the field class."
     },
     {

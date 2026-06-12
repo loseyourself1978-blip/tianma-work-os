@@ -38,7 +38,7 @@
         "risk_summary"
       ],
       "must_show": [
-        "GLD compliant execution and residual 10-share risk",
+        "GLD closed at 0 shares with no-reentry rule active",
         "NVDA compliant execution, imperfect price outcome, and residual core-risk watch",
         "GGLL leveraged-risk valve"
       ]

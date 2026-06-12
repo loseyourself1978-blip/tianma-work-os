@@ -104,6 +104,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "read_only_api_contract_review"
     if "vol6_phase6_3a_ldd_post_close_execution_reconciliation" in name:
         return "runtime_execution_reconciliation"
+    if "vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update" in name:
+        return "runtime_execution_reconciliation"
     if "static_cockpit_prototype_boundary_review" in name:
         return "static_cockpit_prototype_review"
     if "internal_operator_cockpit_static_spec_review" in name:

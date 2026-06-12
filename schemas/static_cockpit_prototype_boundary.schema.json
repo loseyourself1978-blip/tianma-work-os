@@ -42,7 +42,7 @@
     "source_checkpoint": {
       "type": "string",
       "enum": [
-        "2026-06-11T08:10:00+08:00"
+        "2026-06-12T09:18:00+08:00"
       ]
     },
     "source_contracts": {

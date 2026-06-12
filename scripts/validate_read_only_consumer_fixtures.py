@@ -17,8 +17,8 @@ MOCK_DIR = REPO_ROOT / "mock_consumers" / "ldd"
 MANIFEST_PATH = COCKPIT_DIR / "manifest.json"
 VIEW_MODEL_PATH = COCKPIT_DIR / "view_model.json"
 
-EXPECTED_CHECKPOINT = "2026-06-11T08:10:00+08:00"
-EXPECTED_PORTFOLIO_MODE = "core_position_defense_mode"
+EXPECTED_CHECKPOINT = "2026-06-12T09:18:00+08:00"
+EXPECTED_PORTFOLIO_MODE = "residual_core_position_mode"
 EXPECTED_SOURCE_VIEW_MODEL = "cockpit/ldd/view_model.json"
 
 FIXTURE_PATHS = [
@@ -316,32 +316,32 @@ def check_rule_interpretation(
         for item in as_list(snapshot.get("closed_positions"))
         if isinstance(item, dict)
     }
-    required_closed = {"GLD", "SOXL", "UGL", "INTC", "SOXS", "TSLQ", "GDXU"}
+    required_closed = {"GGLL", "GLD", "SOXL", "UGL", "INTC", "SOXS", "TSLQ", "GDXU"}
     closed_valid = required_closed.issubset(closed) and all(
         closed[symbol].get("state") == "closed_position"
         and closed[symbol].get("reentry") == "prohibited"
         for symbol in required_closed
     )
     risk = as_dict(snapshot.get("risk_summary"))
-    gld = as_dict(risk.get("GLD"))
-    nvda = as_dict(risk.get("NVDA"))
-    goog = as_dict(risk.get("GOOG_GGLL"))
     view_risk = as_dict(view_model.get("risk_summary"))
+    active_positions = {str(item) for item in as_list(snapshot.get("active_positions"))}
+    leveraged_risk = str(risk.get("leveraged_risk_valves", "")).lower()
+    cash_defense = str(risk.get("cash_defense", "")).lower()
     valid = (
         closed_valid
-        and gld.get("rule_compliance_result") == "confirmed_execution_closed_position"
-        and gld.get("position_after") == 0
-        and nvda.get("position_after") == 10
-        and nvda.get("next_protection_level") == 198
-        and goog.get("goog_defense_level") == 355
-        and goog.get("ggll_role") == "main_remaining_leveraged_etf_risk_valve"
-        and goog.get("ggll_position_after") == 5
+        and {"GOOG 9", "NVDA 10", "tiny TSLA residual"}.issubset(active_positions)
+        and not any(str(item).startswith("GGLL ") for item in active_positions)
+        and "ggll" in leveraged_risk
+        and "closed" in leveraged_risk
+        and "78.0" in cash_defense
+        and "72.0" in cash_defense
+        and view_risk.get("main_remaining_leveraged_etf_risk_valve") == "none_open_ggll_closed"
         and view_risk.get("main_core_risk_watch") == "NVDA"
     )
     results.check(
         "rule_interpretation_boundary",
         valid,
-        "closed/no-reentry, GLD/NVDA/GGLL execution reconciliation, and GOOG/GGLL risk roles are preserved"
+        "closed/no-reentry, residual GOOG/NVDA positions, cleared GGLL valve, and cash-defense roles are preserved"
         if valid
         else "one or more rule-interpretation boundaries are inconsistent",
     )

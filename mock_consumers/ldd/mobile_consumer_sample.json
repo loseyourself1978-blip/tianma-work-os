@@ -52,7 +52,7 @@
   "required_current_highlights": [
     "GLD closed to 0 shares; no re-entry until 380 reclaim and new approved rule",
     "NVDA reduced to 10 shares with 198 downside protection",
-    "GGLL reduced to 5 shares and remains the main leveraged ETF risk valve",
+    "GGLL cleared to 0 shares and moved to closed no-reentry state",
     "USDT-dominant crypto defense"
   ],
   "privacy_masking_required_before_customer_use": true

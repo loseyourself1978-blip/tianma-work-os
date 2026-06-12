@@ -2,16 +2,20 @@
   "snapshot_type": "static_mock_consumer_snapshot",
   "snapshot_version": "0.1",
   "source_view_model": "cockpit/ldd/view_model.json",
-  "latest_checkpoint": "2026-06-11T08:10:00+08:00",
-  "portfolio_mode": "core_position_defense_mode",
+  "latest_checkpoint": "2026-06-12T09:18:00+08:00",
+  "portfolio_mode": "residual_core_position_mode",
   "consumer_readiness": "ready_with_limits",
   "active_positions": [
-    "GOOG 14",
+    "GOOG 9",
     "NVDA 10",
-    "GGLL 5",
     "tiny TSLA residual"
   ],
   "closed_positions": [
+    {
+      "asset": "GGLL",
+      "state": "closed_position",
+      "reentry": "prohibited"
+    },
     {
       "asset": "GLD",
       "state": "closed_position",
@@ -49,35 +53,18 @@
     }
   ],
   "risk_summary": {
-    "GLD": {
-      "state": "closed_position",
-      "rule_compliance_result": "confirmed_execution_closed_position",
-      "position_before": 10,
-      "position_after": 0,
-      "next_protection_levels": [
-        380
-      ],
-      "reentry_condition": "380 reclaim plus new approved rule"
-    },
-    "NVDA": {
-      "state": "main_core_risk_watch",
-      "rule_compliance_result": "confirmed_execution_rebased_to_10",
-      "price_outcome_quality": "tracked_separately",
-      "position_before": 15,
-      "position_after": 10,
-      "next_protection_level": 198
-    },
-    "GOOG_GGLL": {
-      "goog_defense_level": 355,
-      "ggll_role": "main_remaining_leveraged_etf_risk_valve",
-      "ggll_position_before": 10,
-      "ggll_position_after": 5
-    }
+    "portfolio_mode": "residual_core_position_mode",
+    "operating_mode": "cash_defense_core_position_survival_mode",
+    "main_core_risk_watch": "NVDA",
+    "leveraged_risk_valves": "GGLL, GLD, SOXL, UGL, and INTC closed / no reentry without a new approved rule",
+    "cash_defense": "U.S. cash ratio approximately 78.0%; Binance USDT defense ratio approximately 72.0%"
   },
   "crypto_defense": {
-    "posture": "USDT-dominant defense",
-    "btc_buyback": "inactive below 75,500-76,000",
-    "zec_grid": "closed / profit-locked / do not reopen"
+    "binance_total_assets_usdt": 8247.78,
+    "usdt_balance_usdt": 5936.0,
+    "usdt_defense_ratio_pct": 72.0,
+    "btc_buyback_trigger": "inactive_below_75500_76000",
+    "zec_grid": "closed_do_not_reopen"
   },
   "hong_kong_equity": {
     "asset": "Zhipu / 02513",
@@ -90,12 +77,13 @@
     "live_execution_quote": false
   },
   "execution_writeback": {
-    "order_count": 5,
-    "executed_order_count": 4,
-    "canceled_order_count": 1,
-    "estimated_gross_proceeds_usd": 5286.05,
-    "us_cash_ratio_pct": 68.8,
-    "status": "confirmed_and_reconciled"
+    "status": "confirmed_execution_reconciled",
+    "orders": [
+      "GGLL sell 5 @ 111.6250 filled",
+      "GOOG sell 5 @ 347.77 filled"
+    ],
+    "gross_proceeds_before_fees_usd": 2296.98,
+    "order_detail_completeness": "resolved_by_order_detail_screenshot"
   },
   "safety": {
     "external_api_connected": false,
@@ -104,5 +92,6 @@
     "frontend_app_created": false,
     "timeline_warnings": 0,
     "source_of_truth": "User-provided broker/Binance screenshots"
-  }
+  },
+  "operating_mode": "cash_defense_core_position_survival_mode"
 }

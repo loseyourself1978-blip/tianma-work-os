@@ -2,7 +2,7 @@
   "contract_type": "read_only_ui_boundary",
   "version": "0.1",
   "source_view_model": "cockpit/ldd/view_model.json",
-  "baseline_checkpoint": "2026-06-11T08:10:00+08:00",
+  "baseline_checkpoint": "2026-06-12T09:18:00+08:00",
   "consumer_mode": "internal_read_only",
   "artifact_references": {
     "component_surface_map": "mock_consumers/ldd/ui_surface_map.json",

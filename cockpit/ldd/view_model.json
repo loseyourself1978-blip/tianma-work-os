@@ -2,7 +2,7 @@
   "meta": {
     "project": "LLM Daredevil Desk",
     "view_model_version": "0.1",
-    "generated_at": "2026-06-11T08:10:00+08:00",
+    "generated_at": "2026-06-12T09:18:00+08:00",
     "generator": "scripts/generate_cockpit_view_model.py",
     "source_manifest": "cockpit/ldd/manifest.json",
     "source_files": [
@@ -18,7 +18,7 @@
     "contract_source": "records/ldd/2026-06-08/cockpit_view_model_contract_0844_sgt.json"
   },
   "checkpoint": {
-    "latest_active_checkpoint": "2026-06-11T08:10:00+08:00",
+    "latest_active_checkpoint": "2026-06-12T09:18:00+08:00",
     "status": "latest_active_checkpoint_confirmed",
     "source_files": [
       "cockpit/ldd/manifest.json",
@@ -26,9 +26,10 @@
     ]
   },
   "portfolio_mode": {
-    "current": "core_position_defense_mode",
+    "current": "residual_core_position_mode",
+    "operating_mode": "cash_defense_core_position_survival_mode",
     "status": "active",
-    "summary": "Portfolio remains in core_position_defense_mode.",
+    "summary": "Portfolio is in residual_core_position_mode.",
     "source_files": [
       "cockpit/ldd/latest_state.json",
       "cockpit/ldd/strategy_states.json"
@@ -36,27 +37,27 @@
   },
   "account_overview": {
     "total_account": {
-      "broker_total_assets_usd": "approximately 37368.51",
-      "cash_usd": "approximately 16502.97",
+      "broker_total_assets_usd": "approximately 37627.8",
+      "cash_usd": "approximately 18795.68",
       "total_holding_value_usd": "unknown",
       "total_holding_pl_usd": "unknown",
-      "total_day_pl_usd": "unknown",
-      "note": "The latest post-close checkpoint preserves core_position_defense_mode and reconciles four executed risk-reduction orders plus one canceled order."
+      "total_day_pl_usd": "approximately +58.82",
+      "note": "The latest post-close checkpoint promotes residual_core_position_mode and reconciles confirmed order-detail screenshots."
     },
     "us_equities": {
-      "section_value_usd": "approximately 23997.08",
-      "holding_market_value_usd": "approximately 7494.11",
-      "holding_pl_usd": "approximately +1078.51",
-      "day_pl_usd": "approximately -529.64",
+      "section_value_usd": "approximately 24088.38",
+      "holding_market_value_usd": "approximately 5292.7",
+      "holding_pl_usd": "approximately +2447.56",
+      "day_pl_usd": "approximately +58.82",
       "historical_cleanup_status": "SOXS, TSLQ, GDXU, NVDD, NVDS, SOXL, UGL, and INTC are closed or prohibited; no reopening/no chase.",
       "new_ldd_model_strategy_status": "No new LDD U.S. model strategy position.",
       "key_positions": [
-        "GOOG 14",
+        "GOOG 9",
         "NVDA 10",
-        "GGLL 5",
         "tiny TSLA residual"
       ],
       "closed_positions": [
+        "GGLL 0",
         "GLD 0",
         "SOXL 0",
         "UGL 0",
@@ -69,24 +70,25 @@
       ],
       "open_risks": [
         "NVDA main core-risk watch at 10 shares",
-        "GGLL main remaining leveraged ETF risk valve at 5 shares",
+        "GGLL is closed after clearing the final major leveraged ETF risk valve",
         "GLD is closed and should not be re-entered until a 380 reclaim plus a new approved rule",
-        "Hong Kong high-profit drawdown protection is escalated"
+        "Hong Kong high-profit protection remains separately tracked"
       ],
-      "portfolio_mode": "core_position_defense_mode"
+      "portfolio_mode": "residual_core_position_mode",
+      "operating_mode": "cash_defense_core_position_survival_mode"
     },
     "crypto": {
-      "binance_total_assets_usdt": "approximately 8170.32",
+      "binance_total_assets_usdt": "approximately 8247.78",
       "usdt": "5936",
       "eth": "0.8070416",
       "doge": "8400.535",
       "sol": "2.931163",
       "btc": "0.00055762",
-      "zec_residual": "0.012974, approximately unknown USDT",
+      "zec_residual": "0.012974, approximately 5.54 USDT",
       "cash_posture": "USDT-dominant defensive posture",
       "btc_buyback_status": "Not triggered below 75,500-76,000",
       "zec_bot_status": "Closed / profit-locked based on prior confirmed execution state; no ZEC grid reopening.",
-      "usdt_defense_ratio_pct": 72.7,
+      "usdt_defense_ratio_pct": 72.0,
       "open_risks": [
         "Crypto market weakness",
         "BTC still below buyback trigger",
@@ -97,10 +99,10 @@
       "latest_checkpoint_status": "HK high-profit protection is tracked separately from U.S. risk scoring.",
       "02513_zhipu": {
         "shares": 100,
-        "market_value_hkd": "approximately 113600",
+        "market_value_hkd": "approximately 106100",
         "latest_price_hkd": "unknown",
-        "day_pl_hkd": "approximately -17800",
-        "holding_pl_hkd": "approximately +101980"
+        "day_pl_hkd": "approximately +1300",
+        "holding_pl_hkd": "approximately +94480"
       }
     },
     "source_files": [
@@ -110,19 +112,20 @@
   "account_sections": {
     "sections": {
       "total_account": {
-        "status": "core_position_defense_validated",
-        "broker_total_assets_usd": "approximately 37368.51",
-        "total_day_pl_usd": "unknown",
-        "note": "Latest encoded account state validates core_position_defense_mode."
+        "status": "residual_core_position_mode",
+        "broker_total_assets_usd": "approximately 37627.8",
+        "total_day_pl_usd": "approximately +58.82",
+        "note": "Latest encoded account state validates residual_core_position_mode."
       },
       "us_equities": {
-        "status": "core_position_defense_validated",
-        "section_value_usd": "approximately 23997.08",
-        "day_pl_usd": "approximately -529.64",
-        "main_remaining_leveraged_risk_valve": "GGLL",
+        "status": "residual_core_position_mode",
+        "section_value_usd": "approximately 24088.38",
+        "day_pl_usd": "approximately +58.82",
+        "main_remaining_leveraged_risk_valve": "none_open_ggll_closed",
         "main_core_risk_watch": "NVDA",
         "gld_status": "GLD closed at 0 shares; no re-entry until a 380 reclaim and a new approved rule",
         "closed_cleanup_positions": [
+          "GGLL",
           "GLD",
           "SOXL",
           "UGL",
@@ -131,39 +134,39 @@
       },
       "hong_kong_equities": {
         "status": "separate_high_profit_protection_required",
-        "primary_holding": "02513 Zhipu 100 shares; approximately 113600 HKD market value",
-        "day_pl_hkd": "approximately -17800",
-        "holding_pl_hkd": "approximately +101980",
+        "primary_holding": "02513 Zhipu 100 shares; approximately 106100 HKD market value",
+        "day_pl_hkd": "approximately +1300",
+        "holding_pl_hkd": "approximately +94480",
         "protection_status": "escalated_after_large_one_day_drawdown",
         "scoring_boundary": "Do not mix HK high-profit protection into U.S. risk scoring."
       },
       "crypto_spot": {
         "status": "defensive_usdt_dominant",
-        "binance_total_assets_usdt": "approximately 8170.32",
-        "day_pl_usdt": "unknown",
+        "binance_total_assets_usdt": "approximately 8247.78",
+        "day_pl_usdt": "approximately 0.8966",
         "btc_trigger_status": "not_triggered",
         "zec_grid_status": "closed_profit_locked",
-        "usdt_defense_ratio_pct": 72.7
+        "usdt_defense_ratio_pct": 72.0
       },
       "cash_and_stablecoins": {
         "status": "defensive_cash_and_stablecoin_posture",
-        "broker_cash_usd": "approximately 16502.97",
-        "us_cash_ratio_pct": 68.8,
+        "broker_cash_usd": "approximately 18795.68",
+        "us_cash_ratio_pct": 78.0,
         "binance_usdt": "5936",
-        "binance_usdt_defense_ratio_pct": 72.7,
-        "latest_execution_gross_proceeds_usd": "approximately 5286.05"
+        "binance_usdt_defense_ratio_pct": 72.0,
+        "latest_execution_gross_proceeds_usd": "approximately 2296.98"
       },
       "leveraged_exposure": {
-        "status": "reduced_to_residual_ggll_risk_valve",
-        "open_exposures": [
-          "GGLL 5"
-        ],
+        "status": "leveraged_risk_valves_cleared",
+        "open_exposures": [],
         "closed_exposures": [
+          "GGLL 0",
           "GLD 0",
           "SOXL 0",
           "UGL 0"
         ],
         "no_reopen": [
+          "GGLL",
           "GLD",
           "SOXS",
           "TSLQ",
@@ -177,6 +180,7 @@
       "historical_cleanup": {
         "status": "cleanup_cycle_completed",
         "closed": [
+          "GGLL",
           "GLD",
           "SOXS",
           "TSLQ",
@@ -213,6 +217,8 @@
         "status": "tracked_separately_from_rule_compliance",
         "example": "SOXL rebounded after closure, but the rebound is not a rule-compliance failure.",
         "closed_positions": [
+          "GGLL",
+          "GLD",
           "SOXL",
           "UGL",
           "INTC",
@@ -228,42 +234,28 @@
         "latest_fills": {
           "GGLL_1": {
             "quantity": 5,
-            "price_usd": 114.1,
+            "price_usd": 111.625,
             "execution_state": "executed"
           },
-          "NVDA_2": {
+          "GOOG_2": {
             "quantity": 5,
-            "price_usd": 199.68,
+            "price_usd": 347.77,
             "execution_state": "executed"
-          },
-          "GLD_3": {
-            "quantity": 5,
-            "price_usd": 371.83,
-            "execution_state": "executed"
-          },
-          "GLD_4": {
-            "quantity": 5,
-            "price_usd": 371.6,
-            "execution_state": "executed"
-          },
-          "GLD_5": {
-            "quantity": 5,
-            "price_usd": 385,
-            "execution_state": "canceled"
           }
         },
-        "executed_order_count": 4,
-        "canceled_order_count": 1,
-        "estimated_gross_proceeds_usd": "approximately 5286.05",
-        "us_cash_ratio_pct": 68.8
+        "executed_order_count": 2,
+        "canceled_order_count": 0,
+        "estimated_gross_proceeds_usd": "approximately 2296.98",
+        "us_cash_ratio_pct": 78.0
       },
       "rule_compliance_vs_price_outcome": {
         "status": "separate_scores_required",
-        "GLD_rule_compliance": "confirmed_execution_closed_position",
-        "NVDA_rule_compliance": "confirmed_execution_rebased_to_10",
-        "GGLL_rule_compliance": "confirmed_execution_rebased_to_5",
+        "GLD_rule_compliance": "closed_position_preserved",
+        "NVDA_rule_compliance": "residual_core_watch_rebased_to_10",
+        "GOOG_rule_compliance": "confirmed_reduction_rebased_to_9",
+        "GGLL_rule_compliance": "confirmed_execution_cleared_to_0",
         "price_outcome_quality": "tracked_separately",
-        "account_structure_impact": "U.S. cash ratio improved to approximately 68.8 percent"
+        "account_structure_impact": "U.S. cash ratio improved to approximately 78 percent"
       },
       "post_sale_cost_basis": {
         "status": "broker_remaining_cost_basis_may_change_after_partial_sale",
@@ -272,27 +264,27 @@
       "runtime_status_arbitration": {
         "status": "resolved",
         "severity": "non_blocking",
-        "actual_latest_phase": "Vol.6 Phase 6.3 Read-only API Contract",
-        "latest_market_source_time": "2026-06-11T08:10:00+08:00"
+        "actual_latest_phase": "Vol.6 Phase 6.5 Internal Operator Cockpit Static Spec",
+        "latest_market_source_time": "2026-06-12T09:18:00+08:00"
       }
     },
     "quality_assessment": {
-      "overall_status": "core_position_defense_validated",
+      "overall_status": "residual_core_position_mode",
       "positive_factors": [
-        "GLD, SOXL, UGL, and INTC are closed at 0 shares.",
-        "Four executed sells generated approximately 5286.05 USD before fees; one GLD order was canceled.",
-        "U.S. cash/cash-equivalent is approximately 16502.97 USD.",
-        "U.S. cash ratio is approximately 68.8 percent.",
-        "USDT is approximately 72.7% of Binance visible assets.",
+        "GGLL, GLD, SOXL, UGL, and INTC are closed at 0 shares.",
+        "2 executed sells generated approximately 2296.98 USD before fees.",
+        "U.S. cash/cash-equivalent is approximately 18795.68 USD.",
+        "U.S. cash ratio is approximately 78 percent.",
+        "USDT is approximately 72.0% of Binance visible assets.",
         "ZEC grid remains closed / profit locked.",
-        "Portfolio mode remains core_position_defense_mode.",
+        "Portfolio mode is residual_core_position_mode.",
         "Quote Type Tagging is reinforced for rule validity."
       ],
       "risk_factors": [
         "NVDA is the main core-risk watch at 10 shares.",
-        "GGLL is the main remaining leveraged ETF risk valve at 5 shares.",
+        "GGLL is closed after clearing the final major leveraged ETF risk valve.",
         "GLD is closed and remains a no-reentry position until a 380 reclaim and a new approved rule.",
-        "Hong Kong high-profit drawdown protection is escalated after a -13.54 percent day.",
+        "Hong Kong high-profit protection remains separately tracked.",
         "BTC buyback remains inactive below 75,500-76,000."
       ],
       "next_required_confirmations": [
@@ -310,7 +302,7 @@
   },
   "positions": [
     {
-      "asset_or_position": "GOOG 14",
+      "asset_or_position": "GOOG 9",
       "position_state": "active_position",
       "source_files": [
         "cockpit/ldd/latest_state.json"
@@ -321,16 +313,6 @@
     },
     {
       "asset_or_position": "NVDA 10",
-      "position_state": "active_position",
-      "source_files": [
-        "cockpit/ldd/latest_state.json"
-      ],
-      "tags": [
-        "current_position"
-      ]
-    },
-    {
-      "asset_or_position": "GGLL 5",
       "position_state": "active_position",
       "source_files": [
         "cockpit/ldd/latest_state.json"
@@ -398,6 +380,20 @@
       "position_state": "closed_position",
       "quantity": "0",
       "current_action": "no_readd",
+      "source_files": [
+        "cockpit/ldd/latest_state.json"
+      ],
+      "tags": [
+        "closed_position",
+        "historical_cleanup",
+        "prohibited_reentry"
+      ]
+    },
+    {
+      "asset": "GGLL",
+      "position_state": "closed_position",
+      "quantity": "0",
+      "current_action": "no_readd / no reopening / no re-entry without a new approved rule",
       "source_files": [
         "cockpit/ldd/latest_state.json"
       ],
@@ -484,7 +480,7 @@
       "current_action": "Do not reopen grid or chase; residual ZEC can be converted later if needed.",
       "source_files": [
         "records/ldd/2026-06-03/zec_bot_strategy_state_closed_20260603_0839.json",
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
       "tags": [
         "closed_position",
@@ -495,26 +491,26 @@
     }
   ],
   "risk_summary": {
-    "overall_status": "core_position_defense_validated",
+    "overall_status": "residual_core_position_mode",
     "open_risks": [
       "NVDA main core-risk watch at 10 shares",
-      "GGLL main remaining leveraged ETF risk valve at 5 shares",
+      "GGLL is closed after clearing the final major leveraged ETF risk valve",
       "GLD is closed and should not be re-entered until a 380 reclaim plus a new approved rule",
-      "Hong Kong high-profit drawdown protection is escalated",
+      "Hong Kong high-profit protection remains separately tracked",
       "Crypto market weakness",
       "BTC still below buyback trigger",
       "ZEC residual only"
     ],
     "risk_factors": [
       "NVDA is the main core-risk watch at 10 shares.",
-      "GGLL is the main remaining leveraged ETF risk valve at 5 shares.",
+      "GGLL is closed after clearing the final major leveraged ETF risk valve.",
       "GLD is closed and remains a no-reentry position until a 380 reclaim and a new approved rule.",
-      "Hong Kong high-profit drawdown protection is escalated after a -13.54 percent day.",
+      "Hong Kong high-profit protection remains separately tracked.",
       "BTC buyback remains inactive below 75,500-76,000."
     ],
     "near_trigger_count": 0,
     "triggered_rules": [],
-    "main_remaining_leveraged_etf_risk_valve": "GGLL",
+    "main_remaining_leveraged_etf_risk_valve": "none_open_ggll_closed",
     "main_core_risk_watch": "NVDA",
     "gld_status": "GLD closed at 0 shares; no re-entry until a 380 reclaim and a new approved rule",
     "btc_buyback_status": "Not triggered below 75,500-76,000",
@@ -522,37 +518,36 @@
   },
   "active_rules": [
     {
-      "rule_id": "no-new-buying-after-close-20260611-0810",
-      "asset_or_module": "U.S./Crypto",
-      "rule_type": "prohibition_rule",
+      "rule_id": "no-new-buying-after-close-20260612-0918",
+      "asset_or_module": "Portfolio",
+      "rule_type": "buying_prohibition",
       "status": "active",
       "trigger_state": "active",
-      "trigger_condition": "No new buying after the confirmed post-close risk reductions.",
-      "current_action": "Preserve cash defense and wait for a new approved decision.",
+      "trigger_condition": "Post-close residual-core checkpoint is cash-defense dominant.",
+      "current_action": "No new U.S. equity or crypto buying.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
         "active",
-        "risk_control",
-        "u.s._crypto"
+        "portfolio"
       ]
     },
     {
-      "rule_id": "no-soxl-reentry-20260611-0810",
+      "rule_id": "no-soxl-reentry-20260612-0918",
       "asset_or_module": "SOXL",
-      "rule_type": "no_reentry_rule",
+      "rule_type": "no_reentry",
       "status": "active",
       "trigger_state": "active",
-      "trigger_condition": "SOXL remains closed and requires a new approved rule before re-entry.",
-      "current_action": "Do not re-add SOXL.",
+      "trigger_condition": "SOXL remains closed after forced deleveraging.",
+      "current_action": "Do not re-add SOXL without a new approved rule.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "high",
       "requires_execution_price_confirmation": true,
       "tags": [
@@ -561,17 +556,17 @@
       ]
     },
     {
-      "rule_id": "no-ugl-reentry-20260611-0810",
+      "rule_id": "no-ugl-reentry-20260612-0918",
       "asset_or_module": "UGL",
-      "rule_type": "no_reentry_rule",
+      "rule_type": "no_reentry",
       "status": "active",
       "trigger_state": "active",
-      "trigger_condition": "UGL remains closed and requires a new approved rule before re-entry.",
+      "trigger_condition": "UGL remains closed after cleanup.",
       "current_action": "Do not re-add UGL.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
@@ -580,17 +575,17 @@
       ]
     },
     {
-      "rule_id": "no-intc-reentry-20260611-0810",
+      "rule_id": "no-intc-reentry-20260612-0918",
       "asset_or_module": "INTC",
-      "rule_type": "no_reentry_rule",
+      "rule_type": "no_reentry",
       "status": "active",
       "trigger_state": "active",
-      "trigger_condition": "INTC remains closed and requires a new approved rule before re-entry.",
+      "trigger_condition": "INTC remains closed after weak-position cleanup.",
       "current_action": "Do not re-add INTC.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
@@ -599,36 +594,56 @@
       ]
     },
     {
-      "rule_id": "no-zec-grid-reopen-20260611-0810",
-      "asset_or_module": "ZEC",
-      "rule_type": "closed_bot_guardrail",
+      "rule_id": "gld-no-reentry-380-405-20260612-0918",
+      "asset_or_module": "GLD",
+      "rule_type": "no_reentry_after_forced_deleveraging",
       "status": "active",
       "trigger_state": "active",
-      "trigger_condition": "ZEC grid remains closed and must not be reopened.",
-      "current_action": "Do not reopen or chase ZEC.",
+      "trigger_condition": "GLD is closed; do not re-enter below 380. 380-390 stability is observation only; 400-405 reclaim required before re-entry is reconsidered.",
+      "current_action": "Keep GLD closed; reconsider only after confirmation and new approved rule.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
         "active",
-        "zec"
+        "gld"
       ]
     },
     {
-      "rule_id": "btc-no-buyback-until-75500-76000-20260611-0810",
+      "rule_id": "ggll-no-buyback-goog-370-20260612-0918",
+      "asset_or_module": "GGLL",
+      "rule_type": "leveraged_risk_valve_closed",
+      "status": "active",
+      "trigger_state": "active",
+      "trigger_condition": "GGLL is closed after clearing final leveraged-risk valve.",
+      "current_action": "Do not buy back GGLL without GOOG 370 confirmation and a new approved rule.",
+      "source_files": [
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
+      ],
+      "last_updated": "2026-06-12T09:18:00+08:00",
+      "cockpit_priority": "medium",
+      "requires_execution_price_confirmation": false,
+      "tags": [
+        "active",
+        "ggll",
+        "risk_control"
+      ]
+    },
+    {
+      "rule_id": "btc-no-buyback-75500-76000-20260612-0918",
       "asset_or_module": "BTC",
-      "rule_type": "staged_buyback_watch",
+      "rule_type": "crypto_defense",
       "status": "active",
       "trigger_state": "not_triggered",
-      "trigger_condition": "No BTC buyback until stabilization above 75,500-76,000.",
-      "current_action": "Maintain USDT-dominant defense.",
+      "trigger_condition": "BTC buyback requires stabilization above 75,500-76,000.",
+      "current_action": "No BTC buyback.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
@@ -637,17 +652,17 @@
       ]
     },
     {
-      "rule_id": "nvda-below-198-defense-20260611-0810",
+      "rule_id": "nvda-break-198-defense-20260612-0918",
       "asset_or_module": "NVDA",
-      "rule_type": "main_core_risk_watch",
+      "rule_type": "residual_core_risk_watch",
       "status": "active",
       "trigger_state": "active",
-      "trigger_condition": "If NVDA is below 198 with QQQ and SMH weak, reduce 5 NVDA.",
-      "current_action": "Hold 10 under rebased downside protection; no mechanical buyback.",
+      "trigger_condition": "If NVDA breaks 198 with weak QQQ / SMH, reduce 5 NVDA.",
+      "current_action": "Hold 10 NVDA unless 198 downside trigger confirms.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
@@ -657,37 +672,17 @@
       ]
     },
     {
-      "rule_id": "goog-355-ggll-clear-20260611-0810",
-      "asset_or_module": "GOOG/GGLL",
-      "rule_type": "leveraged_residual_risk_valve",
-      "status": "active",
-      "trigger_state": "active",
-      "trigger_condition": "If GOOG cannot reclaim 355, clear the remaining 5 GGLL.",
-      "current_action": "Use residual GGLL as the main leveraged risk valve.",
-      "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
-      ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
-      "cockpit_priority": "medium",
-      "requires_execution_price_confirmation": false,
-      "tags": [
-        "active",
-        "goog_ggll",
-        "risk_control"
-      ]
-    },
-    {
-      "rule_id": "goog-below-350-common-stock-defense-20260611-0810",
+      "rule_id": "goog-break-350-defense-20260612-0918",
       "asset_or_module": "GOOG",
-      "rule_type": "core_position_defense",
+      "rule_type": "residual_core_position_defense",
       "status": "active",
       "trigger_state": "active",
-      "trigger_condition": "If GOOG is below 350 without recovery, reduce GOOG by 4 to 5 shares.",
-      "current_action": "Defend the common-stock core position without adding.",
+      "trigger_condition": "If GOOG breaks 350 without recovery, reduce approximately 4 shares.",
+      "current_action": "Hold 9 GOOG unless 350 defense trigger confirms.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
@@ -696,22 +691,41 @@
       ]
     },
     {
-      "rule_id": "gld-closed-no-reentry-until-380-reclaim-20260611-0810",
-      "asset_or_module": "GLD",
-      "rule_type": "closed_position_guardrail",
-      "status": "executed",
-      "trigger_state": "executed",
-      "trigger_condition": "GLD position is closed; no re-entry until a 380 reclaim and a new approved rule.",
-      "current_action": "Keep GLD at 0 shares.",
+      "rule_id": "maintain-usdt-defense-above-70-20260612-0918",
+      "asset_or_module": "USDT",
+      "rule_type": "crypto_cash_defense",
+      "status": "active",
+      "trigger_state": "active",
+      "trigger_condition": "Maintain Binance USDT defense above 70%.",
+      "current_action": "Keep USDT-dominant defense.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "medium",
       "requires_execution_price_confirmation": false,
       "tags": [
-        "executed",
-        "gld"
+        "active",
+        "usdt"
+      ]
+    },
+    {
+      "rule_id": "no-zec-grid-reopen-20260612-0918",
+      "asset_or_module": "ZEC grid",
+      "rule_type": "bot_reopen_prohibition",
+      "status": "active",
+      "trigger_state": "active",
+      "trigger_condition": "ZEC grid remains closed / profit-locked.",
+      "current_action": "Do not reopen ZEC grid.",
+      "source_files": [
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
+      ],
+      "last_updated": "2026-06-12T09:18:00+08:00",
+      "cockpit_priority": "medium",
+      "requires_execution_price_confirmation": false,
+      "tags": [
+        "active",
+        "zec grid"
       ]
     }
   ],
@@ -720,17 +734,18 @@
       "strategy_id": "portfolio-core-position-defense",
       "asset_or_module": "LDD portfolio",
       "status": "active",
-      "summary": "Portfolio mode remains core_position_defense_mode after the latest checkpoint validation.",
-      "next_required_action": "Defend NVDA, monitor residual GGLL, preserve GLD closure, prohibit re-adds, and maintain USDT defense.",
+      "summary": "Portfolio mode is residual_core_position_mode with cash_defense_core_position_survival_mode.",
+      "next_required_action": "Defend residual GOOG/NVDA core positions, keep GGLL/GLD closed, prohibit re-adds, and maintain cash/USDT defense.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json",
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json",
         "records/ldd/2026-06-08/core_position_defense_monitor_0843_0844_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "high",
       "tags": [
-        "core_position_defense_mode",
-        "portfolio_mode_transition"
+        "cash_defense_core_position_survival_mode",
+        "portfolio_mode_transition",
+        "residual_core_position_mode"
       ]
     },
     {
@@ -740,10 +755,10 @@
       "summary": "The SOXL, UGL, and INTC cleanup cycle is complete; closed positions remain in the historical cleanup ledger.",
       "next_required_action": "Do not re-add SOXL, UGL, or INTC.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json",
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json",
         "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "medium",
       "tags": [
         "historical_cleanup",
@@ -757,9 +772,9 @@
       "summary": "No new LDD U.S. model strategy position is open.",
       "next_required_action": "Do not open a new model position from this checkpoint.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "medium",
       "tags": [
         "new_strategy_separation",
@@ -773,9 +788,9 @@
       "summary": "SOXS remains closed with no reopening.",
       "next_required_action": "No reopening.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "low",
       "tags": [
         "closed",
@@ -789,9 +804,9 @@
       "summary": "TSLQ remains closed with no reopening.",
       "next_required_action": "No reopening.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "low",
       "tags": [
         "closed",
@@ -805,9 +820,9 @@
       "summary": "GDXU remains closed with no reopening.",
       "next_required_action": "No reopening.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "low",
       "tags": [
         "closed",
@@ -821,10 +836,10 @@
       "summary": "SOXL is closed at 0 shares after the 3-share partial cleanup and 2-share residual cleanup.",
       "next_required_action": "Do not re-add; retain in the closed historical-risk cleanup ledger.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json",
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json",
         "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "low",
       "tags": [
         "soxl",
@@ -835,18 +850,18 @@
     {
       "strategy_id": "ggll-risk-valve",
       "asset_or_module": "GGLL",
-      "status": "monitoring",
-      "summary": "GGLL is the main remaining leveraged ETF risk valve at 5 shares.",
-      "next_required_action": "Clear the remaining 5 GGLL if GOOG cannot reclaim 355; no GGLL add.",
+      "status": "closed",
+      "summary": "GGLL is closed at 0 shares after clearing the final major leveraged-risk valve.",
+      "next_required_action": "Do not buy back GGLL without GOOG 370 confirmation and a new approved rule.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "high",
       "tags": [
         "goog",
         "ggll",
-        "risk_valve"
+        "closed_position"
       ]
     },
     {
@@ -856,10 +871,10 @@
       "summary": "UGL is closed at 0 shares after the leveraged-gold cleanup execution.",
       "next_required_action": "Do not re-add; the GLD-405 forced UGL cleanup rule is retired.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json",
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json",
         "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "low",
       "tags": [
         "gld",
@@ -875,10 +890,10 @@
       "summary": "INTC is closed at 0 shares after weak historical-position cleanup.",
       "next_required_action": "Do not re-add; retain in the closed weak-position cleanup ledger.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json",
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json",
         "records/ldd/2026-06-06/cleanup_effectiveness_review_0852_0853_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "low",
       "tags": [
         "intc",
@@ -893,9 +908,9 @@
       "summary": "NVDA remains the main core-risk watch at 10 shares after confirmed protection reductions.",
       "next_required_action": "Hold without adding; reduce another 5 below 198 with weak QQQ/SMH.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "high",
       "tags": [
         "nvda",
@@ -909,11 +924,11 @@
       "asset_or_module": "GLD",
       "status": "closed",
       "summary": "GLD is closed at 0 shares after confirmed post-close execution reconciliation.",
-      "next_required_action": "Do not re-enter until a 380 reclaim and a new approved rule.",
+      "next_required_action": "Do not re-enter below 380; 400-405 reclaim is required before re-entry is reconsidered.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "high",
       "tags": [
         "gld",
@@ -930,9 +945,9 @@
       "summary": "Crypto remains USDT-dominant and defensive.",
       "next_required_action": "Do not add ETH, SOL, DOGE, or ZEC; wait for BTC trigger.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "medium",
       "tags": [
         "crypto",
@@ -946,9 +961,9 @@
       "summary": "BTC buyback is not triggered below 75,500-76,000.",
       "next_required_action": "Wait for stabilization and confirmation before staged buyback.",
       "source_files": [
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "medium",
       "tags": [
         "btc",
@@ -963,9 +978,9 @@
       "next_required_action": "Do not reopen grid or chase; residual ZEC can be converted later if needed.",
       "source_files": [
         "records/ldd/2026-06-03/zec_bot_strategy_state_closed_20260603_0839.json",
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "medium",
       "tags": [
         "zec",
@@ -977,13 +992,13 @@
       "strategy_id": "runtime-records-latest-checkpoint",
       "asset_or_module": "Runtime records",
       "status": "active",
-      "summary": "Latest active checkpoint is 2026-06-11T08:10:00+08:00.",
+      "summary": "Latest active checkpoint is 2026-06-12T09:18:00+08:00.",
       "next_required_action": "Future cockpit work should read manifest.json first.",
       "source_files": [
         "cockpit/ldd/manifest.json",
         "cockpit/ldd/runtime_timeline.json"
       ],
-      "last_updated": "2026-06-11T08:10:00+08:00",
+      "last_updated": "2026-06-12T09:18:00+08:00",
       "cockpit_priority": "medium",
       "tags": [
         "runtime_records",
@@ -992,12 +1007,12 @@
     }
   ],
   "timeline": {
-    "generated_at": "2026-06-11T08:10:00+08:00",
-    "event_count": 92,
+    "generated_at": "2026-06-12T09:18:00+08:00",
+    "event_count": 93,
     "warning_count": 0,
     "date_range": {
       "start": "2026-06-02T08:22:00+08:00",
-      "end": "2026-06-11T08:10:00+08:00"
+      "end": "2026-06-12T09:18:00+08:00"
     },
     "events": [
       {
@@ -3049,6 +3064,38 @@
           "governance_review",
           "non_trading_runtime_event"
         ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-12-vol6-phase6-5a-ldd-post-close-residual-core-checkpoint-update-0918-sgt-json",
+        "event_time": "2026-06-12T09:18:00+08:00",
+        "event_type": "execution_event",
+        "source_file": "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json",
+        "source_record_type": "runtime_execution_reconciliation",
+        "asset_or_module": "LDD Runtime",
+        "title": "Post-close execution reconciliation and checkpoint promotion",
+        "summary": "Reconciled 2 executed orders and 0 canceled order; promoted checkpoint to 2026-06-12T09:18:00+08:00.",
+        "state_before": "2026-06-11T08:10:00+08:00",
+        "state_after": "2026-06-12T09:18:00+08:00",
+        "supersedes_or_updates": [
+          "Active runtime checkpoint 2026-06-11T08:10:00+08:00",
+          "Stale LDD sync baseline Vol.6 Phase 6.3a reference",
+          "Prior GGLL residual-risk-valve active state"
+        ],
+        "execution_evidence_level": "user_screenshot_source_of_truth",
+        "cockpit_priority": "critical",
+        "tags": [
+          "btc",
+          "checkpoint_promoted",
+          "confirmed_execution",
+          "execution_reconciliation",
+          "gld",
+          "goog",
+          "latest_active_checkpoint",
+          "nvda",
+          "runtime_execution_reconciliation",
+          "soxl",
+          "zec"
+        ]
       }
     ],
     "source_files": [
@@ -3103,8 +3150,8 @@
     ]
   },
   "memory_checkpoint": {
-    "active_memory_status": "Keep durable rules and latest 2026-06-11T08:10:00+08:00 active checkpoint; archive older detailed snapshots in records/reports.",
-    "current_checkpoint": "2026-06-11T08:10:00+08:00",
+    "active_memory_status": "Keep durable rules and latest 2026-06-12T09:18:00+08:00 active checkpoint; archive older detailed snapshots in records/reports.",
+    "current_checkpoint": "2026-06-12T09:18:00+08:00",
     "durable_rules": [
       "User-provided broker/Binance screenshots remain execution source of truth.",
       "Do not execute stale command drafts; execute latest valid command.",
@@ -3139,7 +3186,7 @@
     "execution_source_of_truth": "User-provided broker/Binance screenshots remain authoritative.",
     "latest_checkpoint_confirmed": true,
     "timeline_warning_count": 0,
-    "active_rule_count": 10,
+    "active_rule_count": 11,
     "strategy_state_count": 16,
     "quote_type_tagging_required": true,
     "no_new_execution_reported_at_checkpoint": false,

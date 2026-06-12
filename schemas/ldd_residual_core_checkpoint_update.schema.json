@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/ldd_residual_core_checkpoint_update.schema.json",
+  "title": "LDD Residual Core Checkpoint Update",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "record_type",
+    "phase",
+    "sync_type",
+    "review_type",
+    "timestamp_sgt",
+    "timestamp_range_sgt_bjt",
+    "market_session",
+    "source_priority",
+    "runtime_baseline_correction",
+    "active_checkpoint_before_this_review",
+    "active_checkpoint_after_this_review",
+    "checkpoint_promoted",
+    "promotion_reason",
+    "operating_mode_before",
+    "operating_mode_after",
+    "portfolio_mode_after",
+    "customer_facing_ready",
+    "external_api_connected",
+    "broker_api_connected",
+    "binance_api_connected",
+    "live_market_data_enabled",
+    "trading_automation_enabled",
+    "credential_handling_enabled",
+    "runtime_mutation_enabled_by_user_interface",
+    "execution_trigger_enabled_by_system",
+    "account_update",
+    "current_us_positions",
+    "confirmed_today_orders",
+    "confirmed_gross_proceeds",
+    "execution_review",
+    "binance_account_update",
+    "active_rules_after_review",
+    "next_trading_rules",
+    "review_score",
+    "duxd_twos_product_feedback",
+    "validation_summary",
+    "explicit_non_goals_confirmed"
+  ],
+  "properties": {
+    "record_type": {
+      "type": "string",
+      "enum": ["runtime_execution_reconciliation"]
+    },
+    "phase": {
+      "type": "string",
+      "enum": ["Vol.6 Phase 6.5a"]
+    },
+    "sync_type": {
+      "type": "string",
+      "enum": ["ldd_post_close_review"]
+    },
+    "review_type": {
+      "type": "string"
+    },
+    "timestamp_sgt": {
+      "type": "string"
+    },
+    "timestamp_range_sgt_bjt": {
+      "type": "string"
+    },
+    "market_session": {
+      "type": "string"
+    },
+    "source_priority": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "runtime_baseline_correction": {
+      "type": "object"
+    },
+    "active_checkpoint_before_this_review": {
+      "type": "string"
+    },
+    "active_checkpoint_after_this_review": {
+      "type": "string"
+    },
+    "checkpoint_promoted": {
+      "type": "boolean",
+      "enum": [true]
+    },
+    "promotion_reason": {
+      "type": "string"
+    },
+    "operating_mode_before": {
+      "type": "string"
+    },
+    "operating_mode_after": {
+      "type": "string"
+    },
+    "portfolio_mode_after": {
+      "type": "string"
+    },
+    "customer_facing_ready": {
+      "type": "boolean",
+      "enum": [false]
+    },
+    "external_api_connected": {
+      "type": "boolean",
+      "enum": [false]
+    },
+    "broker_api_connected": {
+      "type": "boolean",
+      "enum": [false]
+    },
+    "binance_api_connected": {
+      "type": "boolean",
+      "enum": [false]
+    },
+    "live_market_data_enabled": {
+      "type": "boolean",
+      "enum": [false]
+    },
+    "trading_automation_enabled": {
+      "type": "boolean",
+      "enum": [false]
+    },
+    "credential_handling_enabled": {
+      "type": "boolean",
+      "enum": [false]
+    },
+    "runtime_mutation_enabled_by_user_interface": {
+      "type": "boolean",
+      "enum": [false]
+    },
+    "execution_trigger_enabled_by_system": {
+      "type": "boolean",
+      "enum": [false]
+    },
+    "account_update": {
+      "type": "object"
+    },
+    "current_us_positions": {
+      "type": "array",
+      "items": {"type": "object"}
+    },
+    "confirmed_today_orders": {
+      "type": "array",
+      "items": {"type": "object"}
+    },
+    "confirmed_gross_proceeds": {
+      "type": "object"
+    },
+    "execution_review": {
+      "type": "object"
+    },
+    "binance_account_update": {
+      "type": "object"
+    },
+    "active_rules_after_review": {
+      "type": "array",
+      "items": {"type": "object"}
+    },
+    "next_trading_rules": {
+      "type": "object"
+    },
+    "review_score": {
+      "type": "object"
+    },
+    "duxd_twos_product_feedback": {
+      "type": "array",
+      "items": {"type": "object"}
+    },
+    "validation_summary": {
+      "type": "object"
+    },
+    "explicit_non_goals_confirmed": {
+      "type": "object"
+    }
+  }
+}

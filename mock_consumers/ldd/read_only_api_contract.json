@@ -20,7 +20,7 @@
         "cockpit/ldd/view_model.json",
         "cockpit/ldd/latest_state.json"
       ],
-      "checkpoint": "2026-06-11T08:10:00+08:00",
+      "checkpoint": "2026-06-12T09:18:00+08:00",
       "timeline_events": 90,
       "timeline_warnings": 0,
       "promoted": true,

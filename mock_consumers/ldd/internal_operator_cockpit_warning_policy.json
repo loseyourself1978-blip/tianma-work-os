@@ -3,7 +3,7 @@
   "contract_version": "0.1",
   "phase": "Vol.6 Phase 6.5",
   "status": "static_contract_only",
-  "source_checkpoint": "2026-06-11T08:10:00+08:00",
+  "source_checkpoint": "2026-06-12T09:18:00+08:00",
   "warning_items": [
     {
       "warning_id": "customer_facing_blocked",
@@ -92,7 +92,7 @@
       "may_hide": false,
       "severity": "high",
       "display_surface": "internal_operator_cockpit_static",
-      "related_policy": "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json",
+      "related_policy": "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json",
       "validation_rule": "Execution ledger must be read-only and contain no execution controls."
     },
     {

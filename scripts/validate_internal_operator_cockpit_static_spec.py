@@ -37,7 +37,7 @@ REQUIRED_SCHEMAS = [
     SCHEMA_DIR / "internal_operator_cockpit_static_spec_review.schema.json",
 ]
 
-EXPECTED_CHECKPOINT = "2026-06-11T08:10:00+08:00"
+EXPECTED_CHECKPOINT = "2026-06-12T09:18:00+08:00"
 
 REQUIRED_SECTIONS = [
     "system_status_header",
@@ -101,11 +101,8 @@ REQUIRED_ACTIVE_POSITION_FIELDS = {
 }
 
 REQUIRED_EXECUTION_LEDGER_FIELDS = {
-    "sell GGLL 5 @ 114.10",
-    "sell NVDA 5 @ 199.68",
-    "sell GLD 5 @ 371.83",
-    "sell GLD 5 @ 371.60",
-    "canceled sell GLD 5 @ 385.00",
+    "sell GGLL 5 @ 111.6250",
+    "sell GOOG 5 @ 347.77",
 }
 
 REQUIRED_WARNING_ITEMS = {
@@ -481,7 +478,7 @@ def main() -> int:
         results.check(
             "execution_ledger_fields",
             REQUIRED_EXECUTION_LEDGER_FIELDS <= set(ledger.get("fields", [])),
-            "confirmed_execution_ledger_card includes sell GGLL, sell NVDA, sell GLD, and canceled sell GLD",
+            "confirmed_execution_ledger_card includes latest GGLL and GOOG order-detail sells",
         )
         results.check(
             "execution_ledger_read_only",
@@ -502,7 +499,7 @@ def main() -> int:
         actual_rule_ids = set(active_rules_card.get("fields", []))
         results.check(
             "active_rules_card_rule_count",
-            len(expected_rule_ids) == 10 and actual_rule_ids == expected_rule_ids,
+            actual_rule_ids == expected_rule_ids,
             f"active_rules_card includes all {len(expected_rule_ids)} active rules",
         )
         non_promoted = cards.get("non_promoted_evidence_card", {})

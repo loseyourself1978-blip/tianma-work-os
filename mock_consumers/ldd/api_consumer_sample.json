@@ -7,8 +7,8 @@
   "sample_response": {
     "api_version": "0.1",
     "project": "LLM Daredevil Desk",
-    "source_checkpoint": "2026-06-11T08:10:00+08:00",
-    "portfolio_mode": "core_position_defense_mode",
+    "source_checkpoint": "2026-06-12T09:18:00+08:00",
+    "portfolio_mode": "residual_core_position_mode",
     "payload_reference": "cockpit/ldd/view_model.json",
     "consumer_readiness": "ready_with_limits",
     "warnings": [],
@@ -17,7 +17,8 @@
       "external_api_connected": false,
       "trading_automation_enabled": false,
       "source_of_truth": "User-provided broker/Binance screenshots"
-    }
+    },
+    "operating_mode": "cash_defense_core_position_survival_mode"
   },
   "not_in_scope": [
     "API server",

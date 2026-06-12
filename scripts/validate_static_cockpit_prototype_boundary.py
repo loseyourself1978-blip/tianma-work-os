@@ -34,7 +34,7 @@ REQUIRED_SCHEMAS = [
     SCHEMA_DIR / "static_cockpit_prototype_review.schema.json",
 ]
 
-EXPECTED_CHECKPOINT = "2026-06-11T08:10:00+08:00"
+EXPECTED_CHECKPOINT = "2026-06-12T09:18:00+08:00"
 
 REQUIRED_SURFACES = {
     "internal_operator_cockpit_static",

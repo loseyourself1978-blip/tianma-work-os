@@ -227,6 +227,8 @@ def build_view_model(payloads: dict[str, dict[str, Any]], load_warnings: list[st
     sections = as_dict(account_structure.get("sections"))
     active_positions, closed_positions = build_positions(latest_state, strategy_states)
     warnings = collect_warnings(payloads, load_warnings)
+    portfolio_mode = scalar(runtime.get("portfolio_mode"), "core_position_defense_mode")
+    operating_mode = scalar(runtime.get("operating_mode"), portfolio_mode)
 
     return {
         "meta": {
@@ -244,9 +246,10 @@ def build_view_model(payloads: dict[str, dict[str, Any]], load_warnings: list[st
             "source_files": ["cockpit/ldd/manifest.json", "cockpit/ldd/latest_state.json"],
         },
         "portfolio_mode": {
-            "current": scalar(runtime.get("portfolio_mode"), "core_position_defense_mode"),
+            "current": portfolio_mode,
+            "operating_mode": operating_mode,
             "status": "active",
-            "summary": "Portfolio remains in core_position_defense_mode.",
+            "summary": f"Portfolio is in {portfolio_mode}.",
             "source_files": ["cockpit/ldd/latest_state.json", "cockpit/ldd/strategy_states.json"],
         },
         "account_overview": {

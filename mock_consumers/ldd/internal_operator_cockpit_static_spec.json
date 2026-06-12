@@ -14,7 +14,7 @@
     "demo_viewer",
     "customer_facing_viewer_blocked"
   ],
-  "source_checkpoint": "2026-06-11T08:10:00+08:00",
+  "source_checkpoint": "2026-06-12T09:18:00+08:00",
   "source_contracts": [
     "cockpit/ldd/view_model.json",
     "cockpit/ldd/manifest.json",

@@ -427,6 +427,15 @@ Vol.6 Phase 6.5 - Internal Operator Cockpit Static Spec
 - `reports/ldd/vol6_phase6_5_internal_operator_cockpit_static_spec.md`
 - Next: `Vol.6 Phase 6.6 - AI Board Cockpit Static Spec`
 
+## Vol.6 Phase 6.5a / LDD Post-close Residual Core Checkpoint Update
+
+- `docs/runtime/VOL6_PHASE6_5A_LDD_POST_CLOSE_RESIDUAL_CORE_CHECKPOINT_UPDATE_v0.1.md`
+- `schemas/ldd_residual_core_checkpoint_update.schema.json`
+- `records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json`
+- `reports/ldd/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update.md`
+- Current phase: `Vol.6 Phase 6.5a - LDD Post-close Residual Core Checkpoint Update`
+- Next: `Vol.6 Phase 6.6 - AI Board Cockpit Static Spec`
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

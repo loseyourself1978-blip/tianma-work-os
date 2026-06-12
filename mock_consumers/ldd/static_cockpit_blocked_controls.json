@@ -5,7 +5,7 @@
   "status": "static_contract_only",
   "actual_ui_created": false,
   "customer_facing_ready": false,
-  "source_checkpoint": "2026-06-11T08:10:00+08:00",
+  "source_checkpoint": "2026-06-12T09:18:00+08:00",
   "blocked_controls": [
     {
       "control_id": "buy_button",

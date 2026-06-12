@@ -5,13 +5,13 @@
   "status": "static_contract_only",
   "actual_ui_created": false,
   "customer_facing_ready": false,
-  "source_checkpoint": "2026-06-11T08:10:00+08:00",
+  "source_checkpoint": "2026-06-12T09:18:00+08:00",
   "display_items": [
     {
       "item_id": "active_checkpoint_timestamp",
       "display_required": true,
       "may_hide": false,
-      "expected_value": "2026-06-11T08:10:00+08:00",
+      "expected_value": "2026-06-12T09:18:00+08:00",
       "source_contract_ref": "cockpit/ldd/manifest.json",
       "allowed_surfaces": [
         "internal_operator_cockpit_static",
@@ -23,13 +23,13 @@
         "customer_facing_static_blocked"
       ],
       "customer_facing_policy": "blocked_until_customer_facing_ready_true",
-      "validation_rule": "Active checkpoint must show 2026-06-11T08:10:00+08:00 and may not be hidden."
+      "validation_rule": "Active checkpoint must show 2026-06-12T09:18:00+08:00 and may not be hidden."
     },
     {
       "item_id": "source_priority",
       "display_required": true,
       "may_hide": false,
-      "source_contract_ref": "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json",
+      "source_contract_ref": "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json",
       "allowed_surfaces": [
         "internal_operator_cockpit_static",
         "ai_board_review_static",
@@ -63,7 +63,7 @@
       "item_id": "source_of_truth",
       "display_required": true,
       "may_hide": false,
-      "source_contract_ref": "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json",
+      "source_contract_ref": "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json",
       "allowed_surfaces": [
         "internal_operator_cockpit_static",
         "ai_board_review_static",
@@ -145,7 +145,7 @@
       "item_id": "execution_reconciliation_status",
       "display_required": true,
       "may_hide": false,
-      "source_contract_ref": "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json",
+      "source_contract_ref": "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json",
       "allowed_surfaces": [
         "internal_operator_cockpit_static",
         "ai_board_review_static",

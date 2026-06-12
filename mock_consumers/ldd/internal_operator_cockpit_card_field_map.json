@@ -3,7 +3,7 @@
   "contract_version": "0.1",
   "phase": "Vol.6 Phase 6.5",
   "status": "static_contract_only",
-  "source_checkpoint": "2026-06-11T08:10:00+08:00",
+  "source_checkpoint": "2026-06-12T09:18:00+08:00",
   "cards": [
     {
       "card_id": "system_status_header_card",
@@ -55,14 +55,14 @@
       "data_quality_visible": true,
       "source_traceability_visible": true,
       "quote_type_visible": true,
-      "expected_checkpoint": "2026-06-11T08:10:00+08:00",
+      "expected_checkpoint": "2026-06-12T09:18:00+08:00",
       "interactive_controls_allowed": false,
       "mutation_allowed": false,
       "execution_allowed": false,
       "export_allowed": false,
       "customer_facing_allowed": false,
       "implementation_status": "static_spec_only",
-      "validation_rule": "Checkpoint card must visibly show 2026-06-11T08:10:00+08:00."
+      "validation_rule": "Checkpoint card must visibly show 2026-06-12T09:18:00+08:00."
     },
     {
       "card_id": "account_snapshot_card",
@@ -166,9 +166,9 @@
         "execution_sensitive"
       ],
       "position_state_notes": [
-        "GOOG 14 active",
-        "NVDA 10 active",
-        "GGLL 5 active leveraged-risk valve",
+        "GOOG 9 residual core position",
+        "NVDA 10 main AI core exposure",
+        "GGLL 0 closed final leveraged-risk valve",
         "TSLA 0.0116 tiny residual",
         "GLD 0 closed no reentry"
       ],
@@ -221,13 +221,10 @@
       "card_id": "confirmed_execution_ledger_card",
       "display_name": "Confirmed Execution Ledger Card",
       "source_layer": "active_checkpoint",
-      "source_contract_ref": "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json",
+      "source_contract_ref": "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json",
       "fields": [
-        "sell GGLL 5 @ 114.10",
-        "sell NVDA 5 @ 199.68",
-        "sell GLD 5 @ 371.83",
-        "sell GLD 5 @ 371.60",
-        "canceled sell GLD 5 @ 385.00"
+        "sell GGLL 5 @ 111.6250",
+        "sell GOOG 5 @ 347.77"
       ],
       "field_classes_used": [
         "internal_read_only",
@@ -254,18 +251,19 @@
       "source_layer": "active_checkpoint",
       "source_contract_ref": "cockpit/ldd/active_rules.json",
       "fields": [
-        "no-new-buying-after-close-20260611-0810",
-        "no-soxl-reentry-20260611-0810",
-        "no-ugl-reentry-20260611-0810",
-        "no-intc-reentry-20260611-0810",
-        "no-zec-grid-reopen-20260611-0810",
-        "btc-no-buyback-until-75500-76000-20260611-0810",
-        "nvda-below-198-defense-20260611-0810",
-        "goog-355-ggll-clear-20260611-0810",
-        "goog-below-350-common-stock-defense-20260611-0810",
-        "gld-closed-no-reentry-until-380-reclaim-20260611-0810"
+        "no-new-buying-after-close-20260612-0918",
+        "no-soxl-reentry-20260612-0918",
+        "no-ugl-reentry-20260612-0918",
+        "no-intc-reentry-20260612-0918",
+        "gld-no-reentry-380-405-20260612-0918",
+        "ggll-no-buyback-goog-370-20260612-0918",
+        "btc-no-buyback-75500-76000-20260612-0918",
+        "nvda-break-198-defense-20260612-0918",
+        "goog-break-350-defense-20260612-0918",
+        "maintain-usdt-defense-above-70-20260612-0918",
+        "no-zec-grid-reopen-20260612-0918"
       ],
-      "active_rule_count": 10,
+      "active_rule_count": 11,
       "field_classes_used": [
         "internal_read_only",
         "execution_sensitive"
@@ -281,7 +279,7 @@
       "export_allowed": false,
       "customer_facing_allowed": false,
       "implementation_status": "static_spec_only",
-      "validation_rule": "Active rules must include all 10 checkpoint rules and remain non-interactive."
+      "validation_rule": "Active rules must include all 11 checkpoint rules and remain non-interactive."
     },
     {
       "card_id": "strategy_states_card",
@@ -292,7 +290,7 @@
         "portfolio_mode",
         "strategy_states",
         "strategy_state_count",
-        "core_position_defense_mode",
+        "residual_core_position_mode",
         "closed_or_no_reentry_states"
       ],
       "strategy_state_count": 16,

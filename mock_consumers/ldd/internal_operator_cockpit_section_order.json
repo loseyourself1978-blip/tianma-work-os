@@ -3,7 +3,7 @@
   "contract_version": "0.1",
   "phase": "Vol.6 Phase 6.5",
   "status": "static_contract_only",
-  "source_checkpoint": "2026-06-11T08:10:00+08:00",
+  "source_checkpoint": "2026-06-12T09:18:00+08:00",
   "sections": [
     {
       "section_id": "system_status_header",
@@ -55,7 +55,7 @@
       "execution_allowed": false,
       "customer_facing_allowed": false,
       "implementation_status": "static_spec_only",
-      "validation_rule": "Checkpoint banner must show 2026-06-11T08:10:00+08:00."
+      "validation_rule": "Checkpoint banner must show 2026-06-12T09:18:00+08:00."
     },
     {
       "section_id": "account_snapshot_section",

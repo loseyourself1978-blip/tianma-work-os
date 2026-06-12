@@ -5,7 +5,7 @@
   "status": "static_contract_only",
   "actual_ui_created": false,
   "customer_facing_ready": false,
-  "source_checkpoint": "2026-06-11T08:10:00+08:00",
+  "source_checkpoint": "2026-06-12T09:18:00+08:00",
   "source_contracts": [
     "cockpit/ldd/view_model.json",
     "mock_consumers/ldd/ui_boundary_contract.json",
@@ -148,7 +148,7 @@
       "source_contract_refs": [
         "cockpit/ldd/runtime_timeline.json",
         "records/ldd/2026-06-10/vol6_phase6_2a_ldd_premarket_runtime_sync_governance_patch_1706_sgt.json",
-        "records/ldd/2026-06-11/vol6_phase6_3a_ldd_post_close_execution_reconciliation_0810_sgt.json"
+        "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json"
       ],
       "allowed_cards": [
         "execution_ledger_card",
