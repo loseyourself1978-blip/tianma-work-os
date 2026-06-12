@@ -466,7 +466,15 @@ Vol.6 Phase 6.5 - Internal Operator Cockpit Static Spec
 - `scripts/validate_cockpit_static_spec_integration.py`
 - `records/ldd/2026-06-12/vol6_phase6_7_cockpit_static_spec_integration_review_0918_sgt.json`
 - `reports/ldd/vol6_phase6_7_cockpit_static_spec_integration_review.md`
-- Current phase: `Vol.6 Phase 6.7 - Cockpit Static Spec Integration Review`
+- Next: `Vol.6 Phase 6.8 - Static Consumer Fixture Integration and Handoff`
+
+## Vol.6 Phase 6.7a / LDD Premarket Rebound Confirmation Governance Sync
+
+- `docs/runtime/VOL6_PHASE6_7A_LDD_PREMARKET_REBOUND_CONFIRMATION_GOVERNANCE_SYNC_v0.1.md`
+- `schemas/ldd_premarket_governance_sync.schema.json`
+- `records/ldd/2026-06-12/vol6_phase6_7a_ldd_premarket_rebound_confirmation_governance_sync_1703_sgt.json`
+- `reports/ldd/vol6_phase6_7a_ldd_premarket_rebound_confirmation_governance_sync.md`
+- Current phase: `Vol.6 Phase 6.7a - LDD Premarket Rebound Confirmation Governance Sync`
 - Next: `Vol.6 Phase 6.8 - Static Consumer Fixture Integration and Handoff`
 
 ## Product Principles

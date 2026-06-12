@@ -106,6 +106,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "runtime_execution_reconciliation"
     if "vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update" in name:
         return "runtime_execution_reconciliation"
+    if "vol6_phase6_7a_ldd_premarket_rebound_confirmation_governance_sync" in name:
+        return "governance_runtime_sync"
     if "static_cockpit_prototype_boundary_review" in name:
         return "static_cockpit_prototype_review"
     if "internal_operator_cockpit_static_spec_review" in name:

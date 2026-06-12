@@ -80,6 +80,7 @@ SCHEMA_FILES = {
     "read_only_api_contract_review": "read_only_api_contract_review.schema.json",
     "runtime_execution_reconciliation": "runtime_execution_reconciliation.schema.json",
     "ldd_residual_core_checkpoint_update": "ldd_residual_core_checkpoint_update.schema.json",
+    "ldd_premarket_governance_sync": "ldd_premarket_governance_sync.schema.json",
     "static_cockpit_prototype_review": "static_cockpit_prototype_review.schema.json",
     "internal_operator_cockpit_static_spec_review": "internal_operator_cockpit_static_spec_review.schema.json",
     "ai_board_cockpit_static_spec_review": "ai_board_cockpit_static_spec_review.schema.json",
@@ -128,6 +129,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "runtime_execution_reconciliation", SCHEMA_FILES["runtime_execution_reconciliation"]
     if "vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update" in filename:
         return "ldd_residual_core_checkpoint_update", SCHEMA_FILES["ldd_residual_core_checkpoint_update"]
+    if "vol6_phase6_7a_ldd_premarket_rebound_confirmation_governance_sync" in filename:
+        return "ldd_premarket_governance_sync", SCHEMA_FILES["ldd_premarket_governance_sync"]
     if "static_cockpit_prototype_boundary_review" in filename:
         return "static_cockpit_prototype_review", SCHEMA_FILES["static_cockpit_prototype_review"]
     if "internal_operator_cockpit_static_spec_review" in filename:

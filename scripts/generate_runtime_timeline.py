@@ -138,6 +138,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str:
         return "runtime_execution_reconciliation"
     if "vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update" in name:
         return "runtime_execution_reconciliation"
+    if "vol6_phase6_7a_ldd_premarket_rebound_confirmation_governance_sync" in name:
+        return "governance_runtime_sync"
     if "executed_order_writeback" in name:
         return "executed_order_writeback"
     if "runtime_status_conflict_arbitration" in name:

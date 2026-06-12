@@ -1,0 +1,242 @@
+{
+  "record_type": "governance_runtime_sync",
+  "phase": "Vol.6 Phase 6.7a",
+  "sync_type": "ldd_premarket_review",
+  "timestamp_sgt": "2026-06-12T17:03:00+08:00",
+  "timestamp_range_sgt_bjt": "2026-06-12 17:02-17:03",
+  "market_session": "2026-06-12_us_premarket",
+  "source_priority": [
+    "user_broker_screenshots",
+    "user_binance_screenshots",
+    "external_market_data_for_validation_only"
+  ],
+  "source_of_truth": [
+    "user_broker_screenshots",
+    "user_binance_screenshots"
+  ],
+  "quote_type": "U.S. premarket / broker platform SoT",
+  "runtime_baseline_correction": {
+    "ldd_sync_referenced_stale_twos_baseline": "Vol.6 Phase 6.6 / f67588ea13682ea1a3f8bea2b2be49f1b641d667",
+    "actual_twos_baseline_before_implementation": "Vol.6 Phase 6.7 / c2a2a06edba6216eed64998caba018c3a3adf03d",
+    "implementation_rule": "Use LDD account and market facts as source input while implementing from the current repository baseline."
+  },
+  "active_checkpoint_before_this_review": "2026-06-12T09:18:00+08:00",
+  "active_checkpoint_after_this_review": "2026-06-12T09:18:00+08:00",
+  "latest_checkpoint_unchanged": true,
+  "checkpoint_promoted": false,
+  "promotion_block_reason": "premarket_observation_no_new_orders_no_execution",
+  "execution_event": false,
+  "operating_mode": "cash_defense_core_position_survival_mode",
+  "portfolio_mode": "residual_core_position_mode",
+  "customer_facing_ready": false,
+  "external_api_connected": false,
+  "broker_api_connected": false,
+  "binance_api_connected": false,
+  "live_market_data_enabled": false,
+  "trading_automation_enabled": false,
+  "credential_handling_enabled": false,
+  "runtime_mutation_enabled_by_user_interface": false,
+  "execution_trigger_enabled_by_system": false,
+  "broker_state_update": {
+    "total_assets_usd": 38090.02,
+    "total_day_pnl_usd": 492.55,
+    "total_holding_value_usd": 19294.34,
+    "total_holding_pnl_usd": 14728.06,
+    "cash_usd": 18795.68,
+    "us_section_usd": 24091.21,
+    "us_holding_value_usd": 5295.53,
+    "implied_us_cash_usd": 18795.68,
+    "us_cash_ratio_pct": 78.0,
+    "us_holding_pnl_usd": 2212.07,
+    "us_day_pnl_usd": 33.16,
+    "observation_status": "non_promoted_premarket_broker_sot"
+  },
+  "current_us_positions": {
+    "GOOG": {
+      "shares": 9,
+      "current_price_broker": 359.41,
+      "market_value_usd": 3234.69,
+      "day_pnl_usd": 25.65,
+      "observation_state": "residual_core_position"
+    },
+    "NVDA": {
+      "shares": 10,
+      "current_price_broker": 205.62,
+      "market_value_usd": 2056.2,
+      "day_pnl_usd": 7.5,
+      "observation_state": "core_position_watch"
+    },
+    "TSLA": {
+      "shares": 0.0116,
+      "current_price_broker": 400.23,
+      "market_value_usd": 4.64,
+      "observation_state": "tiny_residual"
+    },
+    "GGLL": 0,
+    "GLD": 0,
+    "SOXL": 0,
+    "UGL": 0,
+    "INTC": 0,
+    "SOXS": 0,
+    "TSLQ": 0,
+    "GDXU": 0
+  },
+  "binance_state_update": {
+    "total_assets_usdt": 8252.94,
+    "day_pnl_usdt": 6.2,
+    "day_pnl_pct": 0.08,
+    "usdt_balance": 5936.0,
+    "usdt_defense_ratio_pct": 71.9,
+    "ETH": 0.8070416,
+    "DOGE": 8400.535,
+    "SOL": 2.931163,
+    "BTC": 0.00055762,
+    "ZEC": 0.012974,
+    "zec_grid_status": "closed_no_reopen"
+  },
+  "market_structure": {
+    "NVDA": {
+      "external_price": 204.87,
+      "broker_position_price": 205.62,
+      "state": "back_above_200_but_below_210_212_confirmation"
+    },
+    "GOOG": {
+      "external_price": 356.56,
+      "broker_position_price": 359.41,
+      "state": "reclaimed_355_watch_360_365"
+    },
+    "QQQ": {
+      "external_price": 717.12,
+      "state": "strong_tech_rebound_requires_regular_session_confirmation"
+    },
+    "SMH": {
+      "external_price": 609.45,
+      "state": "semiconductor_rebound_strong_but_watch_for_reflexive_bounce"
+    },
+    "GLD": {
+      "external_price": 386.32,
+      "state": "above_380_observation_zone_no_reentry_yet"
+    },
+    "SOXL": {
+      "external_price": 223.99,
+      "state": "strong_rebound_closed_position_opportunity_cost_only"
+    },
+    "BTC": {
+      "external_price": "approx_63496",
+      "state": "buyback_trigger_inactive"
+    },
+    "ETH": {
+      "external_price": "approx_1674",
+      "state": "mild_rebound_no_add"
+    }
+  },
+  "execution_state": {
+    "current_day_orders_visible": "0/0",
+    "no_new_buy_orders": true,
+    "no_new_sell_orders_after_last_postclose_review": true,
+    "no_leveraged_etf_reentry": true,
+    "no_zec_grid_reopen": true
+  },
+  "active_rules_after_review": [
+    {
+      "rule_id": "no_new_buying_before_regular_session_confirmation",
+      "automation_enabled": false
+    },
+    {
+      "rule_id": "no_soxl_reentry",
+      "automation_enabled": false
+    },
+    {
+      "rule_id": "no_ugl_reentry",
+      "automation_enabled": false
+    },
+    {
+      "rule_id": "no_intc_reentry",
+      "automation_enabled": false
+    },
+    {
+      "rule_id": "no_ggll_buyback_without_goog_370_confirmation",
+      "automation_enabled": false
+    },
+    {
+      "rule_id": "no_gld_reentry_without_380_390_stability_and_400_405_confirmation",
+      "automation_enabled": false
+    },
+    {
+      "rule_id": "no_zec_grid_reopen",
+      "automation_enabled": false
+    },
+    {
+      "rule_id": "btc_no_buyback_until_75500_76000",
+      "automation_enabled": false
+    },
+    {
+      "rule_id": "if_nvda_holds_204_208_keep_10_shares",
+      "automation_enabled": false
+    },
+    {
+      "rule_id": "if_nvda_breaks_198_with_qqq_smh_weak_reduce_5_nvda",
+      "automation_enabled": false
+    },
+    {
+      "rule_id": "if_goog_holds_355_and_reclaims_360_365_keep_9_shares",
+      "automation_enabled": false
+    },
+    {
+      "rule_id": "if_goog_breaks_350_without_recovery_reduce_goog_approximately_4_shares",
+      "automation_enabled": false
+    },
+    {
+      "rule_id": "maintain_us_cash_defense_above_70_percent",
+      "automation_enabled": false
+    },
+    {
+      "rule_id": "maintain_binance_usdt_defense_above_70_percent",
+      "automation_enabled": false
+    }
+  ],
+  "duxd_feedback": [
+    "broker_screenshot_supersedes_old_runtime_baseline",
+    "premarket_rebound_confirmation_gate",
+    "no_reentry_after_forced_deleveraging_rule",
+    "closed_position_opportunity_cost_tracker_for_soxl_gld_ggll",
+    "residual_core_position_mode_confirmed",
+    "cash_defense_ratio_cockpit_upgrade",
+    "quote_type_tagging_for_broker_position_price_vs_external_price"
+  ],
+  "final_instruction": [
+    "today_is_not_active_attack_day",
+    "do_not_chase_soxl_or_gld_rebound",
+    "hold_goog_9_and_nvda_10_pending_regular_session_confirmation",
+    "keep_cash_as_main_position"
+  ],
+  "validation_summary": {
+    "status": "passed",
+    "runtime_validation": "passed",
+    "checkpoint_promoted": false,
+    "active_checkpoint_expected_after_validation": "2026-06-12T09:18:00+08:00",
+    "timeline_warning_expected": 0,
+    "records_checked_after_addition": 96,
+    "validation_json_checked_after_addition": 117,
+    "execution_event": false
+  },
+  "explicit_non_goals_confirmed": {
+    "frontend_app_created": false,
+    "customer_facing_ui_created": false,
+    "html_css_js_ui_created": false,
+    "api_server_created": false,
+    "live_endpoint_created": false,
+    "external_api_connected": false,
+    "broker_api_connected": false,
+    "binance_api_connected": false,
+    "live_market_data_enabled": false,
+    "trading_automation_enabled": false,
+    "credential_handling_enabled": false,
+    "runtime_mutation_ui_enabled": false,
+    "execution_trigger_enabled": false,
+    "github_issues_created": false,
+    "github_projects_board_created": false,
+    "historical_records_overwritten": false,
+    "prior_records_mutated": false
+  }
+}

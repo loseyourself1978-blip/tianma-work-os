@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-06-12T09:18:00+08:00",
+  "generated_at": "2026-06-12T17:03:00+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "runtime_timeline",
   "version": "0.1",
   "source_root": "records/ldd",
-  "event_count": 95,
+  "event_count": 96,
   "date_range": {
     "start": "2026-06-02T08:22:00+08:00",
-    "end": "2026-06-12T09:18:00+08:00"
+    "end": "2026-06-12T17:03:00+08:00"
   },
   "events": [
     {
@@ -2128,6 +2128,32 @@
       "tags": [
         "governance_review",
         "non_trading_runtime_event"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-12-vol6-phase6-7a-ldd-premarket-rebound-confirmation-governance-sync-1703-sgt-json",
+      "event_time": "2026-06-12T17:03:00+08:00",
+      "event_type": "sync_delta",
+      "source_file": "records/ldd/2026-06-12/vol6_phase6_7a_ldd_premarket_rebound_confirmation_governance_sync_1703_sgt.json",
+      "source_record_type": "governance_runtime_sync",
+      "asset_or_module": "LDD Runtime",
+      "title": "Non-promoted LDD governance runtime sync",
+      "summary": "Recorded Vol.6 Phase 6.7a as governance evidence while latest checkpoint unchanged=True.",
+      "state_before": "active_checkpoint_unchanged",
+      "state_after": "latest_checkpoint_unchanged=True; promoted=false",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "user_screenshot_source_of_truth",
+      "cockpit_priority": "low",
+      "tags": [
+        "btc",
+        "gld",
+        "goog",
+        "governance_runtime_sync",
+        "non_promoted_evidence",
+        "non_trading_runtime_event",
+        "nvda",
+        "soxl",
+        "zec"
       ]
     }
   ],
