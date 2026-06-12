@@ -451,8 +451,23 @@ Vol.6 Phase 6.5 - Internal Operator Cockpit Static Spec
 - `scripts/validate_ai_board_cockpit_static_spec.py`
 - `records/ldd/2026-06-12/vol6_phase6_6_ai_board_cockpit_static_spec_review_0918_sgt.json`
 - `reports/ldd/vol6_phase6_6_ai_board_cockpit_static_spec.md`
-- Current phase: `Vol.6 Phase 6.6 - AI Board Cockpit Static Spec`
 - Next: `Vol.6 Phase 6.7 - Cockpit Static Spec Integration Review`
+
+## Vol.6 Phase 6.7 / Cockpit Static Spec Integration Review
+
+- `docs/runtime/VOL6_PHASE6_7_COCKPIT_STATIC_SPEC_INTEGRATION_REVIEW_v0.1.md`
+- `schemas/cockpit_static_spec_integration_review.schema.json`
+- `mock_consumers/ldd/cockpit_static_spec_integration_matrix.json`
+- `mock_consumers/ldd/cockpit_static_spec_consistency_checks.json`
+- `mock_consumers/ldd/cockpit_static_spec_surface_role_matrix.json`
+- `mock_consumers/ldd/cockpit_static_spec_card_traceability_matrix.json`
+- `mock_consumers/ldd/cockpit_static_spec_blocked_action_crosscheck.json`
+- `mock_consumers/ldd/cockpit_static_spec_readiness_gate.json`
+- `scripts/validate_cockpit_static_spec_integration.py`
+- `records/ldd/2026-06-12/vol6_phase6_7_cockpit_static_spec_integration_review_0918_sgt.json`
+- `reports/ldd/vol6_phase6_7_cockpit_static_spec_integration_review.md`
+- Current phase: `Vol.6 Phase 6.7 - Cockpit Static Spec Integration Review`
+- Next: `Vol.6 Phase 6.8 - Static Consumer Fixture Integration and Handoff`
 
 ## Product Principles
 

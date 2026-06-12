@@ -1,0 +1,27 @@
+{
+  "gate_id": "ldd_cockpit_static_spec_readiness_gate",
+  "phase": "Vol.6 Phase 6.7",
+  "active_checkpoint": "2026-06-12T09:18:00+08:00",
+  "operating_mode": "cash_defense_core_position_survival_mode",
+  "portfolio_mode": "residual_core_position_mode",
+  "internal_static_spec_ready": true,
+  "ai_board_static_spec_ready": true,
+  "read_only_api_contract_ready": true,
+  "permission_masking_ready": true,
+  "customer_facing_ready": false,
+  "actual_ui_ready": false,
+  "api_server_ready": false,
+  "live_connection_ready": false,
+  "trading_automation_ready": false,
+  "credential_handling_ready": false,
+  "blockers": [
+    "no_actual_ui_implementation",
+    "no_customer_facing_permission_approval",
+    "no_live_api_boundary_approval",
+    "no_broker_binance_connector_approval",
+    "no_trading_automation_approval",
+    "no_credential_handling_approval"
+  ],
+  "next_phase_allowed": true,
+  "next_phase": "Vol.6 Phase 6.8 - Static Consumer Fixture Integration and Handoff"
+}

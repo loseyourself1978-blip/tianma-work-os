@@ -1,0 +1,35 @@
+{
+  "matrix_id": "ldd_cockpit_static_spec_integration_matrix",
+  "matrix_version": "0.1",
+  "phase": "Vol.6 Phase 6.7",
+  "status": "static_contract_only_not_implemented",
+  "actual_ui_created": false,
+  "customer_facing_ready": false,
+  "active_checkpoint": "2026-06-12T09:18:00+08:00",
+  "operating_mode": "cash_defense_core_position_survival_mode",
+  "portfolio_mode": "residual_core_position_mode",
+  "integrated_specs": [
+    {"spec_id": "ui_boundary_architecture", "phase": "Vol.6 Phase 6.1", "primary_artifact": "docs/runtime/VOL6_PHASE6_1_UI_BOUNDARY_ARCHITECTURE_v0.1.md", "supporting_artifacts": ["mock_consumers/ldd/ui_boundary_surface_map.json", "mock_consumers/ldd/ui_visibility_matrix.json"], "validation_script": "scripts/validate_ui_boundary_contract.sh", "integration_role": "defines read-only surfaces and blocked customer-facing view", "must_remain_read_only": true, "customer_facing_allowed": false, "mutation_allowed": false, "execution_allowed": false, "implementation_status": "static_contract_only", "validation_rule": "UI boundary remains static and non-implemented."},
+    {"spec_id": "permission_privacy_masking_model", "phase": "Vol.6 Phase 6.2", "primary_artifact": "docs/runtime/VOL6_PHASE6_2_PERMISSION_PRIVACY_MASKING_MODEL_v0.1.md", "supporting_artifacts": ["mock_consumers/ldd/permission_role_taxonomy.json", "mock_consumers/ldd/privacy_masking_policy.json", "mock_consumers/ldd/field_permission_matrix.json"], "validation_script": "scripts/validate_permission_privacy_masking.sh", "integration_role": "defines deny-by-default permissions and masking", "must_remain_read_only": true, "customer_facing_allowed": false, "mutation_allowed": false, "execution_allowed": false, "implementation_status": "static_contract_only", "validation_rule": "Permission model blocks customer-facing access."},
+    {"spec_id": "read_only_api_contract", "phase": "Vol.6 Phase 6.3", "primary_artifact": "docs/runtime/VOL6_PHASE6_3_READ_ONLY_API_CONTRACT_v0.1.md", "supporting_artifacts": ["mock_consumers/ldd/read_only_api_contract.json", "mock_consumers/ldd/read_only_api_endpoint_catalog.json", "mock_consumers/ldd/read_only_api_forbidden_capabilities.json"], "validation_script": "scripts/validate_read_only_api_contract.sh", "integration_role": "defines static read-only response and endpoint contracts", "must_remain_read_only": true, "customer_facing_allowed": false, "mutation_allowed": false, "execution_allowed": false, "implementation_status": "static_contract_only", "validation_rule": "Read-only API remains contract-only."},
+    {"spec_id": "static_cockpit_prototype_boundary", "phase": "Vol.6 Phase 6.4", "primary_artifact": "docs/runtime/VOL6_PHASE6_4_STATIC_COCKPIT_PROTOTYPE_BOUNDARY_REVIEW_v0.1.md", "supporting_artifacts": ["mock_consumers/ldd/static_cockpit_surface_layout.json", "mock_consumers/ldd/static_cockpit_card_catalog.json", "mock_consumers/ldd/static_cockpit_blocked_controls.json"], "validation_script": "scripts/validate_static_cockpit_prototype_boundary.sh", "integration_role": "defines static surfaces, cards, interactions, and blocked controls", "must_remain_read_only": true, "customer_facing_allowed": false, "mutation_allowed": false, "execution_allowed": false, "implementation_status": "static_contract_only", "validation_rule": "Static prototype boundary remains non-UI."},
+    {"spec_id": "internal_operator_cockpit_static_spec", "phase": "Vol.6 Phase 6.5", "primary_artifact": "docs/runtime/VOL6_PHASE6_5_INTERNAL_OPERATOR_COCKPIT_STATIC_SPEC_v0.1.md", "supporting_artifacts": ["mock_consumers/ldd/internal_operator_cockpit_static_spec.json", "mock_consumers/ldd/internal_operator_cockpit_card_field_map.json"], "validation_script": "scripts/validate_internal_operator_cockpit_static_spec.sh", "integration_role": "defines internal operator static information architecture", "must_remain_read_only": true, "customer_facing_allowed": false, "mutation_allowed": false, "execution_allowed": false, "implementation_status": "static_contract_only", "validation_rule": "Internal operator spec remains static/read-only."},
+    {"spec_id": "ai_board_cockpit_static_spec", "phase": "Vol.6 Phase 6.6", "primary_artifact": "docs/runtime/VOL6_PHASE6_6_AI_BOARD_COCKPIT_STATIC_SPEC_v0.1.md", "supporting_artifacts": ["mock_consumers/ldd/ai_board_cockpit_static_spec.json", "mock_consumers/ldd/ai_board_role_panel_map.json", "mock_consumers/ldd/ai_board_blocked_action_policy.json"], "validation_script": "scripts/validate_ai_board_cockpit_static_spec.sh", "integration_role": "defines AI Board static role panels and arbitration", "must_remain_read_only": true, "customer_facing_allowed": false, "mutation_allowed": false, "execution_allowed": false, "implementation_status": "static_contract_only", "validation_rule": "AI Board spec remains static/read-only."},
+    {"spec_id": "residual_core_checkpoint_update", "phase": "Vol.6 Phase 6.5a", "primary_artifact": "records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json", "supporting_artifacts": ["cockpit/ldd/view_model.json", "cockpit/ldd/latest_state.json"], "validation_script": "scripts/validate_runtime_records.sh", "integration_role": "active checkpoint and residual-core source state", "must_remain_read_only": true, "customer_facing_allowed": false, "mutation_allowed": false, "execution_allowed": false, "implementation_status": "governance_record_only", "validation_rule": "Checkpoint record is source state, not a UI mutation surface."}
+  ],
+  "integration_checks": [
+    "all_specs_read_only",
+    "all_customer_facing_blocked",
+    "all_mutation_execution_blocked",
+    "checkpoint_mode_alignment",
+    "blocked_action_unification"
+  ],
+  "validation_expectations": [
+    "actual_ui_created_false",
+    "customer_facing_ready_false",
+    "active_checkpoint_2026_06_12T09_18_00_plus_08_00",
+    "operating_mode_cash_defense_core_position_survival_mode",
+    "portfolio_mode_residual_core_position_mode",
+    "all_integrated_specs_static_or_governance_only"
+  ]
+}

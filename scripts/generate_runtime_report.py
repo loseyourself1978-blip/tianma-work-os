@@ -112,6 +112,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "internal_operator_cockpit_static_spec_review"
     if "ai_board_cockpit_static_spec_review" in name:
         return "ai_board_cockpit_static_spec_review"
+    if "cockpit_static_spec_integration_review" in name:
+        return "cockpit_static_spec_integration_review"
     if "executed_order_writeback" in name:
         return "executed_order_writeback"
     if "runtime_status_conflict_arbitration" in name:
@@ -221,6 +223,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "internal_operator_cockpit_static_spec_review"
     if data.get("record_type") == "governance_review" and data.get("phase") == "Vol.6 Phase 6.6":
         return "ai_board_cockpit_static_spec_review"
+    if data.get("record_type") == "governance_review" and data.get("phase") == "Vol.6 Phase 6.7":
+        return "cockpit_static_spec_integration_review"
     if data.get("schema_type") == "executed_order_writeback":
         return "executed_order_writeback"
     if data.get("schema_type") == "runtime_status_arbitration":
