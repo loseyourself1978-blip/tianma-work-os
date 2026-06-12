@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI Board Cockpit Static Spec",
+  "type": "object",
+  "required": [
+    "spec_id",
+    "spec_version",
+    "phase",
+    "status",
+    "actual_ui_created",
+    "customer_facing_ready",
+    "target_surface",
+    "allowed_roles",
+    "blocked_roles",
+    "source_checkpoint",
+    "operating_mode",
+    "portfolio_mode",
+    "source_contracts",
+    "role_taxonomy_ref",
+    "role_panel_map_ref",
+    "evidence_policy_ref",
+    "disagreement_policy_ref",
+    "arbitration_policy_ref",
+    "decision_trace_policy_ref",
+    "blocked_action_policy_ref",
+    "allowed_interactions",
+    "blocked_interactions",
+    "validation_expectations"
+  ],
+  "properties": {
+    "phase": {
+      "type": "string",
+      "enum": [
+        "Vol.6 Phase 6.6"
+      ]
+    },
+    "actual_ui_created": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "customer_facing_ready": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "target_surface": {
+      "type": "string",
+      "enum": [
+        "ai_board_review_static"
+      ]
+    },
+    "source_checkpoint": {
+      "type": "string",
+      "enum": [
+        "2026-06-12T09:18:00+08:00"
+      ]
+    },
+    "operating_mode": {
+      "type": "string",
+      "enum": [
+        "cash_defense_core_position_survival_mode"
+      ]
+    },
+    "portfolio_mode": {
+      "type": "string",
+      "enum": [
+        "residual_core_position_mode"
+      ]
+    }
+  },
+  "additionalProperties": true
+}

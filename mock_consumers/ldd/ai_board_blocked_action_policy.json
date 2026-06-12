@@ -1,0 +1,29 @@
+{
+  "policy_id": "ldd_ai_board_blocked_action_policy",
+  "source_checkpoint": "2026-06-12T09:18:00+08:00",
+  "blocked_actions": [
+    {"action_id": "place_order", "blocked": true, "allowed_roles": [], "reason": "AI Board is read-only and cannot place orders.", "related_contract": "read_only_api_forbidden_capabilities", "validation_rule": "No role can place orders."},
+    {"action_id": "cancel_order", "blocked": true, "allowed_roles": [], "reason": "AI Board cannot cancel orders.", "related_contract": "read_only_api_forbidden_capabilities", "validation_rule": "No role can cancel orders."},
+    {"action_id": "modify_order", "blocked": true, "allowed_roles": [], "reason": "AI Board cannot modify orders.", "related_contract": "read_only_api_forbidden_capabilities", "validation_rule": "No role can modify orders."},
+    {"action_id": "execute_trade", "blocked": true, "allowed_roles": [], "reason": "AI Board cannot execute trades.", "related_contract": "read_only_api_forbidden_capabilities", "validation_rule": "No role can execute trades."},
+    {"action_id": "start_bot", "blocked": true, "allowed_roles": [], "reason": "Bot control is outside scope.", "related_contract": "read_only_api_forbidden_capabilities", "validation_rule": "No role can start bots."},
+    {"action_id": "stop_bot", "blocked": true, "allowed_roles": [], "reason": "Bot control is outside scope.", "related_contract": "read_only_api_forbidden_capabilities", "validation_rule": "No role can stop bots."},
+    {"action_id": "reopen_grid", "blocked": true, "allowed_roles": [], "reason": "ZEC grid reopening is prohibited.", "related_contract": "active_rules", "validation_rule": "Grid reopening remains blocked."},
+    {"action_id": "connect_broker_api", "blocked": true, "allowed_roles": [], "reason": "No broker API connection is allowed.", "related_contract": "permission_privacy_masking_contract", "validation_rule": "Broker connection remains blocked."},
+    {"action_id": "connect_binance_api", "blocked": true, "allowed_roles": [], "reason": "No Binance API connection is allowed.", "related_contract": "permission_privacy_masking_contract", "validation_rule": "Binance connection remains blocked."},
+    {"action_id": "connect_external_market_api", "blocked": true, "allowed_roles": [], "reason": "No external market API connection is allowed.", "related_contract": "read_only_api_contract", "validation_rule": "External API connection remains blocked."},
+    {"action_id": "fetch_live_market_data", "blocked": true, "allowed_roles": [], "reason": "Live market data is not allowed.", "related_contract": "read_only_api_contract", "validation_rule": "Live market fetch remains blocked."},
+    {"action_id": "refresh_live_price", "blocked": true, "allowed_roles": [], "reason": "Static cockpit cannot refresh live prices.", "related_contract": "static_cockpit_prototype_boundary", "validation_rule": "Live refresh remains blocked."},
+    {"action_id": "mutate_runtime_record", "blocked": true, "allowed_roles": [], "reason": "Runtime mutation is governance/process only.", "related_contract": "read_only_api_contract", "validation_rule": "Runtime mutation remains blocked."},
+    {"action_id": "promote_checkpoint_from_ui", "blocked": true, "allowed_roles": [], "reason": "Checkpoint promotion cannot occur from UI.", "related_contract": "static_cockpit_prototype_boundary", "validation_rule": "Checkpoint promotion from UI remains blocked."},
+    {"action_id": "suppress_warning", "blocked": true, "allowed_roles": [], "reason": "Warnings must remain visible.", "related_contract": "data_quality_display_policy", "validation_rule": "Warning suppression remains blocked."},
+    {"action_id": "hide_data_quality_flag", "blocked": true, "allowed_roles": [], "reason": "Data-quality flags must remain visible.", "related_contract": "data_quality_display_policy", "validation_rule": "Data-quality hiding remains blocked."},
+    {"action_id": "reveal_sensitive_value", "blocked": true, "allowed_roles": [], "reason": "Sensitive fields require masking policy.", "related_contract": "permission_privacy_masking_contract", "validation_rule": "Sensitive reveal remains blocked."},
+    {"action_id": "reveal_never_expose_field", "blocked": true, "allowed_roles": [], "reason": "Never-expose fields must be rejected.", "related_contract": "permission_privacy_masking_contract", "validation_rule": "Never-expose reveal remains blocked."},
+    {"action_id": "enable_customer_facing_view", "blocked": true, "allowed_roles": [], "reason": "Customer-facing readiness is false.", "related_contract": "customer_facing_unblock_criteria", "validation_rule": "Customer-facing enablement remains blocked."},
+    {"action_id": "export_sensitive_customer_data", "blocked": true, "allowed_roles": [], "reason": "Sensitive customer export requires future permission and masking layer.", "related_contract": "permission_privacy_masking_contract", "validation_rule": "Sensitive export remains blocked."},
+    {"action_id": "override_final_commander_without_trace", "blocked": true, "allowed_roles": [], "reason": "Final Commander arbitration must be traceable.", "related_contract": "ai_board_decision_trace_policy", "validation_rule": "Untraced override remains blocked."},
+    {"action_id": "hide_ai_board_disagreement", "blocked": true, "allowed_roles": [], "reason": "Disagreements must remain visible.", "related_contract": "ai_board_disagreement_policy", "validation_rule": "Disagreement hiding remains blocked."},
+    {"action_id": "convert_recommendation_to_execution", "blocked": true, "allowed_roles": [], "reason": "Recommendations cannot become automated execution; user manual action outside the system is required.", "related_contract": "ai_board_arbitration_policy", "validation_rule": "Recommendation-to-execution conversion remains blocked."}
+  ]
+}

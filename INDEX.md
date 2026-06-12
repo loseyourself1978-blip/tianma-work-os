@@ -433,8 +433,26 @@ Vol.6 Phase 6.5 - Internal Operator Cockpit Static Spec
 - `schemas/ldd_residual_core_checkpoint_update.schema.json`
 - `records/ldd/2026-06-12/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update_0918_sgt.json`
 - `reports/ldd/vol6_phase6_5a_ldd_post_close_residual_core_checkpoint_update.md`
-- Current phase: `Vol.6 Phase 6.5a - LDD Post-close Residual Core Checkpoint Update`
 - Next: `Vol.6 Phase 6.6 - AI Board Cockpit Static Spec`
+
+## Vol.6 Phase 6.6 / AI Board Cockpit Static Spec
+
+- `docs/runtime/VOL6_PHASE6_6_AI_BOARD_COCKPIT_STATIC_SPEC_v0.1.md`
+- `schemas/ai_board_cockpit_static_spec.schema.json`
+- `schemas/ai_board_cockpit_static_spec_review.schema.json`
+- `mock_consumers/ldd/ai_board_cockpit_static_spec.json`
+- `mock_consumers/ldd/ai_board_role_taxonomy.json`
+- `mock_consumers/ldd/ai_board_role_panel_map.json`
+- `mock_consumers/ldd/ai_board_evidence_policy.json`
+- `mock_consumers/ldd/ai_board_disagreement_policy.json`
+- `mock_consumers/ldd/ai_board_arbitration_policy.json`
+- `mock_consumers/ldd/ai_board_decision_trace_policy.json`
+- `mock_consumers/ldd/ai_board_blocked_action_policy.json`
+- `scripts/validate_ai_board_cockpit_static_spec.py`
+- `records/ldd/2026-06-12/vol6_phase6_6_ai_board_cockpit_static_spec_review_0918_sgt.json`
+- `reports/ldd/vol6_phase6_6_ai_board_cockpit_static_spec.md`
+- Current phase: `Vol.6 Phase 6.6 - AI Board Cockpit Static Spec`
+- Next: `Vol.6 Phase 6.7 - Cockpit Static Spec Integration Review`
 
 ## Product Principles
 

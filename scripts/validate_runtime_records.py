@@ -81,7 +81,8 @@ SCHEMA_FILES = {
     "runtime_execution_reconciliation": "runtime_execution_reconciliation.schema.json",
     "ldd_residual_core_checkpoint_update": "ldd_residual_core_checkpoint_update.schema.json",
     "static_cockpit_prototype_review": "static_cockpit_prototype_review.schema.json",
-    "internal_operator_cockpit_static_spec_review": "internal_operator_cockpit_static_spec_review.schema.json"
+    "internal_operator_cockpit_static_spec_review": "internal_operator_cockpit_static_spec_review.schema.json",
+    "ai_board_cockpit_static_spec_review": "ai_board_cockpit_static_spec_review.schema.json"
 }
 
 
@@ -130,6 +131,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "static_cockpit_prototype_review", SCHEMA_FILES["static_cockpit_prototype_review"]
     if "internal_operator_cockpit_static_spec_review" in filename:
         return "internal_operator_cockpit_static_spec_review", SCHEMA_FILES["internal_operator_cockpit_static_spec_review"]
+    if "ai_board_cockpit_static_spec_review" in filename:
+        return "ai_board_cockpit_static_spec_review", SCHEMA_FILES["ai_board_cockpit_static_spec_review"]
     if "phase5_final_pressure_test_result" in filename:
         return "cockpit_consistency_review", SCHEMA_FILES["cockpit_consistency_review"]
     if "ldd_post_close_execution_review" in filename:

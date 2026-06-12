@@ -1,0 +1,65 @@
+{
+  "spec_id": "ldd_ai_board_cockpit_static_spec",
+  "spec_version": "0.1",
+  "phase": "Vol.6 Phase 6.6",
+  "status": "static_contract_only_not_implemented",
+  "actual_ui_created": false,
+  "customer_facing_ready": false,
+  "target_surface": "ai_board_review_static",
+  "allowed_roles": [
+    "ai_board_reviewer",
+    "audit_reviewer",
+    "internal_operator"
+  ],
+  "blocked_roles": [
+    "demo_viewer",
+    "customer_facing_viewer_blocked"
+  ],
+  "source_checkpoint": "2026-06-12T09:18:00+08:00",
+  "operating_mode": "cash_defense_core_position_survival_mode",
+  "portfolio_mode": "residual_core_position_mode",
+  "source_contracts": [
+    "cockpit/ldd/view_model.json",
+    "mock_consumers/ldd/read_only_api_contract.json",
+    "mock_consumers/ldd/permission_role_taxonomy.json",
+    "mock_consumers/ldd/internal_operator_cockpit_static_spec.json"
+  ],
+  "role_taxonomy_ref": "mock_consumers/ldd/ai_board_role_taxonomy.json",
+  "role_panel_map_ref": "mock_consumers/ldd/ai_board_role_panel_map.json",
+  "evidence_policy_ref": "mock_consumers/ldd/ai_board_evidence_policy.json",
+  "disagreement_policy_ref": "mock_consumers/ldd/ai_board_disagreement_policy.json",
+  "arbitration_policy_ref": "mock_consumers/ldd/ai_board_arbitration_policy.json",
+  "decision_trace_policy_ref": "mock_consumers/ldd/ai_board_decision_trace_policy.json",
+  "blocked_action_policy_ref": "mock_consumers/ldd/ai_board_blocked_action_policy.json",
+  "allowed_interactions": [
+    "read_static_snapshot",
+    "expand_role_panel",
+    "collapse_role_panel",
+    "inspect_evidence_trace",
+    "inspect_disagreement_summary",
+    "inspect_arbitration_trace",
+    "inspect_final_decision_trace"
+  ],
+  "blocked_interactions": [
+    "place_order",
+    "execute_trade",
+    "mutate_runtime_record",
+    "promote_checkpoint_from_ui",
+    "convert_recommendation_to_execution",
+    "enable_customer_facing_view"
+  ],
+  "validation_expectations": [
+    "actual_ui_created_false",
+    "customer_facing_ready_false",
+    "target_surface_ai_board_review_static",
+    "ai_board_reviewer_allowed",
+    "customer_facing_viewer_blocked",
+    "source_checkpoint_2026_06_12T09_18_00_plus_08_00",
+    "operating_mode_cash_defense_core_position_survival_mode",
+    "portfolio_mode_residual_core_position_mode",
+    "all_roles_static_spec_only",
+    "all_panels_static_spec_only",
+    "all_actions_read_only_or_blocked",
+    "no_frontend_api_or_trading_implementation"
+  ]
+}
