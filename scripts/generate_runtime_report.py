@@ -227,6 +227,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "ai_board_cockpit_static_spec_review"
     if data.get("record_type") == "governance_review" and data.get("phase") == "Vol.6 Phase 6.7":
         return "cockpit_static_spec_integration_review"
+    if data.get("record_type") == "governance_review" and data.get("phase") == "Vol.6 Phase 6.8":
+        return "static_consumer_fixture_handoff"
     if data.get("schema_type") == "executed_order_writeback":
         return "executed_order_writeback"
     if data.get("schema_type") == "runtime_status_arbitration":

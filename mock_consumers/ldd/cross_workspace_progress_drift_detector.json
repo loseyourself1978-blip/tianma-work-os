@@ -1,0 +1,132 @@
+{
+  "detector_id": "cross-workspace-progress-drift-detector-v0.1",
+  "phase": "Vol.6 Phase 6.8",
+  "purpose": "Detect when an LDD Review Sync references stale Tianma Work OS phase, commit, checkpoint, operating mode, or portfolio mode.",
+  "enabled_for_static_review": true,
+  "current_twos_phase": "Vol.6 Phase 6.7a - LDD Premarket Rebound Confirmation Governance Sync",
+  "current_twos_commit": "650d60d23fd5d2957d5fe223dd84a37915dd9d3e",
+  "current_active_checkpoint": "2026-06-12T09:18:00+08:00",
+  "current_operating_mode": "cash_defense_core_position_survival_mode",
+  "current_portfolio_mode": "residual_core_position_mode",
+  "drift_sources": [
+    "ldd_review_sync_latest_twos_runtime_status",
+    "codex_completion_status",
+    "github_origin_main_commit",
+    "index_current_phase",
+    "cockpit_manifest_checkpoint",
+    "latest_active_memory_checkpoint_report"
+  ],
+  "detection_rules": [
+    {
+      "rule_id": "stale_phase_detected",
+      "description": "stale phase detected",
+      "input_fields": [
+        "ldd_sync_phase",
+        "current_twos_phase"
+      ],
+      "expected_current_value": "Vol.6 Phase 6.8 - Static Consumer Fixture Integration and Handoff",
+      "drift_condition": "ldd_sync_phase != current_twos_phase",
+      "severity": "non_blocking_runtime_context_drift",
+      "blocking_for_runtime_fact_ingestion": false,
+      "required_action": "Correct runtime/product baseline context while preserving broker/Binance facts.",
+      "validation_rule": "Correct runtime/product baseline context only; do not block Source-of-Truth market/account facts when broker/Binance screenshots remain authoritative."
+    },
+    {
+      "rule_id": "stale_commit_detected",
+      "description": "stale commit detected",
+      "input_fields": [
+        "ldd_sync_commit",
+        "current_twos_commit"
+      ],
+      "expected_current_value": "650d60d23fd5d2957d5fe223dd84a37915dd9d3e",
+      "drift_condition": "ldd_sync_commit != current_twos_commit",
+      "severity": "non_blocking_runtime_context_drift",
+      "blocking_for_runtime_fact_ingestion": false,
+      "required_action": "Compare LDD sync commit against current_twos_commit and correct baseline context.",
+      "validation_rule": "Correct runtime/product baseline context only; do not block Source-of-Truth market/account facts when broker/Binance screenshots remain authoritative."
+    },
+    {
+      "rule_id": "stale_checkpoint_detected",
+      "description": "stale checkpoint detected",
+      "input_fields": [
+        "ldd_sync_checkpoint",
+        "current_active_checkpoint"
+      ],
+      "expected_current_value": "2026-06-12T09:18:00+08:00",
+      "drift_condition": "ldd_sync_checkpoint != current_active_checkpoint",
+      "severity": "needs_reconciliation",
+      "blocking_for_runtime_fact_ingestion": false,
+      "required_action": "Label checkpoint drift and reconcile according to promoted/non-promoted evidence policy.",
+      "validation_rule": "Correct runtime/product baseline context only; do not block Source-of-Truth market/account facts when broker/Binance screenshots remain authoritative."
+    },
+    {
+      "rule_id": "stale_operating_mode_detected",
+      "description": "stale operating mode detected",
+      "input_fields": [
+        "ldd_sync_operating_mode",
+        "current_operating_mode"
+      ],
+      "expected_current_value": "cash_defense_core_position_survival_mode",
+      "drift_condition": "ldd_sync_operating_mode != current_operating_mode",
+      "severity": "non_blocking_runtime_context_drift",
+      "blocking_for_runtime_fact_ingestion": false,
+      "required_action": "Correct operating-mode context.",
+      "validation_rule": "Correct runtime/product baseline context only; do not block Source-of-Truth market/account facts when broker/Binance screenshots remain authoritative."
+    },
+    {
+      "rule_id": "stale_portfolio_mode_detected",
+      "description": "stale portfolio mode detected",
+      "input_fields": [
+        "ldd_sync_portfolio_mode",
+        "current_portfolio_mode"
+      ],
+      "expected_current_value": "residual_core_position_mode",
+      "drift_condition": "ldd_sync_portfolio_mode != current_portfolio_mode",
+      "severity": "non_blocking_runtime_context_drift",
+      "blocking_for_runtime_fact_ingestion": false,
+      "required_action": "Correct portfolio-mode context.",
+      "validation_rule": "Correct runtime/product baseline context only; do not block Source-of-Truth market/account facts when broker/Binance screenshots remain authoritative."
+    },
+    {
+      "rule_id": "missing_twos_runtime_status_block",
+      "description": "missing twos runtime status block",
+      "input_fields": [
+        "ldd_review_sync_twos_status_block"
+      ],
+      "expected_current_value": "present and complete",
+      "drift_condition": "status block missing or incomplete",
+      "severity": "backfeed_required",
+      "blocking_for_runtime_fact_ingestion": false,
+      "required_action": "Require TWOS Runtime Status Update backfeed generation.",
+      "validation_rule": "Correct runtime/product baseline context only; do not block Source-of-Truth market/account facts when broker/Binance screenshots remain authoritative."
+    },
+    {
+      "rule_id": "ldd_review_sync_after_codex_phase_without_backfeed",
+      "description": "ldd review sync after codex phase without backfeed",
+      "input_fields": [
+        "ldd_review_sync_time",
+        "last_codex_phase_completion_time",
+        "backfeed_present"
+      ],
+      "expected_current_value": "backfeed present after phase completion",
+      "drift_condition": "ldd sync follows Codex phase without latest backfeed",
+      "severity": "backfeed_required",
+      "blocking_for_runtime_fact_ingestion": false,
+      "required_action": "Require LDD baseline sync before next LDD review if practical.",
+      "validation_rule": "Correct runtime/product baseline context only; do not block Source-of-Truth market/account facts when broker/Binance screenshots remain authoritative."
+    }
+  ],
+  "drift_severity_levels": [
+    "informational",
+    "non_blocking_runtime_context_drift",
+    "needs_reconciliation",
+    "backfeed_required"
+  ],
+  "required_actions": [
+    "correct_runtime_baseline_context",
+    "preserve_source_of_truth_account_facts",
+    "generate_twos_backfeed_block",
+    "request_complete_ldd_instruction_block_when_practical"
+  ],
+  "validation_expectations": "Detector must include stale phase/commit/checkpoint/mode rules and backfeed-required rules without blocking Source-of-Truth screenshots."
+}

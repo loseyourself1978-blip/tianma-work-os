@@ -1,0 +1,225 @@
+{
+  "manifest_id": "ldd-static-consumer-fixture-package-v0.1",
+  "manifest_version": "0.1",
+  "phase": "Vol.6 Phase 6.8",
+  "status": "ready_for_static_handoff",
+  "actual_ui_created": false,
+  "customer_facing_ready": false,
+  "active_checkpoint": "2026-06-12T09:18:00+08:00",
+  "latest_timeline_event": "2026-06-12T17:03:00+08:00",
+  "timeline_events": 96,
+  "timeline_warnings": 0,
+  "operating_mode": "cash_defense_core_position_survival_mode",
+  "portfolio_mode": "residual_core_position_mode",
+  "included_fixture_groups": [
+    {
+      "group_id": "read_only_api_contract_fixtures",
+      "purpose": "Read-only API response envelope and endpoint contract fixtures.",
+      "primary_artifacts": [
+        "mock_consumers/ldd/read_only_api_contract.json",
+        "mock_consumers/ldd/read_only_api_endpoint_catalog.json"
+      ],
+      "supporting_artifacts": [
+        "mock_consumers/ldd/read_only_api_response_examples.json",
+        "mock_consumers/ldd/read_only_api_forbidden_capabilities.json"
+      ],
+      "validation_script": "scripts/validate_read_only_api_contract.sh",
+      "readiness": "ready_for_static_handoff",
+      "customer_facing_allowed": false,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "implementation_status": "static_contract_only",
+      "validation_rule": "Must remain static/read-only, non-customer-facing, non-mutating, and non-executing."
+    },
+    {
+      "group_id": "ui_boundary_fixtures",
+      "purpose": "UI boundary surface and visibility fixtures.",
+      "primary_artifacts": [
+        "mock_consumers/ldd/ui_boundary_contract.json",
+        "mock_consumers/ldd/ui_boundary_surface_map.json"
+      ],
+      "supporting_artifacts": [
+        "mock_consumers/ldd/ui_visibility_matrix.json",
+        "mock_consumers/ldd/ui_state_taxonomy.json"
+      ],
+      "validation_script": "scripts/validate_ui_boundary_contract.sh",
+      "readiness": "ready_for_static_handoff",
+      "customer_facing_allowed": false,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "implementation_status": "static_contract_only",
+      "validation_rule": "Must remain static/read-only, non-customer-facing, non-mutating, and non-executing."
+    },
+    {
+      "group_id": "permission_privacy_masking_fixtures",
+      "purpose": "Permission, role, masking, and customer-facing block fixtures.",
+      "primary_artifacts": [
+        "mock_consumers/ldd/permission_role_taxonomy.json",
+        "mock_consumers/ldd/field_permission_matrix.json"
+      ],
+      "supporting_artifacts": [
+        "mock_consumers/ldd/privacy_masking_policy.json",
+        "mock_consumers/ldd/customer_facing_unblock_criteria.json"
+      ],
+      "validation_script": "scripts/validate_permission_privacy_masking.sh",
+      "readiness": "ready_for_static_handoff",
+      "customer_facing_allowed": false,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "implementation_status": "static_contract_only",
+      "validation_rule": "Must remain static/read-only, non-customer-facing, non-mutating, and non-executing."
+    },
+    {
+      "group_id": "static_cockpit_prototype_boundary_fixtures",
+      "purpose": "Static cockpit prototype boundary fixtures.",
+      "primary_artifacts": [
+        "mock_consumers/ldd/static_cockpit_surface_layout.json",
+        "mock_consumers/ldd/static_cockpit_card_catalog.json"
+      ],
+      "supporting_artifacts": [
+        "mock_consumers/ldd/static_cockpit_interaction_policy.json",
+        "mock_consumers/ldd/static_cockpit_blocked_controls.json",
+        "mock_consumers/ldd/static_cockpit_data_quality_display_policy.json"
+      ],
+      "validation_script": "scripts/validate_static_cockpit_prototype_boundary.sh",
+      "readiness": "ready_for_static_handoff",
+      "customer_facing_allowed": false,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "implementation_status": "static_contract_only",
+      "validation_rule": "Must remain static/read-only, non-customer-facing, non-mutating, and non-executing."
+    },
+    {
+      "group_id": "internal_operator_cockpit_static_fixtures",
+      "purpose": "Internal operator static cockpit fixtures.",
+      "primary_artifacts": [
+        "mock_consumers/ldd/internal_operator_cockpit_static_spec.json",
+        "mock_consumers/ldd/internal_operator_cockpit_section_order.json"
+      ],
+      "supporting_artifacts": [
+        "mock_consumers/ldd/internal_operator_cockpit_card_field_map.json",
+        "mock_consumers/ldd/internal_operator_cockpit_warning_policy.json",
+        "mock_consumers/ldd/internal_operator_cockpit_source_traceability_policy.json",
+        "mock_consumers/ldd/internal_operator_cockpit_blocked_action_policy.json"
+      ],
+      "validation_script": "scripts/validate_internal_operator_cockpit_static_spec.sh",
+      "readiness": "ready_for_static_handoff",
+      "customer_facing_allowed": false,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "implementation_status": "static_contract_only",
+      "validation_rule": "Must remain static/read-only, non-customer-facing, non-mutating, and non-executing."
+    },
+    {
+      "group_id": "ai_board_cockpit_static_fixtures",
+      "purpose": "AI Board static cockpit fixtures.",
+      "primary_artifacts": [
+        "mock_consumers/ldd/ai_board_cockpit_static_spec.json",
+        "mock_consumers/ldd/ai_board_role_taxonomy.json"
+      ],
+      "supporting_artifacts": [
+        "mock_consumers/ldd/ai_board_role_panel_map.json",
+        "mock_consumers/ldd/ai_board_evidence_policy.json",
+        "mock_consumers/ldd/ai_board_disagreement_policy.json",
+        "mock_consumers/ldd/ai_board_arbitration_policy.json",
+        "mock_consumers/ldd/ai_board_decision_trace_policy.json",
+        "mock_consumers/ldd/ai_board_blocked_action_policy.json"
+      ],
+      "validation_script": "scripts/validate_ai_board_cockpit_static_spec.sh",
+      "readiness": "ready_for_static_handoff",
+      "customer_facing_allowed": false,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "implementation_status": "static_contract_only",
+      "validation_rule": "Must remain static/read-only, non-customer-facing, non-mutating, and non-executing."
+    },
+    {
+      "group_id": "cockpit_static_spec_integration_fixtures",
+      "purpose": "Cross-spec integration fixtures for surfaces, roles, cards, blocked actions, and readiness.",
+      "primary_artifacts": [
+        "mock_consumers/ldd/cockpit_static_spec_integration_matrix.json",
+        "mock_consumers/ldd/cockpit_static_spec_readiness_gate.json"
+      ],
+      "supporting_artifacts": [
+        "mock_consumers/ldd/cockpit_static_spec_consistency_checks.json",
+        "mock_consumers/ldd/cockpit_static_spec_surface_role_matrix.json",
+        "mock_consumers/ldd/cockpit_static_spec_card_traceability_matrix.json",
+        "mock_consumers/ldd/cockpit_static_spec_blocked_action_crosscheck.json"
+      ],
+      "validation_script": "scripts/validate_cockpit_static_spec_integration.sh",
+      "readiness": "ready_for_static_handoff",
+      "customer_facing_allowed": false,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "implementation_status": "static_contract_only",
+      "validation_rule": "Must remain static/read-only, non-customer-facing, non-mutating, and non-executing."
+    },
+    {
+      "group_id": "ldd_premarket_governance_sync_fixtures",
+      "purpose": "Non-promoted LDD premarket governance evidence fixtures.",
+      "primary_artifacts": [
+        "records/ldd/2026-06-12/vol6_phase6_7a_ldd_premarket_rebound_confirmation_governance_sync_1703_sgt.json"
+      ],
+      "supporting_artifacts": [
+        "docs/runtime/VOL6_PHASE6_7A_LDD_PREMARKET_REBOUND_CONFIRMATION_GOVERNANCE_SYNC_v0.1.md",
+        "reports/ldd/vol6_phase6_7a_ldd_premarket_rebound_confirmation_governance_sync.md"
+      ],
+      "validation_script": "bash scripts/validate_runtime_records.sh",
+      "readiness": "ready_with_limits",
+      "customer_facing_allowed": false,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "implementation_status": "governance_record_only",
+      "validation_rule": "Must remain static/read-only, non-customer-facing, non-mutating, and non-executing."
+    },
+    {
+      "group_id": "handoff_and_backfeed_fixtures",
+      "purpose": "Vol.6 static fixture handoff and LDD baseline backfeed fixtures.",
+      "primary_artifacts": [
+        "mock_consumers/ldd/static_consumer_fixture_handoff_packet.json",
+        "mock_consumers/ldd/ldd_twos_runtime_baseline_backfeed_protocol.json"
+      ],
+      "supporting_artifacts": [
+        "mock_consumers/ldd/static_consumer_fixture_package_manifest.json",
+        "mock_consumers/ldd/cross_workspace_progress_drift_detector.json"
+      ],
+      "validation_script": "scripts/validate_static_consumer_fixture_integration.sh",
+      "readiness": "ready_for_static_handoff",
+      "customer_facing_allowed": false,
+      "mutation_allowed": false,
+      "execution_allowed": false,
+      "implementation_status": "handoff_packet_only",
+      "validation_rule": "Must remain static/read-only, non-customer-facing, non-mutating, and non-executing."
+    }
+  ],
+  "required_validators": [
+    "validate_runtime_records.sh",
+    "generate_runtime_report.sh",
+    "validate_cockpit_view_model_quality.sh",
+    "validate_read_only_consumer_fixtures.sh",
+    "validate_ui_boundary_contract.sh",
+    "validate_permission_privacy_masking.sh",
+    "validate_read_only_api_contract.sh",
+    "validate_static_cockpit_prototype_boundary.sh",
+    "validate_internal_operator_cockpit_static_spec.sh",
+    "validate_ai_board_cockpit_static_spec.sh",
+    "validate_cockpit_static_spec_integration.sh",
+    "validate_static_consumer_fixture_integration.sh"
+  ],
+  "safety_boundary": {
+    "frontend_app_created": false,
+    "customer_facing_ui_created": false,
+    "html_css_js_ui_created": false,
+    "api_server_created": false,
+    "live_endpoint_created": false,
+    "external_api_connected": false,
+    "broker_api_connected": false,
+    "binance_api_connected": false,
+    "live_market_data_enabled": false,
+    "trading_automation_enabled": false,
+    "credential_handling_enabled": false,
+    "runtime_mutation_ui_enabled": false,
+    "execution_trigger_enabled": false
+  },
+  "validation_expectations": "All fixture groups and validators must pass before Phase 6.9 handoff summary."
+}

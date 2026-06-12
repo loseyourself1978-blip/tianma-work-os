@@ -1,0 +1,96 @@
+{
+  "map_id": "ldd-static-consumer-fixture-dependency-map-v0.1",
+  "phase": "Vol.6 Phase 6.8",
+  "active_checkpoint": "2026-06-12T09:18:00+08:00",
+  "dependencies": [
+    {
+      "dependency_id": "ui_boundary_fixtures_to_permission_privacy_masking_fixtures",
+      "upstream_group": "ui_boundary_fixtures",
+      "downstream_group": "permission_privacy_masking_fixtures",
+      "dependency_type": "static_contract_dependency",
+      "required": true,
+      "blocking_if_missing": true,
+      "validation_rule": "Dependency must not imply runtime mutation, execution trigger, live API, broker/Binance connection, or frontend implementation."
+    },
+    {
+      "dependency_id": "permission_privacy_masking_fixtures_to_read_only_api_contract_fixtures",
+      "upstream_group": "permission_privacy_masking_fixtures",
+      "downstream_group": "read_only_api_contract_fixtures",
+      "dependency_type": "static_contract_dependency",
+      "required": true,
+      "blocking_if_missing": true,
+      "validation_rule": "Dependency must not imply runtime mutation, execution trigger, live API, broker/Binance connection, or frontend implementation."
+    },
+    {
+      "dependency_id": "read_only_api_contract_fixtures_to_static_cockpit_prototype_boundary_fixtures",
+      "upstream_group": "read_only_api_contract_fixtures",
+      "downstream_group": "static_cockpit_prototype_boundary_fixtures",
+      "dependency_type": "static_contract_dependency",
+      "required": true,
+      "blocking_if_missing": true,
+      "validation_rule": "Dependency must not imply runtime mutation, execution trigger, live API, broker/Binance connection, or frontend implementation."
+    },
+    {
+      "dependency_id": "static_cockpit_prototype_boundary_fixtures_to_internal_operator_cockpit_static_fixtures",
+      "upstream_group": "static_cockpit_prototype_boundary_fixtures",
+      "downstream_group": "internal_operator_cockpit_static_fixtures",
+      "dependency_type": "static_contract_dependency",
+      "required": true,
+      "blocking_if_missing": true,
+      "validation_rule": "Dependency must not imply runtime mutation, execution trigger, live API, broker/Binance connection, or frontend implementation."
+    },
+    {
+      "dependency_id": "static_cockpit_prototype_boundary_fixtures_to_ai_board_cockpit_static_fixtures",
+      "upstream_group": "static_cockpit_prototype_boundary_fixtures",
+      "downstream_group": "ai_board_cockpit_static_fixtures",
+      "dependency_type": "static_contract_dependency",
+      "required": true,
+      "blocking_if_missing": true,
+      "validation_rule": "Dependency must not imply runtime mutation, execution trigger, live API, broker/Binance connection, or frontend implementation."
+    },
+    {
+      "dependency_id": "internal_operator_cockpit_static_fixtures_to_cockpit_static_spec_integration_fixtures",
+      "upstream_group": "internal_operator_cockpit_static_fixtures",
+      "downstream_group": "cockpit_static_spec_integration_fixtures",
+      "dependency_type": "static_contract_dependency",
+      "required": true,
+      "blocking_if_missing": true,
+      "validation_rule": "Dependency must not imply runtime mutation, execution trigger, live API, broker/Binance connection, or frontend implementation."
+    },
+    {
+      "dependency_id": "ai_board_cockpit_static_fixtures_to_cockpit_static_spec_integration_fixtures",
+      "upstream_group": "ai_board_cockpit_static_fixtures",
+      "downstream_group": "cockpit_static_spec_integration_fixtures",
+      "dependency_type": "static_contract_dependency",
+      "required": true,
+      "blocking_if_missing": true,
+      "validation_rule": "Dependency must not imply runtime mutation, execution trigger, live API, broker/Binance connection, or frontend implementation."
+    },
+    {
+      "dependency_id": "ldd_premarket_governance_sync_fixtures_to_cockpit_static_spec_integration_fixtures",
+      "upstream_group": "ldd_premarket_governance_sync_fixtures",
+      "downstream_group": "cockpit_static_spec_integration_fixtures",
+      "dependency_type": "static_contract_dependency",
+      "required": true,
+      "blocking_if_missing": true,
+      "validation_rule": "Dependency must not imply runtime mutation, execution trigger, live API, broker/Binance connection, or frontend implementation."
+    },
+    {
+      "dependency_id": "cockpit_static_spec_integration_fixtures_to_handoff_and_backfeed_fixtures",
+      "upstream_group": "cockpit_static_spec_integration_fixtures",
+      "downstream_group": "handoff_and_backfeed_fixtures",
+      "dependency_type": "static_contract_dependency",
+      "required": true,
+      "blocking_if_missing": true,
+      "validation_rule": "Dependency must not imply runtime mutation, execution trigger, live API, broker/Binance connection, or frontend implementation."
+    }
+  ],
+  "forbidden_dependency_implications": [
+    "runtime_mutation",
+    "execution_trigger",
+    "live_api",
+    "broker_connection",
+    "binance_connection",
+    "frontend_implementation"
+  ]
+}

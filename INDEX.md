@@ -474,8 +474,25 @@ Vol.6 Phase 6.5 - Internal Operator Cockpit Static Spec
 - `schemas/ldd_premarket_governance_sync.schema.json`
 - `records/ldd/2026-06-12/vol6_phase6_7a_ldd_premarket_rebound_confirmation_governance_sync_1703_sgt.json`
 - `reports/ldd/vol6_phase6_7a_ldd_premarket_rebound_confirmation_governance_sync.md`
-- Current phase: `Vol.6 Phase 6.7a - LDD Premarket Rebound Confirmation Governance Sync`
 - Next: `Vol.6 Phase 6.8 - Static Consumer Fixture Integration and Handoff`
+
+## Vol.6 Phase 6.8 / Static Consumer Fixture Integration and Handoff
+
+- `docs/runtime/VOL6_PHASE6_8_STATIC_CONSUMER_FIXTURE_INTEGRATION_AND_HANDOFF_v0.1.md`
+- `schemas/static_consumer_fixture_integration.schema.json`
+- `schemas/static_consumer_fixture_handoff.schema.json`
+- `mock_consumers/ldd/static_consumer_fixture_package_manifest.json`
+- `mock_consumers/ldd/static_consumer_fixture_dependency_map.json`
+- `mock_consumers/ldd/static_consumer_fixture_readiness_matrix.json`
+- `mock_consumers/ldd/static_consumer_fixture_safety_gate.json`
+- `mock_consumers/ldd/static_consumer_fixture_handoff_packet.json`
+- `mock_consumers/ldd/cross_workspace_progress_drift_detector.json`
+- `mock_consumers/ldd/ldd_twos_runtime_baseline_backfeed_protocol.json`
+- `scripts/validate_static_consumer_fixture_integration.py`
+- `records/ldd/2026-06-12/vol6_phase6_8_static_consumer_fixture_integration_and_handoff_1703_sgt.json`
+- `reports/ldd/vol6_phase6_8_static_consumer_fixture_integration_and_handoff.md`
+- Current phase: `Vol.6 Phase 6.8 - Static Consumer Fixture Integration and Handoff`
+- Next: `Vol.6 Phase 6.9 - Vol.6 Handoff Summary and Vol.7 Readiness Gate`
 
 ## Product Principles
 

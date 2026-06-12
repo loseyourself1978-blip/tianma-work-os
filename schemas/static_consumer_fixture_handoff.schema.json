@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/static_consumer_fixture_handoff.schema.json",
+  "title": "Static Consumer Fixture Handoff Review",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "record_type",
+    "phase",
+    "timestamp",
+    "latest_checkpoint",
+    "latest_timeline_event_before_review",
+    "timeline_events_before_review",
+    "timeline_warnings",
+    "operating_mode",
+    "portfolio_mode",
+    "customer_facing_ready",
+    "actual_ui_created",
+    "frontend_app_created",
+    "html_css_js_ui_created",
+    "api_server_created",
+    "live_endpoint_created",
+    "external_api_connected",
+    "broker_api_connected",
+    "binance_api_connected",
+    "live_market_data_enabled",
+    "trading_automation_enabled",
+    "credential_handling_enabled",
+    "runtime_mutation_ui_enabled",
+    "execution_trigger_enabled",
+    "static_consumer_fixture_package_created",
+    "dependency_map_created",
+    "readiness_matrix_created",
+    "safety_gate_created",
+    "cross_workspace_progress_drift_detector_created",
+    "ldd_twos_runtime_baseline_backfeed_protocol_created",
+    "handoff_packet_created",
+    "validation_summary",
+    "created_artifacts",
+    "explicit_non_goals_confirmed"
+  ],
+  "properties": {
+    "record_type": {
+      "type": "string",
+      "enum": [
+        "governance_review"
+      ]
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "Vol.6 Phase 6.8"
+      ]
+    },
+    "timestamp": {
+      "type": "string",
+      "enum": [
+        "2026-06-12T17:03:00+08:00"
+      ]
+    },
+    "latest_checkpoint": {
+      "type": "string",
+      "enum": [
+        "2026-06-12T09:18:00+08:00"
+      ]
+    },
+    "latest_timeline_event_before_review": {
+      "type": "string",
+      "enum": [
+        "2026-06-12T17:03:00+08:00"
+      ]
+    },
+    "timeline_events_before_review": {
+      "type": "integer",
+      "enum": [
+        96
+      ]
+    },
+    "timeline_warnings": {
+      "type": "integer",
+      "enum": [
+        0
+      ]
+    },
+    "operating_mode": {
+      "type": "string",
+      "enum": [
+        "cash_defense_core_position_survival_mode"
+      ]
+    },
+    "portfolio_mode": {
+      "type": "string",
+      "enum": [
+        "residual_core_position_mode"
+      ]
+    },
+    "customer_facing_ready": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "actual_ui_created": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "frontend_app_created": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "html_css_js_ui_created": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "api_server_created": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "live_endpoint_created": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "external_api_connected": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "broker_api_connected": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "binance_api_connected": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "live_market_data_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "trading_automation_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "credential_handling_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "runtime_mutation_ui_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "execution_trigger_enabled": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    }
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/static_consumer_fixture_integration.schema.json",
+  "title": "Static Consumer Fixture Integration Contract",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "phase",
+    "active_checkpoint",
+    "latest_timeline_event",
+    "operating_mode",
+    "portfolio_mode",
+    "customer_facing_ready"
+  ],
+  "properties": {
+    "phase": {
+      "type": "string"
+    },
+    "active_checkpoint": {
+      "type": "string",
+      "enum": [
+        "2026-06-12T09:18:00+08:00"
+      ]
+    },
+    "latest_timeline_event": {
+      "type": "string",
+      "enum": [
+        "2026-06-12T17:03:00+08:00"
+      ]
+    },
+    "operating_mode": {
+      "type": "string",
+      "enum": [
+        "cash_defense_core_position_survival_mode"
+      ]
+    },
+    "portfolio_mode": {
+      "type": "string",
+      "enum": [
+        "residual_core_position_mode"
+      ]
+    },
+    "customer_facing_ready": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "actual_ui_created": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "api_server_ready": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "trading_automation_ready": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "credential_handling_ready": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "runtime_mutation_ui_ready": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    },
+    "execution_trigger_ready": {
+      "type": "boolean",
+      "enum": [
+        false
+      ]
+    }
+  }
+}

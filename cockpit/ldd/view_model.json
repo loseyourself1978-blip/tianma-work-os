@@ -1008,7 +1008,7 @@
   ],
   "timeline": {
     "generated_at": "2026-06-12T17:03:00+08:00",
-    "event_count": 96,
+    "event_count": 97,
     "warning_count": 0,
     "date_range": {
       "start": "2026-06-02T08:22:00+08:00",
@@ -3159,6 +3159,25 @@
           "nvda",
           "soxl",
           "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-12-vol6-phase6-8-static-consumer-fixture-integration-and-handoff-1703-sgt-json",
+        "event_time": "2026-06-12T17:03:00+08:00",
+        "event_type": "report_generation",
+        "source_file": "records/ldd/2026-06-12/vol6_phase6_8_static_consumer_fixture_integration_and_handoff_1703_sgt.json",
+        "source_record_type": "governance_review",
+        "asset_or_module": "LDD Runtime",
+        "title": "Vol.6 Phase 6.8",
+        "summary": "Governance review recorded with customer-facing ready=False, runtime_mutation_flag=False, and trading_automation_flag=False.",
+        "state_before": "",
+        "state_after": "phase=Vol.6 Phase 6.8; customer_facing_ready=False",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "governance_review",
+          "non_trading_runtime_event"
         ]
       }
     ],

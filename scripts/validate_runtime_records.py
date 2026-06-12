@@ -84,7 +84,8 @@ SCHEMA_FILES = {
     "static_cockpit_prototype_review": "static_cockpit_prototype_review.schema.json",
     "internal_operator_cockpit_static_spec_review": "internal_operator_cockpit_static_spec_review.schema.json",
     "ai_board_cockpit_static_spec_review": "ai_board_cockpit_static_spec_review.schema.json",
-    "cockpit_static_spec_integration_review": "cockpit_static_spec_integration_review.schema.json"
+    "cockpit_static_spec_integration_review": "cockpit_static_spec_integration_review.schema.json",
+    "static_consumer_fixture_handoff": "static_consumer_fixture_handoff.schema.json"
 }
 
 
@@ -139,6 +140,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "ai_board_cockpit_static_spec_review", SCHEMA_FILES["ai_board_cockpit_static_spec_review"]
     if "cockpit_static_spec_integration_review" in filename:
         return "cockpit_static_spec_integration_review", SCHEMA_FILES["cockpit_static_spec_integration_review"]
+    if "static_consumer_fixture_integration_and_handoff" in filename:
+        return "static_consumer_fixture_handoff", SCHEMA_FILES["static_consumer_fixture_handoff"]
     if "phase5_final_pressure_test_result" in filename:
         return "cockpit_consistency_review", SCHEMA_FILES["cockpit_consistency_review"]
     if "ldd_post_close_execution_review" in filename:
