@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/vol7_read_only_panel_layout.schema.json",
+  "title": "Vol.7 Read-Only Panel Layout",
+  "description": "Validates the read-only panel layout fixture for Vol.7 Phase 7.1.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "phase",
+    "active_checkpoint",
+    "customer_facing_readiness",
+    "fixture_only",
+    "read_only",
+    "mutation_allowed",
+    "execution_allowed",
+    "credential_handling_allowed",
+    "live_data_allowed",
+    "ldd_scope_reminder",
+    "panels"
+  ],
+  "properties": {
+    "phase": {"description": "Vol.7 Phase 7.1 phase label.", "type": "string"},
+    "active_checkpoint": {"description": "Current active LDD checkpoint.", "type": "string"},
+    "customer_facing_readiness": {"description": "Customer-facing readiness must remain false.", "type": "boolean", "const": false, "enum": [false]},
+    "fixture_only": {"description": "Panel layout is fixture-only.", "type": "boolean", "const": true, "enum": [true]},
+    "read_only": {"description": "Panel layout is read-only.", "type": "boolean", "const": true, "enum": [true]},
+    "mutation_allowed": {"description": "Mutation is disallowed.", "type": "boolean", "const": false, "enum": [false]},
+    "execution_allowed": {"description": "Execution is disallowed.", "type": "boolean", "const": false, "enum": [false]},
+    "credential_handling_allowed": {"description": "Credential handling is disallowed.", "type": "boolean", "const": false, "enum": [false]},
+    "live_data_allowed": {"description": "Live data is disallowed.", "type": "boolean", "const": false, "enum": [false]},
+    "ldd_scope_reminder": {"description": "Full-market LDD scope reminder.", "type": "string"},
+    "panels": {
+      "description": "Read-only panel definitions.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "panel_id",
+          "title",
+          "purpose",
+          "source_fixtures",
+          "display_fields",
+          "required_labels",
+          "read_only",
+          "mutation_allowed",
+          "execution_allowed",
+          "credential_handling_allowed",
+          "live_data_allowed",
+          "forbidden_affordances"
+        ],
+        "properties": {
+          "panel_id": {"description": "Stable panel identifier.", "type": "string"},
+          "title": {"description": "Panel display title.", "type": "string"},
+          "purpose": {"description": "Panel purpose.", "type": "string"},
+          "source_fixtures": {"description": "Fixtures read by this panel.", "type": "array", "items": {"type": "string"}},
+          "display_fields": {"description": "Fields shown by this panel.", "type": "array", "items": {"type": "string"}},
+          "required_labels": {"description": "Labels that must appear with this panel.", "type": "array", "items": {"type": "string"}},
+          "read_only": {"description": "Panel is read-only.", "type": "boolean", "enum": [true]},
+          "mutation_allowed": {"description": "Panel cannot mutate runtime or fixtures.", "type": "boolean", "enum": [false]},
+          "execution_allowed": {"description": "Panel cannot execute trades or actions.", "type": "boolean", "enum": [false]},
+          "credential_handling_allowed": {"description": "Panel cannot handle credentials.", "type": "boolean", "enum": [false]},
+          "live_data_allowed": {"description": "Panel cannot fetch live data.", "type": "boolean", "enum": [false]},
+          "forbidden_affordances": {"description": "Forbidden controls for this panel.", "type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  }
+}

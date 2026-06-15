@@ -1,0 +1,130 @@
+{
+  "metadata": {
+    "example_id": "vol7_static_consumer_view_model_example",
+    "phase": "Vol.7 Phase 7.1 - Static Fixture Consumer Contract and Read-Only Panel Layout",
+    "generated_from": "static_fixture_contract",
+    "fixture_only": true
+  },
+  "baseline": {
+    "baseline_commit": "3f8d1703b8cae4fa47e6846667bea03cd8330f67",
+    "origin_status": "synchronized",
+    "working_tree_status": "clean",
+    "active_checkpoint": "2026-06-12T09:18:00+08:00",
+    "latest_timeline_event": "2026-06-15T13:41:45+08:00"
+  },
+  "runtime_status": {
+    "runtime_records_count": 100,
+    "operating_mode": "cash_defense_core_position_survival_mode",
+    "portfolio_mode": "residual_core_position_mode"
+  },
+  "readiness": {
+    "customer_facing_readiness": false,
+    "fixture_only": true,
+    "read_only": true,
+    "mutation_allowed": false,
+    "execution_allowed": false,
+    "credential_handling_allowed": false,
+    "live_data_allowed": false
+  },
+  "timeline_health": {
+    "timeline_event_count": 100,
+    "timeline_warning_count": 0
+  },
+  "active_rules_summary": {
+    "active_rules_count": 11,
+    "label": "Rules are static, read-only, and not executable."
+  },
+  "strategy_state_summary": {
+    "strategy_states_count": 16,
+    "label": "Strategy states are static, read-only, and not executable."
+  },
+  "allowed_panels": [
+    "runtime_status_panel",
+    "readiness_gate_panel",
+    "timeline_health_panel",
+    "active_rules_panel",
+    "strategy_states_panel",
+    "static_fixture_source_panel",
+    "ldd_scope_reminder_panel",
+    "stale_data_warning_panel",
+    "forbidden_actions_panel",
+    "non_executable_guardrail_panel"
+  ],
+  "forbidden_actions": [
+    "buy_button",
+    "sell_button",
+    "rebalance_button",
+    "connect_broker_button",
+    "connect_binance_button",
+    "sync_broker_button",
+    "sync_binance_button",
+    "live_refresh_button",
+    "api_key_input",
+    "credential_form",
+    "login_auth_form",
+    "auto_trade_toggle",
+    "runtime_edit_form",
+    "rule_mutation_editor",
+    "portfolio_edit_form",
+    "alert_dispatch_toggle",
+    "scheduler_toggle",
+    "background_worker_trigger",
+    "production_publish_button",
+    "customer_facing_publish_flag"
+  ],
+  "forbidden_integrations": [
+    "production_ui",
+    "customer_facing_ui",
+    "frontend_app",
+    "html_css_js_implementation",
+    "api_server",
+    "live_endpoint",
+    "broker_connection",
+    "binance_connection",
+    "live_market_data",
+    "trading_automation",
+    "credential_handling",
+    "runtime_mutation_ui",
+    "execution_trigger",
+    "order_placement",
+    "portfolio_modification",
+    "background_worker",
+    "scheduler",
+    "notification_dispatcher"
+  ],
+  "scope_reminders": [
+    "LDD scope is the entire U.S. equity market, not only existing or former positions."
+  ],
+  "stale_data_warnings": [
+    "This is a static fixture example.",
+    "Do not treat values as live market data.",
+    "Use cockpit/ldd/view_model.json as the read-only source artifact."
+  ],
+  "fixture_labels": [
+    "STATIC FIXTURE",
+    "READ ONLY",
+    "NOT EXECUTABLE",
+    "NO LIVE DATA",
+    "NO BROKER CONNECTION",
+    "NO BINANCE CONNECTION",
+    "NO CREDENTIAL HANDLING",
+    "NO RUNTIME MUTATION",
+    "CUSTOMER-FACING READINESS: FALSE"
+  ],
+  "read_only_guards": {
+    "fixture_only": true,
+    "read_only": true,
+    "mutation_allowed": false,
+    "execution_allowed": false,
+    "credential_handling_allowed": false,
+    "live_data_allowed": false,
+    "customer_facing_readiness": false
+  },
+  "fixture_only": true,
+  "read_only": true,
+  "mutation_allowed": false,
+  "execution_allowed": false,
+  "credential_handling_allowed": false,
+  "live_data_allowed": false,
+  "customer_facing_readiness": false
+}
