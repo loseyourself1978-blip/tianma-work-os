@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.6 Phase 6.9 - Vol.6 Handoff Summary and Vol.7 Readiness Gate
+Vol.7 Phase 7.0 - Static UI Shell Boundary Map
 ```
 
 ## Core Documents
@@ -82,6 +82,7 @@ Vol.6 Phase 6.9 - Vol.6 Handoff Summary and Vol.7 Readiness Gate
 - `docs/runtime/VOL6_PHASE6_8A_LDD_FULL_MARKET_SCOPE_CORRECTION_AND_IPO_RADAR_GOVERNANCE_SYNC_v0.1.md`
 - `docs/runtime/VOL6_PHASE6_9_HANDOFF_SUMMARY_AND_VOL7_READINESS_GATE_v0.1.md`
 - `docs/runtime/VOL6_HANDOFF_SUMMARY_v0.1.md`
+- `docs/runtime/VOL7_PHASE7_0_STATIC_UI_SHELL_BOUNDARY_MAP_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
@@ -533,6 +534,19 @@ Vol.6 Phase 6.9 - Vol.6 Handoff Summary and Vol.7 Readiness Gate
 - `reports/ldd/vol6_handoff_summary.md`
 - Current phase: `Vol.6 Phase 6.9 - Vol.6 Handoff Summary and Vol.7 Readiness Gate`
 - Next: `Vol.7 Phase 7.0 - UI Shell Planning / Static Fixture Consumer Baseline Verification`
+
+## Vol.7 Phase 7.0 / Static UI Shell Boundary Map
+
+- `docs/runtime/VOL7_PHASE7_0_STATIC_UI_SHELL_BOUNDARY_MAP_v0.1.md`
+- `schemas/vol7_static_ui_shell_boundary_map.schema.json`
+- `mock_consumers/ldd/vol7_static_ui_shell_boundary_map.json`
+- `mock_consumers/ldd/vol7_static_fixture_consumer_allowed_panels.json`
+- `mock_consumers/ldd/vol7_static_fixture_consumer_forbidden_actions.json`
+- `scripts/validate_vol7_static_ui_shell_boundary_map.py`
+- `scripts/validate_vol7_static_ui_shell_boundary_map.sh`
+- `records/ldd/2026-06-15/vol7_phase7_0_static_ui_shell_boundary_map.json`
+- Current phase: `Vol.7 Phase 7.0 - Static UI Shell Boundary Map`
+- Next: `Vol.7 Phase 7.1 - Static Fixture Consumer Contract and Read-Only Panel Layout`
 
 ## Product Principles
 

@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/vol7_static_ui_shell_boundary_map.schema.json",
+  "title": "Vol.7 Static UI Shell Boundary Map",
+  "description": "Validates the static, read-only UI shell boundary map fixture for Vol.7 Phase 7.0.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "phase",
+    "baseline_commit",
+    "origin_status",
+    "working_tree_status",
+    "active_checkpoint",
+    "latest_timeline_event",
+    "runtime_records_count",
+    "timeline_event_count",
+    "timeline_warning_count",
+    "active_rules_count",
+    "customer_facing_readiness",
+    "operating_mode",
+    "portfolio_mode",
+    "allowed_panels",
+    "forbidden_actions",
+    "forbidden_integrations",
+    "fixture_only",
+    "read_only",
+    "mutation_allowed",
+    "execution_allowed",
+    "credential_handling_allowed",
+    "live_data_allowed",
+    "ldd_scope_reminder"
+  ],
+  "properties": {
+    "phase": {
+      "description": "Phase label for the static UI shell boundary map.",
+      "type": "string"
+    },
+    "baseline_commit": {
+      "description": "Repository commit used as the baseline for this static boundary map.",
+      "type": "string"
+    },
+    "origin_status": {
+      "description": "Remote synchronization status at boundary-map creation time.",
+      "type": "string"
+    },
+    "working_tree_status": {
+      "description": "Working tree status at boundary-map baseline time.",
+      "type": "string"
+    },
+    "active_checkpoint": {
+      "description": "Active LDD checkpoint consumed as read-only fixture metadata.",
+      "type": "string"
+    },
+    "latest_timeline_event": {
+      "description": "Latest timeline event from the Vol.6 handoff baseline.",
+      "type": "string"
+    },
+    "runtime_records_count": {
+      "description": "Runtime record count at the Vol.6 handoff baseline.",
+      "type": "integer"
+    },
+    "timeline_event_count": {
+      "description": "Timeline event count at the Vol.6 handoff baseline.",
+      "type": "integer"
+    },
+    "timeline_warning_count": {
+      "description": "Timeline warning count at the Vol.6 handoff baseline.",
+      "type": "integer"
+    },
+    "active_rules_count": {
+      "description": "Active rule count at the Vol.6 handoff baseline.",
+      "type": "integer"
+    },
+    "customer_facing_readiness": {
+      "description": "Customer-facing readiness remains blocked.",
+      "type": "boolean",
+      "const": false,
+      "enum": [false]
+    },
+    "operating_mode": {
+      "description": "Operating mode from the active checkpoint.",
+      "type": "string"
+    },
+    "portfolio_mode": {
+      "description": "Portfolio mode from the active checkpoint.",
+      "type": "string"
+    },
+    "allowed_panels": {
+      "description": "Read-only panels a future static UI shell may display.",
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "forbidden_actions": {
+      "description": "UI actions that must remain disabled or absent.",
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "forbidden_integrations": {
+      "description": "System integrations forbidden for the static shell boundary.",
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "fixture_only": {
+      "description": "The boundary map is a static fixture only.",
+      "type": "boolean",
+      "const": true,
+      "enum": [true]
+    },
+    "read_only": {
+      "description": "The boundary map can only be read.",
+      "type": "boolean",
+      "const": true,
+      "enum": [true]
+    },
+    "mutation_allowed": {
+      "description": "Runtime or fixture mutation is not allowed.",
+      "type": "boolean",
+      "const": false,
+      "enum": [false]
+    },
+    "execution_allowed": {
+      "description": "Trade/order execution is not allowed.",
+      "type": "boolean",
+      "const": false,
+      "enum": [false]
+    },
+    "credential_handling_allowed": {
+      "description": "Credential collection, storage, or handling is not allowed.",
+      "type": "boolean",
+      "const": false,
+      "enum": [false]
+    },
+    "live_data_allowed": {
+      "description": "Live market, broker, Binance, or external data is not allowed.",
+      "type": "boolean",
+      "const": false,
+      "enum": [false]
+    },
+    "ldd_scope_reminder": {
+      "description": "Reminder that LDD scans the whole U.S. equity market, not only current or former holdings.",
+      "type": "string"
+    }
+  }
+}

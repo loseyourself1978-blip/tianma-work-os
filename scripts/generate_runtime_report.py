@@ -110,6 +110,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "governance_runtime_sync"
     if "vol6_phase6_9_handoff_summary_and_vol7_readiness_gate" in name:
         return "vol6_handoff_readiness_gate"
+    if "vol7_phase7_0_static_ui_shell_boundary_map" in name:
+        return "governance_review"
     if "static_cockpit_prototype_boundary_review" in name:
         return "static_cockpit_prototype_review"
     if "internal_operator_cockpit_static_spec_review" in name:
@@ -233,6 +235,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "static_consumer_fixture_handoff"
     if data.get("record_type") == "governance_review" and data.get("phase") == "Vol.6 Phase 6.9":
         return "vol6_handoff_readiness_gate"
+    if data.get("record_type") == "governance_review" and str(data.get("phase", "")).startswith("Vol.7 Phase 7.0"):
+        return "governance_review"
     if data.get("schema_type") == "executed_order_writeback":
         return "executed_order_writeback"
     if data.get("schema_type") == "runtime_status_arbitration":

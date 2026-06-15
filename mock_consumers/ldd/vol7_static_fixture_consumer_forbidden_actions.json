@@ -1,0 +1,37 @@
+{
+  "contract_id": "vol7_static_fixture_consumer_forbidden_actions",
+  "phase": "Vol.7 Phase 7.0 - Static UI Shell Boundary Map",
+  "fixture_only": true,
+  "read_only": true,
+  "customer_facing_readiness": false,
+  "forbidden_actions": [
+    {"action_id": "buy_button", "blocked": true, "allowed_roles": [], "reason": "Order execution is outside the static fixture scope."},
+    {"action_id": "sell_button", "blocked": true, "allowed_roles": [], "reason": "Order execution is outside the static fixture scope."},
+    {"action_id": "rebalance_button", "blocked": true, "allowed_roles": [], "reason": "Portfolio modification is forbidden."},
+    {"action_id": "sync_broker_button", "blocked": true, "allowed_roles": [], "reason": "Broker integration is forbidden."},
+    {"action_id": "sync_binance_button", "blocked": true, "allowed_roles": [], "reason": "Binance integration is forbidden."},
+    {"action_id": "connect_account_button", "blocked": true, "allowed_roles": [], "reason": "Account connection is forbidden."},
+    {"action_id": "api_key_input", "blocked": true, "allowed_roles": [], "reason": "Credential handling is forbidden."},
+    {"action_id": "credential_form", "blocked": true, "allowed_roles": [], "reason": "Credential handling is forbidden."},
+    {"action_id": "live_refresh_button", "blocked": true, "allowed_roles": [], "reason": "Live market-data fetch is forbidden."},
+    {"action_id": "auto_trade_toggle", "blocked": true, "allowed_roles": [], "reason": "Trading automation is forbidden."},
+    {"action_id": "runtime_edit_form", "blocked": true, "allowed_roles": [], "reason": "Runtime mutation UI is forbidden."},
+    {"action_id": "rule_mutation_editor", "blocked": true, "allowed_roles": [], "reason": "Rule mutation is forbidden."},
+    {"action_id": "alert_dispatch_toggle", "blocked": true, "allowed_roles": [], "reason": "Real alert dispatch is forbidden."},
+    {"action_id": "production_publish_button", "blocked": true, "allowed_roles": [], "reason": "Production deployment is forbidden."}
+  ],
+  "forbidden_integrations": [
+    {"integration_id": "runtime_mutation", "blocked": true, "allowed_roles": []},
+    {"integration_id": "order_execution", "blocked": true, "allowed_roles": []},
+    {"integration_id": "broker_binance_integration", "blocked": true, "allowed_roles": []},
+    {"integration_id": "live_market_data_fetch", "blocked": true, "allowed_roles": []},
+    {"integration_id": "api_server", "blocked": true, "allowed_roles": []},
+    {"integration_id": "credential_storage", "blocked": true, "allowed_roles": []},
+    {"integration_id": "login_auth_system", "blocked": true, "allowed_roles": []},
+    {"integration_id": "real_alert_dispatch", "blocked": true, "allowed_roles": []},
+    {"integration_id": "scheduler", "blocked": true, "allowed_roles": []},
+    {"integration_id": "background_process", "blocked": true, "allowed_roles": []},
+    {"integration_id": "webhook_receiver", "blocked": true, "allowed_roles": []},
+    {"integration_id": "production_deployment", "blocked": true, "allowed_roles": []}
+  ]
+}

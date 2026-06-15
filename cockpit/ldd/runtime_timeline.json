@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-06-12T17:20:00+08:00",
+  "generated_at": "2026-06-15T13:41:45+08:00",
   "project": "LLM Daredevil Desk",
   "runtime_layer": "runtime_timeline",
   "version": "0.1",
   "source_root": "records/ldd",
-  "event_count": 99,
+  "event_count": 100,
   "date_range": {
     "start": "2026-06-02T08:22:00+08:00",
-    "end": "2026-06-12T17:20:00+08:00"
+    "end": "2026-06-15T13:41:45+08:00"
   },
   "events": [
     {
@@ -2212,6 +2212,25 @@
       "summary": "Governance review recorded with customer-facing ready=False, runtime_mutation_flag=False, and trading_automation_flag=False.",
       "state_before": "",
       "state_after": "phase=Vol.6 Phase 6.9; customer_facing_ready=False",
+      "supersedes_or_updates": [],
+      "execution_evidence_level": "runtime_record",
+      "cockpit_priority": "medium",
+      "tags": [
+        "governance_review",
+        "non_trading_runtime_event"
+      ]
+    },
+    {
+      "timeline_event_id": "timeline-records-ldd-2026-06-15-vol7-phase7-0-static-ui-shell-boundary-map-json",
+      "event_time": "2026-06-15T13:41:45+08:00",
+      "event_type": "report_generation",
+      "source_file": "records/ldd/2026-06-15/vol7_phase7_0_static_ui_shell_boundary_map.json",
+      "source_record_type": "governance_review",
+      "asset_or_module": "LDD Runtime",
+      "title": "Vol.7 Phase 7.0 - Static UI Shell Boundary Map",
+      "summary": "Governance review recorded with customer-facing ready=unknown, runtime_mutation_flag=unknown, and trading_automation_flag=unknown.",
+      "state_before": "",
+      "state_after": "phase=Vol.7 Phase 7.0 - Static UI Shell Boundary Map; customer_facing_ready=unknown",
       "supersedes_or_updates": [],
       "execution_evidence_level": "runtime_record",
       "cockpit_priority": "medium",
