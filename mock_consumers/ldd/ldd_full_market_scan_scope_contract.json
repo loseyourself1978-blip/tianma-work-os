@@ -1,0 +1,46 @@
+{
+  "contract_id": "ldd-full-market-scan-scope-v0.1",
+  "phase": "Vol.6 Phase 6.8a",
+  "status": "static_governance_contract",
+  "enabled": true,
+  "ldd_scope": "entire_us_equity_market",
+  "not_limited_to_current_or_former_positions": true,
+  "required_layers": [
+    "account_risk_management_layer",
+    "full_market_opportunity_scan_layer",
+    "sector_rotation_heatmap",
+    "new_listing_ipo_radar",
+    "non_position_candidate_watchlist",
+    "forbidden_chase_list",
+    "position_replacement_or_expansion_review"
+  ],
+  "required_scan_modules": [
+    "AI_semiconductor",
+    "software_cloud_cybersecurity",
+    "aerospace_defense_space",
+    "robotics_autonomous_driving",
+    "energy_oil_nuclear_power",
+    "financials_crypto_related_equities",
+    "healthcare_glp1",
+    "consumer_platform_tech",
+    "IPO_new_listings",
+    "ETF_index_leveraged_tools"
+  ],
+  "scope_warning_policy": {
+    "warning_id": "ldd_review_overfocused_on_current_or_former_positions",
+    "display_required": true,
+    "trigger_condition": "review_only_mentions_current_or_former_holdings",
+    "required_message": "LDD review scope is entire U.S. equity market, not only current/former positions."
+  },
+  "customer_facing_ready": false,
+  "actual_ui_created": false,
+  "api_server_created": false,
+  "live_market_data_enabled": false,
+  "trading_automation_enabled": false,
+  "validation_expectations": [
+    "scope must remain entire_us_equity_market",
+    "all seven required layers must be present",
+    "all ten scan modules must be present",
+    "no live fetch or automated execution may be enabled"
+  ]
+}

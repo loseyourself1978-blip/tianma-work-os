@@ -1,0 +1,22 @@
+{
+  "contract_id": "ldd-position-replacement-expansion-review-v0.1",
+  "phase": "Vol.6 Phase 6.8a",
+  "static_review_only": true,
+  "no_automatic_replacement": true,
+  "no_automatic_expansion": true,
+  "review_required_before_candidate_becomes_position": true,
+  "cash_defense_must_be_preserved": true,
+  "core_funding_protection": {
+    "no_selling_goog_to_fund_candidate": true,
+    "no_selling_nvda_to_fund_candidate": true,
+    "no_forced_cash_deployment": true,
+    "maintain_us_cash_defense_above_70_percent": true,
+    "maintain_binance_usdt_defense_above_70_percent": true
+  },
+  "validation_expectations": [
+    "candidate entries cannot automatically replace GOOG or NVDA",
+    "candidate entries cannot force cash deployment",
+    "review stays static and read-only",
+    "no automated purchase path may exist"
+  ]
+}

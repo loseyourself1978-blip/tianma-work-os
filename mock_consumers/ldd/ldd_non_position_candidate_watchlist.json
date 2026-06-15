@@ -1,0 +1,93 @@
+{
+  "watchlist_id": "ldd-non-position-candidate-watchlist-v0.1",
+  "phase": "Vol.6 Phase 6.8a",
+  "status": "static_candidate_radar_only",
+  "source_policy": "user_or_ldd_provided_candidate_radar_items_not_verified_live_data",
+  "candidates": [
+    {
+      "ticker": "SPCX",
+      "category": "IPO_new_listing_space_ai_infrastructure",
+      "state": "user_provided_candidate_radar_item_observation_only",
+      "source": "user_instruction_scope_correction",
+      "currently_held": false,
+      "eligible_for_observation": true,
+      "execution_allowed_by_system": false,
+      "manual_user_action_required": true,
+      "chase_blocked": true,
+      "external_verification_required_before_execution": true,
+      "validation_rule": "SPCX requires external verification, real executable quote, and manual user action outside TWOS."
+    },
+    {
+      "ticker": "MU",
+      "category": "memory_semiconductor",
+      "state": "strong_rebound_observe_no_chase",
+      "source": "user_instruction_scope_correction",
+      "currently_held": false,
+      "eligible_for_observation": true,
+      "execution_allowed_by_system": false,
+      "manual_user_action_required": true,
+      "chase_blocked": true,
+      "validation_rule": "MU may be observed but not chased or system-executed."
+    },
+    {
+      "ticker": "DRAM",
+      "category": "memory_etf",
+      "state": "strong_rebound_observe_no_chase",
+      "source": "user_instruction_scope_correction",
+      "currently_held": false,
+      "eligible_for_observation": true,
+      "execution_allowed_by_system": false,
+      "manual_user_action_required": true,
+      "chase_blocked": true,
+      "validation_rule": "DRAM may be observed but not chased or system-executed."
+    },
+    {
+      "ticker": "ASML",
+      "category": "semiconductor_equipment",
+      "state": "strong_rebound_observe",
+      "source": "user_instruction_scope_correction",
+      "currently_held": false,
+      "eligible_for_observation": true,
+      "execution_allowed_by_system": false,
+      "manual_user_action_required": true,
+      "chase_blocked": false,
+      "validation_rule": "ASML remains observation-only until separate rule review."
+    },
+    {
+      "ticker": "TSM",
+      "category": "semiconductor_foundry",
+      "state": "observe_repair_quality",
+      "source": "user_instruction_scope_correction",
+      "currently_held": false,
+      "eligible_for_observation": true,
+      "execution_allowed_by_system": false,
+      "manual_user_action_required": true,
+      "chase_blocked": false,
+      "validation_rule": "TSM remains observation-only until separate rule review."
+    },
+    {
+      "ticker": "AMD",
+      "category": "ai_semiconductor_beta",
+      "state": "observe_no_chase",
+      "source": "user_instruction_scope_correction",
+      "currently_held": false,
+      "eligible_for_observation": true,
+      "execution_allowed_by_system": false,
+      "manual_user_action_required": true,
+      "chase_blocked": true,
+      "validation_rule": "AMD may be observed but not chased or system-executed."
+    },
+    {
+      "ticker": "ORCL",
+      "category": "cloud_software",
+      "state": "weak_relative_strength_no_falling_knife",
+      "source": "user_instruction_scope_correction",
+      "currently_held": false,
+      "eligible_for_observation": true,
+      "execution_allowed_by_system": false,
+      "manual_user_action_required": true,
+      "chase_blocked": true,
+      "validation_rule": "ORCL may be observed but not treated as a falling-knife buy."
+    }
+  ]
+}

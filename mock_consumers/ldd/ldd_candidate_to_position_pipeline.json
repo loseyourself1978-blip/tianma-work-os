@@ -1,0 +1,79 @@
+{
+  "pipeline_id": "ldd-candidate-to-position-pipeline-v0.1",
+  "phase": "Vol.6 Phase 6.8a",
+  "status": "static_governance_pipeline",
+  "stages": [
+    {
+      "stage_id": "market_scan_detected",
+      "description": "Candidate appears in full-market scan.",
+      "required": true,
+      "blocks_automation": true,
+      "system_execution_allowed": false,
+      "user_manual_action_required": false,
+      "validation_rule": "Detection alone cannot create an order."
+    },
+    {
+      "stage_id": "candidate_watchlist_added",
+      "description": "Candidate is added to static non-position watchlist.",
+      "required": true,
+      "blocks_automation": true,
+      "system_execution_allowed": false,
+      "user_manual_action_required": false,
+      "validation_rule": "Watchlist status is not position status."
+    },
+    {
+      "stage_id": "external_verification_required",
+      "description": "External listing/quote context must be verified before user action.",
+      "required": true,
+      "blocks_automation": true,
+      "system_execution_allowed": false,
+      "user_manual_action_required": false,
+      "validation_rule": "Verification does not permit system execution."
+    },
+    {
+      "stage_id": "real_executable_quote_required",
+      "description": "A real executable quote is required before any manual user order.",
+      "required": true,
+      "blocks_automation": true,
+      "system_execution_allowed": false,
+      "user_manual_action_required": false,
+      "validation_rule": "Indicative, broker valuation, or external prices are not executable quotes."
+    },
+    {
+      "stage_id": "rule_review_required",
+      "description": "Candidate must pass rule review before becoming a position.",
+      "required": true,
+      "blocks_automation": true,
+      "system_execution_allowed": false,
+      "user_manual_action_required": false,
+      "validation_rule": "Rule review remains read-only governance."
+    },
+    {
+      "stage_id": "manual_user_order_only",
+      "description": "Any order must be manually placed by the user outside TWOS.",
+      "required": true,
+      "blocks_automation": true,
+      "system_execution_allowed": false,
+      "user_manual_action_required": true,
+      "validation_rule": "TWOS must not place, stage, or trigger orders."
+    },
+    {
+      "stage_id": "post_execution_reconciliation_required",
+      "description": "If the user executes outside TWOS, later screenshots must reconcile the result.",
+      "required": true,
+      "blocks_automation": true,
+      "system_execution_allowed": false,
+      "user_manual_action_required": false,
+      "validation_rule": "Only confirmed execution evidence can update position state."
+    },
+    {
+      "stage_id": "checkpoint_promotion_only_after_confirmed_execution",
+      "description": "Checkpoint promotion requires confirmed execution and post-execution account state.",
+      "required": true,
+      "blocks_automation": true,
+      "system_execution_allowed": false,
+      "user_manual_action_required": false,
+      "validation_rule": "Premarket observation cannot promote checkpoint."
+    }
+  ]
+}

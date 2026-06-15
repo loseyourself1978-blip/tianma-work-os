@@ -1,12 +1,12 @@
 {
   "protocol_id": "ldd-twos-runtime-baseline-backfeed-protocol-v0.1",
-  "phase": "Vol.6 Phase 6.8",
+  "phase": "Vol.6 Phase 6.8a",
   "purpose": "Provide a compact TWOS Runtime Status Update block that must be pasted back into LDD after meaningful TWOS/Codex progress.",
   "enabled_for_static_review": true,
   "backfeed_required_after_phase_completion": true,
   "backfeed_required_after_checkpoint_promotion": true,
   "backfeed_required_after_non_promoted_governance_sync": true,
-  "backfeed_block_template": "TWOS Runtime Status Update｜For LDD Baseline Sync\n\nLatest TWOS phase:\nVol.6 Phase 6.8 - Static Consumer Fixture Integration and Handoff\n\nLatest commit:\n<PHASE_6_8_COMMIT_SHA_AFTER_PUSH>\n\nOrigin/main:\nsynchronized\n\nWorking tree:\nclean\n\nActive checkpoint:\n2026-06-12T09:18:00+08:00\n\nLatest timeline event:\n2026-06-12T17:03:00+08:00\n\nOperating mode:\ncash_defense_core_position_survival_mode\n\nPortfolio mode:\nresidual_core_position_mode\n\nRuntime records:\n<POST_PHASE_6_8_RUNTIME_RECORD_COUNT>\n\nTimeline:\n<POST_PHASE_6_8_TIMELINE_EVENTS> events, 0 warnings\n\nActive rules:\n11\n\nCustomer-facing readiness:\nfalse\n\nSafety boundaries:\nNo frontend app, no customer-facing UI, no HTML/CSS/JS UI, no API server, no live endpoint, no external API, no broker/Binance connection, no live market data, no trading automation, no credential handling, no runtime mutation UI, no execution trigger.\n\nInstruction for future LDD Review Sync:\nUse this TWOS status as the latest runtime/product baseline unless a newer TWOS Runtime Status Update is provided.",
+  "backfeed_block_template": "TWOS Runtime Status Update｜For LDD Baseline Sync\n\nLatest TWOS phase:\nVol.6 Phase 6.8a - LDD Full-Market Scope Correction and IPO Radar Governance Sync\n\nLatest commit:\n<PHASE_6_8A_COMMIT_SHA_AFTER_PUSH>\n\nOrigin/main:\nsynchronized\n\nWorking tree:\nclean\n\nActive checkpoint:\n2026-06-12T09:18:00+08:00\n\nLatest timeline event:\n2026-06-12T17:20:00+08:00\n\nOperating mode:\ncash_defense_core_position_survival_mode\n\nPortfolio mode:\nresidual_core_position_mode\n\nRuntime records:\n<POST_PHASE_6_8A_RUNTIME_RECORD_COUNT>\n\nTimeline:\n<POST_PHASE_6_8A_TIMELINE_EVENTS> events, 0 warnings\n\nActive rules:\n11\n\nCustomer-facing readiness:\nfalse\n\nSafety boundaries:\nNo frontend app, no customer-facing UI, no HTML/CSS/JS UI, no API server, no live endpoint, no external API, no broker/Binance connection, no live market data, no trading automation, no credential handling, no runtime mutation UI, no execution trigger.\n\nInstruction for future LDD Review Sync:\nUse this TWOS status as the latest runtime/product baseline unless a newer TWOS Runtime Status Update is provided.",
   "required_fields": [
     "latest_twos_phase",
     "latest_commit",

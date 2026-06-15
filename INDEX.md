@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.6 Phase 6.5 - Internal Operator Cockpit Static Spec
+Vol.6 Phase 6.8a - LDD Full-Market Scope Correction and IPO Radar Governance Sync
 ```
 
 ## Core Documents
@@ -79,6 +79,7 @@ Vol.6 Phase 6.5 - Internal Operator Cockpit Static Spec
 - `docs/runtime/VOL6_PHASE6_3A_LDD_POST_CLOSE_EXECUTION_RECONCILIATION_AND_CHECKPOINT_UPDATE_v0.1.md`
 - `docs/runtime/VOL6_PHASE6_4_STATIC_COCKPIT_PROTOTYPE_BOUNDARY_REVIEW_v0.1.md`
 - `docs/runtime/VOL6_PHASE6_5_INTERNAL_OPERATOR_COCKPIT_STATIC_SPEC_v0.1.md`
+- `docs/runtime/VOL6_PHASE6_8A_LDD_FULL_MARKET_SCOPE_CORRECTION_AND_IPO_RADAR_GOVERNANCE_SYNC_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
@@ -492,6 +493,23 @@ Vol.6 Phase 6.5 - Internal Operator Cockpit Static Spec
 - `records/ldd/2026-06-12/vol6_phase6_8_static_consumer_fixture_integration_and_handoff_1703_sgt.json`
 - `reports/ldd/vol6_phase6_8_static_consumer_fixture_integration_and_handoff.md`
 - Current phase: `Vol.6 Phase 6.8 - Static Consumer Fixture Integration and Handoff`
+- Next: `Vol.6 Phase 6.9 - Vol.6 Handoff Summary and Vol.7 Readiness Gate`
+
+## Vol.6 Phase 6.8a / LDD Full-Market Scope Correction and IPO Radar Governance Sync
+
+- `docs/runtime/VOL6_PHASE6_8A_LDD_FULL_MARKET_SCOPE_CORRECTION_AND_IPO_RADAR_GOVERNANCE_SYNC_v0.1.md`
+- `schemas/ldd_full_market_scope_governance_sync.schema.json`
+- `mock_consumers/ldd/ldd_full_market_scan_scope_contract.json`
+- `mock_consumers/ldd/ldd_sector_rotation_heatmap_contract.json`
+- `mock_consumers/ldd/ldd_new_listing_ipo_radar_contract.json`
+- `mock_consumers/ldd/ldd_non_position_candidate_watchlist.json`
+- `mock_consumers/ldd/ldd_candidate_to_position_pipeline.json`
+- `mock_consumers/ldd/ldd_forbidden_chase_list.json`
+- `mock_consumers/ldd/ldd_position_replacement_expansion_review_contract.json`
+- `scripts/validate_ldd_full_market_scope_governance_sync.py`
+- `records/ldd/2026-06-12/vol6_phase6_8a_ldd_full_market_scope_correction_and_ipo_radar_governance_sync_1720_sgt.json`
+- `reports/ldd/vol6_phase6_8a_ldd_full_market_scope_correction_and_ipo_radar_governance_sync.md`
+- Current phase: `Vol.6 Phase 6.8a - LDD Full-Market Scope Correction and IPO Radar Governance Sync`
 - Next: `Vol.6 Phase 6.9 - Vol.6 Handoff Summary and Vol.7 Readiness Gate`
 
 ## Product Principles

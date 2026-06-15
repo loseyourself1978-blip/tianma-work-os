@@ -1,0 +1,55 @@
+{
+  "contract_id": "ldd-new-listing-ipo-radar-v0.1",
+  "phase": "Vol.6 Phase 6.8a",
+  "static_review_only": true,
+  "live_market_data_enabled": false,
+  "new_listing_radar_enabled": true,
+  "ipo_first_trade_confirmation_gate": true,
+  "candidate_rules": [
+    {
+      "ticker": "SPCX",
+      "name": "SpaceX",
+      "source": "user_instruction_scope_correction",
+      "category": "IPO_new_listing_space_ai_infrastructure",
+      "status": "candidate_watchlist_user_provided",
+      "ipo_price_usd": 135,
+      "external_verification_required_before_execution": true,
+      "real_executable_quote_required": true,
+      "initial_action_allowed": true,
+      "action_scope": "manual_user_action_outside_twos_only",
+      "max_initial_position": "1-2 shares",
+      "preferred_first_entry": "1 share observation position",
+      "buy_zones": [
+        {
+          "zone": "135-155",
+          "rule": "allow_1_to_2_shares"
+        },
+        {
+          "zone": "155-175",
+          "rule": "allow_max_1_share"
+        },
+        {
+          "zone": "175-200",
+          "rule": "wait_30_to_60_minutes_no_chase"
+        },
+        {
+          "zone": "above_200",
+          "rule": "no_buy_today"
+        }
+      ],
+      "no_market_order": true,
+      "no_heavy_position": true,
+      "no_selling_goog_or_nvda_to_fund": true,
+      "no_chase_above_200_today": true,
+      "no_system_execution": true,
+      "risk_tags": [
+        "mega_ipo_volatility",
+        "ultra_high_valuation",
+        "retail_hype_risk",
+        "index_inclusion_expectation",
+        "musk_key_person_risk"
+      ],
+      "validation_rule": "SPCX is a user-provided candidate radar item only; TWOS must not assert live listing facts or execute an order."
+    }
+  ]
+}

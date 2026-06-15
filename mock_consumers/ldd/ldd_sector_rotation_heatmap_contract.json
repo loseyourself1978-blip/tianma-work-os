@@ -1,0 +1,108 @@
+{
+  "contract_id": "ldd-sector-rotation-heatmap-v0.1",
+  "phase": "Vol.6 Phase 6.8a",
+  "static_review_only": true,
+  "live_market_data_enabled": false,
+  "sectors": [
+    {
+      "sector_id": "AI_semiconductor",
+      "display_name": "AI / semiconductor",
+      "scan_required": true,
+      "may_include_current_positions": true,
+      "may_include_non_position_candidates": true,
+      "output_required": true,
+      "no_live_fetch": true,
+      "validation_rule": "Must scan current AI core exposure and non-position semiconductor candidates."
+    },
+    {
+      "sector_id": "software_cloud_cybersecurity",
+      "display_name": "Software / cloud / cybersecurity",
+      "scan_required": true,
+      "may_include_current_positions": false,
+      "may_include_non_position_candidates": true,
+      "output_required": true,
+      "no_live_fetch": true,
+      "validation_rule": "Must include non-position software candidates when relevant."
+    },
+    {
+      "sector_id": "aerospace_defense_space",
+      "display_name": "Aerospace / defense / space",
+      "scan_required": true,
+      "may_include_current_positions": false,
+      "may_include_non_position_candidates": true,
+      "output_required": true,
+      "no_live_fetch": true,
+      "validation_rule": "Must support space and defense candidate radar without live data."
+    },
+    {
+      "sector_id": "robotics_autonomous_driving",
+      "display_name": "Robotics / autonomous driving",
+      "scan_required": true,
+      "may_include_current_positions": true,
+      "may_include_non_position_candidates": true,
+      "output_required": true,
+      "no_live_fetch": true,
+      "validation_rule": "Must separate TSLA residual exposure from broader autonomous-driving candidates."
+    },
+    {
+      "sector_id": "energy_oil_nuclear_power",
+      "display_name": "Energy / oil / nuclear power",
+      "scan_required": true,
+      "may_include_current_positions": false,
+      "may_include_non_position_candidates": true,
+      "output_required": true,
+      "no_live_fetch": true,
+      "validation_rule": "Must keep energy candidates separate from current residual core positions."
+    },
+    {
+      "sector_id": "financials_crypto_related_equities",
+      "display_name": "Financials / crypto-related equities",
+      "scan_required": true,
+      "may_include_current_positions": false,
+      "may_include_non_position_candidates": true,
+      "output_required": true,
+      "no_live_fetch": true,
+      "validation_rule": "Must not convert crypto defense posture into equity execution."
+    },
+    {
+      "sector_id": "healthcare_glp1",
+      "display_name": "Healthcare / GLP-1",
+      "scan_required": true,
+      "may_include_current_positions": false,
+      "may_include_non_position_candidates": true,
+      "output_required": true,
+      "no_live_fetch": true,
+      "validation_rule": "Must include healthcare rotation candidates when relevant."
+    },
+    {
+      "sector_id": "consumer_platform_tech",
+      "display_name": "Consumer platform tech",
+      "scan_required": true,
+      "may_include_current_positions": true,
+      "may_include_non_position_candidates": true,
+      "output_required": true,
+      "no_live_fetch": true,
+      "validation_rule": "Must separate GOOG core hold review from new platform-tech candidate search."
+    },
+    {
+      "sector_id": "IPO_new_listings",
+      "display_name": "IPO / new listings",
+      "scan_required": true,
+      "may_include_current_positions": false,
+      "may_include_non_position_candidates": true,
+      "output_required": true,
+      "no_live_fetch": true,
+      "validation_rule": "Must include IPO radar and confirmation gates without asserting live listing facts."
+    },
+    {
+      "sector_id": "ETF_index_leveraged_tools",
+      "display_name": "ETF / index / leveraged tools",
+      "scan_required": true,
+      "may_include_current_positions": false,
+      "may_include_non_position_candidates": true,
+      "output_required": true,
+      "no_live_fetch": true,
+      "validation_rule": "Must preserve no-reentry discipline for leveraged tools."
+    }
+  ]
+}

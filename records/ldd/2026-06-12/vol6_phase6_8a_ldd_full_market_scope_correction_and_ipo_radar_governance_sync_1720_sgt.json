@@ -1,0 +1,268 @@
+{
+  "record_type": "governance_runtime_sync",
+  "phase": "Vol.6 Phase 6.8a",
+  "sync_type": "ldd_premarket_review_scope_update",
+  "timestamp_sgt": "2026-06-12T17:20:00+08:00",
+  "timestamp_range_sgt_bjt": "2026-06-12 17:02-17:20",
+  "market_session": "2026-06-12_us_premarket",
+  "source_priority": [
+    "user_broker_screenshots",
+    "user_binance_screenshots",
+    "user_instruction_scope_correction",
+    "external_market_data_for_validation_only"
+  ],
+  "runtime_baseline_correction": {
+    "stale_ldd_twos_phase": "Vol.6 Phase 6.7 - Cockpit Static Spec Integration Review",
+    "stale_ldd_twos_commit": "c2a2a06edba6216eed64998caba018c3a3adf03d",
+    "actual_twos_phase_before_this_record": "Vol.6 Phase 6.8 - Static Consumer Fixture Integration and Handoff",
+    "actual_twos_commit_before_this_record": "704f006b52461459ccc995ee0b6de7a53bbb0de2",
+    "market_account_facts_still_accepted": true,
+    "runtime_product_baseline_corrected": true
+  },
+  "active_checkpoint_before_this_review": "2026-06-12T09:18:00+08:00",
+  "active_checkpoint_after_this_review": "2026-06-12T09:18:00+08:00",
+  "latest_checkpoint_unchanged": true,
+  "checkpoint_promoted": false,
+  "promotion_block_reason": "scope_correction_and_premarket_observation_no_execution",
+  "execution_event": false,
+  "operating_mode": "cash_defense_core_position_survival_mode",
+  "portfolio_mode": "residual_core_position_mode",
+  "customer_facing_ready": false,
+  "external_api_connected": false,
+  "broker_api_connected": false,
+  "binance_api_connected": false,
+  "live_market_data_enabled": false,
+  "trading_automation_enabled": false,
+  "credential_handling_enabled": false,
+  "runtime_mutation_enabled_by_user_interface": false,
+  "execution_trigger_enabled_by_system": false,
+  "broker_state_update": {
+    "total_assets_usd": 38090.02,
+    "total_day_pnl_usd": 492.55,
+    "total_holding_value_usd": 19294.34,
+    "total_holding_pnl_usd": 14728.06,
+    "cash_usd": 18795.68,
+    "us_section_usd": 24091.21,
+    "us_holding_value_usd": 5295.53,
+    "implied_us_cash_usd": 18795.68,
+    "us_cash_ratio": "78.0%",
+    "us_holding_pnl_usd": 2212.07,
+    "us_day_pnl_usd": 33.16,
+    "promotion_status": "non_promoted_premarket_observation"
+  },
+  "current_us_positions": {
+    "GOOG": {
+      "shares": 9,
+      "current_price_broker": 359.41,
+      "market_value_usd": 3234.69,
+      "day_pnl_usd": 25.65
+    },
+    "NVDA": {
+      "shares": 10,
+      "current_price_broker": 205.62,
+      "market_value_usd": 2056.2,
+      "day_pnl_usd": 7.5
+    },
+    "TSLA": {
+      "shares": 0.0116
+    },
+    "GGLL": 0,
+    "GLD": 0,
+    "SOXL": 0,
+    "UGL": 0,
+    "INTC": 0,
+    "SOXS": 0,
+    "TSLQ": 0,
+    "GDXU": 0,
+    "promotion_status": "non_promoted_premarket_observation"
+  },
+  "binance_state_update": {
+    "total_assets_usdt": 8252.94,
+    "day_pnl_usdt": 6.2,
+    "day_pnl_pct": "+0.08%",
+    "usdt_balance": 5936.0,
+    "usdt_defense_ratio": "71.9%",
+    "ETH": 0.8070416,
+    "DOGE": 8400.535,
+    "SOL": 2.931163,
+    "BTC": 0.00055762,
+    "ZEC": 0.012974,
+    "zec_grid_status": "closed_no_reopen"
+  },
+  "scope_correction": {
+    "issue": "recent_ldd_reviews_overfocused_on_current_and_historical_positions",
+    "corrected_scope": "entire_us_equity_market",
+    "not_limited_to_current_or_former_positions": true,
+    "scope_warning_required_when_review_only_mentions_current_or_former_holdings": true
+  },
+  "permanent_modules": [
+    "account_risk_management_layer",
+    "full_market_opportunity_scan_layer",
+    "sector_rotation_heatmap",
+    "new_listing_ipo_radar",
+    "non_position_candidate_watchlist",
+    "forbidden_chase_list",
+    "position_replacement_or_expansion_review"
+  ],
+  "full_market_scan_modules": [
+    "AI_semiconductor",
+    "software_cloud_cybersecurity",
+    "aerospace_defense_space",
+    "robotics_autonomous_driving",
+    "energy_oil_nuclear_power",
+    "financials_crypto_related_equities",
+    "healthcare_glp1",
+    "consumer_platform_tech",
+    "IPO_new_listings",
+    "ETF_index_leveraged_tools"
+  ],
+  "new_candidate_watchlist": [
+    {
+      "ticker": "SPCX",
+      "name": "SpaceX",
+      "category": "IPO_new_listing_space_ai_infrastructure",
+      "source": "user_instruction_scope_correction",
+      "status": "candidate_watchlist_user_provided",
+      "ipo_price_usd": 135,
+      "initial_action_allowed": true,
+      "action_scope": "manual_user_action_outside_twos_only",
+      "max_initial_position": "1-2 shares",
+      "preferred_first_entry": "1 share observation position",
+      "external_verification_required_before_execution": true,
+      "real_executable_quote_required": true,
+      "buy_zones": [
+        "135-155 allow 1-2 shares",
+        "155-175 allow max 1 share",
+        "175-200 wait 30-60 minutes and no chase",
+        "above 200 no buy today"
+      ],
+      "rules": [
+        "no_market_order",
+        "no_heavy_position",
+        "no_selling_goog_or_nvda_to_fund_spcx",
+        "no_chase_after_ipo_spike",
+        "wait_for_real_executable_quote_or_first_trade",
+        "no_system_execution",
+        "manual_order_only_if_user_decides"
+      ],
+      "risk_tags": [
+        "mega_ipo_volatility",
+        "ultra_high_valuation",
+        "retail_hype_risk",
+        "index_inclusion_expectation",
+        "musk_key_person_risk"
+      ]
+    },
+    {
+      "ticker": "MU",
+      "category": "memory_semiconductor",
+      "state": "strong_rebound_observe_no_chase"
+    },
+    {
+      "ticker": "DRAM",
+      "category": "memory_etf",
+      "state": "strong_rebound_observe_no_chase"
+    },
+    {
+      "ticker": "ASML",
+      "category": "semiconductor_equipment",
+      "state": "strong_rebound_observe"
+    },
+    {
+      "ticker": "TSM",
+      "category": "semiconductor_foundry",
+      "state": "observe_repair_quality"
+    },
+    {
+      "ticker": "AMD",
+      "category": "ai_semiconductor_beta",
+      "state": "observe_no_chase"
+    },
+    {
+      "ticker": "ORCL",
+      "category": "cloud_software",
+      "state": "weak_relative_strength_no_falling_knife"
+    }
+  ],
+  "active_rules_after_review": [
+    "no_new_broad_buying_before_regular_session_confirmation",
+    "spcx_observation_position_allowed_max_1_to_2_shares",
+    "spcx_no_buy_above_200_today",
+    "spcx_limit_order_only_no_market_order",
+    "no_soxl_reentry",
+    "no_ugl_reentry",
+    "no_intc_reentry",
+    "no_ggll_buyback_without_goog_370_confirmation",
+    "no_gld_reentry_without_380_390_stability_and_400_405_confirmation",
+    "no_zec_grid_reopen",
+    "btc_no_buyback_until_75500_76000",
+    "if_nvda_holds_204_208_keep_10_shares",
+    "if_nvda_breaks_198_with_qqq_smh_weak_reduce_5_nvda",
+    "if_goog_breaks_350_without_recovery_reduce_goog_approximately_4_shares",
+    "maintain_us_cash_defense_above_70_percent",
+    "maintain_binance_usdt_defense_above_70_percent"
+  ],
+  "duxd_feedback": [
+    "restore_full_market_scan_scope",
+    "add_sector_rotation_heatmap_to_every_ldd_review",
+    "add_new_listing_ipo_radar",
+    "add_non_position_candidate_watchlist",
+    "add_candidate_to_position_pipeline",
+    "add_forbidden_chase_list",
+    "add_spcx_ipo_observation_rule",
+    "add_ipo_first_trade_confirmation_gate",
+    "add_position_scope_warning_when_review_only_mentions_current_or_former_holdings"
+  ],
+  "final_instruction": [
+    "ldd_scope_is_entire_us_equity_market_not_only_existing_positions",
+    "spcx_can_be_bought_as_1_share_observation_position_only",
+    "do_not_chase_spcx_above_175_without_30_to_60_minute_confirmation",
+    "no_spcx_buy_above_200_today",
+    "keep_goog_9_and_nvda_10",
+    "keep_cash_as_main_position",
+    "do_not_reopen_soxl_gld_ggll_ugl_intc_before_confirmation"
+  ],
+  "cross_workspace_progress_drift": {
+    "stale_ldd_twos_phase": "Vol.6 Phase 6.7 - Cockpit Static Spec Integration Review",
+    "stale_ldd_twos_commit": "c2a2a06edba6216eed64998caba018c3a3adf03d",
+    "actual_twos_phase_before_this_record": "Vol.6 Phase 6.8 - Static Consumer Fixture Integration and Handoff",
+    "actual_twos_commit_before_this_record": "704f006b52461459ccc995ee0b6de7a53bbb0de2",
+    "drift_detected": true,
+    "drift_type": [
+      "stale_phase_detected",
+      "stale_commit_detected"
+    ],
+    "market_account_facts_still_accepted": true,
+    "runtime_product_baseline_corrected": true,
+    "backfeed_required_after_completion": true
+  },
+  "validation_summary": {
+    "runtime_record_valid": true,
+    "full_market_scope_contract_created": true,
+    "ipo_radar_contract_created": true,
+    "non_position_candidate_watchlist_created": true,
+    "candidate_to_position_pipeline_created": true,
+    "forbidden_chase_list_created": true,
+    "checkpoint_promoted": false,
+    "execution_event": false,
+    "blocking_failures": 0,
+    "warnings": 0
+  },
+  "explicit_non_goals_confirmed": {
+    "frontend_app_created": false,
+    "customer_facing_ui_created": false,
+    "html_css_js_ui_created": false,
+    "api_server_created": false,
+    "live_endpoint_created": false,
+    "external_api_connected": false,
+    "broker_api_connected": false,
+    "binance_api_connected": false,
+    "live_market_data_enabled": false,
+    "trading_automation_enabled": false,
+    "credential_handling_enabled": false,
+    "runtime_mutation_ui_enabled": false,
+    "execution_trigger_enabled": false,
+    "github_issues_created": false,
+    "github_projects_board_created": false
+  }
+}

@@ -2,7 +2,7 @@
   "gate_id": "ldd-static-consumer-fixture-safety-gate-v0.1",
   "phase": "Vol.6 Phase 6.8",
   "active_checkpoint": "2026-06-12T09:18:00+08:00",
-  "latest_timeline_event": "2026-06-12T17:03:00+08:00",
+  "latest_timeline_event": "2026-06-12T17:20:00+08:00",
   "operating_mode": "cash_defense_core_position_survival_mode",
   "portfolio_mode": "residual_core_position_mode",
   "internal_static_spec_ready": true,

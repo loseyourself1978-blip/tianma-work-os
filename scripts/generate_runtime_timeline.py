@@ -140,6 +140,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str:
         return "runtime_execution_reconciliation"
     if "vol6_phase6_7a_ldd_premarket_rebound_confirmation_governance_sync" in name:
         return "governance_runtime_sync"
+    if "vol6_phase6_8a_ldd_full_market_scope_correction_and_ipo_radar_governance_sync" in name:
+        return "governance_runtime_sync"
     if "executed_order_writeback" in name:
         return "executed_order_writeback"
     if "runtime_status_conflict_arbitration" in name:
@@ -534,6 +536,11 @@ def title_and_summary(record: LoadedRecord) -> tuple[str, str]:
             f"Governance review recorded with customer-facing ready={scalar(data.get('customer_facing_ready'))}, runtime_mutation_flag={scalar(data.get('runtime_mutation_enabled', data.get('runtime_mutation_ui_enabled')))}, and trading_automation_flag={scalar(data.get('trading_automation_enabled'))}.",
         )
     if rt == "governance_runtime_sync":
+        if data.get("sync_type") == "ldd_premarket_review_scope_update":
+            return (
+                "LDD full-market scope correction and IPO radar governance sync",
+                "Recorded full-market scan scope, sector heatmap, IPO radar, non-position candidate watchlist, and forbidden chase rules as non-promoted governance evidence.",
+            )
         return (
             "Non-promoted LDD governance runtime sync",
             f"Recorded {scalar(data.get('phase'))} as governance evidence while latest checkpoint unchanged={scalar(data.get('latest_checkpoint_unchanged'))}.",
@@ -613,7 +620,19 @@ def state_before_after(record: LoadedRecord) -> tuple[str, str]:
     if rt == "governance_review":
         return "", f"phase={scalar(data.get('phase') or data.get('review_phase'))}; customer_facing_ready={scalar(data.get('customer_facing_ready'))}"
     if rt == "governance_runtime_sync":
-        return "active_checkpoint_unchanged", f"latest_checkpoint_unchanged={scalar(data.get('latest_checkpoint_unchanged'))}; promoted=false"
+        before = scalar(
+            data.get("active_checkpoint_before_this_review")
+            or data.get("previous_active_checkpoint")
+            or "active_checkpoint_unchanged",
+            "active_checkpoint_unchanged",
+        )
+        after = scalar(
+            data.get("active_checkpoint_after_this_review")
+            or data.get("active_checkpoint_before_this_review")
+            or "active_checkpoint_unchanged",
+            "active_checkpoint_unchanged",
+        )
+        return before, f"{after}; checkpoint_promoted={scalar(data.get('checkpoint_promoted'), 'false')}; execution_event={scalar(data.get('execution_event'), 'false')}"
     if rt == "executed_order_writeback":
         reconciliation = data.get("reconciliation", {}) if isinstance(data.get("reconciliation"), dict) else {}
         return "", f"reconciliation_status={scalar(reconciliation.get('reconciliation_status'))}"

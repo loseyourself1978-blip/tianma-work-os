@@ -11,7 +11,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CHECKPOINT = "2026-06-12T09:18:00+08:00"
-LATEST_TIMELINE_EVENT = "2026-06-12T17:03:00+08:00"
+LATEST_TIMELINE_EVENT = "2026-06-12T17:20:00+08:00"
 OPERATING_MODE = "cash_defense_core_position_survival_mode"
 PORTFOLIO_MODE = "residual_core_position_mode"
 BASELINE_COMMIT = "650d60d23fd5d2957d5fe223dd84a37915dd9d3e"
@@ -221,7 +221,7 @@ def main() -> int:
 
     protocol = loaded.get("backfeed_protocol", {})
     template = str(protocol.get("backfeed_block_template", ""))
-    require("TWOS Runtime Status Update｜For LDD Baseline Sync" in template and "<PHASE_6_8_COMMIT_SHA_AFTER_PUSH>" in template, "backfeed_template", "backfeed protocol contains the full TWOS Runtime Status Update template", failures)
+    require("TWOS Runtime Status Update｜For LDD Baseline Sync" in template and "<PHASE_6_8A_COMMIT_SHA_AFTER_PUSH>" in template, "backfeed_template", "backfeed protocol contains the full TWOS Runtime Status Update template", failures)
     require(protocol.get("backfeed_required_after_phase_completion") is True, "backfeed_after_phase", "backfeed required after phase completion", failures)
     require(protocol.get("backfeed_required_after_checkpoint_promotion") is True, "backfeed_after_checkpoint", "backfeed required after checkpoint promotion", failures)
     require(protocol.get("backfeed_required_after_non_promoted_governance_sync") is True, "backfeed_after_non_promoted", "backfeed required after non-promoted governance sync", failures)

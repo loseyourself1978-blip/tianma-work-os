@@ -1,0 +1,70 @@
+{
+  "list_id": "ldd-forbidden-chase-list-v0.1",
+  "phase": "Vol.6 Phase 6.8a",
+  "status": "static_governance_block_list",
+  "items": [
+    {
+      "item_id": "spcx_above_200_today",
+      "blocked": true,
+      "system_execution_allowed": false,
+      "manual_user_override_required": true,
+      "validation_rule": "No SPCX buy above 200 today."
+    },
+    {
+      "item_id": "spcx_after_ipo_spike_without_30_60_min_confirmation",
+      "blocked": true,
+      "system_execution_allowed": false,
+      "manual_user_override_required": true,
+      "validation_rule": "No SPCX chase after IPO spike without 30-60 minute confirmation."
+    },
+    {
+      "item_id": "soxl_rebound_after_forced_deleveraging",
+      "blocked": true,
+      "system_execution_allowed": false,
+      "manual_user_override_required": true,
+      "validation_rule": "SOXL rebound is opportunity cost only, not a reentry instruction."
+    },
+    {
+      "item_id": "gld_rebound_without_400_405_confirmation",
+      "blocked": true,
+      "system_execution_allowed": false,
+      "manual_user_override_required": true,
+      "validation_rule": "GLD reentry requires 400-405 confirmation and new approved rule."
+    },
+    {
+      "item_id": "ggll_buyback_without_goog_370_confirmation",
+      "blocked": true,
+      "system_execution_allowed": false,
+      "manual_user_override_required": true,
+      "validation_rule": "GGLL buyback requires GOOG 370 confirmation and new approved rule."
+    },
+    {
+      "item_id": "ugl_reentry",
+      "blocked": true,
+      "system_execution_allowed": false,
+      "manual_user_override_required": true,
+      "validation_rule": "UGL remains closed / no reentry."
+    },
+    {
+      "item_id": "intc_reentry",
+      "blocked": true,
+      "system_execution_allowed": false,
+      "manual_user_override_required": true,
+      "validation_rule": "INTC remains closed / no reentry."
+    },
+    {
+      "item_id": "btc_buyback_below_75500_76000",
+      "blocked": true,
+      "system_execution_allowed": false,
+      "manual_user_override_required": true,
+      "validation_rule": "BTC buyback trigger remains inactive below 75,500-76,000."
+    },
+    {
+      "item_id": "zec_grid_reopen",
+      "blocked": true,
+      "system_execution_allowed": false,
+      "manual_user_override_required": true,
+      "validation_rule": "ZEC grid remains closed; do not reopen."
+    }
+  ]
+}
