@@ -114,6 +114,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "governance_review"
     if "vol7_phase7_1_static_fixture_consumer_contract_and_panel_layout" in name:
         return "governance_review"
+    if "vol7_phase7_2_static_fixture_consumer_dry_run_and_drift_detector" in name:
+        return "governance_review"
     if "static_cockpit_prototype_boundary_review" in name:
         return "static_cockpit_prototype_review"
     if "internal_operator_cockpit_static_spec_review" in name:
@@ -240,6 +242,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
     if data.get("record_type") == "governance_review" and str(data.get("phase", "")).startswith("Vol.7 Phase 7.0"):
         return "governance_review"
     if data.get("record_type") == "governance_review" and str(data.get("phase", "")).startswith("Vol.7 Phase 7.1"):
+        return "governance_review"
+    if data.get("record_type") == "governance_review" and str(data.get("phase", "")).startswith("Vol.7 Phase 7.2"):
         return "governance_review"
     if data.get("schema_type") == "executed_order_writeback":
         return "executed_order_writeback"

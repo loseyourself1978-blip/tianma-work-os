@@ -34,6 +34,8 @@ READ_ONLY_API_RESPONSES = REPO_ROOT / "mock_consumers" / "ldd" / "read_only_api_
 VOL7_STATIC_UI_SHELL_BOUNDARY_MAP = REPO_ROOT / "mock_consumers" / "ldd" / "vol7_static_ui_shell_boundary_map.json"
 VOL7_STATIC_FIXTURE_CONSUMER_CONTRACT = REPO_ROOT / "mock_consumers" / "ldd" / "vol7_static_fixture_consumer_contract.json"
 VOL7_READ_ONLY_PANEL_LAYOUT = REPO_ROOT / "mock_consumers" / "ldd" / "vol7_read_only_panel_layout.json"
+VOL7_STATIC_FIXTURE_CONSUMER_DRY_RUN = REPO_ROOT / "mock_consumers" / "ldd" / "vol7_static_fixture_consumer_dry_run_result.json"
+VOL7_STATIC_FIXTURE_CONSUMER_DRIFT_REPORT = REPO_ROOT / "mock_consumers" / "ldd" / "vol7_static_fixture_consumer_drift_report.json"
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 
@@ -89,6 +91,8 @@ SCHEMA_FILES = {
     "vol7_static_ui_shell_boundary_map": "vol7_static_ui_shell_boundary_map.schema.json",
     "vol7_static_fixture_consumer_contract": "vol7_static_fixture_consumer_contract.schema.json",
     "vol7_read_only_panel_layout": "vol7_read_only_panel_layout.schema.json",
+    "vol7_static_fixture_consumer_dry_run": "vol7_static_fixture_consumer_dry_run.schema.json",
+    "vol7_static_fixture_consumer_drift_report": "vol7_static_fixture_consumer_drift_report.schema.json",
     "static_cockpit_prototype_review": "static_cockpit_prototype_review.schema.json",
     "internal_operator_cockpit_static_spec_review": "internal_operator_cockpit_static_spec_review.schema.json",
     "ai_board_cockpit_static_spec_review": "ai_board_cockpit_static_spec_review.schema.json",
@@ -148,6 +152,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "vol7_static_ui_shell_boundary_map", SCHEMA_FILES["vol7_static_ui_shell_boundary_map"]
     if "vol7_phase7_1_static_fixture_consumer_contract_and_panel_layout" in filename:
         return "vol7_static_fixture_consumer_contract", SCHEMA_FILES["vol7_static_fixture_consumer_contract"]
+    if "vol7_phase7_2_static_fixture_consumer_dry_run_and_drift_detector" in filename:
+        return "vol7_static_fixture_consumer_dry_run", SCHEMA_FILES["vol7_static_fixture_consumer_dry_run"]
     if "static_cockpit_prototype_boundary_review" in filename:
         return "static_cockpit_prototype_review", SCHEMA_FILES["static_cockpit_prototype_review"]
     if "internal_operator_cockpit_static_spec_review" in filename:
@@ -446,6 +452,26 @@ def collect_targets() -> tuple[list[ValidationTarget], list[Path]]:
                 "mock_consumers",
                 SCHEMA_FILES["vol7_read_only_panel_layout"],
                 "vol7_read_only_panel_layout",
+            )
+        )
+
+    if VOL7_STATIC_FIXTURE_CONSUMER_DRY_RUN.exists():
+        targets.append(
+            ValidationTarget(
+                VOL7_STATIC_FIXTURE_CONSUMER_DRY_RUN,
+                "mock_consumers",
+                SCHEMA_FILES["vol7_static_fixture_consumer_dry_run"],
+                "vol7_static_fixture_consumer_dry_run",
+            )
+        )
+
+    if VOL7_STATIC_FIXTURE_CONSUMER_DRIFT_REPORT.exists():
+        targets.append(
+            ValidationTarget(
+                VOL7_STATIC_FIXTURE_CONSUMER_DRIFT_REPORT,
+                "mock_consumers",
+                SCHEMA_FILES["vol7_static_fixture_consumer_drift_report"],
+                "vol7_static_fixture_consumer_drift_report",
             )
         )
 

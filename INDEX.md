@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.7 Phase 7.1 - Static Fixture Consumer Contract and Read-Only Panel Layout
+Vol.7 Phase 7.2 - Static Fixture Consumer Dry-Run and Drift Detector
 ```
 
 ## Core Documents
@@ -84,6 +84,7 @@ Vol.7 Phase 7.1 - Static Fixture Consumer Contract and Read-Only Panel Layout
 - `docs/runtime/VOL6_HANDOFF_SUMMARY_v0.1.md`
 - `docs/runtime/VOL7_PHASE7_0_STATIC_UI_SHELL_BOUNDARY_MAP_v0.1.md`
 - `docs/runtime/VOL7_PHASE7_1_STATIC_FIXTURE_CONSUMER_CONTRACT_AND_PANEL_LAYOUT_v0.1.md`
+- `docs/runtime/VOL7_PHASE7_2_STATIC_FIXTURE_CONSUMER_DRY_RUN_AND_DRIFT_DETECTOR_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
@@ -562,6 +563,19 @@ Vol.7 Phase 7.1 - Static Fixture Consumer Contract and Read-Only Panel Layout
 - `records/ldd/2026-06-15/vol7_phase7_1_static_fixture_consumer_contract_and_panel_layout.json`
 - Current phase: `Vol.7 Phase 7.1 - Static Fixture Consumer Contract and Read-Only Panel Layout`
 - Next: `Vol.7 Phase 7.2 - Static Fixture Consumer Dry-Run and Drift Detector`
+
+## Vol.7 Phase 7.2 / Static Fixture Consumer Dry-Run and Drift Detector
+
+- `docs/runtime/VOL7_PHASE7_2_STATIC_FIXTURE_CONSUMER_DRY_RUN_AND_DRIFT_DETECTOR_v0.1.md`
+- `schemas/vol7_static_fixture_consumer_dry_run.schema.json`
+- `schemas/vol7_static_fixture_consumer_drift_report.schema.json`
+- `mock_consumers/ldd/vol7_static_fixture_consumer_dry_run_result.json`
+- `mock_consumers/ldd/vol7_static_fixture_consumer_drift_report.json`
+- `scripts/validate_vol7_static_fixture_consumer_dry_run.py`
+- `scripts/validate_vol7_static_fixture_consumer_dry_run.sh`
+- `records/ldd/2026-06-15/vol7_phase7_2_static_fixture_consumer_dry_run_and_drift_detector.json`
+- Current phase: `Vol.7 Phase 7.2 - Static Fixture Consumer Dry-Run and Drift Detector`
+- Next: `Vol.7 Phase 7.3 - Static Shell Implementation Readiness Gate`
 
 ## Product Principles
 
