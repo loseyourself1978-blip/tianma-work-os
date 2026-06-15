@@ -15,6 +15,7 @@ CHECKPOINT = "2026-06-12T09:18:00+08:00"
 BASELINE_COMMIT = "1a5f7bce0df645020089b63bc8a82463c63d1027"
 BASELINE_TIMELINE_EVENT = "2026-06-15T13:58:46+08:00"
 DRY_RUN_TIMESTAMP = "2026-06-15T14:23:13+08:00"
+READINESS_GATE_TIMESTAMP = "2026-06-15T17:07:00+08:00"
 OPERATING_MODE = "cash_defense_core_position_survival_mode"
 PORTFOLIO_MODE = "residual_core_position_mode"
 SCOPE_REMINDER = "LDD scope is the entire U.S. equity market, not only existing or former positions."
@@ -380,9 +381,9 @@ def main() -> int:
     require(all(item == SCOPE_REMINDER for item in scope_sources) and SCOPE_REMINDER in example_scope, "ldd_scope_reminder", "LDD full-market scope reminder exists across all Phase 7.0-7.2 fixtures", failures)
 
     event_count, warning_count, latest_event = current_timeline_counts(timeline)
-    require(event_count in {101, 102}, "current_timeline_count", "current timeline count is baseline 101 or post-record 102", failures)
+    require(event_count in {101, 102, 103}, "current_timeline_count", "current timeline count is baseline 101, post-dry-run 102, or post-readiness-gate 103", failures)
     require(warning_count == 0, "current_timeline_warnings", "current timeline warnings remain 0", failures)
-    require(latest_event in {BASELINE_TIMELINE_EVENT, DRY_RUN_TIMESTAMP}, "current_latest_event", "current latest timeline event is baseline or Phase 7.2 dry-run timestamp", failures)
+    require(latest_event in {BASELINE_TIMELINE_EVENT, DRY_RUN_TIMESTAMP, READINESS_GATE_TIMESTAMP}, "current_latest_event", "current latest timeline event is baseline, Phase 7.2 dry-run timestamp, or Phase 7.3 readiness timestamp", failures)
     require(view_model.get("checkpoint", {}).get("latest_active_checkpoint") == CHECKPOINT, "view_model_checkpoint", "view model active checkpoint is unchanged", failures)
     require(latest_state.get("latest_active_checkpoint") == CHECKPOINT or latest_state.get("checkpoint") == CHECKPOINT, "latest_state_checkpoint", "latest_state active checkpoint is unchanged", failures)
 

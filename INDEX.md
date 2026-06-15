@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.7 Phase 7.2 - Static Fixture Consumer Dry-Run and Drift Detector
+Vol.7 Phase 7.3 - Static Shell Implementation Readiness Gate
 ```
 
 ## Core Documents
@@ -85,6 +85,7 @@ Vol.7 Phase 7.2 - Static Fixture Consumer Dry-Run and Drift Detector
 - `docs/runtime/VOL7_PHASE7_0_STATIC_UI_SHELL_BOUNDARY_MAP_v0.1.md`
 - `docs/runtime/VOL7_PHASE7_1_STATIC_FIXTURE_CONSUMER_CONTRACT_AND_PANEL_LAYOUT_v0.1.md`
 - `docs/runtime/VOL7_PHASE7_2_STATIC_FIXTURE_CONSUMER_DRY_RUN_AND_DRIFT_DETECTOR_v0.1.md`
+- `docs/runtime/VOL7_PHASE7_3_STATIC_SHELL_IMPLEMENTATION_READINESS_GATE_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
@@ -576,6 +577,17 @@ Vol.7 Phase 7.2 - Static Fixture Consumer Dry-Run and Drift Detector
 - `records/ldd/2026-06-15/vol7_phase7_2_static_fixture_consumer_dry_run_and_drift_detector.json`
 - Current phase: `Vol.7 Phase 7.2 - Static Fixture Consumer Dry-Run and Drift Detector`
 - Next: `Vol.7 Phase 7.3 - Static Shell Implementation Readiness Gate`
+
+## Vol.7 Phase 7.3 / Static Shell Implementation Readiness Gate
+
+- `docs/runtime/VOL7_PHASE7_3_STATIC_SHELL_IMPLEMENTATION_READINESS_GATE_v0.1.md`
+- `schemas/vol7_static_shell_implementation_readiness_gate.schema.json`
+- `mock_consumers/ldd/vol7_static_shell_implementation_readiness_gate.json`
+- `scripts/validate_vol7_static_shell_implementation_readiness_gate.py`
+- `scripts/validate_vol7_static_shell_implementation_readiness_gate.sh`
+- `records/ldd/2026-06-15/vol7_phase7_3_static_shell_implementation_readiness_gate.json`
+- Current phase: `Vol.7 Phase 7.3 - Static Shell Implementation Readiness Gate`
+- Next: `Vol.7 Phase 7.4 - Local Static Shell Skeleton Permissioned Implementation`
 
 ## Product Principles
 

@@ -36,6 +36,7 @@ VOL7_STATIC_FIXTURE_CONSUMER_CONTRACT = REPO_ROOT / "mock_consumers" / "ldd" / "
 VOL7_READ_ONLY_PANEL_LAYOUT = REPO_ROOT / "mock_consumers" / "ldd" / "vol7_read_only_panel_layout.json"
 VOL7_STATIC_FIXTURE_CONSUMER_DRY_RUN = REPO_ROOT / "mock_consumers" / "ldd" / "vol7_static_fixture_consumer_dry_run_result.json"
 VOL7_STATIC_FIXTURE_CONSUMER_DRIFT_REPORT = REPO_ROOT / "mock_consumers" / "ldd" / "vol7_static_fixture_consumer_drift_report.json"
+VOL7_STATIC_SHELL_IMPLEMENTATION_READINESS_GATE = REPO_ROOT / "mock_consumers" / "ldd" / "vol7_static_shell_implementation_readiness_gate.json"
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 
@@ -93,6 +94,7 @@ SCHEMA_FILES = {
     "vol7_read_only_panel_layout": "vol7_read_only_panel_layout.schema.json",
     "vol7_static_fixture_consumer_dry_run": "vol7_static_fixture_consumer_dry_run.schema.json",
     "vol7_static_fixture_consumer_drift_report": "vol7_static_fixture_consumer_drift_report.schema.json",
+    "vol7_static_shell_implementation_readiness_gate": "vol7_static_shell_implementation_readiness_gate.schema.json",
     "static_cockpit_prototype_review": "static_cockpit_prototype_review.schema.json",
     "internal_operator_cockpit_static_spec_review": "internal_operator_cockpit_static_spec_review.schema.json",
     "ai_board_cockpit_static_spec_review": "ai_board_cockpit_static_spec_review.schema.json",
@@ -154,6 +156,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "vol7_static_fixture_consumer_contract", SCHEMA_FILES["vol7_static_fixture_consumer_contract"]
     if "vol7_phase7_2_static_fixture_consumer_dry_run_and_drift_detector" in filename:
         return "vol7_static_fixture_consumer_dry_run", SCHEMA_FILES["vol7_static_fixture_consumer_dry_run"]
+    if "vol7_phase7_3_static_shell_implementation_readiness_gate" in filename:
+        return "vol7_static_shell_implementation_readiness_gate", SCHEMA_FILES["vol7_static_shell_implementation_readiness_gate"]
     if "static_cockpit_prototype_boundary_review" in filename:
         return "static_cockpit_prototype_review", SCHEMA_FILES["static_cockpit_prototype_review"]
     if "internal_operator_cockpit_static_spec_review" in filename:
@@ -472,6 +476,16 @@ def collect_targets() -> tuple[list[ValidationTarget], list[Path]]:
                 "mock_consumers",
                 SCHEMA_FILES["vol7_static_fixture_consumer_drift_report"],
                 "vol7_static_fixture_consumer_drift_report",
+            )
+        )
+
+    if VOL7_STATIC_SHELL_IMPLEMENTATION_READINESS_GATE.exists():
+        targets.append(
+            ValidationTarget(
+                VOL7_STATIC_SHELL_IMPLEMENTATION_READINESS_GATE,
+                "mock_consumers",
+                SCHEMA_FILES["vol7_static_shell_implementation_readiness_gate"],
+                "vol7_static_shell_implementation_readiness_gate",
             )
         )
 
