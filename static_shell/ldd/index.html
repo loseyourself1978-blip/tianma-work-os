@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LDD Local Static Shell Skeleton</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="shell-header">
+      <div class="header-inner">
+        <p class="eyebrow">LOCAL STATIC PREVIEW ONLY</p>
+        <h1>LDD Cockpit Static Shell Skeleton</h1>
+        <p id="source-warning">Embedded fixture snapshot only. No network, no credentials, no live data, no execution.</p>
+        <div class="summary-grid" aria-label="Static runtime summary">
+          <div class="summary-item">
+            <span class="summary-label">Phase</span>
+            <span class="summary-value" id="phase">Loading static fixture</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Active Checkpoint</span>
+            <span class="summary-value" id="checkpoint">Loading static fixture</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Readiness</span>
+            <span class="summary-value" id="readiness">Loading static fixture</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Mode</span>
+            <span class="summary-value" id="mode">Loading static fixture</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="guard-strip" aria-label="Required static guard labels">
+      <div class="guard-inner">
+        <strong>Guardrails</strong>
+        <div class="guard-labels" id="required-labels"></div>
+      </div>
+    </section>
+
+    <main class="shell-layout">
+      <aside class="side-nav" aria-label="Panel navigation">
+        <h2>Read-Only Panels</h2>
+        <nav class="nav-links" id="panel-nav"></nav>
+      </aside>
+      <section class="panel-stack" id="static-shell-app" aria-label="Local static shell panels"></section>
+    </main>
+
+    <footer class="footer-note">
+      This local shell is a static skeleton. It provides no broker, Binance, live data, credential, runtime mutation, order, trade, scheduler, or notification capability.
+    </footer>
+
+    <script src="static_shell_data.js"></script>
+    <script src="render_static_shell.js"></script>
+  </body>
+</html>
