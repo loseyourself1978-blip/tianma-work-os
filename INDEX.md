@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.6 Phase 6.8a - LDD Full-Market Scope Correction and IPO Radar Governance Sync
+Vol.6 Phase 6.9 - Vol.6 Handoff Summary and Vol.7 Readiness Gate
 ```
 
 ## Core Documents
@@ -80,6 +80,8 @@ Vol.6 Phase 6.8a - LDD Full-Market Scope Correction and IPO Radar Governance Syn
 - `docs/runtime/VOL6_PHASE6_4_STATIC_COCKPIT_PROTOTYPE_BOUNDARY_REVIEW_v0.1.md`
 - `docs/runtime/VOL6_PHASE6_5_INTERNAL_OPERATOR_COCKPIT_STATIC_SPEC_v0.1.md`
 - `docs/runtime/VOL6_PHASE6_8A_LDD_FULL_MARKET_SCOPE_CORRECTION_AND_IPO_RADAR_GOVERNANCE_SYNC_v0.1.md`
+- `docs/runtime/VOL6_PHASE6_9_HANDOFF_SUMMARY_AND_VOL7_READINESS_GATE_v0.1.md`
+- `docs/runtime/VOL6_HANDOFF_SUMMARY_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
@@ -511,6 +513,26 @@ Vol.6 Phase 6.8a - LDD Full-Market Scope Correction and IPO Radar Governance Syn
 - `reports/ldd/vol6_phase6_8a_ldd_full_market_scope_correction_and_ipo_radar_governance_sync.md`
 - Current phase: `Vol.6 Phase 6.8a - LDD Full-Market Scope Correction and IPO Radar Governance Sync`
 - Next: `Vol.6 Phase 6.9 - Vol.6 Handoff Summary and Vol.7 Readiness Gate`
+
+## Vol.6 Phase 6.9 / Vol.6 Handoff Summary and Vol.7 Readiness Gate
+
+- `docs/runtime/VOL6_PHASE6_9_HANDOFF_SUMMARY_AND_VOL7_READINESS_GATE_v0.1.md`
+- `docs/runtime/VOL6_HANDOFF_SUMMARY_v0.1.md`
+- `schemas/vol6_handoff_readiness_gate.schema.json`
+- `schemas/vol7_entry_readiness_gate.schema.json`
+- `mock_consumers/ldd/vol6_handoff_packet.json`
+- `mock_consumers/ldd/vol6_completion_readiness_gate.json`
+- `mock_consumers/ldd/vol7_entry_boundary_contract.json`
+- `mock_consumers/ldd/vol7_static_ui_shell_planning_gate.json`
+- `mock_consumers/ldd/vol6_to_vol7_handoff_checklist.json`
+- `mock_consumers/ldd/twos_ldd_post_vol6_backfeed_status_update.json`
+- `scripts/validate_vol6_handoff_readiness_gate.py`
+- `scripts/validate_vol6_handoff_readiness_gate.sh`
+- `records/ldd/2026-06-12/vol6_phase6_9_handoff_summary_and_vol7_readiness_gate_1720_sgt.json`
+- `reports/ldd/vol6_phase6_9_handoff_summary_and_vol7_readiness_gate.md`
+- `reports/ldd/vol6_handoff_summary.md`
+- Current phase: `Vol.6 Phase 6.9 - Vol.6 Handoff Summary and Vol.7 Readiness Gate`
+- Next: `Vol.7 Phase 7.0 - UI Shell Planning / Static Fixture Consumer Baseline Verification`
 
 ## Product Principles
 

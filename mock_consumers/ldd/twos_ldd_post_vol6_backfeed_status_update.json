@@ -1,0 +1,29 @@
+{
+  "backfeed_id": "twos-ldd-post-vol6-backfeed-status-update-v0.1",
+  "phase": "Vol.6 Phase 6.9",
+  "purpose": "Provide the complete TWOS Runtime Status Update block for the LDD review chat after Vol.6 completion.",
+  "backfeed_required": true,
+  "target_chat": "LDD review chat",
+  "template": "TWOS Runtime Status Update｜For LDD Baseline Sync\n\nLatest TWOS phase:\nVol.6 Phase 6.9 - Vol.6 Handoff Summary and Vol.7 Readiness Gate\n\nLatest commit:\n<PHASE_6_9_COMMIT_SHA_AFTER_PUSH>\n\nOrigin/main:\nsynchronized\n\nWorking tree:\nclean\n\nActive checkpoint:\n2026-06-12T09:18:00+08:00\n\nLatest timeline event:\n<POST_PHASE_6_9_LATEST_TIMELINE_EVENT>\n\nOperating mode:\ncash_defense_core_position_survival_mode\n\nPortfolio mode:\nresidual_core_position_mode\n\nRuntime records:\n<POST_PHASE_6_9_RUNTIME_RECORD_COUNT>\n\nTimeline:\n<POST_PHASE_6_9_TIMELINE_EVENTS> events, 0 warnings\n\nActive rules:\n11\n\nCustomer-facing readiness:\nfalse\n\nVol.6 status:\nCompleted. Handoff ready.\n\nVol.7 recommended chat:\nTianma Work OS Vol.7 — UI Shell Planning / Static Fixture Consumer\n\nVol.7 entry scope:\nStatic fixture consumer planning only. No production UI, no customer-facing UI, no API server, no live endpoint, no broker/Binance connection, no live market data, no trading automation, no credential handling, no runtime mutation UI, no execution trigger.\n\nLDD scope reminder:\nLDD scope is the entire U.S. equity market, not only existing or former positions. Future LDD reviews must include account risk management, full-market opportunity scan, sector rotation heatmap, IPO/new listing radar, non-position candidate watchlist, candidate-to-position pipeline, forbidden chase list, and position replacement/expansion review.\n\nSafety boundaries:\nNo frontend app, no customer-facing UI, no HTML/CSS/JS UI, no API server, no live endpoint, no external API, no broker/Binance connection, no live market data, no trading automation, no credential handling, no runtime mutation UI, no execution trigger.\n\nInstruction for future LDD Review Sync:\nUse this TWOS status as the latest runtime/product baseline unless a newer TWOS Runtime Status Update is provided.",
+  "required_fields": [
+    "latest_twos_phase",
+    "latest_commit",
+    "origin_main",
+    "working_tree",
+    "active_checkpoint",
+    "latest_timeline_event",
+    "operating_mode",
+    "portfolio_mode",
+    "runtime_records",
+    "timeline",
+    "active_rules",
+    "customer_facing_readiness",
+    "vol6_status",
+    "vol7_recommended_chat",
+    "vol7_entry_scope",
+    "ldd_scope_reminder",
+    "safety_boundaries",
+    "instruction_for_future_ldd_review_sync"
+  ],
+  "validation_rule": "Backfeed template must include Vol.6 completion, Vol.7 static-only scope, and LDD full-market scope reminder."
+}

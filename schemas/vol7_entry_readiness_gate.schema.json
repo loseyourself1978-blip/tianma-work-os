@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/vol7_entry_readiness_gate.schema.json",
+  "title": "Vol.7 Entry Readiness Gate",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_id",
+    "phase",
+    "status",
+    "recommended_new_chat_title",
+    "allowed_scope",
+    "prohibited_scope",
+    "customer_facing_ready",
+    "actual_ui_allowed_at_entry",
+    "api_server_allowed_at_entry",
+    "live_endpoint_allowed_at_entry",
+    "external_api_allowed_at_entry",
+    "broker_binance_connection_allowed_at_entry",
+    "live_market_data_allowed_at_entry",
+    "trading_automation_allowed_at_entry",
+    "credential_handling_allowed_at_entry",
+    "runtime_mutation_ui_allowed_at_entry",
+    "execution_trigger_allowed_at_entry",
+    "validation_rule"
+  ],
+  "properties": {
+    "recommended_new_chat_title": {
+      "type": "string",
+      "enum": ["Tianma Work OS Vol.7 — UI Shell Planning / Static Fixture Consumer"]
+    },
+    "customer_facing_ready": {"type": "boolean", "enum": [false]},
+    "actual_ui_allowed_at_entry": {"type": "boolean", "enum": [false]},
+    "api_server_allowed_at_entry": {"type": "boolean", "enum": [false]},
+    "live_endpoint_allowed_at_entry": {"type": "boolean", "enum": [false]},
+    "external_api_allowed_at_entry": {"type": "boolean", "enum": [false]},
+    "broker_binance_connection_allowed_at_entry": {"type": "boolean", "enum": [false]},
+    "live_market_data_allowed_at_entry": {"type": "boolean", "enum": [false]},
+    "trading_automation_allowed_at_entry": {"type": "boolean", "enum": [false]},
+    "credential_handling_allowed_at_entry": {"type": "boolean", "enum": [false]},
+    "runtime_mutation_ui_allowed_at_entry": {"type": "boolean", "enum": [false]},
+    "execution_trigger_allowed_at_entry": {"type": "boolean", "enum": [false]}
+  }
+}

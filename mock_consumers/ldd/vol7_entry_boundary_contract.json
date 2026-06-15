@@ -1,0 +1,68 @@
+{
+  "contract_id": "vol7-entry-boundary-contract-v0.1",
+  "phase": "Vol.6 Phase 6.9",
+  "status": "vol7_static_planning_entry_ready",
+  "recommended_new_chat_title": "Tianma Work OS Vol.7 — UI Shell Planning / Static Fixture Consumer",
+  "allowed_scope": [
+    "static_fixture_consumer_planning",
+    "UI_shell_information_architecture",
+    "static_layout_wireframe_spec",
+    "mock_data_binding_plan",
+    "fixture_driven_component_contracts",
+    "no_runtime_connection_review",
+    "accessibility_and_readability_review",
+    "operator_workflow_dry_run",
+    "static_error_empty_state_spec",
+    "static_export_policy_review"
+  ],
+  "prohibited_scope": [
+    "production_frontend_app",
+    "customer_facing_ui",
+    "API_server",
+    "live_endpoint",
+    "external_market_api",
+    "broker_api",
+    "Binance_api",
+    "live_market_data",
+    "trading_automation",
+    "credential_handling",
+    "runtime_mutation_ui",
+    "execution_trigger"
+  ],
+  "required_inputs_from_vol6": [
+    "cockpit/ldd/view_model.json",
+    "mock_consumers/ldd/static_consumer_fixture_package_manifest.json",
+    "mock_consumers/ldd/vol6_handoff_packet.json",
+    "mock_consumers/ldd/vol6_completion_readiness_gate.json",
+    "mock_consumers/ldd/vol7_static_ui_shell_planning_gate.json"
+  ],
+  "required_validators_to_keep": [
+    "validate_runtime_records.sh",
+    "validate_cockpit_view_model_quality.sh",
+    "validate_static_consumer_fixture_integration.sh",
+    "validate_vol6_handoff_readiness_gate.sh"
+  ],
+  "static_fixture_sources": [
+    "read_only_api_contract",
+    "ui_boundary_contract",
+    "permission_privacy_masking_contract",
+    "static_cockpit_prototype_boundary",
+    "internal_operator_cockpit_static_spec",
+    "ai_board_cockpit_static_spec",
+    "cockpit_static_spec_integration_review",
+    "static_consumer_fixture_package",
+    "ldd_full_market_scope_contract"
+  ],
+  "customer_facing_ready": false,
+  "actual_ui_allowed_at_entry": false,
+  "api_server_allowed_at_entry": false,
+  "live_endpoint_allowed_at_entry": false,
+  "external_api_allowed_at_entry": false,
+  "broker_binance_connection_allowed_at_entry": false,
+  "live_market_data_allowed_at_entry": false,
+  "trading_automation_allowed_at_entry": false,
+  "credential_handling_allowed_at_entry": false,
+  "runtime_mutation_ui_allowed_at_entry": false,
+  "execution_trigger_allowed_at_entry": false,
+  "validation_rule": "Vol.7 may start only as static fixture consumer planning; real UI/API/live/credential/execution capabilities remain blocked."
+}

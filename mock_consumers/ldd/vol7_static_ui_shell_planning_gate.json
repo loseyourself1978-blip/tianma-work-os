@@ -1,0 +1,41 @@
+{
+  "gate_id": "vol7-static-ui-shell-planning-gate-v0.1",
+  "phase": "Vol.6 Phase 6.9",
+  "title": "Tianma Work OS Vol.7 — UI Shell Planning / Static Fixture Consumer",
+  "entry_allowed": true,
+  "entry_type": "static_planning_only",
+  "source_fixtures_required": [
+    "read_only_api_contract",
+    "ui_boundary_contract",
+    "permission_privacy_masking_contract",
+    "static_cockpit_prototype_boundary",
+    "internal_operator_cockpit_static_spec",
+    "ai_board_cockpit_static_spec",
+    "cockpit_static_spec_integration_review",
+    "static_consumer_fixture_package",
+    "ldd_full_market_scope_contract"
+  ],
+  "implementation_allowed": false,
+  "implementation_blockers": [
+    "no_production_frontend_app",
+    "no_customer_facing_ui",
+    "no_api_server",
+    "no_live_endpoint",
+    "no_broker_binance_connection",
+    "no_live_market_data",
+    "no_trading_automation",
+    "no_credential_handling",
+    "no_runtime_mutation_ui",
+    "no_execution_trigger"
+  ],
+  "required_reviews_before_any_real_ui": [
+    "customer_facing_permission_approval",
+    "security_privacy_review",
+    "live_api_boundary_review",
+    "credential_handling_review",
+    "no_trading_automation_review",
+    "read_only_runtime_access_review",
+    "static_fixture_to_ui_mapping_review"
+  ],
+  "validation_rule": "Entry is allowed for static planning only; implementation remains blocked."
+}

@@ -1,0 +1,37 @@
+{
+  "checklist_id": "vol6-to-vol7-handoff-checklist-v0.1",
+  "phase": "Vol.6 Phase 6.9",
+  "status": "ready_for_vol7_static_planning",
+  "items": [
+    {
+      "item_id": "runtime_records_validated",
+      "complete": true,
+      "validation_rule": "Runtime records must validate before Vol.7 starts."
+    },
+    {
+      "item_id": "view_model_quality_validated",
+      "complete": true,
+      "validation_rule": "View model quality gates must pass."
+    },
+    {
+      "item_id": "static_fixture_chain_validated",
+      "complete": true,
+      "validation_rule": "Static fixture integration must pass."
+    },
+    {
+      "item_id": "full_market_scope_contract_validated",
+      "complete": true,
+      "validation_rule": "LDD full-market scope governance validator must pass."
+    },
+    {
+      "item_id": "vol7_entry_static_only",
+      "complete": true,
+      "validation_rule": "Vol.7 entry is static fixture consumer planning only."
+    },
+    {
+      "item_id": "safety_boundaries_false",
+      "complete": true,
+      "validation_rule": "UI/API/live/credential/execution flags must remain false."
+    }
+  ]
+}
