@@ -1007,12 +1007,12 @@
     }
   ],
   "timeline": {
-    "generated_at": "2026-06-16T09:03:34+08:00",
-    "event_count": 105,
+    "generated_at": "2026-06-16T10:05:33+08:00",
+    "event_count": 106,
     "warning_count": 0,
     "date_range": {
       "start": "2026-06-02T08:22:00+08:00",
-      "end": "2026-06-16T09:03:34+08:00"
+      "end": "2026-06-16T10:05:33+08:00"
     },
     "events": [
       {
@@ -3349,6 +3349,25 @@
           "nvda",
           "soxl",
           "zec"
+        ]
+      },
+      {
+        "timeline_event_id": "timeline-records-ldd-2026-06-15-vol7-phase7-6-local-static-shell-demo-pack-and-operator-walkthrough-json",
+        "event_time": "2026-06-16T10:05:33+08:00",
+        "event_type": "report_generation",
+        "source_file": "records/ldd/2026-06-15/vol7_phase7_6_local_static_shell_demo_pack_and_operator_walkthrough.json",
+        "source_record_type": "governance_review",
+        "asset_or_module": "LDD Runtime",
+        "title": "Vol.7 Phase 7.6 - Local Static Shell Demo Pack and Operator Walkthrough",
+        "summary": "Governance review recorded with customer-facing ready=unknown, runtime_mutation_flag=unknown, and trading_automation_flag=unknown.",
+        "state_before": "",
+        "state_after": "phase=Vol.7 Phase 7.6 - Local Static Shell Demo Pack and Operator Walkthrough; customer_facing_ready=unknown",
+        "supersedes_or_updates": [],
+        "execution_evidence_level": "runtime_record",
+        "cockpit_priority": "medium",
+        "tags": [
+          "governance_review",
+          "non_trading_runtime_event"
         ]
       }
     ],

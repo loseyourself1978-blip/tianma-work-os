@@ -1,0 +1,64 @@
+# LDD Local Static Shell Demo Checklist
+
+Use this checklist for local-only operator inspection.
+
+- [ ] `static_shell/ldd/index.html` opens directly from the filesystem.
+- [ ] No server is required.
+- [ ] No network is required.
+- [ ] No API key is required.
+- [ ] No login is required.
+- [ ] No account connection is required.
+- [ ] `LOCAL STATIC PREVIEW ONLY` is visible.
+- [ ] `STATIC FIXTURE` is visible.
+- [ ] `READ ONLY` is visible.
+- [ ] `NOT EXECUTABLE` is visible.
+- [ ] `NO LIVE DATA` is visible.
+- [ ] `NO BROKER CONNECTION` is visible.
+- [ ] `NO BINANCE CONNECTION` is visible.
+- [ ] `NO CREDENTIAL HANDLING` is visible.
+- [ ] `NO RUNTIME MUTATION` is visible.
+- [ ] `CUSTOMER-FACING READINESS: FALSE` is visible.
+- [ ] Runtime Status Panel is present.
+- [ ] Readiness Gate Panel is present.
+- [ ] Timeline Health Panel is present.
+- [ ] Active Rules Panel is present.
+- [ ] Strategy States Panel is present.
+- [ ] Static Fixture Source Panel is present.
+- [ ] LDD Scope Reminder Panel is present.
+- [ ] Quote Drift Display Panel is present.
+- [ ] Holdings / Candidate / Forbidden / Radar Separation Panel is present.
+- [ ] Cash Defense Split Panel is present.
+- [ ] Transfer / P&L Separation Panel is present.
+- [ ] Opportunity Cost Tracker Panel is present.
+- [ ] Rule Compliance vs Opportunity Capture Panel is present.
+- [ ] Zero-Position Candidate Radar Panel is present.
+- [ ] Forbidden Chase List Panel is present.
+- [ ] IPO/New-Listing Radar Panel is present.
+- [ ] Forbidden Actions Panel is present.
+- [ ] Non-Executable Guardrail Panel is present.
+- [ ] Quote types are separated.
+- [ ] Holding/watchlist/night-session/premarket quotes are not implied to be executable prices.
+- [ ] Execution source remains broker/Binance order page and final filled order records.
+- [ ] U.S. cash-defense ratio is visible.
+- [ ] Binance USDT defense ratio is visible.
+- [ ] HK exposure is represented.
+- [ ] Total cross-account risk remains a fixture-only placeholder.
+- [ ] 49.99 USDT withdrawal is represented as account movement, not trading loss.
+- [ ] GGLL is represented as zero-position, not residual risk valve.
+- [ ] ZEC grid is represented as closed/no-reopen.
+- [ ] Opportunity Cost Tracker is represented as hindsight/context only.
+- [ ] Rule compliance is separated from opportunity capture.
+- [ ] Zero-position candidate radar is represented.
+- [ ] Forbidden chase list is represented.
+- [ ] IPO/new-listing radar is represented.
+- [ ] LDD full-market scope reminder is visible.
+- [ ] No buy controls are present.
+- [ ] No sell controls are present.
+- [ ] No rebalance controls are present.
+- [ ] No credential inputs are present.
+- [ ] No login/auth form is present.
+- [ ] No live refresh control is present.
+- [ ] No API calls are present.
+- [ ] No network dependency is present.
+- [ ] No package manager/build system is present.
+- [ ] Customer-facing readiness remains false.

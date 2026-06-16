@@ -15,6 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 PHASE = "Vol.7 Phase 7.5 - Local Static Shell Review, Accessibility, Guardrail Hardening, and LDD Post-Close DUXD Backfeed"
 BASELINE_COMMIT = "9de6673708ca2449701e52f41f9e2bca3787a879"
 REVIEW_TIMESTAMP = "2026-06-16T09:03:34+08:00"
+DEMO_PACK_TIMESTAMP = "2026-06-16T10:05:33+08:00"
 CHECKPOINT = "2026-06-12T09:18:00+08:00"
 BASELINE_TIMELINE_EVENT = "2026-06-15T18:12:39+08:00"
 OPERATING_MODE = "cash_defense_core_position_survival_mode"
@@ -267,9 +268,9 @@ def main() -> int:
         fail(finding, failures)
 
     event_count, warning_count, latest_event = timeline_counts(timeline)
-    require(event_count in {104, 105}, "current_timeline_count", "current timeline count is baseline 104 or post-review 105", failures)
+    require(event_count in {104, 105, 106}, "current_timeline_count", "current timeline count is baseline 104, post-review 105, or post-demo-pack 106", failures)
     require(warning_count == 0, "current_timeline_warnings", "current timeline warnings remain 0", failures)
-    require(latest_event in {BASELINE_TIMELINE_EVENT, REVIEW_TIMESTAMP}, "current_latest_event", "current latest event is baseline or Phase 7.5 review timestamp", failures)
+    require(latest_event in {BASELINE_TIMELINE_EVENT, REVIEW_TIMESTAMP, DEMO_PACK_TIMESTAMP}, "current_latest_event", "current latest event is baseline, Phase 7.5 review timestamp, or Phase 7.6 demo pack timestamp", failures)
     require(view_model.get("checkpoint", {}).get("latest_active_checkpoint") == CHECKPOINT, "view_model_checkpoint", "view model active checkpoint is unchanged", failures)
     require(latest_state.get("latest_active_checkpoint") == CHECKPOINT or latest_state.get("checkpoint") == CHECKPOINT, "latest_state_checkpoint", "latest_state active checkpoint is unchanged", failures)
     require("Vol.7 Phase 7.6 - Local Static Shell Demo Pack and Operator Walkthrough" in doc_text, "phase76_handoff", "document hands off to Phase 7.6", failures)

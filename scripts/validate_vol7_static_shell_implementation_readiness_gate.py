@@ -17,6 +17,7 @@ BASELINE_TIMELINE_EVENT = "2026-06-15T14:23:13+08:00"
 READINESS_TIMESTAMP = "2026-06-15T17:07:00+08:00"
 LOCAL_STATIC_SHELL_TIMESTAMP = "2026-06-15T18:12:39+08:00"
 LOCAL_STATIC_SHELL_REVIEW_TIMESTAMP = "2026-06-16T09:03:34+08:00"
+LOCAL_STATIC_SHELL_DEMO_PACK_TIMESTAMP = "2026-06-16T10:05:33+08:00"
 LDD_BACKFEED_TIMESTAMP = "2026-06-15T17:06:00+08:00"
 CHECKPOINT = "2026-06-12T09:18:00+08:00"
 OPERATING_MODE = "cash_defense_core_position_survival_mode"
@@ -407,9 +408,9 @@ def main() -> int:
 
     timeline = inputs.get("runtime_timeline", {})
     event_count, warning_count, latest_event = current_timeline_counts(timeline)
-    require(event_count in {102, 103, 104, 105}, "current_timeline_count", "current timeline count is baseline 102, post-record 103, post-local-static-shell 104, or post-local-static-shell-review 105", failures)
+    require(event_count in {102, 103, 104, 105, 106}, "current_timeline_count", "current timeline count is baseline 102, post-record 103, post-local-static-shell 104, post-local-static-shell-review 105, or post-demo-pack 106", failures)
     require(warning_count == 0, "current_timeline_warnings", "current timeline warnings remain 0", failures)
-    require(latest_event in {BASELINE_TIMELINE_EVENT, READINESS_TIMESTAMP, LOCAL_STATIC_SHELL_TIMESTAMP, LOCAL_STATIC_SHELL_REVIEW_TIMESTAMP}, "current_latest_event", "current latest timeline event is baseline, Phase 7.3 readiness timestamp, Phase 7.4 local static shell timestamp, or Phase 7.5 review timestamp", failures)
+    require(latest_event in {BASELINE_TIMELINE_EVENT, READINESS_TIMESTAMP, LOCAL_STATIC_SHELL_TIMESTAMP, LOCAL_STATIC_SHELL_REVIEW_TIMESTAMP, LOCAL_STATIC_SHELL_DEMO_PACK_TIMESTAMP}, "current_latest_event", "current latest timeline event is baseline, Phase 7.3 readiness timestamp, Phase 7.4 local static shell timestamp, Phase 7.5 review timestamp, or Phase 7.6 demo pack timestamp", failures)
 
     view_model = inputs.get("view_model", {})
     latest_state = inputs.get("latest_state", {})

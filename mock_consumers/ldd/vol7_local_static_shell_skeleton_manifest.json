@@ -173,6 +173,54 @@
     "non_live": true,
     "non_executable": true
   },
+  "phase7_6_demo_pack_overlay": {
+    "demo_phase": "Vol.7 Phase 7.6 - Local Static Shell Demo Pack and Operator Walkthrough",
+    "demo_pack_timestamp": "2026-06-16T10:05:33+08:00",
+    "baseline_commit": "5801c03a735fac578d1b382a716927060cbfb0ec",
+    "demo_pack_status": "passed",
+    "operator_walkthrough_status": "passed",
+    "demo_checklist_status": "passed",
+    "safety_boundary_status": "passed",
+    "local_static_shell_path": "static_shell/ldd/index.html",
+    "demo_documents": [
+      "static_shell/ldd/README.md",
+      "static_shell/ldd/OPERATOR_WALKTHROUGH.md",
+      "static_shell/ldd/DEMO_CHECKLIST.md",
+      "static_shell/ldd/SAFETY_BOUNDARY.md"
+    ],
+    "fixture_only": true,
+    "read_only": true,
+    "local_static_preview_only": true,
+    "network_allowed": false,
+    "api_allowed": false,
+    "mutation_allowed": false,
+    "execution_allowed": false,
+    "credential_handling_allowed": false,
+    "live_data_allowed": false,
+    "customer_facing_readiness": false,
+    "production_deployment_allowed": false,
+    "required_panels": [
+      "runtime_status_panel",
+      "readiness_gate_panel",
+      "timeline_health_panel",
+      "active_rules_panel",
+      "strategy_states_panel",
+      "static_fixture_source_panel",
+      "ldd_scope_reminder_panel",
+      "quote_drift_display_panel",
+      "holdings_candidate_forbidden_radar_separation_panel",
+      "cash_defense_split_panel",
+      "transfer_pnl_separation_panel",
+      "opportunity_cost_tracker_panel",
+      "rule_compliance_opportunity_capture_panel",
+      "zero_position_candidate_radar_panel",
+      "forbidden_chase_list_panel",
+      "ipo_new_listing_radar_panel",
+      "forbidden_actions_panel",
+      "non_executable_guardrail_panel"
+    ],
+    "next_phase": "Vol.7 Phase 7.7 - Local Static Shell Snapshot QA and Vol.7 Completion Readiness"
+  },
   "ggll_current_state": "zero_position_not_residual_risk_valve",
   "zec_grid_state": "closed_no_reopen",
   "usdt_defense_floor": 0.70,
@@ -185,9 +233,9 @@
     "no_runtime_mutation_controls": true,
     "no_package_manager_files": true,
     "no_backend_server_files": true,
-    "post_record_runtime_records_expected": 105,
-    "post_record_timeline_events_expected": 105,
+    "post_record_runtime_records_expected": 106,
+    "post_record_timeline_events_expected": 106,
     "timeline_warning_count_expected": 0
   },
-  "next_phase": "Vol.7 Phase 7.6 - Local Static Shell Demo Pack and Operator Walkthrough"
+  "next_phase": "Vol.7 Phase 7.7 - Local Static Shell Snapshot QA and Vol.7 Completion Readiness"
 }

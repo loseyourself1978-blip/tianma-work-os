@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.7 Phase 7.5 - Local Static Shell Review, Accessibility, Guardrail Hardening, and LDD Post-Close DUXD Backfeed
+Vol.7 Phase 7.6 - Local Static Shell Demo Pack and Operator Walkthrough
 ```
 
 ## Core Documents
@@ -88,6 +88,7 @@ Vol.7 Phase 7.5 - Local Static Shell Review, Accessibility, Guardrail Hardening,
 - `docs/runtime/VOL7_PHASE7_3_STATIC_SHELL_IMPLEMENTATION_READINESS_GATE_v0.1.md`
 - `docs/runtime/VOL7_PHASE7_4_LOCAL_STATIC_SHELL_SKELETON_PERMISSIONED_IMPLEMENTATION_v0.1.md`
 - `docs/runtime/VOL7_PHASE7_5_LOCAL_STATIC_SHELL_REVIEW_ACCESSIBILITY_GUARDRAIL_HARDENING_AND_LDD_BACKFEED_v0.1.md`
+- `docs/runtime/VOL7_PHASE7_6_LOCAL_STATIC_SHELL_DEMO_PACK_AND_OPERATOR_WALKTHROUGH_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
@@ -623,6 +624,26 @@ Vol.7 Phase 7.5 - Local Static Shell Review, Accessibility, Guardrail Hardening,
   - `static_shell/ldd/render_static_shell.js`
 - Current phase: `Vol.7 Phase 7.5 - Local Static Shell Review, Accessibility, Guardrail Hardening, and LDD Post-Close DUXD Backfeed`
 - Next: `Vol.7 Phase 7.6 - Local Static Shell Demo Pack and Operator Walkthrough`
+
+## Vol.7 Phase 7.6 / Local Static Shell Demo Pack and Operator Walkthrough
+
+- `docs/runtime/VOL7_PHASE7_6_LOCAL_STATIC_SHELL_DEMO_PACK_AND_OPERATOR_WALKTHROUGH_v0.1.md`
+- `static_shell/ldd/OPERATOR_WALKTHROUGH.md`
+- `static_shell/ldd/DEMO_CHECKLIST.md`
+- `static_shell/ldd/SAFETY_BOUNDARY.md`
+- `schemas/vol7_local_static_shell_demo_pack.schema.json`
+- `mock_consumers/ldd/vol7_local_static_shell_demo_pack.json`
+- `scripts/validate_vol7_local_static_shell_demo_pack.py`
+- `scripts/validate_vol7_local_static_shell_demo_pack.sh`
+- `records/ldd/2026-06-15/vol7_phase7_6_local_static_shell_demo_pack_and_operator_walkthrough.json`
+- Demo-reviewed static shell files:
+  - `static_shell/ldd/README.md`
+  - `static_shell/ldd/index.html`
+  - `static_shell/ldd/styles.css`
+  - `static_shell/ldd/static_shell_data.js`
+  - `static_shell/ldd/render_static_shell.js`
+- Current phase: `Vol.7 Phase 7.6 - Local Static Shell Demo Pack and Operator Walkthrough`
+- Next: `Vol.7 Phase 7.7 - Local Static Shell Snapshot QA and Vol.7 Completion Readiness`
 
 ## Product Principles
 

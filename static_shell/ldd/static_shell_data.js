@@ -1,12 +1,13 @@
 window.TIANMA_LDD_STATIC_SHELL_DATA = Object.freeze({
-  phase: "Vol.7 Phase 7.5 - Local Static Shell Review, Accessibility, Guardrail Hardening, and LDD Post-Close DUXD Backfeed",
-  baseline_commit: "9de6673708ca2449701e52f41f9e2bca3787a879",
+  phase: "Vol.7 Phase 7.6 - Local Static Shell Demo Pack and Operator Walkthrough",
+  baseline_commit: "5801c03a735fac578d1b382a716927060cbfb0ec",
+  demo_pack_timestamp: "2026-06-16T10:05:33+08:00",
   review_timestamp: "2026-06-16T09:03:34+08:00",
   ldd_post_close_backfeed_window: "2026-06-15 U.S. regular-session post-close; screenshots 08:37-08:38 SGT/BJT",
   active_checkpoint: "2026-06-12T09:18:00+08:00",
   latest_timeline_event: "2026-06-15T18:12:39+08:00",
-  runtime_records_count: 104,
-  timeline_event_count: 104,
+  runtime_records_count: 105,
+  timeline_event_count: 105,
   timeline_warning_count: 0,
   active_rules_count: 11,
   strategy_states_count: 16,
@@ -19,6 +20,10 @@ window.TIANMA_LDD_STATIC_SHELL_DATA = Object.freeze({
   review_status: "passed",
   accessibility_review_status: "passed",
   guardrail_visibility_status: "passed",
+  demo_pack_status: "passed",
+  operator_walkthrough_status: "passed",
+  demo_checklist_status: "passed",
+  safety_boundary_status: "passed",
   ldd_scope_reminder: "LDD scope is the entire U.S. equity market, not only existing or former positions.",
   fixture_only: true,
   read_only: true,
@@ -50,6 +55,21 @@ window.TIANMA_LDD_STATIC_SHELL_DATA = Object.freeze({
     cannot_accept_credentials: "This static shell cannot accept credentials, passwords, tokens, account numbers, or API keys.",
     execution_sot: "Execution source remains broker/Binance order page and final filled order records."
   },
+  local_demo_pack: {
+    demo_pack_status: "passed",
+    operator_walkthrough_status: "passed",
+    demo_checklist_status: "passed",
+    safety_boundary_status: "passed",
+    local_static_shell_path: "static_shell/ldd/index.html",
+    opening_steps: "Open static_shell/ldd/index.html directly in a browser. No server, network, API key, login, or account connection is required.",
+    demo_documents: [
+      "static_shell/ldd/README.md",
+      "static_shell/ldd/OPERATOR_WALKTHROUGH.md",
+      "static_shell/ldd/DEMO_CHECKLIST.md",
+      "static_shell/ldd/SAFETY_BOUNDARY.md"
+    ],
+    phase7_7_handoff: "Vol.7 Phase 7.7 - Local Static Shell Snapshot QA and Vol.7 Completion Readiness"
+  },
   accessibility_review: {
     semantic_headings: true,
     panel_landmarks: true,
@@ -76,6 +96,8 @@ window.TIANMA_LDD_STATIC_SHELL_DATA = Object.freeze({
     "opportunity_cost_tracker_panel",
     "rule_compliance_opportunity_capture_panel",
     "zero_position_candidate_radar_panel",
+    "forbidden_chase_list_panel",
+    "ipo_new_listing_radar_panel",
     "forbidden_actions_panel",
     "non_executable_guardrail_panel"
   ],
@@ -370,6 +392,18 @@ window.TIANMA_LDD_STATIC_SHELL_DATA = Object.freeze({
       title: "Zero-Position Candidate Radar Panel",
       purpose: "Show former holdings, candidate radar, forbidden chase list, IPO/new-listing radar, and residual tiny positions.",
       fields: ["position_separation.zero_position_candidate_radar", "position_separation.forbidden_chase_list", "position_separation.ipo_new_listing_radar", "position_separation.ggll_current_state", "position_separation.zec_grid_state"]
+    },
+    {
+      panel_id: "forbidden_chase_list_panel",
+      title: "Forbidden Chase List Panel",
+      purpose: "Show no-chase assets as fixture-only context, not buyback or execution instructions.",
+      fields: ["position_separation.forbidden_chase_list", "opportunity_cost_tracker.rules", "execution_allowed"]
+    },
+    {
+      panel_id: "ipo_new_listing_radar_panel",
+      title: "IPO/New-Listing Radar Panel",
+      purpose: "Show IPO/new-listing radar constraints without portfolio modification or execution controls.",
+      fields: ["position_separation.ipo_new_listing_radar", "mutation_allowed", "execution_allowed"]
     },
     {
       panel_id: "forbidden_actions_panel",
