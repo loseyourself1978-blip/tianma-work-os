@@ -44,6 +44,8 @@ VOL7_LOCAL_STATIC_SHELL_SNAPSHOT_QA = REPO_ROOT / "mock_consumers" / "ldd" / "vo
 VOL7_COMPLETION_READINESS_GATE = REPO_ROOT / "mock_consumers" / "ldd" / "vol7_completion_readiness_gate.json"
 VOL7_HANDOFF_SUMMARY = REPO_ROOT / "mock_consumers" / "ldd" / "vol7_handoff_summary.json"
 VOL8_ENTRY_READINESS_GATE = REPO_ROOT / "mock_consumers" / "ldd" / "vol8_entry_readiness_gate.json"
+VOL8_STATIC_SHELL_QA_HANDOFF_INTAKE = REPO_ROOT / "mock_consumers" / "ldd" / "vol8_static_shell_qa_handoff_intake.json"
+VOL8_BOUNDARY_FREEZE = REPO_ROOT / "mock_consumers" / "ldd" / "vol8_boundary_freeze.json"
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 
@@ -109,6 +111,8 @@ SCHEMA_FILES = {
     "vol7_completion_readiness_gate": "vol7_completion_readiness_gate.schema.json",
     "vol7_handoff_summary": "vol7_handoff_summary.schema.json",
     "vol8_entry_readiness_gate": "vol8_entry_readiness_gate.schema.json",
+    "vol8_static_shell_qa_handoff_intake": "vol8_static_shell_qa_handoff_intake.schema.json",
+    "vol8_boundary_freeze": "vol8_boundary_freeze.schema.json",
     "static_cockpit_prototype_review": "static_cockpit_prototype_review.schema.json",
     "internal_operator_cockpit_static_spec_review": "internal_operator_cockpit_static_spec_review.schema.json",
     "ai_board_cockpit_static_spec_review": "ai_board_cockpit_static_spec_review.schema.json",
@@ -182,6 +186,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "vol7_local_static_shell_snapshot_qa", SCHEMA_FILES["vol7_local_static_shell_snapshot_qa"]
     if "vol7_phase7_8_handoff_summary_and_vol8_readiness_gate" in filename:
         return "vol7_handoff_summary", SCHEMA_FILES["vol7_handoff_summary"]
+    if "vol8_phase8_1_static_shell_qa_handoff_intake_and_boundary_freeze" in filename:
+        return "vol8_static_shell_qa_handoff_intake", SCHEMA_FILES["vol8_static_shell_qa_handoff_intake"]
     if "static_cockpit_prototype_boundary_review" in filename:
         return "static_cockpit_prototype_review", SCHEMA_FILES["static_cockpit_prototype_review"]
     if "internal_operator_cockpit_static_spec_review" in filename:
@@ -580,6 +586,26 @@ def collect_targets() -> tuple[list[ValidationTarget], list[Path]]:
                 "mock_consumers",
                 SCHEMA_FILES["vol8_entry_readiness_gate"],
                 "vol8_entry_readiness_gate",
+            )
+        )
+
+    if VOL8_STATIC_SHELL_QA_HANDOFF_INTAKE.exists():
+        targets.append(
+            ValidationTarget(
+                VOL8_STATIC_SHELL_QA_HANDOFF_INTAKE,
+                "mock_consumers",
+                SCHEMA_FILES["vol8_static_shell_qa_handoff_intake"],
+                "vol8_static_shell_qa_handoff_intake",
+            )
+        )
+
+    if VOL8_BOUNDARY_FREEZE.exists():
+        targets.append(
+            ValidationTarget(
+                VOL8_BOUNDARY_FREEZE,
+                "mock_consumers",
+                SCHEMA_FILES["vol8_boundary_freeze"],
+                "vol8_boundary_freeze",
             )
         )
 

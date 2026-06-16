@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.7 Phase 7.8 - Vol.7 Handoff Summary and Vol.8 Readiness Gate
+Vol.8 Phase 8.1 - Static Shell QA Handoff Intake and Boundary Freeze
 ```
 
 ## Core Documents
@@ -92,6 +92,8 @@ Vol.7 Phase 7.8 - Vol.7 Handoff Summary and Vol.8 Readiness Gate
 - `docs/runtime/VOL7_PHASE7_7_LOCAL_STATIC_SHELL_SNAPSHOT_QA_AND_COMPLETION_READINESS_v0.1.md`
 - `docs/runtime/VOL7_HANDOFF_SUMMARY_v0.1.md`
 - `docs/runtime/VOL7_PHASE7_8_HANDOFF_SUMMARY_AND_VOL8_READINESS_GATE_v0.1.md`
+- `docs/runtime/VOL8_PHASE8_1_STATIC_SHELL_QA_HANDOFF_INTAKE_AND_BOUNDARY_FREEZE_v0.1.md`
+- `docs/runtime/VOL8_STATIC_SHELL_QA_HANDOFF_CHECKLIST_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
@@ -679,6 +681,23 @@ Vol.7 Phase 7.8 - Vol.7 Handoff Summary and Vol.8 Readiness Gate
 - Vol.7 handoff status: `ready`
 - Vol.8 entry readiness: `ready_with_limits`
 - Recommended next chat: `Tianma Work OS Vol.8 — Static Shell QA Handoff / Next Product Boundary`
+
+## Vol.8 Phase 8.1 / Static Shell QA Handoff Intake and Boundary Freeze
+
+- `docs/runtime/VOL8_PHASE8_1_STATIC_SHELL_QA_HANDOFF_INTAKE_AND_BOUNDARY_FREEZE_v0.1.md`
+- `docs/runtime/VOL8_STATIC_SHELL_QA_HANDOFF_CHECKLIST_v0.1.md`
+- `schemas/vol8_static_shell_qa_handoff_intake.schema.json`
+- `schemas/vol8_boundary_freeze.schema.json`
+- `mock_consumers/ldd/vol8_static_shell_qa_handoff_intake.json`
+- `mock_consumers/ldd/vol8_boundary_freeze.json`
+- `records/ldd/2026-06-16/vol8_phase8_1_static_shell_qa_handoff_intake_and_boundary_freeze.json`
+- `scripts/validate_vol8_phase8_1_static_shell_qa_handoff.py`
+- `scripts/validate_vol8_phase8_1_static_shell_qa_handoff.sh`
+- Current phase: `Vol.8 Phase 8.1 - Static Shell QA Handoff Intake and Boundary Freeze`
+- Boundary status: `frozen_for_phase_8_1`
+- QA review status: `ready_for_local_static_review`
+- Implementation readiness: `not_ready_for_implementation`
+- Customer-facing readiness: `false`
 
 ## Product Principles
 

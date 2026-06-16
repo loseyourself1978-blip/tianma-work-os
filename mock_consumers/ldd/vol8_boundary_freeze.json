@@ -1,0 +1,47 @@
+{
+  "phase": "Vol.8 Phase 8.1 - Static Shell QA Handoff Intake and Boundary Freeze",
+  "boundary_status": "frozen_for_phase_8_1",
+  "allowed_scope": [
+    "local static shell review",
+    "fixture readability review",
+    "QA handoff documentation",
+    "schema and fixture validation",
+    "future boundary mapping notes"
+  ],
+  "forbidden_scope": [
+    "production UI",
+    "customer-facing UI",
+    "hosted app",
+    "API server",
+    "live endpoint",
+    "external API",
+    "broker connection",
+    "Binance connection",
+    "live market data",
+    "trading automation",
+    "credential handling",
+    "login/auth",
+    "runtime mutation",
+    "execution trigger",
+    "order placement",
+    "portfolio modification",
+    "background worker",
+    "scheduler",
+    "notification dispatcher",
+    "GitHub Issues",
+    "GitHub Projects board",
+    "package manager files",
+    "build tools",
+    "frontend framework",
+    "network dependency"
+  ],
+  "static_shell_boundary": "local_static_read_only_fixture_only_no_network_no_execution",
+  "implementation_readiness": "not_ready_for_implementation",
+  "customer_facing_readiness": false,
+  "requires_future_gate_before_implementation": true,
+  "notes": [
+    "Boundary is frozen for Phase 8.1.",
+    "QA observations do not approve implementation.",
+    "Any live/runtime/customer-facing expansion requires a future readiness gate."
+  ]
+}

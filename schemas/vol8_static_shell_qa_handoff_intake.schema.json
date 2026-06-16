@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/vol8_static_shell_qa_handoff_intake.schema.json",
+  "title": "Vol.8 Static Shell QA Handoff Intake",
+  "description": "Validates the Vol.8 Phase 8.1 local static shell QA handoff intake fixture.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "phase",
+    "baseline_commit",
+    "runtime_records",
+    "timeline_events",
+    "timeline_warnings",
+    "static_shell_path",
+    "fixture_only",
+    "read_only",
+    "network_allowed",
+    "execution_allowed",
+    "customer_facing_readiness",
+    "qa_review_status",
+    "allowed_review_categories",
+    "forbidden_scope_confirmed_absent",
+    "feedback_intake_categories",
+    "handoff_notes",
+    "next_phase_recommendation"
+  ],
+  "properties": {
+    "phase": {
+      "type": "string",
+      "enum": ["Vol.8 Phase 8.1 - Static Shell QA Handoff Intake and Boundary Freeze"]
+    },
+    "baseline_commit": {
+      "type": "string",
+      "enum": ["47d9a7d542cd4df96188f100d61d31a206417e5c"]
+    },
+    "runtime_records": {
+      "type": "integer",
+      "enum": [108]
+    },
+    "timeline_events": {
+      "type": "integer",
+      "enum": [108]
+    },
+    "timeline_warnings": {
+      "type": "integer",
+      "enum": [0]
+    },
+    "static_shell_path": {
+      "type": "string",
+      "enum": ["static_shell/ldd/"]
+    },
+    "fixture_only": {
+      "type": "boolean",
+      "enum": [true]
+    },
+    "read_only": {
+      "type": "boolean",
+      "enum": [true]
+    },
+    "network_allowed": {
+      "type": "boolean",
+      "enum": [false]
+    },
+    "execution_allowed": {
+      "type": "boolean",
+      "enum": [false]
+    },
+    "customer_facing_readiness": {
+      "type": "boolean",
+      "enum": [false]
+    },
+    "qa_review_status": {
+      "type": "string",
+      "enum": ["ready_for_local_static_review"]
+    },
+    "allowed_review_categories": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "forbidden_scope_confirmed_absent": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "feedback_intake_categories": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "handoff_notes": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "next_phase_recommendation": {
+      "type": "string"
+    }
+  }
+}

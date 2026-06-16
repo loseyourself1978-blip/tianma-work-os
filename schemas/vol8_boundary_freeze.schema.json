@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/vol8_boundary_freeze.schema.json",
+  "title": "Vol.8 Product Boundary Freeze",
+  "description": "Validates the Vol.8 Phase 8.1 product boundary freeze fixture.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "phase",
+    "boundary_status",
+    "allowed_scope",
+    "forbidden_scope",
+    "static_shell_boundary",
+    "implementation_readiness",
+    "customer_facing_readiness",
+    "requires_future_gate_before_implementation",
+    "notes"
+  ],
+  "properties": {
+    "phase": {
+      "type": "string",
+      "enum": ["Vol.8 Phase 8.1 - Static Shell QA Handoff Intake and Boundary Freeze"]
+    },
+    "boundary_status": {
+      "type": "string",
+      "enum": ["frozen_for_phase_8_1"]
+    },
+    "allowed_scope": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "forbidden_scope": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "static_shell_boundary": {
+      "type": "string",
+      "enum": ["local_static_read_only_fixture_only_no_network_no_execution"]
+    },
+    "implementation_readiness": {
+      "type": "string",
+      "enum": ["not_ready_for_implementation"]
+    },
+    "customer_facing_readiness": {
+      "type": "boolean",
+      "enum": [false]
+    },
+    "requires_future_gate_before_implementation": {
+      "type": "boolean",
+      "enum": [true]
+    },
+    "notes": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}
