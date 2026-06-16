@@ -1,0 +1,18 @@
+{
+  "latest_twos_phase": "Vol.8 Phase 8.6 - Vol.8 Handoff Summary and Vol.9 Readiness Gate",
+  "latest_commit": "4836b20c373b40aa92a822ee09bb718fc953ae2d",
+  "origin_main_state": "synchronized_at_phase_intake",
+  "working_tree_state": "clean_at_phase_intake",
+  "operating_mode": "cash_defense_core_position_survival_mode",
+  "portfolio_mode": "residual_core_position_mode",
+  "runtime_records": 113,
+  "frameworks_indexed": 24,
+  "customer_facing_readiness": false,
+  "vol8_completed": true,
+  "vol8_status": "completed",
+  "vol9_entry_readiness": "ready_with_limits",
+  "static_shell_boundary": "local_static_read_only_fixture_only_no_network_no_execution",
+  "forbidden_scope_remains_absent": true,
+  "ldd_scope_reminder": "entire U.S. equity market, not only existing or former positions",
+  "status_update": "Vol.8 is complete as a static QA handoff and product-boundary mapping volume. Vol.9 may begin only under ready_with_limits planning scope."
+}

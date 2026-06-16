@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.8 Phase 8.5 - Future Implementation Readiness Ladder
+Vol.8 Phase 8.6 - Vol.8 Handoff Summary and Vol.9 Readiness Gate
 ```
 
 ## Core Documents
@@ -105,6 +105,8 @@ Vol.8 Phase 8.5 - Future Implementation Readiness Ladder
 - `docs/runtime/VOL8_PHASE8_5_FUTURE_IMPLEMENTATION_READINESS_LADDER_v0.1.md`
 - `docs/runtime/VOL8_FUTURE_IMPLEMENTATION_READINESS_LADDER_GUIDE_v0.1.md`
 - `docs/runtime/VOL8_FUTURE_IMPLEMENTATION_READINESS_LADDER_v0.1.md`
+- `docs/runtime/VOL8_PHASE8_6_HANDOFF_SUMMARY_AND_VOL9_READINESS_GATE_v0.1.md`
+- `docs/runtime/VOL8_HANDOFF_SUMMARY_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
@@ -788,6 +790,28 @@ Vol.8 Phase 8.5 - Future Implementation Readiness Ladder
 - Current phase: `Vol.8 Phase 8.5 - Future Implementation Readiness Ladder`
 - Readiness ladder items: `13`
 - Functional frameworks indexed: `23`
+- Customer-facing readiness: `false`
+- Network allowed: `false`
+- Execution allowed: `false`
+
+## Vol.8 Phase 8.6 / Vol.8 Handoff Summary and Vol.9 Readiness Gate
+
+- `docs/runtime/VOL8_PHASE8_6_HANDOFF_SUMMARY_AND_VOL9_READINESS_GATE_v0.1.md`
+- `docs/runtime/VOL8_HANDOFF_SUMMARY_v0.1.md`
+- `schemas/vol8_handoff_summary.schema.json`
+- `schemas/vol9_entry_readiness_gate.schema.json`
+- `mock_consumers/ldd/vol8_handoff_summary.json`
+- `mock_consumers/ldd/vol9_entry_readiness_gate.json`
+- `mock_consumers/ldd/twos_ldd_post_vol8_backfeed_status_update.json`
+- `records/ldd/2026-06-16/vol8_phase8_6_handoff_summary_and_vol9_readiness_gate.json`
+- `scripts/validate_vol8_handoff_and_vol9_readiness.py`
+- `scripts/validate_vol8_handoff_and_vol9_readiness.sh`
+- Updated: `docs/runtime/IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_v0.1.md`
+- Updated: `mock_consumers/ldd/implemented_function_framework_index.json`
+- Current phase: `Vol.8 Phase 8.6 - Vol.8 Handoff Summary and Vol.9 Readiness Gate`
+- Vol.8 status: `completed`
+- Vol.9 entry readiness: `ready_with_limits`
+- Functional frameworks indexed: `24`
 - Customer-facing readiness: `false`
 - Network allowed: `false`
 - Execution allowed: `false`

@@ -1,10 +1,10 @@
 # Implemented Function Framework Index v0.1
 
-Generated for: `Vol.8 Phase 8.5 - Future Implementation Readiness Ladder`
+Generated for: `Vol.8 Phase 8.6 - Vol.8 Handoff Summary and Vol.9 Readiness Gate`
 
-Baseline commit: `59401955f861af4c1313b2973d1528278474cc18`
+Baseline commit: `4836b20c373b40aa92a822ee09bb718fc953ae2d`
 
-Runtime records baseline: `112`
+Runtime records baseline: `113`
 
 Customer-facing readiness: `false`
 
@@ -35,14 +35,15 @@ This index lists repo-backed implemented frameworks only. It does not claim cust
 | 21 | Local Operator Feedback Review Model | Static Shell Local QA Framework | Vol.8 Phase 8.3 - Local Operator Feedback Review Model<br>Vol.8 Phase 8.3 / v0.1 | Vol.8 Phase 8.3 - Local Operator Feedback Review Model<br>`2cc8a93885c0d8254189d3237153113135508529` | implemented validation contract | `docs/runtime/VOL8_PHASE8_3_LOCAL_OPERATOR_FEEDBACK_REVIEW_MODEL_v0.1.md`<br>`docs/runtime/VOL8_LOCAL_OPERATOR_FEEDBACK_REVIEW_GUIDE_v0.1.md`<br>`docs/runtime/VOL8_LOCAL_OPERATOR_FEEDBACK_ROLLUP_v0.1.md`<br>+4 more | Connect feedback rollup to future roadmap boundary mapping, still static-only. |
 | 22 | Feedback-to-Roadmap Product Boundary Mapping | Product Boundary / Roadmap Mapping Framework | Vol.8 Phase 8.4 - Feedback-to-Roadmap Product Boundary Mapping<br>Vol.8 Phase 8.4 / v0.1 | Vol.8 Phase 8.4 - Feedback-to-Roadmap Product Boundary Mapping<br>`5a13f54bd36a81f4ba39530c63899ec4529807d5` | implemented validation contract / implemented handoff contract / implemented readiness gate | `docs/runtime/VOL8_PHASE8_4_FEEDBACK_TO_ROADMAP_PRODUCT_BOUNDARY_MAPPING_v0.1.md`<br>`docs/runtime/VOL8_FEEDBACK_TO_ROADMAP_MAPPING_GUIDE_v0.1.md`<br>`docs/runtime/VOL8_FEEDBACK_TO_ROADMAP_BOUNDARY_MAP_v0.1.md`<br>+4 more | Convert roadmap boundary map into future implementation readiness ladder, still static-only. |
 | 23 | Future Implementation Readiness Ladder | Product Boundary / Roadmap Mapping Framework | Vol.8 Phase 8.5 - Future Implementation Readiness Ladder<br>Vol.8 Phase 8.5 / v0.1 | Vol.8 Phase 8.5 - Future Implementation Readiness Ladder<br>`59401955f861af4c1313b2973d1528278474cc18` | implemented validation contract / implemented handoff contract / implemented readiness gate | `docs/runtime/VOL8_PHASE8_5_FUTURE_IMPLEMENTATION_READINESS_LADDER_v0.1.md`<br>`docs/runtime/VOL8_FUTURE_IMPLEMENTATION_READINESS_LADDER_GUIDE_v0.1.md`<br>`docs/runtime/VOL8_FUTURE_IMPLEMENTATION_READINESS_LADDER_v0.1.md`<br>+4 more | Prepare Vol.8 handoff summary and Vol.9 readiness gate, still static-only. |
+| 24 | Vol.8 Handoff Summary and Vol.9 Readiness Gate | Handoff / Readiness Gate Framework | Vol.8 Phase 8.6 - Vol.8 Handoff Summary and Vol.9 Readiness Gate<br>Vol.8 Phase 8.6 / v0.1 | Vol.8 Phase 8.6 - Vol.8 Handoff Summary and Vol.9 Readiness Gate<br>`4836b20c373b40aa92a822ee09bb718fc953ae2d` | implemented handoff contract / implemented readiness gate / implemented validation contract | `docs/runtime/VOL8_PHASE8_6_HANDOFF_SUMMARY_AND_VOL9_READINESS_GATE_v0.1.md`<br>`docs/runtime/VOL8_HANDOFF_SUMMARY_v0.1.md`<br>`schemas/vol8_handoff_summary.schema.json`<br>+4 more | Begin Vol.9 under ready_with_limits boundary, no live/runtime/execution implementation without future gates. |
 
 ## Summary
 
-- Total implemented frameworks: `23`
+- Total implemented frameworks: `24`
 - Customer-facing frameworks: `0`
 - Live/runtime/execution frameworks: `0`
-- Fixture/static/read-only frameworks count: `23`
-- Validation-backed frameworks count: `23`
+- Fixture/static/read-only frameworks count: `24`
+- Validation-backed frameworks count: `24`
 
 ## Notes
 

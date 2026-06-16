@@ -27,7 +27,8 @@
         "Vol.8 Phase 8.2 - Implemented Function Framework Index Output Module",
         "Vol.8 Phase 8.3 - Local Operator Feedback Review Model",
         "Vol.8 Phase 8.4 - Feedback-to-Roadmap Product Boundary Mapping",
-        "Vol.8 Phase 8.5 - Future Implementation Readiness Ladder"
+        "Vol.8 Phase 8.5 - Future Implementation Readiness Ladder",
+        "Vol.8 Phase 8.6 - Vol.8 Handoff Summary and Vol.9 Readiness Gate"
       ]
     },
     "baseline_commit": {
@@ -36,12 +37,13 @@
         "90d6d2081e7ca75de082d5447ef80e4250d8131e",
         "2cc8a93885c0d8254189d3237153113135508529",
         "5a13f54bd36a81f4ba39530c63899ec4529807d5",
-        "59401955f861af4c1313b2973d1528278474cc18"
+        "59401955f861af4c1313b2973d1528278474cc18",
+        "4836b20c373b40aa92a822ee09bb718fc953ae2d"
       ]
     },
     "runtime_records": {
       "type": "integer",
-      "enum": [109, 110, 111, 112]
+      "enum": [109, 110, 111, 112, 113]
     },
     "customer_facing_readiness": {
       "type": "boolean",
@@ -92,6 +94,7 @@
               "implemented_handoff_contract",
               "implemented_readiness_gate",
               "implemented_validation_contract / implemented_handoff_contract / implemented_readiness_gate",
+              "implemented_handoff_contract / implemented_readiness_gate / implemented_validation_contract",
               "roadmap_only",
               "deprecated_or_superseded"
             ]

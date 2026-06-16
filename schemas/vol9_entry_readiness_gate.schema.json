@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/vol9_entry_readiness_gate.schema.json",
+  "title": "Vol.9 Entry Readiness Gate",
+  "description": "Validates the static-only Vol.9 entry readiness gate fixture created by Vol.8 Phase 8.6.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "target_volume",
+    "source_volume",
+    "source_phase",
+    "baseline_commit",
+    "runtime_records",
+    "entry_readiness",
+    "recommended_scope",
+    "default_forbidden_scope",
+    "allowed_readiness_levels",
+    "disallowed_readiness_levels",
+    "requires_future_gate_before_implementation",
+    "customer_facing_readiness",
+    "network_allowed",
+    "execution_allowed",
+    "notes"
+  ],
+  "properties": {
+    "target_volume": {"type": "string", "enum": ["Vol.9"]},
+    "source_volume": {"type": "string", "enum": ["Vol.8"]},
+    "source_phase": {"type": "string", "enum": ["Vol.8 Phase 8.6 - Vol.8 Handoff Summary and Vol.9 Readiness Gate"]},
+    "baseline_commit": {"type": "string", "enum": ["4836b20c373b40aa92a822ee09bb718fc953ae2d"]},
+    "runtime_records": {"type": "integer", "enum": [113]},
+    "entry_readiness": {"type": "string", "enum": ["ready_with_limits"]},
+    "recommended_scope": {"type": "array", "items": {"type": "string"}},
+    "default_forbidden_scope": {"type": "array", "items": {"type": "string"}},
+    "allowed_readiness_levels": {"type": "array", "items": {"type": "string"}},
+    "disallowed_readiness_levels": {"type": "array", "items": {"type": "string"}},
+    "requires_future_gate_before_implementation": {"type": "boolean", "enum": [true]},
+    "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+    "network_allowed": {"type": "boolean", "enum": [false]},
+    "execution_allowed": {"type": "boolean", "enum": [false]},
+    "notes": {"type": "array", "items": {"type": "string"}}
+  }
+}

@@ -1,8 +1,8 @@
 {
   "index_version": "v0.1",
-  "generated_for_phase": "Vol.8 Phase 8.5 - Future Implementation Readiness Ladder",
-  "baseline_commit": "59401955f861af4c1313b2973d1528278474cc18",
-  "runtime_records": 112,
+  "generated_for_phase": "Vol.8 Phase 8.6 - Vol.8 Handoff Summary and Vol.9 Readiness Gate",
+  "baseline_commit": "4836b20c373b40aa92a822ee09bb718fc953ae2d",
+  "runtime_records": 113,
   "customer_facing_readiness": false,
   "frameworks": [
     {
@@ -464,14 +464,34 @@
       "network_allowed": false,
       "execution_allowed": false,
       "next_improvement": "Prepare Vol.8 handoff summary and Vol.9 readiness gate, still static-only."
+    },
+    {
+      "framework_id": "vol8_handoff_summary_and_vol9_readiness_gate",
+      "framework_name": "Vol.8 Handoff Summary and Vol.9 Readiness Gate",
+      "category": "Handoff / Readiness Gate Framework",
+      "brief_description": "Phase 8.6 closes Vol.8 as a static QA handoff and product-boundary mapping volume, then evaluates Vol.9 entry as ready_with_limits for future planning only.",
+      "implemented_since_phase": "Vol.8 Phase 8.6 - Vol.8 Handoff Summary and Vol.9 Readiness Gate",
+      "implemented_since_version": "Vol.8 Phase 8.6 / v0.1",
+      "latest_verified_phase": "Vol.8 Phase 8.6 - Vol.8 Handoff Summary and Vol.9 Readiness Gate",
+      "latest_verified_commit": "4836b20c373b40aa92a822ee09bb718fc953ae2d",
+      "status": "implemented_handoff_contract / implemented_readiness_gate / implemented_validation_contract",
+      "artifact_paths": ["docs/runtime/VOL8_PHASE8_6_HANDOFF_SUMMARY_AND_VOL9_READINESS_GATE_v0.1.md", "docs/runtime/VOL8_HANDOFF_SUMMARY_v0.1.md", "schemas/vol8_handoff_summary.schema.json", "schemas/vol9_entry_readiness_gate.schema.json", "mock_consumers/ldd/vol8_handoff_summary.json", "mock_consumers/ldd/vol9_entry_readiness_gate.json", "mock_consumers/ldd/twos_ldd_post_vol8_backfeed_status_update.json"],
+      "validation_paths": ["scripts/validate_vol8_handoff_and_vol9_readiness.py", "scripts/validate_vol8_handoff_and_vol9_readiness.sh"],
+      "runtime_record_paths": ["records/ldd/2026-06-16/vol8_phase8_6_handoff_summary_and_vol9_readiness_gate.json"],
+      "customer_facing": false,
+      "fixture_only": true,
+      "read_only": true,
+      "network_allowed": false,
+      "execution_allowed": false,
+      "next_improvement": "Begin Vol.9 under ready_with_limits boundary, no live/runtime/execution implementation without future gates."
     }
   ],
   "summary": {
-    "total_implemented_frameworks": 23,
+    "total_implemented_frameworks": 24,
     "customer_facing_frameworks": 0,
     "live_runtime_execution_frameworks": 0,
-    "fixture_static_read_only_frameworks": 23,
-    "validation_backed_frameworks": 23
+    "fixture_static_read_only_frameworks": 24,
+    "validation_backed_frameworks": 24
   },
   "forbidden_scope_confirmed_absent": [
     "production UI",

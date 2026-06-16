@@ -1,0 +1,60 @@
+{
+  "target_volume": "Vol.9",
+  "source_volume": "Vol.8",
+  "source_phase": "Vol.8 Phase 8.6 - Vol.8 Handoff Summary and Vol.9 Readiness Gate",
+  "baseline_commit": "4836b20c373b40aa92a822ee09bb718fc953ae2d",
+  "runtime_records": 113,
+  "entry_readiness": "ready_with_limits",
+  "recommended_scope": [
+    "future implementation readiness gate design",
+    "static prototype boundary planning",
+    "permission and safety model drafting",
+    "no-live implementation roadmap",
+    "static-only product architecture refinement"
+  ],
+  "default_forbidden_scope": [
+    "production UI",
+    "customer-facing UI",
+    "hosted app",
+    "API server",
+    "live endpoint",
+    "external API",
+    "broker connection",
+    "Binance connection",
+    "live market data",
+    "trading automation",
+    "credential handling",
+    "login/auth",
+    "runtime mutation",
+    "execution trigger",
+    "order placement",
+    "portfolio modification",
+    "background worker",
+    "scheduler",
+    "notification dispatcher"
+  ],
+  "allowed_readiness_levels": [
+    "L1_static_doc_refinement_ready",
+    "L2_static_fixture_refinement_ready",
+    "L3_roadmap_only_no_implementation",
+    "L4_future_static_prototype_candidate"
+  ],
+  "disallowed_readiness_levels": [
+    "L5_future_runtime_candidate_requires_gate",
+    "L6_future_network_api_candidate_requires_gate",
+    "L7_future_customer_facing_candidate_requires_gate",
+    "L8_future_security_credential_candidate_requires_gate",
+    "L9_future_execution_candidate_requires_governance",
+    "L0_forbidden_rejected",
+    "L10_out_of_scope_deferred"
+  ],
+  "requires_future_gate_before_implementation": true,
+  "customer_facing_readiness": false,
+  "network_allowed": false,
+  "execution_allowed": false,
+  "notes": [
+    "Vol.9 readiness is a planning gate only.",
+    "Readiness levels do not authorize live/runtime/execution work.",
+    "Any future implementation must pass a new explicit readiness gate."
+  ]
+}
