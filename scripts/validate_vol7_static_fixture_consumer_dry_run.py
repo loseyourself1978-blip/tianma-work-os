@@ -19,6 +19,7 @@ READINESS_GATE_TIMESTAMP = "2026-06-15T17:07:00+08:00"
 LOCAL_STATIC_SHELL_TIMESTAMP = "2026-06-15T18:12:39+08:00"
 LOCAL_STATIC_SHELL_REVIEW_TIMESTAMP = "2026-06-16T09:03:34+08:00"
 LOCAL_STATIC_SHELL_DEMO_PACK_TIMESTAMP = "2026-06-16T10:05:33+08:00"
+LOCAL_STATIC_SHELL_SNAPSHOT_QA_TIMESTAMP = "2026-06-16T11:00:19+08:00"
 OPERATING_MODE = "cash_defense_core_position_survival_mode"
 PORTFOLIO_MODE = "residual_core_position_mode"
 SCOPE_REMINDER = "LDD scope is the entire U.S. equity market, not only existing or former positions."
@@ -384,9 +385,9 @@ def main() -> int:
     require(all(item == SCOPE_REMINDER for item in scope_sources) and SCOPE_REMINDER in example_scope, "ldd_scope_reminder", "LDD full-market scope reminder exists across all Phase 7.0-7.2 fixtures", failures)
 
     event_count, warning_count, latest_event = current_timeline_counts(timeline)
-    require(event_count in {101, 102, 103, 104, 105, 106}, "current_timeline_count", "current timeline count is baseline 101, post-dry-run 102, post-readiness-gate 103, post-local-static-shell 104, post-local-static-shell-review 105, or post-demo-pack 106", failures)
+    require(event_count in {101, 102, 103, 104, 105, 106, 107}, "current_timeline_count", "current timeline count is baseline 101 through post-snapshot-QA 107", failures)
     require(warning_count == 0, "current_timeline_warnings", "current timeline warnings remain 0", failures)
-    require(latest_event in {BASELINE_TIMELINE_EVENT, DRY_RUN_TIMESTAMP, READINESS_GATE_TIMESTAMP, LOCAL_STATIC_SHELL_TIMESTAMP, LOCAL_STATIC_SHELL_REVIEW_TIMESTAMP, LOCAL_STATIC_SHELL_DEMO_PACK_TIMESTAMP}, "current_latest_event", "current latest timeline event is baseline, Phase 7.2 dry-run timestamp, Phase 7.3 readiness timestamp, Phase 7.4 local static shell timestamp, Phase 7.5 review timestamp, or Phase 7.6 demo pack timestamp", failures)
+    require(latest_event in {BASELINE_TIMELINE_EVENT, DRY_RUN_TIMESTAMP, READINESS_GATE_TIMESTAMP, LOCAL_STATIC_SHELL_TIMESTAMP, LOCAL_STATIC_SHELL_REVIEW_TIMESTAMP, LOCAL_STATIC_SHELL_DEMO_PACK_TIMESTAMP, LOCAL_STATIC_SHELL_SNAPSHOT_QA_TIMESTAMP}, "current_latest_event", "current latest timeline event is a known Vol.7 static timeline timestamp through Phase 7.7", failures)
     require(view_model.get("checkpoint", {}).get("latest_active_checkpoint") == CHECKPOINT, "view_model_checkpoint", "view model active checkpoint is unchanged", failures)
     require(latest_state.get("latest_active_checkpoint") == CHECKPOINT or latest_state.get("checkpoint") == CHECKPOINT, "latest_state_checkpoint", "latest_state active checkpoint is unchanged", failures)
 

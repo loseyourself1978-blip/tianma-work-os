@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.7 Phase 7.6 - Local Static Shell Demo Pack and Operator Walkthrough
+Vol.7 Phase 7.7 - Local Static Shell Snapshot QA and Vol.7 Completion Readiness
 ```
 
 ## Core Documents
@@ -89,6 +89,7 @@ Vol.7 Phase 7.6 - Local Static Shell Demo Pack and Operator Walkthrough
 - `docs/runtime/VOL7_PHASE7_4_LOCAL_STATIC_SHELL_SKELETON_PERMISSIONED_IMPLEMENTATION_v0.1.md`
 - `docs/runtime/VOL7_PHASE7_5_LOCAL_STATIC_SHELL_REVIEW_ACCESSIBILITY_GUARDRAIL_HARDENING_AND_LDD_BACKFEED_v0.1.md`
 - `docs/runtime/VOL7_PHASE7_6_LOCAL_STATIC_SHELL_DEMO_PACK_AND_OPERATOR_WALKTHROUGH_v0.1.md`
+- `docs/runtime/VOL7_PHASE7_7_LOCAL_STATIC_SHELL_SNAPSHOT_QA_AND_COMPLETION_READINESS_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
@@ -644,6 +645,20 @@ Vol.7 Phase 7.6 - Local Static Shell Demo Pack and Operator Walkthrough
   - `static_shell/ldd/render_static_shell.js`
 - Current phase: `Vol.7 Phase 7.6 - Local Static Shell Demo Pack and Operator Walkthrough`
 - Next: `Vol.7 Phase 7.7 - Local Static Shell Snapshot QA and Vol.7 Completion Readiness`
+
+## Vol.7 Phase 7.7 / Local Static Shell Snapshot QA and Vol.7 Completion Readiness
+
+- `docs/runtime/VOL7_PHASE7_7_LOCAL_STATIC_SHELL_SNAPSHOT_QA_AND_COMPLETION_READINESS_v0.1.md`
+- `schemas/vol7_local_static_shell_snapshot_qa.schema.json`
+- `schemas/vol7_completion_readiness_gate.schema.json`
+- `mock_consumers/ldd/vol7_local_static_shell_snapshot_qa.json`
+- `mock_consumers/ldd/vol7_completion_readiness_gate.json`
+- `scripts/validate_vol7_local_static_shell_snapshot_qa.py`
+- `scripts/validate_vol7_local_static_shell_snapshot_qa.sh`
+- `records/ldd/2026-06-15/vol7_phase7_7_local_static_shell_snapshot_qa_and_completion_readiness.json`
+- Current phase: `Vol.7 Phase 7.7 - Local Static Shell Snapshot QA and Vol.7 Completion Readiness`
+- Completion readiness: `ready_for_handoff`
+- Next: `Vol.7 Phase 7.8 - Vol.7 Handoff Summary and Vol.8 Readiness Gate`
 
 ## Product Principles
 
