@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.8 Phase 8.2 - Implemented Function Framework Index Output Module
+Vol.8 Phase 8.3 - Local Operator Feedback Review Model
 ```
 
 ## Core Documents
@@ -96,6 +96,9 @@ Vol.8 Phase 8.2 - Implemented Function Framework Index Output Module
 - `docs/runtime/VOL8_STATIC_SHELL_QA_HANDOFF_CHECKLIST_v0.1.md`
 - `docs/runtime/VOL8_PHASE8_2_IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_OUTPUT_MODULE_v0.1.md`
 - `docs/runtime/IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_v0.1.md`
+- `docs/runtime/VOL8_PHASE8_3_LOCAL_OPERATOR_FEEDBACK_REVIEW_MODEL_v0.1.md`
+- `docs/runtime/VOL8_LOCAL_OPERATOR_FEEDBACK_REVIEW_GUIDE_v0.1.md`
+- `docs/runtime/VOL8_LOCAL_OPERATOR_FEEDBACK_ROLLUP_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
@@ -713,6 +716,28 @@ Vol.8 Phase 8.2 - Implemented Function Framework Index Output Module
 - `scripts/validate_implemented_function_framework_index.sh`
 - Current phase: `Vol.8 Phase 8.2 - Implemented Function Framework Index Output Module`
 - Functional frameworks indexed: `20`
+- Customer-facing readiness: `false`
+- Network allowed: `false`
+- Execution allowed: `false`
+
+## Vol.8 Phase 8.3 / Local Operator Feedback Review Model
+
+- `docs/runtime/VOL8_PHASE8_3_LOCAL_OPERATOR_FEEDBACK_REVIEW_MODEL_v0.1.md`
+- `docs/runtime/VOL8_LOCAL_OPERATOR_FEEDBACK_REVIEW_GUIDE_v0.1.md`
+- `docs/runtime/VOL8_LOCAL_OPERATOR_FEEDBACK_ROLLUP_v0.1.md`
+- `schemas/vol8_operator_feedback_review.schema.json`
+- `schemas/vol8_operator_feedback_rollup.schema.json`
+- `mock_consumers/ldd/vol8_operator_feedback_review_sample.json`
+- `mock_consumers/ldd/vol8_operator_feedback_rollup.json`
+- `records/ldd/2026-06-16/vol8_phase8_3_local_operator_feedback_review_model.json`
+- `scripts/generate_vol8_operator_feedback_rollup.py`
+- `scripts/validate_vol8_operator_feedback_review.py`
+- `scripts/validate_vol8_operator_feedback_review.sh`
+- Updated: `docs/runtime/IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_v0.1.md`
+- Updated: `mock_consumers/ldd/implemented_function_framework_index.json`
+- Current phase: `Vol.8 Phase 8.3 - Local Operator Feedback Review Model`
+- Feedback sample items: `7`
+- Functional frameworks indexed: `21`
 - Customer-facing readiness: `false`
 - Network allowed: `false`
 - Execution allowed: `false`

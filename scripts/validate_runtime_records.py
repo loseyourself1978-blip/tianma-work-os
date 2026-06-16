@@ -47,6 +47,8 @@ VOL8_ENTRY_READINESS_GATE = REPO_ROOT / "mock_consumers" / "ldd" / "vol8_entry_r
 VOL8_STATIC_SHELL_QA_HANDOFF_INTAKE = REPO_ROOT / "mock_consumers" / "ldd" / "vol8_static_shell_qa_handoff_intake.json"
 VOL8_BOUNDARY_FREEZE = REPO_ROOT / "mock_consumers" / "ldd" / "vol8_boundary_freeze.json"
 IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX = REPO_ROOT / "mock_consumers" / "ldd" / "implemented_function_framework_index.json"
+VOL8_OPERATOR_FEEDBACK_REVIEW_SAMPLE = REPO_ROOT / "mock_consumers" / "ldd" / "vol8_operator_feedback_review_sample.json"
+VOL8_OPERATOR_FEEDBACK_ROLLUP = REPO_ROOT / "mock_consumers" / "ldd" / "vol8_operator_feedback_rollup.json"
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 
@@ -115,6 +117,8 @@ SCHEMA_FILES = {
     "vol8_static_shell_qa_handoff_intake": "vol8_static_shell_qa_handoff_intake.schema.json",
     "vol8_boundary_freeze": "vol8_boundary_freeze.schema.json",
     "implemented_function_framework_index": "implemented_function_framework_index.schema.json",
+    "vol8_operator_feedback_review": "vol8_operator_feedback_review.schema.json",
+    "vol8_operator_feedback_rollup": "vol8_operator_feedback_rollup.schema.json",
     "static_cockpit_prototype_review": "static_cockpit_prototype_review.schema.json",
     "internal_operator_cockpit_static_spec_review": "internal_operator_cockpit_static_spec_review.schema.json",
     "ai_board_cockpit_static_spec_review": "ai_board_cockpit_static_spec_review.schema.json",
@@ -192,6 +196,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "vol8_static_shell_qa_handoff_intake", SCHEMA_FILES["vol8_static_shell_qa_handoff_intake"]
     if "vol8_phase8_2_implemented_function_framework_index_output_module" in filename:
         return "implemented_function_framework_index", SCHEMA_FILES["implemented_function_framework_index"]
+    if "vol8_phase8_3_local_operator_feedback_review_model" in filename:
+        return "vol8_operator_feedback_rollup", SCHEMA_FILES["vol8_operator_feedback_rollup"]
     if "static_cockpit_prototype_boundary_review" in filename:
         return "static_cockpit_prototype_review", SCHEMA_FILES["static_cockpit_prototype_review"]
     if "internal_operator_cockpit_static_spec_review" in filename:
@@ -620,6 +626,26 @@ def collect_targets() -> tuple[list[ValidationTarget], list[Path]]:
                 "mock_consumers",
                 SCHEMA_FILES["implemented_function_framework_index"],
                 "implemented_function_framework_index",
+            )
+        )
+
+    if VOL8_OPERATOR_FEEDBACK_REVIEW_SAMPLE.exists():
+        targets.append(
+            ValidationTarget(
+                VOL8_OPERATOR_FEEDBACK_REVIEW_SAMPLE,
+                "mock_consumers",
+                SCHEMA_FILES["vol8_operator_feedback_review"],
+                "vol8_operator_feedback_review",
+            )
+        )
+
+    if VOL8_OPERATOR_FEEDBACK_ROLLUP.exists():
+        targets.append(
+            ValidationTarget(
+                VOL8_OPERATOR_FEEDBACK_ROLLUP,
+                "mock_consumers",
+                SCHEMA_FILES["vol8_operator_feedback_rollup"],
+                "vol8_operator_feedback_rollup",
             )
         )
 

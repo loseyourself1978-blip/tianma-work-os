@@ -1,10 +1,10 @@
 # Implemented Function Framework Index v0.1
 
-Generated for: `Vol.8 Phase 8.2 - Implemented Function Framework Index Output Module`
+Generated for: `Vol.8 Phase 8.3 - Local Operator Feedback Review Model`
 
-Baseline commit: `90d6d2081e7ca75de082d5447ef80e4250d8131e`
+Baseline commit: `2cc8a93885c0d8254189d3237153113135508529`
 
-Runtime records baseline: `109`
+Runtime records baseline: `110`
 
 Customer-facing readiness: `false`
 
@@ -32,14 +32,15 @@ This index lists repo-backed implemented frameworks only. It does not claim cust
 | 18 | Product Boundary / Forbidden Scope Framework | Product Boundary / Forbidden Scope Framework | Vol.6 Phase 6.1 - UI Boundary Architecture<br>Vol.6 Phase 6.1 / v0.1 | Vol.8 Phase 8.2 - Implemented Function Framework Index Output Module<br>`90d6d2081e7ca75de082d5447ef80e4250d8131e` | implemented documentation contract | `docs/runtime/VOL6_PHASE6_1_UI_BOUNDARY_ARCHITECTURE_v0.1.md`<br>`mock_consumers/ldd/read_only_api_forbidden_capabilities.json`<br>`mock_consumers/ldd/cockpit_static_spec_blocked_action_crosscheck.json` | Keep forbidden scope visible in every future product-boundary phase. |
 | 19 | LDD Full-Market Scope Governance Framework | LDD Baseline Sync Framework | Vol.6 Phase 6.8a - LDD Full-Market Scope Correction and IPO Radar Governance Sync<br>Vol.6 Phase 6.8a / v0.1 | Vol.8 Phase 8.2 - Implemented Function Framework Index Output Module<br>`90d6d2081e7ca75de082d5447ef80e4250d8131e` | implemented fixture contract | `docs/runtime/VOL6_PHASE6_8A_LDD_FULL_MARKET_SCOPE_CORRECTION_AND_IPO_RADAR_GOVERNANCE_SYNC_v0.1.md`<br>`schemas/ldd_full_market_scope_governance_sync.schema.json`<br>`mock_consumers/ldd/ldd_full_market_scan_scope_contract.json` | Tie future candidate-review notes back to the full-market scope reminder. |
 | 20 | Implemented Function Framework Index Output Module | Implemented Function Framework Index Output Module | Vol.8 Phase 8.2 - Implemented Function Framework Index Output Module<br>Vol.8 Phase 8.2 / v0.1 | Vol.8 Phase 8.2 - Implemented Function Framework Index Output Module<br>`90d6d2081e7ca75de082d5447ef80e4250d8131e` | implemented validation contract | `docs/runtime/VOL8_PHASE8_2_IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_OUTPUT_MODULE_v0.1.md`<br>`docs/runtime/IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_v0.1.md`<br>`mock_consumers/ldd/implemented_function_framework_index.json` | Use the index as a planning input for future roadmap and product-boundary reviews. |
+| 21 | Local Operator Feedback Review Model | Static Shell Local QA Framework | Vol.8 Phase 8.3 - Local Operator Feedback Review Model<br>Vol.8 Phase 8.3 / v0.1 | Vol.8 Phase 8.3 - Local Operator Feedback Review Model<br>`2cc8a93885c0d8254189d3237153113135508529` | implemented validation contract | `docs/runtime/VOL8_PHASE8_3_LOCAL_OPERATOR_FEEDBACK_REVIEW_MODEL_v0.1.md`<br>`docs/runtime/VOL8_LOCAL_OPERATOR_FEEDBACK_REVIEW_GUIDE_v0.1.md`<br>`docs/runtime/VOL8_LOCAL_OPERATOR_FEEDBACK_ROLLUP_v0.1.md`<br>+4 more | Connect feedback rollup to future roadmap boundary mapping, still static-only. |
 
 ## Summary
 
-- Total implemented frameworks: `20`
+- Total implemented frameworks: `21`
 - Customer-facing frameworks: `0`
 - Live/runtime/execution frameworks: `0`
-- Fixture/static/read-only frameworks count: `20`
-- Validation-backed frameworks count: `20`
+- Fixture/static/read-only frameworks count: `21`
+- Validation-backed frameworks count: `21`
 
 ## Notes
 

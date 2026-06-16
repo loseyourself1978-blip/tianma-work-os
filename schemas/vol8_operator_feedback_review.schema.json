@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/vol8_operator_feedback_review.schema.json",
+  "title": "Vol.8 Operator Feedback Review Items",
+  "description": "Validates local static-shell operator feedback review items.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": true,
+    "required": [
+      "feedback_id",
+      "phase",
+      "reviewer_role",
+      "static_shell_path",
+      "feedback_title",
+      "feedback_summary",
+      "category",
+      "severity",
+      "routing",
+      "affected_artifacts",
+      "boundary_risk",
+      "customer_facing_claim",
+      "network_or_api_claim",
+      "execution_or_mutation_claim",
+      "credential_or_auth_claim",
+      "roadmap_only",
+      "recommended_action",
+      "status"
+    ],
+    "properties": {
+      "feedback_id": {"type": "string"},
+      "phase": {"type": "string", "enum": ["Vol.8 Phase 8.3 - Local Operator Feedback Review Model"]},
+      "reviewer_role": {"type": "string"},
+      "static_shell_path": {"type": "string", "enum": ["static_shell/ldd/"]},
+      "feedback_title": {"type": "string"},
+      "feedback_summary": {"type": "string"},
+      "category": {
+        "type": "string",
+        "enum": [
+          "blocking_clarity_issue",
+          "non_blocking_ux_improvement",
+          "information_architecture_issue",
+          "visual_hierarchy_issue",
+          "fixture_readability_issue",
+          "terminology_drift",
+          "operator_trust_risk",
+          "missing_context",
+          "documentation_refinement",
+          "future_product_candidate",
+          "boundary_question",
+          "forbidden_scope_request",
+          "live_runtime_request",
+          "execution_related_request",
+          "out_of_scope_for_vol8"
+        ]
+      },
+      "severity": {"type": "string", "enum": ["critical", "high", "medium", "low", "note"]},
+      "routing": {
+        "type": "string",
+        "enum": [
+          "static_shell_doc_refinement",
+          "static_shell_fixture_refinement",
+          "qa_checklist_update",
+          "implemented_framework_index_update",
+          "future_roadmap_backlog",
+          "boundary_guardrail_review",
+          "reject_forbidden_scope",
+          "defer_until_future_readiness_gate"
+        ]
+      },
+      "affected_artifacts": {"type": "array", "items": {"type": "string"}},
+      "boundary_risk": {"type": "boolean"},
+      "customer_facing_claim": {"type": "boolean"},
+      "network_or_api_claim": {"type": "boolean"},
+      "execution_or_mutation_claim": {"type": "boolean"},
+      "credential_or_auth_claim": {"type": "boolean"},
+      "roadmap_only": {"type": "boolean"},
+      "recommended_action": {"type": "string"},
+      "status": {
+        "type": "string",
+        "enum": [
+          "sample_static_feedback",
+          "accepted_static_feedback",
+          "roadmap_only",
+          "rejected_forbidden_scope",
+          "deferred_future_gate"
+        ]
+      }
+    }
+  }
+}

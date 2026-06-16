@@ -1,0 +1,75 @@
+{
+  "phase": "Vol.8 Phase 8.3 - Local Operator Feedback Review Model",
+  "baseline_commit": "2cc8a93885c0d8254189d3237153113135508529",
+  "runtime_records": 110,
+  "static_shell_path": "static_shell/ldd/",
+  "customer_facing_readiness": false,
+  "feedback_items": [
+    "mock_consumers/ldd/vol8_operator_feedback_review_sample.json"
+  ],
+  "summary": {
+    "total_feedback_items": 7,
+    "count_by_category": {
+      "blocking_clarity_issue": 1,
+      "non_blocking_ux_improvement": 1,
+      "missing_context": 1,
+      "terminology_drift": 1,
+      "future_product_candidate": 1,
+      "forbidden_scope_request": 1,
+      "execution_related_request": 1
+    },
+    "count_by_severity": {
+      "critical": 3,
+      "medium": 2,
+      "low": 1,
+      "note": 1
+    },
+    "count_by_routing": {
+      "boundary_guardrail_review": 1,
+      "static_shell_doc_refinement": 1,
+      "static_shell_fixture_refinement": 1,
+      "implemented_framework_index_update": 1,
+      "future_roadmap_backlog": 1,
+      "reject_forbidden_scope": 1,
+      "defer_until_future_readiness_gate": 1
+    },
+    "forbidden_scope_requests_count": 1,
+    "live_runtime_execution_requests_count": 2,
+    "accepted_static_shell_feedback_count": 4,
+    "roadmap_only_feedback_count": 2,
+    "boundary_risk_notes": [
+      "vol8-feedback-001: static boundary banner needs stronger placement.",
+      "vol8-feedback-006: live broker data request rejected for forbidden scope.",
+      "vol8-feedback-007: execution control request deferred until future readiness gate."
+    ],
+    "recommended_next_action": "Use the sample model to collect real local operator feedback, accept static-shell documentation/fixture refinements, and route all live/runtime/execution requests to rejection or a future readiness gate."
+  },
+  "forbidden_scope_confirmed_absent": [
+    "production UI",
+    "customer-facing UI",
+    "hosted app",
+    "API server",
+    "live endpoint",
+    "external API",
+    "broker connection",
+    "Binance connection",
+    "live market data",
+    "trading automation",
+    "credential handling",
+    "login/auth",
+    "runtime mutation",
+    "execution trigger",
+    "order placement",
+    "portfolio modification",
+    "background worker",
+    "scheduler",
+    "notification dispatcher",
+    "GitHub Issues",
+    "GitHub Projects board",
+    "package manager files",
+    "build tools",
+    "frontend framework",
+    "network dependency"
+  ],
+  "recommended_next_phase": "Vol.8 Phase 8.4 - Static Shell Feedback Intake Review and Boundary Mapping"
+}

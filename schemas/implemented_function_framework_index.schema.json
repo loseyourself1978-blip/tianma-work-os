@@ -23,15 +23,21 @@
     },
     "generated_for_phase": {
       "type": "string",
-      "enum": ["Vol.8 Phase 8.2 - Implemented Function Framework Index Output Module"]
+      "enum": [
+        "Vol.8 Phase 8.2 - Implemented Function Framework Index Output Module",
+        "Vol.8 Phase 8.3 - Local Operator Feedback Review Model"
+      ]
     },
     "baseline_commit": {
       "type": "string",
-      "enum": ["90d6d2081e7ca75de082d5447ef80e4250d8131e"]
+      "enum": [
+        "90d6d2081e7ca75de082d5447ef80e4250d8131e",
+        "2cc8a93885c0d8254189d3237153113135508529"
+      ]
     },
     "runtime_records": {
       "type": "integer",
-      "enum": [109]
+      "enum": [109, 110]
     },
     "customer_facing_readiness": {
       "type": "boolean",

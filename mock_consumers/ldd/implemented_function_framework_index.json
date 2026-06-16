@@ -1,8 +1,8 @@
 {
   "index_version": "v0.1",
-  "generated_for_phase": "Vol.8 Phase 8.2 - Implemented Function Framework Index Output Module",
-  "baseline_commit": "90d6d2081e7ca75de082d5447ef80e4250d8131e",
-  "runtime_records": 109,
+  "generated_for_phase": "Vol.8 Phase 8.3 - Local Operator Feedback Review Model",
+  "baseline_commit": "2cc8a93885c0d8254189d3237153113135508529",
+  "runtime_records": 110,
   "customer_facing_readiness": false,
   "frameworks": [
     {
@@ -404,14 +404,34 @@
       "network_allowed": false,
       "execution_allowed": false,
       "next_improvement": "Use the index as a planning input for future roadmap and product-boundary reviews."
+    },
+    {
+      "framework_id": "local_operator_feedback_review_model",
+      "framework_name": "Local Operator Feedback Review Model",
+      "category": "Static Shell Local QA Framework",
+      "brief_description": "Phase 8.3 structures local operator feedback capture, classification, rollup, and safe routing for the static shell.",
+      "implemented_since_phase": "Vol.8 Phase 8.3 - Local Operator Feedback Review Model",
+      "implemented_since_version": "Vol.8 Phase 8.3 / v0.1",
+      "latest_verified_phase": "Vol.8 Phase 8.3 - Local Operator Feedback Review Model",
+      "latest_verified_commit": "2cc8a93885c0d8254189d3237153113135508529",
+      "status": "implemented_validation_contract",
+      "artifact_paths": ["docs/runtime/VOL8_PHASE8_3_LOCAL_OPERATOR_FEEDBACK_REVIEW_MODEL_v0.1.md", "docs/runtime/VOL8_LOCAL_OPERATOR_FEEDBACK_REVIEW_GUIDE_v0.1.md", "docs/runtime/VOL8_LOCAL_OPERATOR_FEEDBACK_ROLLUP_v0.1.md", "schemas/vol8_operator_feedback_review.schema.json", "schemas/vol8_operator_feedback_rollup.schema.json", "mock_consumers/ldd/vol8_operator_feedback_review_sample.json", "mock_consumers/ldd/vol8_operator_feedback_rollup.json"],
+      "validation_paths": ["scripts/generate_vol8_operator_feedback_rollup.py", "scripts/validate_vol8_operator_feedback_review.py", "scripts/validate_vol8_operator_feedback_review.sh"],
+      "runtime_record_paths": ["records/ldd/2026-06-16/vol8_phase8_3_local_operator_feedback_review_model.json"],
+      "customer_facing": false,
+      "fixture_only": true,
+      "read_only": true,
+      "network_allowed": false,
+      "execution_allowed": false,
+      "next_improvement": "Connect feedback rollup to future roadmap boundary mapping, still static-only."
     }
   ],
   "summary": {
-    "total_implemented_frameworks": 20,
+    "total_implemented_frameworks": 21,
     "customer_facing_frameworks": 0,
     "live_runtime_execution_frameworks": 0,
-    "fixture_static_read_only_frameworks": 20,
-    "validation_backed_frameworks": 20
+    "fixture_static_read_only_frameworks": 21,
+    "validation_backed_frameworks": 21
   },
   "forbidden_scope_confirmed_absent": [
     "production UI",

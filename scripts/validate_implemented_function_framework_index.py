@@ -11,18 +11,19 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
-PHASE = "Vol.8 Phase 8.2 - Implemented Function Framework Index Output Module"
-BASELINE_COMMIT = "90d6d2081e7ca75de082d5447ef80e4250d8131e"
-EXPECTED_RUNTIME_RECORDS = 109
+PHASE = "Vol.8 Phase 8.3 - Local Operator Feedback Review Model"
+BASELINE_COMMIT = "2cc8a93885c0d8254189d3237153113135508529"
+EXPECTED_RUNTIME_RECORDS = 110
 EXPECTED_INDEX_VERSION = "v0.1"
 
 SCHEMA_PATH = "schemas/implemented_function_framework_index.schema.json"
 FIXTURE_PATH = "mock_consumers/ldd/implemented_function_framework_index.json"
 MARKDOWN_PATH = "docs/runtime/IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_v0.1.md"
-RECORD_PATH = "records/ldd/2026-06-16/vol8_phase8_2_implemented_function_framework_index_output_module.json"
+RECORD_PATH = "records/ldd/2026-06-16/vol8_phase8_3_local_operator_feedback_review_model.json"
 
 REQUIRED_FILES = [
     "docs/runtime/VOL8_PHASE8_2_IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_OUTPUT_MODULE_v0.1.md",
+    "docs/runtime/VOL8_PHASE8_3_LOCAL_OPERATOR_FEEDBACK_REVIEW_MODEL_v0.1.md",
     SCHEMA_PATH,
     FIXTURE_PATH,
     MARKDOWN_PATH,
@@ -165,7 +166,7 @@ def main() -> int:
     failures: list[str] = []
 
     missing = sorted(path for path in REQUIRED_FILES if not path_exists(path))
-    require(not missing, "required_files", "all Phase 8.2 documents, schema, fixture, record, generator, and validators exist", failures)
+    require(not missing, "required_files", "all Phase 8.3 documents, schema, fixture, record, generator, and validators exist", failures)
     for path in missing:
         print(f"Missing: {path}")
     if missing:
@@ -182,9 +183,9 @@ def main() -> int:
         print(f"  - {error}")
 
     require(index.get("index_version") == EXPECTED_INDEX_VERSION, "index_version", "index version is v0.1", failures)
-    require(index.get("generated_for_phase") == PHASE, "phase", "generated phase matches Phase 8.2", failures)
-    require(index.get("baseline_commit") == BASELINE_COMMIT, "baseline_commit", "baseline commit matches Phase 8.1 commit", failures)
-    require(index.get("runtime_records") == EXPECTED_RUNTIME_RECORDS, "runtime_records", "runtime records baseline equals 109", failures)
+    require(index.get("generated_for_phase") == PHASE, "phase", "generated phase matches Phase 8.3", failures)
+    require(index.get("baseline_commit") == BASELINE_COMMIT, "baseline_commit", "baseline commit matches Phase 8.3 commit", failures)
+    require(index.get("runtime_records") == EXPECTED_RUNTIME_RECORDS, "runtime_records", "runtime records baseline equals 110", failures)
     require(index.get("customer_facing_readiness") is False, "customer_facing_readiness", "customer-facing readiness remains false", failures)
 
     frameworks = as_list(index.get("frameworks"))
@@ -247,7 +248,7 @@ def main() -> int:
 
     require("# Implemented Function Framework Index v0.1" in markdown, "markdown_title", "generated markdown has expected title", failures)
     require(str(len(frameworks)) in markdown, "markdown_count", "generated markdown includes framework count", failures)
-    require(record.get("baseline_commit") == BASELINE_COMMIT and record.get("runtime_records") == EXPECTED_RUNTIME_RECORDS, "record_baseline", "runtime record preserves Phase 8.2 baseline metadata", failures)
+    require(record.get("baseline_commit") == BASELINE_COMMIT and record.get("runtime_records") == EXPECTED_RUNTIME_RECORDS, "record_baseline", "runtime record preserves Phase 8.3 baseline metadata", failures)
     require(record.get("network_allowed") is False and record.get("execution_allowed") is False and record.get("customer_facing") is False, "record_boundaries", "runtime record keeps no-network/no-execution/not-customer-facing boundaries", failures)
 
     print()

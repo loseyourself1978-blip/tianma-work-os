@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/vol8_operator_feedback_rollup.schema.json",
+  "title": "Vol.8 Operator Feedback Rollup",
+  "description": "Validates the local static-shell operator feedback rollup fixture.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "phase",
+    "baseline_commit",
+    "runtime_records",
+    "static_shell_path",
+    "customer_facing_readiness",
+    "feedback_items",
+    "summary",
+    "forbidden_scope_confirmed_absent",
+    "recommended_next_phase"
+  ],
+  "properties": {
+    "phase": {"type": "string", "enum": ["Vol.8 Phase 8.3 - Local Operator Feedback Review Model"]},
+    "baseline_commit": {"type": "string", "enum": ["2cc8a93885c0d8254189d3237153113135508529"]},
+    "runtime_records": {"type": "integer", "enum": [110]},
+    "static_shell_path": {"type": "string", "enum": ["static_shell/ldd/"]},
+    "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+    "feedback_items": {
+      "type": "array",
+      "items": {"type": ["object", "string"]}
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "total_feedback_items",
+        "count_by_category",
+        "count_by_severity",
+        "count_by_routing",
+        "forbidden_scope_requests_count",
+        "live_runtime_execution_requests_count",
+        "accepted_static_shell_feedback_count",
+        "roadmap_only_feedback_count",
+        "boundary_risk_notes",
+        "recommended_next_action"
+      ],
+      "properties": {
+        "total_feedback_items": {"type": "integer"},
+        "count_by_category": {"type": "object"},
+        "count_by_severity": {"type": "object"},
+        "count_by_routing": {"type": "object"},
+        "forbidden_scope_requests_count": {"type": "integer"},
+        "live_runtime_execution_requests_count": {"type": "integer"},
+        "accepted_static_shell_feedback_count": {"type": "integer"},
+        "roadmap_only_feedback_count": {"type": "integer"},
+        "boundary_risk_notes": {"type": "array", "items": {"type": "string"}},
+        "recommended_next_action": {"type": "string"}
+      }
+    },
+    "forbidden_scope_confirmed_absent": {"type": "array", "items": {"type": "string"}},
+    "recommended_next_phase": {"type": "string"}
+  }
+}
