@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/vol8_feedback_to_roadmap_mapping.schema.json",
+  "title": "Vol.8 Feedback-to-Roadmap Mapping Items",
+  "description": "Validates local static-only feedback-to-roadmap mapping items for Vol.8 Phase 8.4.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": true,
+    "required": [
+      "mapping_id",
+      "phase",
+      "source_feedback_id",
+      "source_feedback_title",
+      "mapping_category",
+      "boundary_decision",
+      "mapped_summary",
+      "allowed_current_action",
+      "disallowed_current_action",
+      "requires_future_gate",
+      "future_gate_type",
+      "affected_artifacts",
+      "roadmap_only",
+      "customer_facing_allowed",
+      "network_or_api_allowed",
+      "execution_or_mutation_allowed",
+      "credential_or_auth_allowed",
+      "recommended_next_action",
+      "status"
+    ],
+    "properties": {
+      "mapping_id": {"type": "string"},
+      "phase": {"type": "string", "enum": ["Vol.8 Phase 8.4 - Feedback-to-Roadmap Product Boundary Mapping"]},
+      "source_feedback_id": {"type": "string"},
+      "source_feedback_title": {"type": "string"},
+      "mapping_category": {
+        "type": "string",
+        "enum": [
+          "static_doc_refinement",
+          "static_fixture_refinement",
+          "qa_checklist_refinement",
+          "terminology_alignment",
+          "operator_trust_guardrail",
+          "implemented_framework_index_update",
+          "future_product_candidate",
+          "future_readiness_gate_required",
+          "forbidden_scope_rejected",
+          "live_runtime_request_deferred",
+          "execution_request_deferred",
+          "credential_or_auth_request_deferred",
+          "customer_facing_request_deferred",
+          "out_of_scope_for_vol8"
+        ]
+      },
+      "boundary_decision": {
+        "type": "string",
+        "enum": [
+          "safe_to_refine_now_static_only",
+          "roadmap_only_no_implementation",
+          "requires_future_readiness_gate",
+          "reject_forbidden_scope",
+          "defer_until_runtime_boundary_defined",
+          "defer_until_customer_facing_boundary_defined",
+          "defer_until_security_and_credential_boundary_defined",
+          "defer_until_execution_governance_defined"
+        ]
+      },
+      "mapped_summary": {"type": "string"},
+      "allowed_current_action": {"type": "string"},
+      "disallowed_current_action": {"type": "string"},
+      "requires_future_gate": {"type": "boolean"},
+      "future_gate_type": {"type": "string"},
+      "affected_artifacts": {"type": "array", "items": {"type": "string"}},
+      "roadmap_only": {"type": "boolean"},
+      "customer_facing_allowed": {"type": "boolean", "enum": [false]},
+      "network_or_api_allowed": {"type": "boolean", "enum": [false]},
+      "execution_or_mutation_allowed": {"type": "boolean", "enum": [false]},
+      "credential_or_auth_allowed": {"type": "boolean", "enum": [false]},
+      "recommended_next_action": {"type": "string"},
+      "status": {"type": "string"}
+    }
+  }
+}

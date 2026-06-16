@@ -49,6 +49,8 @@ VOL8_BOUNDARY_FREEZE = REPO_ROOT / "mock_consumers" / "ldd" / "vol8_boundary_fre
 IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX = REPO_ROOT / "mock_consumers" / "ldd" / "implemented_function_framework_index.json"
 VOL8_OPERATOR_FEEDBACK_REVIEW_SAMPLE = REPO_ROOT / "mock_consumers" / "ldd" / "vol8_operator_feedback_review_sample.json"
 VOL8_OPERATOR_FEEDBACK_ROLLUP = REPO_ROOT / "mock_consumers" / "ldd" / "vol8_operator_feedback_rollup.json"
+VOL8_FEEDBACK_TO_ROADMAP_MAPPING_SAMPLE = REPO_ROOT / "mock_consumers" / "ldd" / "vol8_feedback_to_roadmap_mapping_sample.json"
+VOL8_FEEDBACK_TO_ROADMAP_BOUNDARY_MAP = REPO_ROOT / "mock_consumers" / "ldd" / "vol8_feedback_to_roadmap_boundary_map.json"
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 
@@ -119,6 +121,8 @@ SCHEMA_FILES = {
     "implemented_function_framework_index": "implemented_function_framework_index.schema.json",
     "vol8_operator_feedback_review": "vol8_operator_feedback_review.schema.json",
     "vol8_operator_feedback_rollup": "vol8_operator_feedback_rollup.schema.json",
+    "vol8_feedback_to_roadmap_mapping": "vol8_feedback_to_roadmap_mapping.schema.json",
+    "vol8_feedback_to_roadmap_boundary_map": "vol8_feedback_to_roadmap_boundary_map.schema.json",
     "static_cockpit_prototype_review": "static_cockpit_prototype_review.schema.json",
     "internal_operator_cockpit_static_spec_review": "internal_operator_cockpit_static_spec_review.schema.json",
     "ai_board_cockpit_static_spec_review": "ai_board_cockpit_static_spec_review.schema.json",
@@ -198,6 +202,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "implemented_function_framework_index", SCHEMA_FILES["implemented_function_framework_index"]
     if "vol8_phase8_3_local_operator_feedback_review_model" in filename:
         return "vol8_operator_feedback_rollup", SCHEMA_FILES["vol8_operator_feedback_rollup"]
+    if "vol8_phase8_4_feedback_to_roadmap_product_boundary_mapping" in filename:
+        return "vol8_feedback_to_roadmap_boundary_map", SCHEMA_FILES["vol8_feedback_to_roadmap_boundary_map"]
     if "static_cockpit_prototype_boundary_review" in filename:
         return "static_cockpit_prototype_review", SCHEMA_FILES["static_cockpit_prototype_review"]
     if "internal_operator_cockpit_static_spec_review" in filename:
@@ -646,6 +652,26 @@ def collect_targets() -> tuple[list[ValidationTarget], list[Path]]:
                 "mock_consumers",
                 SCHEMA_FILES["vol8_operator_feedback_rollup"],
                 "vol8_operator_feedback_rollup",
+            )
+        )
+
+    if VOL8_FEEDBACK_TO_ROADMAP_MAPPING_SAMPLE.exists():
+        targets.append(
+            ValidationTarget(
+                VOL8_FEEDBACK_TO_ROADMAP_MAPPING_SAMPLE,
+                "mock_consumers",
+                SCHEMA_FILES["vol8_feedback_to_roadmap_mapping"],
+                "vol8_feedback_to_roadmap_mapping",
+            )
+        )
+
+    if VOL8_FEEDBACK_TO_ROADMAP_BOUNDARY_MAP.exists():
+        targets.append(
+            ValidationTarget(
+                VOL8_FEEDBACK_TO_ROADMAP_BOUNDARY_MAP,
+                "mock_consumers",
+                SCHEMA_FILES["vol8_feedback_to_roadmap_boundary_map"],
+                "vol8_feedback_to_roadmap_boundary_map",
             )
         )
 

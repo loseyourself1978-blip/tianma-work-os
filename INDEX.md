@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.8 Phase 8.3 - Local Operator Feedback Review Model
+Vol.8 Phase 8.4 - Feedback-to-Roadmap Product Boundary Mapping
 ```
 
 ## Core Documents
@@ -99,6 +99,9 @@ Vol.8 Phase 8.3 - Local Operator Feedback Review Model
 - `docs/runtime/VOL8_PHASE8_3_LOCAL_OPERATOR_FEEDBACK_REVIEW_MODEL_v0.1.md`
 - `docs/runtime/VOL8_LOCAL_OPERATOR_FEEDBACK_REVIEW_GUIDE_v0.1.md`
 - `docs/runtime/VOL8_LOCAL_OPERATOR_FEEDBACK_ROLLUP_v0.1.md`
+- `docs/runtime/VOL8_PHASE8_4_FEEDBACK_TO_ROADMAP_PRODUCT_BOUNDARY_MAPPING_v0.1.md`
+- `docs/runtime/VOL8_FEEDBACK_TO_ROADMAP_MAPPING_GUIDE_v0.1.md`
+- `docs/runtime/VOL8_FEEDBACK_TO_ROADMAP_BOUNDARY_MAP_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
@@ -738,6 +741,28 @@ Vol.8 Phase 8.3 - Local Operator Feedback Review Model
 - Current phase: `Vol.8 Phase 8.3 - Local Operator Feedback Review Model`
 - Feedback sample items: `7`
 - Functional frameworks indexed: `21`
+- Customer-facing readiness: `false`
+- Network allowed: `false`
+- Execution allowed: `false`
+
+## Vol.8 Phase 8.4 / Feedback-to-Roadmap Product Boundary Mapping
+
+- `docs/runtime/VOL8_PHASE8_4_FEEDBACK_TO_ROADMAP_PRODUCT_BOUNDARY_MAPPING_v0.1.md`
+- `docs/runtime/VOL8_FEEDBACK_TO_ROADMAP_MAPPING_GUIDE_v0.1.md`
+- `docs/runtime/VOL8_FEEDBACK_TO_ROADMAP_BOUNDARY_MAP_v0.1.md`
+- `schemas/vol8_feedback_to_roadmap_mapping.schema.json`
+- `schemas/vol8_feedback_to_roadmap_boundary_map.schema.json`
+- `mock_consumers/ldd/vol8_feedback_to_roadmap_mapping_sample.json`
+- `mock_consumers/ldd/vol8_feedback_to_roadmap_boundary_map.json`
+- `records/ldd/2026-06-16/vol8_phase8_4_feedback_to_roadmap_product_boundary_mapping.json`
+- `scripts/generate_vol8_feedback_to_roadmap_boundary_map.py`
+- `scripts/validate_vol8_feedback_to_roadmap_mapping.py`
+- `scripts/validate_vol8_feedback_to_roadmap_mapping.sh`
+- Updated: `docs/runtime/IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_v0.1.md`
+- Updated: `mock_consumers/ldd/implemented_function_framework_index.json`
+- Current phase: `Vol.8 Phase 8.4 - Feedback-to-Roadmap Product Boundary Mapping`
+- Mapped feedback-to-roadmap items: `11`
+- Functional frameworks indexed: `22`
 - Customer-facing readiness: `false`
 - Network allowed: `false`
 - Execution allowed: `false`

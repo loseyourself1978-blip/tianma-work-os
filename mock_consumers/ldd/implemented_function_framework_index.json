@@ -1,8 +1,8 @@
 {
   "index_version": "v0.1",
-  "generated_for_phase": "Vol.8 Phase 8.3 - Local Operator Feedback Review Model",
-  "baseline_commit": "2cc8a93885c0d8254189d3237153113135508529",
-  "runtime_records": 110,
+  "generated_for_phase": "Vol.8 Phase 8.4 - Feedback-to-Roadmap Product Boundary Mapping",
+  "baseline_commit": "5a13f54bd36a81f4ba39530c63899ec4529807d5",
+  "runtime_records": 111,
   "customer_facing_readiness": false,
   "frameworks": [
     {
@@ -424,14 +424,34 @@
       "network_allowed": false,
       "execution_allowed": false,
       "next_improvement": "Connect feedback rollup to future roadmap boundary mapping, still static-only."
+    },
+    {
+      "framework_id": "feedback_to_roadmap_product_boundary_mapping",
+      "framework_name": "Feedback-to-Roadmap Product Boundary Mapping",
+      "category": "Product Boundary / Roadmap Mapping Framework",
+      "brief_description": "Phase 8.4 maps local operator feedback into static-only refinements, roadmap candidates, future gates, rejected forbidden scope, and deferred live/runtime/execution requests.",
+      "implemented_since_phase": "Vol.8 Phase 8.4 - Feedback-to-Roadmap Product Boundary Mapping",
+      "implemented_since_version": "Vol.8 Phase 8.4 / v0.1",
+      "latest_verified_phase": "Vol.8 Phase 8.4 - Feedback-to-Roadmap Product Boundary Mapping",
+      "latest_verified_commit": "5a13f54bd36a81f4ba39530c63899ec4529807d5",
+      "status": "implemented_validation_contract / implemented_handoff_contract / implemented_readiness_gate",
+      "artifact_paths": ["docs/runtime/VOL8_PHASE8_4_FEEDBACK_TO_ROADMAP_PRODUCT_BOUNDARY_MAPPING_v0.1.md", "docs/runtime/VOL8_FEEDBACK_TO_ROADMAP_MAPPING_GUIDE_v0.1.md", "docs/runtime/VOL8_FEEDBACK_TO_ROADMAP_BOUNDARY_MAP_v0.1.md", "schemas/vol8_feedback_to_roadmap_mapping.schema.json", "schemas/vol8_feedback_to_roadmap_boundary_map.schema.json", "mock_consumers/ldd/vol8_feedback_to_roadmap_mapping_sample.json", "mock_consumers/ldd/vol8_feedback_to_roadmap_boundary_map.json"],
+      "validation_paths": ["scripts/generate_vol8_feedback_to_roadmap_boundary_map.py", "scripts/validate_vol8_feedback_to_roadmap_mapping.py", "scripts/validate_vol8_feedback_to_roadmap_mapping.sh"],
+      "runtime_record_paths": ["records/ldd/2026-06-16/vol8_phase8_4_feedback_to_roadmap_product_boundary_mapping.json"],
+      "customer_facing": false,
+      "fixture_only": true,
+      "read_only": true,
+      "network_allowed": false,
+      "execution_allowed": false,
+      "next_improvement": "Convert roadmap boundary map into future implementation readiness ladder, still static-only."
     }
   ],
   "summary": {
-    "total_implemented_frameworks": 21,
+    "total_implemented_frameworks": 22,
     "customer_facing_frameworks": 0,
     "live_runtime_execution_frameworks": 0,
-    "fixture_static_read_only_frameworks": 21,
-    "validation_backed_frameworks": 21
+    "fixture_static_read_only_frameworks": 22,
+    "validation_backed_frameworks": 22
   },
   "forbidden_scope_confirmed_absent": [
     "production UI",

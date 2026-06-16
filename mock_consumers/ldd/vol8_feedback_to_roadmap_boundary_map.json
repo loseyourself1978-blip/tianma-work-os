@@ -1,0 +1,72 @@
+{
+  "phase": "Vol.8 Phase 8.4 - Feedback-to-Roadmap Product Boundary Mapping",
+  "baseline_commit": "5a13f54bd36a81f4ba39530c63899ec4529807d5",
+  "runtime_records": 111,
+  "static_shell_path": "static_shell/ldd/",
+  "customer_facing_readiness": false,
+  "source_feedback_rollup": "docs/runtime/VOL8_LOCAL_OPERATOR_FEEDBACK_ROLLUP_v0.1.md",
+  "mapped_items": ["mock_consumers/ldd/vol8_feedback_to_roadmap_mapping_sample.json"],
+  "summary": {
+    "total_mapped_items": 11,
+    "count_by_mapping_category": {
+      "operator_trust_guardrail": 1,
+      "static_doc_refinement": 1,
+      "static_fixture_refinement": 1,
+      "terminology_alignment": 1,
+      "implemented_framework_index_update": 1,
+      "qa_checklist_refinement": 1,
+      "future_product_candidate": 1,
+      "future_readiness_gate_required": 1,
+      "forbidden_scope_rejected": 1,
+      "execution_request_deferred": 1,
+      "live_runtime_request_deferred": 1
+    },
+    "count_by_boundary_decision": {
+      "safe_to_refine_now_static_only": 6,
+      "roadmap_only_no_implementation": 1,
+      "requires_future_readiness_gate": 1,
+      "reject_forbidden_scope": 1,
+      "defer_until_execution_governance_defined": 1,
+      "defer_until_runtime_boundary_defined": 1
+    },
+    "safe_static_only_refinements_count": 6,
+    "roadmap_only_candidates_count": 4,
+    "future_readiness_gate_required_count": 3,
+    "rejected_forbidden_scope_count": 1,
+    "deferred_live_runtime_execution_count": 2,
+    "boundary_risk_notes": [
+      "vol8-feedback-001 maps to operator trust guardrail and QA checklist refinement only.",
+      "vol8-feedback-006 is rejected for forbidden broker/API/live-data scope and separately deferred for future runtime-boundary discussion.",
+      "vol8-feedback-007 is deferred until execution governance is defined."
+    ],
+    "recommended_next_action": "Use this boundary map as static planning input for a future implementation readiness ladder; do not treat any roadmap item as implementation approval."
+  },
+  "forbidden_scope_confirmed_absent": [
+    "production UI",
+    "customer-facing UI",
+    "hosted app",
+    "API server",
+    "live endpoint",
+    "external API",
+    "broker connection",
+    "Binance connection",
+    "live market data",
+    "trading automation",
+    "credential handling",
+    "login/auth",
+    "runtime mutation",
+    "execution trigger",
+    "order placement",
+    "portfolio modification",
+    "background worker",
+    "scheduler",
+    "notification dispatcher",
+    "GitHub Issues",
+    "GitHub Projects board",
+    "package manager files",
+    "build tools",
+    "frontend framework",
+    "network dependency"
+  ],
+  "recommended_next_phase": "Future implementation readiness ladder, still static-only until a new gate authorizes otherwise"
+}

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/vol8_feedback_to_roadmap_boundary_map.schema.json",
+  "title": "Vol.8 Feedback-to-Roadmap Boundary Map",
+  "description": "Validates the local static-only feedback-to-roadmap boundary map fixture for Vol.8 Phase 8.4.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "phase",
+    "baseline_commit",
+    "runtime_records",
+    "static_shell_path",
+    "customer_facing_readiness",
+    "source_feedback_rollup",
+    "mapped_items",
+    "summary",
+    "forbidden_scope_confirmed_absent",
+    "recommended_next_phase"
+  ],
+  "properties": {
+    "phase": {"type": "string", "enum": ["Vol.8 Phase 8.4 - Feedback-to-Roadmap Product Boundary Mapping"]},
+    "baseline_commit": {"type": "string", "enum": ["5a13f54bd36a81f4ba39530c63899ec4529807d5"]},
+    "runtime_records": {"type": "integer", "enum": [111]},
+    "static_shell_path": {"type": "string", "enum": ["static_shell/ldd/"]},
+    "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+    "source_feedback_rollup": {"type": "string"},
+    "mapped_items": {
+      "type": "array",
+      "items": {"type": ["object", "string"]}
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "total_mapped_items",
+        "count_by_mapping_category",
+        "count_by_boundary_decision",
+        "safe_static_only_refinements_count",
+        "roadmap_only_candidates_count",
+        "future_readiness_gate_required_count",
+        "rejected_forbidden_scope_count",
+        "deferred_live_runtime_execution_count",
+        "boundary_risk_notes",
+        "recommended_next_action"
+      ],
+      "properties": {
+        "total_mapped_items": {"type": "integer"},
+        "count_by_mapping_category": {"type": "object"},
+        "count_by_boundary_decision": {"type": "object"},
+        "safe_static_only_refinements_count": {"type": "integer"},
+        "roadmap_only_candidates_count": {"type": "integer"},
+        "future_readiness_gate_required_count": {"type": "integer"},
+        "rejected_forbidden_scope_count": {"type": "integer"},
+        "deferred_live_runtime_execution_count": {"type": "integer"},
+        "boundary_risk_notes": {"type": "array", "items": {"type": "string"}},
+        "recommended_next_action": {"type": "string"}
+      }
+    },
+    "forbidden_scope_confirmed_absent": {"type": "array", "items": {"type": "string"}},
+    "recommended_next_phase": {"type": "string"}
+  }
+}
