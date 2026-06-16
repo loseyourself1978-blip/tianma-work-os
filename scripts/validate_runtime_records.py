@@ -46,6 +46,7 @@ VOL7_HANDOFF_SUMMARY = REPO_ROOT / "mock_consumers" / "ldd" / "vol7_handoff_summ
 VOL8_ENTRY_READINESS_GATE = REPO_ROOT / "mock_consumers" / "ldd" / "vol8_entry_readiness_gate.json"
 VOL8_STATIC_SHELL_QA_HANDOFF_INTAKE = REPO_ROOT / "mock_consumers" / "ldd" / "vol8_static_shell_qa_handoff_intake.json"
 VOL8_BOUNDARY_FREEZE = REPO_ROOT / "mock_consumers" / "ldd" / "vol8_boundary_freeze.json"
+IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX = REPO_ROOT / "mock_consumers" / "ldd" / "implemented_function_framework_index.json"
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 
@@ -113,6 +114,7 @@ SCHEMA_FILES = {
     "vol8_entry_readiness_gate": "vol8_entry_readiness_gate.schema.json",
     "vol8_static_shell_qa_handoff_intake": "vol8_static_shell_qa_handoff_intake.schema.json",
     "vol8_boundary_freeze": "vol8_boundary_freeze.schema.json",
+    "implemented_function_framework_index": "implemented_function_framework_index.schema.json",
     "static_cockpit_prototype_review": "static_cockpit_prototype_review.schema.json",
     "internal_operator_cockpit_static_spec_review": "internal_operator_cockpit_static_spec_review.schema.json",
     "ai_board_cockpit_static_spec_review": "ai_board_cockpit_static_spec_review.schema.json",
@@ -188,6 +190,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "vol7_handoff_summary", SCHEMA_FILES["vol7_handoff_summary"]
     if "vol8_phase8_1_static_shell_qa_handoff_intake_and_boundary_freeze" in filename:
         return "vol8_static_shell_qa_handoff_intake", SCHEMA_FILES["vol8_static_shell_qa_handoff_intake"]
+    if "vol8_phase8_2_implemented_function_framework_index_output_module" in filename:
+        return "implemented_function_framework_index", SCHEMA_FILES["implemented_function_framework_index"]
     if "static_cockpit_prototype_boundary_review" in filename:
         return "static_cockpit_prototype_review", SCHEMA_FILES["static_cockpit_prototype_review"]
     if "internal_operator_cockpit_static_spec_review" in filename:
@@ -606,6 +610,16 @@ def collect_targets() -> tuple[list[ValidationTarget], list[Path]]:
                 "mock_consumers",
                 SCHEMA_FILES["vol8_boundary_freeze"],
                 "vol8_boundary_freeze",
+            )
+        )
+
+    if IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX.exists():
+        targets.append(
+            ValidationTarget(
+                IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX,
+                "mock_consumers",
+                SCHEMA_FILES["implemented_function_framework_index"],
+                "implemented_function_framework_index",
             )
         )
 

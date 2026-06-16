@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.8 Phase 8.1 - Static Shell QA Handoff Intake and Boundary Freeze
+Vol.8 Phase 8.2 - Implemented Function Framework Index Output Module
 ```
 
 ## Core Documents
@@ -94,6 +94,8 @@ Vol.8 Phase 8.1 - Static Shell QA Handoff Intake and Boundary Freeze
 - `docs/runtime/VOL7_PHASE7_8_HANDOFF_SUMMARY_AND_VOL8_READINESS_GATE_v0.1.md`
 - `docs/runtime/VOL8_PHASE8_1_STATIC_SHELL_QA_HANDOFF_INTAKE_AND_BOUNDARY_FREEZE_v0.1.md`
 - `docs/runtime/VOL8_STATIC_SHELL_QA_HANDOFF_CHECKLIST_v0.1.md`
+- `docs/runtime/VOL8_PHASE8_2_IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_OUTPUT_MODULE_v0.1.md`
+- `docs/runtime/IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
@@ -698,6 +700,22 @@ Vol.8 Phase 8.1 - Static Shell QA Handoff Intake and Boundary Freeze
 - QA review status: `ready_for_local_static_review`
 - Implementation readiness: `not_ready_for_implementation`
 - Customer-facing readiness: `false`
+
+## Vol.8 Phase 8.2 / Implemented Function Framework Index Output Module
+
+- `docs/runtime/VOL8_PHASE8_2_IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_OUTPUT_MODULE_v0.1.md`
+- `docs/runtime/IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_v0.1.md`
+- `schemas/implemented_function_framework_index.schema.json`
+- `mock_consumers/ldd/implemented_function_framework_index.json`
+- `records/ldd/2026-06-16/vol8_phase8_2_implemented_function_framework_index_output_module.json`
+- `scripts/generate_implemented_function_framework_index.py`
+- `scripts/validate_implemented_function_framework_index.py`
+- `scripts/validate_implemented_function_framework_index.sh`
+- Current phase: `Vol.8 Phase 8.2 - Implemented Function Framework Index Output Module`
+- Functional frameworks indexed: `20`
+- Customer-facing readiness: `false`
+- Network allowed: `false`
+- Execution allowed: `false`
 
 ## Product Principles
 

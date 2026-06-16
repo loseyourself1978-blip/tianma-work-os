@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/implemented_function_framework_index.schema.json",
+  "title": "Implemented Function Framework Index",
+  "description": "Validates the Vol.8 Phase 8.2 implemented function framework index fixture.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "index_version",
+    "generated_for_phase",
+    "baseline_commit",
+    "runtime_records",
+    "customer_facing_readiness",
+    "frameworks",
+    "summary",
+    "forbidden_scope_confirmed_absent",
+    "notes"
+  ],
+  "properties": {
+    "index_version": {
+      "type": "string",
+      "enum": ["v0.1"]
+    },
+    "generated_for_phase": {
+      "type": "string",
+      "enum": ["Vol.8 Phase 8.2 - Implemented Function Framework Index Output Module"]
+    },
+    "baseline_commit": {
+      "type": "string",
+      "enum": ["90d6d2081e7ca75de082d5447ef80e4250d8131e"]
+    },
+    "runtime_records": {
+      "type": "integer",
+      "enum": [109]
+    },
+    "customer_facing_readiness": {
+      "type": "boolean",
+      "enum": [false]
+    },
+    "frameworks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "framework_id",
+          "framework_name",
+          "category",
+          "brief_description",
+          "implemented_since_phase",
+          "implemented_since_version",
+          "latest_verified_phase",
+          "latest_verified_commit",
+          "status",
+          "artifact_paths",
+          "validation_paths",
+          "runtime_record_paths",
+          "customer_facing",
+          "fixture_only",
+          "read_only",
+          "network_allowed",
+          "execution_allowed",
+          "next_improvement"
+        ],
+        "properties": {
+          "framework_id": {"type": "string"},
+          "framework_name": {"type": "string"},
+          "category": {"type": "string"},
+          "brief_description": {"type": "string"},
+          "implemented_since_phase": {"type": "string"},
+          "implemented_since_version": {"type": "string"},
+          "latest_verified_phase": {"type": "string"},
+          "latest_verified_commit": {"type": "string"},
+          "status": {
+            "type": "string",
+            "enum": [
+              "implemented_documentation_contract",
+              "implemented_schema_contract",
+              "implemented_fixture_contract",
+              "implemented_validation_contract",
+              "implemented_static_shell_contract",
+              "implemented_handoff_contract",
+              "implemented_readiness_gate",
+              "roadmap_only",
+              "deprecated_or_superseded"
+            ]
+          },
+          "artifact_paths": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "validation_paths": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "runtime_record_paths": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "customer_facing": {
+            "type": "boolean",
+            "enum": [false]
+          },
+          "fixture_only": {
+            "type": "boolean",
+            "enum": [true]
+          },
+          "read_only": {
+            "type": "boolean",
+            "enum": [true]
+          },
+          "network_allowed": {
+            "type": "boolean",
+            "enum": [false]
+          },
+          "execution_allowed": {
+            "type": "boolean",
+            "enum": [false]
+          },
+          "next_improvement": {"type": "string"}
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "total_implemented_frameworks",
+        "customer_facing_frameworks",
+        "live_runtime_execution_frameworks",
+        "fixture_static_read_only_frameworks",
+        "validation_backed_frameworks"
+      ],
+      "properties": {
+        "total_implemented_frameworks": {"type": "integer"},
+        "customer_facing_frameworks": {"type": "integer", "enum": [0]},
+        "live_runtime_execution_frameworks": {"type": "integer", "enum": [0]},
+        "fixture_static_read_only_frameworks": {"type": "integer"},
+        "validation_backed_frameworks": {"type": "integer"}
+      }
+    },
+    "forbidden_scope_confirmed_absent": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "notes": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}
