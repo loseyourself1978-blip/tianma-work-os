@@ -15,6 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 PHASE = "Vol.7 Phase 7.7 - Local Static Shell Snapshot QA and Vol.7 Completion Readiness"
 BASELINE_COMMIT = "04042d1a20c4d96b5cfdab4d404c2458fb2c12a8"
 QA_TIMESTAMP = "2026-06-16T11:00:19+08:00"
+VOL7_HANDOFF_TIMESTAMP = "2026-06-16T13:00:56+08:00"
 PREVIOUS_TIMESTAMP = "2026-06-16T10:05:33+08:00"
 CHECKPOINT = "2026-06-12T09:18:00+08:00"
 OPERATING_MODE = "cash_defense_core_position_survival_mode"
@@ -303,9 +304,9 @@ def main() -> int:
         failures.append(finding)
 
     event_count, warning_count, latest_event = timeline_counts(runtime_timeline)
-    require(event_count in {106, 107}, "current_timeline_count", "current timeline count is baseline 106 or post-snapshot-QA 107", failures)
+    require(event_count in {106, 107, 108}, "current_timeline_count", "current timeline count is baseline 106 through post-handoff 108", failures)
     require(warning_count == 0, "current_timeline_warnings", "current timeline warnings remain 0", failures)
-    require(latest_event in {PREVIOUS_TIMESTAMP, QA_TIMESTAMP}, "current_latest_event", "current latest event is Phase 7.6 or Phase 7.7 timestamp", failures)
+    require(latest_event in {PREVIOUS_TIMESTAMP, QA_TIMESTAMP, VOL7_HANDOFF_TIMESTAMP}, "current_latest_event", "current latest event is Phase 7.6, Phase 7.7, or Phase 7.8 timestamp", failures)
     require(latest_state.get("latest_active_checkpoint") == CHECKPOINT, "latest_state_checkpoint", "latest_state active checkpoint remains unchanged", failures)
     require(view_model.get("checkpoint", {}).get("latest_active_checkpoint") == CHECKPOINT, "view_model_checkpoint", "view model active checkpoint remains unchanged", failures)
     require(view_model.get("portfolio_mode", {}).get("operating_mode") == OPERATING_MODE and view_model.get("portfolio_mode", {}).get("current") == PORTFOLIO_MODE, "view_model_modes", "view model modes remain unchanged", failures)

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/vol8_entry_readiness_gate.schema.json",
+  "title": "Vol.8 Entry Readiness Gate",
+  "description": "Validates the Vol.8 entry readiness gate fixture.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "phase",
+    "baseline_commit",
+    "vol8_entry_readiness",
+    "recommended_next_volume",
+    "recommended_next_chat_title",
+    "entry_scope",
+    "forbidden_scope",
+    "customer_facing_readiness",
+    "inherits_static_shell_boundary",
+    "requires_explicit_approval_for_expansion",
+    "fixture_only",
+    "read_only",
+    "network_allowed",
+    "api_allowed",
+    "mutation_allowed",
+    "execution_allowed",
+    "credential_handling_allowed",
+    "live_data_allowed",
+    "production_deployment_allowed",
+    "warnings",
+    "errors"
+  ],
+  "properties": {
+    "phase": {
+      "type": "string",
+      "enum": ["Vol.7 Phase 7.8 - Vol.7 Handoff Summary and Vol.8 Readiness Gate"]
+    },
+    "baseline_commit": {
+      "type": "string",
+      "enum": ["e31014b9fbb56d37c8ad566a3c637e995befcbe0"]
+    },
+    "vol8_entry_readiness": {"type": "string", "enum": ["ready_with_limits"]},
+    "recommended_next_volume": {"type": "string", "enum": ["Vol.8"]},
+    "recommended_next_chat_title": {"type": "string", "enum": ["Tianma Work OS Vol.8 — Static Shell QA Handoff / Next Product Boundary"]},
+    "entry_scope": {"type": "array", "items": {"type": "string"}},
+    "forbidden_scope": {"type": "array", "items": {"type": "string"}},
+    "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+    "inherits_static_shell_boundary": {"type": "boolean", "enum": [true]},
+    "requires_explicit_approval_for_expansion": {"type": "boolean", "enum": [true]},
+    "fixture_only": {"type": "boolean", "enum": [true]},
+    "read_only": {"type": "boolean", "enum": [true]},
+    "network_allowed": {"type": "boolean", "enum": [false]},
+    "api_allowed": {"type": "boolean", "enum": [false]},
+    "mutation_allowed": {"type": "boolean", "enum": [false]},
+    "execution_allowed": {"type": "boolean", "enum": [false]},
+    "credential_handling_allowed": {"type": "boolean", "enum": [false]},
+    "live_data_allowed": {"type": "boolean", "enum": [false]},
+    "production_deployment_allowed": {"type": "boolean", "enum": [false]},
+    "warnings": {"type": "array", "items": {"type": "string"}, "maxItems": 0},
+    "errors": {"type": "array", "items": {"type": "string"}, "maxItems": 0}
+  }
+}

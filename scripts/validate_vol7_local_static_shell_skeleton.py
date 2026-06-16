@@ -19,6 +19,7 @@ IMPLEMENTATION_TIMESTAMP = "2026-06-15T18:12:39+08:00"
 REVIEW_TIMESTAMP = "2026-06-16T09:03:34+08:00"
 DEMO_PACK_TIMESTAMP = "2026-06-16T10:05:33+08:00"
 SNAPSHOT_QA_TIMESTAMP = "2026-06-16T11:00:19+08:00"
+VOL7_HANDOFF_TIMESTAMP = "2026-06-16T13:00:56+08:00"
 CHECKPOINT = "2026-06-12T09:18:00+08:00"
 OPERATING_MODE = "cash_defense_core_position_survival_mode"
 PORTFOLIO_MODE = "residual_core_position_mode"
@@ -360,9 +361,9 @@ def main() -> int:
         fail(error or "cockpit/ldd/runtime_timeline.json is not an object", failures)
     else:
         event_count, warning_count, latest_event = current_timeline_counts(runtime_timeline)
-        require(event_count in {103, 104, 105, 106, 107}, "current_timeline_count", "current timeline count is baseline 103 through post-snapshot-QA 107", failures)
+        require(event_count in {103, 104, 105, 106, 107, 108}, "current_timeline_count", "current timeline count is baseline 103 through post-handoff 108", failures)
         require(warning_count == 0, "current_timeline_warnings", "current timeline warnings remain 0", failures)
-        require(latest_event in {BASELINE_TIMELINE_EVENT, IMPLEMENTATION_TIMESTAMP, REVIEW_TIMESTAMP, DEMO_PACK_TIMESTAMP, SNAPSHOT_QA_TIMESTAMP}, "current_latest_event", "current latest event is a known Vol.7 static shell timestamp through Phase 7.7", failures)
+        require(latest_event in {BASELINE_TIMELINE_EVENT, IMPLEMENTATION_TIMESTAMP, REVIEW_TIMESTAMP, DEMO_PACK_TIMESTAMP, SNAPSHOT_QA_TIMESTAMP, VOL7_HANDOFF_TIMESTAMP}, "current_latest_event", "current latest event is a known Vol.7 static shell timestamp through Phase 7.8", failures)
 
     view_model, error = load_json("cockpit/ldd/view_model.json")
     if error or not isinstance(view_model, dict):

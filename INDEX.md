@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.7 Phase 7.7 - Local Static Shell Snapshot QA and Vol.7 Completion Readiness
+Vol.7 Phase 7.8 - Vol.7 Handoff Summary and Vol.8 Readiness Gate
 ```
 
 ## Core Documents
@@ -90,6 +90,8 @@ Vol.7 Phase 7.7 - Local Static Shell Snapshot QA and Vol.7 Completion Readiness
 - `docs/runtime/VOL7_PHASE7_5_LOCAL_STATIC_SHELL_REVIEW_ACCESSIBILITY_GUARDRAIL_HARDENING_AND_LDD_BACKFEED_v0.1.md`
 - `docs/runtime/VOL7_PHASE7_6_LOCAL_STATIC_SHELL_DEMO_PACK_AND_OPERATOR_WALKTHROUGH_v0.1.md`
 - `docs/runtime/VOL7_PHASE7_7_LOCAL_STATIC_SHELL_SNAPSHOT_QA_AND_COMPLETION_READINESS_v0.1.md`
+- `docs/runtime/VOL7_HANDOFF_SUMMARY_v0.1.md`
+- `docs/runtime/VOL7_PHASE7_8_HANDOFF_SUMMARY_AND_VOL8_READINESS_GATE_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
@@ -659,6 +661,24 @@ Vol.7 Phase 7.7 - Local Static Shell Snapshot QA and Vol.7 Completion Readiness
 - Current phase: `Vol.7 Phase 7.7 - Local Static Shell Snapshot QA and Vol.7 Completion Readiness`
 - Completion readiness: `ready_for_handoff`
 - Next: `Vol.7 Phase 7.8 - Vol.7 Handoff Summary and Vol.8 Readiness Gate`
+
+## Vol.7 Phase 7.8 / Vol.7 Handoff Summary and Vol.8 Readiness Gate
+
+- `docs/runtime/VOL7_HANDOFF_SUMMARY_v0.1.md`
+- `docs/runtime/VOL7_PHASE7_8_HANDOFF_SUMMARY_AND_VOL8_READINESS_GATE_v0.1.md`
+- `schemas/vol7_handoff_summary.schema.json`
+- `schemas/vol8_entry_readiness_gate.schema.json`
+- `mock_consumers/ldd/vol7_handoff_summary.json`
+- `mock_consumers/ldd/vol8_entry_readiness_gate.json`
+- `mock_consumers/ldd/twos_ldd_post_vol7_backfeed_status_update.json`
+- `scripts/validate_vol7_handoff_and_vol8_readiness.py`
+- `scripts/validate_vol7_handoff_and_vol8_readiness.sh`
+- `records/ldd/2026-06-15/vol7_phase7_8_handoff_summary_and_vol8_readiness_gate.json`
+- Current phase: `Vol.7 Phase 7.8 - Vol.7 Handoff Summary and Vol.8 Readiness Gate`
+- Vol.7 status: `completed`
+- Vol.7 handoff status: `ready`
+- Vol.8 entry readiness: `ready_with_limits`
+- Recommended next chat: `Tianma Work OS Vol.8 — Static Shell QA Handoff / Next Product Boundary`
 
 ## Product Principles
 

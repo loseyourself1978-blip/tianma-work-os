@@ -265,6 +265,8 @@ def classify_record(path: Path, data: dict[str, Any]) -> str | None:
         return "governance_review"
     if data.get("record_type") == "governance_review" and str(data.get("phase", "")).startswith("Vol.7 Phase 7.7"):
         return "governance_review"
+    if data.get("record_type") == "governance_review" and str(data.get("phase", "")).startswith("Vol.7 Phase 7.8"):
+        return "governance_review"
     if data.get("schema_type") == "executed_order_writeback":
         return "executed_order_writeback"
     if data.get("schema_type") == "runtime_status_arbitration":
