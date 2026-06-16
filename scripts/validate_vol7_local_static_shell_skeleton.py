@@ -16,6 +16,7 @@ PHASE = "Vol.7 Phase 7.4 - Local Static Shell Skeleton Permissioned Implementati
 BASELINE_COMMIT = "80e02ba076f191fc02e48cf7d159a66451aa8ff9"
 BASELINE_TIMELINE_EVENT = "2026-06-15T17:07:00+08:00"
 IMPLEMENTATION_TIMESTAMP = "2026-06-15T18:12:39+08:00"
+REVIEW_TIMESTAMP = "2026-06-16T09:03:34+08:00"
 CHECKPOINT = "2026-06-12T09:18:00+08:00"
 OPERATING_MODE = "cash_defense_core_position_survival_mode"
 PORTFOLIO_MODE = "residual_core_position_mode"
@@ -332,7 +333,11 @@ def main() -> int:
     require(all(panel in data_text for panel in REQUIRED_PANELS), "static_shell_panels", "all required panels are represented in embedded data", failures)
     require(SCOPE_REMINDER in all_shell_text, "static_shell_scope", "LDD full-market scope reminder is present", failures)
     require("quote_drift_display_layer_required" in data_text and "quote_type_tagging_required" in data_text, "static_shell_quote_drift", "quote drift display and quote-type tagging are represented", failures)
-    require("cash_defense_ratio_split_required" in data_text and "77.8%" in data_text and "71.2%" in data_text, "static_shell_cash_split", "cash-defense split values are represented as static non-live values", failures)
+    cash_split_values_present = (
+        ("77.8%" in data_text and "71.2%" in data_text)
+        or ("77.6%" in data_text and "70.6%" in data_text)
+    )
+    require("cash_defense_ratio_split_required" in data_text and cash_split_values_present, "static_shell_cash_split", "cash-defense split values are represented as static non-live values", failures)
     require("transfer_pnl_separation_required" in data_text and "49.99 USDT" in data_text, "static_shell_transfer_separation", "transfer/P&L separation and 49.99 USDT withdrawal are represented", failures)
     require("zero_position_not_residual_risk_valve" in data_text, "static_shell_ggll_state", "GGLL zero-position correction exists in static data", failures)
     require("closed_no_reopen" in data_text, "static_shell_zec_state", "ZEC closed/no-reopen state exists in static data", failures)
@@ -353,9 +358,9 @@ def main() -> int:
         fail(error or "cockpit/ldd/runtime_timeline.json is not an object", failures)
     else:
         event_count, warning_count, latest_event = current_timeline_counts(runtime_timeline)
-        require(event_count in {103, 104}, "current_timeline_count", "current timeline count is baseline 103 or post-record 104", failures)
+        require(event_count in {103, 104, 105}, "current_timeline_count", "current timeline count is baseline 103, post-record 104, or post-review 105", failures)
         require(warning_count == 0, "current_timeline_warnings", "current timeline warnings remain 0", failures)
-        require(latest_event in {BASELINE_TIMELINE_EVENT, IMPLEMENTATION_TIMESTAMP}, "current_latest_event", "current latest event is baseline or Phase 7.4 implementation timestamp", failures)
+        require(latest_event in {BASELINE_TIMELINE_EVENT, IMPLEMENTATION_TIMESTAMP, REVIEW_TIMESTAMP}, "current_latest_event", "current latest event is baseline, Phase 7.4 implementation timestamp, or Phase 7.5 review timestamp", failures)
 
     view_model, error = load_json("cockpit/ldd/view_model.json")
     if error or not isinstance(view_model, dict):

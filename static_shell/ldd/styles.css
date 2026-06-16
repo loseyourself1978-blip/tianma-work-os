@@ -26,6 +26,22 @@ body {
   line-height: 1.45;
 }
 
+.skip-link {
+  position: absolute;
+  left: 16px;
+  top: -48px;
+  z-index: 10;
+  border-radius: 6px;
+  background: var(--ink);
+  color: #ffffff;
+  padding: 8px 10px;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 12px;
+}
+
 .shell-header {
   border-bottom: 1px solid var(--line);
   background: #ffffff;
@@ -50,6 +66,12 @@ h1 {
   font-size: 28px;
   line-height: 1.15;
   letter-spacing: 0;
+}
+
+.safety-copy {
+  margin: 8px 0 0;
+  color: var(--red);
+  font-weight: 750;
 }
 
 .summary-grid {
@@ -91,6 +113,11 @@ h1 {
   max-width: 1180px;
   margin: 0 auto;
   padding: 12px 20px;
+}
+
+.guard-inner h2 {
+  margin: 0;
+  font-size: 15px;
 }
 
 .guard-labels {
@@ -153,6 +180,13 @@ h1 {
   background: #eef6ff;
 }
 
+.nav-link:focus-visible,
+.panel-summary:focus-visible,
+.skip-link:focus-visible {
+  outline: 3px solid #235a97;
+  outline-offset: 2px;
+}
+
 .panel-stack {
   display: grid;
   gap: 14px;
@@ -203,6 +237,7 @@ h1 {
 .panel-purpose {
   margin: 0 0 12px;
   color: var(--muted);
+  font-weight: 600;
 }
 
 .field-row,

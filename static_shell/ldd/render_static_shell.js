@@ -32,7 +32,13 @@
   function renderScalarList(values) {
     const list = makeElement("ul", "value-list");
     values.forEach((item) => {
-      list.appendChild(makeElement("li", "", item));
+      const listItem = makeElement("li", "");
+      if (typeof item === "object" && item !== null) {
+        listItem.appendChild(renderValue(item));
+      } else {
+        listItem.textContent = String(item);
+      }
+      list.appendChild(listItem);
     });
     return list;
   }
@@ -52,12 +58,7 @@
 
   function renderValue(value) {
     if (Array.isArray(value)) {
-      return renderScalarList(value.map((item) => {
-        if (typeof item === "object" && item !== null) {
-          return Object.entries(item).map(([key, nestedValue]) => `${humanize(key)}: ${nestedValue}`).join(" | ");
-        }
-        return item;
-      }));
+      return renderScalarList(value);
     }
     if (typeof value === "object" && value !== null) {
       return renderObject(value);
@@ -78,12 +79,16 @@
   function renderPanel(panel, index) {
     const details = makeElement("details", "panel");
     details.id = panel.panel_id;
+    details.setAttribute("role", "region");
+    details.setAttribute("aria-labelledby", `${panel.panel_id}-title`);
     if (index < 4) {
       details.open = true;
     }
 
     const summary = makeElement("summary", "panel-summary");
-    summary.appendChild(makeElement("span", "panel-title", panel.title));
+    const title = makeElement("span", "panel-title", panel.title);
+    title.id = `${panel.panel_id}-title`;
+    summary.appendChild(title);
     summary.appendChild(makeElement("span", "panel-state", "READ ONLY"));
     details.appendChild(summary);
 
@@ -100,6 +105,7 @@
     panels.forEach((panel) => {
       const item = makeElement("a", "nav-link", panel.title);
       item.setAttribute("href", `#${panel.panel_id}`);
+      item.setAttribute("aria-label", `Jump to ${panel.title}`);
       nav.appendChild(item);
     });
   }
@@ -117,9 +123,9 @@
     }
     document.getElementById("phase").textContent = data.phase;
     document.getElementById("checkpoint").textContent = data.active_checkpoint;
-    document.getElementById("readiness").textContent = data.static_shell_implementation_readiness;
+    document.getElementById("readiness").textContent = `${data.static_shell_implementation_readiness}; customer-facing readiness: ${data.customer_facing_readiness}`;
     document.getElementById("mode").textContent = `${data.operating_mode} / ${data.portfolio_mode}`;
-    document.getElementById("source-warning").textContent = "Embedded fixture snapshot only. No network, no credentials, no live data, no execution.";
+    document.getElementById("source-warning").textContent = "Embedded fixture snapshot only. No network, no credentials, no live data, no execution. Execution source remains broker/Binance order page and final filled order records.";
 
     renderLabels();
     renderNav(data.panels);
