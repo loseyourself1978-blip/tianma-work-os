@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/vol8_future_implementation_readiness_ladder.schema.json",
+  "title": "Vol.8 Future Implementation Readiness Ladder",
+  "description": "Validates the local static-only future implementation readiness ladder fixture for Vol.8 Phase 8.5.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "phase",
+    "baseline_commit",
+    "runtime_records",
+    "static_shell_path",
+    "customer_facing_readiness",
+    "source_boundary_map",
+    "readiness_items",
+    "summary",
+    "forbidden_scope_confirmed_absent",
+    "recommended_next_phase"
+  ],
+  "properties": {
+    "phase": {"type": "string", "enum": ["Vol.8 Phase 8.5 - Future Implementation Readiness Ladder"]},
+    "baseline_commit": {"type": "string", "enum": ["59401955f861af4c1313b2973d1528278474cc18"]},
+    "runtime_records": {"type": "integer", "enum": [112]},
+    "static_shell_path": {"type": "string", "enum": ["static_shell/ldd/"]},
+    "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+    "source_boundary_map": {"type": "string"},
+    "readiness_items": {
+      "type": "array",
+      "items": {"type": ["object", "string"]}
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "total_ladder_items",
+        "count_by_readiness_level",
+        "count_by_required_gate_type",
+        "static_ready_count",
+        "roadmap_only_count",
+        "future_gate_required_count",
+        "rejected_forbidden_scope_count",
+        "deferred_out_of_scope_count",
+        "execution_governance_required_count",
+        "network_api_gate_required_count",
+        "customer_facing_gate_required_count",
+        "security_credential_gate_required_count",
+        "boundary_risk_notes",
+        "recommended_next_action"
+      ],
+      "properties": {
+        "total_ladder_items": {"type": "integer"},
+        "count_by_readiness_level": {"type": "object"},
+        "count_by_required_gate_type": {"type": "object"},
+        "static_ready_count": {"type": "integer"},
+        "roadmap_only_count": {"type": "integer"},
+        "future_gate_required_count": {"type": "integer"},
+        "rejected_forbidden_scope_count": {"type": "integer"},
+        "deferred_out_of_scope_count": {"type": "integer"},
+        "execution_governance_required_count": {"type": "integer"},
+        "network_api_gate_required_count": {"type": "integer"},
+        "customer_facing_gate_required_count": {"type": "integer"},
+        "security_credential_gate_required_count": {"type": "integer"},
+        "boundary_risk_notes": {"type": "array", "items": {"type": "string"}},
+        "recommended_next_action": {"type": "string"}
+      }
+    },
+    "forbidden_scope_confirmed_absent": {"type": "array", "items": {"type": "string"}},
+    "recommended_next_phase": {"type": "string"}
+  }
+}

@@ -1,8 +1,8 @@
 {
   "index_version": "v0.1",
-  "generated_for_phase": "Vol.8 Phase 8.4 - Feedback-to-Roadmap Product Boundary Mapping",
-  "baseline_commit": "5a13f54bd36a81f4ba39530c63899ec4529807d5",
-  "runtime_records": 111,
+  "generated_for_phase": "Vol.8 Phase 8.5 - Future Implementation Readiness Ladder",
+  "baseline_commit": "59401955f861af4c1313b2973d1528278474cc18",
+  "runtime_records": 112,
   "customer_facing_readiness": false,
   "frameworks": [
     {
@@ -444,14 +444,34 @@
       "network_allowed": false,
       "execution_allowed": false,
       "next_improvement": "Convert roadmap boundary map into future implementation readiness ladder, still static-only."
+    },
+    {
+      "framework_id": "future_implementation_readiness_ladder",
+      "framework_name": "Future Implementation Readiness Ladder",
+      "category": "Product Boundary / Roadmap Mapping Framework",
+      "brief_description": "Phase 8.5 classifies roadmap and deferred candidates into explicit readiness levels and required gates to prevent future candidates from being mistaken as approved implementation work.",
+      "implemented_since_phase": "Vol.8 Phase 8.5 - Future Implementation Readiness Ladder",
+      "implemented_since_version": "Vol.8 Phase 8.5 / v0.1",
+      "latest_verified_phase": "Vol.8 Phase 8.5 - Future Implementation Readiness Ladder",
+      "latest_verified_commit": "59401955f861af4c1313b2973d1528278474cc18",
+      "status": "implemented_validation_contract / implemented_handoff_contract / implemented_readiness_gate",
+      "artifact_paths": ["docs/runtime/VOL8_PHASE8_5_FUTURE_IMPLEMENTATION_READINESS_LADDER_v0.1.md", "docs/runtime/VOL8_FUTURE_IMPLEMENTATION_READINESS_LADDER_GUIDE_v0.1.md", "docs/runtime/VOL8_FUTURE_IMPLEMENTATION_READINESS_LADDER_v0.1.md", "schemas/vol8_future_implementation_readiness_item.schema.json", "schemas/vol8_future_implementation_readiness_ladder.schema.json", "mock_consumers/ldd/vol8_future_implementation_readiness_items.json", "mock_consumers/ldd/vol8_future_implementation_readiness_ladder.json"],
+      "validation_paths": ["scripts/generate_vol8_future_implementation_readiness_ladder.py", "scripts/validate_vol8_future_implementation_readiness_ladder.py", "scripts/validate_vol8_future_implementation_readiness_ladder.sh"],
+      "runtime_record_paths": ["records/ldd/2026-06-16/vol8_phase8_5_future_implementation_readiness_ladder.json"],
+      "customer_facing": false,
+      "fixture_only": true,
+      "read_only": true,
+      "network_allowed": false,
+      "execution_allowed": false,
+      "next_improvement": "Prepare Vol.8 handoff summary and Vol.9 readiness gate, still static-only."
     }
   ],
   "summary": {
-    "total_implemented_frameworks": 22,
+    "total_implemented_frameworks": 23,
     "customer_facing_frameworks": 0,
     "live_runtime_execution_frameworks": 0,
-    "fixture_static_read_only_frameworks": 22,
-    "validation_backed_frameworks": 22
+    "fixture_static_read_only_frameworks": 23,
+    "validation_backed_frameworks": 23
   },
   "forbidden_scope_confirmed_absent": [
     "production UI",

@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/vol8_future_implementation_readiness_item.schema.json",
+  "title": "Vol.8 Future Implementation Readiness Items",
+  "description": "Validates local static-only future implementation readiness ladder items for Vol.8 Phase 8.5.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": true,
+    "required": [
+      "readiness_item_id",
+      "phase",
+      "source_mapping_id",
+      "source_mapping_category",
+      "source_boundary_decision",
+      "candidate_title",
+      "candidate_summary",
+      "readiness_level",
+      "required_gate_type",
+      "allowed_current_action",
+      "disallowed_current_action",
+      "implementation_allowed_now",
+      "roadmap_only",
+      "requires_future_gate",
+      "customer_facing_allowed_now",
+      "network_or_api_allowed_now",
+      "execution_or_mutation_allowed_now",
+      "credential_or_auth_allowed_now",
+      "affected_artifacts",
+      "recommended_next_action",
+      "status"
+    ],
+    "properties": {
+      "readiness_item_id": {"type": "string"},
+      "phase": {"type": "string", "enum": ["Vol.8 Phase 8.5 - Future Implementation Readiness Ladder"]},
+      "source_mapping_id": {"type": "string"},
+      "source_mapping_category": {"type": "string"},
+      "source_boundary_decision": {"type": "string"},
+      "candidate_title": {"type": "string"},
+      "candidate_summary": {"type": "string"},
+      "readiness_level": {
+        "type": "string",
+        "enum": [
+          "L0_forbidden_rejected",
+          "L1_static_doc_refinement_ready",
+          "L2_static_fixture_refinement_ready",
+          "L3_roadmap_only_no_implementation",
+          "L4_future_static_prototype_candidate",
+          "L5_future_runtime_candidate_requires_gate",
+          "L6_future_network_api_candidate_requires_gate",
+          "L7_future_customer_facing_candidate_requires_gate",
+          "L8_future_security_credential_candidate_requires_gate",
+          "L9_future_execution_candidate_requires_governance",
+          "L10_out_of_scope_deferred"
+        ]
+      },
+      "required_gate_type": {
+        "type": "string",
+        "enum": [
+          "no_gate_static_doc_only",
+          "static_shell_qa_gate",
+          "product_boundary_gate",
+          "future_static_prototype_gate",
+          "runtime_boundary_gate",
+          "network_api_integration_gate",
+          "customer_facing_readiness_gate",
+          "security_credential_gate",
+          "execution_governance_gate",
+          "compliance_review_gate",
+          "reject_forbidden_scope"
+        ]
+      },
+      "allowed_current_action": {"type": "string"},
+      "disallowed_current_action": {"type": "string"},
+      "implementation_allowed_now": {"type": "boolean"},
+      "roadmap_only": {"type": "boolean"},
+      "requires_future_gate": {"type": "boolean"},
+      "customer_facing_allowed_now": {"type": "boolean", "enum": [false]},
+      "network_or_api_allowed_now": {"type": "boolean", "enum": [false]},
+      "execution_or_mutation_allowed_now": {"type": "boolean", "enum": [false]},
+      "credential_or_auth_allowed_now": {"type": "boolean", "enum": [false]},
+      "affected_artifacts": {"type": "array", "items": {"type": "string"}},
+      "recommended_next_action": {"type": "string"},
+      "status": {"type": "string"}
+    }
+  }
+}

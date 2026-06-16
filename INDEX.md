@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.8 Phase 8.4 - Feedback-to-Roadmap Product Boundary Mapping
+Vol.8 Phase 8.5 - Future Implementation Readiness Ladder
 ```
 
 ## Core Documents
@@ -102,6 +102,9 @@ Vol.8 Phase 8.4 - Feedback-to-Roadmap Product Boundary Mapping
 - `docs/runtime/VOL8_PHASE8_4_FEEDBACK_TO_ROADMAP_PRODUCT_BOUNDARY_MAPPING_v0.1.md`
 - `docs/runtime/VOL8_FEEDBACK_TO_ROADMAP_MAPPING_GUIDE_v0.1.md`
 - `docs/runtime/VOL8_FEEDBACK_TO_ROADMAP_BOUNDARY_MAP_v0.1.md`
+- `docs/runtime/VOL8_PHASE8_5_FUTURE_IMPLEMENTATION_READINESS_LADDER_v0.1.md`
+- `docs/runtime/VOL8_FUTURE_IMPLEMENTATION_READINESS_LADDER_GUIDE_v0.1.md`
+- `docs/runtime/VOL8_FUTURE_IMPLEMENTATION_READINESS_LADDER_v0.1.md`
 - `docs/runtime/VOL6_UI_BOUNDARY_ARCHITECTURE_v0.1.md`
 - `docs/runtime/LDD_COCKPIT_RUNTIME_PILOT_v0.1.md`
 
@@ -763,6 +766,28 @@ Vol.8 Phase 8.4 - Feedback-to-Roadmap Product Boundary Mapping
 - Current phase: `Vol.8 Phase 8.4 - Feedback-to-Roadmap Product Boundary Mapping`
 - Mapped feedback-to-roadmap items: `11`
 - Functional frameworks indexed: `22`
+- Customer-facing readiness: `false`
+- Network allowed: `false`
+- Execution allowed: `false`
+
+## Vol.8 Phase 8.5 / Future Implementation Readiness Ladder
+
+- `docs/runtime/VOL8_PHASE8_5_FUTURE_IMPLEMENTATION_READINESS_LADDER_v0.1.md`
+- `docs/runtime/VOL8_FUTURE_IMPLEMENTATION_READINESS_LADDER_GUIDE_v0.1.md`
+- `docs/runtime/VOL8_FUTURE_IMPLEMENTATION_READINESS_LADDER_v0.1.md`
+- `schemas/vol8_future_implementation_readiness_item.schema.json`
+- `schemas/vol8_future_implementation_readiness_ladder.schema.json`
+- `mock_consumers/ldd/vol8_future_implementation_readiness_items.json`
+- `mock_consumers/ldd/vol8_future_implementation_readiness_ladder.json`
+- `records/ldd/2026-06-16/vol8_phase8_5_future_implementation_readiness_ladder.json`
+- `scripts/generate_vol8_future_implementation_readiness_ladder.py`
+- `scripts/validate_vol8_future_implementation_readiness_ladder.py`
+- `scripts/validate_vol8_future_implementation_readiness_ladder.sh`
+- Updated: `docs/runtime/IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_v0.1.md`
+- Updated: `mock_consumers/ldd/implemented_function_framework_index.json`
+- Current phase: `Vol.8 Phase 8.5 - Future Implementation Readiness Ladder`
+- Readiness ladder items: `13`
+- Functional frameworks indexed: `23`
 - Customer-facing readiness: `false`
 - Network allowed: `false`
 - Execution allowed: `false`
