@@ -1,0 +1,121 @@
+{
+  "schema_version": "0.1",
+  "acknowledgement_name": "ldd_consumer_acknowledgement_packet",
+  "phase": "Vol.9 Phase 9.2",
+  "generated_at_sgt": "2026-06-17T00:00:00+08:00",
+  "acknowledged_backfeed_packet": "twos_ldd_post_vol8_to_vol9_backfeed_status_update.json",
+  "repository_validated_twos_baseline": {
+    "phase": "Vol.9 Phase 9.1",
+    "commit": "c88ba02fcea3328b85061ab7d7f4f0b240b3ba33",
+    "runtime_records_baseline_after_phase": 114,
+    "frameworks_indexed": 24,
+    "customer_facing_readiness": false,
+    "live_runtime_execution_frameworks": 0,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  },
+  "previous_visible_ldd_baseline": {
+    "phase": "Vol.7 Phase 7.8",
+    "status": "stale_superseded",
+    "stale_for": "TWOS runtime/product baseline purposes"
+  },
+  "acknowledgement_state": {
+    "consumer_acknowledgement_status": "acknowledged",
+    "consumer_ack_required": false,
+    "strict_baseline_sync_ready": true,
+    "state_before_acknowledgement": "backfeed_packet_ready",
+    "state_after_acknowledgement": "consumer_acknowledged"
+  },
+  "sot_separation": {
+    "twos_runtime_product_sot": [
+      "current_twos_volume_and_phase",
+      "repository_commit",
+      "runtime_record_count",
+      "framework_index_count",
+      "static_shell_readiness",
+      "validation_state",
+      "customer_facing_readiness",
+      "live_runtime_implementation_readiness"
+    ],
+    "ldd_trading_execution_sot": [
+      "broker_screenshots",
+      "binance_screenshots",
+      "order_screenshots",
+      "filled_trades",
+      "expired_zero_fill_orders",
+      "canceled_orders",
+      "portfolio_changes",
+      "cash_impact",
+      "quote_type"
+    ],
+    "separation_rules": [
+      "TWOS runtime/product SoT must never override LDD trading/execution SoT.",
+      "LDD trading/execution SoT must never override TWOS runtime/product SoT."
+    ]
+  },
+  "trading_state_impact": {
+    "trading_facts_changed": false,
+    "portfolio_state_changed": false,
+    "execution_ledger_changed": false,
+    "cash_state_changed": false,
+    "broker_connection_changed": false,
+    "binance_connection_changed": false,
+    "account_state_changed": false
+  },
+  "quote_type_preservation": [
+    "watchlist_price",
+    "premarket_price",
+    "holding_valuation_price",
+    "order_page_executable_price",
+    "final_filled_price"
+  ],
+  "execution_event_distinctions": [
+    "actual_filled_trade",
+    "expired_zero_fill_order",
+    "canceled_order",
+    "portfolio_change",
+    "no_cash_impact_event"
+  ],
+  "forbidden_scope": [
+    "production UI",
+    "customer-facing UI",
+    "hosted app",
+    "API server",
+    "live endpoint",
+    "external API",
+    "broker connection",
+    "Binance connection",
+    "live market data",
+    "trading automation",
+    "credential handling",
+    "login/auth",
+    "runtime mutation",
+    "execution trigger",
+    "order placement",
+    "portfolio modification",
+    "background worker",
+    "scheduler",
+    "notification dispatcher",
+    "GitHub Issues",
+    "GitHub Projects board",
+    "package manager files",
+    "build tools",
+    "frontend framework",
+    "network dependency"
+  ],
+  "duxd_queue": [
+    {
+      "queue_item": "Execution Ledger Evidence Classifier / Zero-Fill Order Separation Protocol",
+      "status": "future_protocol_seed_only",
+      "phase9_2_action": "preserved_only_not_implemented"
+    }
+  ],
+  "acceptance": {
+    "status": "acknowledged",
+    "consumer_acknowledgement_status": "acknowledged",
+    "consumer_ack_required": false,
+    "strict_baseline_sync_ready": true,
+    "customer_facing_readiness": false,
+    "live_runtime_execution_frameworks": 0,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  }
+}

@@ -57,6 +57,8 @@ VOL8_HANDOFF_SUMMARY = REPO_ROOT / "mock_consumers" / "ldd" / "vol8_handoff_summ
 VOL9_ENTRY_READINESS_GATE = REPO_ROOT / "mock_consumers" / "ldd" / "vol9_entry_readiness_gate.json"
 VOL9_PHASE9_1_RUNTIME_STATUS_BACKFEED_PROTOCOL = REPO_ROOT / "mock_consumers" / "ldd" / "twos_ldd_runtime_status_backfeed_protocol.json"
 VOL9_PHASE9_1_DRIFT_RESOLUTION_GATE = REPO_ROOT / "mock_consumers" / "ldd" / "cross_workspace_baseline_drift_resolution_gate.json"
+VOL9_PHASE9_2_LDD_CONSUMER_ACKNOWLEDGEMENT = REPO_ROOT / "mock_consumers" / "ldd" / "ldd_consumer_acknowledgement_packet.json"
+VOL9_PHASE9_2_STRICT_BASELINE_SYNC_READY_GATE = REPO_ROOT / "mock_consumers" / "ldd" / "strict_baseline_sync_ready_gate.json"
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 
@@ -135,6 +137,8 @@ SCHEMA_FILES = {
     "vol9_entry_readiness_gate": "vol9_entry_readiness_gate.schema.json",
     "twos_ldd_runtime_status_backfeed_protocol": "twos_ldd_runtime_status_backfeed_protocol.schema.json",
     "cross_workspace_baseline_drift_state": "cross_workspace_baseline_drift_state.schema.json",
+    "ldd_consumer_acknowledgement": "ldd_consumer_acknowledgement.schema.json",
+    "strict_baseline_sync_ready_gate": "strict_baseline_sync_ready_gate.schema.json",
     "static_cockpit_prototype_review": "static_cockpit_prototype_review.schema.json",
     "internal_operator_cockpit_static_spec_review": "internal_operator_cockpit_static_spec_review.schema.json",
     "ai_board_cockpit_static_spec_review": "ai_board_cockpit_static_spec_review.schema.json",
@@ -222,6 +226,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "vol8_handoff_summary", SCHEMA_FILES["vol8_handoff_summary"]
     if "vol9_phase9_1_cross_workspace_baseline_drift_resolution_and_backfeed_protocol" in filename:
         return "cross_workspace_baseline_drift_state", SCHEMA_FILES["cross_workspace_baseline_drift_state"]
+    if "vol9_phase9_2_ldd_consumer_acknowledgement_and_strict_baseline_sync_ready_gate" in filename:
+        return "strict_baseline_sync_ready_gate", SCHEMA_FILES["strict_baseline_sync_ready_gate"]
     if "static_cockpit_prototype_boundary_review" in filename:
         return "static_cockpit_prototype_review", SCHEMA_FILES["static_cockpit_prototype_review"]
     if "internal_operator_cockpit_static_spec_review" in filename:
@@ -750,6 +756,26 @@ def collect_targets() -> tuple[list[ValidationTarget], list[Path]]:
                 "mock_consumers",
                 SCHEMA_FILES["cross_workspace_baseline_drift_state"],
                 "cross_workspace_baseline_drift_state",
+            )
+        )
+
+    if VOL9_PHASE9_2_LDD_CONSUMER_ACKNOWLEDGEMENT.exists():
+        targets.append(
+            ValidationTarget(
+                VOL9_PHASE9_2_LDD_CONSUMER_ACKNOWLEDGEMENT,
+                "mock_consumers",
+                SCHEMA_FILES["ldd_consumer_acknowledgement"],
+                "ldd_consumer_acknowledgement",
+            )
+        )
+
+    if VOL9_PHASE9_2_STRICT_BASELINE_SYNC_READY_GATE.exists():
+        targets.append(
+            ValidationTarget(
+                VOL9_PHASE9_2_STRICT_BASELINE_SYNC_READY_GATE,
+                "mock_consumers",
+                SCHEMA_FILES["strict_baseline_sync_ready_gate"],
+                "strict_baseline_sync_ready_gate",
             )
         )
 

@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.9 Phase 9.1 - Cross-Workspace Baseline Drift Resolution and Runtime Status Backfeed Protocol
+Vol.9 Phase 9.2 - LDD Consumer Acknowledgement and Strict Baseline Sync-Ready Gate
 ```
 
 ## Core Documents
@@ -841,6 +841,35 @@ Vol.9 Phase 9.1 - Cross-Workspace Baseline Drift Resolution and Runtime Status B
 - Execution allowed: `false`
 
 Vol.9 Phase 9.1 creates a static/read-only baseline drift resolution and runtime status backfeed protocol. It does not create live implementation, customer-facing readiness, trading automation, broker/Binance connection, or runtime execution capability.
+
+## Vol.9 Phase 9.2 / LDD Consumer Acknowledgement and Strict Baseline Sync-Ready Gate
+
+- `docs/runtime/VOL9_PHASE9_2_LDD_CONSUMER_ACKNOWLEDGEMENT_AND_STRICT_BASELINE_SYNC_READY_GATE_v0.1.md`
+- `docs/runtime/LDD_CONSUMER_ACKNOWLEDGEMENT_PROTOCOL_v0.1.md`
+- `schemas/ldd_consumer_acknowledgement.schema.json`
+- `schemas/strict_baseline_sync_ready_gate.schema.json`
+- `mock_consumers/ldd/ldd_consumer_acknowledgement_packet.json`
+- `mock_consumers/ldd/strict_baseline_sync_ready_gate.json`
+- `mock_consumers/ldd/twos_ldd_post_phase9_2_strict_sync_ready_status_update.json`
+- `records/ldd/2026-06-17/vol9_phase9_2_ldd_consumer_acknowledgement_and_strict_baseline_sync_ready_gate.json`
+- `scripts/validate_vol9_phase9_2_ldd_consumer_acknowledgement.py`
+- `scripts/validate_vol9_phase9_2_ldd_consumer_acknowledgement.sh`
+- Updated: `scripts/validate_runtime_records.py`
+- Current phase: `Vol.9 Phase 9.2 - LDD Consumer Acknowledgement and Strict Baseline Sync-Ready Gate`
+- Repository-validated baseline acknowledged: `Vol.9 Phase 9.1`
+- Acknowledged commit: `c88ba02fcea3328b85061ab7d7f4f0b240b3ba33`
+- LDD-visible stale baseline: `Vol.7 Phase 7.8`
+- Drift state before phase: `backfeed_packet_ready`
+- Drift state after phase: `strict_baseline_sync_ready`
+- Consumer acknowledgement required: `false`
+- Consumer acknowledged: `true`
+- Runtime records baseline after phase: `115`
+- Functional frameworks indexed: `24`
+- Customer-facing readiness: `false`
+- Network allowed: `false`
+- Execution allowed: `false`
+
+Vol.9 Phase 9.2 creates a static/read-only LDD consumer acknowledgement fixture and strict baseline sync-ready gate. It does not create live implementation, customer-facing readiness, trading automation, broker/Binance connection, runtime execution capability, network dependency, scheduler, notification dispatcher, or background worker.
 
 ## Product Principles
 

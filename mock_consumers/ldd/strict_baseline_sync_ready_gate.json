@@ -1,0 +1,54 @@
+{
+  "schema_version": "0.1",
+  "gate_name": "strict_baseline_sync_ready_gate",
+  "phase": "Vol.9 Phase 9.2",
+  "state_name": "strict_baseline_sync_ready",
+  "consumer_acknowledged": true,
+  "consumer_ack_required": false,
+  "strict_baseline_sync_ready": true,
+  "repository_validated_baseline": "Vol.9 Phase 9.1",
+  "repository_validated_commit": "c88ba02fcea3328b85061ab7d7f4f0b240b3ba33",
+  "previous_visible_ldd_baseline": "Vol.7 Phase 7.8",
+  "previous_visible_ldd_baseline_status": "stale_superseded",
+  "stale_superseded_baselines": [
+    {
+      "baseline": "Vol.7 Phase 7.8",
+      "status": "stale_superseded",
+      "stale_for": "TWOS runtime/product baseline purposes"
+    }
+  ],
+  "customer_facing_readiness": false,
+  "live_runtime_execution_frameworks": 0,
+  "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution",
+  "required_conditions": [
+    "repository_validated_baseline_phase = Vol.9 Phase 9.1",
+    "repository_validated_baseline_commit = c88ba02fcea3328b85061ab7d7f4f0b240b3ba33",
+    "previous_visible_ldd_baseline = Vol.7 Phase 7.8",
+    "previous_visible_ldd_baseline_status = stale_superseded",
+    "consumer_acknowledgement_status = acknowledged",
+    "consumer_ack_required = false",
+    "strict_baseline_sync_ready = true",
+    "customer_facing_readiness = false",
+    "live_runtime_execution_frameworks = 0",
+    "static_shell_mode = local_static_read_only_fixture_only_no_network_no_execution"
+  ],
+  "sot_separation": [
+    "TWOS runtime/product SoT must never override LDD trading/execution SoT.",
+    "LDD trading/execution SoT must never override TWOS runtime/product SoT."
+  ],
+  "trading_state_impact": {
+    "trading_facts_changed": false,
+    "portfolio_state_changed": false,
+    "execution_ledger_changed": false,
+    "cash_state_changed": false,
+    "broker_connection_changed": false,
+    "binance_connection_changed": false
+  },
+  "acceptance": {
+    "status": "strict_baseline_sync_ready",
+    "fixture_validated": true,
+    "customer_facing_readiness": false,
+    "live_runtime_execution_frameworks": 0,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  }
+}

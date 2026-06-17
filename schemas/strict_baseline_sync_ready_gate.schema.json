@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/strict_baseline_sync_ready_gate.schema.json",
+  "title": "Strict Baseline Sync-Ready Gate",
+  "description": "Validates the static Phase 9.2 strict baseline sync-ready gate.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "gate_name",
+    "phase",
+    "state_name",
+    "consumer_acknowledged",
+    "consumer_ack_required",
+    "strict_baseline_sync_ready",
+    "repository_validated_baseline",
+    "stale_superseded_baselines",
+    "customer_facing_readiness",
+    "live_runtime_execution_frameworks",
+    "static_shell_mode",
+    "required_conditions",
+    "acceptance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "enum": ["0.1"]},
+    "gate_name": {"type": "string", "enum": ["strict_baseline_sync_ready_gate"]},
+    "phase": {"type": "string", "enum": ["Vol.9 Phase 9.2"]},
+    "state_name": {
+      "type": "string",
+      "enum": [
+        "consumer_acknowledged",
+        "strict_baseline_sync_ready"
+      ]
+    },
+    "consumer_acknowledged": {"type": "boolean", "enum": [true]},
+    "consumer_ack_required": {"type": "boolean", "enum": [false]},
+    "strict_baseline_sync_ready": {"type": "boolean", "enum": [true]},
+    "repository_validated_baseline": {"type": "string", "enum": ["Vol.9 Phase 9.1"]},
+    "repository_validated_commit": {"type": "string", "enum": ["c88ba02fcea3328b85061ab7d7f4f0b240b3ba33"]},
+    "stale_superseded_baselines": {"type": "array"},
+    "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+    "live_runtime_execution_frameworks": {"type": "integer", "enum": [0]},
+    "static_shell_mode": {"type": "string", "enum": ["local_static_read_only_fixture_only_no_network_no_execution"]},
+    "required_conditions": {"type": "array", "items": {"type": "string"}},
+    "acceptance": {"type": "object"}
+  }
+}

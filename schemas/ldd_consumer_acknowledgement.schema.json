@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/ldd_consumer_acknowledgement.schema.json",
+  "title": "LDD Consumer Acknowledgement",
+  "description": "Validates the static Phase 9.2 LDD consumer acknowledgement packet.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "acknowledgement_name",
+    "phase",
+    "generated_at_sgt",
+    "acknowledged_backfeed_packet",
+    "repository_validated_twos_baseline",
+    "previous_visible_ldd_baseline",
+    "acknowledgement_state",
+    "sot_separation",
+    "trading_state_impact",
+    "forbidden_scope",
+    "acceptance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "enum": ["0.1"]},
+    "acknowledgement_name": {"type": "string", "enum": ["ldd_consumer_acknowledgement_packet"]},
+    "phase": {"type": "string", "enum": ["Vol.9 Phase 9.2"]},
+    "generated_at_sgt": {"type": "string"},
+    "acknowledged_backfeed_packet": {"type": "string"},
+    "repository_validated_twos_baseline": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["phase", "commit"],
+      "properties": {
+        "phase": {"type": "string", "enum": ["Vol.9 Phase 9.1"]},
+        "commit": {"type": "string", "enum": ["c88ba02fcea3328b85061ab7d7f4f0b240b3ba33"]}
+      }
+    },
+    "previous_visible_ldd_baseline": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["phase", "status"],
+      "properties": {
+        "phase": {"type": "string", "enum": ["Vol.7 Phase 7.8"]},
+        "status": {"type": "string", "enum": ["stale_superseded"]}
+      }
+    },
+    "acknowledgement_state": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "consumer_acknowledgement_status",
+        "consumer_ack_required",
+        "strict_baseline_sync_ready"
+      ],
+      "properties": {
+        "consumer_acknowledgement_status": {"type": "string", "enum": ["acknowledged"]},
+        "consumer_ack_required": {"type": "boolean", "enum": [false]},
+        "strict_baseline_sync_ready": {"type": "boolean", "enum": [true]}
+      }
+    },
+    "sot_separation": {"type": "object"},
+    "trading_state_impact": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "trading_facts_changed",
+        "portfolio_state_changed",
+        "execution_ledger_changed"
+      ],
+      "properties": {
+        "trading_facts_changed": {"type": "boolean", "enum": [false]},
+        "portfolio_state_changed": {"type": "boolean", "enum": [false]},
+        "execution_ledger_changed": {"type": "boolean", "enum": [false]},
+        "cash_state_changed": {"type": "boolean", "enum": [false]},
+        "broker_connection_changed": {"type": "boolean", "enum": [false]},
+        "binance_connection_changed": {"type": "boolean", "enum": [false]}
+      }
+    },
+    "forbidden_scope": {"type": "array", "items": {"type": "string"}},
+    "acceptance": {"type": "object"}
+  }
+}
