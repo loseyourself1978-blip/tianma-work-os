@@ -63,6 +63,8 @@ VOL9_PHASE9_3_FUTURE_IMPLEMENTATION_BOUNDARY_MATRIX = REPO_ROOT / "mock_consumer
 VOL9_PHASE9_3_STATIC_PROTOTYPE_GATE = REPO_ROOT / "mock_consumers" / "ldd" / "static_prototype_gate.json"
 VOL9_PHASE9_4_STATIC_PROTOTYPE_EVIDENCE_PACK = REPO_ROOT / "mock_consumers" / "ldd" / "static_prototype_evidence_pack.json"
 VOL9_PHASE9_4_FUTURE_GATE_READINESS_CHECKLIST = REPO_ROOT / "mock_consumers" / "ldd" / "future_gate_readiness_checklist.json"
+VOL9_PHASE9_5_FORBIDDEN_SCOPE_REGRESSION_GUARD = REPO_ROOT / "mock_consumers" / "ldd" / "forbidden_scope_regression_guard.json"
+VOL9_PHASE9_5_FUTURE_GATE_NON_ACTIVATION_AUDIT = REPO_ROOT / "mock_consumers" / "ldd" / "future_gate_non_activation_audit.json"
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 
@@ -147,6 +149,8 @@ SCHEMA_FILES = {
     "static_prototype_gate": "static_prototype_gate.schema.json",
     "static_prototype_evidence_pack": "static_prototype_evidence_pack.schema.json",
     "future_gate_readiness_checklist": "future_gate_readiness_checklist.schema.json",
+    "forbidden_scope_regression_guard": "forbidden_scope_regression_guard.schema.json",
+    "future_gate_non_activation_audit": "future_gate_non_activation_audit.schema.json",
     "static_cockpit_prototype_review": "static_cockpit_prototype_review.schema.json",
     "internal_operator_cockpit_static_spec_review": "internal_operator_cockpit_static_spec_review.schema.json",
     "ai_board_cockpit_static_spec_review": "ai_board_cockpit_static_spec_review.schema.json",
@@ -240,6 +244,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "static_prototype_gate", SCHEMA_FILES["static_prototype_gate"]
     if "vol9_phase9_4_static_prototype_evidence_pack_and_future_gate_readiness_checklist" in filename:
         return "future_gate_readiness_checklist", SCHEMA_FILES["future_gate_readiness_checklist"]
+    if "vol9_phase9_5_forbidden_scope_regression_guard_and_non_activation_audit_harness" in filename:
+        return "future_gate_non_activation_audit", SCHEMA_FILES["future_gate_non_activation_audit"]
     if "static_cockpit_prototype_boundary_review" in filename:
         return "static_cockpit_prototype_review", SCHEMA_FILES["static_cockpit_prototype_review"]
     if "internal_operator_cockpit_static_spec_review" in filename:
@@ -828,6 +834,26 @@ def collect_targets() -> tuple[list[ValidationTarget], list[Path]]:
                 "mock_consumers",
                 SCHEMA_FILES["future_gate_readiness_checklist"],
                 "future_gate_readiness_checklist",
+            )
+        )
+
+    if VOL9_PHASE9_5_FORBIDDEN_SCOPE_REGRESSION_GUARD.exists():
+        targets.append(
+            ValidationTarget(
+                VOL9_PHASE9_5_FORBIDDEN_SCOPE_REGRESSION_GUARD,
+                "mock_consumers",
+                SCHEMA_FILES["forbidden_scope_regression_guard"],
+                "forbidden_scope_regression_guard",
+            )
+        )
+
+    if VOL9_PHASE9_5_FUTURE_GATE_NON_ACTIVATION_AUDIT.exists():
+        targets.append(
+            ValidationTarget(
+                VOL9_PHASE9_5_FUTURE_GATE_NON_ACTIVATION_AUDIT,
+                "mock_consumers",
+                SCHEMA_FILES["future_gate_non_activation_audit"],
+                "future_gate_non_activation_audit",
             )
         )
 

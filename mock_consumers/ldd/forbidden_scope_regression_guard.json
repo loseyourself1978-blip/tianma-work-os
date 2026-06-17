@@ -1,0 +1,391 @@
+{
+  "schema_version": "0.1",
+  "guard_name": "forbidden_scope_regression_guard",
+  "phase": "Vol.9 Phase 9.5",
+  "generated_at_sgt": "2026-06-17T00:00:00+08:00",
+  "forbidden_scope_regression_guard_created": true,
+  "customer_facing_readiness": false,
+  "live_runtime_execution_frameworks": 0,
+  "future_gate_activation": false,
+  "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution",
+  "baseline": {
+    "latest_completed_phase_before_phase": "Vol.9 Phase 9.4",
+    "latest_commit_before_phase": "d070c0a7b4a1d858526daa08f1c04ffd665ed970",
+    "runtime_records_baseline_before_phase": 117,
+    "frameworks_indexed": 24,
+    "customer_facing_frameworks": 0,
+    "live_runtime_execution_frameworks": 0,
+    "fixture_static_read_only_frameworks": 24,
+    "validation_backed_frameworks": 24,
+    "baseline_state": "static_evidence_pack_created",
+    "future_gate_activation": false,
+    "customer_facing_readiness": false,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  },
+  "core_principle": [
+    "A regression guard prevents accidental capability activation.",
+    "A regression guard is not a capability.",
+    "A non-activation audit is not an activation.",
+    "A blocked future gate remains blocked until a future validated activation phase explicitly changes it."
+  ],
+  "forbidden_capability_checks": {
+    "production_ui": {
+      "capability_name": "production_ui",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No production UI artifact is introduced."
+    },
+    "customer_facing_ui": {
+      "capability_name": "customer_facing_ui",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No customer-facing UI artifact is introduced."
+    },
+    "hosted_app": {
+      "capability_name": "hosted_app",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No hosted app is introduced."
+    },
+    "api_server": {
+      "capability_name": "api_server",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No API server is introduced."
+    },
+    "live_endpoint": {
+      "capability_name": "live_endpoint",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No live endpoint is introduced."
+    },
+    "external_api": {
+      "capability_name": "external_api",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No external API is introduced."
+    },
+    "broker_connection": {
+      "capability_name": "broker_connection",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No broker connection is introduced."
+    },
+    "binance_connection": {
+      "capability_name": "binance_connection",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No Binance connection is introduced."
+    },
+    "live_market_data": {
+      "capability_name": "live_market_data",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No live market data is introduced."
+    },
+    "trading_automation": {
+      "capability_name": "trading_automation",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No trading automation is introduced."
+    },
+    "credential_handling": {
+      "capability_name": "credential_handling",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No credential handling is introduced."
+    },
+    "login_auth": {
+      "capability_name": "login_auth",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No login/auth capability is introduced."
+    },
+    "runtime_mutation": {
+      "capability_name": "runtime_mutation",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No runtime mutation capability is introduced."
+    },
+    "execution_trigger": {
+      "capability_name": "execution_trigger",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No execution trigger is introduced."
+    },
+    "order_placement": {
+      "capability_name": "order_placement",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No order placement capability is introduced."
+    },
+    "portfolio_modification": {
+      "capability_name": "portfolio_modification",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No portfolio modification capability is introduced."
+    },
+    "background_worker": {
+      "capability_name": "background_worker",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No background worker is introduced."
+    },
+    "scheduler": {
+      "capability_name": "scheduler",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No scheduler is introduced."
+    },
+    "notification_dispatcher": {
+      "capability_name": "notification_dispatcher",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No notification dispatcher is introduced."
+    },
+    "github_issues": {
+      "capability_name": "github_issues",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No GitHub Issues automation is introduced."
+    },
+    "github_projects_board": {
+      "capability_name": "github_projects_board",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No GitHub Projects board automation is introduced."
+    },
+    "package_manager_files": {
+      "capability_name": "package_manager_files",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No package manager files are introduced."
+    },
+    "build_tools": {
+      "capability_name": "build_tools",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No build tools are introduced."
+    },
+    "frontend_framework": {
+      "capability_name": "frontend_framework",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No frontend framework is introduced."
+    },
+    "network_dependency": {
+      "capability_name": "network_dependency",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No network dependency is introduced."
+    },
+    "external_integration": {
+      "capability_name": "external_integration",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No external integration is introduced."
+    },
+    "production_deployment": {
+      "capability_name": "production_deployment",
+      "current_status": "not_present",
+      "allowed_in_current_phase": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "regression_guard_result": "passed",
+      "audit_note": "No production deployment capability is introduced."
+    }
+  },
+  "evidence_classification_guard": {
+    "allowed_classifications": [
+      "static_planning_evidence_available",
+      "static_fixture_evidence_available",
+      "not_provided_in_current_phase",
+      "future_live_evidence_required"
+    ],
+    "blocked_classifications": [
+      "live_ready",
+      "production_ready",
+      "customer_ready",
+      "execution_ready",
+      "credential_ready",
+      "integration_ready",
+      "deployment_ready"
+    ],
+    "classification_upgrade_detected": false,
+    "guard_result": "passed",
+    "audit_note": "Phase 9.4 evidence categories remain static, missing, or future-live-required evidence only."
+  },
+  "source_of_truth_separation": {
+    "twos_runtime_product_sot": [
+      "current_twos_volume_and_phase",
+      "repository_commit",
+      "runtime_record_count",
+      "framework_index_count",
+      "static_shell_readiness",
+      "validation_state",
+      "customer_facing_readiness",
+      "live_runtime_implementation_readiness"
+    ],
+    "ldd_trading_execution_sot": [
+      "broker_screenshots",
+      "binance_screenshots",
+      "order_screenshots",
+      "filled_trades",
+      "expired_zero_fill_orders",
+      "canceled_orders",
+      "portfolio_changes",
+      "cash_impact",
+      "quote_type"
+    ],
+    "separation_rules": [
+      "TWOS runtime/product SoT must never override LDD trading/execution SoT.",
+      "LDD trading/execution SoT must never override TWOS runtime/product SoT.",
+      "Regression guards and non-activation audits must never mutate trading facts, portfolio state, execution ledger state, account state, or cash state."
+    ]
+  },
+  "quote_type_preservation": [
+    "watchlist_price",
+    "premarket_price",
+    "holding_valuation_price",
+    "order_page_executable_price",
+    "final_filled_price"
+  ],
+  "execution_event_distinction": [
+    "actual_filled_trade",
+    "expired_zero_fill_order",
+    "canceled_order",
+    "portfolio_change",
+    "no_cash_impact_event"
+  ],
+  "duxd_queue": [
+    {
+      "queue_item": "Execution Ledger Evidence Classifier / Zero-Fill Order Separation Protocol",
+      "status": "future_protocol_seed_only",
+      "phase9_5_action": "preserved_only_not_implemented"
+    }
+  ],
+  "forbidden_scope": [
+    "production_ui",
+    "customer_facing_ui",
+    "hosted_app",
+    "api_server",
+    "live_endpoint",
+    "external_api",
+    "broker_connection",
+    "binance_connection",
+    "live_market_data",
+    "trading_automation",
+    "credential_handling",
+    "login_auth",
+    "runtime_mutation",
+    "execution_trigger",
+    "order_placement",
+    "portfolio_modification",
+    "background_worker",
+    "scheduler",
+    "notification_dispatcher",
+    "github_issues",
+    "github_projects_board",
+    "package_manager_files",
+    "build_tools",
+    "frontend_framework",
+    "network_dependency",
+    "external_integration",
+    "production_deployment"
+  ],
+  "trading_state_impact": {
+    "trading_facts_changed": false,
+    "portfolio_state_changed": false,
+    "execution_ledger_changed": false,
+    "cash_state_changed": false,
+    "broker_connection_changed": false,
+    "binance_connection_changed": false
+  },
+  "acceptance": {
+    "status": "forbidden_scope_regression_guard_created",
+    "forbidden_scope_regression_guard_created": true,
+    "future_gate_non_activation_audit_created": true,
+    "future_gate_activation": false,
+    "customer_facing_readiness": false,
+    "live_runtime_execution_frameworks": 0,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  }
+}

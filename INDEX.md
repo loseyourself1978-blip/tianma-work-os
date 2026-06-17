@@ -924,6 +924,32 @@ Vol.9 Phase 9.3 creates a static/read-only future implementation boundary matrix
 
 Vol.9 Phase 9.4 creates a static/read-only prototype evidence pack and future gate readiness checklist. It does not activate live implementation, customer-facing readiness, trading automation, broker/Binance connection, runtime execution capability, network dependency, scheduler, notification dispatcher, background worker, credential handling, runtime mutation, external integration, or production deployment.
 
+## Vol.9 Phase 9.5 / Forbidden Scope Regression Guard and Non-Activation Audit Harness
+
+- `docs/runtime/VOL9_PHASE9_5_FORBIDDEN_SCOPE_REGRESSION_GUARD_AND_NON_ACTIVATION_AUDIT_HARNESS_v0.1.md`
+- `docs/runtime/FORBIDDEN_SCOPE_REGRESSION_GUARD_PROTOCOL_v0.1.md`
+- `schemas/forbidden_scope_regression_guard.schema.json`
+- `schemas/future_gate_non_activation_audit.schema.json`
+- `mock_consumers/ldd/forbidden_scope_regression_guard.json`
+- `mock_consumers/ldd/future_gate_non_activation_audit.json`
+- `mock_consumers/ldd/twos_ldd_post_phase9_5_regression_guard_status_update.json`
+- `records/ldd/2026-06-17/vol9_phase9_5_forbidden_scope_regression_guard_and_non_activation_audit_harness.json`
+- `scripts/validate_vol9_phase9_5_forbidden_scope_regression_guard.py`
+- `scripts/validate_vol9_phase9_5_forbidden_scope_regression_guard.sh`
+- Updated: `scripts/validate_runtime_records.py`
+- Current phase: `Vol.9 Phase 9.5 - Forbidden Scope Regression Guard and Non-Activation Audit Harness`
+- Baseline state before phase: `static_evidence_pack_created`
+- Forbidden scope regression guard created: `true`
+- Future gate non-activation audit created: `true`
+- Future gate activation: `false`
+- Runtime records baseline after phase: `118`
+- Functional frameworks indexed: `24`
+- Customer-facing readiness: `false`
+- Network allowed: `false`
+- Execution allowed: `false`
+
+Vol.9 Phase 9.5 creates a static/read-only forbidden scope regression guard and future gate non-activation audit harness. It does not activate live implementation, customer-facing readiness, trading automation, broker/Binance connection, runtime execution capability, network dependency, scheduler, notification dispatcher, background worker, credential handling, runtime mutation, external integration, or production deployment.
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/forbidden_scope_regression_guard.schema.json",
+  "title": "Forbidden Scope Regression Guard",
+  "description": "Validates the static Phase 9.5 forbidden scope regression guard.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "guard_name",
+    "phase",
+    "generated_at_sgt",
+    "baseline",
+    "forbidden_scope_regression_guard_created",
+    "forbidden_capability_checks",
+    "evidence_classification_guard",
+    "source_of_truth_separation",
+    "quote_type_preservation",
+    "execution_event_distinction",
+    "forbidden_scope",
+    "acceptance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "enum": ["0.1"]},
+    "guard_name": {"type": "string", "enum": ["forbidden_scope_regression_guard"]},
+    "phase": {"type": "string", "enum": ["Vol.9 Phase 9.5"]},
+    "generated_at_sgt": {"type": "string"},
+    "forbidden_scope_regression_guard_created": {"type": "boolean", "enum": [true]},
+    "baseline": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "latest_completed_phase_before_phase",
+        "latest_commit_before_phase",
+        "customer_facing_readiness",
+        "live_runtime_execution_frameworks",
+        "static_shell_mode"
+      ],
+      "properties": {
+        "latest_completed_phase_before_phase": {"type": "string", "enum": ["Vol.9 Phase 9.4"]},
+        "latest_commit_before_phase": {"type": "string", "enum": ["d070c0a7b4a1d858526daa08f1c04ffd665ed970"]},
+        "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+        "live_runtime_execution_frameworks": {"type": "integer", "enum": [0]},
+        "static_shell_mode": {"type": "string", "enum": ["local_static_read_only_fixture_only_no_network_no_execution"]}
+      }
+    },
+    "forbidden_capability_checks": {"type": "object"},
+    "evidence_classification_guard": {"type": "object"},
+    "source_of_truth_separation": {"type": "object"},
+    "quote_type_preservation": {"type": "array", "items": {"type": "string"}},
+    "execution_event_distinction": {"type": "array", "items": {"type": "string"}},
+    "forbidden_scope": {"type": "array", "items": {"type": "string"}},
+    "acceptance": {"type": "object"}
+  }
+}
