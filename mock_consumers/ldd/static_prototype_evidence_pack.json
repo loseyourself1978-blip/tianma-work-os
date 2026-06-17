@@ -1,0 +1,288 @@
+{
+  "schema_version": "0.1",
+  "evidence_pack_name": "static_prototype_evidence_pack",
+  "phase": "Vol.9 Phase 9.4",
+  "generated_at_sgt": "2026-06-17T00:00:00+08:00",
+  "static_evidence_pack_created": true,
+  "customer_facing_readiness": false,
+  "live_runtime_execution_frameworks": 0,
+  "future_gate_activation": false,
+  "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution",
+  "baseline": {
+    "latest_completed_phase_before_phase": "Vol.9 Phase 9.3",
+    "latest_commit_before_phase": "0bf392e98ae0b4f3ea7236af03f563983d7dfa5b",
+    "runtime_records_baseline_before_phase": 116,
+    "frameworks_indexed": 24,
+    "customer_facing_frameworks": 0,
+    "live_runtime_execution_frameworks": 0,
+    "fixture_static_read_only_frameworks": 24,
+    "validation_backed_frameworks": 24,
+    "baseline_state": "static_prototype_gate_defined",
+    "customer_facing_readiness": false,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  },
+  "core_principle": [
+    "Evidence readiness is not capability readiness.",
+    "A static checklist is not customer-facing readiness.",
+    "A static checklist is not live runtime readiness.",
+    "A static checklist is not execution readiness.",
+    "A static checklist is not broker/Binance connectivity.",
+    "A static checklist is not permission to mutate runtime or trading state."
+  ],
+  "evidence_categories": {
+    "security_review_evidence": {
+      "evidence_name": "security_review_evidence",
+      "description": "Formal review evidence for security-sensitive capability boundaries.",
+      "current_status": "missing",
+      "current_phase_classification": "not_provided_in_current_phase",
+      "future_gate_dependency": [
+        "customer_facing_readiness_gate",
+        "live_read_only_runtime_gate",
+        "runtime_mutation_gate",
+        "external_integration_gate",
+        "credential_handling_gate",
+        "notification_scheduler_gate",
+        "production_deployment_gate"
+      ],
+      "missing_evidence": "Formal security review evidence is not provided in Phase 9.4.",
+      "activation_blocker": "Missing security review blocks future non-static gates.",
+      "non_activation_statement": "Static evidence does not activate security-sensitive capability."
+    },
+    "privacy_review_evidence": {
+      "evidence_name": "privacy_review_evidence",
+      "description": "Formal review evidence for privacy, data exposure, and user-facing disclosure boundaries.",
+      "current_status": "missing",
+      "current_phase_classification": "not_provided_in_current_phase",
+      "future_gate_dependency": [
+        "customer_facing_readiness_gate",
+        "external_integration_gate",
+        "credential_handling_gate",
+        "production_deployment_gate"
+      ],
+      "missing_evidence": "Formal privacy review evidence is not provided in Phase 9.4.",
+      "activation_blocker": "Missing privacy review blocks future data exposure gates.",
+      "non_activation_statement": "Static evidence does not activate privacy-sensitive capability."
+    },
+    "credential_handling_design": {
+      "evidence_name": "credential_handling_design",
+      "description": "Design evidence for credential storage, access, rotation, revocation, and audit.",
+      "current_status": "missing",
+      "current_phase_classification": "not_provided_in_current_phase",
+      "future_gate_dependency": [
+        "credential_handling_gate"
+      ],
+      "missing_evidence": "Credential storage, access, rotation, revocation, and audit design is not provided in Phase 9.4.",
+      "activation_blocker": "Missing credential design blocks credential handling.",
+      "non_activation_statement": "Static evidence does not activate credential handling."
+    },
+    "read_only_runtime_contract": {
+      "evidence_name": "read_only_runtime_contract",
+      "description": "Future contract evidence for live read-only runtime behavior, failure modes, and source arbitration.",
+      "current_status": "missing",
+      "current_phase_classification": "future_live_evidence_required",
+      "future_gate_dependency": [
+        "live_read_only_runtime_gate"
+      ],
+      "missing_evidence": "Live read-only contract, source arbitration, and failure-mode contract are not provided in Phase 9.4.",
+      "activation_blocker": "Missing live runtime contract blocks live read-only runtime.",
+      "non_activation_statement": "Static evidence does not activate live runtime."
+    },
+    "mutation_safety_contract": {
+      "evidence_name": "mutation_safety_contract",
+      "description": "Future contract evidence for mutation safety, rollback, auditability, and operator confirmation.",
+      "current_status": "missing",
+      "current_phase_classification": "not_provided_in_current_phase",
+      "future_gate_dependency": [
+        "runtime_mutation_gate"
+      ],
+      "missing_evidence": "Mutation safety, rollback, audit, and operator confirmation contract is not provided in Phase 9.4.",
+      "activation_blocker": "Missing mutation safety blocks runtime mutation.",
+      "non_activation_statement": "Static evidence does not activate runtime mutation."
+    },
+    "external_integration_contract": {
+      "evidence_name": "external_integration_contract",
+      "description": "Future contract evidence for external integration boundaries, error modes, privacy, and security.",
+      "current_status": "missing",
+      "current_phase_classification": "not_provided_in_current_phase",
+      "future_gate_dependency": [
+        "external_integration_gate"
+      ],
+      "missing_evidence": "External integration contract, error-mode plan, privacy boundary, and security boundary are not provided in Phase 9.4.",
+      "activation_blocker": "Missing integration contract blocks external integration.",
+      "non_activation_statement": "Static evidence does not activate external APIs or integrations."
+    },
+    "customer_facing_ux_review": {
+      "evidence_name": "customer_facing_ux_review",
+      "description": "Future review evidence for customer-facing UX, support boundary, and privacy display behavior.",
+      "current_status": "missing",
+      "current_phase_classification": "not_provided_in_current_phase",
+      "future_gate_dependency": [
+        "customer_facing_readiness_gate"
+      ],
+      "missing_evidence": "Customer-facing UX review, support boundary review, and privacy display review are not provided in Phase 9.4.",
+      "activation_blocker": "Missing UX review blocks customer-facing preview.",
+      "non_activation_statement": "Static evidence does not activate customer-facing readiness."
+    },
+    "production_deployment_review": {
+      "evidence_name": "production_deployment_review",
+      "description": "Future review evidence for deployment readiness, observability, incident response, and operational ownership.",
+      "current_status": "missing",
+      "current_phase_classification": "not_provided_in_current_phase",
+      "future_gate_dependency": [
+        "production_deployment_gate"
+      ],
+      "missing_evidence": "Production deployment, observability, incident response, and operational ownership review are not provided in Phase 9.4.",
+      "activation_blocker": "Missing production review blocks production deployment.",
+      "non_activation_statement": "Static evidence does not activate production deployment."
+    },
+    "rollback_plan": {
+      "evidence_name": "rollback_plan",
+      "description": "Future evidence for tested recovery steps, rollback strategy, ownership, and failure containment.",
+      "current_status": "missing",
+      "current_phase_classification": "not_provided_in_current_phase",
+      "future_gate_dependency": [
+        "runtime_mutation_gate",
+        "notification_scheduler_gate",
+        "production_deployment_gate"
+      ],
+      "missing_evidence": "Rollback strategy, tested recovery steps, and owner map are not provided in Phase 9.4.",
+      "activation_blocker": "Missing rollback plan blocks risky future gates.",
+      "non_activation_statement": "Static evidence does not activate reversible runtime change."
+    },
+    "audit_log_contract": {
+      "evidence_name": "audit_log_contract",
+      "description": "Future contract evidence for audit logs, retention policy, access policy, and review obligations.",
+      "current_status": "missing",
+      "current_phase_classification": "not_provided_in_current_phase",
+      "future_gate_dependency": [
+        "live_read_only_runtime_gate",
+        "runtime_mutation_gate",
+        "credential_handling_gate",
+        "trading_execution_gate"
+      ],
+      "missing_evidence": "Audit log schema, retention policy, access policy, and review obligations are not provided in Phase 9.4.",
+      "activation_blocker": "Missing audit contract blocks live and execution-sensitive gates.",
+      "non_activation_statement": "Static evidence does not activate audit-backed runtime capability."
+    },
+    "trading_execution_safety_review": {
+      "evidence_name": "trading_execution_safety_review",
+      "description": "Future review evidence for execution safety, zero-fill separation, order review, and stop conditions.",
+      "current_status": "missing",
+      "current_phase_classification": "not_provided_in_current_phase",
+      "future_gate_dependency": [
+        "trading_execution_gate"
+      ],
+      "missing_evidence": "Execution safety, zero-fill separation, order review, and kill switch plan are not provided in Phase 9.4.",
+      "activation_blocker": "Missing trading safety review blocks execution capability.",
+      "non_activation_statement": "Static evidence does not activate trading automation."
+    },
+    "source_of_truth_arbitration_review": {
+      "evidence_name": "source_of_truth_arbitration_review",
+      "description": "Static evidence that TWOS runtime/product SoT and LDD trading/execution SoT remain separate.",
+      "current_status": "static_sot_separation_recorded",
+      "current_phase_classification": "static_planning_evidence_available",
+      "future_gate_dependency": [
+        "live_read_only_runtime_gate",
+        "trading_execution_gate"
+      ],
+      "missing_evidence": "Live arbitration review under real data and account conditions is not provided in Phase 9.4.",
+      "activation_blocker": "Static SoT separation is not enough for live arbitration.",
+      "non_activation_statement": "Static evidence does not mutate or override trading/execution facts."
+    }
+  },
+  "source_of_truth_separation": {
+    "twos_runtime_product_sot": [
+      "current_twos_volume_and_phase",
+      "repository_commit",
+      "runtime_record_count",
+      "framework_index_count",
+      "static_shell_readiness",
+      "validation_state",
+      "customer_facing_readiness",
+      "live_runtime_implementation_readiness"
+    ],
+    "ldd_trading_execution_sot": [
+      "broker_screenshots",
+      "binance_screenshots",
+      "order_screenshots",
+      "filled_trades",
+      "expired_zero_fill_orders",
+      "canceled_orders",
+      "portfolio_changes",
+      "cash_impact",
+      "quote_type"
+    ],
+    "separation_rules": [
+      "TWOS runtime/product SoT must never override LDD trading/execution SoT.",
+      "LDD trading/execution SoT must never override TWOS runtime/product SoT.",
+      "Static evidence packs and future gate checklists must never mutate trading facts, portfolio state, execution ledger state, account state, or cash state."
+    ]
+  },
+  "quote_type_preservation": [
+    "watchlist_price",
+    "premarket_price",
+    "holding_valuation_price",
+    "order_page_executable_price",
+    "final_filled_price"
+  ],
+  "execution_event_distinction": [
+    "actual_filled_trade",
+    "expired_zero_fill_order",
+    "canceled_order",
+    "portfolio_change",
+    "no_cash_impact_event"
+  ],
+  "duxd_queue": [
+    {
+      "queue_item": "Execution Ledger Evidence Classifier / Zero-Fill Order Separation Protocol",
+      "status": "future_protocol_seed_only",
+      "phase9_4_action": "preserved_only_not_implemented"
+    }
+  ],
+  "forbidden_scope": [
+    "production_ui",
+    "customer_facing_ui",
+    "hosted_app",
+    "api_server",
+    "live_endpoint",
+    "external_api",
+    "broker_connection",
+    "binance_connection",
+    "live_market_data",
+    "trading_automation",
+    "credential_handling",
+    "login_auth",
+    "runtime_mutation",
+    "execution_trigger",
+    "order_placement",
+    "portfolio_modification",
+    "background_worker",
+    "scheduler",
+    "notification_dispatcher",
+    "github_issues",
+    "github_projects_board",
+    "package_manager_files",
+    "build_tools",
+    "frontend_framework",
+    "network_dependency",
+    "external_integration",
+    "production_deployment_capability"
+  ],
+  "trading_state_impact": {
+    "trading_facts_changed": false,
+    "portfolio_state_changed": false,
+    "execution_ledger_changed": false,
+    "cash_state_changed": false,
+    "broker_connection_changed": false,
+    "binance_connection_changed": false
+  },
+  "acceptance": {
+    "status": "static_evidence_pack_created",
+    "static_evidence_pack_created": true,
+    "future_gate_checklist_created": true,
+    "future_gate_activation": false,
+    "customer_facing_readiness": false,
+    "live_runtime_execution_frameworks": 0,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  }
+}

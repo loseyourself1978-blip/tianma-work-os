@@ -61,6 +61,8 @@ VOL9_PHASE9_2_LDD_CONSUMER_ACKNOWLEDGEMENT = REPO_ROOT / "mock_consumers" / "ldd
 VOL9_PHASE9_2_STRICT_BASELINE_SYNC_READY_GATE = REPO_ROOT / "mock_consumers" / "ldd" / "strict_baseline_sync_ready_gate.json"
 VOL9_PHASE9_3_FUTURE_IMPLEMENTATION_BOUNDARY_MATRIX = REPO_ROOT / "mock_consumers" / "ldd" / "future_implementation_boundary_matrix.json"
 VOL9_PHASE9_3_STATIC_PROTOTYPE_GATE = REPO_ROOT / "mock_consumers" / "ldd" / "static_prototype_gate.json"
+VOL9_PHASE9_4_STATIC_PROTOTYPE_EVIDENCE_PACK = REPO_ROOT / "mock_consumers" / "ldd" / "static_prototype_evidence_pack.json"
+VOL9_PHASE9_4_FUTURE_GATE_READINESS_CHECKLIST = REPO_ROOT / "mock_consumers" / "ldd" / "future_gate_readiness_checklist.json"
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 
@@ -143,6 +145,8 @@ SCHEMA_FILES = {
     "strict_baseline_sync_ready_gate": "strict_baseline_sync_ready_gate.schema.json",
     "future_implementation_boundary_matrix": "future_implementation_boundary_matrix.schema.json",
     "static_prototype_gate": "static_prototype_gate.schema.json",
+    "static_prototype_evidence_pack": "static_prototype_evidence_pack.schema.json",
+    "future_gate_readiness_checklist": "future_gate_readiness_checklist.schema.json",
     "static_cockpit_prototype_review": "static_cockpit_prototype_review.schema.json",
     "internal_operator_cockpit_static_spec_review": "internal_operator_cockpit_static_spec_review.schema.json",
     "ai_board_cockpit_static_spec_review": "ai_board_cockpit_static_spec_review.schema.json",
@@ -234,6 +238,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "strict_baseline_sync_ready_gate", SCHEMA_FILES["strict_baseline_sync_ready_gate"]
     if "vol9_phase9_3_future_implementation_boundary_matrix_and_static_prototype_gate" in filename:
         return "static_prototype_gate", SCHEMA_FILES["static_prototype_gate"]
+    if "vol9_phase9_4_static_prototype_evidence_pack_and_future_gate_readiness_checklist" in filename:
+        return "future_gate_readiness_checklist", SCHEMA_FILES["future_gate_readiness_checklist"]
     if "static_cockpit_prototype_boundary_review" in filename:
         return "static_cockpit_prototype_review", SCHEMA_FILES["static_cockpit_prototype_review"]
     if "internal_operator_cockpit_static_spec_review" in filename:
@@ -802,6 +808,26 @@ def collect_targets() -> tuple[list[ValidationTarget], list[Path]]:
                 "mock_consumers",
                 SCHEMA_FILES["static_prototype_gate"],
                 "static_prototype_gate",
+            )
+        )
+
+    if VOL9_PHASE9_4_STATIC_PROTOTYPE_EVIDENCE_PACK.exists():
+        targets.append(
+            ValidationTarget(
+                VOL9_PHASE9_4_STATIC_PROTOTYPE_EVIDENCE_PACK,
+                "mock_consumers",
+                SCHEMA_FILES["static_prototype_evidence_pack"],
+                "static_prototype_evidence_pack",
+            )
+        )
+
+    if VOL9_PHASE9_4_FUTURE_GATE_READINESS_CHECKLIST.exists():
+        targets.append(
+            ValidationTarget(
+                VOL9_PHASE9_4_FUTURE_GATE_READINESS_CHECKLIST,
+                "mock_consumers",
+                SCHEMA_FILES["future_gate_readiness_checklist"],
+                "future_gate_readiness_checklist",
             )
         )
 

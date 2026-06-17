@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/future_gate_readiness_checklist.schema.json",
+  "title": "Future Gate Readiness Checklist",
+  "description": "Validates the static Phase 9.4 future gate readiness checklist.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "checklist_name",
+    "phase",
+    "generated_at_sgt",
+    "state_name",
+    "future_gate_checklist_created",
+    "future_gate_activation",
+    "gates",
+    "readiness_states",
+    "customer_facing_readiness",
+    "live_runtime_execution_frameworks",
+    "static_shell_mode",
+    "non_activation_rules",
+    "required_conditions",
+    "acceptance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "enum": ["0.1"]},
+    "checklist_name": {"type": "string", "enum": ["future_gate_readiness_checklist"]},
+    "phase": {"type": "string", "enum": ["Vol.9 Phase 9.4"]},
+    "generated_at_sgt": {"type": "string"},
+    "state_name": {"type": "string", "enum": ["static_evidence_pack_created", "future_gate_checklist_created", "future_gate_activation_blocked"]},
+    "future_gate_checklist_created": {"type": "boolean", "enum": [true]},
+    "future_gate_activation": {"type": "boolean", "enum": [false]},
+    "gates": {"type": "object"},
+    "readiness_states": {"type": "array", "items": {"type": "string"}},
+    "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+    "live_runtime_execution_frameworks": {"type": "integer", "enum": [0]},
+    "static_shell_mode": {"type": "string", "enum": ["local_static_read_only_fixture_only_no_network_no_execution"]},
+    "non_activation_rules": {"type": "array", "items": {"type": "string"}},
+    "required_conditions": {"type": "array", "items": {"type": "string"}},
+    "acceptance": {"type": "object"}
+  }
+}
