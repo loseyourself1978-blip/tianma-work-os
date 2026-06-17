@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/future_implementation_boundary_matrix.schema.json",
+  "title": "Future Implementation Boundary Matrix",
+  "description": "Validates the static Phase 9.3 future implementation boundary matrix.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "matrix_name",
+    "phase",
+    "generated_at_sgt",
+    "baseline",
+    "boundary_categories",
+    "implementation_levels",
+    "future_gates",
+    "source_of_truth_separation",
+    "quote_type_preservation",
+    "execution_event_distinction",
+    "forbidden_scope",
+    "acceptance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "enum": ["0.1"]},
+    "matrix_name": {"type": "string", "enum": ["future_implementation_boundary_matrix"]},
+    "phase": {"type": "string", "enum": ["Vol.9 Phase 9.3"]},
+    "generated_at_sgt": {"type": "string"},
+    "future_implementation_boundary_defined": {"type": "boolean", "enum": [true]},
+    "static_prototype_gate_defined": {"type": "boolean", "enum": [true]},
+    "baseline": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "latest_completed_phase_before_phase",
+        "latest_commit_before_phase",
+        "customer_facing_readiness",
+        "live_runtime_execution_frameworks",
+        "static_shell_mode"
+      ],
+      "properties": {
+        "latest_completed_phase_before_phase": {"type": "string", "enum": ["Vol.9 Phase 9.2"]},
+        "latest_commit_before_phase": {"type": "string", "enum": ["ff085c84e9bef299d1c48bb6f7b86e4d5c2003e0"]},
+        "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+        "live_runtime_execution_frameworks": {"type": "integer", "enum": [0]},
+        "static_shell_mode": {"type": "string", "enum": ["local_static_read_only_fixture_only_no_network_no_execution"]}
+      }
+    },
+    "boundary_categories": {"type": "array", "items": {"type": "object"}},
+    "implementation_levels": {"type": "array", "items": {"type": "object"}},
+    "future_gates": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "static_prototype_gate",
+        "customer_facing_readiness_gate",
+        "live_read_only_runtime_gate",
+        "runtime_mutation_gate",
+        "external_integration_gate",
+        "trading_execution_gate",
+        "credential_handling_gate",
+        "notification_scheduler_gate",
+        "production_deployment_gate"
+      ],
+      "properties": {
+        "static_prototype_gate": {
+          "type": "object",
+          "required": ["status", "current_phase_allowed"],
+          "properties": {
+            "status": {"type": "string", "enum": ["active_static_only"]},
+            "current_phase_allowed": {"type": "boolean", "enum": [true]}
+          }
+        },
+        "customer_facing_readiness_gate": {"type": "object", "required": ["status", "current_phase_allowed"], "properties": {"status": {"type": "string", "enum": ["not_activated"]}, "current_phase_allowed": {"type": "boolean", "enum": [false]}}},
+        "live_read_only_runtime_gate": {"type": "object", "required": ["status", "current_phase_allowed"], "properties": {"status": {"type": "string", "enum": ["not_activated"]}, "current_phase_allowed": {"type": "boolean", "enum": [false]}}},
+        "runtime_mutation_gate": {"type": "object", "required": ["status", "current_phase_allowed"], "properties": {"status": {"type": "string", "enum": ["not_activated"]}, "current_phase_allowed": {"type": "boolean", "enum": [false]}}},
+        "external_integration_gate": {"type": "object", "required": ["status", "current_phase_allowed"], "properties": {"status": {"type": "string", "enum": ["not_activated"]}, "current_phase_allowed": {"type": "boolean", "enum": [false]}}},
+        "trading_execution_gate": {"type": "object", "required": ["status", "current_phase_allowed"], "properties": {"status": {"type": "string", "enum": ["not_activated"]}, "current_phase_allowed": {"type": "boolean", "enum": [false]}}},
+        "credential_handling_gate": {"type": "object", "required": ["status", "current_phase_allowed"], "properties": {"status": {"type": "string", "enum": ["not_activated"]}, "current_phase_allowed": {"type": "boolean", "enum": [false]}}},
+        "notification_scheduler_gate": {"type": "object", "required": ["status", "current_phase_allowed"], "properties": {"status": {"type": "string", "enum": ["not_activated"]}, "current_phase_allowed": {"type": "boolean", "enum": [false]}}},
+        "production_deployment_gate": {"type": "object", "required": ["status", "current_phase_allowed"], "properties": {"status": {"type": "string", "enum": ["not_activated"]}, "current_phase_allowed": {"type": "boolean", "enum": [false]}}}
+      }
+    },
+    "source_of_truth_separation": {"type": "object"},
+    "quote_type_preservation": {"type": "array", "items": {"type": "string"}},
+    "execution_event_distinction": {"type": "array", "items": {"type": "string"}},
+    "forbidden_scope": {"type": "array", "items": {"type": "string"}},
+    "acceptance": {"type": "object"}
+  }
+}

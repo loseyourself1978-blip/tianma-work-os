@@ -1,0 +1,310 @@
+{
+  "schema_version": "0.1",
+  "matrix_name": "future_implementation_boundary_matrix",
+  "phase": "Vol.9 Phase 9.3",
+  "generated_at_sgt": "2026-06-17T00:00:00+08:00",
+  "future_implementation_boundary_defined": true,
+  "static_prototype_gate_defined": true,
+  "customer_facing_readiness": false,
+  "live_runtime_execution_frameworks": 0,
+  "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution",
+  "baseline": {
+    "latest_completed_phase_before_phase": "Vol.9 Phase 9.2",
+    "latest_commit_before_phase": "ff085c84e9bef299d1c48bb6f7b86e4d5c2003e0",
+    "runtime_records_baseline_before_phase": 115,
+    "frameworks_indexed": 24,
+    "customer_facing_frameworks": 0,
+    "live_runtime_execution_frameworks": 0,
+    "fixture_static_read_only_frameworks": 24,
+    "validation_backed_frameworks": 24,
+    "baseline_state": "strict_baseline_sync_ready",
+    "customer_facing_readiness": false,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  },
+  "boundary_categories": [
+    {
+      "category": "allowed_static_planning",
+      "definition": "Planning artifacts that describe future product direction without implementation.",
+      "examples": ["roadmap_notes", "boundary_docs", "gate_definitions", "static_matrices"],
+      "current_status": "allowed_current_phase",
+      "gate_requirements": "static_validation_only",
+      "explicit_forbidden_interpretations": ["production_readiness", "customer_facing_readiness", "live_runtime_readiness"]
+    },
+    {
+      "category": "allowed_static_fixture",
+      "definition": "Repository-local machine-readable fixtures used for review and validation.",
+      "examples": ["mock_consumer_json", "schemas", "runtime_records"],
+      "current_status": "allowed_current_phase",
+      "gate_requirements": "schema_and_static_validator_required",
+      "explicit_forbidden_interpretations": ["live_data_feed", "runtime_mutation", "external_integration"]
+    },
+    {
+      "category": "allowed_static_read_only_shell",
+      "definition": "Local read-only shell artifacts using fixtures only.",
+      "examples": ["static_shell/ldd/", "fixture_backed_local_review"],
+      "current_status": "allowed_current_phase",
+      "gate_requirements": "must_remain_local_static_read_only_fixture_only_no_network_no_execution",
+      "explicit_forbidden_interpretations": ["hosted_app", "production_ui", "customer_facing_ui"]
+    },
+    {
+      "category": "allowed_static_consumer_fixture",
+      "definition": "Mock consumer artifacts for baseline, acknowledgement, and gate review.",
+      "examples": ["ldd_backfeed_packet", "consumer_acknowledgement_packet", "static_gate_fixture"],
+      "current_status": "allowed_current_phase",
+      "gate_requirements": "fixture_validation_required",
+      "explicit_forbidden_interpretations": ["live_sync", "api_response", "consumer_deployment"]
+    },
+    {
+      "category": "allowed_static_validation",
+      "definition": "Standard-library local validators that inspect schemas, records, and fixtures.",
+      "examples": ["python_validation_script", "shell_wrapper"],
+      "current_status": "allowed_current_phase",
+      "gate_requirements": "no_package_or_network_dependency",
+      "explicit_forbidden_interpretations": ["runtime_service", "scheduler", "background_worker"]
+    },
+    {
+      "category": "future_gate_required",
+      "definition": "Capability candidates that require future evidence and explicit activation gates.",
+      "examples": ["customer_preview", "live_read_only_runtime", "external_integration"],
+      "current_status": "not_activated",
+      "gate_requirements": "future_gate_evidence_required",
+      "explicit_forbidden_interpretations": ["ready_now", "enabled_by_static_artifacts"]
+    },
+    {
+      "category": "forbidden_current_phase",
+      "definition": "Capabilities explicitly disallowed in Phase 9.3.",
+      "examples": ["broker_connection", "binance_connection", "order_placement", "credential_handling", "production_deployment"],
+      "current_status": "forbidden_current_phase",
+      "gate_requirements": "not_applicable_current_phase",
+      "explicit_forbidden_interpretations": ["enabled", "ready", "approved"]
+    },
+    {
+      "category": "never_inferred_from_static",
+      "definition": "Claims that static artifacts can never prove by themselves.",
+      "examples": ["production_readiness", "customer_facing_readiness", "execution_readiness", "trading_automation_readiness"],
+      "current_status": "blocked_as_inference",
+      "gate_requirements": "future_non_static_evidence_and_explicit_gate_required",
+      "explicit_forbidden_interpretations": ["static_artifact_equals_readiness"]
+    }
+  ],
+  "implementation_levels": [
+    {
+      "level": "level_0_static_planning",
+      "classification": "allowed_current_phase"
+    },
+    {
+      "level": "level_1_static_fixture_prototype",
+      "classification": "allowed_current_phase"
+    },
+    {
+      "level": "level_2_local_read_only_prototype",
+      "classification": "allowed_current_phase"
+    },
+    {
+      "level": "level_3_internal_operator_review_prototype",
+      "classification": "future_gate_required"
+    },
+    {
+      "level": "level_4_customer_facing_preview",
+      "classification": "forbidden_current_phase"
+    },
+    {
+      "level": "level_5_live_read_only_runtime",
+      "classification": "future_gate_required_forbidden_current_phase"
+    },
+    {
+      "level": "level_6_live_mutation_runtime",
+      "classification": "future_gate_required_forbidden_current_phase"
+    },
+    {
+      "level": "level_7_execution_capable_runtime",
+      "classification": "future_gate_required_forbidden_current_phase"
+    }
+  ],
+  "allowed_current_levels": [
+    "level_0_static_planning",
+    "level_1_static_fixture_prototype",
+    "level_2_local_read_only_prototype"
+  ],
+  "blocked_levels": [
+    "level_3_internal_operator_review_prototype",
+    "level_4_customer_facing_preview",
+    "level_5_live_read_only_runtime",
+    "level_6_live_mutation_runtime",
+    "level_7_execution_capable_runtime"
+  ],
+  "future_gates": {
+    "static_prototype_gate": {
+      "purpose": "Allow static planning, fixture, read-only shell, consumer fixture, and validation work only.",
+      "status": "active_static_only",
+      "current_phase_allowed": true,
+      "required_evidence_before_activation": "already_limited_to_static_scope",
+      "explicit_non_activation_statement": "Does not activate customer-facing, live runtime, mutation, integration, credential, scheduler, notification, production, or execution capability.",
+      "forbidden_assumptions": ["static_prototype_implies_production_readiness"]
+    },
+    "customer_facing_readiness_gate": {
+      "purpose": "Evaluate customer-facing preview readiness.",
+      "status": "not_activated",
+      "current_phase_allowed": false,
+      "required_evidence_before_activation": ["security_review_evidence", "privacy_review_evidence", "customer_facing_ux_review", "rollback_plan"],
+      "explicit_non_activation_statement": "Phase 9.3 does not activate customer-facing readiness.",
+      "forbidden_assumptions": ["static_shell_implies_customer_facing_readiness"]
+    },
+    "live_read_only_runtime_gate": {
+      "purpose": "Evaluate live read-only runtime readiness.",
+      "status": "not_activated",
+      "current_phase_allowed": false,
+      "required_evidence_before_activation": ["read_only_runtime_contract", "audit_log_contract", "source_of_truth_arbitration_review"],
+      "explicit_non_activation_statement": "Phase 9.3 does not activate live read-only runtime.",
+      "forbidden_assumptions": ["fixture_data_implies_live_data_readiness"]
+    },
+    "runtime_mutation_gate": {
+      "purpose": "Evaluate whether runtime mutation can be considered.",
+      "status": "not_activated",
+      "current_phase_allowed": false,
+      "required_evidence_before_activation": ["mutation_safety_contract", "rollback_plan", "audit_log_contract", "security_review_evidence"],
+      "explicit_non_activation_statement": "Phase 9.3 does not activate runtime mutation.",
+      "forbidden_assumptions": ["static_controls_imply_mutation_safety"]
+    },
+    "external_integration_gate": {
+      "purpose": "Evaluate whether external integrations can be considered.",
+      "status": "not_activated",
+      "current_phase_allowed": false,
+      "required_evidence_before_activation": ["external_integration_contract", "privacy_review_evidence", "security_review_evidence"],
+      "explicit_non_activation_statement": "Phase 9.3 does not activate external integrations.",
+      "forbidden_assumptions": ["api_shaped_fixture_implies_external_api"]
+    },
+    "trading_execution_gate": {
+      "purpose": "Evaluate whether execution-capable runtime can be considered.",
+      "status": "not_activated",
+      "current_phase_allowed": false,
+      "required_evidence_before_activation": ["trading_execution_safety_review", "source_of_truth_arbitration_review", "audit_log_contract"],
+      "explicit_non_activation_statement": "Phase 9.3 does not activate trading execution.",
+      "forbidden_assumptions": ["trading_records_imply_trading_automation"]
+    },
+    "credential_handling_gate": {
+      "purpose": "Evaluate whether credential handling can be considered.",
+      "status": "not_activated",
+      "current_phase_allowed": false,
+      "required_evidence_before_activation": ["credential_handling_design", "security_review_evidence", "privacy_review_evidence", "audit_log_contract"],
+      "explicit_non_activation_statement": "Phase 9.3 does not activate credential handling.",
+      "forbidden_assumptions": ["permission_docs_imply_credential_readiness"]
+    },
+    "notification_scheduler_gate": {
+      "purpose": "Evaluate whether schedulers or notification dispatchers can be considered.",
+      "status": "not_activated",
+      "current_phase_allowed": false,
+      "required_evidence_before_activation": ["rollback_plan", "audit_log_contract", "security_review_evidence"],
+      "explicit_non_activation_statement": "Phase 9.3 does not activate scheduling or notification dispatch.",
+      "forbidden_assumptions": ["status_packets_imply_automation"]
+    },
+    "production_deployment_gate": {
+      "purpose": "Evaluate whether production deployment can be considered.",
+      "status": "not_activated",
+      "current_phase_allowed": false,
+      "required_evidence_before_activation": ["production_deployment_review", "rollback_plan", "security_review_evidence", "privacy_review_evidence"],
+      "explicit_non_activation_statement": "Phase 9.3 does not activate production deployment.",
+      "forbidden_assumptions": ["static_prototype_implies_production_readiness"]
+    }
+  },
+  "future_gate_evidence_categories": {
+    "security_review_evidence": "not_provided_in_current_phase",
+    "privacy_review_evidence": "not_provided_in_current_phase",
+    "credential_handling_design": "not_provided_in_current_phase",
+    "read_only_runtime_contract": "not_provided_in_current_phase",
+    "mutation_safety_contract": "not_provided_in_current_phase",
+    "external_integration_contract": "not_provided_in_current_phase",
+    "customer_facing_ux_review": "not_provided_in_current_phase",
+    "production_deployment_review": "not_provided_in_current_phase",
+    "rollback_plan": "not_provided_in_current_phase",
+    "audit_log_contract": "not_provided_in_current_phase",
+    "trading_execution_safety_review": "not_provided_in_current_phase",
+    "source_of_truth_arbitration_review": "not_provided_in_current_phase"
+  },
+  "source_of_truth_separation": {
+    "twos_runtime_product_sot": [
+      "current_twos_volume_and_phase",
+      "repository_commit",
+      "runtime_record_count",
+      "framework_index_count",
+      "static_shell_readiness",
+      "validation_state",
+      "customer_facing_readiness",
+      "live_runtime_implementation_readiness"
+    ],
+    "ldd_trading_execution_sot": [
+      "broker_screenshots",
+      "binance_screenshots",
+      "order_screenshots",
+      "filled_trades",
+      "expired_zero_fill_orders",
+      "canceled_orders",
+      "portfolio_changes",
+      "cash_impact",
+      "quote_type"
+    ],
+    "separation_rules": [
+      "TWOS runtime/product SoT must never override LDD trading/execution SoT.",
+      "LDD trading/execution SoT must never override TWOS runtime/product SoT.",
+      "Static prototype gates must never mutate trading facts, portfolio state, execution ledger state, account state, or cash state."
+    ]
+  },
+  "quote_type_preservation": [
+    "watchlist_price",
+    "premarket_price",
+    "holding_valuation_price",
+    "order_page_executable_price",
+    "final_filled_price"
+  ],
+  "execution_event_distinction": [
+    "actual_filled_trade",
+    "expired_zero_fill_order",
+    "canceled_order",
+    "portfolio_change",
+    "no_cash_impact_event"
+  ],
+  "trading_state_impact": {
+    "trading_facts_changed": false,
+    "portfolio_state_changed": false,
+    "execution_ledger_changed": false,
+    "cash_state_changed": false,
+    "broker_connection_changed": false,
+    "binance_connection_changed": false
+  },
+  "forbidden_scope": [
+    "production UI",
+    "customer-facing UI",
+    "hosted app",
+    "API server",
+    "live endpoint",
+    "external API",
+    "broker connection",
+    "Binance connection",
+    "live market data",
+    "trading automation",
+    "credential handling",
+    "login/auth",
+    "runtime mutation",
+    "execution trigger",
+    "order placement",
+    "portfolio modification",
+    "background worker",
+    "scheduler",
+    "notification dispatcher",
+    "GitHub Issues",
+    "GitHub Projects board",
+    "package manager files",
+    "build tools",
+    "frontend framework",
+    "network dependency"
+  ],
+  "acceptance": {
+    "status": "future_boundary_matrix_ready",
+    "future_implementation_boundary_defined": true,
+    "static_prototype_gate_defined": true,
+    "customer_facing_readiness": false,
+    "live_runtime_execution_frameworks": 0,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution",
+    "future_gate_activation": false
+  }
+}

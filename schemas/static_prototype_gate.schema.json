@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/static_prototype_gate.schema.json",
+  "title": "Static Prototype Gate",
+  "description": "Validates the static Phase 9.3 prototype gate.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "gate_name",
+    "phase",
+    "state_name",
+    "static_prototype_gate_defined",
+    "current_phase_allowed",
+    "allowed_levels",
+    "blocked_levels",
+    "customer_facing_readiness",
+    "live_runtime_execution_frameworks",
+    "static_shell_mode",
+    "non_activation_rules",
+    "required_conditions",
+    "acceptance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "enum": ["0.1"]},
+    "gate_name": {"type": "string", "enum": ["static_prototype_gate"]},
+    "phase": {"type": "string", "enum": ["Vol.9 Phase 9.3"]},
+    "state_name": {"type": "string", "enum": ["static_prototype_gate_defined", "future_boundary_matrix_ready"]},
+    "static_prototype_gate_defined": {"type": "boolean", "enum": [true]},
+    "current_phase_allowed": {"type": "boolean", "enum": [true]},
+    "allowed_levels": {"type": "array", "items": {"type": "string"}},
+    "blocked_levels": {"type": "array", "items": {"type": "string"}},
+    "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+    "live_runtime_execution_frameworks": {"type": "integer", "enum": [0]},
+    "static_shell_mode": {"type": "string", "enum": ["local_static_read_only_fixture_only_no_network_no_execution"]},
+    "non_activation_rules": {"type": "array", "items": {"type": "string"}},
+    "required_conditions": {"type": "array", "items": {"type": "string"}},
+    "acceptance": {"type": "object"}
+  }
+}
