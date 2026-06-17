@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/twos_ldd_runtime_status_backfeed_protocol.schema.json",
+  "title": "TWOS/LDD Runtime Status Backfeed Protocol Packet",
+  "description": "Validates the static Phase 9.1 TWOS/LDD runtime status backfeed packet.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "protocol_name",
+    "phase",
+    "generated_at_sgt",
+    "twos_runtime_product_baseline",
+    "ldd_visible_baseline",
+    "drift_detection",
+    "source_taxonomy",
+    "source_precedence",
+    "required_action",
+    "forbidden_scope",
+    "duxd_queue",
+    "acceptance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "enum": ["0.1"]},
+    "protocol_name": {"type": "string", "enum": ["TWOS/LDD Runtime Status Backfeed Protocol"]},
+    "phase": {"type": "string", "enum": ["Vol.9 Phase 9.1"]},
+    "generated_at_sgt": {"type": "string"},
+    "repository_validated_baseline": {"type": "string", "enum": ["Vol.8 Phase 8.6"]},
+    "repository_commit": {"type": "string", "enum": ["c58243df6f9685f13c0017e4f87798f844d53277"]},
+    "twos_runtime_product_baseline": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "latest_completed_phase",
+        "latest_commit",
+        "runtime_records_baseline",
+        "frameworks_indexed",
+        "customer_facing_frameworks",
+        "live_runtime_execution_frameworks",
+        "fixture_static_read_only_frameworks",
+        "validation_backed_frameworks",
+        "vol9_entry_readiness",
+        "customer_facing_readiness",
+        "static_shell_path",
+        "static_shell_mode"
+      ],
+      "properties": {
+        "latest_completed_phase": {"type": "string", "enum": ["Vol.8 Phase 8.6 - Vol.8 Handoff Summary and Vol.9 Readiness Gate"]},
+        "latest_commit": {"type": "string", "enum": ["c58243df6f9685f13c0017e4f87798f844d53277"]},
+        "runtime_records_baseline": {"type": "integer", "enum": [113]},
+        "frameworks_indexed": {"type": "integer", "enum": [24]},
+        "customer_facing_frameworks": {"type": "integer", "enum": [0]},
+        "live_runtime_execution_frameworks": {"type": "integer", "enum": [0]},
+        "fixture_static_read_only_frameworks": {"type": "integer", "enum": [24]},
+        "validation_backed_frameworks": {"type": "integer", "enum": [24]},
+        "vol9_entry_readiness": {"type": "string", "enum": ["ready_with_limits"]},
+        "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+        "static_shell_path": {"type": "string", "enum": ["static_shell/ldd/"]},
+        "static_shell_mode": {"type": "string", "enum": ["local_static_read_only_fixture_only_no_network_no_execution"]}
+      }
+    },
+    "ldd_visible_baseline": {"type": "object"},
+    "drift_detection": {"type": "object"},
+    "source_taxonomy": {"type": "array", "items": {"type": "object"}},
+    "source_precedence": {"type": "object"},
+    "required_action": {"type": "array", "items": {"type": "string"}},
+    "forbidden_scope": {"type": "array", "items": {"type": "string"}},
+    "duxd_queue": {"type": "array", "items": {"type": "object"}},
+    "acceptance": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "customer_facing_readiness",
+        "live_runtime_execution_frameworks",
+        "static_shell_mode"
+      ],
+      "properties": {
+        "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+        "live_runtime_execution_frameworks": {"type": "integer", "enum": [0]},
+        "static_shell_mode": {"type": "string", "enum": ["local_static_read_only_fixture_only_no_network_no_execution"]}
+      }
+    }
+  }
+}

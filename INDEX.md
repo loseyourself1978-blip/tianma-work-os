@@ -17,7 +17,7 @@ You own the strategy. AI handles the execution.
 ## Current Phase
 
 ```text
-Vol.8 Phase 8.6 - Vol.8 Handoff Summary and Vol.9 Readiness Gate
+Vol.9 Phase 9.1 - Cross-Workspace Baseline Drift Resolution and Runtime Status Backfeed Protocol
 ```
 
 ## Core Documents
@@ -815,6 +815,32 @@ Vol.8 Phase 8.6 - Vol.8 Handoff Summary and Vol.9 Readiness Gate
 - Customer-facing readiness: `false`
 - Network allowed: `false`
 - Execution allowed: `false`
+
+## Vol.9 Phase 9.1 / Cross-Workspace Baseline Drift Resolution and Runtime Status Backfeed Protocol
+
+- `docs/runtime/VOL9_PHASE9_1_CROSS_WORKSPACE_BASELINE_DRIFT_RESOLUTION_AND_BACKFEED_PROTOCOL_v0.1.md`
+- `docs/runtime/TWOS_LDD_RUNTIME_STATUS_BACKFEED_PROTOCOL_v0.1.md`
+- `schemas/twos_ldd_runtime_status_backfeed_protocol.schema.json`
+- `schemas/cross_workspace_baseline_drift_state.schema.json`
+- `mock_consumers/ldd/twos_ldd_runtime_status_backfeed_protocol.json`
+- `mock_consumers/ldd/cross_workspace_baseline_drift_resolution_gate.json`
+- `mock_consumers/ldd/twos_ldd_post_vol8_to_vol9_backfeed_status_update.json`
+- `records/ldd/2026-06-17/vol9_phase9_1_cross_workspace_baseline_drift_resolution_and_backfeed_protocol.json`
+- `scripts/validate_vol9_phase9_1_runtime_status_backfeed.py`
+- `scripts/validate_vol9_phase9_1_runtime_status_backfeed.sh`
+- Updated: `scripts/validate_runtime_records.py`
+- Current phase: `Vol.9 Phase 9.1 - Cross-Workspace Baseline Drift Resolution and Runtime Status Backfeed Protocol`
+- Repository-validated baseline: `Vol.8 Phase 8.6`
+- LDD-visible stale baseline: `Vol.7 Phase 7.8`
+- Drift state before phase: `baseline_drift_detected`
+- Drift state after phase: `backfeed_packet_ready`
+- Runtime records baseline after phase: `114`
+- Functional frameworks indexed: `24`
+- Customer-facing readiness: `false`
+- Network allowed: `false`
+- Execution allowed: `false`
+
+Vol.9 Phase 9.1 creates a static/read-only baseline drift resolution and runtime status backfeed protocol. It does not create live implementation, customer-facing readiness, trading automation, broker/Binance connection, or runtime execution capability.
 
 ## Product Principles
 

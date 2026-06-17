@@ -1,0 +1,18 @@
+{
+  "schema_version": "0.1",
+  "phase": "Vol.9 Phase 9.1",
+  "repository_commit": "c58243df6f9685f13c0017e4f87798f844d53277",
+  "title": "TWOS/LDD Runtime Status Backfeed Update｜Vol.8 → Vol.9 Phase 9.1",
+  "copy_paste_ready_ldd_sync_block": "TWOS/LDD Runtime Status Backfeed Update｜Vol.8 → Vol.9 Phase 9.1\n\nLatest repository-validated TWOS baseline is Vol.8 Phase 8.6.\nLatest repository commit is c58243df6f9685f13c0017e4f87798f844d53277.\nPrevious LDD-visible formal TWOS baseline Vol.7 Phase 7.8 is now stale/superseded for TWOS runtime baseline purposes.\nRuntime records baseline before Phase 9.1: 113.\nRuntime records baseline after Phase 9.1 static record emission: 114.\nFrameworks indexed: 24.\nCustomer-facing readiness: false.\nLive/runtime/execution frameworks: 0.\nStatic shell mode: local_static_read_only_fixture_only_no_network_no_execution.\n\nNo trading facts are changed by this update.\nNo portfolio state is changed by this update.\nNo execution ledger state is changed by this update.\nNo customer-facing readiness is created.\nNo live/runtime/execution capability is created.\n\nTWOS runtime/product SoT must never override LDD trading/execution SoT.\nLDD trading/execution SoT must never override TWOS runtime/product SoT.\n\nLDD action required: consume the newest static backfeed packet before using TWOS product/runtime baseline. Until LDD acknowledgement exists, drift state is backfeed_packet_ready and strict baseline sync-ready is false.",
+  "required_ldd_update_lines": [
+    "Latest repository-validated TWOS baseline is Vol.8 Phase 8.6.",
+    "Previous LDD-visible formal TWOS baseline Vol.7 Phase 7.8 is now stale/superseded for TWOS runtime baseline purposes.",
+    "No trading facts are changed by this update.",
+    "No portfolio state is changed by this update.",
+    "No execution ledger state is changed by this update.",
+    "No customer-facing readiness is created.",
+    "No live/runtime/execution capability is created."
+  ],
+  "consumer_ack_required": true,
+  "strict_baseline_sync_ready": false
+}

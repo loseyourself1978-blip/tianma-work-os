@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/cross_workspace_baseline_drift_state.schema.json",
+  "title": "Cross-Workspace Baseline Drift State",
+  "description": "Validates static TWOS/LDD baseline drift state for Vol.9 Phase 9.1.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "state_name",
+    "drift_detected",
+    "drift_reason",
+    "current_repository_validated_baseline",
+    "visible_ldd_formal_baseline",
+    "stale_baselines",
+    "resolution_status",
+    "required_next_action",
+    "strict_sync_ready_conditions"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "enum": ["0.1"]},
+    "state_name": {
+      "type": "string",
+      "enum": [
+        "strict_baseline_sync_ready",
+        "baseline_drift_detected",
+        "backfeed_required",
+        "backfeed_packet_ready",
+        "consumer_ack_pending",
+        "consumer_acknowledged"
+      ]
+    },
+    "drift_detected": {"type": "boolean"},
+    "drift_reason": {"type": "string"},
+    "current_repository_validated_baseline": {"type": "object"},
+    "visible_ldd_formal_baseline": {"type": "string"},
+    "repository_validated_baseline": {"type": "string"},
+    "stale_baselines": {"type": "array"},
+    "resolution_status": {"type": "string"},
+    "required_next_action": {"type": "string"},
+    "strict_sync_ready_conditions": {"type": "array"},
+    "consumer_ack_required": {"type": "boolean"},
+    "strict_sync_ready": {"type": "boolean"}
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "schema_version": "0.1",
+  "state_name": "backfeed_packet_ready",
+  "drift_detected": true,
+  "drift_reason": "LDD-visible formal TWOS Runtime Status Update referenced Vol.7 Phase 7.8 while repository-validated baseline is Vol.8 Phase 8.6.",
+  "current_repository_validated_baseline": {
+    "phase": "Vol.8 Phase 8.6",
+    "latest_completed_phase": "Vol.8 Phase 8.6 - Vol.8 Handoff Summary and Vol.9 Readiness Gate",
+    "commit": "c58243df6f9685f13c0017e4f87798f844d53277",
+    "runtime_records_baseline": 113,
+    "frameworks_indexed": 24,
+    "customer_facing_readiness": false,
+    "live_runtime_execution_frameworks": 0,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  },
+  "visible_ldd_formal_baseline": "Vol.7 Phase 7.8",
+  "repository_validated_baseline": "Vol.8 Phase 8.6",
+  "stale_baselines": [
+    {
+      "baseline": "Vol.7 Phase 7.8",
+      "classification": "stale_superseded_baseline",
+      "stale_for": "TWOS runtime/product baseline purposes"
+    }
+  ],
+  "resolution_status": "static_backfeed_packet_ready_for_ldd_consumption",
+  "required_next_action": "LDD must consume the newest static backfeed packet before using TWOS product/runtime baseline.",
+  "strict_sync_ready_conditions": [
+    "LDD consumes the newest TWOS/LDD Runtime Status Backfeed packet.",
+    "LDD marks Vol.7 Phase 7.8 as stale/superseded for TWOS runtime baseline purposes.",
+    "No newer repository-validated TWOS baseline is pending.",
+    "Customer-facing readiness remains false.",
+    "Live/runtime/execution framework count remains 0.",
+    "LDD trading/execution facts remain governed by LDD trading/execution Source of Truth."
+  ],
+  "consumer_ack_required": true,
+  "strict_sync_ready": false,
+  "backfeed_packet": "mock_consumers/ldd/twos_ldd_runtime_status_backfeed_protocol.json",
+  "repository_commit": "c58243df6f9685f13c0017e4f87798f844d53277",
+  "phase": "Vol.9 Phase 9.1"
+}

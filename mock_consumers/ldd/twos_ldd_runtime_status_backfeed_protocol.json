@@ -1,0 +1,180 @@
+{
+  "schema_version": "0.1",
+  "protocol_name": "TWOS/LDD Runtime Status Backfeed Protocol",
+  "phase": "Vol.9 Phase 9.1",
+  "generated_at_sgt": "2026-06-17T00:00:00+08:00",
+  "repository_validated_baseline": "Vol.8 Phase 8.6",
+  "repository_commit": "c58243df6f9685f13c0017e4f87798f844d53277",
+  "twos_runtime_product_baseline": {
+    "latest_completed_phase": "Vol.8 Phase 8.6 - Vol.8 Handoff Summary and Vol.9 Readiness Gate",
+    "latest_commit": "c58243df6f9685f13c0017e4f87798f844d53277",
+    "origin_main_state": "synchronized",
+    "working_tree_state": "clean_at_phase_intake",
+    "runtime_records_baseline": 113,
+    "frameworks_indexed": 24,
+    "customer_facing_frameworks": 0,
+    "live_runtime_execution_frameworks": 0,
+    "fixture_static_read_only_frameworks": 24,
+    "validation_backed_frameworks": 24,
+    "vol8_status": "completed",
+    "vol9_entry_readiness": "ready_with_limits",
+    "customer_facing_readiness": false,
+    "static_shell_path": "static_shell/ldd/",
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  },
+  "ldd_visible_baseline": {
+    "latest_formal_twos_runtime_status_update": "Vol.7 Phase 7.8",
+    "classification": "stale_superseded_baseline",
+    "stale_for": "TWOS runtime/product baseline purposes",
+    "still_valid_for": "historical reference only"
+  },
+  "drift_detection": {
+    "drift_detected": true,
+    "state_before_phase": "baseline_drift_detected",
+    "state_after_phase": "backfeed_packet_ready",
+    "drift_reason": "LDD-visible formal TWOS Runtime Status Update referenced Vol.7 Phase 7.8 while repository-validated baseline is Vol.8 Phase 8.6.",
+    "resolution": "Emit a static TWOS/LDD Runtime Status Backfeed packet and mark Vol.7 Phase 7.8 as stale/superseded for TWOS runtime baseline purposes.",
+    "consumer_ack_required": true,
+    "strict_baseline_sync_ready": false
+  },
+  "source_taxonomy": [
+    {
+      "source_class": "latest_formal_twos_runtime_status_update",
+      "domain": "twos_runtime_product",
+      "phase9_1_status": "stale_when_vol7_phase7_8_is_visible"
+    },
+    {
+      "source_class": "repository_validated_twos_baseline",
+      "domain": "twos_runtime_product",
+      "phase9_1_status": "authoritative"
+    },
+    {
+      "source_class": "project_memory_inferred_baseline",
+      "domain": "twos_runtime_product",
+      "phase9_1_status": "supporting_context_only"
+    },
+    {
+      "source_class": "user_provided_ldd_anchor_baseline",
+      "domain": "cross_workspace_anchor",
+      "phase9_1_status": "intake_context_only"
+    },
+    {
+      "source_class": "stale_superseded_baseline",
+      "domain": "twos_runtime_product",
+      "phase9_1_status": "historical_reference_only"
+    }
+  ],
+  "source_precedence": {
+    "twos_runtime_product_baseline": [
+      "repository_validated_twos_baseline",
+      "latest_formal_twos_runtime_status_update",
+      "project_memory_inferred_baseline",
+      "user_provided_ldd_anchor_baseline",
+      "stale_superseded_baseline"
+    ],
+    "ldd_trading_execution_facts": [
+      "user_broker_screenshots",
+      "order_detail_screenshots",
+      "filled_execution_records",
+      "broker_binance_account_screenshots",
+      "external_market_data_background_only"
+    ],
+    "separation_rules": [
+      "TWOS runtime/product SoT must never override LDD trading/execution SoT.",
+      "LDD trading/execution SoT must never override TWOS runtime/product SoT."
+    ]
+  },
+  "source_of_truth_boundary": {
+    "twos_runtime_product_sot": [
+      "current_twos_volume_and_phase",
+      "repository_commit",
+      "runtime_record_count",
+      "framework_index_count",
+      "static_shell_readiness",
+      "validation_state",
+      "customer_facing_readiness",
+      "live_runtime_implementation_readiness"
+    ],
+    "ldd_trading_execution_sot": [
+      "broker_screenshots",
+      "binance_screenshots",
+      "order_screenshots",
+      "filled_trades",
+      "expired_zero_fill_orders",
+      "canceled_orders",
+      "portfolio_changes",
+      "cash_impact",
+      "quote_type"
+    ]
+  },
+  "quote_type_preservation": [
+    "watchlist_price",
+    "premarket_price",
+    "holding_valuation_price",
+    "order_page_executable_price",
+    "final_filled_price"
+  ],
+  "execution_event_distinctions": [
+    "actual_filled_trade",
+    "expired_zero_fill_order",
+    "canceled_order",
+    "portfolio_change",
+    "no_cash_impact_event"
+  ],
+  "required_action": [
+    "Do not mutate runtime state.",
+    "Do not infer live readiness.",
+    "Do not create customer-facing readiness.",
+    "Emit static backfeed packet.",
+    "Mark older visible baseline as stale/superseded.",
+    "Require LDD to consume the newest backfeed packet before using TWOS product/runtime baseline."
+  ],
+  "forbidden_scope": [
+    "production UI",
+    "customer-facing UI",
+    "hosted app",
+    "API server",
+    "live endpoint",
+    "external API",
+    "broker connection",
+    "Binance connection",
+    "live market data",
+    "trading automation",
+    "credential handling",
+    "login/auth",
+    "runtime mutation",
+    "execution trigger",
+    "order placement",
+    "portfolio modification",
+    "background worker",
+    "scheduler",
+    "notification dispatcher",
+    "GitHub Issues",
+    "GitHub Projects board",
+    "package manager files",
+    "build tools",
+    "frontend framework",
+    "network dependency"
+  ],
+  "duxd_queue": [
+    {
+      "queue_item": "Execution Ledger Evidence Classifier / Zero-Fill Order Separation Protocol",
+      "status": "future_protocol_seed_only",
+      "phase9_1_action": "recorded_only_not_implemented",
+      "reason": "SPCX correction requires future separation of actual fills, zero-fill expirations, canceled orders, portfolio changes, and no-cash-impact events."
+    },
+    {
+      "queue_item": "Strict LDD consumer acknowledgement workflow",
+      "status": "future_protocol_refinement",
+      "phase9_1_action": "deferred"
+    }
+  ],
+  "acceptance": {
+    "status": "ready_for_ldd_consumption",
+    "customer_facing_readiness": false,
+    "live_runtime_execution_frameworks": 0,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution",
+    "consumer_ack_required": true,
+    "strict_baseline_sync_ready": false
+  }
+}
