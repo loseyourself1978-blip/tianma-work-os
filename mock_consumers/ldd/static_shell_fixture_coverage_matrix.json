@@ -1,0 +1,290 @@
+{
+  "schema_version": "0.1",
+  "matrix_name": "static_shell_fixture_coverage_matrix",
+  "phase": "Vol.9 Phase 9.6",
+  "generated_at_sgt": "2026-06-17T00:00:00+08:00",
+  "static_shell_fixture_coverage_matrix_created": true,
+  "customer_facing_readiness": false,
+  "live_runtime_execution_frameworks": 0,
+  "future_gate_activation": false,
+  "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution",
+  "baseline": {
+    "latest_completed_phase_before_phase": "Vol.9 Phase 9.5",
+    "latest_commit_before_phase": "69eeaa8711d3d8c0cf583750734a77148fbe724e",
+    "runtime_records_baseline_before_phase": 118,
+    "frameworks_indexed": 24,
+    "customer_facing_frameworks": 0,
+    "live_runtime_execution_frameworks": 0,
+    "fixture_static_read_only_frameworks": 24,
+    "validation_backed_frameworks": 24,
+    "baseline_state": "forbidden_scope_regression_guard_created",
+    "future_gate_activation": false,
+    "customer_facing_readiness": false,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  },
+  "core_principle": [
+    "Traceability is not activation.",
+    "Fixture coverage is not production coverage.",
+    "Static shell coverage is not customer-facing readiness.",
+    "Prototype-to-gate mapping is planning evidence only.",
+    "No mapped artifact may activate a future gate by implication."
+  ],
+  "coverage_domains": [
+    "static_shell_artifacts",
+    "mock_consumer_fixtures",
+    "runtime_protocol_documents",
+    "json_schemas",
+    "validation_scripts",
+    "runtime_records",
+    "index_references"
+  ],
+  "coverage_items": [
+    {
+      "artifact_path": "static_shell/ldd/",
+      "artifact_type": "local_static_shell_directory",
+      "coverage_domain": "static_shell_artifacts",
+      "related_phase": "Vol.7 Phase 7.4 through Vol.7 Phase 7.7",
+      "related_future_gate": ["static_prototype_gate", "customer_facing_readiness_gate"],
+      "coverage_classification": "static_shell_coverage",
+      "activation_status": "static_trace_only",
+      "coverage_limit": "Local static shell coverage only; no hosted app, production UI, customer-facing UI, or live runtime.",
+      "non_activation_statement": "Static shell coverage does not activate customer-facing readiness or live runtime readiness."
+    },
+    {
+      "artifact_path": "mock_consumers/ldd/",
+      "artifact_type": "mock_consumer_fixture_directory",
+      "coverage_domain": "mock_consumer_fixtures",
+      "related_phase": "Vol.7 through Vol.9",
+      "related_future_gate": ["static_prototype_gate", "live_read_only_runtime_gate", "external_integration_gate"],
+      "coverage_classification": "static_fixture_coverage",
+      "activation_status": "planning_trace_only",
+      "coverage_limit": "Mock consumer fixture coverage only; no external API, live data, or deployed consumer.",
+      "non_activation_statement": "Mock fixtures do not activate live runtime, external integration, or customer-facing readiness."
+    },
+    {
+      "artifact_path": "docs/runtime/",
+      "artifact_type": "runtime_protocol_document_directory",
+      "coverage_domain": "runtime_protocol_documents",
+      "related_phase": "Vol.1 through Vol.9 Phase 9.6",
+      "related_future_gate": ["static_prototype_gate", "customer_facing_readiness_gate", "production_deployment_gate"],
+      "coverage_classification": "static_planning_coverage",
+      "activation_status": "planning_trace_only",
+      "coverage_limit": "Protocol documentation coverage only; no implementation capability is created.",
+      "non_activation_statement": "Runtime protocol documents do not activate future gates by implication."
+    },
+    {
+      "artifact_path": "schemas/",
+      "artifact_type": "json_schema_directory",
+      "coverage_domain": "json_schemas",
+      "related_phase": "Vol.3 through Vol.9 Phase 9.6",
+      "related_future_gate": ["static_prototype_gate", "live_read_only_runtime_gate", "runtime_mutation_gate"],
+      "coverage_classification": "static_validation_coverage",
+      "activation_status": "static_validation_only",
+      "coverage_limit": "JSON schema coverage only; no live service contract or runtime execution contract is created.",
+      "non_activation_statement": "Schemas validate static artifacts only and do not activate runtime capability."
+    },
+    {
+      "artifact_path": "scripts/",
+      "artifact_type": "standard_library_validation_script_directory",
+      "coverage_domain": "validation_scripts",
+      "related_phase": "Vol.3 through Vol.9 Phase 9.6",
+      "related_future_gate": ["static_prototype_gate", "notification_scheduler_gate"],
+      "coverage_classification": "static_validation_coverage",
+      "activation_status": "static_validation_only",
+      "coverage_limit": "Local validation coverage only; no background worker, scheduler, notification dispatcher, or network dependency.",
+      "non_activation_statement": "Validation scripts do not activate automation, scheduling, or notification dispatch."
+    },
+    {
+      "artifact_path": "records/ldd/2026-06-17/",
+      "artifact_type": "runtime_record_directory",
+      "coverage_domain": "runtime_records",
+      "related_phase": "Vol.9 Phase 9.1 through Vol.9 Phase 9.6",
+      "related_future_gate": ["static_prototype_gate", "trading_execution_gate"],
+      "coverage_classification": "runtime_record_coverage",
+      "activation_status": "record_trace_only",
+      "coverage_limit": "Runtime record coverage only; no trading, portfolio, account, cash, or execution ledger mutation.",
+      "non_activation_statement": "Runtime records do not activate trading execution or mutate trading state."
+    },
+    {
+      "artifact_path": "INDEX.md",
+      "artifact_type": "repository_index",
+      "coverage_domain": "index_references",
+      "related_phase": "Vol.9 Phase 9.6",
+      "related_future_gate": ["static_prototype_gate"],
+      "coverage_classification": "index_trace_coverage",
+      "activation_status": "index_trace_only",
+      "coverage_limit": "Index reference coverage only; no implementation or readiness state is created.",
+      "non_activation_statement": "Index references do not activate future gates."
+    },
+    {
+      "artifact_path": "docs/runtime/VOL9_PHASE9_6_STATIC_SHELL_FIXTURE_COVERAGE_MATRIX_AND_PROTOTYPE_TO_GATE_TRACEABILITY_MAP_v0.1.md",
+      "artifact_type": "phase_protocol_document",
+      "coverage_domain": "runtime_protocol_documents",
+      "related_phase": "Vol.9 Phase 9.6",
+      "related_future_gate": ["static_prototype_gate", "customer_facing_readiness_gate", "production_deployment_gate"],
+      "coverage_classification": "static_planning_coverage",
+      "activation_status": "planning_trace_only",
+      "coverage_limit": "Phase traceability planning document only.",
+      "non_activation_statement": "Phase 9.6 documentation does not activate customer-facing, live, execution, integration, or production readiness."
+    },
+    {
+      "artifact_path": "mock_consumers/ldd/prototype_to_gate_traceability_map.json",
+      "artifact_type": "mock_consumer_traceability_fixture",
+      "coverage_domain": "mock_consumer_fixtures",
+      "related_phase": "Vol.9 Phase 9.6",
+      "related_future_gate": [
+        "static_prototype_gate",
+        "customer_facing_readiness_gate",
+        "live_read_only_runtime_gate",
+        "runtime_mutation_gate",
+        "external_integration_gate",
+        "trading_execution_gate",
+        "credential_handling_gate",
+        "notification_scheduler_gate",
+        "production_deployment_gate"
+      ],
+      "coverage_classification": "static_fixture_coverage",
+      "activation_status": "planning_trace_only",
+      "coverage_limit": "Traceability fixture only; all non-static future gates remain blocked.",
+      "non_activation_statement": "Prototype-to-gate traceability mapping is planning evidence only and does not activate future gates."
+    }
+  ],
+  "coverage_classification_rules": {
+    "allowed_coverage_classifications": [
+      "static_planning_coverage",
+      "static_fixture_coverage",
+      "static_shell_coverage",
+      "static_validation_coverage",
+      "runtime_record_coverage",
+      "index_trace_coverage"
+    ],
+    "forbidden_coverage_classifications": [
+      "customer_ready_coverage",
+      "live_ready_coverage",
+      "production_ready_coverage",
+      "execution_ready_coverage",
+      "integration_ready_coverage",
+      "credential_ready_coverage",
+      "deployment_ready_coverage"
+    ],
+    "artifact_support_allowed_as": [
+      "planning_evidence_only",
+      "static_fixture_evidence_only",
+      "static_validation_evidence_only"
+    ],
+    "artifact_support_forbidden_as": [
+      "activation_evidence",
+      "production_evidence",
+      "customer_facing_evidence",
+      "live_runtime_evidence",
+      "execution_evidence",
+      "credential_handling_evidence",
+      "external_integration_evidence",
+      "deployment_evidence"
+    ]
+  },
+  "future_gaps": {
+    "security_review_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "privacy_review_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "credential_handling_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "read_only_runtime_contract_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "mutation_safety_contract_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "external_integration_contract_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "customer_facing_ux_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "production_deployment_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "rollback_plan_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "audit_log_contract_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "trading_execution_safety_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "source_of_truth_arbitration_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "live_data_contract_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "operator_review_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true}
+  },
+  "source_of_truth_separation": {
+    "twos_runtime_product_sot": [
+      "current_twos_volume_and_phase",
+      "repository_commit",
+      "runtime_record_count",
+      "framework_index_count",
+      "static_shell_readiness",
+      "validation_state",
+      "customer_facing_readiness",
+      "live_runtime_implementation_readiness"
+    ],
+    "ldd_trading_execution_sot": [
+      "broker_screenshots",
+      "binance_screenshots",
+      "order_screenshots",
+      "filled_trades",
+      "expired_zero_fill_orders",
+      "canceled_orders",
+      "portfolio_changes",
+      "cash_impact",
+      "quote_type"
+    ],
+    "separation_rules": [
+      "TWOS runtime/product SoT must never override LDD trading/execution SoT.",
+      "LDD trading/execution SoT must never override TWOS runtime/product SoT.",
+      "Static traceability maps must never mutate trading facts, portfolio state, execution ledger state, account state, or cash state."
+    ]
+  },
+  "quote_type_preservation": [
+    "watchlist_price",
+    "premarket_price",
+    "holding_valuation_price",
+    "order_page_executable_price",
+    "final_filled_price"
+  ],
+  "execution_event_distinction": [
+    "actual_filled_trade",
+    "expired_zero_fill_order",
+    "canceled_order",
+    "portfolio_change",
+    "no_cash_impact_event"
+  ],
+  "forbidden_scope": [
+    "production_ui",
+    "customer_facing_ui",
+    "hosted_app",
+    "api_server",
+    "live_endpoint",
+    "external_api",
+    "broker_connection",
+    "binance_connection",
+    "live_market_data",
+    "trading_automation",
+    "credential_handling",
+    "login_auth",
+    "runtime_mutation",
+    "execution_trigger",
+    "order_placement",
+    "portfolio_modification",
+    "background_worker",
+    "scheduler",
+    "notification_dispatcher",
+    "github_issues",
+    "github_projects_board",
+    "package_manager_files",
+    "build_tools",
+    "frontend_framework",
+    "network_dependency",
+    "external_integration",
+    "production_deployment"
+  ],
+  "trading_state_impact": {
+    "trading_facts_changed": false,
+    "portfolio_state_changed": false,
+    "execution_ledger_changed": false,
+    "cash_state_changed": false,
+    "broker_connection_changed": false,
+    "binance_connection_changed": false
+  },
+  "acceptance": {
+    "status": "static_shell_traceability_map_created",
+    "static_shell_fixture_coverage_matrix_created": true,
+    "prototype_to_gate_traceability_map_created": true,
+    "future_gate_activation": false,
+    "customer_facing_readiness": false,
+    "live_runtime_execution_frameworks": 0,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  }
+}

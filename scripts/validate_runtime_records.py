@@ -65,6 +65,8 @@ VOL9_PHASE9_4_STATIC_PROTOTYPE_EVIDENCE_PACK = REPO_ROOT / "mock_consumers" / "l
 VOL9_PHASE9_4_FUTURE_GATE_READINESS_CHECKLIST = REPO_ROOT / "mock_consumers" / "ldd" / "future_gate_readiness_checklist.json"
 VOL9_PHASE9_5_FORBIDDEN_SCOPE_REGRESSION_GUARD = REPO_ROOT / "mock_consumers" / "ldd" / "forbidden_scope_regression_guard.json"
 VOL9_PHASE9_5_FUTURE_GATE_NON_ACTIVATION_AUDIT = REPO_ROOT / "mock_consumers" / "ldd" / "future_gate_non_activation_audit.json"
+VOL9_PHASE9_6_STATIC_SHELL_FIXTURE_COVERAGE_MATRIX = REPO_ROOT / "mock_consumers" / "ldd" / "static_shell_fixture_coverage_matrix.json"
+VOL9_PHASE9_6_PROTOTYPE_TO_GATE_TRACEABILITY_MAP = REPO_ROOT / "mock_consumers" / "ldd" / "prototype_to_gate_traceability_map.json"
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 
@@ -151,6 +153,8 @@ SCHEMA_FILES = {
     "future_gate_readiness_checklist": "future_gate_readiness_checklist.schema.json",
     "forbidden_scope_regression_guard": "forbidden_scope_regression_guard.schema.json",
     "future_gate_non_activation_audit": "future_gate_non_activation_audit.schema.json",
+    "static_shell_fixture_coverage_matrix": "static_shell_fixture_coverage_matrix.schema.json",
+    "prototype_to_gate_traceability_map": "prototype_to_gate_traceability_map.schema.json",
     "static_cockpit_prototype_review": "static_cockpit_prototype_review.schema.json",
     "internal_operator_cockpit_static_spec_review": "internal_operator_cockpit_static_spec_review.schema.json",
     "ai_board_cockpit_static_spec_review": "ai_board_cockpit_static_spec_review.schema.json",
@@ -246,6 +250,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "future_gate_readiness_checklist", SCHEMA_FILES["future_gate_readiness_checklist"]
     if "vol9_phase9_5_forbidden_scope_regression_guard_and_non_activation_audit_harness" in filename:
         return "future_gate_non_activation_audit", SCHEMA_FILES["future_gate_non_activation_audit"]
+    if "vol9_phase9_6_static_shell_fixture_coverage_matrix_and_prototype_to_gate_traceability_map" in filename:
+        return "prototype_to_gate_traceability_map", SCHEMA_FILES["prototype_to_gate_traceability_map"]
     if "static_cockpit_prototype_boundary_review" in filename:
         return "static_cockpit_prototype_review", SCHEMA_FILES["static_cockpit_prototype_review"]
     if "internal_operator_cockpit_static_spec_review" in filename:
@@ -854,6 +860,26 @@ def collect_targets() -> tuple[list[ValidationTarget], list[Path]]:
                 "mock_consumers",
                 SCHEMA_FILES["future_gate_non_activation_audit"],
                 "future_gate_non_activation_audit",
+            )
+        )
+
+    if VOL9_PHASE9_6_STATIC_SHELL_FIXTURE_COVERAGE_MATRIX.exists():
+        targets.append(
+            ValidationTarget(
+                VOL9_PHASE9_6_STATIC_SHELL_FIXTURE_COVERAGE_MATRIX,
+                "mock_consumers",
+                SCHEMA_FILES["static_shell_fixture_coverage_matrix"],
+                "static_shell_fixture_coverage_matrix",
+            )
+        )
+
+    if VOL9_PHASE9_6_PROTOTYPE_TO_GATE_TRACEABILITY_MAP.exists():
+        targets.append(
+            ValidationTarget(
+                VOL9_PHASE9_6_PROTOTYPE_TO_GATE_TRACEABILITY_MAP,
+                "mock_consumers",
+                SCHEMA_FILES["prototype_to_gate_traceability_map"],
+                "prototype_to_gate_traceability_map",
             )
         )
 

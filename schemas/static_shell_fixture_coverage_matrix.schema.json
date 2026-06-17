@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/static_shell_fixture_coverage_matrix.schema.json",
+  "title": "Static Shell Fixture Coverage Matrix",
+  "description": "Validates the static Phase 9.6 shell fixture coverage matrix.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "matrix_name",
+    "phase",
+    "generated_at_sgt",
+    "baseline",
+    "static_shell_fixture_coverage_matrix_created",
+    "coverage_domains",
+    "coverage_items",
+    "coverage_classification_rules",
+    "future_gaps",
+    "source_of_truth_separation",
+    "quote_type_preservation",
+    "execution_event_distinction",
+    "forbidden_scope",
+    "acceptance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "enum": ["0.1"]},
+    "matrix_name": {"type": "string", "enum": ["static_shell_fixture_coverage_matrix"]},
+    "phase": {"type": "string", "enum": ["Vol.9 Phase 9.6"]},
+    "generated_at_sgt": {"type": "string"},
+    "static_shell_fixture_coverage_matrix_created": {"type": "boolean", "enum": [true]},
+    "baseline": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "latest_completed_phase_before_phase",
+        "latest_commit_before_phase",
+        "customer_facing_readiness",
+        "live_runtime_execution_frameworks",
+        "static_shell_mode"
+      ],
+      "properties": {
+        "latest_completed_phase_before_phase": {"type": "string", "enum": ["Vol.9 Phase 9.5"]},
+        "latest_commit_before_phase": {"type": "string", "enum": ["69eeaa8711d3d8c0cf583750734a77148fbe724e"]},
+        "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+        "live_runtime_execution_frameworks": {"type": "integer", "enum": [0]},
+        "static_shell_mode": {"type": "string", "enum": ["local_static_read_only_fixture_only_no_network_no_execution"]}
+      }
+    },
+    "coverage_domains": {"type": "array", "items": {"type": "string"}},
+    "coverage_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "artifact_path",
+          "artifact_type",
+          "coverage_domain",
+          "related_phase",
+          "related_future_gate",
+          "coverage_classification",
+          "activation_status",
+          "coverage_limit",
+          "non_activation_statement"
+        ],
+        "properties": {
+          "artifact_path": {"type": "string"},
+          "artifact_type": {"type": "string"},
+          "coverage_domain": {"type": "string"},
+          "related_phase": {"type": "string"},
+          "related_future_gate": {"type": "array", "items": {"type": "string"}},
+          "coverage_classification": {
+            "type": "string",
+            "enum": [
+              "static_planning_coverage",
+              "static_fixture_coverage",
+              "static_shell_coverage",
+              "static_validation_coverage",
+              "runtime_record_coverage",
+              "index_trace_coverage"
+            ]
+          },
+          "activation_status": {"type": "string"},
+          "coverage_limit": {"type": "string"},
+          "non_activation_statement": {"type": "string"}
+        }
+      }
+    },
+    "coverage_classification_rules": {"type": "object"},
+    "future_gaps": {"type": "object"},
+    "source_of_truth_separation": {"type": "object"},
+    "quote_type_preservation": {"type": "array", "items": {"type": "string"}},
+    "execution_event_distinction": {"type": "array", "items": {"type": "string"}},
+    "forbidden_scope": {"type": "array", "items": {"type": "string"}},
+    "acceptance": {"type": "object"}
+  }
+}

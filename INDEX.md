@@ -950,6 +950,32 @@ Vol.9 Phase 9.4 creates a static/read-only prototype evidence pack and future ga
 
 Vol.9 Phase 9.5 creates a static/read-only forbidden scope regression guard and future gate non-activation audit harness. It does not activate live implementation, customer-facing readiness, trading automation, broker/Binance connection, runtime execution capability, network dependency, scheduler, notification dispatcher, background worker, credential handling, runtime mutation, external integration, or production deployment.
 
+## Vol.9 Phase 9.6 / Static Shell Fixture Coverage Matrix and Prototype-to-Gate Traceability Map
+
+- `docs/runtime/VOL9_PHASE9_6_STATIC_SHELL_FIXTURE_COVERAGE_MATRIX_AND_PROTOTYPE_TO_GATE_TRACEABILITY_MAP_v0.1.md`
+- `docs/runtime/STATIC_SHELL_PROTOTYPE_TRACEABILITY_PROTOCOL_v0.1.md`
+- `schemas/static_shell_fixture_coverage_matrix.schema.json`
+- `schemas/prototype_to_gate_traceability_map.schema.json`
+- `mock_consumers/ldd/static_shell_fixture_coverage_matrix.json`
+- `mock_consumers/ldd/prototype_to_gate_traceability_map.json`
+- `mock_consumers/ldd/twos_ldd_post_phase9_6_traceability_status_update.json`
+- `records/ldd/2026-06-17/vol9_phase9_6_static_shell_fixture_coverage_matrix_and_prototype_to_gate_traceability_map.json`
+- `scripts/validate_vol9_phase9_6_static_shell_traceability.py`
+- `scripts/validate_vol9_phase9_6_static_shell_traceability.sh`
+- Updated: `scripts/validate_runtime_records.py`
+- Current phase: `Vol.9 Phase 9.6 - Static Shell Fixture Coverage Matrix and Prototype-to-Gate Traceability Map`
+- Baseline state before phase: `forbidden_scope_regression_guard_created`
+- Static shell fixture coverage matrix created: `true`
+- Prototype-to-gate traceability map created: `true`
+- Future gate activation: `false`
+- Runtime records baseline after phase: `119`
+- Functional frameworks indexed: `24`
+- Customer-facing readiness: `false`
+- Network allowed: `false`
+- Execution allowed: `false`
+
+Vol.9 Phase 9.6 creates a static/read-only fixture coverage matrix and prototype-to-gate traceability map. It does not activate live implementation, customer-facing readiness, trading automation, broker/Binance connection, runtime execution capability, network dependency, scheduler, notification dispatcher, background worker, credential handling, runtime mutation, external integration, or production deployment.
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

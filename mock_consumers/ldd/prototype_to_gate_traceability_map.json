@@ -1,0 +1,214 @@
+{
+  "schema_version": "0.1",
+  "traceability_map_name": "prototype_to_gate_traceability_map",
+  "phase": "Vol.9 Phase 9.6",
+  "generated_at_sgt": "2026-06-17T00:00:00+08:00",
+  "state_name": "static_shell_traceability_map_created",
+  "static_shell_fixture_coverage_matrix_created": true,
+  "prototype_to_gate_traceability_map_created": true,
+  "future_gate_activation": false,
+  "customer_facing_readiness": false,
+  "live_runtime_execution_frameworks": 0,
+  "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution",
+  "baseline": {
+    "latest_completed_phase_before_phase": "Vol.9 Phase 9.5",
+    "latest_commit_before_phase": "69eeaa8711d3d8c0cf583750734a77148fbe724e",
+    "runtime_records_baseline_before_phase": 118,
+    "baseline_state": "forbidden_scope_regression_guard_created",
+    "customer_facing_readiness": false,
+    "live_runtime_execution_frameworks": 0,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  },
+  "future_gates": {
+    "static_prototype_gate": {
+      "status": "active_static_only",
+      "traceability_status": "static_trace_only",
+      "current_phase_allowed": true,
+      "activation_requested": false,
+      "activation_granted": true,
+      "related_artifact_support": ["planning_evidence_only", "static_fixture_evidence_only", "static_validation_evidence_only"],
+      "non_activation_statement": "Static prototype gate traceability remains static only."
+    },
+    "customer_facing_readiness_gate": {
+      "status": "not_activated",
+      "traceability_status": "planning_trace_only",
+      "current_phase_allowed": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "related_artifact_support": ["planning_evidence_only"],
+      "non_activation_statement": "Traceability does not activate customer-facing readiness."
+    },
+    "live_read_only_runtime_gate": {
+      "status": "not_activated",
+      "traceability_status": "planning_trace_only",
+      "current_phase_allowed": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "related_artifact_support": ["planning_evidence_only", "static_validation_evidence_only"],
+      "non_activation_statement": "Traceability does not activate live read-only runtime."
+    },
+    "runtime_mutation_gate": {
+      "status": "not_activated",
+      "traceability_status": "planning_trace_only",
+      "current_phase_allowed": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "related_artifact_support": ["planning_evidence_only"],
+      "non_activation_statement": "Traceability does not activate runtime mutation."
+    },
+    "external_integration_gate": {
+      "status": "not_activated",
+      "traceability_status": "planning_trace_only",
+      "current_phase_allowed": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "related_artifact_support": ["planning_evidence_only"],
+      "non_activation_statement": "Traceability does not activate external integration."
+    },
+    "trading_execution_gate": {
+      "status": "not_activated",
+      "traceability_status": "planning_trace_only",
+      "current_phase_allowed": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "related_artifact_support": ["planning_evidence_only"],
+      "non_activation_statement": "Traceability does not activate trading execution."
+    },
+    "credential_handling_gate": {
+      "status": "not_activated",
+      "traceability_status": "planning_trace_only",
+      "current_phase_allowed": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "related_artifact_support": ["planning_evidence_only"],
+      "non_activation_statement": "Traceability does not activate credential handling."
+    },
+    "notification_scheduler_gate": {
+      "status": "not_activated",
+      "traceability_status": "planning_trace_only",
+      "current_phase_allowed": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "related_artifact_support": ["planning_evidence_only"],
+      "non_activation_statement": "Traceability does not activate scheduling or notification dispatch."
+    },
+    "production_deployment_gate": {
+      "status": "not_activated",
+      "traceability_status": "planning_trace_only",
+      "current_phase_allowed": false,
+      "activation_requested": false,
+      "activation_granted": false,
+      "related_artifact_support": ["planning_evidence_only"],
+      "non_activation_statement": "Traceability does not activate production deployment."
+    }
+  },
+  "artifact_traceability_rules": {
+    "allowed_support_types": [
+      "planning_evidence_only",
+      "static_fixture_evidence_only",
+      "static_validation_evidence_only"
+    ],
+    "forbidden_support_types": [
+      "activation_evidence",
+      "production_evidence",
+      "customer_facing_evidence",
+      "live_runtime_evidence",
+      "execution_evidence",
+      "credential_handling_evidence",
+      "external_integration_evidence",
+      "deployment_evidence"
+    ],
+    "rule_result": "passed"
+  },
+  "future_gaps": {
+    "security_review_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "privacy_review_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "credential_handling_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "read_only_runtime_contract_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "mutation_safety_contract_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "external_integration_contract_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "customer_facing_ux_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "production_deployment_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "rollback_plan_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "audit_log_contract_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "trading_execution_safety_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "source_of_truth_arbitration_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "live_data_contract_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true},
+    "operator_review_gap": {"status": "open_future_gap", "current_phase_resolved": false, "activation_blocker": true}
+  },
+  "readiness_states": [
+    "static_shell_traceability_map_created",
+    "prototype_to_gate_traceability_map_created",
+    "future_gate_activation_blocked",
+    "live_readiness_not_established",
+    "customer_facing_readiness_not_established",
+    "execution_readiness_not_established"
+  ],
+  "non_activation_rules": [
+    "Traceability mapping does not activate customer-facing readiness.",
+    "Traceability mapping does not activate live runtime readiness.",
+    "Traceability mapping does not activate execution readiness.",
+    "Traceability mapping does not activate trading automation readiness.",
+    "Traceability mapping does not activate broker/Binance connectivity.",
+    "Traceability mapping does not activate credential handling readiness.",
+    "Traceability mapping does not activate scheduler or notification dispatcher readiness.",
+    "Traceability mapping does not activate production deployment readiness.",
+    "Traceability mapping does not mutate trading facts, portfolio state, account state, cash state, or execution ledger state.",
+    "Traceability mapping only classifies static/planning/fixture/validation coverage."
+  ],
+  "required_conditions": [
+    "Static prototype gate remains active_static_only.",
+    "Static prototype gate traceability_status remains static_trace_only.",
+    "All non-static future gates remain not_activated.",
+    "All non-static future gates keep traceability_status planning_trace_only.",
+    "All non-static future gates keep current_phase_allowed false.",
+    "All non-static future gates keep activation_requested false.",
+    "All non-static future gates keep activation_granted false.",
+    "All future gaps remain open_future_gap blockers.",
+    "Customer-facing readiness remains false.",
+    "Live/runtime/execution framework count remains 0.",
+    "Static shell mode remains local_static_read_only_fixture_only_no_network_no_execution."
+  ],
+  "source_of_truth_separation": {
+    "separation_rules": [
+      "TWOS runtime/product SoT must never override LDD trading/execution SoT.",
+      "LDD trading/execution SoT must never override TWOS runtime/product SoT.",
+      "Static traceability maps must never mutate trading facts, portfolio state, execution ledger state, account state, or cash state."
+    ]
+  },
+  "quote_type_preservation": [
+    "watchlist_price",
+    "premarket_price",
+    "holding_valuation_price",
+    "order_page_executable_price",
+    "final_filled_price"
+  ],
+  "execution_event_distinction": [
+    "actual_filled_trade",
+    "expired_zero_fill_order",
+    "canceled_order",
+    "portfolio_change",
+    "no_cash_impact_event"
+  ],
+  "trading_state_impact": "none",
+  "portfolio_state_impact": "none",
+  "execution_ledger_impact": "none",
+  "cash_state_impact": "none",
+  "broker_connection_impact": "none",
+  "binance_connection_impact": "none",
+  "trading_facts_changed": false,
+  "portfolio_state_changed": false,
+  "execution_ledger_changed": false,
+  "cash_state_changed": false,
+  "broker_connection_changed": false,
+  "binance_connection_changed": false,
+  "acceptance": {
+    "status": "static_shell_traceability_map_created",
+    "static_shell_fixture_coverage_matrix_created": true,
+    "prototype_to_gate_traceability_map_created": true,
+    "future_gate_activation": false,
+    "customer_facing_readiness": false,
+    "live_runtime_execution_frameworks": 0,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  }
+}
