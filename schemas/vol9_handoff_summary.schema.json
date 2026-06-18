@@ -1,0 +1,64 @@
+{
+  "type": "object",
+  "required": [
+    "schema_version",
+    "handoff_name",
+    "phase",
+    "generated_at_sgt",
+    "baseline",
+    "vol9_handoff_summary_created",
+    "vol9_status",
+    "milestone_review",
+    "phase_timeline",
+    "validation_summary",
+    "feature_inventory_impact",
+    "customer_facing_readiness",
+    "live_runtime_execution_frameworks",
+    "future_gate_activation",
+    "static_shell_mode",
+    "non_activation_boundary",
+    "acceptance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "handoff_name": {"type": "string"},
+    "phase": {"enum": ["Vol.9 Phase 9.10"]},
+    "generated_at_sgt": {"type": "string"},
+    "baseline": {
+      "type": "object",
+      "required": [
+        "latest_completed_phase_before_phase",
+        "latest_commit_before_phase",
+        "customer_facing_readiness",
+        "live_runtime_execution_frameworks",
+        "static_shell_mode"
+      ],
+      "properties": {
+        "latest_completed_phase_before_phase": {"enum": ["Vol.9 Phase 9.9"]},
+        "latest_commit_before_phase": {"enum": ["f81351507c7775be6fdb034dcc34a5117a0788db"]},
+        "runtime_records_baseline_before_phase": {"type": "integer"},
+        "frameworks_indexed": {"type": "integer"},
+        "customer_facing_frameworks": {"type": "integer"},
+        "live_runtime_execution_frameworks": {"enum": [0]},
+        "fixture_static_read_only_frameworks": {"type": "integer"},
+        "validation_backed_frameworks": {"type": "integer"},
+        "baseline_state": {"type": "string"},
+        "future_gate_activation": {"enum": [false]},
+        "customer_facing_readiness": {"enum": [false]},
+        "static_shell_mode": {"enum": ["local_static_read_only_fixture_only_no_network_no_execution"]}
+      }
+    },
+    "vol9_handoff_summary_created": {"enum": [true]},
+    "vol9_status": {"enum": ["completed"]},
+    "customer_facing_readiness": {"enum": [false]},
+    "live_runtime_execution_frameworks": {"enum": [0]},
+    "future_gate_activation": {"enum": [false]},
+    "static_shell_mode": {"enum": ["local_static_read_only_fixture_only_no_network_no_execution"]},
+    "milestone_review": {"type": "array", "items": {"type": "object"}},
+    "phase_timeline": {"type": "array", "items": {"type": "object"}},
+    "validation_summary": {"type": "object"},
+    "feature_inventory_impact": {"type": "object"},
+    "non_activation_boundary": {"type": "object"},
+    "acceptance": {"type": "object"}
+  }
+}

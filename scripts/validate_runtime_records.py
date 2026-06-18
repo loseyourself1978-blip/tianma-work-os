@@ -75,6 +75,9 @@ VOL9_PHASE9_8_IMPLEMENTED_FEATURE_TIMELINE_CATALOG = REPO_ROOT / "mock_consumers
 VOL9_PHASE9_9_PRINCIPLE_REGISTRY = REPO_ROOT / "mock_consumers" / "ldd" / "principle_registry.json"
 VOL9_PHASE9_9_ROADMAP_TAXONOMY = REPO_ROOT / "mock_consumers" / "ldd" / "roadmap_phase_runtime_volume_taxonomy.json"
 VOL9_PHASE9_9_VOLUME_ENTRY_EXIT_PROTOCOL = REPO_ROOT / "mock_consumers" / "ldd" / "volume_entry_exit_review_protocol.json"
+VOL9_PHASE9_10_HANDOFF_SUMMARY = REPO_ROOT / "mock_consumers" / "ldd" / "vol9_handoff_summary.json"
+VOL9_PHASE9_10_PRINCIPLE_ADHERENCE_REVIEW = REPO_ROOT / "mock_consumers" / "ldd" / "vol9_principle_adherence_review.json"
+VOL9_PHASE9_10_VOL10_ENTRY_READINESS_GATE = REPO_ROOT / "mock_consumers" / "ldd" / "vol10_entry_readiness_gate.json"
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 
@@ -171,6 +174,9 @@ SCHEMA_FILES = {
     "principle_registry": "principle_registry.schema.json",
     "roadmap_phase_runtime_volume_taxonomy": "roadmap_phase_runtime_volume_taxonomy.schema.json",
     "volume_entry_exit_review_protocol": "volume_entry_exit_review_protocol.schema.json",
+    "vol9_handoff_summary": "vol9_handoff_summary.schema.json",
+    "vol9_principle_adherence_review": "vol9_principle_adherence_review.schema.json",
+    "vol10_entry_readiness_gate": "vol10_entry_readiness_gate.schema.json",
     "static_cockpit_prototype_review": "static_cockpit_prototype_review.schema.json",
     "internal_operator_cockpit_static_spec_review": "internal_operator_cockpit_static_spec_review.schema.json",
     "ai_board_cockpit_static_spec_review": "ai_board_cockpit_static_spec_review.schema.json",
@@ -274,6 +280,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "implemented_feature_timeline_catalog", SCHEMA_FILES["implemented_feature_timeline_catalog"]
     if "vol9_phase9_9_principle_registry_roadmap_volume_taxonomy_and_volume_entry_exit_protocol" in filename:
         return "volume_entry_exit_review_protocol", SCHEMA_FILES["volume_entry_exit_review_protocol"]
+    if "vol9_phase9_10_handoff_summary_principle_adherence_review_and_vol10_readiness_gate" in filename:
+        return "vol10_entry_readiness_gate", SCHEMA_FILES["vol10_entry_readiness_gate"]
     if "static_cockpit_prototype_boundary_review" in filename:
         return "static_cockpit_prototype_review", SCHEMA_FILES["static_cockpit_prototype_review"]
     if "internal_operator_cockpit_static_spec_review" in filename:
@@ -982,6 +990,36 @@ def collect_targets() -> tuple[list[ValidationTarget], list[Path]]:
                 "mock_consumers",
                 SCHEMA_FILES["volume_entry_exit_review_protocol"],
                 "volume_entry_exit_review_protocol",
+            )
+        )
+
+    if VOL9_PHASE9_10_HANDOFF_SUMMARY.exists():
+        targets.append(
+            ValidationTarget(
+                VOL9_PHASE9_10_HANDOFF_SUMMARY,
+                "mock_consumers",
+                SCHEMA_FILES["vol9_handoff_summary"],
+                "vol9_handoff_summary",
+            )
+        )
+
+    if VOL9_PHASE9_10_PRINCIPLE_ADHERENCE_REVIEW.exists():
+        targets.append(
+            ValidationTarget(
+                VOL9_PHASE9_10_PRINCIPLE_ADHERENCE_REVIEW,
+                "mock_consumers",
+                SCHEMA_FILES["vol9_principle_adherence_review"],
+                "vol9_principle_adherence_review",
+            )
+        )
+
+    if VOL9_PHASE9_10_VOL10_ENTRY_READINESS_GATE.exists():
+        targets.append(
+            ValidationTarget(
+                VOL9_PHASE9_10_VOL10_ENTRY_READINESS_GATE,
+                "mock_consumers",
+                SCHEMA_FILES["vol10_entry_readiness_gate"],
+                "vol10_entry_readiness_gate",
             )
         )
 
