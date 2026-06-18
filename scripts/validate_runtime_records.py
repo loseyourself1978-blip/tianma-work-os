@@ -80,6 +80,7 @@ VOL9_PHASE9_10_PRINCIPLE_ADHERENCE_REVIEW = REPO_ROOT / "mock_consumers" / "ldd"
 VOL9_PHASE9_10_VOL10_ENTRY_READINESS_GATE = REPO_ROOT / "mock_consumers" / "ldd" / "vol10_entry_readiness_gate.json"
 VOL10_PHASE10_0_MILESTONE_PLAN = REPO_ROOT / "mock_consumers" / "ldd" / "vol10_milestone_plan.json"
 VOL10_PHASE10_0_VOLUME_ENTRY_PROTOCOL_REVIEW = REPO_ROOT / "mock_consumers" / "ldd" / "vol10_volume_entry_protocol_review.json"
+VOL10_PHASE10_1_STATIC_PRODUCT_BLUEPRINT_MAP = REPO_ROOT / "mock_consumers" / "ldd" / "vol10_static_product_blueprint_consolidation_map.json"
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 
@@ -181,6 +182,7 @@ SCHEMA_FILES = {
     "vol10_entry_readiness_gate": "vol10_entry_readiness_gate.schema.json",
     "vol10_milestone_plan": "vol10_milestone_plan.schema.json",
     "vol10_volume_entry_protocol_review": "vol10_volume_entry_protocol_review.schema.json",
+    "vol10_static_product_blueprint_consolidation_map": "vol10_static_product_blueprint_consolidation_map.schema.json",
     "static_cockpit_prototype_review": "static_cockpit_prototype_review.schema.json",
     "internal_operator_cockpit_static_spec_review": "internal_operator_cockpit_static_spec_review.schema.json",
     "ai_board_cockpit_static_spec_review": "ai_board_cockpit_static_spec_review.schema.json",
@@ -288,6 +290,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "vol10_entry_readiness_gate", SCHEMA_FILES["vol10_entry_readiness_gate"]
     if "vol10_phase10_0_volume_entry_protocol_and_milestone_plan" in filename:
         return "vol10_volume_entry_protocol_review", SCHEMA_FILES["vol10_volume_entry_protocol_review"]
+    if "vol10_phase10_1_static_product_blueprint_consolidation_map" in filename:
+        return "vol10_static_product_blueprint_consolidation_map", SCHEMA_FILES["vol10_static_product_blueprint_consolidation_map"]
     if "static_cockpit_prototype_boundary_review" in filename:
         return "static_cockpit_prototype_review", SCHEMA_FILES["static_cockpit_prototype_review"]
     if "internal_operator_cockpit_static_spec_review" in filename:
@@ -1046,6 +1050,16 @@ def collect_targets() -> tuple[list[ValidationTarget], list[Path]]:
                 "mock_consumers",
                 SCHEMA_FILES["vol10_volume_entry_protocol_review"],
                 "vol10_volume_entry_protocol_review",
+            )
+        )
+
+    if VOL10_PHASE10_1_STATIC_PRODUCT_BLUEPRINT_MAP.exists():
+        targets.append(
+            ValidationTarget(
+                VOL10_PHASE10_1_STATIC_PRODUCT_BLUEPRINT_MAP,
+                "mock_consumers",
+                SCHEMA_FILES["vol10_static_product_blueprint_consolidation_map"],
+                "vol10_static_product_blueprint_consolidation_map",
             )
         )
 

@@ -1,0 +1,58 @@
+{
+  "type": "object",
+  "required": [
+    "schema_version",
+    "map_name",
+    "phase",
+    "generated_at_sgt",
+    "baseline",
+    "vol10_static_product_blueprint_consolidation_map_created",
+    "required_separation",
+    "roadmap_activation_state",
+    "customer_facing_readiness",
+    "live_runtime_execution_frameworks",
+    "live_runtime_execution_capability",
+    "future_gate_activation",
+    "forbidden_scope",
+    "acceptance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "map_name": {"type": "string"},
+    "phase": {"enum": ["Vol.10 Phase 10.1"]},
+    "generated_at_sgt": {"type": "string"},
+    "baseline": {
+      "type": "object",
+      "required": [
+        "latest_completed_phase_before_phase",
+        "latest_commit_before_phase",
+        "runtime_records_baseline_before_phase",
+        "vol10_entry_protocol",
+        "customer_facing_readiness",
+        "live_runtime_execution_frameworks",
+        "live_runtime_execution_capability"
+      ],
+      "properties": {
+        "latest_completed_phase_before_phase": {"enum": ["Vol.10 Phase 10.0"]},
+        "latest_commit_before_phase": {"enum": ["8cca3a6f1eeb230b74db6c593833089138775b26"]},
+        "runtime_records_baseline_before_phase": {"enum": [124]},
+        "vol10_entry_protocol": {"enum": ["completed"]},
+        "customer_facing_readiness": {"enum": [false]},
+        "live_runtime_execution_frameworks": {"enum": [0]},
+        "live_runtime_execution_capability": {"enum": [false]}
+      }
+    },
+    "vol10_static_product_blueprint_consolidation_map_created": {"enum": [true]},
+    "blueprint_clusters": {"type": "array", "items": {"type": "object"}},
+    "required_separation": {"type": "object"},
+    "roadmap_activation_state": {"type": "object"},
+    "phase_ladder_state": {"type": "object"},
+    "customer_facing_readiness": {"enum": [false]},
+    "live_runtime_execution_frameworks": {"enum": [0]},
+    "live_runtime_execution_capability": {"enum": [false]},
+    "future_gate_activation": {"enum": [false]},
+    "forbidden_scope": {"type": "object"},
+    "validation_plan": {"type": "object"},
+    "acceptance": {"type": "object"}
+  }
+}

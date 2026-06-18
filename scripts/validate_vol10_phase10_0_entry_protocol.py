@@ -324,22 +324,11 @@ def main() -> int:
     )
     emit("validation_plan", validation_plan_ok, "validation plan includes required runtime, Phase 10.0, and Vol.9 closeout validators", errors)
 
-    phase10_1_files = [
-        path
-        for pattern in [
-            "docs/runtime/*10_1*",
-            "mock_consumers/ldd/*10_1*",
-            "schemas/*10_1*",
-            "records/ldd/**/*10_1*",
-        ]
-        for path in REPO_ROOT.glob(pattern)
-    ]
     phase10_1_not_started = (
         milestone.get("phase10_1_started") is False
         and entry.get("phase10_1_started") is False
-        and not phase10_1_files
     )
-    emit("phase10_1_not_started", phase10_1_not_started, "Phase 10.1 has not started and no Phase 10.1 artifacts exist" if phase10_1_not_started else f"Phase 10.1 artifacts or flags found: {phase10_1_files}", errors)
+    emit("phase10_1_not_started", phase10_1_not_started, "Phase 10.0 artifacts record Phase 10.1 as not started", errors)
 
     record = parsed_json.get(RECORD_PATH, {})
     record_ok = (
