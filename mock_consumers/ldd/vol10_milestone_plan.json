@@ -1,0 +1,124 @@
+{
+  "schema_version": "0.1",
+  "plan_name": "vol10_milestone_plan",
+  "phase": "Vol.10 Phase 10.0",
+  "generated_at_sgt": "2026-06-18T00:00:00+08:00",
+  "baseline": {
+    "latest_completed_phase_before_phase": "Vol.9 Phase 9.10",
+    "latest_commit_before_phase": "a183735f7afe68b768143d2455990cbea75c9056",
+    "runtime_records_baseline_before_phase": 123,
+    "vol9_status": "completed",
+    "vol10_entry_readiness": "ready_with_limits",
+    "customer_facing_readiness": false,
+    "live_runtime_execution_frameworks": 0,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  },
+  "vol10_milestone_plan_created": true,
+  "milestone": {
+    "name": "Static Product Blueprint Consolidation & Codex Execution Planning Layer",
+    "status": "planned_static_only",
+    "default_boundary": "static_read_only_no_live_no_customer_facing_no_execution",
+    "phase10_1_started": false
+  },
+  "roadmap_alignment": {
+    "supports_roadmap_phases": [
+      "Roadmap Phase 1 - Product Blueprint and MVP Scope",
+      "Roadmap Phase 2 - Manual Prototype and Real Scenario Validation"
+    ],
+    "roadmap_phase_3_mvp_build_activated": false,
+    "roadmap_phase_4_multi_model_execution_layer_activated": false,
+    "roadmap_phase_5_ecosystem_public_collaboration_activated": false,
+    "taxonomy_note": "Roadmap Phase 0-5, runtime Vol.10, and Vol.10 Phase 10.x are separate taxonomy layers."
+  },
+  "phase_ladder": [
+    {"phase": "Vol.10 Phase 10.0", "title": "Volume Entry Protocol & Milestone Plan", "status": "current_entry_phase", "phase_started": true, "implementation_scope": "entry_protocol_only"},
+    {"phase": "Vol.10 Phase 10.1", "title": "Static Product Blueprint Consolidation Map", "status": "planned_only", "phase_started": false, "implementation_scope": "not_started"},
+    {"phase": "Vol.10 Phase 10.2", "title": "Codex Execution Planning Layer", "status": "planned_only", "phase_started": false, "implementation_scope": "not_started"},
+    {"phase": "Vol.10 Phase 10.3", "title": "Blueprint-to-Artifact Traceability Matrix", "status": "planned_only", "phase_started": false, "implementation_scope": "not_started"},
+    {"phase": "Vol.10 Phase 10.4", "title": "Static Product Requirement Packet", "status": "planned_only", "phase_started": false, "implementation_scope": "not_started"},
+    {"phase": "Vol.10 Phase 10.5", "title": "Validation & Regression Guard Plan", "status": "planned_only", "phase_started": false, "implementation_scope": "not_started"},
+    {"phase": "Vol.10 Phase 10.x", "title": "Handoff Summary & Vol.11 Readiness Gate", "status": "planned_only", "phase_started": false, "implementation_scope": "not_started"}
+  ],
+  "default_boundary": {
+    "static_read_only_no_live_by_default": true,
+    "customer_facing_readiness": false,
+    "live_runtime_execution_frameworks": 0,
+    "live_runtime_execution_capability": false,
+    "future_gate_activation": false,
+    "phase10_1_started": false
+  },
+  "source_of_truth_separation": {
+    "twos_runtime_product_sot_scope": "product_runtime_baseline_state_only",
+    "ldd_trading_execution_sot_scope": "trading_account_execution_facts_only",
+    "product_runtime_records_override_trading_facts": false,
+    "trading_facts_imply_product_readiness": false,
+    "quote_type_preservation": [
+      "watchlist_price",
+      "premarket_price",
+      "holding_valuation_price",
+      "order_page_executable_price",
+      "final_filled_price"
+    ],
+    "execution_evidence_boundaries": [
+      "actual_filled_trade",
+      "expired_zero_fill_order",
+      "canceled_order",
+      "portfolio_change",
+      "no_cash_impact_event"
+    ]
+  },
+  "forbidden_scope": {
+    "all_forbidden_capabilities_blocked": true,
+    "blocked_capabilities": [
+      "production_ui",
+      "customer_facing_ui",
+      "hosted_app",
+      "api_server",
+      "live_endpoint",
+      "external_api",
+      "broker_connection",
+      "binance_connection",
+      "live_market_data",
+      "trading_automation",
+      "credential_handling",
+      "login_auth",
+      "runtime_mutation",
+      "execution_trigger",
+      "order_placement",
+      "portfolio_modification",
+      "background_worker",
+      "scheduler",
+      "notification_dispatcher",
+      "github_issues",
+      "github_projects_board",
+      "package_manager_files",
+      "build_tools",
+      "frontend_framework",
+      "network_dependency",
+      "external_integration",
+      "production_deployment_capability"
+    ]
+  },
+  "validation_plan": {
+    "required_commands": [
+      "bash scripts/validate_runtime_records.sh",
+      "bash scripts/validate_vol10_phase10_0_entry_protocol.sh",
+      "bash scripts/validate_vol9_phase9_10_handoff_and_vol10_readiness.sh"
+    ],
+    "phase10_1_not_started_check_required": true,
+    "customer_facing_readiness_false_check_required": true,
+    "live_runtime_execution_capability_false_check_required": true
+  },
+  "customer_facing_readiness": false,
+  "live_runtime_execution_frameworks": 0,
+  "live_runtime_execution_capability": false,
+  "future_gate_activation": false,
+  "phase10_1_started": false,
+  "acceptance": {
+    "vol10_milestone_plan_created": true,
+    "runtime_records_baseline_before_phase": 123,
+    "phase10_1_started": false,
+    "customer_facing_readiness": false,
+    "live_runtime_execution_capability": false
+  }
+}

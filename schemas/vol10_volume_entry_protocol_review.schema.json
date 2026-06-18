@@ -1,0 +1,67 @@
+{
+  "type": "object",
+  "required": [
+    "schema_version",
+    "review_name",
+    "phase",
+    "generated_at_sgt",
+    "baseline",
+    "vol10_volume_entry_protocol_review_created",
+    "volume_entry_checks",
+    "principle_review",
+    "roadmap_alignment_review",
+    "source_of_truth_review",
+    "forbidden_scope_review",
+    "validation_plan",
+    "phase10_1_started",
+    "customer_facing_readiness",
+    "live_runtime_execution_frameworks",
+    "live_runtime_execution_capability",
+    "future_gate_activation",
+    "static_shell_mode",
+    "acceptance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "review_name": {"type": "string"},
+    "phase": {"enum": ["Vol.10 Phase 10.0"]},
+    "generated_at_sgt": {"type": "string"},
+    "baseline": {
+      "type": "object",
+      "required": [
+        "latest_completed_phase_before_phase",
+        "latest_commit_before_phase",
+        "runtime_records_baseline_before_phase",
+        "vol9_status",
+        "vol10_entry_readiness",
+        "customer_facing_readiness",
+        "live_runtime_execution_frameworks",
+        "static_shell_mode"
+      ],
+      "properties": {
+        "latest_completed_phase_before_phase": {"enum": ["Vol.9 Phase 9.10"]},
+        "latest_commit_before_phase": {"enum": ["a183735f7afe68b768143d2455990cbea75c9056"]},
+        "runtime_records_baseline_before_phase": {"enum": [123]},
+        "vol9_status": {"enum": ["completed"]},
+        "vol10_entry_readiness": {"enum": ["ready_with_limits"]},
+        "customer_facing_readiness": {"enum": [false]},
+        "live_runtime_execution_frameworks": {"enum": [0]},
+        "static_shell_mode": {"enum": ["local_static_read_only_fixture_only_no_network_no_execution"]}
+      }
+    },
+    "vol10_volume_entry_protocol_review_created": {"enum": [true]},
+    "volume_entry_checks": {"type": "object"},
+    "principle_review": {"type": "array", "items": {"type": "object"}},
+    "roadmap_alignment_review": {"type": "object"},
+    "source_of_truth_review": {"type": "object"},
+    "forbidden_scope_review": {"type": "object"},
+    "validation_plan": {"type": "object"},
+    "phase10_1_started": {"enum": [false]},
+    "customer_facing_readiness": {"enum": [false]},
+    "live_runtime_execution_frameworks": {"enum": [0]},
+    "live_runtime_execution_capability": {"enum": [false]},
+    "future_gate_activation": {"enum": [false]},
+    "static_shell_mode": {"enum": ["local_static_read_only_fixture_only_no_network_no_execution"]},
+    "acceptance": {"type": "object"}
+  }
+}

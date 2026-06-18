@@ -1107,6 +1107,39 @@ Vol.9 Phase 9.9 creates a validation-backed principle registry, roadmap phase vs
 
 Vol.9 Phase 9.10 closes Vol.9 with a validation-backed handoff summary, principle adherence review, roadmap alignment review, and Vol.10 readiness gate. Vol.10 entry readiness is ready_with_limits and requires milestone planning plus principle review before any Vol.10 work begins. It does not activate live implementation, customer-facing readiness, trading automation, broker/Binance connection, live market data, runtime execution capability, network dependency, scheduler, notification dispatcher, background worker, credential handling, runtime mutation, external integration, or production deployment.
 
+## Vol.10 Phase 10.0 / Volume Entry Protocol, Milestone Plan and Validation Plan
+
+- `docs/runtime/VOL10_MILESTONE_PLAN_v0.1.md`
+- `docs/runtime/VOL10_VOLUME_ENTRY_PROTOCOL_REVIEW_v0.1.md`
+- `schemas/vol10_milestone_plan.schema.json`
+- `schemas/vol10_volume_entry_protocol_review.schema.json`
+- `mock_consumers/ldd/vol10_milestone_plan.json`
+- `mock_consumers/ldd/vol10_volume_entry_protocol_review.json`
+- `records/ldd/2026-06-18/vol10_phase10_0_volume_entry_protocol_and_milestone_plan.json`
+- `scripts/validate_vol10_phase10_0_entry_protocol.py`
+- `scripts/validate_vol10_phase10_0_entry_protocol.sh`
+- Updated: `docs/runtime/IMPLEMENTED_FEATURE_INVENTORY_TREE_AND_TIMELINE_v0.1.md`
+- Updated: `scripts/validate_runtime_records.py`
+- Current phase: `Vol.10 Phase 10.0 - Volume Entry Protocol, Milestone Plan and Validation Plan`
+- Latest completed phase before entry: `Vol.9 Phase 9.10`
+- Baseline commit before phase: `a183735f7afe68b768143d2455990cbea75c9056`
+- Runtime records baseline before phase: `123`
+- Runtime records baseline after phase: `124`
+- Vol.10 milestone: `Static Product Blueprint Consolidation & Codex Execution Planning Layer`
+- Vol.10 milestone plan created: `true`
+- Vol.10 Volume Entry Protocol review created: `true`
+- Phase 10.1 started: `false`
+- Vol.10 supports: `Roadmap Phase 1/2 static blueprint and manual prototype validation work`
+- Vol.10 does not activate: `Roadmap Phase 3 MVP Build`, `Roadmap Phase 4 multi-model execution layer`, or `Roadmap Phase 5 ecosystem/public collaboration`
+- Customer-facing readiness: `false`
+- Live/runtime/execution frameworks: `0`
+- Live runtime execution capability: `false`
+- Future gate activation: `false`
+- Network allowed: `false`
+- Execution allowed: `false`
+
+Vol.10 Phase 10.0 applies the Volume Entry Protocol and creates a static/read-only milestone plan, principle review, roadmap alignment review, source-of-truth review, forbidden scope review, validation plan, fixtures, schemas, and runtime record. It does not start Vol.10 Phase 10.1. It does not activate live implementation, customer-facing readiness, trading automation, broker/Binance connection, live market data, runtime execution capability, network dependency, scheduler, notification dispatcher, background worker, credential handling, runtime mutation, external integration, or production deployment.
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.
