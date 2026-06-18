@@ -976,6 +976,39 @@ Vol.9 Phase 9.5 creates a static/read-only forbidden scope regression guard and 
 
 Vol.9 Phase 9.6 creates a static/read-only fixture coverage matrix and prototype-to-gate traceability map. It does not activate live implementation, customer-facing readiness, trading automation, broker/Binance connection, runtime execution capability, network dependency, scheduler, notification dispatcher, background worker, credential handling, runtime mutation, external integration, or production deployment.
 
+## Vol.9 Phase 9.7 / LDD Full-Report Scope Regression Guard, Order Reconciliation and Static Cockpit Panel Requirements
+
+- `docs/runtime/VOL9_PHASE9_7_LDD_FULL_REPORT_SCOPE_REGRESSION_GUARD_ORDER_RECONCILIATION_AND_STATIC_COCKPIT_PANEL_REQUIREMENTS_v0.1.md`
+- `docs/runtime/LDD_FULL_REPORT_SCOPE_AND_ORDER_RECONCILIATION_PROTOCOL_v0.1.md`
+- `schemas/ldd_full_report_scope_requirements.schema.json`
+- `schemas/ldd_order_reconciliation_and_zero_fill_separation.schema.json`
+- `schemas/ldd_static_cockpit_panel_requirement_gate.schema.json`
+- `mock_consumers/ldd/ldd_full_report_scope_requirements.json`
+- `mock_consumers/ldd/ldd_order_reconciliation_and_zero_fill_separation.json`
+- `mock_consumers/ldd/ldd_static_cockpit_panel_requirement_gate.json`
+- `mock_consumers/ldd/ldd_latest_post_close_sync_reference.json`
+- `mock_consumers/ldd/twos_ldd_post_phase9_7_full_report_scope_status_update.json`
+- `records/ldd/2026-06-17/vol9_phase9_7_ldd_full_report_scope_regression_guard_order_reconciliation_and_static_cockpit_panel_requirements.json`
+- `scripts/validate_vol9_phase9_7_ldd_full_report_scope.py`
+- `scripts/validate_vol9_phase9_7_ldd_full_report_scope.sh`
+- Updated: `scripts/validate_runtime_records.py`
+- Current phase: `Vol.9 Phase 9.7 - LDD Full-Report Scope Regression Guard, Order Reconciliation Evidence Gate and Static Cockpit Panel Requirements`
+- Baseline state before phase: `static_shell_traceability_map_created`
+- LDD full-report scope requirements created: `true`
+- Full standalone sync rule created: `true`
+- Order reconciliation gate created: `true`
+- Zero-fill order separation created: `true`
+- Static cockpit panel requirement gate created: `true`
+- Scope regression guard created: `true`
+- Future gate activation: `false`
+- Runtime records baseline after phase: `120`
+- Functional frameworks indexed: `24`
+- Customer-facing readiness: `false`
+- Network allowed: `false`
+- Execution allowed: `false`
+
+Vol.9 Phase 9.7 creates static/read-only LDD full-report scope requirements, full standalone sync regeneration rules, order reconciliation requirements, zero-fill order separation requirements, and static cockpit panel requirement gates. It does not activate live implementation, customer-facing readiness, trading automation, broker/Binance connection, live market data, runtime execution capability, network dependency, scheduler, notification dispatcher, background worker, credential handling, runtime mutation, external integration, or production deployment.
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/ldd_static_cockpit_panel_requirement_gate.schema.json",
+  "title": "LDD Static Cockpit Panel Requirement Gate",
+  "description": "Validates the static Phase 9.7 LDD cockpit panel requirement gate.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "gate_name",
+    "phase",
+    "generated_at_sgt",
+    "state_name",
+    "static_cockpit_panel_requirement_gate_created",
+    "scope_regression_guard_created",
+    "required_static_panels",
+    "customer_facing_readiness",
+    "live_runtime_execution_frameworks",
+    "static_shell_mode",
+    "non_activation_rules",
+    "required_conditions",
+    "acceptance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "enum": ["0.1"]},
+    "gate_name": {"type": "string", "enum": ["ldd_static_cockpit_panel_requirement_gate"]},
+    "phase": {"type": "string", "enum": ["Vol.9 Phase 9.7"]},
+    "generated_at_sgt": {"type": "string"},
+    "state_name": {"type": "string", "enum": ["ldd_full_report_scope_gate_created", "static_cockpit_panel_requirement_gate_created", "scope_regression_guard_created"]},
+    "static_cockpit_panel_requirement_gate_created": {"type": "boolean", "enum": [true]},
+    "scope_regression_guard_created": {"type": "boolean", "enum": [true]},
+    "required_static_panels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "panel_name",
+          "panel_purpose",
+          "required_inputs",
+          "static_only_status",
+          "related_ldd_report_sections",
+          "source_of_truth_boundary",
+          "forbidden_interpretations",
+          "future_gate_dependency",
+          "activation_status",
+          "customer_facing_readiness",
+          "live_runtime_execution_frameworks"
+        ],
+        "properties": {
+          "panel_name": {"type": "string"},
+          "panel_purpose": {"type": "string"},
+          "required_inputs": {"type": "array", "items": {"type": "string"}},
+          "static_only_status": {"type": "string", "enum": ["required_static_panel"]},
+          "related_ldd_report_sections": {"type": "array", "items": {"type": "string"}},
+          "source_of_truth_boundary": {"type": "string"},
+          "forbidden_interpretations": {"type": "array", "items": {"type": "string"}},
+          "future_gate_dependency": {"type": "string"},
+          "activation_status": {"type": "string", "enum": ["not_activated"]},
+          "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+          "live_runtime_execution_frameworks": {"type": "integer", "enum": [0]}
+        }
+      }
+    },
+    "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+    "live_runtime_execution_frameworks": {"type": "integer", "enum": [0]},
+    "static_shell_mode": {"type": "string", "enum": ["local_static_read_only_fixture_only_no_network_no_execution"]},
+    "non_activation_rules": {"type": "array", "items": {"type": "string"}},
+    "required_conditions": {"type": "array", "items": {"type": "string"}},
+    "acceptance": {"type": "object"}
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/ldd_full_report_scope_requirements.schema.json",
+  "title": "LDD Full Report Scope Requirements",
+  "description": "Validates the static Phase 9.7 LDD full-report scope requirements fixture.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "requirements_name",
+    "phase",
+    "generated_at_sgt",
+    "baseline",
+    "latest_ldd_input",
+    "ldd_full_report_scope_requirements_created",
+    "full_standalone_sync_rule_created",
+    "required_report_sections",
+    "full_standalone_sync_regeneration_rule",
+    "scope_regression_guard",
+    "source_of_truth_separation",
+    "quote_type_preservation",
+    "dream_sleeve_boundary",
+    "forbidden_scope",
+    "acceptance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "enum": ["0.1"]},
+    "requirements_name": {"type": "string", "enum": ["ldd_full_report_scope_requirements"]},
+    "phase": {"type": "string", "enum": ["Vol.9 Phase 9.7"]},
+    "generated_at_sgt": {"type": "string"},
+    "baseline": {
+      "type": "object",
+      "required": [
+        "latest_completed_phase_before_phase",
+        "latest_commit_before_phase",
+        "customer_facing_readiness",
+        "live_runtime_execution_frameworks",
+        "static_shell_mode"
+      ],
+      "properties": {
+        "latest_completed_phase_before_phase": {"type": "string", "enum": ["Vol.9 Phase 9.6"]},
+        "latest_commit_before_phase": {"type": "string", "enum": ["157b28a66239b16d73acc15962007465a388773f"]},
+        "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+        "live_runtime_execution_frameworks": {"type": "integer", "enum": [0]},
+        "static_shell_mode": {"type": "string", "enum": ["local_static_read_only_fixture_only_no_network_no_execution"]}
+      }
+    },
+    "latest_ldd_input": {"type": "object"},
+    "ldd_full_report_scope_requirements_created": {"type": "boolean", "enum": [true]},
+    "full_standalone_sync_rule_created": {"type": "boolean", "enum": [true]},
+    "required_report_sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "section_name",
+          "required_in_premarket_review",
+          "required_in_post_close_review",
+          "scope_classification",
+          "source_of_truth_boundary",
+          "missing_section_regression_level",
+          "non_activation_statement"
+        ],
+        "properties": {
+          "section_name": {"type": "string"},
+          "required_in_premarket_review": {"type": "boolean", "enum": [true]},
+          "required_in_post_close_review": {"type": "boolean", "enum": [true]},
+          "scope_classification": {
+            "type": "string",
+            "enum": [
+              "full_market_required",
+              "sector_scan_required",
+              "candidate_radar_required",
+              "risk_control_required",
+              "monitoring_only_required",
+              "execution_fact_required",
+              "sync_block_required",
+              "product_feedback_required",
+              "account_state_reference_required",
+              "order_reconciliation_required"
+            ]
+          },
+          "source_of_truth_boundary": {"type": "string"},
+          "missing_section_regression_level": {"type": "string"},
+          "non_activation_statement": {"type": "string"}
+        }
+      }
+    },
+    "full_standalone_sync_regeneration_rule": {"type": "object"},
+    "scope_regression_guard": {"type": "object"},
+    "source_of_truth_separation": {"type": "object"},
+    "quote_type_preservation": {"type": "object"},
+    "dream_sleeve_boundary": {"type": "object"},
+    "forbidden_scope": {"type": "array", "items": {"type": "string"}},
+    "acceptance": {"type": "object"}
+  }
+}

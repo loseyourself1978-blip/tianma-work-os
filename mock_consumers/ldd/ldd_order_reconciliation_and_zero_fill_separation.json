@@ -1,0 +1,87 @@
+{
+  "schema_version": "0.1",
+  "gate_name": "ldd_order_reconciliation_and_zero_fill_separation",
+  "phase": "Vol.9 Phase 9.7",
+  "generated_at_sgt": "2026-06-17T00:00:00+08:00",
+  "baseline": {
+    "latest_completed_phase_before_phase": "Vol.9 Phase 9.6",
+    "latest_commit_before_phase": "157b28a66239b16d73acc15962007465a388773f",
+    "ldd_user_provided_twos_anchor_phase": "Vol.9 Phase 9.5",
+    "repository_validated_twos_baseline_phase": "Vol.9 Phase 9.6"
+  },
+  "state_name": "execution_ledger_gap_closed",
+  "order_reconciliation_gate_created": true,
+  "zero_fill_order_separation_created": true,
+  "event_classes": [
+    "actual_filled_trade",
+    "expired_zero_fill_order",
+    "canceled_order",
+    "portfolio_change",
+    "no_cash_impact_event",
+    "order_count_anomaly",
+    "order_detail_reconciled",
+    "execution_ledger_gap_open",
+    "execution_ledger_gap_closed"
+  ],
+  "spcx_order_reconciliation": {
+    "symbol": "SPCX",
+    "name": "SpaceX",
+    "direction": "buy",
+    "limit_price_usd": 150.0,
+    "quantity": 10,
+    "filled_quantity": 0,
+    "reference_current_price_usd_approx": 192.39,
+    "status": "expired",
+    "classification": "expired_zero_fill_order",
+    "filled_trade_occurred": false,
+    "position_created": false,
+    "cash_impact_occurred": false,
+    "confirmed_filled_us_orders": 0,
+    "expired_order_count": 1,
+    "dream_sleeve_related": true,
+    "main_strategy_chase": false,
+    "rule_violation": false
+  },
+  "order_reconciliation_requirement": {
+    "order_count_screenshot_rule": "A screenshot showing current-day orders 0/1 is not enough to infer a filled trade.",
+    "order_detail_evidence_required": true,
+    "classification_rule": "Order-detail evidence is required before classifying trade direction, filled quantity, cash impact, or portfolio change.",
+    "zero_fill_trade_count_rule": "Expired zero-fill orders must not be counted as actual filled trades.",
+    "zero_fill_portfolio_rule": "Expired zero-fill orders must not create portfolio changes.",
+    "zero_fill_cash_rule": "Expired zero-fill orders must not create cash impact.",
+    "live_classifier_implemented": false,
+    "future_classifier_seed": "Execution Ledger Evidence Classifier / Zero-Fill Order Separation Protocol"
+  },
+  "execution_ledger_impact": {
+    "execution_ledger_gap_before_order_detail": "open",
+    "execution_ledger_gap_after_order_detail": "closed",
+    "actual_filled_trade_count": 0,
+    "expired_zero_fill_order_count": 1,
+    "execution_ledger_changed": false
+  },
+  "trading_state_impact": {
+    "trading_facts_changed": false,
+    "portfolio_state_changed": false,
+    "execution_ledger_changed": false,
+    "cash_state_changed": false,
+    "broker_connection_changed": false,
+    "binance_connection_changed": false
+  },
+  "source_of_truth_boundary": {
+    "order_details_source": "LDD trading/execution SoT only",
+    "twos_protocol_source": "TWOS runtime/product SoT for static requirement only",
+    "separation_rule": "TWOS runtime/product SoT must never override LDD trading/execution SoT."
+  },
+  "non_activation_rules": [
+    "The order reconciliation gate is static evidence only.",
+    "The zero-fill separation gate does not implement a live classifier.",
+    "The SPCX record does not create a position, cash impact, order placement, broker connection, or trading automation."
+  ],
+  "acceptance": {
+    "spcx_classification": "expired_zero_fill_order",
+    "filled_quantity_zero": true,
+    "filled_trade_occurred_false": true,
+    "position_created_false": true,
+    "cash_impact_false": true
+  }
+}

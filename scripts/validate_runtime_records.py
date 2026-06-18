@@ -67,6 +67,9 @@ VOL9_PHASE9_5_FORBIDDEN_SCOPE_REGRESSION_GUARD = REPO_ROOT / "mock_consumers" / 
 VOL9_PHASE9_5_FUTURE_GATE_NON_ACTIVATION_AUDIT = REPO_ROOT / "mock_consumers" / "ldd" / "future_gate_non_activation_audit.json"
 VOL9_PHASE9_6_STATIC_SHELL_FIXTURE_COVERAGE_MATRIX = REPO_ROOT / "mock_consumers" / "ldd" / "static_shell_fixture_coverage_matrix.json"
 VOL9_PHASE9_6_PROTOTYPE_TO_GATE_TRACEABILITY_MAP = REPO_ROOT / "mock_consumers" / "ldd" / "prototype_to_gate_traceability_map.json"
+VOL9_PHASE9_7_LDD_FULL_REPORT_SCOPE_REQUIREMENTS = REPO_ROOT / "mock_consumers" / "ldd" / "ldd_full_report_scope_requirements.json"
+VOL9_PHASE9_7_LDD_ORDER_RECONCILIATION = REPO_ROOT / "mock_consumers" / "ldd" / "ldd_order_reconciliation_and_zero_fill_separation.json"
+VOL9_PHASE9_7_LDD_STATIC_COCKPIT_PANEL_GATE = REPO_ROOT / "mock_consumers" / "ldd" / "ldd_static_cockpit_panel_requirement_gate.json"
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 
 
@@ -155,6 +158,9 @@ SCHEMA_FILES = {
     "future_gate_non_activation_audit": "future_gate_non_activation_audit.schema.json",
     "static_shell_fixture_coverage_matrix": "static_shell_fixture_coverage_matrix.schema.json",
     "prototype_to_gate_traceability_map": "prototype_to_gate_traceability_map.schema.json",
+    "ldd_full_report_scope_requirements": "ldd_full_report_scope_requirements.schema.json",
+    "ldd_order_reconciliation_and_zero_fill_separation": "ldd_order_reconciliation_and_zero_fill_separation.schema.json",
+    "ldd_static_cockpit_panel_requirement_gate": "ldd_static_cockpit_panel_requirement_gate.schema.json",
     "static_cockpit_prototype_review": "static_cockpit_prototype_review.schema.json",
     "internal_operator_cockpit_static_spec_review": "internal_operator_cockpit_static_spec_review.schema.json",
     "ai_board_cockpit_static_spec_review": "ai_board_cockpit_static_spec_review.schema.json",
@@ -252,6 +258,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "future_gate_non_activation_audit", SCHEMA_FILES["future_gate_non_activation_audit"]
     if "vol9_phase9_6_static_shell_fixture_coverage_matrix_and_prototype_to_gate_traceability_map" in filename:
         return "prototype_to_gate_traceability_map", SCHEMA_FILES["prototype_to_gate_traceability_map"]
+    if "vol9_phase9_7_ldd_full_report_scope_regression_guard_order_reconciliation_and_static_cockpit_panel_requirements" in filename:
+        return "ldd_static_cockpit_panel_requirement_gate", SCHEMA_FILES["ldd_static_cockpit_panel_requirement_gate"]
     if "static_cockpit_prototype_boundary_review" in filename:
         return "static_cockpit_prototype_review", SCHEMA_FILES["static_cockpit_prototype_review"]
     if "internal_operator_cockpit_static_spec_review" in filename:
@@ -880,6 +888,36 @@ def collect_targets() -> tuple[list[ValidationTarget], list[Path]]:
                 "mock_consumers",
                 SCHEMA_FILES["prototype_to_gate_traceability_map"],
                 "prototype_to_gate_traceability_map",
+            )
+        )
+
+    if VOL9_PHASE9_7_LDD_FULL_REPORT_SCOPE_REQUIREMENTS.exists():
+        targets.append(
+            ValidationTarget(
+                VOL9_PHASE9_7_LDD_FULL_REPORT_SCOPE_REQUIREMENTS,
+                "mock_consumers",
+                SCHEMA_FILES["ldd_full_report_scope_requirements"],
+                "ldd_full_report_scope_requirements",
+            )
+        )
+
+    if VOL9_PHASE9_7_LDD_ORDER_RECONCILIATION.exists():
+        targets.append(
+            ValidationTarget(
+                VOL9_PHASE9_7_LDD_ORDER_RECONCILIATION,
+                "mock_consumers",
+                SCHEMA_FILES["ldd_order_reconciliation_and_zero_fill_separation"],
+                "ldd_order_reconciliation_and_zero_fill_separation",
+            )
+        )
+
+    if VOL9_PHASE9_7_LDD_STATIC_COCKPIT_PANEL_GATE.exists():
+        targets.append(
+            ValidationTarget(
+                VOL9_PHASE9_7_LDD_STATIC_COCKPIT_PANEL_GATE,
+                "mock_consumers",
+                SCHEMA_FILES["ldd_static_cockpit_panel_requirement_gate"],
+                "ldd_static_cockpit_panel_requirement_gate",
             )
         )
 

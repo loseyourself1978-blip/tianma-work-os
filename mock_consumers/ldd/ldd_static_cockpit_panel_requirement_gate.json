@@ -1,0 +1,64 @@
+{
+  "schema_version": "0.1",
+  "gate_name": "ldd_static_cockpit_panel_requirement_gate",
+  "phase": "Vol.9 Phase 9.7",
+  "generated_at_sgt": "2026-06-17T00:00:00+08:00",
+  "baseline": {
+    "latest_completed_phase_before_phase": "Vol.9 Phase 9.6",
+    "latest_commit_before_phase": "157b28a66239b16d73acc15962007465a388773f",
+    "runtime_records_baseline_before_phase": 119,
+    "baseline_state": "static_shell_traceability_map_created"
+  },
+  "state_name": "ldd_full_report_scope_gate_created",
+  "static_cockpit_panel_requirement_gate_created": true,
+  "scope_regression_guard_created": true,
+  "full_market_scan_required": true,
+  "future_gate_activation": false,
+  "customer_facing_readiness": false,
+  "live_runtime_execution_frameworks": 0,
+  "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution",
+  "required_static_panels": [
+    {"panel_name": "full_market_scan_panel", "panel_purpose": "Keep LDD reviews broader than holdings or former positions.", "required_inputs": ["broad_market_structure", "full_market_candidate_radar"], "static_only_status": "required_static_panel", "related_ldd_report_sections": ["broad_market_structure", "full_market_candidate_radar"], "source_of_truth_boundary": "LDD market review reference only", "forbidden_interpretations": ["market_data_ready", "live_runtime_ready", "customer_facing_ui_ready"], "future_gate_dependency": "customer_facing_readiness_gate", "activation_status": "not_activated", "customer_facing_readiness": false, "live_runtime_execution_frameworks": 0},
+    {"panel_name": "sector_rotation_heatmap_panel", "panel_purpose": "Preserve sector rotation visibility.", "required_inputs": ["sector_rotation_heatmap"], "static_only_status": "required_static_panel", "related_ldd_report_sections": ["sector_rotation_heatmap", "ai_semiconductors", "mega_cap_tech", "cloud_software_enterprise_ai", "gold_miners", "energy_oil", "crypto_crypto_linked_equities"], "source_of_truth_boundary": "LDD market review reference only", "forbidden_interpretations": ["live_market_data", "live_trading_signal"], "future_gate_dependency": "live_read_only_runtime_gate", "activation_status": "not_activated", "customer_facing_readiness": false, "live_runtime_execution_frameworks": 0},
+    {"panel_name": "non_position_candidate_radar_panel", "panel_purpose": "Keep non-position candidate radar explicit.", "required_inputs": ["full_market_candidate_radar"], "static_only_status": "required_static_panel", "related_ldd_report_sections": ["quantum_speculative_tech", "space_ipo_new_listings", "power_data_center_infrastructure", "full_market_candidate_radar"], "source_of_truth_boundary": "LDD market review reference only", "forbidden_interpretations": ["execution_instruction", "trading_automation"], "future_gate_dependency": "trading_execution_gate", "activation_status": "not_activated", "customer_facing_readiness": false, "live_runtime_execution_frameworks": 0},
+    {"panel_name": "forbidden_chase_list_panel", "panel_purpose": "Preserve explicit risk-control blocks.", "required_inputs": ["forbidden_chase_list"], "static_only_status": "required_static_panel", "related_ldd_report_sections": ["forbidden_chase_list", "current_risk_rules"], "source_of_truth_boundary": "LDD strategy/risk SoT only", "forbidden_interpretations": ["order_placement", "execution_trigger"], "future_gate_dependency": "trading_execution_gate", "activation_status": "not_activated", "customer_facing_readiness": false, "live_runtime_execution_frameworks": 0},
+    {"panel_name": "dream_sleeve_monitoring_only_panel", "panel_purpose": "Separate symbolic monitoring from main strategy.", "required_inputs": ["dream_sleeve_monitoring_only"], "static_only_status": "required_static_panel", "related_ldd_report_sections": ["dream_sleeve_monitoring_only", "spcx_zero_fill_order_separation"], "source_of_truth_boundary": "LDD monitoring reference only", "forbidden_interpretations": ["main_strategy_chase", "execution_instruction"], "future_gate_dependency": "customer_facing_readiness_gate", "activation_status": "not_activated", "customer_facing_readiness": false, "live_runtime_execution_frameworks": 0},
+    {"panel_name": "current_holdings_risk_rules_panel", "panel_purpose": "Keep holdings and risk rules visible without collapsing full-market scope.", "required_inputs": ["us_holdings_update", "current_risk_rules"], "static_only_status": "required_static_panel", "related_ldd_report_sections": ["us_holdings_update", "current_risk_rules", "strategy_judgment"], "source_of_truth_boundary": "LDD trading/execution SoT for holdings and strategy/risk SoT for rules", "forbidden_interpretations": ["holdings_only", "portfolio_modification"], "future_gate_dependency": "live_read_only_runtime_gate", "activation_status": "not_activated", "customer_facing_readiness": false, "live_runtime_execution_frameworks": 0},
+    {"panel_name": "execution_ledger_order_reconciliation_panel", "panel_purpose": "Make order-detail reconciliation explicit before execution classification.", "required_inputs": ["execution_ledger_and_order_state", "order_detail_reconciliation"], "static_only_status": "required_static_panel", "related_ldd_report_sections": ["execution_ledger_and_order_state", "order_detail_reconciliation"], "source_of_truth_boundary": "LDD trading/execution SoT only", "forbidden_interpretations": ["execution_ready", "order_placement"], "future_gate_dependency": "trading_execution_gate", "activation_status": "not_activated", "customer_facing_readiness": false, "live_runtime_execution_frameworks": 0},
+    {"panel_name": "zero_fill_order_separation_panel", "panel_purpose": "Keep expired zero-fill orders separate from actual filled trades.", "required_inputs": ["spcx_zero_fill_order_separation"], "static_only_status": "required_static_panel", "related_ldd_report_sections": ["spcx_zero_fill_order_separation", "order_detail_reconciliation"], "source_of_truth_boundary": "LDD trading/execution SoT only", "forbidden_interpretations": ["actual_filled_trade", "portfolio_change", "cash_impact"], "future_gate_dependency": "trading_execution_gate", "activation_status": "not_activated", "customer_facing_readiness": false, "live_runtime_execution_frameworks": 0},
+    {"panel_name": "quote_type_tagging_panel", "panel_purpose": "Preserve quote-source distinctions.", "required_inputs": ["quote_type_tagging"], "static_only_status": "required_static_panel", "related_ldd_report_sections": ["source_of_truth", "execution_ledger_and_order_state"], "source_of_truth_boundary": "LDD trading/execution SoT only", "forbidden_interpretations": ["market_data_ready", "final_filled_price_inferred"], "future_gate_dependency": "live_read_only_runtime_gate", "activation_status": "not_activated", "customer_facing_readiness": false, "live_runtime_execution_frameworks": 0},
+    {"panel_name": "cash_defense_floor_panel", "panel_purpose": "Preserve cash defense context as static reference.", "required_inputs": ["longbridge_account_update", "current_risk_rules"], "static_only_status": "required_static_panel", "related_ldd_report_sections": ["longbridge_account_update", "current_risk_rules"], "source_of_truth_boundary": "LDD trading/execution SoT only", "forbidden_interpretations": ["portfolio_modification", "runtime_mutation"], "future_gate_dependency": "runtime_mutation_gate", "activation_status": "not_activated", "customer_facing_readiness": false, "live_runtime_execution_frameworks": 0},
+    {"panel_name": "crypto_usdt_defense_panel", "panel_purpose": "Preserve Binance USDT defense state as static reference.", "required_inputs": ["binance_account_update"], "static_only_status": "required_static_panel", "related_ldd_report_sections": ["binance_account_update"], "source_of_truth_boundary": "LDD trading/execution SoT only", "forbidden_interpretations": ["binance_connection_ready", "portfolio_modification"], "future_gate_dependency": "external_integration_gate", "activation_status": "not_activated", "customer_facing_readiness": false, "live_runtime_execution_frameworks": 0},
+    {"panel_name": "full_sync_regeneration_rule_panel", "panel_purpose": "Show correction handling and full standalone regeneration rule.", "required_inputs": ["sync_rule_and_baseline"], "static_only_status": "required_static_panel", "related_ldd_report_sections": ["sync_rule_and_baseline", "twos_sync_block"], "source_of_truth_boundary": "TWOS product/runtime SoT for static protocol only", "forbidden_interpretations": ["runtime_mutation", "background_worker", "scheduler"], "future_gate_dependency": "notification_scheduler_gate", "activation_status": "not_activated", "customer_facing_readiness": false, "live_runtime_execution_frameworks": 0},
+    {"panel_name": "twos_sync_block_panel", "panel_purpose": "Keep static TWOS sync block visible as product/runtime backfeed.", "required_inputs": ["twos_sync_block", "duxd_product_feedback"], "static_only_status": "required_static_panel", "related_ldd_report_sections": ["twos_sync_block", "duxd_product_feedback", "final_ldd_instruction"], "source_of_truth_boundary": "TWOS product/runtime SoT for static backfeed only", "forbidden_interpretations": ["live_sync", "customer_facing_ui_ready", "runtime_mutation"], "future_gate_dependency": "production_deployment_gate", "activation_status": "not_activated", "customer_facing_readiness": false, "live_runtime_execution_frameworks": 0}
+  ],
+  "scope_regression_guard": {
+    "state_name": "full_market_scope_valid",
+    "holdings_only_review_allowed": false,
+    "current_positions_only_review_allowed": false,
+    "former_positions_only_review_allowed": false
+  },
+  "non_activation_rules": [
+    "Static cockpit panel requirements do not create customer-facing readiness.",
+    "Static cockpit panel requirements do not create live UI.",
+    "Static cockpit panel requirements do not create live runtime readiness.",
+    "Static cockpit panel requirements do not create execution readiness.",
+    "Static cockpit panel requirements do not create market data connectivity.",
+    "Static cockpit panel requirements do not create broker/Binance connectivity.",
+    "Static cockpit panel requirements do not create credential handling readiness.",
+    "Static cockpit panel requirements do not create scheduler or notification dispatcher readiness.",
+    "Static cockpit panel requirements do not mutate trading facts, portfolio state, account state, cash state, or execution ledger state.",
+    "Static cockpit panel requirements only define planning, fixture, static shell, and validation requirements."
+  ],
+  "required_conditions": [
+    "All required panels remain static-only.",
+    "All panels remain not activated.",
+    "Customer-facing readiness remains false.",
+    "Live/runtime/execution framework count remains 0."
+  ],
+  "acceptance": {
+    "all_required_panels_present": true,
+    "all_required_panels_static_only": true,
+    "future_gate_activation": false
+  }
+}

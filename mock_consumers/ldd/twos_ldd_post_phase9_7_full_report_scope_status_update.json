@@ -1,0 +1,28 @@
+{
+  "update_name": "twos_ldd_post_phase9_7_full_report_scope_status_update",
+  "phase": "Vol.9 Phase 9.7",
+  "generated_at_sgt": "2026-06-17T00:00:00+08:00",
+  "repository_validated_twos_baseline_commit": "157b28a66239b16d73acc15962007465a388773f",
+  "title": "TWOS/LDD Runtime Status Backfeed Update｜Vol.9 Phase 9.7 LDD Full Report Scope & Order Reconciliation Gate",
+  "copy_paste_sync_block": [
+    "TWOS/LDD Runtime Status Backfeed Update｜Vol.9 Phase 9.7 LDD Full Report Scope & Order Reconciliation Gate",
+    "Vol.9 Phase 9.7 creates static LDD full-report scope requirements, full standalone sync regeneration rules, order reconciliation requirements, zero-fill order separation requirements, and static cockpit panel requirement gates.",
+    "Future LDD premarket/post-close reviews must include full-market scan, sector rotation heatmap, non-position candidate radar, forbidden chase list, Dream Sleeve monitoring-only section, current holdings/risk rules, execution ledger and order state, order-detail reconciliation where required, quote-type tagging, and TWOS Sync Block.",
+    "After user corrections to report scope, assumptions, screenshots, order details, source-of-truth priority, execution classification, rules, or format, LDD must regenerate the full latest report and full LDD → TWOS Sync Block unless explicitly told otherwise.",
+    "Holdings-only, current-position-only, and former-position-only LDD reviews are scope-regressed.",
+    "SPCX order detail is stored as static reference only: buy limit 150.00, quantity 10, filled quantity 0, status expired, no filled trade, no position created, no cash impact.",
+    "Future gate activation remains blocked.",
+    "Customer-facing readiness remains false.",
+    "Live/runtime/execution framework count remains 0.",
+    "No trading facts are changed by this update.",
+    "No portfolio state is changed by this update.",
+    "No execution ledger state is changed by this update.",
+    "No cash state is changed by this update.",
+    "No broker/Binance connection is changed by this update.",
+    "No external API, network dependency, scheduler, notification dispatcher, credential handling, runtime mutation, order placement, trading automation, external integration, or production deployment is created."
+  ],
+  "static_ldd_reference_only": true,
+  "customer_facing_readiness": false,
+  "live_runtime_execution_frameworks": 0,
+  "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+}

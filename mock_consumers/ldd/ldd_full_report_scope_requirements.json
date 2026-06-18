@@ -1,0 +1,133 @@
+{
+  "schema_version": "0.1",
+  "requirements_name": "ldd_full_report_scope_requirements",
+  "phase": "Vol.9 Phase 9.7",
+  "generated_at_sgt": "2026-06-17T00:00:00+08:00",
+  "baseline": {
+    "latest_completed_phase_before_phase": "Vol.9 Phase 9.6",
+    "latest_commit_before_phase": "157b28a66239b16d73acc15962007465a388773f",
+    "runtime_records_baseline_before_phase": 119,
+    "frameworks_indexed": 24,
+    "customer_facing_frameworks": 0,
+    "live_runtime_execution_frameworks": 0,
+    "fixture_static_read_only_frameworks": 24,
+    "validation_backed_frameworks": 24,
+    "baseline_state": "static_shell_traceability_map_created",
+    "future_gate_activation": false,
+    "customer_facing_readiness": false,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  },
+  "latest_ldd_input": {
+    "input_name": "LDD Post-Close Review Sync | 2026-06-17 U.S. Regular Session Post-Close",
+    "review_status": "full_market_scan_corrected_version_spcx_order_detail_reconciled",
+    "screenshots_time_sgt_bjt": "2026-06-17 09:04-09:05",
+    "order_detail_time_sgt_bjt": "2026-06-17 09:40",
+    "sync_rule": "full_regenerated_standalone_block",
+    "supersedes_prior_2026_06_17_post_close_draft": true,
+    "ldd_user_provided_twos_anchor_phase": "Vol.9 Phase 9.5",
+    "ldd_user_provided_twos_anchor_commit": "69eeaa8711d3d8c0cf583750734a77148fbe724e",
+    "repository_validated_twos_baseline_phase": "Vol.9 Phase 9.6",
+    "repository_validated_twos_baseline_commit": "157b28a66239b16d73acc15962007465a388773f",
+    "baseline_handling": "static_source_taxonomy_entry_not_live_drift_resolution"
+  },
+  "ldd_full_report_scope_requirements_created": true,
+  "full_standalone_sync_rule_created": true,
+  "full_market_scan_required": true,
+  "holdings_only_review_allowed": false,
+  "current_positions_only_review_allowed": false,
+  "former_positions_only_review_allowed": false,
+  "incremental_patch_allowed_by_default": false,
+  "customer_facing_readiness": false,
+  "live_runtime_execution_frameworks": 0,
+  "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution",
+  "required_report_sections": [
+    {"section_name": "sync_rule_and_baseline", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "sync_block_required", "source_of_truth_boundary": "TWOS runtime/product SoT for baseline taxonomy only", "missing_section_regression_level": "twos_sync_block_missing", "non_activation_statement": "Baseline taxonomy does not create live sync or runtime mutation."},
+    {"section_name": "source_of_truth", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "risk_control_required", "source_of_truth_boundary": "TWOS product/runtime SoT and LDD trading/execution SoT remain separate", "missing_section_regression_level": "source_of_truth_missing", "non_activation_statement": "Source-of-truth separation does not override trading or runtime facts."},
+    {"section_name": "longbridge_account_update", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "account_state_reference_required", "source_of_truth_boundary": "LDD trading/execution SoT only", "missing_section_regression_level": "account_state_reference_missing", "non_activation_statement": "Account reference does not create broker connection or portfolio mutation."},
+    {"section_name": "hk_holding_update", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "account_state_reference_required", "source_of_truth_boundary": "LDD trading/execution SoT only", "missing_section_regression_level": "account_state_reference_missing", "non_activation_statement": "Holding reference does not create executable instruction."},
+    {"section_name": "us_holdings_update", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "account_state_reference_required", "source_of_truth_boundary": "LDD trading/execution SoT only", "missing_section_regression_level": "account_state_reference_missing", "non_activation_statement": "Holding reference does not create executable instruction."},
+    {"section_name": "zero_position_states", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "account_state_reference_required", "source_of_truth_boundary": "LDD trading/execution SoT only", "missing_section_regression_level": "zero_position_state_missing", "non_activation_statement": "Zero-position reference does not mutate portfolio state."},
+    {"section_name": "execution_ledger_and_order_state", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "execution_fact_required", "source_of_truth_boundary": "LDD trading/execution SoT only", "missing_section_regression_level": "execution_ledger_missing", "non_activation_statement": "Execution ledger visibility does not create execution capability."},
+    {"section_name": "order_detail_reconciliation", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "order_reconciliation_required", "source_of_truth_boundary": "LDD trading/execution SoT only", "missing_section_regression_level": "order_reconciliation_missing", "non_activation_statement": "Order-detail evidence gate does not implement a live classifier."},
+    {"section_name": "spcx_zero_fill_order_separation", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "order_reconciliation_required", "source_of_truth_boundary": "LDD trading/execution SoT only", "missing_section_regression_level": "order_reconciliation_missing", "non_activation_statement": "Zero-fill separation does not create position or cash impact."},
+    {"section_name": "broad_market_structure", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "full_market_required", "source_of_truth_boundary": "LDD market review reference only", "missing_section_regression_level": "full_market_scope_regression_detected", "non_activation_statement": "Market structure review does not create market data connectivity."},
+    {"section_name": "sector_rotation_heatmap", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "sector_scan_required", "source_of_truth_boundary": "LDD market review reference only", "missing_section_regression_level": "sector_heatmap_missing", "non_activation_statement": "Sector heatmap requirement does not create live UI."},
+    {"section_name": "ai_semiconductors", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "sector_scan_required", "source_of_truth_boundary": "LDD market review reference only", "missing_section_regression_level": "sector_scan_missing", "non_activation_statement": "Sector scan does not create trading automation."},
+    {"section_name": "mega_cap_tech", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "sector_scan_required", "source_of_truth_boundary": "LDD market review reference only", "missing_section_regression_level": "sector_scan_missing", "non_activation_statement": "Sector scan does not create trading automation."},
+    {"section_name": "cloud_software_enterprise_ai", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "sector_scan_required", "source_of_truth_boundary": "LDD market review reference only", "missing_section_regression_level": "sector_scan_missing", "non_activation_statement": "Sector scan does not create trading automation."},
+    {"section_name": "gold_miners", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "sector_scan_required", "source_of_truth_boundary": "LDD market review reference only", "missing_section_regression_level": "sector_scan_missing", "non_activation_statement": "Sector scan does not create trading automation."},
+    {"section_name": "energy_oil", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "sector_scan_required", "source_of_truth_boundary": "LDD market review reference only", "missing_section_regression_level": "sector_scan_missing", "non_activation_statement": "Sector scan does not create trading automation."},
+    {"section_name": "crypto_crypto_linked_equities", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "sector_scan_required", "source_of_truth_boundary": "LDD market review reference only", "missing_section_regression_level": "sector_scan_missing", "non_activation_statement": "Sector scan does not create trading automation."},
+    {"section_name": "quantum_speculative_tech", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "candidate_radar_required", "source_of_truth_boundary": "LDD market review reference only", "missing_section_regression_level": "candidate_radar_missing", "non_activation_statement": "Candidate radar does not create execution instruction."},
+    {"section_name": "space_ipo_new_listings", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "candidate_radar_required", "source_of_truth_boundary": "LDD market review reference only", "missing_section_regression_level": "candidate_radar_missing", "non_activation_statement": "Candidate radar does not create execution instruction."},
+    {"section_name": "power_data_center_infrastructure", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "candidate_radar_required", "source_of_truth_boundary": "LDD market review reference only", "missing_section_regression_level": "candidate_radar_missing", "non_activation_statement": "Candidate radar does not create execution instruction."},
+    {"section_name": "full_market_candidate_radar", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "candidate_radar_required", "source_of_truth_boundary": "LDD market review reference only", "missing_section_regression_level": "candidate_radar_missing", "non_activation_statement": "Candidate radar does not create live trading signals."},
+    {"section_name": "forbidden_chase_list", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "risk_control_required", "source_of_truth_boundary": "LDD strategy/risk SoT only", "missing_section_regression_level": "forbidden_chase_list_missing", "non_activation_statement": "Forbidden list does not place or cancel orders."},
+    {"section_name": "binance_account_update", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "account_state_reference_required", "source_of_truth_boundary": "LDD trading/execution SoT only", "missing_section_regression_level": "account_state_reference_missing", "non_activation_statement": "Binance reference does not create Binance connection."},
+    {"section_name": "strategy_judgment", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "risk_control_required", "source_of_truth_boundary": "LDD strategy/risk SoT only", "missing_section_regression_level": "strategy_judgment_missing", "non_activation_statement": "Strategy judgment does not create trading automation."},
+    {"section_name": "current_risk_rules", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "risk_control_required", "source_of_truth_boundary": "LDD strategy/risk SoT only", "missing_section_regression_level": "risk_rules_missing", "non_activation_statement": "Risk rules do not mutate runtime or portfolio state."},
+    {"section_name": "dream_sleeve_monitoring_only", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "monitoring_only_required", "source_of_truth_boundary": "LDD monitoring reference only", "missing_section_regression_level": "dream_sleeve_panel_missing", "non_activation_statement": "Dream Sleeve monitoring does not justify main-strategy chase."},
+    {"section_name": "review_score", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "product_feedback_required", "source_of_truth_boundary": "LDD review reference and TWOS product planning only", "missing_section_regression_level": "review_score_missing", "non_activation_statement": "Review score does not create customer-facing readiness."},
+    {"section_name": "duxd_product_feedback", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "product_feedback_required", "source_of_truth_boundary": "TWOS product/runtime SoT for planning only", "missing_section_regression_level": "product_feedback_missing", "non_activation_statement": "DUXD feedback does not create live implementation."},
+    {"section_name": "final_ldd_instruction", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "sync_block_required", "source_of_truth_boundary": "LDD instruction reference only", "missing_section_regression_level": "twos_sync_block_missing", "non_activation_statement": "Instruction text does not create execution trigger."},
+    {"section_name": "twos_sync_block", "required_in_premarket_review": true, "required_in_post_close_review": true, "scope_classification": "sync_block_required", "source_of_truth_boundary": "TWOS product/runtime SoT for static backfeed only", "missing_section_regression_level": "twos_sync_block_missing", "non_activation_statement": "TWOS sync block does not mutate trading facts."}
+  ],
+  "full_standalone_sync_regeneration_rule": {
+    "rule_text": "After any user correction to LDD report scope, assumptions, rules, screenshots, order details, source-of-truth priority, execution classification, or format, regenerate the full latest LDD report and full LDD -> TWOS Sync Block unless the user explicitly says otherwise.",
+    "incremental_patch_classification": "incremental_patch_not_allowed_by_default",
+    "required_classification": "full_standalone_regeneration_required",
+    "allowed_states": ["full_sync_block_valid", "incremental_patch_detected", "prior_draft_superseded", "full_regeneration_required", "full_regeneration_completed"],
+    "state_name": "full_sync_block_valid",
+    "full_standalone_sync_rule_created": true,
+    "incremental_patch_allowed_by_default": false,
+    "prior_draft_superseded": true
+  },
+  "scope_regression_guard": {
+    "state_name": "full_market_scope_valid",
+    "scope_regression_guard_created": true,
+    "full_market_scan_required": true,
+    "holdings_only_review_allowed": false,
+    "current_positions_only_review_allowed": false,
+    "former_positions_only_review_allowed": false,
+    "guard_states": ["full_market_scope_valid", "scope_regression_detected", "holdings_only_regression_detected", "current_positions_only_regression_detected", "former_positions_only_regression_detected", "candidate_radar_missing", "sector_heatmap_missing", "forbidden_chase_list_missing", "dream_sleeve_panel_missing", "execution_ledger_missing", "order_reconciliation_missing", "twos_sync_block_missing", "full_sync_regeneration_rule_missing"]
+  },
+  "source_of_truth_separation": {
+    "twos_runtime_product_sot": "static product/runtime baseline and cockpit/report requirements only",
+    "ldd_trading_execution_sot": "broker, Binance, order, portfolio, cash, execution, and quote facts only",
+    "rules": [
+      "TWOS runtime/product SoT must never override LDD trading/execution SoT.",
+      "LDD trading/execution SoT must never override TWOS runtime/product SoT.",
+      "Static cockpit panel requirements must never mutate trading facts, portfolio state, execution ledger state, account state, or cash state."
+    ]
+  },
+  "quote_type_preservation": {
+    "quote_types": ["watchlist_price", "premarket_price", "after_hours_price", "holding_valuation_price", "order_page_executable_price", "final_filled_price"],
+    "rules": [
+      "Holding valuation price is not necessarily executable.",
+      "Watchlist price is not necessarily executable.",
+      "Premarket price is not necessarily executable during regular session.",
+      "After-hours price is not necessarily executable during regular session.",
+      "Order-page executable price is the closest broker-visible execution reference before final fill.",
+      "Final filled price is the only actual execution price."
+    ]
+  },
+  "dream_sleeve_boundary": {
+    "status": "monitoring_only",
+    "rules": [
+      "Dream Sleeve is monitoring and recommendation only.",
+      "Dream Sleeve does not affect LDD rational main strategy decisions for building positions, holding, reducing, clearing, or risk controls.",
+      "Dream Sleeve does not justify main-strategy chase.",
+      "Dream Sleeve does not affect GOOG/NVDA holdings or cash-defense rules.",
+      "SPCX may remain on Dream Sleeve watchlist for symbolic frontier-tech support.",
+      "SPCX deep-limit symbolic orders must remain separated from LDD main strategy scoring.",
+      "Main strategy must not chase SPCX at 190-200+.",
+      "SPCH / SSPC remain prohibited."
+    ]
+  },
+  "forbidden_scope": ["production_ui", "customer_facing_ui", "hosted_app", "api_server", "live_endpoint", "external_api", "broker_connection", "binance_connection", "live_market_data", "trading_automation", "credential_handling", "login_auth", "runtime_mutation", "execution_trigger", "order_placement", "portfolio_modification", "background_worker", "scheduler", "notification_dispatcher", "github_issues", "github_projects_board", "package_manager_files", "build_tools", "frontend_framework", "network_dependency", "external_integration", "production_deployment_capability"],
+  "acceptance": {
+    "scope_requirements_created": true,
+    "forbidden_scope_classifications_absent": true,
+    "static_read_only_only": true
+  }
+}
