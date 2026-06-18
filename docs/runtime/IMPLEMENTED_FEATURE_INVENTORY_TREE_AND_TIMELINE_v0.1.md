@@ -4,6 +4,14 @@ This inventory is the product-readable entry point for already implemented Tianm
 
 Implemented feature inventory is a visibility and traceability artifact. It does not create customer-facing readiness, live runtime readiness, trading execution readiness, broker/Binance connectivity, market data connectivity, production readiness, or runtime mutation.
 
+## Principle and Roadmap References
+
+For foundational principles and roadmap taxonomy, read:
+
+- `docs/runtime/PRINCIPLE_REGISTRY_v0.1.md`
+- `docs/runtime/ROADMAP_PHASE_AND_RUNTIME_VOLUME_TAXONOMY_v0.1.md`
+- `docs/runtime/VOLUME_ENTRY_EXIT_REVIEW_PROTOCOL_v0.1.md`
+
 ## 1. Implemented Feature Tree
 
 ```text
@@ -146,8 +154,11 @@ This catalog does not create production UI, customer-facing UI, hosted app, API 
 For the fastest understanding of implemented functionality, read in this order:
 
 1. `docs/runtime/IMPLEMENTED_FEATURE_INVENTORY_TREE_AND_TIMELINE_v0.1.md`
-2. `mock_consumers/ldd/implemented_feature_inventory_tree.json`
-3. `mock_consumers/ldd/implemented_feature_timeline_catalog.json`
-4. `docs/runtime/IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_v0.1.md`
-5. `mock_consumers/ldd/implemented_function_framework_index.json`
-6. `INDEX.md`
+2. `docs/runtime/PRINCIPLE_REGISTRY_v0.1.md`
+3. `docs/runtime/ROADMAP_PHASE_AND_RUNTIME_VOLUME_TAXONOMY_v0.1.md`
+4. `docs/runtime/VOLUME_ENTRY_EXIT_REVIEW_PROTOCOL_v0.1.md`
+5. `mock_consumers/ldd/implemented_feature_inventory_tree.json`
+6. `mock_consumers/ldd/implemented_feature_timeline_catalog.json`
+7. `docs/runtime/IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_v0.1.md`
+8. `mock_consumers/ldd/implemented_function_framework_index.json`
+9. `INDEX.md`

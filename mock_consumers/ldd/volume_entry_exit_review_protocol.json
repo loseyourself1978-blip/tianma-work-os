@@ -1,0 +1,80 @@
+{
+  "schema_version": "0.1",
+  "protocol_name": "volume_entry_exit_review_protocol",
+  "phase": "Vol.9 Phase 9.9",
+  "generated_at_sgt": "2026-06-17T00:00:00+08:00",
+  "baseline": {
+    "latest_completed_phase_before_phase": "Vol.9 Phase 9.8",
+    "latest_commit_before_phase": "6180d40315879f44fd9731c5504a0a07006df51a",
+    "runtime_records_baseline_before_phase": 121,
+    "baseline_state": "implemented_feature_inventory_catalog_created",
+    "future_gate_activation": false,
+    "customer_facing_readiness": false,
+    "live_runtime_execution_frameworks": 0,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  },
+  "volume_entry_exit_review_protocol_created": true,
+  "future_volume_entry_review_required": true,
+  "future_volume_exit_review_required": true,
+  "principle_review_at_volume_start_required": true,
+  "principle_review_at_volume_end_required": true,
+  "milestone_plan_at_volume_start_required": true,
+  "milestone_review_at_volume_end_required": true,
+  "customer_facing_readiness": false,
+  "live_runtime_execution_frameworks": 0,
+  "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution",
+  "volume_entry_requirements": [
+    "volume_milestone_plan",
+    "principle_registry_review",
+    "roadmap_alignment_review",
+    "prior_volume_handoff_review",
+    "scope_boundary_review",
+    "forbidden_scope_review",
+    "source_of_truth_review",
+    "validation_plan",
+    "open_questions_and_update_candidates"
+  ],
+  "volume_exit_requirements": [
+    "volume_milestone_review",
+    "completed_scope_review",
+    "principle_adherence_review",
+    "principle_drift_review",
+    "principle_update_decision",
+    "roadmap_alignment_review",
+    "runtime_record_baseline_review",
+    "feature_inventory_update_check",
+    "handoff_summary",
+    "next_volume_readiness_gate"
+  ],
+  "principle_review_requirements": {
+    "principle_registry_path": "docs/runtime/PRINCIPLE_REGISTRY_v0.1.md",
+    "volume_start_review_required": true,
+    "volume_end_review_required": true,
+    "update_decision_required_for_missing_ambiguous_outdated_or_conflicting_principles": true
+  },
+  "milestone_review_requirements": {
+    "volume_start_milestone_plan_required": true,
+    "volume_end_milestone_review_required": true,
+    "volume_exit_must_state_milestone_met_or_not_met": true
+  },
+  "roadmap_alignment_requirements": {
+    "roadmap_taxonomy_path": "docs/runtime/ROADMAP_PHASE_AND_RUNTIME_VOLUME_TAXONOMY_v0.1.md",
+    "roadmap_phase_layer_must_be_named": true,
+    "runtime_volume_layer_must_be_named": true,
+    "volume_internal_phase_layer_must_be_named": true
+  },
+  "non_activation_rules": [
+    "Volume entry/exit review does not create customer-facing readiness.",
+    "Volume entry/exit review does not create live runtime readiness.",
+    "Volume entry/exit review does not mutate trading facts, portfolio state, account state, cash state, or execution ledger state.",
+    "Volume entry/exit review only creates mandatory future planning and review protocol."
+  ],
+  "acceptance": {
+    "future_volume_entry_review_required": true,
+    "future_volume_exit_review_required": true,
+    "principle_review_at_volume_start_required": true,
+    "principle_review_at_volume_end_required": true,
+    "milestone_plan_at_volume_start_required": true,
+    "milestone_review_at_volume_end_required": true
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "schema_version": "0.1",
+  "taxonomy_name": "roadmap_phase_runtime_volume_taxonomy",
+  "phase": "Vol.9 Phase 9.9",
+  "generated_at_sgt": "2026-06-17T00:00:00+08:00",
+  "baseline": {
+    "latest_completed_phase_before_phase": "Vol.9 Phase 9.8",
+    "latest_commit_before_phase": "6180d40315879f44fd9731c5504a0a07006df51a",
+    "runtime_records_baseline_before_phase": 121,
+    "baseline_state": "implemented_feature_inventory_catalog_created",
+    "future_gate_activation": false,
+    "customer_facing_readiness": false,
+    "live_runtime_execution_frameworks": 0,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  },
+  "taxonomy_created": true,
+  "roadmap_phase_layer_distinct_from_runtime_volume": true,
+  "runtime_volume_layer_distinct_from_volume_internal_phase": true,
+  "customer_facing_readiness": false,
+  "live_runtime_execution_frameworks": 0,
+  "future_gate_activation": false,
+  "taxonomy_layers": [
+    {
+      "layer_name": "roadmap_phase",
+      "definition": "Product roadmap stage, such as Roadmap Phase 0 through Phase 5 in Tianma Work OS Roadmap v0.1.",
+      "example": "Roadmap Phase 2 - Manual Prototype and Real Scenario Validation"
+    },
+    {
+      "layer_name": "runtime_volume",
+      "definition": "Operational execution cycle / work volume inside the repository and project workflow.",
+      "example": "Vol.9"
+    },
+    {
+      "layer_name": "volume_internal_phase",
+      "definition": "Subphase inside a runtime volume.",
+      "example": "Vol.9 Phase 9.9"
+    }
+  ],
+  "roadmap_phases": [
+    {"roadmap_phase": "Phase 0", "label": "Open-Source Foundation and Product Thesis", "current_status": "foundation_artifacts_present"},
+    {"roadmap_phase": "Phase 1", "label": "Product Blueprint and MVP Scope", "current_status": "blueprint_artifacts_present"},
+    {"roadmap_phase": "Phase 2", "label": "Manual Prototype and Real Scenario Validation", "current_status": "current_vol9_primary_support"},
+    {"roadmap_phase": "Phase 3", "label": "MVP Build", "current_status": "not_active"},
+    {"roadmap_phase": "Phase 4", "label": "Multi-Model Professional Execution Layer", "current_status": "not_active"},
+    {"roadmap_phase": "Phase 5", "label": "Public Collaboration and Ecosystem", "current_status": "not_active"}
+  ],
+  "runtime_volumes": [
+    {"runtime_volume": "Vol.5", "taxonomy_layer": "runtime_volume", "relationship_to_roadmap": "manual prototype and record maturation"},
+    {"runtime_volume": "Vol.6", "taxonomy_layer": "runtime_volume", "relationship_to_roadmap": "manual prototype governance and static cockpit planning"},
+    {"runtime_volume": "Vol.7", "taxonomy_layer": "runtime_volume", "relationship_to_roadmap": "local static shell prototype work"},
+    {"runtime_volume": "Vol.8", "taxonomy_layer": "runtime_volume", "relationship_to_roadmap": "handoff, feedback, and readiness gates"},
+    {"runtime_volume": "Vol.9", "taxonomy_layer": "runtime_volume", "relationship_to_roadmap": "Roadmap Phase 2 support and planning evidence for later phases"}
+  ],
+  "volume_internal_phases": [
+    {"volume_internal_phase": "Vol.9 Phase 9.1", "taxonomy_layer": "volume_internal_phase"},
+    {"volume_internal_phase": "Vol.9 Phase 9.2", "taxonomy_layer": "volume_internal_phase"},
+    {"volume_internal_phase": "Vol.9 Phase 9.3", "taxonomy_layer": "volume_internal_phase"},
+    {"volume_internal_phase": "Vol.9 Phase 9.4", "taxonomy_layer": "volume_internal_phase"},
+    {"volume_internal_phase": "Vol.9 Phase 9.5", "taxonomy_layer": "volume_internal_phase"},
+    {"volume_internal_phase": "Vol.9 Phase 9.6", "taxonomy_layer": "volume_internal_phase"},
+    {"volume_internal_phase": "Vol.9 Phase 9.7", "taxonomy_layer": "volume_internal_phase"},
+    {"volume_internal_phase": "Vol.9 Phase 9.8", "taxonomy_layer": "volume_internal_phase"},
+    {"volume_internal_phase": "Vol.9 Phase 9.9", "taxonomy_layer": "volume_internal_phase"}
+  ],
+  "current_mapping": {
+    "statement": "Current Vol.9 work primarily supports Roadmap Phase 2 — Manual Prototype and Real Scenario Validation, while preparing validation-backed planning evidence for later roadmap phases. It does not activate Phase 3 MVP Build, Phase 4 Multi-Model Professional Execution Layer, or Phase 5 Public Collaboration and Ecosystem.",
+    "vol9_primary_roadmap_support": "Phase 2 — Manual Prototype and Real Scenario Validation",
+    "planning_evidence_for_later_phases_only": true,
+    "phase3_mvp_build_active": false,
+    "phase4_multi_model_execution_layer_active": false,
+    "phase5_public_ecosystem_active": false
+  },
+  "non_activation_rules": [
+    "Roadmap taxonomy does not create customer-facing readiness.",
+    "Roadmap taxonomy does not create live runtime readiness.",
+    "Roadmap taxonomy does not activate Phase 3 MVP Build.",
+    "Roadmap taxonomy does not mutate trading facts, portfolio state, account state, cash state, or execution ledger state."
+  ],
+  "acceptance": {
+    "roadmap_phase_layer_distinct_from_runtime_volume": true,
+    "runtime_volume_layer_distinct_from_volume_internal_phase": true,
+    "roadmap_phase_0_to_5_present": true,
+    "future_gate_activation": false
+  }
+}

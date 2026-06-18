@@ -1,5 +1,13 @@
 # Tianma Work OS Roadmap v0.1
 
+## Terminology Note
+
+Roadmap Phase 0-5 and runtime Vol.1-Vol.9 are not the same taxonomy layer.
+
+Roadmap phases describe product maturity and strategic roadmap stages. Runtime volumes describe iterative execution cycles inside the repository and project workflow. Volume internal phases, such as Vol.9 Phase 9.9, describe implementation or documentation substeps inside a runtime volume.
+
+Current Vol.9 work primarily supports Roadmap Phase 2 manual prototype and real scenario validation, while preparing validation-backed planning evidence for later roadmap phases. It does not activate Phase 3 MVP Build, Phase 4 Multi-Model Professional Execution Layer, or Phase 5 Public Collaboration and Ecosystem.
+
 ## Phase 0 — Open-Source Foundation and Product Thesis
 
 Status: In progress.

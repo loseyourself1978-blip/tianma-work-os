@@ -1037,6 +1037,41 @@ Vol.9 Phase 9.7 creates static/read-only LDD full-report scope requirements, ful
 
 Vol.9 Phase 9.8 creates a product-readable implemented feature inventory tree and volume timeline catalog. It improves Codex visibility into implemented modules, submodules, feature descriptions, and implementation timeline by Vol./Phase. It does not activate live implementation, customer-facing readiness, trading automation, broker/Binance connection, live market data, runtime execution capability, network dependency, scheduler, notification dispatcher, background worker, credential handling, runtime mutation, external integration, or production deployment.
 
+## Vol.9 Phase 9.9 / Principle Registry, Roadmap Volume Taxonomy and Volume Entry/Exit Protocol
+
+- `docs/runtime/VOL9_PHASE9_9_PRINCIPLE_REGISTRY_ROADMAP_VOLUME_TAXONOMY_AND_VOLUME_ENTRY_EXIT_PROTOCOL_v0.1.md`
+- `docs/runtime/PRINCIPLE_REGISTRY_v0.1.md`
+- `docs/runtime/ROADMAP_PHASE_AND_RUNTIME_VOLUME_TAXONOMY_v0.1.md`
+- `docs/runtime/VOLUME_ENTRY_EXIT_REVIEW_PROTOCOL_v0.1.md`
+- `schemas/principle_registry.schema.json`
+- `schemas/roadmap_phase_runtime_volume_taxonomy.schema.json`
+- `schemas/volume_entry_exit_review_protocol.schema.json`
+- `mock_consumers/ldd/principle_registry.json`
+- `mock_consumers/ldd/roadmap_phase_runtime_volume_taxonomy.json`
+- `mock_consumers/ldd/volume_entry_exit_review_protocol.json`
+- `mock_consumers/ldd/twos_ldd_post_phase9_9_principle_registry_status_update.json`
+- `records/ldd/2026-06-17/vol9_phase9_9_principle_registry_roadmap_volume_taxonomy_and_volume_entry_exit_protocol.json`
+- `scripts/validate_vol9_phase9_9_principle_registry.py`
+- `scripts/validate_vol9_phase9_9_principle_registry.sh`
+- Updated: `ROADMAP.md`
+- Updated: `docs/runtime/IMPLEMENTED_FEATURE_INVENTORY_TREE_AND_TIMELINE_v0.1.md`
+- Updated: `scripts/validate_runtime_records.py`
+- Current phase: `Vol.9 Phase 9.9 - Principle Registry, Roadmap Phase vs Runtime Volume Taxonomy Map and Volume Entry/Exit Review Protocol`
+- Baseline state before phase: `implemented_feature_inventory_catalog_created`
+- Principle registry created: `true`
+- Roadmap runtime taxonomy created: `true`
+- Volume entry/exit review protocol created: `true`
+- Future volume entry review required: `true`
+- Future volume exit review required: `true`
+- Future gate activation: `false`
+- Runtime records baseline after phase: `122`
+- Functional frameworks indexed: `24`
+- Customer-facing readiness: `false`
+- Network allowed: `false`
+- Execution allowed: `false`
+
+Vol.9 Phase 9.9 creates a validation-backed principle registry, roadmap phase vs runtime volume taxonomy map, and mandatory volume entry/exit review protocol. It clarifies that Roadmap Phase 0–5 and runtime Vol.1–Vol.9 are not the same taxonomy layer. It requires every future runtime Volume to begin with milestone planning and principle review, and to end with milestone review and principle adherence review. It does not activate live implementation, customer-facing readiness, trading automation, broker/Binance connection, live market data, runtime execution capability, network dependency, scheduler, notification dispatcher, background worker, credential handling, runtime mutation, external integration, or production deployment.
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

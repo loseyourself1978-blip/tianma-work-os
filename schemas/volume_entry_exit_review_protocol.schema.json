@@ -1,0 +1,70 @@
+{
+  "type": "object",
+  "required": [
+    "schema_version",
+    "protocol_name",
+    "phase",
+    "generated_at_sgt",
+    "baseline",
+    "volume_entry_exit_review_protocol_created",
+    "future_volume_entry_review_required",
+    "future_volume_exit_review_required",
+    "principle_review_at_volume_start_required",
+    "principle_review_at_volume_end_required",
+    "milestone_plan_at_volume_start_required",
+    "milestone_review_at_volume_end_required",
+    "customer_facing_readiness",
+    "live_runtime_execution_frameworks",
+    "static_shell_mode",
+    "volume_entry_requirements",
+    "volume_exit_requirements",
+    "principle_review_requirements",
+    "milestone_review_requirements",
+    "roadmap_alignment_requirements",
+    "non_activation_rules",
+    "acceptance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "protocol_name": {"type": "string"},
+    "phase": {"enum": ["Vol.9 Phase 9.9"]},
+    "generated_at_sgt": {"type": "string"},
+    "baseline": {
+      "type": "object",
+      "required": [
+        "latest_completed_phase_before_phase",
+        "latest_commit_before_phase",
+        "customer_facing_readiness",
+        "live_runtime_execution_frameworks",
+        "static_shell_mode"
+      ],
+      "properties": {
+        "latest_completed_phase_before_phase": {"enum": ["Vol.9 Phase 9.8"]},
+        "latest_commit_before_phase": {"enum": ["6180d40315879f44fd9731c5504a0a07006df51a"]},
+        "runtime_records_baseline_before_phase": {"type": "integer"},
+        "baseline_state": {"type": "string"},
+        "future_gate_activation": {"enum": [false]},
+        "customer_facing_readiness": {"enum": [false]},
+        "live_runtime_execution_frameworks": {"enum": [0]},
+        "static_shell_mode": {"enum": ["local_static_read_only_fixture_only_no_network_no_execution"]}
+      }
+    },
+    "volume_entry_exit_review_protocol_created": {"enum": [true]},
+    "future_volume_entry_review_required": {"enum": [true]},
+    "future_volume_exit_review_required": {"enum": [true]},
+    "principle_review_at_volume_start_required": {"enum": [true]},
+    "principle_review_at_volume_end_required": {"enum": [true]},
+    "milestone_plan_at_volume_start_required": {"enum": [true]},
+    "milestone_review_at_volume_end_required": {"enum": [true]},
+    "customer_facing_readiness": {"enum": [false]},
+    "live_runtime_execution_frameworks": {"enum": [0]},
+    "static_shell_mode": {"enum": ["local_static_read_only_fixture_only_no_network_no_execution"]},
+    "volume_entry_requirements": {"type": "array", "items": {"type": "string"}},
+    "volume_exit_requirements": {"type": "array", "items": {"type": "string"}},
+    "principle_review_requirements": {"type": "object"},
+    "milestone_review_requirements": {"type": "object"},
+    "roadmap_alignment_requirements": {"type": "object"},
+    "non_activation_rules": {"type": "array", "items": {"type": "string"}},
+    "acceptance": {"type": "object"}
+  }
+}

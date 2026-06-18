@@ -1,0 +1,62 @@
+{
+  "type": "object",
+  "required": [
+    "schema_version",
+    "taxonomy_name",
+    "phase",
+    "generated_at_sgt",
+    "baseline",
+    "taxonomy_created",
+    "roadmap_phase_layer_distinct_from_runtime_volume",
+    "runtime_volume_layer_distinct_from_volume_internal_phase",
+    "customer_facing_readiness",
+    "live_runtime_execution_frameworks",
+    "future_gate_activation",
+    "taxonomy_layers",
+    "roadmap_phases",
+    "runtime_volumes",
+    "volume_internal_phases",
+    "current_mapping",
+    "non_activation_rules",
+    "acceptance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "taxonomy_name": {"type": "string"},
+    "phase": {"enum": ["Vol.9 Phase 9.9"]},
+    "generated_at_sgt": {"type": "string"},
+    "baseline": {
+      "type": "object",
+      "required": [
+        "latest_completed_phase_before_phase",
+        "latest_commit_before_phase",
+        "customer_facing_readiness",
+        "live_runtime_execution_frameworks",
+        "static_shell_mode"
+      ],
+      "properties": {
+        "latest_completed_phase_before_phase": {"enum": ["Vol.9 Phase 9.8"]},
+        "latest_commit_before_phase": {"enum": ["6180d40315879f44fd9731c5504a0a07006df51a"]},
+        "runtime_records_baseline_before_phase": {"type": "integer"},
+        "baseline_state": {"type": "string"},
+        "future_gate_activation": {"enum": [false]},
+        "customer_facing_readiness": {"enum": [false]},
+        "live_runtime_execution_frameworks": {"enum": [0]},
+        "static_shell_mode": {"enum": ["local_static_read_only_fixture_only_no_network_no_execution"]}
+      }
+    },
+    "taxonomy_created": {"enum": [true]},
+    "roadmap_phase_layer_distinct_from_runtime_volume": {"enum": [true]},
+    "runtime_volume_layer_distinct_from_volume_internal_phase": {"enum": [true]},
+    "customer_facing_readiness": {"enum": [false]},
+    "live_runtime_execution_frameworks": {"enum": [0]},
+    "future_gate_activation": {"enum": [false]},
+    "taxonomy_layers": {"type": "array", "items": {"type": "object"}},
+    "roadmap_phases": {"type": "array", "items": {"type": "object"}},
+    "runtime_volumes": {"type": "array", "items": {"type": "object"}},
+    "volume_internal_phases": {"type": "array", "items": {"type": "object"}},
+    "current_mapping": {"type": "object"},
+    "non_activation_rules": {"type": "array", "items": {"type": "string"}},
+    "acceptance": {"type": "object"}
+  }
+}

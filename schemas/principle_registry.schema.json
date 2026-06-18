@@ -1,0 +1,103 @@
+{
+  "type": "object",
+  "required": [
+    "schema_version",
+    "registry_name",
+    "phase",
+    "generated_at_sgt",
+    "baseline",
+    "principle_registry_created",
+    "future_volume_entry_review_required",
+    "future_volume_exit_review_required",
+    "customer_facing_readiness",
+    "live_runtime_execution_frameworks",
+    "static_shell_mode",
+    "principles",
+    "source_discovery",
+    "volume_review_policy",
+    "non_activation_rules",
+    "forbidden_scope",
+    "acceptance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "registry_name": {"type": "string"},
+    "phase": {"enum": ["Vol.9 Phase 9.9"]},
+    "generated_at_sgt": {"type": "string"},
+    "baseline": {
+      "type": "object",
+      "required": [
+        "latest_completed_phase_before_phase",
+        "latest_commit_before_phase",
+        "customer_facing_readiness",
+        "live_runtime_execution_frameworks",
+        "static_shell_mode"
+      ],
+      "properties": {
+        "latest_completed_phase_before_phase": {"enum": ["Vol.9 Phase 9.8"]},
+        "latest_commit_before_phase": {"enum": ["6180d40315879f44fd9731c5504a0a07006df51a"]},
+        "runtime_records_baseline_before_phase": {"type": "integer"},
+        "frameworks_indexed": {"type": "integer"},
+        "customer_facing_frameworks": {"type": "integer"},
+        "live_runtime_execution_frameworks": {"enum": [0]},
+        "fixture_static_read_only_frameworks": {"type": "integer"},
+        "validation_backed_frameworks": {"type": "integer"},
+        "baseline_state": {"type": "string"},
+        "future_gate_activation": {"enum": [false]},
+        "customer_facing_readiness": {"enum": [false]},
+        "static_shell_mode": {"enum": ["local_static_read_only_fixture_only_no_network_no_execution"]}
+      }
+    },
+    "principle_registry_created": {"enum": [true]},
+    "future_volume_entry_review_required": {"enum": [true]},
+    "future_volume_exit_review_required": {"enum": [true]},
+    "customer_facing_readiness": {"enum": [false]},
+    "live_runtime_execution_frameworks": {"enum": [0]},
+    "static_shell_mode": {"enum": ["local_static_read_only_fixture_only_no_network_no_execution"]},
+    "principles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "principle_id",
+          "principle_name",
+          "principle_statement",
+          "principle_group",
+          "source_status",
+          "source_files",
+          "introduced_or_confirmed_in",
+          "current_status",
+          "applies_to",
+          "drift_risk",
+          "review_required_at_volume_start",
+          "review_required_at_volume_end",
+          "update_policy",
+          "customer_facing_readiness",
+          "live_runtime_execution_capability"
+        ],
+        "properties": {
+          "principle_id": {"type": "string"},
+          "principle_name": {"type": "string"},
+          "principle_statement": {"type": "string"},
+          "principle_group": {"type": "string"},
+          "source_status": {"enum": ["repository_supported", "needs_canonicalization", "introduced_in_phase9_9"]},
+          "source_files": {"type": "array", "items": {"type": "string"}},
+          "introduced_or_confirmed_in": {"type": "string"},
+          "current_status": {"type": "string"},
+          "applies_to": {"type": "array", "items": {"type": "string"}},
+          "drift_risk": {"type": "string"},
+          "review_required_at_volume_start": {"enum": [true]},
+          "review_required_at_volume_end": {"enum": [true]},
+          "update_policy": {"type": "string"},
+          "customer_facing_readiness": {"enum": [false]},
+          "live_runtime_execution_capability": {"enum": [false]}
+        }
+      }
+    },
+    "source_discovery": {"type": "object"},
+    "volume_review_policy": {"type": "object"},
+    "non_activation_rules": {"type": "array", "items": {"type": "string"}},
+    "forbidden_scope": {"type": "array", "items": {"type": "string"}},
+    "acceptance": {"type": "object"}
+  }
+}
