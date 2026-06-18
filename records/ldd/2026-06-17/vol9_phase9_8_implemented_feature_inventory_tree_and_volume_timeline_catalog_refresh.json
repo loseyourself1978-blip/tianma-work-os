@@ -1,0 +1,100 @@
+{
+  "schema_version": "0.1",
+  "record_type": "vol9_phase9_8_implemented_feature_inventory_catalog",
+  "catalog_name": "implemented_feature_timeline_catalog",
+  "phase": "Vol.9 Phase 9.8",
+  "generated_at_sgt": "2026-06-17T00:00:00+08:00",
+  "status": "completed",
+  "baseline": {
+    "latest_completed_phase_before_phase": "Vol.9 Phase 9.7",
+    "latest_commit_before_phase": "10f0c3e419378df8033bdfd594cbf2a163351ecb",
+    "customer_facing_readiness": false,
+    "live_runtime_execution_frameworks": 0,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  },
+  "runtime_records_baseline_before_phase": 120,
+  "runtime_records_delta": 1,
+  "runtime_records_baseline_after_phase": 121,
+  "frameworks_indexed": 24,
+  "customer_facing_frameworks": 0,
+  "live_runtime_execution_frameworks": 0,
+  "fixture_static_read_only_frameworks": 24,
+  "validation_backed_frameworks": 24,
+  "customer_facing_readiness": false,
+  "vol9_entry_readiness": "ready_with_limits",
+  "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution",
+  "baseline_state_before_phase": "ldd_full_report_scope_gate_created",
+  "baseline_state_after_phase": "implemented_feature_inventory_catalog_created",
+  "implemented_feature_inventory_tree_created": true,
+  "implemented_feature_timeline_catalog_created": true,
+  "feature_inventory_codex_visible": true,
+  "future_gate_activation": false,
+  "timeline_entries": [
+    {
+      "feature_id": "implemented_feature_inventory_tree",
+      "feature_module": "Framework Index & Feature Inventory",
+      "submodule_capability": "implemented_feature_inventory_tree",
+      "feature_description": "Product-readable tree of implemented modules and submodules for Codex and repository readers.",
+      "introduced_in": "Vol.9 Phase 9.8",
+      "updated_in": "Vol.9 Phase 9.8",
+      "primary_artifacts": ["docs/runtime/IMPLEMENTED_FEATURE_INVENTORY_TREE_AND_TIMELINE_v0.1.md", "mock_consumers/ldd/implemented_feature_inventory_tree.json"],
+      "validation_coverage": "scripts/validate_vol9_phase9_8_feature_inventory.sh",
+      "readiness_classification": "index_only",
+      "customer_facing_readiness": false,
+      "live_runtime_execution_capability": false,
+      "notes": "Visibility artifact only; no runtime capability is created."
+    },
+    {
+      "feature_id": "implemented_feature_timeline_catalog",
+      "feature_module": "Framework Index & Feature Inventory",
+      "submodule_capability": "implemented_feature_timeline_catalog",
+      "feature_description": "Product-readable table of implemented features, descriptions, artifacts, validation coverage, and Vol./Phase timing.",
+      "introduced_in": "Vol.9 Phase 9.8",
+      "updated_in": "Vol.9 Phase 9.8",
+      "primary_artifacts": ["mock_consumers/ldd/implemented_feature_timeline_catalog.json"],
+      "validation_coverage": "scripts/validate_vol9_phase9_8_feature_inventory.sh",
+      "readiness_classification": "index_only",
+      "customer_facing_readiness": false,
+      "live_runtime_execution_capability": false,
+      "notes": "Timeline catalog does not activate features."
+    }
+  ],
+  "volume_coverage": {
+    "Vol.5": "repository-supported historical artifacts",
+    "Vol.6": "UI boundary, permission/privacy, read-only API, and static cockpit planning",
+    "Vol.7": "static shell planning and handoff",
+    "Vol.8": "implemented framework index and Vol.9 readiness",
+    "Vol.9": "baseline sync, gates, traceability, full-report scope, and feature inventory"
+  },
+  "codex_reading_guide": [
+    "docs/runtime/IMPLEMENTED_FEATURE_INVENTORY_TREE_AND_TIMELINE_v0.1.md",
+    "mock_consumers/ldd/implemented_feature_inventory_tree.json",
+    "mock_consumers/ldd/implemented_feature_timeline_catalog.json",
+    "docs/runtime/IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_v0.1.md",
+    "INDEX.md"
+  ],
+  "readiness_classification_rules": {
+    "allowed": ["static_planning", "static_fixture", "static_read_only_shell", "mock_consumer_fixture", "validation_backed", "protocol_only", "runtime_record_only", "index_only"],
+    "forbidden": ["customer_facing_ready", "live_runtime_ready", "execution_ready", "broker_connected", "binance_connected", "market_data_connected", "production_ready"]
+  },
+  "non_activation_rules": [
+    "Implemented feature inventory is a visibility and traceability artifact.",
+    "It does not create new runtime capability.",
+    "It does not activate customer-facing readiness.",
+    "It does not activate live runtime readiness.",
+    "It does not activate trading execution readiness."
+  ],
+  "trading_facts_changed": false,
+  "portfolio_state_changed": false,
+  "execution_ledger_changed": false,
+  "cash_state_changed": false,
+  "broker_connection_changed": false,
+  "binance_connection_changed": false,
+  "acceptance": {
+    "runtime_record_completed": true,
+    "implemented_feature_inventory_tree_created": true,
+    "implemented_feature_timeline_catalog_created": true,
+    "feature_inventory_codex_visible": true,
+    "forbidden_scope_absent": true
+  }
+}

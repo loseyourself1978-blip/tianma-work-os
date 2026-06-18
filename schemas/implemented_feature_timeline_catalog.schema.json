@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/implemented_feature_timeline_catalog.schema.json",
+  "title": "Implemented Feature Timeline Catalog",
+  "description": "Validates the static Phase 9.8 implemented feature timeline catalog fixture.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "catalog_name",
+    "phase",
+    "generated_at_sgt",
+    "baseline",
+    "implemented_feature_timeline_catalog_created",
+    "timeline_entries",
+    "volume_coverage",
+    "codex_reading_guide",
+    "readiness_classification_rules",
+    "non_activation_rules",
+    "acceptance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "enum": ["0.1"]},
+    "catalog_name": {"type": "string", "enum": ["implemented_feature_timeline_catalog"]},
+    "phase": {"type": "string", "enum": ["Vol.9 Phase 9.8"]},
+    "generated_at_sgt": {"type": "string"},
+    "baseline": {
+      "type": "object",
+      "required": [
+        "latest_completed_phase_before_phase",
+        "latest_commit_before_phase",
+        "customer_facing_readiness",
+        "live_runtime_execution_frameworks"
+      ],
+      "properties": {
+        "latest_completed_phase_before_phase": {"type": "string", "enum": ["Vol.9 Phase 9.7"]},
+        "latest_commit_before_phase": {"type": "string", "enum": ["10f0c3e419378df8033bdfd594cbf2a163351ecb"]},
+        "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+        "live_runtime_execution_frameworks": {"type": "integer", "enum": [0]}
+      }
+    },
+    "implemented_feature_timeline_catalog_created": {"type": "boolean", "enum": [true]},
+    "timeline_entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "feature_id",
+          "feature_module",
+          "submodule_capability",
+          "feature_description",
+          "introduced_in",
+          "updated_in",
+          "primary_artifacts",
+          "validation_coverage",
+          "readiness_classification",
+          "customer_facing_readiness",
+          "live_runtime_execution_capability",
+          "notes"
+        ],
+        "properties": {
+          "feature_id": {"type": "string"},
+          "feature_module": {"type": "string"},
+          "submodule_capability": {"type": "string"},
+          "feature_description": {"type": "string"},
+          "introduced_in": {"type": "string"},
+          "updated_in": {"type": "string"},
+          "primary_artifacts": {"type": "array", "items": {"type": "string"}},
+          "validation_coverage": {"type": "string"},
+          "readiness_classification": {
+            "type": "string",
+            "enum": ["static_planning", "static_fixture", "static_read_only_shell", "mock_consumer_fixture", "validation_backed", "protocol_only", "runtime_record_only", "index_only"]
+          },
+          "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+          "live_runtime_execution_capability": {"type": "boolean", "enum": [false]},
+          "notes": {"type": "string"}
+        }
+      }
+    },
+    "volume_coverage": {"type": "object"},
+    "codex_reading_guide": {"type": "array", "items": {"type": "string"}},
+    "readiness_classification_rules": {"type": "object"},
+    "non_activation_rules": {"type": "array", "items": {"type": "string"}},
+    "acceptance": {"type": "object"}
+  }
+}

@@ -1009,6 +1009,34 @@ Vol.9 Phase 9.6 creates a static/read-only fixture coverage matrix and prototype
 
 Vol.9 Phase 9.7 creates static/read-only LDD full-report scope requirements, full standalone sync regeneration rules, order reconciliation requirements, zero-fill order separation requirements, and static cockpit panel requirement gates. It does not activate live implementation, customer-facing readiness, trading automation, broker/Binance connection, live market data, runtime execution capability, network dependency, scheduler, notification dispatcher, background worker, credential handling, runtime mutation, external integration, or production deployment.
 
+## Vol.9 Phase 9.8 / Implemented Feature Inventory Tree and Volume Timeline Catalog Refresh
+
+- `docs/runtime/VOL9_PHASE9_8_IMPLEMENTED_FEATURE_INVENTORY_TREE_AND_VOLUME_TIMELINE_CATALOG_REFRESH_v0.1.md`
+- `docs/runtime/IMPLEMENTED_FEATURE_INVENTORY_TREE_AND_TIMELINE_v0.1.md`
+- `schemas/implemented_feature_inventory_tree.schema.json`
+- `schemas/implemented_feature_timeline_catalog.schema.json`
+- `mock_consumers/ldd/implemented_feature_inventory_tree.json`
+- `mock_consumers/ldd/implemented_feature_timeline_catalog.json`
+- `mock_consumers/ldd/twos_ldd_post_phase9_8_feature_inventory_status_update.json`
+- `records/ldd/2026-06-17/vol9_phase9_8_implemented_feature_inventory_tree_and_volume_timeline_catalog_refresh.json`
+- `scripts/validate_vol9_phase9_8_feature_inventory.py`
+- `scripts/validate_vol9_phase9_8_feature_inventory.sh`
+- Updated: `docs/runtime/IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_v0.1.md`
+- Updated: `scripts/validate_runtime_records.py`
+- Current phase: `Vol.9 Phase 9.8 - Implemented Feature Inventory Tree and Volume Timeline Catalog Refresh`
+- Baseline state before phase: `ldd_full_report_scope_gate_created`
+- Implemented feature inventory tree created: `true`
+- Implemented feature timeline catalog created: `true`
+- Feature inventory Codex-visible: `true`
+- Future gate activation: `false`
+- Runtime records baseline after phase: `121`
+- Functional frameworks indexed: `24`
+- Customer-facing readiness: `false`
+- Network allowed: `false`
+- Execution allowed: `false`
+
+Vol.9 Phase 9.8 creates a product-readable implemented feature inventory tree and volume timeline catalog. It improves Codex visibility into implemented modules, submodules, feature descriptions, and implementation timeline by Vol./Phase. It does not activate live implementation, customer-facing readiness, trading automation, broker/Binance connection, live market data, runtime execution capability, network dependency, scheduler, notification dispatcher, background worker, credential handling, runtime mutation, external integration, or production deployment.
+
 ## Product Principles
 
 1. Tianma Work OS is not a chatbot.

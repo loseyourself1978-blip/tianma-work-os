@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loseyourself1978-blip/tianma-work-os/schemas/implemented_feature_inventory_tree.schema.json",
+  "title": "Implemented Feature Inventory Tree",
+  "description": "Validates the static Phase 9.8 implemented feature inventory tree fixture.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "inventory_name",
+    "phase",
+    "generated_at_sgt",
+    "baseline",
+    "implemented_feature_inventory_tree_created",
+    "tree_modules",
+    "readiness_classification_rules",
+    "non_activation_rules",
+    "source_of_truth_separation",
+    "forbidden_scope",
+    "acceptance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "enum": ["0.1"]},
+    "inventory_name": {"type": "string", "enum": ["implemented_feature_inventory_tree"]},
+    "phase": {"type": "string", "enum": ["Vol.9 Phase 9.8"]},
+    "generated_at_sgt": {"type": "string"},
+    "baseline": {
+      "type": "object",
+      "required": [
+        "latest_completed_phase_before_phase",
+        "latest_commit_before_phase",
+        "customer_facing_readiness",
+        "live_runtime_execution_frameworks",
+        "static_shell_mode"
+      ],
+      "properties": {
+        "latest_completed_phase_before_phase": {"type": "string", "enum": ["Vol.9 Phase 9.7"]},
+        "latest_commit_before_phase": {"type": "string", "enum": ["10f0c3e419378df8033bdfd594cbf2a163351ecb"]},
+        "customer_facing_readiness": {"type": "boolean", "enum": [false]},
+        "live_runtime_execution_frameworks": {"type": "integer", "enum": [0]},
+        "static_shell_mode": {"type": "string", "enum": ["local_static_read_only_fixture_only_no_network_no_execution"]}
+      }
+    },
+    "implemented_feature_inventory_tree_created": {"type": "boolean", "enum": [true]},
+    "tree_modules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "module_name",
+          "module_type",
+          "introduced_in",
+          "current_status",
+          "readiness_classification",
+          "validation_status",
+          "primary_artifacts",
+          "submodules",
+          "non_activation_statement"
+        ],
+        "properties": {
+          "module_name": {"type": "string"},
+          "module_type": {"type": "string"},
+          "introduced_in": {"type": "string"},
+          "current_status": {"type": "string"},
+          "readiness_classification": {
+            "type": "string",
+            "enum": ["static_planning", "static_fixture", "static_read_only_shell", "mock_consumer_fixture", "validation_backed", "protocol_only", "runtime_record_only", "index_only"]
+          },
+          "validation_status": {"type": "string"},
+          "primary_artifacts": {"type": "array", "items": {"type": "string"}},
+          "submodules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "module_name",
+                "module_type",
+                "introduced_in",
+                "current_status",
+                "readiness_classification",
+                "validation_status",
+                "primary_artifacts",
+                "non_activation_statement"
+              ],
+              "properties": {
+                "module_name": {"type": "string"},
+                "module_type": {"type": "string"},
+                "introduced_in": {"type": "string"},
+                "current_status": {"type": "string"},
+                "readiness_classification": {
+                  "type": "string",
+                  "enum": ["static_planning", "static_fixture", "static_read_only_shell", "mock_consumer_fixture", "validation_backed", "protocol_only", "runtime_record_only", "index_only"]
+                },
+                "validation_status": {"type": "string"},
+                "primary_artifacts": {"type": "array", "items": {"type": "string"}},
+                "non_activation_statement": {"type": "string"}
+              }
+            }
+          },
+          "non_activation_statement": {"type": "string"}
+        }
+      }
+    },
+    "readiness_classification_rules": {"type": "object"},
+    "non_activation_rules": {"type": "array", "items": {"type": "string"}},
+    "source_of_truth_separation": {"type": "object"},
+    "forbidden_scope": {"type": "array", "items": {"type": "string"}},
+    "acceptance": {"type": "object"}
+  }
+}

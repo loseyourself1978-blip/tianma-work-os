@@ -1,0 +1,240 @@
+{
+  "schema_version": "0.1",
+  "inventory_name": "implemented_feature_inventory_tree",
+  "phase": "Vol.9 Phase 9.8",
+  "generated_at_sgt": "2026-06-17T00:00:00+08:00",
+  "baseline": {
+    "latest_completed_phase_before_phase": "Vol.9 Phase 9.7",
+    "latest_commit_before_phase": "10f0c3e419378df8033bdfd594cbf2a163351ecb",
+    "runtime_records_baseline_before_phase": 120,
+    "frameworks_indexed": 24,
+    "customer_facing_frameworks": 0,
+    "live_runtime_execution_frameworks": 0,
+    "fixture_static_read_only_frameworks": 24,
+    "validation_backed_frameworks": 24,
+    "baseline_state": "ldd_full_report_scope_gate_created",
+    "future_gate_activation": false,
+    "customer_facing_readiness": false,
+    "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution"
+  },
+  "implemented_feature_inventory_tree_created": true,
+  "feature_inventory_codex_visible": true,
+  "customer_facing_readiness": false,
+  "live_runtime_execution_frameworks": 0,
+  "static_shell_mode": "local_static_read_only_fixture_only_no_network_no_execution",
+  "tree_modules": [
+    {
+      "module_name": "Tianma Work OS Runtime Governance",
+      "module_type": "runtime_governance",
+      "introduced_in": "Vol.3 Phase 2; matured through Vol.8 Phase 8.6",
+      "current_status": "implemented_static_framework",
+      "readiness_classification": "validation_backed",
+      "validation_status": "validated_by_scripts/validate_runtime_records.sh",
+      "primary_artifacts": ["schemas/portfolio_state.schema.json", "schemas/strategy_state.schema.json", "scripts/validate_runtime_records.py"],
+      "submodules": [
+        {"module_name": "runtime_record_schema_support", "module_type": "schema_support", "introduced_in": "Vol.3 Phase 2", "current_status": "implemented", "readiness_classification": "validation_backed", "validation_status": "validated", "primary_artifacts": ["schemas/portfolio_state.schema.json", "schemas/strategy_state.schema.json"], "non_activation_statement": "Schema support does not create runtime mutation."},
+        {"module_name": "runtime_record_validation", "module_type": "validation_harness", "introduced_in": "Vol.3 Phase 2", "current_status": "implemented", "readiness_classification": "validation_backed", "validation_status": "validated", "primary_artifacts": ["scripts/validate_runtime_records.py"], "non_activation_statement": "Validation does not create runtime capability."},
+        {"module_name": "runtime_status_arbitration", "module_type": "runtime_status_protocol", "introduced_in": "Vol.6 repository-supported historical artifact", "current_status": "implemented", "readiness_classification": "runtime_record_only", "validation_status": "validated", "primary_artifacts": ["records/ldd/2026-06-10/runtime_status_conflict_arbitration_0848_0849_sgt.json"], "non_activation_statement": "Runtime status arbitration does not override trading facts."},
+        {"module_name": "handoff_summary_and_readiness_gate", "module_type": "readiness_gate", "introduced_in": "Vol.6 Phase 6.9", "current_status": "implemented", "readiness_classification": "protocol_only", "validation_status": "validated", "primary_artifacts": ["schemas/vol8_handoff_summary.schema.json", "mock_consumers/ldd/vol9_entry_readiness_gate.json"], "non_activation_statement": "Readiness gates do not create customer-facing readiness."}
+      ],
+      "non_activation_statement": "Runtime governance artifacts remain static/read-only and do not create execution capability."
+    },
+    {
+      "module_name": "LDD Runtime Records & Execution Ledger Support",
+      "module_type": "runtime_record_support",
+      "introduced_in": "Vol.5 repository-supported historical artifact",
+      "current_status": "implemented_static_framework",
+      "readiness_classification": "runtime_record_only",
+      "validation_status": "validated_by_scripts/validate_runtime_records.sh",
+      "primary_artifacts": ["records/ldd/", "schemas/execution_event.schema.json"],
+      "submodules": [
+        {"module_name": "runtime_record_schema_support", "module_type": "schema_support", "introduced_in": "Vol.3 Phase 2", "current_status": "implemented", "readiness_classification": "validation_backed", "validation_status": "validated", "primary_artifacts": ["schemas/execution_event.schema.json"], "non_activation_statement": "Execution schemas do not execute orders."},
+        {"module_name": "order_count_anomaly_detector", "module_type": "static_evidence_gate", "introduced_in": "Vol.9 Phase 9.7", "current_status": "implemented_static_requirement", "readiness_classification": "static_fixture", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/ldd_order_reconciliation_and_zero_fill_separation.json"], "non_activation_statement": "Anomaly detection is a static requirement, not a live detector."},
+        {"module_name": "execution_ledger_gap_detector", "module_type": "static_evidence_gate", "introduced_in": "Vol.9 Phase 9.7", "current_status": "implemented_static_requirement", "readiness_classification": "static_fixture", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/ldd_order_reconciliation_and_zero_fill_separation.json"], "non_activation_statement": "Gap detection does not mutate an execution ledger."},
+        {"module_name": "actual_vs_expired_vs_canceled_event_distinction", "module_type": "execution_event_boundary", "introduced_in": "Vol.9 Phase 9.1", "current_status": "implemented_static_boundary", "readiness_classification": "protocol_only", "validation_status": "validated", "primary_artifacts": ["docs/runtime/LDD_FULL_REPORT_SCOPE_AND_ORDER_RECONCILIATION_PROTOCOL_v0.1.md"], "non_activation_statement": "Event distinction does not classify live broker orders."}
+      ],
+      "non_activation_statement": "Execution ledger support is static evidence only and does not change account state."
+    },
+    {
+      "module_name": "Static Shell / LDD Cockpit Planning",
+      "module_type": "static_shell_planning",
+      "introduced_in": "Vol.6 Phase 6.4; Vol.7 static shell planning",
+      "current_status": "implemented_static_framework",
+      "readiness_classification": "static_read_only_shell",
+      "validation_status": "validated_by_phase_validators",
+      "primary_artifacts": ["static_shell/ldd/", "mock_consumers/ldd/static_shell_fixture_coverage_matrix.json"],
+      "submodules": [
+        {"module_name": "static_shell_fixture_matrix", "module_type": "fixture_matrix", "introduced_in": "Vol.9 Phase 9.6", "current_status": "implemented", "readiness_classification": "static_fixture", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/static_shell_fixture_coverage_matrix.json"], "non_activation_statement": "Fixture coverage is not production coverage."},
+        {"module_name": "static_cockpit_panel_requirements", "module_type": "panel_requirement_gate", "introduced_in": "Vol.9 Phase 9.7", "current_status": "implemented", "readiness_classification": "static_planning", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/ldd_static_cockpit_panel_requirement_gate.json"], "non_activation_statement": "Static panel requirements do not create live UI."}
+      ],
+      "non_activation_statement": "Static shell planning remains local, read-only, fixture-only, no-network, and no-execution."
+    },
+    {
+      "module_name": "Mock Consumer Fixtures",
+      "module_type": "fixture_contracts",
+      "introduced_in": "Vol.5 Phase 5.6b; matured through Vol.9",
+      "current_status": "implemented_static_framework",
+      "readiness_classification": "mock_consumer_fixture",
+      "validation_status": "validated_by_scripts/validate_runtime_records.sh",
+      "primary_artifacts": ["mock_consumers/ldd/"],
+      "submodules": [
+        {"module_name": "mock_consumer_fixture_contracts", "module_type": "fixture_contract", "introduced_in": "Vol.5 Phase 5.6b", "current_status": "implemented", "readiness_classification": "mock_consumer_fixture", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/consumer_contract_test_matrix.json"], "non_activation_statement": "Mock consumers do not create external APIs."},
+        {"module_name": "ldd_latest_post_close_sync_reference", "module_type": "static_reference", "introduced_in": "Vol.9 Phase 9.7", "current_status": "implemented_static_reference", "readiness_classification": "mock_consumer_fixture", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/ldd_latest_post_close_sync_reference.json"], "non_activation_statement": "Latest LDD reference values do not mutate trading state."}
+      ],
+      "non_activation_statement": "Fixture contracts do not create live endpoints or network dependencies."
+    },
+    {
+      "module_name": "Framework Index & Feature Inventory",
+      "module_type": "feature_inventory",
+      "introduced_in": "Vol.8 Phase 8.2; upgraded in Vol.9 Phase 9.8",
+      "current_status": "implemented_static_catalog",
+      "readiness_classification": "index_only",
+      "validation_status": "validated_by_scripts/validate_vol9_phase9_8_feature_inventory.sh",
+      "primary_artifacts": ["docs/runtime/IMPLEMENTED_FEATURE_INVENTORY_TREE_AND_TIMELINE_v0.1.md"],
+      "submodules": [
+        {"module_name": "implemented_function_framework_index", "module_type": "framework_index", "introduced_in": "Vol.8 Phase 8.2", "current_status": "implemented", "readiness_classification": "index_only", "validation_status": "validated", "primary_artifacts": ["docs/runtime/IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_v0.1.md"], "non_activation_statement": "Framework index is a reference artifact only."},
+        {"module_name": "implemented_feature_inventory_tree", "module_type": "feature_tree", "introduced_in": "Vol.9 Phase 9.8", "current_status": "implemented", "readiness_classification": "index_only", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/implemented_feature_inventory_tree.json"], "non_activation_statement": "Feature tree improves visibility only."},
+        {"module_name": "implemented_feature_timeline_catalog", "module_type": "feature_timeline", "introduced_in": "Vol.9 Phase 9.8", "current_status": "implemented", "readiness_classification": "index_only", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/implemented_feature_timeline_catalog.json"], "non_activation_statement": "Timeline catalog does not activate features."}
+      ],
+      "non_activation_statement": "Catalog artifacts do not create new runtime capability."
+    },
+    {
+      "module_name": "Cross-Workspace Baseline Sync",
+      "module_type": "baseline_sync_protocol",
+      "introduced_in": "Vol.9 Phase 9.1",
+      "current_status": "implemented_static_protocol",
+      "readiness_classification": "protocol_only",
+      "validation_status": "validated_by_phase_9_1_and_9_2_validators",
+      "primary_artifacts": ["docs/runtime/TWOS_LDD_RUNTIME_STATUS_BACKFEED_PROTOCOL_v0.1.md"],
+      "submodules": [
+        {"module_name": "twos_ldd_runtime_status_backfeed_protocol", "module_type": "backfeed_protocol", "introduced_in": "Vol.9 Phase 9.1", "current_status": "implemented", "readiness_classification": "protocol_only", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/twos_ldd_runtime_status_backfeed_protocol.json"], "non_activation_statement": "Backfeed protocol does not mutate runtime state."},
+        {"module_name": "ldd_consumer_acknowledgement_gate", "module_type": "consumer_acknowledgement", "introduced_in": "Vol.9 Phase 9.2", "current_status": "implemented", "readiness_classification": "mock_consumer_fixture", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/ldd_consumer_acknowledgement_packet.json"], "non_activation_statement": "Acknowledgement fixture is not live sync."},
+        {"module_name": "strict_baseline_sync_ready_gate", "module_type": "sync_ready_gate", "introduced_in": "Vol.9 Phase 9.2", "current_status": "implemented", "readiness_classification": "static_fixture", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/strict_baseline_sync_ready_gate.json"], "non_activation_statement": "Strict sync-ready state does not create trading facts."}
+      ],
+      "non_activation_statement": "Baseline sync remains static and source-taxonomy only."
+    },
+    {
+      "module_name": "Future Implementation Boundary & Gate System",
+      "module_type": "future_gate_system",
+      "introduced_in": "Vol.9 Phase 9.3",
+      "current_status": "implemented_static_protocol",
+      "readiness_classification": "static_planning",
+      "validation_status": "validated_by_phase_9_3_through_9_6_validators",
+      "primary_artifacts": ["mock_consumers/ldd/future_implementation_boundary_matrix.json"],
+      "submodules": [
+        {"module_name": "future_implementation_boundary_matrix", "module_type": "boundary_matrix", "introduced_in": "Vol.9 Phase 9.3", "current_status": "implemented", "readiness_classification": "static_planning", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/future_implementation_boundary_matrix.json"], "non_activation_statement": "Boundary matrix does not activate future gates."},
+        {"module_name": "static_prototype_gate", "module_type": "static_gate", "introduced_in": "Vol.9 Phase 9.3", "current_status": "implemented", "readiness_classification": "static_planning", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/static_prototype_gate.json"], "non_activation_statement": "Static prototype gate allows static work only."},
+        {"module_name": "future_gate_readiness_checklist", "module_type": "readiness_checklist", "introduced_in": "Vol.9 Phase 9.4", "current_status": "implemented", "readiness_classification": "static_fixture", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/future_gate_readiness_checklist.json"], "non_activation_statement": "Evidence readiness is not capability readiness."},
+        {"module_name": "forbidden_scope_regression_guard", "module_type": "regression_guard", "introduced_in": "Vol.9 Phase 9.5", "current_status": "implemented", "readiness_classification": "validation_backed", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/forbidden_scope_regression_guard.json"], "non_activation_statement": "Regression guard prevents activation but is not capability."},
+        {"module_name": "future_gate_non_activation_audit", "module_type": "non_activation_audit", "introduced_in": "Vol.9 Phase 9.5", "current_status": "implemented", "readiness_classification": "validation_backed", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/future_gate_non_activation_audit.json"], "non_activation_statement": "Audit is not activation."},
+        {"module_name": "prototype_to_gate_traceability_map", "module_type": "traceability_map", "introduced_in": "Vol.9 Phase 9.6", "current_status": "implemented", "readiness_classification": "static_planning", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/prototype_to_gate_traceability_map.json"], "non_activation_statement": "Traceability is planning evidence only."}
+      ],
+      "non_activation_statement": "Future gate system keeps non-static capabilities blocked."
+    },
+    {
+      "module_name": "LDD Full-Market Review Scope System",
+      "module_type": "ldd_scope_system",
+      "introduced_in": "Vol.6 Phase 6.8a; upgraded in Vol.9 Phase 9.7",
+      "current_status": "implemented_static_requirement",
+      "readiness_classification": "static_fixture",
+      "validation_status": "validated_by_scripts/validate_vol9_phase9_7_ldd_full_report_scope.sh",
+      "primary_artifacts": ["mock_consumers/ldd/ldd_full_report_scope_requirements.json"],
+      "submodules": [
+        {"module_name": "ldd_full_market_scope_requirements", "module_type": "scope_requirement", "introduced_in": "Vol.6 Phase 6.8a", "current_status": "implemented", "readiness_classification": "static_fixture", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/ldd_full_report_scope_requirements.json"], "non_activation_statement": "Full-market scope is not live market data."},
+        {"module_name": "full_report_scope_regression_guard", "module_type": "scope_guard", "introduced_in": "Vol.9 Phase 9.7", "current_status": "implemented", "readiness_classification": "validation_backed", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/ldd_full_report_scope_requirements.json"], "non_activation_statement": "Scope guard is static-only."},
+        {"module_name": "sector_rotation_heatmap_requirement", "module_type": "scope_requirement", "introduced_in": "Vol.9 Phase 9.7", "current_status": "implemented", "readiness_classification": "static_planning", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/ldd_static_cockpit_panel_requirement_gate.json"], "non_activation_statement": "Heatmap requirement does not create market data connection."},
+        {"module_name": "non_position_candidate_radar_requirement", "module_type": "scope_requirement", "introduced_in": "Vol.9 Phase 9.7", "current_status": "implemented", "readiness_classification": "static_planning", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/ldd_static_cockpit_panel_requirement_gate.json"], "non_activation_statement": "Candidate radar requirement is not a trading signal."},
+        {"module_name": "forbidden_chase_list_requirement", "module_type": "risk_requirement", "introduced_in": "Vol.9 Phase 9.7", "current_status": "implemented", "readiness_classification": "static_planning", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/ldd_full_report_scope_requirements.json"], "non_activation_statement": "Forbidden list does not place orders."},
+        {"module_name": "dream_sleeve_monitoring_only_requirement", "module_type": "monitoring_requirement", "introduced_in": "Vol.9 Phase 9.7", "current_status": "implemented", "readiness_classification": "static_planning", "validation_status": "validated", "primary_artifacts": ["docs/runtime/LDD_FULL_REPORT_SCOPE_AND_ORDER_RECONCILIATION_PROTOCOL_v0.1.md"], "non_activation_statement": "Dream Sleeve monitoring does not justify main-strategy chase."},
+        {"module_name": "full_standalone_sync_regeneration_rule", "module_type": "sync_rule", "introduced_in": "Vol.9 Phase 9.7", "current_status": "implemented", "readiness_classification": "protocol_only", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/ldd_full_report_scope_requirements.json"], "non_activation_statement": "Regeneration rule is not a scheduler or notification dispatcher."}
+      ],
+      "non_activation_statement": "LDD scope requirements do not create live review automation."
+    },
+    {
+      "module_name": "Order Reconciliation & Zero-Fill Separation",
+      "module_type": "execution_evidence_gate",
+      "introduced_in": "Vol.9 Phase 9.7",
+      "current_status": "implemented_static_requirement",
+      "readiness_classification": "static_fixture",
+      "validation_status": "validated_by_scripts/validate_vol9_phase9_7_ldd_full_report_scope.sh",
+      "primary_artifacts": ["mock_consumers/ldd/ldd_order_reconciliation_and_zero_fill_separation.json"],
+      "submodules": [
+        {"module_name": "order_reconciliation_gate", "module_type": "order_evidence_gate", "introduced_in": "Vol.9 Phase 9.7", "current_status": "implemented", "readiness_classification": "static_fixture", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/ldd_order_reconciliation_and_zero_fill_separation.json"], "non_activation_statement": "Order reconciliation does not classify live orders."},
+        {"module_name": "zero_fill_order_separation", "module_type": "zero_fill_boundary", "introduced_in": "Vol.9 Phase 9.7", "current_status": "implemented", "readiness_classification": "static_fixture", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/ldd_order_reconciliation_and_zero_fill_separation.json"], "non_activation_statement": "Expired zero-fill orders do not create positions or cash impact."},
+        {"module_name": "spcx_zero_fill_order_reference", "module_type": "static_order_reference", "introduced_in": "Vol.9 Phase 9.7", "current_status": "implemented", "readiness_classification": "mock_consumer_fixture", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/ldd_latest_post_close_sync_reference.json"], "non_activation_statement": "SPCX reference is not an order instruction."}
+      ],
+      "non_activation_statement": "Order reconciliation remains static and non-executing."
+    },
+    {
+      "module_name": "Source-of-Truth / Quote-Type / Execution Event Boundaries",
+      "module_type": "boundary_protocol",
+      "introduced_in": "Vol.6 through Vol.9",
+      "current_status": "implemented_static_boundary",
+      "readiness_classification": "protocol_only",
+      "validation_status": "validated_by_phase_validators",
+      "primary_artifacts": ["docs/runtime/LDD_FULL_REPORT_SCOPE_AND_ORDER_RECONCILIATION_PROTOCOL_v0.1.md"],
+      "submodules": [
+        {"module_name": "quote_type_tagging_boundary", "module_type": "quote_boundary", "introduced_in": "Vol.6 repository-supported historical artifact", "current_status": "implemented", "readiness_classification": "protocol_only", "validation_status": "validated", "primary_artifacts": ["docs/runtime/LDD_FULL_REPORT_SCOPE_AND_ORDER_RECONCILIATION_PROTOCOL_v0.1.md"], "non_activation_statement": "Quote tags are not executable prices unless final filled."},
+        {"module_name": "actual_vs_expired_vs_canceled_event_distinction", "module_type": "event_boundary", "introduced_in": "Vol.9 Phase 9.1", "current_status": "implemented", "readiness_classification": "protocol_only", "validation_status": "validated", "primary_artifacts": ["mock_consumers/ldd/ldd_order_reconciliation_and_zero_fill_separation.json"], "non_activation_statement": "Event distinctions do not execute trades."}
+      ],
+      "non_activation_statement": "Boundary protocols do not override either Source of Truth."
+    },
+    {
+      "module_name": "Validation & Regression Guard Harness",
+      "module_type": "validation_harness",
+      "introduced_in": "Vol.3 through Vol.9",
+      "current_status": "implemented_static_framework",
+      "readiness_classification": "validation_backed",
+      "validation_status": "validated_by_repository_validators",
+      "primary_artifacts": ["scripts/validate_runtime_records.py", "scripts/validate_vol9_phase9_8_feature_inventory.py"],
+      "submodules": [
+        {"module_name": "runtime_record_validation", "module_type": "validation_harness", "introduced_in": "Vol.3 Phase 2", "current_status": "implemented", "readiness_classification": "validation_backed", "validation_status": "validated", "primary_artifacts": ["scripts/validate_runtime_records.py"], "non_activation_statement": "Validation is not runtime capability."},
+        {"module_name": "forbidden_scope_regression_guard", "module_type": "regression_guard", "introduced_in": "Vol.9 Phase 9.5", "current_status": "implemented", "readiness_classification": "validation_backed", "validation_status": "validated", "primary_artifacts": ["scripts/validate_vol9_phase9_5_forbidden_scope_regression_guard.py"], "non_activation_statement": "Guard does not activate capabilities."}
+      ],
+      "non_activation_statement": "Validation harnesses only confirm static artifact consistency."
+    },
+    {
+      "module_name": "DUXD Product Feedback Backfeed",
+      "module_type": "product_feedback_backfeed",
+      "introduced_in": "Vol.8 Phase 8.3 through Vol.9 Phase 9.8",
+      "current_status": "implemented_static_feedback_loop",
+      "readiness_classification": "static_planning",
+      "validation_status": "validated_by_phase_validators",
+      "primary_artifacts": ["docs/runtime/VOL9_PHASE9_8_IMPLEMENTED_FEATURE_INVENTORY_TREE_AND_VOLUME_TIMELINE_CATALOG_REFRESH_v0.1.md"],
+      "submodules": [
+        {"module_name": "duxd_product_feedback_backfeed", "module_type": "feedback_backfeed", "introduced_in": "Vol.8 Phase 8.3", "current_status": "implemented", "readiness_classification": "static_planning", "validation_status": "validated", "primary_artifacts": ["docs/runtime/VOL8_PHASE8_3_LOCAL_OPERATOR_FEEDBACK_REVIEW_MODEL_v0.1.md"], "non_activation_statement": "Product feedback is not customer-facing readiness."},
+        {"module_name": "product_readability_feedback_loop", "module_type": "feature_visibility_feedback", "introduced_in": "Vol.9 Phase 9.8", "current_status": "implemented", "readiness_classification": "index_only", "validation_status": "validated", "primary_artifacts": ["docs/runtime/IMPLEMENTED_FEATURE_INVENTORY_TREE_AND_TIMELINE_v0.1.md"], "non_activation_statement": "Readability feedback does not create live implementation."}
+      ],
+      "non_activation_statement": "DUXD feedback remains a static planning backfeed."
+    }
+  ],
+  "readiness_classification_rules": {
+    "allowed": ["static_planning", "static_fixture", "static_read_only_shell", "mock_consumer_fixture", "validation_backed", "protocol_only", "runtime_record_only", "index_only"],
+    "forbidden": ["customer_facing_ready", "live_runtime_ready", "execution_ready", "broker_connected", "binance_connected", "market_data_connected", "production_ready"]
+  },
+  "non_activation_rules": [
+    "Implemented feature inventory is a visibility and traceability artifact.",
+    "It does not create new runtime capability.",
+    "It does not activate customer-facing readiness.",
+    "It does not activate live runtime readiness.",
+    "It does not activate trading execution readiness.",
+    "It must clearly distinguish implemented static frameworks from future live capabilities."
+  ],
+  "source_of_truth_separation": {
+    "twos_runtime_product_sot": "product/runtime baseline, static feature inventory, validation state, readiness gates, and static shell readiness only",
+    "ldd_trading_execution_sot": "broker screenshots, Binance screenshots, order screenshots, filled trades, expired zero-fill orders, canceled orders, portfolio changes, cash impact, and quote type only",
+    "separation_rules": [
+      "TWOS runtime/product SoT must never override LDD trading/execution SoT.",
+      "LDD trading/execution SoT must never override TWOS runtime/product SoT.",
+      "Implemented feature inventory must never mutate trading facts, portfolio state, execution ledger state, account state, or cash state."
+    ]
+  },
+  "forbidden_scope": ["production_ui", "customer_facing_ui", "hosted_app", "api_server", "live_endpoint", "external_api", "broker_connection", "binance_connection", "live_market_data", "trading_automation", "credential_handling", "login_auth", "runtime_mutation", "execution_trigger", "order_placement", "portfolio_modification", "background_worker", "scheduler", "notification_dispatcher", "github_issues", "github_projects_board", "package_manager_files", "build_tools", "frontend_framework", "network_dependency", "external_integration", "production_deployment_capability"],
+  "acceptance": {
+    "all_required_top_level_modules_present": true,
+    "all_required_submodules_present": true,
+    "feature_inventory_codex_visible": true,
+    "customer_facing_readiness": false,
+    "live_runtime_execution_frameworks": 0
+  }
+}

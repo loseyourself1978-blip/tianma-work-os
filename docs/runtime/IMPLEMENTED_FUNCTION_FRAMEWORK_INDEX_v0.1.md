@@ -10,6 +10,16 @@ Customer-facing readiness: `false`
 
 This index lists repo-backed implemented frameworks only. It does not claim customer-facing readiness, live integration, runtime mutation, or execution readiness.
 
+## Product-Readable Feature Inventory
+
+For a user-facing and Codex-facing view of implemented modules, submodules, concrete feature descriptions, and Vol./Phase timeline, read:
+
+```text
+docs/runtime/IMPLEMENTED_FEATURE_INVENTORY_TREE_AND_TIMELINE_v0.1.md
+```
+
+The feature inventory sits above this framework-oriented index. This file remains the technical framework reference.
+
 | # | Functional Framework | Category | Implemented Since | Latest Verified | Current Status | Key Artifacts | Next Improvement |
 |---|---|---|---|---|---|---|---|
 | 1 | Runtime Record System | Runtime Record System | Vol.3 Phase 2 - Runtime Data Model and LDD Pilot Records<br>Vol.3 Phase 2 / v0.1 | Vol.8 Phase 8.2 - Implemented Function Framework Index Output Module<br>`90d6d2081e7ca75de082d5447ef80e4250d8131e` | implemented validation contract | `docs/runtime/RUNTIME_ARCHITECTURE_v0.1.md`<br>`schemas/portfolio_state.schema.json`<br>`schemas/strategy_state.schema.json`<br>+1 more | Keep adding schema mappings as new record classes appear. |
