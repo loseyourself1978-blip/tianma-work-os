@@ -16,6 +16,7 @@ For foundational principles and roadmap taxonomy, read:
 - `docs/runtime/VOL10_MILESTONE_PLAN_v0.1.md`
 - `docs/runtime/VOL10_VOLUME_ENTRY_PROTOCOL_REVIEW_v0.1.md`
 - `docs/runtime/VOL10_STATIC_PRODUCT_BLUEPRINT_CONSOLIDATION_MAP_v0.1.md`
+- `docs/runtime/VOL10_EARLY_CLOSEOUT_AND_NEXT_VOLUME_HANDOFF_v0.1.md`
 
 ## 1. Implemented Feature Tree
 
@@ -167,8 +168,9 @@ For the fastest understanding of implemented functionality, read in this order:
 7. `docs/runtime/VOL10_MILESTONE_PLAN_v0.1.md`
 8. `docs/runtime/VOL10_VOLUME_ENTRY_PROTOCOL_REVIEW_v0.1.md`
 9. `docs/runtime/VOL10_STATIC_PRODUCT_BLUEPRINT_CONSOLIDATION_MAP_v0.1.md`
-10. `mock_consumers/ldd/implemented_feature_inventory_tree.json`
-11. `mock_consumers/ldd/implemented_feature_timeline_catalog.json`
-12. `docs/runtime/IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_v0.1.md`
-13. `mock_consumers/ldd/implemented_function_framework_index.json`
-14. `INDEX.md`
+10. `docs/runtime/VOL10_EARLY_CLOSEOUT_AND_NEXT_VOLUME_HANDOFF_v0.1.md`
+11. `mock_consumers/ldd/implemented_feature_inventory_tree.json`
+12. `mock_consumers/ldd/implemented_feature_timeline_catalog.json`
+13. `docs/runtime/IMPLEMENTED_FUNCTION_FRAMEWORK_INDEX_v0.1.md`
+14. `mock_consumers/ldd/implemented_function_framework_index.json`
+15. `INDEX.md`

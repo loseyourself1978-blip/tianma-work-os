@@ -292,6 +292,8 @@ def schema_for_filename(filename: str) -> tuple[str, str] | None:
         return "vol10_volume_entry_protocol_review", SCHEMA_FILES["vol10_volume_entry_protocol_review"]
     if "vol10_phase10_1_static_product_blueprint_consolidation_map" in filename:
         return "vol10_static_product_blueprint_consolidation_map", SCHEMA_FILES["vol10_static_product_blueprint_consolidation_map"]
+    if "vol10_phase10_2_early_closeout_and_next_volume_handoff" in filename:
+        return "cockpit_summary", SCHEMA_FILES["cockpit_summary"]
     if "static_cockpit_prototype_boundary_review" in filename:
         return "static_cockpit_prototype_review", SCHEMA_FILES["static_cockpit_prototype_review"]
     if "internal_operator_cockpit_static_spec_review" in filename:
