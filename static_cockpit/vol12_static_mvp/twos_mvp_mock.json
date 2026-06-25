@@ -1,0 +1,64 @@
+{
+  "meta": {
+    "product": "Tianma Work OS",
+    "volume": "Vol.12",
+    "slice": "One-Hour Static MVP Sprint",
+    "mode": "static_local_fixture_only",
+    "lastKnownBaseline": "Vol.11 closeout: Minimum Context / AI Board Always-On / Active Next Lock",
+    "noLiveBoundary": ["no_execution", "no_api", "no_scheduler", "no_schema", "no_validator", "no_broker_connection", "no_binance_connection"]
+  },
+  "activeRuntimeBoard": {
+    "state": "Vol.12 static MVP slice opened",
+    "northStar": "Visible cockpit first: reduce lookup time before adding automation",
+    "activeNextLock": "Build only one HTML page, one CSS file, and one mock JSON file",
+    "minimumContext": [
+      "Minimum Context remains active",
+      "AI Board remains always-on",
+      "Active Next Lock remains active",
+      "No-live boundary remains active"
+    ]
+  },
+  "aiBoardStrip": [
+    { "role": "North Star", "signal": "Visible static MVP over governance expansion" },
+    { "role": "Context Minimalist", "signal": "One-screen cockpit, no deep lookup required" },
+    { "role": "Risk Officer", "signal": "Forbidden scope displayed as a persistent bar" },
+    { "role": "Reviewable Value", "signal": "Panels prove what state is visible and what is intentionally mocked" }
+  ],
+  "lddRiskVisibility": {
+    "mode": "cash_defense_core_position_survival_mode",
+    "keyRisks": [
+      "GOOG below recovery zone: watch 350 / 355 / 370 levels",
+      "NVDA repair zone: watch 204 / 208 confirmation and 198 risk line",
+      "SOXL / GGLL / GDXU / UGL remain no-chase unless rules change",
+      "USDT defense target remains above 70% in crypto sleeve"
+    ],
+    "executionSourceOfTruth": "Broker / Binance screenshots and order-detail evidence, not live feed"
+  },
+  "lddMarketMapV2": {
+    "coverage": [
+      "AI and megacap: NVDA, GOOG, QQQ, SMH",
+      "Semiconductor and leverage radar: SOXL, SOXS, INTC, AMD",
+      "Memory / storage: MU, WDC, SNDK, STX, DRAM ETF",
+      "Gold and miners: GLD, UGL, GDXU",
+      "Crypto: BTC, ETH, SOL, DOGE, ZEC",
+      "Dream Sleeve: SPCX / SpaceX-style support positions"
+    ],
+    "rule": "Coverage does not imply trade permission; no-chase list overrides radar interest."
+  },
+  "wc2026MultiLedger": {
+    "status": "multi-ledger prediction review active",
+    "ledgers": [
+      "Main prediction",
+      "Defensive prediction",
+      "Upset prediction",
+      "High-score prediction",
+      "High-odds prediction",
+      "Post-match correction ledger"
+    ],
+    "principle": "High-odds is not the same as main recommendation; score accuracy is secondary to direction and risk classification."
+  },
+  "activeNext": {
+    "nextStep": "Open index.html locally and review one-screen readability before adding any new layer.",
+    "forbiddenScope": ["live data", "execution", "API", "scheduler", "schema", "validator", "framework", "unrelated file changes"]
+  }
+}
