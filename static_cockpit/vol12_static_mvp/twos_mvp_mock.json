@@ -1,64 +1,81 @@
 {
   "meta": {
     "product": "Tianma Work OS",
-    "volume": "Vol.12",
-    "slice": "One-Hour Static MVP Sprint",
+    "volume": "Vol.12.1",
+    "slice": "TWOS Host Layer Static Integration",
     "mode": "static_local_fixture_only",
-    "lastKnownBaseline": "Vol.11 closeout: Minimum Context / AI Board Always-On / Active Next Lock",
-    "noLiveBoundary": ["no_execution", "no_api", "no_scheduler", "no_schema", "no_validator", "no_broker_connection", "no_binance_connection"]
-  },
-  "activeRuntimeBoard": {
-    "state": "Vol.12 static MVP slice opened",
-    "northStar": "Visible cockpit first: reduce lookup time before adding automation",
-    "activeNextLock": "Build only one HTML page, one CSS file, and one mock JSON file",
-    "minimumContext": [
-      "Minimum Context remains active",
-      "AI Board remains always-on",
-      "Active Next Lock remains active",
-      "No-live boundary remains active"
+    "syncState": "2026-06-25 Post",
+    "sourceOfTruth": "origin/main actual Git worktree static fixture",
+    "noLiveBoundary": [
+      "no_api",
+      "no_live_data",
+      "no_broker_connection",
+      "no_binance_connection",
+      "no_scheduler",
+      "no_schema",
+      "no_validator",
+      "no_framework",
+      "no_market_analysis_logic",
+      "no_trade_execution_logic",
+      "no_match_prediction_logic"
     ]
   },
-  "aiBoardStrip": [
-    { "role": "North Star", "signal": "Visible static MVP over governance expansion" },
-    { "role": "Context Minimalist", "signal": "One-screen cockpit, no deep lookup required" },
-    { "role": "Risk Officer", "signal": "Forbidden scope displayed as a persistent bar" },
-    { "role": "Reviewable Value", "signal": "Panels prove what state is visible and what is intentionally mocked" }
-  ],
-  "lddRiskVisibility": {
-    "mode": "cash_defense_core_position_survival_mode",
-    "keyRisks": [
-      "GOOG below recovery zone: watch 350 / 355 / 370 levels",
-      "NVDA repair zone: watch 204 / 208 confirmation and 198 risk line",
-      "SOXL / GGLL / GDXU / UGL remain no-chase unless rules change",
-      "USDT defense target remains above 70% in crypto sleeve"
-    ],
-    "executionSourceOfTruth": "Broker / Binance screenshots and order-detail evidence, not live feed"
+  "twos": {
+    "hostLayer": "Vol.12.1 Host Layer",
+    "aiBoard": "AI Board Always-On",
+    "activeNextLock": "Active Next Lock",
+    "status": "Static/local/fixture-only",
+    "workstreamsHosted": ["TWOS", "LDD", "2026WC"],
+    "forbiddenScopeVisible": true
   },
-  "lddMarketMapV2": {
-    "coverage": [
-      "AI and megacap: NVDA, GOOG, QQQ, SMH",
-      "Semiconductor and leverage radar: SOXL, SOXS, INTC, AMD",
-      "Memory / storage: MU, WDC, SNDK, STX, DRAM ETF",
-      "Gold and miners: GLD, UGL, GDXU",
-      "Crypto: BTC, ETH, SOL, DOGE, ZEC",
-      "Dream Sleeve: SPCX / SpaceX-style support positions"
+  "ldd": {
+    "syncState": "2026-06-25 Post",
+    "riskOrderCompletionLedger": {
+      "status": "completed",
+      "symbol": "NVDA",
+      "filled": "197 × 5",
+      "positionBefore": 10,
+      "positionAfter": 5
+    },
+    "postExecutionPositionRebaseline": {
+      "positions": {
+        "NVDA": 5,
+        "GOOG": 5,
+        "SPCX Dream Sleeve": 10
+      },
+      "cash": {
+        "usEquityCashApprox": 19670.61,
+        "usEquityCashPercentApprox": "82.3%",
+        "binanceUsdtPercentApprox": "73.4%"
+      }
+    },
+    "riskLevels": {
+      "NVDA": "190 / 198 / 204",
+      "GOOG": "340 / 350 / 355"
+    },
+    "panels": [
+      "Risk Order Completion Ledger",
+      "Post-Execution Position Rebaseline",
+      "Memory/Storage Day-2 Confirmation Gate",
+      "Theme Confirmation vs Entry Discipline",
+      "Market Map v2.0 Coverage Ledger"
     ],
-    "rule": "Coverage does not imply trade permission; no-chase list overrides radar interest."
+    "marketMapV2Coverage": ["DRAM", "MU", "SNDK", "WDC", "STX", "QCOM"],
+    "discipline": [
+      "no chase",
+      "no SOXL/SOXS chase",
+      "storage strength does not equal high-open chase",
+      "theme confirmed, entry discipline not relaxed"
+    ]
   },
-  "wc2026MultiLedger": {
-    "status": "multi-ledger prediction review active",
-    "ledgers": [
-      "Main prediction",
-      "Defensive prediction",
-      "Upset prediction",
-      "High-score prediction",
-      "High-odds prediction",
-      "Post-match correction ledger"
-    ],
-    "principle": "High-odds is not the same as main recommendation; score accuracy is secondary to direction and risk classification."
+  "wc2026": {
+    "status": "Multi-Ledger active",
+    "ledgerMode": "Static manual ledger only",
+    "forbidden": ["No live odds", "No live schedule", "No auto prediction"],
+    "nextManualSync": "Next manual sync / review checkpoint after user-provided snapshot"
   },
   "activeNext": {
-    "nextStep": "Open index.html locally and review one-screen readability before adding any new layer.",
-    "forbiddenScope": ["live data", "execution", "API", "scheduler", "schema", "validator", "framework", "unrelated file changes"]
+    "nextStep": "Review the hosted static cockpit locally.",
+    "fixtureFile": "./twos_mvp_mock.json"
   }
 }

@@ -3,112 +3,167 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tianma Work OS Vol.12 Static MVP Cockpit</title>
+  <title>Tianma Work OS Vol.12.1 Host Layer Static Cockpit</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <main class="cockpit-shell" aria-label="Tianma Work OS Vol.12 Static MVP Cockpit">
-    <header class="hero panel">
+  <main class="cockpit-shell" aria-label="Tianma Work OS Vol.12.1 Host Layer Static Cockpit">
+    <header class="host-header panel">
       <div>
-        <p class="eyebrow">Tianma Work OS · Vol.12</p>
-        <h1>Static TWOS Cockpit MVP</h1>
-        <p class="hero-copy">One-screen visible state for TWOS / LDD / 2026WC. Static, local, fixture-only. No live data, no execution, no API.</p>
+        <p class="eyebrow">Tianma Work OS · Vol.12.1 Host Layer</p>
+        <h1>TWOS / LDD / 2026WC Static Cockpit</h1>
+        <p class="hero-copy">Static/local/fixture-only host view. One HTML page, one CSS file, one mock JSON fixture. No live data, no execution layer.</p>
       </div>
-      <div class="status-stack" aria-label="Current runtime status">
-        <span class="status-pill live-off">LIVE OFF</span>
-        <span class="status-pill">Fixture-only</span>
-        <span class="status-pill">Active Next Locked</span>
+      <div class="status-stack" aria-label="Static status">
+        <span class="status-pill warning">Static/local/fixture-only</span>
+        <span class="status-pill">AI Board Always-On</span>
+        <span class="status-pill">Active Next Lock</span>
       </div>
     </header>
 
-    <section class="ai-strip" aria-label="AI Board strip">
-      <article><strong>North Star</strong><span>Visible MVP before governance expansion</span></article>
-      <article><strong>Context Minimalist</strong><span>One screen, low lookup cost</span></article>
-      <article><strong>Risk Officer</strong><span>Forbidden scope always visible</span></article>
-      <article><strong>Reviewable Value</strong><span>State is readable, mocked, auditable</span></article>
+    <section class="ai-strip" aria-label="AI Board">
+      <article><strong>AI Board</strong><span>Always-on review strip</span></article>
+      <article><strong>TWOS</strong><span>Host layer and scope lock</span></article>
+      <article><strong>LDD</strong><span>Post-execution state is first-class</span></article>
+      <article><strong>2026WC</strong><span>Manual ledger only</span></article>
     </section>
 
-    <section class="grid-top">
-      <article class="panel runtime-board">
+    <section class="workstream-grid" aria-label="Three hosted workstreams">
+      <article class="panel stream-card twos-card">
         <div class="section-heading">
-          <p class="eyebrow">Active Runtime Board</p>
-          <h2>Vol.12 static MVP slice opened</h2>
+          <p class="eyebrow">TWOS</p>
+          <h2>Vol.12.1 Host Layer</h2>
         </div>
-        <div class="runtime-list">
-          <div><span>Baseline</span><strong>Vol.11 closed</strong><em>Minimum Context · AI Board Always-On · Active Next Lock</em></div>
-          <div><span>Goal</span><strong>Visible cockpit</strong><em>Reduce lookup time before automation</em></div>
-          <div><span>Mode</span><strong>Static local fixture</strong><em>Open HTML locally; JSON is mock SoT</em></div>
-          <div><span>Boundary</span><strong>No-live preserved</strong><em>No API · no execution · no scheduler</em></div>
+        <dl class="fact-list">
+          <div><dt>Runtime</dt><dd>AI Board Always-On</dd></div>
+          <div><dt>Control</dt><dd>Active Next Lock</dd></div>
+          <div><dt>Mode</dt><dd>Static/local/fixture-only</dd></div>
+          <div><dt>Fixture</dt><dd><a href="./twos_mvp_mock.json">twos_mvp_mock.json</a></dd></div>
+        </dl>
+        <p class="note">Host layer keeps TWOS, LDD, and 2026WC visible without adding server, API, schema, validator, scheduler, or framework behavior.</p>
+      </article>
+
+      <article class="panel stream-card ldd-card">
+        <div class="section-heading">
+          <p class="eyebrow">LDD</p>
+          <h2>2026-06-25 Post</h2>
+        </div>
+        <div class="highlight-row">
+          <span><b>NVDA risk order completed</b><em>197 × 5 filled</em></span>
+          <span><b>NVDA rebaseline</b><em>10 reduced to 5</em></span>
+        </div>
+        <p class="mini-label">Current positions / cash</p>
+        <div class="metric-grid">
+          <span><b>NVDA</b><em>5</em></span>
+          <span><b>GOOG</b><em>5</em></span>
+          <span><b>SPCX Dream Sleeve</b><em>10</em></span>
+          <span><b>US equity cash</b><em>about 19,670.61 / about 82.3%</em></span>
+          <span><b>Binance USDT</b><em>about 73.4%</em></span>
+          <span><b>Sync state</b><em>2026-06-25 Post</em></span>
         </div>
       </article>
 
-      <article class="panel next-board">
+      <article class="panel stream-card wc-card">
         <div class="section-heading">
-          <p class="eyebrow">Active Next</p>
-          <h2>Review the one-screen cockpit</h2>
+          <p class="eyebrow">2026WC</p>
+          <h2>Multi-Ledger active</h2>
         </div>
-        <p class="large-line">Open <code>index.html</code> locally and confirm the current TWOS / LDD / 2026WC state is understandable without hunting through prior volumes.</p>
-        <a class="fixture-link" href="./twos_mvp_mock.json">Open mock JSON fixture</a>
-      </article>
-    </section>
-
-    <section class="grid-main">
-      <article class="panel risk-panel">
-        <div class="section-heading">
-          <p class="eyebrow">LDD Risk Visibility</p>
-          <h2>Cash-defense survival mode</h2>
-        </div>
-        <ul class="signal-list danger-list">
-          <li><strong>GOOG</strong><span>Watch 350 / 355 / 370 recovery levels</span></li>
-          <li><strong>NVDA</strong><span>204–208 repair zone; 198 risk line</span></li>
-          <li><strong>No-chase</strong><span>SOXL · GGLL · GDXU · UGL · SPCX radar only</span></li>
-          <li><strong>Crypto</strong><span>USDT defense target remains above 70%</span></li>
+        <ul class="signal-list">
+          <li><strong>Static manual ledger only</strong><span>No live odds, No live schedule, No auto prediction.</span></li>
+          <li><strong>Next manual sync / review checkpoint</strong><span>Review after the next user-provided snapshot.</span></li>
+          <li><strong>Prediction boundary</strong><span>No match prediction logic is embedded in this cockpit.</span></li>
         </ul>
-        <p class="note">Execution SoT remains screenshots and order-detail evidence. This panel is a static visibility surface, not a trading system.</p>
-      </article>
-
-      <article class="panel market-panel">
-        <div class="section-heading">
-          <p class="eyebrow">LDD Market Map v2.0</p>
-          <h2>Coverage without trade permission</h2>
-        </div>
-        <div class="coverage-grid">
-          <span>AI / Megacap<br><b>NVDA · GOOG · QQQ · SMH</b></span>
-          <span>Semis / Leverage<br><b>SOXL · SOXS · INTC · AMD</b></span>
-          <span>Memory / Storage<br><b>MU · WDC · SNDK · STX · DRAM ETF</b></span>
-          <span>Gold / Miners<br><b>GLD · UGL · GDXU</b></span>
-          <span>Crypto<br><b>BTC · ETH · SOL · DOGE · ZEC</b></span>
-          <span>Dream Sleeve<br><b>SPCX / SpaceX-style support</b></span>
-        </div>
-      </article>
-
-      <article class="panel wc-panel">
-        <div class="section-heading">
-          <p class="eyebrow">2026WC Multi-Ledger</p>
-          <h2>Prediction layers separated</h2>
-        </div>
-        <div class="ledger-stack">
-          <span>Main prediction</span>
-          <span>Defensive prediction</span>
-          <span>Upset prediction</span>
-          <span>High-score prediction</span>
-          <span>High-odds prediction</span>
-          <span>Post-match correction</span>
-        </div>
-        <p class="note">Principle: high-odds is not the same as main recommendation; direction and risk classification outrank exact-score obsession.</p>
       </article>
     </section>
 
-    <footer class="forbidden-bar" aria-label="Forbidden scope bar">
+    <section class="ldd-ledger-grid" aria-label="LDD ledgers and panels">
+      <article class="panel ledger-card">
+        <div class="section-heading">
+          <p class="eyebrow">LDD Ledger</p>
+          <h2>Risk Order Completion Ledger</h2>
+        </div>
+        <ul class="compact-list">
+          <li><span>NVDA 197 × 5 filled</span></li>
+          <li><span>Position reduced from 10 to 5</span></li>
+          <li><span>Risk action recorded as completed fixture state</span></li>
+        </ul>
+      </article>
+
+      <article class="panel ledger-card">
+        <div class="section-heading">
+          <p class="eyebrow">LDD Ledger</p>
+          <h2>Post-Execution Position Rebaseline</h2>
+        </div>
+        <dl class="fact-list tight">
+          <div><dt>NVDA</dt><dd>5</dd></div>
+          <div><dt>GOOG</dt><dd>5</dd></div>
+          <div><dt>SPCX Dream Sleeve</dt><dd>10</dd></div>
+        </dl>
+      </article>
+
+      <article class="panel ledger-card">
+        <div class="section-heading">
+          <p class="eyebrow">LDD Gate</p>
+          <h2>Memory/Storage Day-2 Confirmation Gate</h2>
+        </div>
+        <div class="symbol-grid">
+          <span>DRAM</span>
+          <span>MU</span>
+          <span>SNDK</span>
+          <span>WDC</span>
+          <span>STX</span>
+          <span>QCOM</span>
+        </div>
+        <p class="note">storage strength does not equal high-open chase.</p>
+      </article>
+
+      <article class="panel ledger-card">
+        <div class="section-heading">
+          <p class="eyebrow">LDD Discipline</p>
+          <h2>Theme Confirmation vs Entry Discipline</h2>
+        </div>
+        <ul class="compact-list">
+          <li><span>theme confirmed, entry discipline not relaxed</span></li>
+          <li><span>no chase</span></li>
+          <li><span>no SOXL/SOXS chase</span></li>
+        </ul>
+      </article>
+
+      <article class="panel ledger-card market-map">
+        <div class="section-heading">
+          <p class="eyebrow">LDD Coverage</p>
+          <h2>Market Map v2.0 Coverage Ledger</h2>
+        </div>
+        <p class="mini-label">Risk levels</p>
+        <div class="risk-grid">
+          <span><b>NVDA</b><em>190 / 198 / 204</em></span>
+          <span><b>GOOG</b><em>340 / 350 / 355</em></span>
+        </div>
+        <p class="note">Coverage remains visibility only. It does not grant trade permission or add market analysis logic.</p>
+      </article>
+    </section>
+
+    <section class="active-next panel" aria-label="Active Next">
+      <div>
+        <p class="eyebrow">Active Next</p>
+        <h2>Review the hosted static cockpit locally</h2>
+      </div>
+      <p>Confirm TWOS, LDD, and 2026WC are understandable in one local page before adding any future layer.</p>
+    </section>
+
+    <footer class="forbidden-bar" aria-label="Forbidden Scope">
       <strong>Forbidden Scope</strong>
-      <span>live data</span>
-      <span>execution</span>
       <span>API</span>
+      <span>live data</span>
+      <span>broker connection</span>
+      <span>Binance connection</span>
       <span>scheduler</span>
       <span>schema</span>
       <span>validator</span>
       <span>framework</span>
-      <span>unrelated files</span>
+      <span>market analysis logic</span>
+      <span>trade execution logic</span>
+      <span>match prediction logic</span>
     </footer>
   </main>
 </body>
