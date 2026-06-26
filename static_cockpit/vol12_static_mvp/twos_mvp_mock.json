@@ -1,81 +1,91 @@
 {
   "meta": {
     "product": "Tianma Work OS",
-    "volume": "Vol.12.1",
-    "slice": "TWOS Host Layer Static Integration",
+    "volume": "Vol.12.2",
+    "slice": "Fast Static Cockpit IA Fix",
     "mode": "static_local_fixture_only",
-    "syncState": "2026-06-25 Post",
+    "localOpenHint": "Open locally by double-clicking index.html or using file://.../index.html",
     "sourceOfTruth": "origin/main actual Git worktree static fixture",
     "noLiveBoundary": [
-      "no_api",
-      "no_live_data",
-      "no_broker_connection",
-      "no_binance_connection",
-      "no_scheduler",
-      "no_schema",
-      "no_validator",
-      "no_framework",
-      "no_market_analysis_logic",
-      "no_trade_execution_logic",
-      "no_match_prediction_logic"
+      "No API",
+      "No live data",
+      "No broker connection",
+      "No Binance connection",
+      "No scheduler",
+      "No schema",
+      "No validator",
+      "No framework",
+      "No market analysis logic",
+      "No trade execution logic",
+      "No match prediction logic"
     ]
   },
-  "twos": {
-    "hostLayer": "Vol.12.1 Host Layer",
-    "aiBoard": "AI Board Always-On",
-    "activeNextLock": "Active Next Lock",
-    "status": "Static/local/fixture-only",
-    "workstreamsHosted": ["TWOS", "LDD", "2026WC"],
-    "forbiddenScopeVisible": true
-  },
-  "ldd": {
-    "syncState": "2026-06-25 Post",
-    "riskOrderCompletionLedger": {
-      "status": "completed",
-      "symbol": "NVDA",
-      "filled": "197 × 5",
-      "positionBefore": 10,
-      "positionAfter": 5
-    },
-    "postExecutionPositionRebaseline": {
-      "positions": {
-        "NVDA": 5,
-        "GOOG": 5,
-        "SPCX Dream Sleeve": 10
-      },
-      "cash": {
-        "usEquityCashApprox": 19670.61,
-        "usEquityCashPercentApprox": "82.3%",
-        "binanceUsdtPercentApprox": "73.4%"
-      }
-    },
+  "todayCommandBar": {
+    "primary": "LDD defensive / cash-heavy",
+    "activeNext": "2026-06-26 Pre check",
     "riskLevels": {
       "NVDA": "190 / 198 / 204",
       "GOOG": "340 / 350 / 355"
     },
-    "panels": [
-      "Risk Order Completion Ledger",
-      "Post-Execution Position Rebaseline",
-      "Memory/Storage Day-2 Confirmation Gate",
-      "Theme Confirmation vs Entry Discipline",
-      "Market Map v2.0 Coverage Ledger"
-    ],
-    "marketMapV2Coverage": ["DRAM", "MU", "SNDK", "WDC", "STX", "QCOM"],
-    "discipline": [
-      "no chase",
-      "no SOXL/SOXS chase",
-      "storage strength does not equal high-open chase",
-      "theme confirmed, entry discipline not relaxed"
+    "memoryStorageGate": "Memory/Storage Day-2",
+    "discipline": ["No chase", "No SOXL/SOXS chase"]
+  },
+  "lddTodayCommandCenter": {
+    "syncState": "2026-06-25 Post",
+    "riskPosture": "defensive / cash-heavy",
+    "positions": {
+      "NVDA": 5,
+      "GOOG": 5,
+      "SPCX Dream Sleeve": 10
+    },
+    "cash": {
+      "usEquityCashApprox": "about 19,670.61 / about 82.3%",
+      "binanceUsdtApprox": "about 73.4%"
+    },
+    "riskOrderCompleted": "NVDA 197 × 5 filled",
+    "postExecutionPositionRebaseline": "NVDA reduced from 10 to 5"
+  },
+  "marketMapV2MemoryStorage": {
+    "title": "Market Map v2.0 / Memory-Storage",
+    "gate": "Memory/Storage Day-2 Confirmation Gate",
+    "coverage": ["DRAM", "MU", "SNDK", "WDC", "STX", "QCOM"],
+    "rules": [
+      "Day-2 confirmation required",
+      "Theme confirmed, entry discipline not relaxed",
+      "Storage strength does not equal high-open chase"
+    ]
+  },
+  "twosControl": {
+    "title": "TWOS Control",
+    "items": [
+      "AI Board Always-On",
+      "Active Next Lock",
+      "Static/local/fixture-only",
+      "No schema / no validator / no scheduler"
     ]
   },
   "wc2026": {
+    "title": "2026WC",
     "status": "Multi-Ledger active",
-    "ledgerMode": "Static manual ledger only",
-    "forbidden": ["No live odds", "No live schedule", "No auto prediction"],
-    "nextManualSync": "Next manual sync / review checkpoint after user-provided snapshot"
+    "items": [
+      "Manual ledger only",
+      "No live odds",
+      "No live schedule",
+      "No auto prediction",
+      "Next manual sync / review checkpoint"
+    ]
   },
-  "activeNext": {
-    "nextStep": "Review the hosted static cockpit locally.",
-    "fixtureFile": "./twos_mvp_mock.json"
-  }
+  "forbiddenScope": [
+    "No API",
+    "No live data",
+    "No broker connection",
+    "No Binance connection",
+    "No scheduler",
+    "No schema",
+    "No validator",
+    "No framework",
+    "No market analysis logic",
+    "No trade execution logic",
+    "No match prediction logic"
+  ]
 }
