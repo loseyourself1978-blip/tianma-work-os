@@ -1,81 +1,85 @@
 {
   "meta": {
     "product": "Tianma Work OS",
-    "volume": "Vol.12.2",
-    "slice": "Fast Static Cockpit IA Fix",
+    "volume": "Vol.12.3",
+    "slice": "Product Shell + Workflow Migration",
     "mode": "static_local_fixture_only",
-    "localOpenHint": "Open locally by double-clicking index.html or using file://.../index.html",
-    "sourceOfTruth": "origin/main actual Git worktree static fixture",
-    "noLiveBoundary": [
-      "No API",
-      "No live data",
-      "No broker connection",
-      "No Binance connection",
-      "No scheduler",
-      "No schema",
-      "No validator",
-      "No framework",
-      "No market analysis logic",
-      "No trade execution logic",
-      "No match prediction logic"
+    "canonicalVisibleUrl": "file:///Users/hj/Downloads/tianma-work-os/static_cockpit/vol12_static_mvp/index.html",
+    "sourceOfTruth": "origin/main actual Git worktree static fixture"
+  },
+  "activeMission": {
+    "currentMission": "LDD 2026-06-26 Pre Check",
+    "posture": "defensive / cash-heavy",
+    "activeNext": "NVDA 190/198/204, GOOG 340/350/355, Memory/Storage Day-2",
+    "decision": "No chase, No execution, No SOXL/SOXS chase"
+  },
+  "aiBoardDecisionTeam": {
+    "boardFormedFor": "LDD Pre Check",
+    "note": "MVP uses one model; future board may use multiple model slots.",
+    "roles": [
+      { "role": "Chair / Orchestrator", "duty": "sets Active Next" },
+      { "role": "Risk Sentinel", "duty": "NVDA / GOOG / cash risk" },
+      { "role": "Market Mapper", "duty": "Memory/Storage Day-2" },
+      { "role": "Execution Guard", "duty": "blocks forbidden scope" },
+      { "role": "Codex Operator", "duty": "repo task only when approved" },
+      { "role": "2026WC Analyst", "duty": "manual ledger standby" }
     ]
   },
-  "todayCommandBar": {
-    "primary": "LDD defensive / cash-heavy",
-    "activeNext": "2026-06-26 Pre check",
-    "riskLevels": {
-      "NVDA": "190 / 198 / 204",
-      "GOOG": "340 / 350 / 355"
+  "workspaceMatrix": [
+    {
+      "project": "LDD Daily Ops",
+      "state": "active",
+      "activeNext": "next 2026-06-26 Pre",
+      "ownerLayer": "AI Board + user"
     },
-    "memoryStorageGate": "Memory/Storage Day-2",
-    "discipline": ["No chase", "No SOXL/SOXS chase"]
-  },
-  "lddTodayCommandCenter": {
+    {
+      "project": "TWOS Product Dev",
+      "state": "active",
+      "activeNext": "Vol.12.3 product shell iteration",
+      "ownerLayer": "Codex repo layer"
+    },
+    {
+      "project": "2026WC Multi-Ledger",
+      "state": "standby/manual sync",
+      "activeNext": "Next manual sync / review checkpoint",
+      "ownerLayer": "manual ledger layer"
+    }
+  ],
+  "workflowConveyor": [
+    { "step": "Sync Intake", "label": "capture user snapshot" },
+    { "step": "AI Board Review", "label": "separate roles and risks" },
+    { "step": "Active Next Lock", "label": "choose one next move" },
+    { "step": "Codex Handoff", "label": "repo-only task packet" },
+    { "step": "Execution Receipt", "label": "record user-provided result" },
+    { "step": "Validation", "label": "check scope and evidence" },
+    { "step": "DUXD Guardrail Update", "label": "preserve operating rules" }
+  ],
+  "lddPrimaryPanel": {
     "syncState": "2026-06-25 Post",
-    "riskPosture": "defensive / cash-heavy",
     "positions": {
       "NVDA": 5,
       "GOOG": 5,
       "SPCX Dream Sleeve": 10
     },
     "cash": {
-      "usEquityCashApprox": "about 19,670.61 / about 82.3%",
-      "binanceUsdtApprox": "about 73.4%"
+      "usEquityCash": "about 19,670.61 / about 82.3%",
+      "binanceUsdt": "about 73.4%"
+    },
+    "riskLevels": {
+      "NVDA": "190 / 198 / 204",
+      "GOOG": "340 / 350 / 355"
     },
     "riskOrderCompleted": "NVDA 197 × 5 filled",
-    "postExecutionPositionRebaseline": "NVDA reduced from 10 to 5"
-  },
-  "marketMapV2MemoryStorage": {
-    "title": "Market Map v2.0 / Memory-Storage",
-    "gate": "Memory/Storage Day-2 Confirmation Gate",
-    "coverage": ["DRAM", "MU", "SNDK", "WDC", "STX", "QCOM"],
-    "rules": [
-      "Day-2 confirmation required",
-      "Theme confirmed, entry discipline not relaxed",
-      "Storage strength does not equal high-open chase"
-    ]
-  },
-  "twosControl": {
-    "title": "TWOS Control",
-    "items": [
-      "AI Board Always-On",
-      "Active Next Lock",
-      "Static/local/fixture-only",
-      "No schema / no validator / no scheduler"
-    ]
+    "marketMapV2": ["DRAM", "MU", "SNDK", "WDC", "STX", "QCOM"],
+    "discipline": "Theme confirmed, entry discipline not relaxed"
   },
   "wc2026": {
-    "title": "2026WC",
     "status": "Multi-Ledger active",
-    "items": [
-      "Manual ledger only",
-      "No live odds",
-      "No live schedule",
-      "No auto prediction",
-      "Next manual sync / review checkpoint"
-    ]
+    "mode": "Manual ledger only",
+    "forbidden": ["No live odds", "No live schedule", "No auto prediction"],
+    "next": "Next manual sync / review checkpoint"
   },
-  "forbiddenScope": [
+  "forbiddenScopeLocked": [
     "No API",
     "No live data",
     "No broker connection",
@@ -84,6 +88,7 @@
     "No schema",
     "No validator",
     "No framework",
+    "No JS",
     "No market analysis logic",
     "No trade execution logic",
     "No match prediction logic"
