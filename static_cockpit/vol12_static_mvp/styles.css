@@ -211,11 +211,30 @@ dd {
   font-weight: 850;
 }
 
+.board-explainer,
 .small-note {
   margin-top: 14px;
   color: var(--muted);
   font-size: 14px;
   line-height: 1.42;
+}
+
+.board-explainer {
+  margin: 0 0 14px;
+  color: var(--ink);
+}
+
+.board-preview dd strong,
+.board-preview dd span {
+  display: block;
+  line-height: 1.35;
+}
+
+.board-preview dd span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .active-next {
@@ -270,16 +289,42 @@ dd {
 
 .workflow {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 10px;
   padding: 0;
   margin: 0;
   list-style: none;
+  counter-reset: workflow;
 }
 
 .workflow li {
+  counter-increment: workflow;
+  position: relative;
   padding: 16px;
-  min-height: 112px;
+  min-height: 136px;
+}
+
+.workflow li::before {
+  content: counter(workflow);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-bottom: 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.workflow li:not(:last-child)::after {
+  content: "→";
+  position: absolute;
+  top: 18px;
+  right: 12px;
+  color: var(--line-strong);
+  font-weight: 900;
 }
 
 .workflow strong,
@@ -368,6 +413,10 @@ td:first-child {
 
   .hero {
     min-height: auto;
+  }
+
+  .workflow li::after {
+    display: none;
   }
 
   h1 {

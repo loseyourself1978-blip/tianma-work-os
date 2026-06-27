@@ -1,28 +1,48 @@
 {
   "meta": {
     "product": "Tianma Work OS",
-    "volume": "Vol.12.5",
-    "slice": "Homepage Reset + Minimal White UI",
+    "volume": "Vol.12.6",
+    "slice": "AI Board Plain-Language Onboarding",
     "mode": "static_local_fixture_only",
     "canonicalVisibleUrl": "file:///Users/hj/Downloads/tianma-work-os/static_cockpit/vol12_static_mvp/index.html"
   },
   "homepage": {
     "title": "Your AI Board for high-context work.",
-    "subtitle": "Paste a sync, recap, or task. TWOS forms a configurable AI Board, locks Active Next, and hands scoped work to Codex only when approved.",
+    "subtitle": "Tell TWOS what you are working on. TWOS forms a team of AI models to plan, check, build, and review the work. Codex receives scoped tasks only when you approve.",
     "localHint": "file:// local static MVP",
-    "composerPlaceholder": "Paste LDD sync, 2026WC recap, Codex result, or any project task...",
+    "composerPlaceholder": "Paste an idea, project task, LDD sync, 2026WC recap, or Codex result...",
     "staticButtons": ["Form AI Board", "Open Workspace", "Review Handoff"]
   },
   "aiBoardPreview": {
     "title": "AI Board Auto-Formed",
+    "explainer": "An AI Board is a task-specific team of model roles. TWOS chooses the roles, locks the next step, and prevents unapproved execution.",
     "slots": {
-      "Chair": "GPT-5.5 Pro slot",
-      "Risk": "GPT-5.4 slot",
-      "Noise Filter": "Claude slot",
-      "Market Mapper": "Gemini / GPT slot",
-      "Codex Operator": "Claude / Codex-compatible slot"
+      "Lead Planner": {
+        "model": "GPT-5.5 Pro slot",
+        "text": "turns your input into the next clear step."
+      },
+      "Reality Checker": {
+        "model": "GPT-5.4 slot",
+        "text": "checks risk, missing context, and contradictions."
+      },
+      "Assumption Checker": {
+        "model": "Claude slot",
+        "text": "filters noise before decisions."
+      },
+      "Domain Analyst": {
+        "model": "Gemini / GPT slot",
+        "text": "adapts to the project type."
+      },
+      "Builder / Codex Handoff": {
+        "model": "Claude / Codex-compatible slot",
+        "text": "prepares scoped repo tasks only after approval."
+      },
+      "Reviewer": {
+        "model": "model slot",
+        "text": "validates results and turns mistakes into guardrails."
+      }
     },
-    "note": "Static mock model slots. No API or live routing."
+    "note": "Model names are static mock slots in this MVP. No API, no live routing, no automation."
   },
   "activeNext": {
     "label": "Active Next: LDD 2026-06-27 Pre",
@@ -43,17 +63,18 @@
     },
     {
       "name": "TWOS Product Dev",
-      "state": "Vol.12.5 homepage reset",
+      "state": "Vol.12.6 onboarding clarity",
       "signal": "AI Board productization",
       "next": "UX simplification"
     }
   ],
   "workflow": [
-    "Paste Sync",
-    "Form AI Board",
-    "Lock Active Next",
-    "Scoped Codex Handoff",
-    "Validation + DUXD Guardrail"
+    "Paste your task",
+    "TWOS forms AI Board",
+    "Board locks Active Next",
+    "Approved handoff goes to Codex / ledger",
+    "Result returns for validation",
+    "DUXD turns mistakes into guardrails"
   ],
   "details": {
     "lddRiskDetails": {

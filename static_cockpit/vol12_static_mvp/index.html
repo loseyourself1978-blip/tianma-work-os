@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TWOS Static Cockpit Vol.12.5</title>
+  <title>TWOS Static Cockpit Vol.12.6</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <main class="page-shell" aria-label="TWOS Static Cockpit Vol.12.5">
+  <main class="page-shell" aria-label="TWOS Static Cockpit Vol.12.6">
     <nav class="top-nav" aria-label="Primary navigation">
       <a class="brand" href="#top">TWOS</a>
       <div>
@@ -20,13 +20,13 @@
 
     <section class="hero" id="top">
       <div class="hero-copy">
-        <p class="version">Vol.12.5</p>
+        <p class="version">Vol.12.6</p>
         <h1>Your AI Board for high-context work.</h1>
-        <p class="subtitle">Paste a sync, recap, or task. TWOS forms a configurable AI Board, locks Active Next, and hands scoped work to Codex only when approved.</p>
+        <p class="subtitle">Tell TWOS what you are working on. TWOS forms a team of AI models to plan, check, build, and review the work. Codex receives scoped tasks only when you approve.</p>
         <p class="local-hint">file:// local static MVP</p>
 
         <div class="composer" aria-label="Static input composer">
-          <p>Paste LDD sync, 2026WC recap, Codex result, or any project task...</p>
+          <p>Paste an idea, project task, LDD sync, 2026WC recap, or Codex result...</p>
           <div class="composer-actions">
             <button type="button">Form AI Board</button>
             <button type="button">Open Workspace</button>
@@ -38,14 +38,16 @@
       <aside class="hero-panel" id="ai-board" aria-label="AI Board preview">
         <div class="board-preview">
           <p class="label">AI Board Auto-Formed</p>
+          <p class="board-explainer">An AI Board is a task-specific team of model roles. TWOS chooses the roles, locks the next step, and prevents unapproved execution.</p>
           <dl>
-            <div><dt>Chair</dt><dd>GPT-5.5 Pro slot</dd></div>
-            <div><dt>Risk</dt><dd>GPT-5.4 slot</dd></div>
-            <div><dt>Noise Filter</dt><dd>Claude slot</dd></div>
-            <div><dt>Market Mapper</dt><dd>Gemini / GPT slot</dd></div>
-            <div><dt>Codex Operator</dt><dd>Claude / Codex-compatible slot</dd></div>
+            <div><dt>Lead Planner</dt><dd><strong>GPT-5.5 Pro slot</strong><span>turns your input into the next clear step.</span></dd></div>
+            <div><dt>Reality Checker</dt><dd><strong>GPT-5.4 slot</strong><span>checks risk, missing context, and contradictions.</span></dd></div>
+            <div><dt>Assumption Checker</dt><dd><strong>Claude slot</strong><span>filters noise before decisions.</span></dd></div>
+            <div><dt>Domain Analyst</dt><dd><strong>Gemini / GPT slot</strong><span>adapts to the project type.</span></dd></div>
+            <div><dt>Builder / Codex Handoff</dt><dd><strong>Claude / Codex-compatible slot</strong><span>prepares scoped repo tasks only after approval.</span></dd></div>
+            <div><dt>Reviewer</dt><dd><strong>model slot</strong><span>validates results and turns mistakes into guardrails.</span></dd></div>
           </dl>
-          <p class="small-note">Static mock model slots. No API or live routing.</p>
+          <p class="small-note">Model names are static mock slots in this MVP. No API, no live routing, no automation.</p>
         </div>
 
         <div class="active-next">
@@ -75,7 +77,7 @@
         </article>
         <article>
           <h3>TWOS Product Dev</h3>
-          <p><strong>State:</strong> Vol.12.5 homepage reset</p>
+          <p><strong>State:</strong> Vol.12.6 onboarding clarity</p>
           <p><strong>Signal:</strong> AI Board productization</p>
           <p><strong>Next:</strong> UX simplification</p>
         </article>
@@ -88,11 +90,12 @@
         <h2>From context to approved handoff</h2>
       </div>
       <ol class="workflow">
-        <li><strong>Paste Sync</strong><span>Add a recap, task, or result.</span></li>
-        <li><strong>Form AI Board</strong><span>Pick the static mock roles.</span></li>
-        <li><strong>Lock Active Next</strong><span>Make one next checkpoint visible.</span></li>
-        <li><strong>Scoped Codex Handoff</strong><span>Send only approved repo work.</span></li>
-        <li><strong>Validation + DUXD Guardrail</strong><span>Turn mistakes into rules.</span></li>
+        <li><strong>Paste your task</strong><span>Add any idea, sync, recap, or result.</span></li>
+        <li><strong>TWOS forms AI Board</strong><span>Plain-language roles are selected for the task.</span></li>
+        <li><strong>Board locks Active Next</strong><span>One next checkpoint becomes visible.</span></li>
+        <li><strong>Approved handoff goes to Codex / ledger</strong><span>Nothing moves forward without approval.</span></li>
+        <li><strong>Result returns for validation</strong><span>The outcome is checked against the request.</span></li>
+        <li><strong>DUXD turns mistakes into guardrails</strong><span>Lessons become future operating rules.</span></li>
       </ol>
     </section>
 
