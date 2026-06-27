@@ -1,14 +1,19 @@
 {
   "meta": {
     "product": "Tianma Work OS",
-    "volume": "Vol.12.7",
-    "slice": "Tool-Agnostic AI Board Copy Fix",
+    "volume": "Vol.12.8",
+    "slice": "Static Interaction Flow + Hero Copy Polish",
     "mode": "static_local_fixture_only",
     "canonicalVisibleUrl": "file:///Users/hj/Downloads/tianma-work-os/static_cockpit/vol12_static_mvp/index.html"
   },
   "homepage": {
     "title": "Your AI Board for high-context work.",
-    "subtitle": "Input what you are working on. TWOS forms a team of AI models — ChatGPT, Claude, Gemini, Grok, and more — to plan, check, build, execute through approved tools, and review the work. Every result feeds a self-improving loop of feedback, validation, and guardrails. No tool action runs without your approval.",
+    "heroLines": [
+      "Input any task, project, sync, or recap.",
+      "TWOS assembles AI models — ChatGPT, Claude, Gemini, Grok, and more — into a team that plans, checks, builds, executes through approved tools, and reviews the work.",
+      "Every result feeds a self-improving loop of feedback, validation, and guardrails.",
+      "You approve every tool action before it runs."
+    ],
     "localHint": "file:// local static MVP",
     "composerPlaceholder": "Input an idea, project task, sync, recap, or result...",
     "staticButtons": ["Form AI Board", "Open Workspace", "Review Handoff"]
@@ -16,6 +21,7 @@
   "aiBoardPreview": {
     "title": "AI Board Auto-Formed",
     "explainer": "An AI Board is a task-specific team of AI models. TWOS chooses the roles, locks the next step, and routes approved work to the right tools.",
+    "modelPool": "ChatGPT · Claude · Gemini · Grok · Approved Tools",
     "slots": {
       "Lead Planner": {
         "model": "GPT-5.5 Pro slot",
@@ -63,7 +69,7 @@
     },
     {
       "name": "TWOS Product Dev",
-      "state": "Vol.12.7 tool-agnostic copy",
+      "state": "Vol.12.8 interaction flow",
       "signal": "AI Board productization",
       "next": "UX simplification"
     }
@@ -75,6 +81,20 @@
     "Approved tools receive scoped work",
     "Results return for validation",
     "DUXD turns feedback into guardrails"
+  ],
+  "interactionFlow": [
+    {
+      "state": "Input",
+      "text": "User enters a task, sync, recap, or result."
+    },
+    {
+      "state": "AI Board Formed",
+      "text": "TWOS assembles a model team to plan, check, build, and review."
+    },
+    {
+      "state": "Tool Handoff Ready",
+      "text": "Approved tools wait for user confirmation before running."
+    }
   ],
   "details": {
     "lddRiskDetails": {

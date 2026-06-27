@@ -111,6 +111,21 @@ h3 {
   line-height: 1.48;
 }
 
+.hero-lines {
+  display: grid;
+  gap: 10px;
+  max-width: 780px;
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 19px;
+  line-height: 1.45;
+}
+
+.hero-lines .approval-line {
+  color: var(--ink);
+  font-weight: 900;
+}
+
 .local-hint {
   display: inline-flex;
   margin-top: 18px;
@@ -167,6 +182,7 @@ button:first-child {
 
 .board-preview,
 .active-next,
+.how-flow,
 .workspace-grid article,
 .workflow li,
 details {
@@ -176,7 +192,8 @@ details {
 }
 
 .board-preview,
-.active-next {
+.active-next,
+.how-flow {
   padding: 18px;
 }
 
@@ -224,6 +241,14 @@ dd {
   color: var(--ink);
 }
 
+.model-pool {
+  margin: 0 0 14px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
 .board-preview dd strong,
 .board-preview dd span {
   display: block;
@@ -246,6 +271,53 @@ dd {
   color: var(--ink);
   font-weight: 850;
   line-height: 1.4;
+}
+
+.how-flow {
+  background: var(--soft);
+}
+
+.how-flow ol {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  counter-reset: how;
+}
+
+.how-flow li {
+  counter-increment: how;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.how-flow li::before {
+  content: counter(how);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.how-flow strong,
+.how-flow span {
+  display: block;
+  line-height: 1.35;
+}
+
+.how-flow span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .workspace-section,
@@ -446,6 +518,10 @@ td:first-child {
   }
 
   .subtitle {
+    font-size: 17px;
+  }
+
+  .hero-lines {
     font-size: 17px;
   }
 }
