@@ -1,96 +1,233 @@
 {
   "meta": {
     "product": "Tianma Work OS",
-    "volume": "Vol.12.3",
-    "slice": "Product Shell + Workflow Migration",
+    "volume": "Vol.12.4",
+    "slice": "AI Board + Noise Filter + Day-2 Failure Cockpit",
     "mode": "static_local_fixture_only",
     "canonicalVisibleUrl": "file:///Users/hj/Downloads/tianma-work-os/static_cockpit/vol12_static_mvp/index.html",
-    "sourceOfTruth": "origin/main actual Git worktree static fixture"
-  },
-  "activeMission": {
-    "currentMission": "LDD 2026-06-26 Pre Check",
-    "posture": "defensive / cash-heavy",
-    "activeNext": "NVDA 190/198/204, GOOG 340/350/355, Memory/Storage Day-2",
-    "decision": "No chase, No execution, No SOXL/SOXS chase"
-  },
-  "aiBoardDecisionTeam": {
-    "boardFormedFor": "LDD Pre Check",
-    "note": "MVP uses one model; future board may use multiple model slots.",
-    "roles": [
-      { "role": "Chair / Orchestrator", "duty": "sets Active Next" },
-      { "role": "Risk Sentinel", "duty": "NVDA / GOOG / cash risk" },
-      { "role": "Market Mapper", "duty": "Memory/Storage Day-2" },
-      { "role": "Execution Guard", "duty": "blocks forbidden scope" },
-      { "role": "Codex Operator", "duty": "repo task only when approved" },
-      { "role": "2026WC Analyst", "duty": "manual ledger standby" }
+    "promise": "Paste a sync. TWOS forms an AI Board. Active Next is locked. Codex receives scoped tasks only when approved.",
+    "boundaries": [
+      "No API",
+      "No live data",
+      "No broker connection",
+      "No Binance connection",
+      "No scheduler",
+      "No schema",
+      "No validator",
+      "No framework",
+      "No JS",
+      "No market analysis logic",
+      "No trade execution logic",
+      "No match prediction logic"
     ]
+  },
+  "activeNext": {
+    "ldd": [
+      "GOOG 340 / 335",
+      "NVDA 190 / 198 / 204",
+      "DRAM / MU / SNDK stop-decline check",
+      "SPCX no new order",
+      "USDT still >70%"
+    ],
+    "wc2026": [
+      "Review G-L groups remaining 12 matches",
+      "Enter knockout path"
+    ]
+  },
+  "aiBoardAutoFormed": {
+    "title": "AI Board Auto-Formed",
+    "subtitle": "Configurable model team for the active mission",
+    "boardFormedFor": "LDD 2026-06-27 Pre Check",
+    "slots": [
+      {
+        "role": "Chair / Orchestrator",
+        "modelSlot": "GPT-5.5 Pro slot",
+        "duty": "sets Active Next"
+      },
+      {
+        "role": "Risk Sentinel",
+        "modelSlot": "GPT-5.4 slot",
+        "duty": "checks NVDA / GOOG / cash risk"
+      },
+      {
+        "role": "Market Mapper",
+        "modelSlot": "Gemini / GPT slot",
+        "duty": "maps current theme, quote layer, and watchlist"
+      },
+      {
+        "role": "Noise Filter",
+        "modelSlot": "Claude / GPT slot",
+        "duty": "detects rotation noise, quote-layer noise, and false Day-2 confirmation"
+      },
+      {
+        "role": "Execution Guard",
+        "modelSlot": "Claude / GPT slot",
+        "duty": "blocks forbidden scope"
+      },
+      {
+        "role": "Codex Operator",
+        "modelSlot": "Claude / Codex-compatible slot",
+        "duty": "prepares repo task only after approval"
+      }
+    ],
+    "note": "Model names are static mock slots in this MVP. No API, no live model routing, no automation."
+  },
+  "standbyBoards": {
+    "wc2026": {
+      "name": "2026WC Multi-Ledger Board: standby",
+      "state": "Rotation Noise Filter active",
+      "next": "review G-L groups and enter knockout path"
+    },
+    "twosProductDev": {
+      "name": "TWOS Product Dev: active product iteration",
+      "state": "Vol.12.4 AI Board + Noise Filter + Day-2 Failure cockpit"
+    }
   },
   "workspaceMatrix": [
     {
       "project": "LDD Daily Ops",
-      "state": "active",
-      "activeNext": "next 2026-06-26 Pre",
-      "ownerLayer": "AI Board + user"
+      "state": "active mission; defensive / cash-heavy, GOOG Pending Execution, Memory pullback watch",
+      "activeNext": "2026-06-27 Pre",
+      "ownerLayer": "AI Board + user approval"
     },
     {
       "project": "TWOS Product Dev",
-      "state": "active",
-      "activeNext": "Vol.12.3 product shell iteration",
+      "state": "active product iteration; Vol.12.4",
+      "activeNext": "AI Board + Noise Filter + cockpit clarity",
       "ownerLayer": "Codex repo layer"
     },
     {
       "project": "2026WC Multi-Ledger",
-      "state": "standby/manual sync",
-      "activeNext": "Next manual sync / review checkpoint",
+      "state": "active review / manual sync; 60 matches reviewed, main direction 12/20, 60.0%",
+      "activeNext": "G-L remaining 12 matches, then knockout path",
       "ownerLayer": "manual ledger layer"
     }
   ],
-  "workflowConveyor": [
-    { "step": "Sync Intake", "label": "capture user snapshot" },
-    { "step": "AI Board Review", "label": "separate roles and risks" },
-    { "step": "Active Next Lock", "label": "choose one next move" },
-    { "step": "Codex Handoff", "label": "repo-only task packet" },
-    { "step": "Execution Receipt", "label": "record user-provided result" },
-    { "step": "Validation", "label": "check scope and evidence" },
-    { "step": "DUXD Guardrail Update", "label": "preserve operating rules" }
+  "firstRunWorkflow": [
+    "Paste sync or task.",
+    "TWOS auto-forms an AI Board.",
+    "Board identifies risk, noise, and forbidden scope.",
+    "Board locks Active Next.",
+    "Codex receives scoped task only if approved.",
+    "Result returns as validation receipt.",
+    "DUXD converts mistakes into guardrails."
   ],
-  "lddPrimaryPanel": {
-    "syncState": "2026-06-25 Post",
+  "lddRiskSnapshot": {
+    "heading": "LDD Risk Snapshot — what matters now",
+    "syncState": "2026-06-26 Post",
+    "riskPosture": "defensive / cash-heavy",
     "positions": {
       "NVDA": 5,
       "GOOG": 5,
       "SPCX Dream Sleeve": 10
     },
     "cash": {
-      "usEquityCash": "about 19,670.61 / about 82.3%",
-      "binanceUsdt": "about 73.4%"
+      "usEquityCash": "about 19,669.55 / about 82.5%",
+      "binanceUsdt": "about 73.2%"
     },
     "riskLevels": {
       "NVDA": "190 / 198 / 204",
-      "GOOG": "340 / 350 / 355"
+      "GOOG": "340 / 335"
     },
-    "riskOrderCompleted": "NVDA 197 × 5 filled",
-    "marketMapV2": ["DRAM", "MU", "SNDK", "WDC", "STX", "QCOM"],
-    "discipline": "Theme confirmed, entry discipline not relaxed"
+    "states": [
+      "NVDA remains below 198 / 204",
+      "GOOG broke 340",
+      "GOOG secondary risk: Pending Execution"
+    ]
   },
-  "wc2026": {
-    "status": "Multi-Ledger active",
-    "mode": "Manual ledger only",
-    "forbidden": ["No live odds", "No live schedule", "No auto prediction"],
-    "next": "Next manual sync / review checkpoint"
+  "googSecondaryRiskLedger": {
+    "previousState": "Armed",
+    "trigger": "GOOG < 340",
+    "currentState": "Pending Execution",
+    "nextChecks": "340 / 335",
+    "implementation": "No unless separately approved"
   },
-  "forbiddenScopeLocked": [
-    "No API",
-    "No live data",
-    "No broker connection",
-    "No Binance connection",
-    "No scheduler",
-    "No schema",
-    "No validator",
-    "No framework",
-    "No JS",
-    "No market analysis logic",
-    "No trade execution logic",
-    "No match prediction logic"
-  ]
+  "themeDay2FailureGate": {
+    "theme": "Memory / Storage",
+    "day1State": "confirmed",
+    "day2State": "failed confirmation",
+    "reason": "MU / SNDK / DRAM / WDC / STX / QCOM all pulled back",
+    "result": "downgrade from attack candidate to pullback watch",
+    "rule": "yesterday’s strength does not equal trend continuation"
+  },
+  "memoryPullbackWatchlist": {
+    "symbols": ["MU", "SNDK", "DRAM", "WDC", "STX", "QCOM"],
+    "status": "pullback watch",
+    "requirement": "at least two stop-decline confirmations before re-upgrade",
+    "discipline": "no rebound chase, no falling-knife entry"
+  },
+  "marketMapperV2": {
+    "marketTheme": "Memory / Storage",
+    "currentState": "Day-2 failure / pullback watch",
+    "watchlist": ["MU", "SNDK", "DRAM", "WDC", "STX", "QCOM"],
+    "rule": "theme confirmation must survive Day-2",
+    "entryDiscipline": "not relaxed"
+  },
+  "publicMarketDataListFormat": {
+    "columns": [
+      "Symbol",
+      "Current session",
+      "Quote layer",
+      "Price",
+      "Change",
+      "Source time",
+      "Usable for judgment?"
+    ],
+    "rows": [
+      { "symbol": "NVDA", "currentSession": "not supplied in sync", "quoteLayer": "public quote/news layer", "price": "not supplied in sync", "change": "not supplied in sync", "sourceTime": "not supplied in sync", "usableForJudgment": "No; missing quote layer evidence" },
+      { "symbol": "GOOG", "currentSession": "not supplied in sync", "quoteLayer": "public quote/news layer", "price": "not supplied in sync", "change": "not supplied in sync", "sourceTime": "not supplied in sync", "usableForJudgment": "No; pending source context" },
+      { "symbol": "MU", "currentSession": "not supplied in sync", "quoteLayer": "public quote/news layer", "price": "not supplied in sync", "change": "not supplied in sync", "sourceTime": "not supplied in sync", "usableForJudgment": "No; pullback watch only" },
+      { "symbol": "SNDK", "currentSession": "not supplied in sync", "quoteLayer": "public quote/news layer", "price": "not supplied in sync", "change": "not supplied in sync", "sourceTime": "not supplied in sync", "usableForJudgment": "No; pullback watch only" },
+      { "symbol": "DRAM", "currentSession": "not supplied in sync", "quoteLayer": "public quote/news layer", "price": "not supplied in sync", "change": "not supplied in sync", "sourceTime": "not supplied in sync", "usableForJudgment": "No; pullback watch only" },
+      { "symbol": "WDC", "currentSession": "not supplied in sync", "quoteLayer": "public quote/news layer", "price": "not supplied in sync", "change": "not supplied in sync", "sourceTime": "not supplied in sync", "usableForJudgment": "No; pullback watch only" },
+      { "symbol": "STX", "currentSession": "not supplied in sync", "quoteLayer": "public quote/news layer", "price": "not supplied in sync", "change": "not supplied in sync", "sourceTime": "not supplied in sync", "usableForJudgment": "No; pullback watch only" },
+      { "symbol": "QCOM", "currentSession": "not supplied in sync", "quoteLayer": "public quote/news layer", "price": "not supplied in sync", "change": "not supplied in sync", "sourceTime": "not supplied in sync", "usableForJudgment": "No; pullback watch only" },
+      { "symbol": "QQQ", "currentSession": "not supplied in sync", "quoteLayer": "public quote/news layer", "price": "not supplied in sync", "change": "not supplied in sync", "sourceTime": "not supplied in sync", "usableForJudgment": "No; context only" },
+      { "symbol": "SMH", "currentSession": "not supplied in sync", "quoteLayer": "public quote/news layer", "price": "not supplied in sync", "change": "not supplied in sync", "sourceTime": "not supplied in sync", "usableForJudgment": "No; context only" }
+    ],
+    "rules": [
+      "Public/main quote does not automatically equal pre-market or post-market quote.",
+      "Every market data row must show session, quote layer, source time, and judgment usability."
+    ]
+  },
+  "accountSotMarketDataSplit": {
+    "accountSot": "user-provided position/cash snapshot; NVDA 5, GOOG 5, SPCX 10, cash about 19,669.55, Binance USDT about 73.2%",
+    "marketData": "public quote/news layer; must not be mixed with account SoT",
+    "rule": "Account snapshots and public market data are separate ledgers."
+  },
+  "wc2026MultiLedger": {
+    "sync": "2026WC Sync 2026-06-26",
+    "matchesReviewed": 60,
+    "thirdRound": "D/E/F groups complete",
+    "mainDirection": "12/20, 60.0%",
+    "distortion": "Third-round strength model distorted",
+    "coreNoise": "rotation, acceptable draw, third-place math",
+    "filter": "Rotation Noise Filter required",
+    "next": "review G-L remaining 12 matches and enter round-of-32 knockout path",
+    "forbidden": ["No live odds", "No live schedule", "No auto prediction"]
+  },
+  "noiseFilterLayer": [
+    "Rotation Noise Filter for 2026WC",
+    "Quote Layer Filter for LDD public market data",
+    "Theme Day-2 Failure Gate for market themes",
+    "Account SoT / Market Data Split"
+  ],
+  "permissionFirewallLocked": {
+    "title": "Permission Firewall — LOCKED",
+    "message": "No permission granted. Static fixture only.",
+    "items": [
+      "No API",
+      "No live data",
+      "No broker connection",
+      "No Binance connection",
+      "No scheduler",
+      "No schema",
+      "No validator",
+      "No framework",
+      "No JS",
+      "No market analysis logic",
+      "No trade execution logic",
+      "No match prediction logic"
+    ]
+  }
 }

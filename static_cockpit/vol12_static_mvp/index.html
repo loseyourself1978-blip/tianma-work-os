@@ -3,163 +3,295 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TWOS Static Cockpit Vol.12.3</title>
+  <title>TWOS Static Cockpit Vol.12.4</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <main class="product-shell" aria-label="TWOS Static Cockpit Vol.12.3">
-    <header class="shell-header">
+  <main class="cockpit-shell" aria-label="TWOS Static Cockpit Vol.12.4">
+    <header class="product-header">
       <div>
-        <p class="version">Vol.12.3</p>
-        <h1>TWOS Static Cockpit</h1>
+        <p class="version">Vol.12.4</p>
+        <h1>TWOS Static Cockpit Vol.12.4</h1>
+        <p class="promise">Paste a sync. TWOS forms an AI Board. Active Next is locked. Codex receives scoped tasks only when approved.</p>
         <p class="url-hint">file:///Users/hj/Downloads/tianma-work-os/static_cockpit/vol12_static_mvp/index.html</p>
       </div>
-      <a class="fixture-link" href="./twos_mvp_mock.json">Static fixture</a>
+      <a class="fixture-link" href="./twos_mvp_mock.json">Open static fixture</a>
     </header>
 
-    <section class="active-mission panel" aria-label="Active Mission">
-      <div class="mission-title">
-        <p class="kicker">Active Mission</p>
-        <h2>Current Mission: LDD 2026-06-26 Pre Check</h2>
-        <span>Posture: defensive / cash-heavy</span>
-      </div>
-      <div class="mission-grid">
-        <article>
-          <strong>Active Next</strong>
-          <p>NVDA 190/198/204, GOOG 340/350/355, Memory/Storage Day-2</p>
-        </article>
-        <article>
-          <strong>Decision</strong>
-          <p>No chase, No execution, No SOXL/SOXS chase</p>
-        </article>
+    <section class="hero-grid">
+      <article class="panel ai-board-hero" aria-label="AI Board Auto-Formed">
+        <div class="section-head">
+          <p class="kicker">AI Board Auto-Formed</p>
+          <h2>Configurable model team for the active mission</h2>
+          <p>Board formed for: LDD 2026-06-27 Pre Check</p>
+        </div>
+        <div class="model-slot-grid">
+          <div><span>Chair / Orchestrator</span><strong>GPT-5.5 Pro slot</strong><em>sets Active Next</em></div>
+          <div><span>Risk Sentinel</span><strong>GPT-5.4 slot</strong><em>checks NVDA / GOOG / cash risk</em></div>
+          <div><span>Market Mapper</span><strong>Gemini / GPT slot</strong><em>maps current theme, quote layer, and watchlist</em></div>
+          <div><span>Noise Filter</span><strong>Claude / GPT slot</strong><em>detects rotation noise, quote-layer noise, and false Day-2 confirmation</em></div>
+          <div><span>Execution Guard</span><strong>Claude / GPT slot</strong><em>blocks forbidden scope</em></div>
+          <div><span>Codex Operator</span><strong>Claude / Codex-compatible slot</strong><em>prepares repo task only after approval</em></div>
+        </div>
+        <p class="board-note">Model names are static mock slots in this MVP. No API, no live model routing, no automation.</p>
+      </article>
+
+      <aside class="panel active-next" aria-label="Active Mission and Active Next">
+        <p class="kicker">Active Mission / Active Next</p>
+        <h2>LDD 2026-06-27 Pre</h2>
+        <ul>
+          <li>GOOG 340 / 335</li>
+          <li>NVDA 190 / 198 / 204</li>
+          <li>DRAM / MU / SNDK stop-decline check</li>
+          <li>SPCX no new order</li>
+          <li>USDT still &gt;70%</li>
+        </ul>
+        <h3>2026WC</h3>
+        <ul>
+          <li>Review G-L groups remaining 12 matches</li>
+          <li>Enter knockout path</li>
+        </ul>
+      </aside>
+    </section>
+
+    <section class="panel standby-boards" aria-label="Standby Boards">
+      <p class="kicker">Standby Boards</p>
+      <div class="standby-grid">
+        <div>
+          <strong>2026WC Multi-Ledger Board: standby</strong>
+          <span>Rotation Noise Filter active</span>
+          <em>Next: review G-L groups and enter knockout path</em>
+        </div>
+        <div>
+          <strong>TWOS Product Dev: active product iteration</strong>
+          <span>Vol.12.4 AI Board + Noise Filter + Day-2 Failure cockpit</span>
+          <em>Owner layer: Codex repo task after approval</em>
+        </div>
       </div>
     </section>
 
-    <section class="shell-grid">
-      <article class="panel ai-board" aria-label="AI Board Decision Team">
-        <div class="section-title">
-          <p class="kicker">AI Board Decision Team</p>
-          <h2>Board formed for: LDD Pre Check</h2>
-          <p>MVP uses one model; future board may use multiple model slots.</p>
-        </div>
-        <div class="role-grid">
-          <div><span>Chair / Orchestrator</span><strong>sets Active Next</strong></div>
-          <div><span>Risk Sentinel</span><strong>NVDA / GOOG / cash risk</strong></div>
-          <div><span>Market Mapper</span><strong>Memory/Storage Day-2</strong></div>
-          <div><span>Execution Guard</span><strong>blocks forbidden scope</strong></div>
-          <div><span>Codex Operator</span><strong>repo task only when approved</strong></div>
-          <div><span>2026WC Analyst</span><strong>manual ledger standby</strong></div>
-        </div>
-      </article>
+    <section class="panel first-run" aria-label="First-run workflow">
+      <div class="section-head">
+        <p class="kicker">First-run workflow</p>
+        <h2>From pasted sync to scoped Codex task</h2>
+      </div>
+      <ol class="workflow-steps">
+        <li><strong>Paste sync or task.</strong><span>User provides the state snapshot.</span></li>
+        <li><strong>TWOS auto-forms an AI Board.</strong><span>Mission roles are selected from static mock slots.</span></li>
+        <li><strong>Board identifies risk, noise, and forbidden scope.</strong><span>Noise and permission boundaries are separated from decisions.</span></li>
+        <li><strong>Board locks Active Next.</strong><span>One next checkpoint becomes visible.</span></li>
+        <li><strong>Codex receives scoped task only if approved.</strong><span>Repo work stays explicit and bounded.</span></li>
+        <li><strong>Result returns as validation receipt.</strong><span>Evidence is checked against the requested scope.</span></li>
+        <li><strong>DUXD converts mistakes into guardrails.</strong><span>Operating errors become future constraints.</span></li>
+      </ol>
+    </section>
 
+    <section class="matrix-risk-grid">
       <article class="panel workspace-matrix" aria-label="Workspace Matrix">
-        <div class="section-title">
+        <div class="section-head">
           <p class="kicker">Workspace Matrix</p>
           <h2>Multi-project Work OS</h2>
         </div>
-        <div class="project-table">
-          <div class="project-row header-row">
+        <div class="matrix-table">
+          <div class="matrix-row matrix-header">
             <span>Project</span>
             <span>State</span>
             <span>Active next</span>
             <span>Owner layer</span>
           </div>
-          <div class="project-row">
+          <div class="matrix-row">
             <strong>LDD Daily Ops</strong>
-            <span>active</span>
-            <span>next 2026-06-26 Pre</span>
-            <span>AI Board + user</span>
+            <span>active mission; defensive / cash-heavy, GOOG Pending Execution, Memory pullback watch</span>
+            <span>2026-06-27 Pre</span>
+            <span>AI Board + user approval</span>
           </div>
-          <div class="project-row">
+          <div class="matrix-row">
             <strong>TWOS Product Dev</strong>
-            <span>active</span>
-            <span>Vol.12.3 product shell iteration</span>
+            <span>active product iteration; Vol.12.4</span>
+            <span>AI Board + Noise Filter + cockpit clarity</span>
             <span>Codex repo layer</span>
           </div>
-          <div class="project-row">
+          <div class="matrix-row">
             <strong>2026WC Multi-Ledger</strong>
-            <span>standby/manual sync</span>
-            <span>Next manual sync / review checkpoint</span>
+            <span>active review / manual sync; 60 matches reviewed, main direction 12/20, 60.0%</span>
+            <span>G-L remaining 12 matches, then knockout path</span>
             <span>manual ledger layer</span>
           </div>
         </div>
       </article>
-    </section>
 
-    <section class="panel workflow-conveyor" aria-label="Workflow Conveyor">
-      <div class="section-title">
-        <p class="kicker">Workflow Conveyor</p>
-        <h2>Chat/Codex workflow migration into TWOS</h2>
-      </div>
-      <div class="conveyor">
-        <div><strong>Sync Intake</strong><span>capture user snapshot</span></div>
-        <div><strong>AI Board Review</strong><span>separate roles and risks</span></div>
-        <div><strong>Active Next Lock</strong><span>choose one next move</span></div>
-        <div><strong>Codex Handoff</strong><span>repo-only task packet</span></div>
-        <div><strong>Execution Receipt</strong><span>record user-provided result</span></div>
-        <div><strong>Validation</strong><span>check scope and evidence</span></div>
-        <div><strong>DUXD Guardrail Update</strong><span>preserve operating rules</span></div>
-      </div>
-    </section>
-
-    <section class="bottom-grid">
-      <article class="panel ldd-panel" aria-label="LDD Primary Panel">
-        <div class="section-title">
-          <p class="kicker">LDD Primary Panel</p>
-          <h2>Defensive cash state</h2>
+      <article class="panel ldd-risk" aria-label="LDD Risk Snapshot">
+        <div class="section-head">
+          <p class="kicker">LDD Risk Snapshot</p>
+          <h2>LDD Risk Snapshot — what matters now</h2>
+          <p>Risk posture: defensive / cash-heavy</p>
         </div>
-        <dl class="fact-grid">
-          <div><dt>Sync state</dt><dd>2026-06-25 Post</dd></div>
+        <dl class="risk-facts">
+          <div><dt>Sync state</dt><dd>2026-06-26 Post</dd></div>
           <div><dt>NVDA</dt><dd>5</dd></div>
           <div><dt>GOOG</dt><dd>5</dd></div>
           <div><dt>SPCX Dream Sleeve</dt><dd>10</dd></div>
-          <div><dt>US equity cash</dt><dd>about 19,670.61 / about 82.3%</dd></div>
-          <div><dt>Binance USDT</dt><dd>about 73.4%</dd></div>
+          <div><dt>US equity cash</dt><dd>about 19,669.55 / about 82.5%</dd></div>
+          <div><dt>Binance USDT</dt><dd>about 73.2%</dd></div>
           <div><dt>NVDA risk levels</dt><dd>190 / 198 / 204</dd></div>
-          <div><dt>GOOG risk levels</dt><dd>340 / 350 / 355</dd></div>
-          <div><dt>Risk order completed</dt><dd>NVDA 197 × 5 filled</dd></div>
+          <div><dt>GOOG risk levels</dt><dd>340 / 335</dd></div>
+          <div><dt>NVDA state</dt><dd>NVDA remains below 198 / 204</dd></div>
+          <div><dt>GOOG state</dt><dd>GOOG broke 340</dd></div>
+          <div><dt>GOOG secondary risk</dt><dd>Pending Execution</dd></div>
         </dl>
-        <div class="market-strip">
-          <strong>Market Map v2.0</strong>
-          <span>DRAM</span>
-          <span>MU</span>
-          <span>SNDK</span>
-          <span>WDC</span>
-          <span>STX</span>
-          <span>QCOM</span>
-        </div>
-        <p class="discipline-note">Theme confirmed, entry discipline not relaxed.</p>
+      </article>
+    </section>
+
+    <section class="ldd-ledger-grid">
+      <article class="panel ledger-card" aria-label="GOOG Secondary Risk Ledger">
+        <p class="kicker">GOOG Secondary Risk Ledger</p>
+        <dl class="mini-ledger">
+          <div><dt>Previous state</dt><dd>Armed</dd></div>
+          <div><dt>Trigger</dt><dd>GOOG &lt; 340</dd></div>
+          <div><dt>Current state</dt><dd>Pending Execution</dd></div>
+          <div><dt>Next checks</dt><dd>340 / 335</dd></div>
+          <div><dt>Implementation</dt><dd>No unless separately approved</dd></div>
+        </dl>
       </article>
 
-      <article class="panel wc-panel" aria-label="2026WC compact panel">
-        <div class="section-title">
-          <p class="kicker">2026WC</p>
-          <h2>Multi-Ledger active</h2>
+      <article class="panel ledger-card" aria-label="Theme Day-2 Failure Gate">
+        <p class="kicker">Theme Day-2 Failure Gate</p>
+        <dl class="mini-ledger">
+          <div><dt>Theme</dt><dd>Memory / Storage</dd></div>
+          <div><dt>Day-1 state</dt><dd>confirmed</dd></div>
+          <div><dt>Day-2 state</dt><dd>failed confirmation</dd></div>
+          <div><dt>Reason</dt><dd>MU / SNDK / DRAM / WDC / STX / QCOM all pulled back</dd></div>
+          <div><dt>Result</dt><dd>downgrade from attack candidate to pullback watch</dd></div>
+          <div><dt>Rule</dt><dd>yesterday’s strength does not equal trend continuation</dd></div>
+        </dl>
+      </article>
+
+      <article class="panel ledger-card" aria-label="Memory Pullback Watchlist">
+        <p class="kicker">Memory Pullback Watchlist</p>
+        <dl class="mini-ledger">
+          <div><dt>Symbols</dt><dd>MU, SNDK, DRAM, WDC, STX, QCOM</dd></div>
+          <div><dt>Status</dt><dd>pullback watch</dd></div>
+          <div><dt>Requirement</dt><dd>at least two stop-decline confirmations before re-upgrade</dd></div>
+          <div><dt>Discipline</dt><dd>no rebound chase, no falling-knife entry</dd></div>
+        </dl>
+      </article>
+
+      <article class="panel ledger-card" aria-label="Market Mapper Market Map v2.0">
+        <p class="kicker">Market Mapper / Market Map v2.0</p>
+        <dl class="mini-ledger">
+          <div><dt>Market theme</dt><dd>Memory / Storage</dd></div>
+          <div><dt>Current state</dt><dd>Day-2 failure / pullback watch</dd></div>
+          <div><dt>Watchlist</dt><dd>MU, SNDK, DRAM, WDC, STX, QCOM</dd></div>
+          <div><dt>Rule</dt><dd>theme confirmation must survive Day-2</dd></div>
+          <div><dt>Entry discipline</dt><dd>not relaxed</dd></div>
+        </dl>
+      </article>
+    </section>
+
+    <section class="panel noise-filter" aria-label="Noise Filter Layer">
+      <div class="section-head">
+        <p class="kicker">Noise Filter Layer</p>
+        <h2>Reusable decision hygiene</h2>
+        <p>Noise Filter prevents surface data from becoming premature decisions.</p>
+      </div>
+      <div class="filter-grid">
+        <div><strong>Rotation Noise Filter</strong><span>for 2026WC</span></div>
+        <div><strong>Quote Layer Filter</strong><span>for LDD public market data</span></div>
+        <div><strong>Theme Day-2 Failure Gate</strong><span>for market themes</span></div>
+        <div><strong>Account SoT / Market Data Split</strong><span>keeps ledgers separate</span></div>
+      </div>
+    </section>
+
+    <section class="panel public-data" aria-label="Public Market Data List Format">
+      <div class="section-head">
+        <p class="kicker">Public Market Data List Format</p>
+        <h2>Quote-layer enforcement table</h2>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Symbol</th>
+            <th>Current session</th>
+            <th>Quote layer</th>
+            <th>Price</th>
+            <th>Change</th>
+            <th>Source time</th>
+            <th>Usable for judgment?</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>NVDA</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No; missing quote layer evidence</td></tr>
+          <tr><td>GOOG</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No; pending source context</td></tr>
+          <tr><td>MU</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No; pullback watch only</td></tr>
+          <tr><td>SNDK</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No; pullback watch only</td></tr>
+          <tr><td>DRAM</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No; pullback watch only</td></tr>
+          <tr><td>WDC</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No; pullback watch only</td></tr>
+          <tr><td>STX</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No; pullback watch only</td></tr>
+          <tr><td>QCOM</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No; pullback watch only</td></tr>
+          <tr><td>QQQ</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No; context only</td></tr>
+          <tr><td>SMH</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No; context only</td></tr>
+        </tbody>
+      </table>
+      <p class="rule-text">Public/main quote does not automatically equal pre-market or post-market quote.</p>
+      <p class="rule-text">Every market data row must show session, quote layer, source time, and judgment usability.</p>
+    </section>
+
+    <section class="split-wc-grid">
+      <article class="panel account-split" aria-label="Account SoT / Market Data Split">
+        <div class="section-head">
+          <p class="kicker">Account SoT / Market Data Split</p>
+          <h2>Separate ledgers</h2>
         </div>
-        <ul class="plain-list">
-          <li>Manual ledger only</li>
-          <li>No live odds</li>
-          <li>No live schedule</li>
-          <li>No auto prediction</li>
-          <li>Next manual sync / review checkpoint</li>
+        <div class="split-columns">
+          <div>
+            <strong>Account SoT</strong>
+            <p>user-provided position/cash snapshot</p>
+            <p>NVDA 5, GOOG 5, SPCX 10, cash about 19,669.55, Binance USDT about 73.2%</p>
+          </div>
+          <div>
+            <strong>Market Data</strong>
+            <p>public quote/news layer</p>
+            <p>must not be mixed with account SoT</p>
+          </div>
+        </div>
+        <p class="rule-text">Account snapshots and public market data are separate ledgers.</p>
+      </article>
+
+      <article class="panel wc-panel" aria-label="2026WC Multi-Ledger">
+        <div class="section-head">
+          <p class="kicker">2026WC Multi-Ledger</p>
+          <h2>2026WC Sync 2026-06-26</h2>
+        </div>
+        <ul class="wc-list">
+          <li>60 matches reviewed</li>
+          <li>Third round D/E/F groups complete</li>
+          <li>Main direction: 12/20, 60.0%</li>
+          <li>Third-round strength model distorted</li>
+          <li>Core noise: rotation, acceptable draw, third-place math</li>
+          <li>Rotation Noise Filter required</li>
+          <li>Next: review G-L remaining 12 matches and enter round-of-32 knockout path</li>
+          <li>No live odds, no live schedule, no auto prediction</li>
         </ul>
       </article>
     </section>
 
-    <footer class="forbidden-scope" aria-label="Forbidden Scope LOCKED">
-      <strong>Forbidden Scope LOCKED</strong>
-      <span>No API</span>
-      <span>No live data</span>
-      <span>No broker connection</span>
-      <span>No Binance connection</span>
-      <span>No scheduler</span>
-      <span>No schema</span>
-      <span>No validator</span>
-      <span>No framework</span>
-      <span>No JS</span>
-      <span>No market analysis logic</span>
-      <span>No trade execution logic</span>
-      <span>No match prediction logic</span>
+    <footer class="permission-firewall" aria-label="Permission Firewall — LOCKED">
+      <strong>Permission Firewall — LOCKED</strong>
+      <p>No permission granted. Static fixture only.</p>
+      <div>
+        <span>No API</span>
+        <span>No live data</span>
+        <span>No broker connection</span>
+        <span>No Binance connection</span>
+        <span>No scheduler</span>
+        <span>No schema</span>
+        <span>No validator</span>
+        <span>No framework</span>
+        <span>No JS</span>
+        <span>No market analysis logic</span>
+        <span>No trade execution logic</span>
+        <span>No match prediction logic</span>
+      </div>
     </footer>
   </main>
 </body>
