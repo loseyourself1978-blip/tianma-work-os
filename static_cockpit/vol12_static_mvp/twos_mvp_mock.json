@@ -1,8 +1,8 @@
 {
   "meta": {
     "product": "Tianma Work OS",
-    "volume": "Vol.12.8",
-    "slice": "Static Interaction Flow + Hero Copy Polish",
+    "volume": "Vol.12.9",
+    "slice": "Hero Board + Flow Integration",
     "mode": "static_local_fixture_only",
     "canonicalVisibleUrl": "file:///Users/hj/Downloads/tianma-work-os/static_cockpit/vol12_static_mvp/index.html"
   },
@@ -69,7 +69,7 @@
     },
     {
       "name": "TWOS Product Dev",
-      "state": "Vol.12.8 interaction flow",
+      "state": "Vol.12.9 hero board flow",
       "signal": "AI Board productization",
       "next": "UX simplification"
     }
@@ -85,15 +85,15 @@
   "interactionFlow": [
     {
       "state": "Input",
-      "text": "User enters a task, sync, recap, or result."
+      "text": "Tell TWOS what you are working on."
     },
     {
       "state": "AI Board Formed",
-      "text": "TWOS assembles a model team to plan, check, build, and review."
+      "text": "TWOS assembles the model team."
     },
     {
       "state": "Tool Handoff Ready",
-      "text": "Approved tools wait for user confirmation before running."
+      "text": "Approved tools wait for your confirmation."
     }
   ],
   "details": {

@@ -182,7 +182,6 @@ button:first-child {
 
 .board-preview,
 .active-next,
-.how-flow,
 .workspace-grid article,
 .workflow li,
 details {
@@ -192,8 +191,7 @@ details {
 }
 
 .board-preview,
-.active-next,
-.how-flow {
+.active-next {
   padding: 18px;
 }
 
@@ -273,51 +271,56 @@ dd {
   line-height: 1.4;
 }
 
-.how-flow {
+.board-flow {
+  margin: 0 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   background: var(--soft);
+  padding: 12px;
 }
 
-.how-flow ol {
+.board-flow ol {
   display: grid;
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
   padding: 0;
   margin: 0;
   list-style: none;
-  counter-reset: how;
+  counter-reset: board-flow;
 }
 
-.how-flow li {
-  counter-increment: how;
+.board-flow li {
+  counter-increment: board-flow;
   display: grid;
-  grid-template-columns: 26px minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 8px;
   align-items: start;
 }
 
-.how-flow li::before {
-  content: counter(how);
+.board-flow li::before {
+  content: counter(board-flow);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
 }
 
-.how-flow strong,
-.how-flow span {
+.board-flow strong,
+.board-flow span {
   display: block;
   line-height: 1.35;
 }
 
-.how-flow span {
+.board-flow span {
   margin-top: 3px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .workspace-section,
@@ -511,6 +514,10 @@ td:first-child {
   .board-preview div {
     grid-template-columns: 1fr;
     gap: 4px;
+  }
+
+  .board-flow ol {
+    grid-template-columns: 1fr;
   }
 
   h1 {
