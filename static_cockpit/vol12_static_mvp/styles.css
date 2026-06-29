@@ -1,22 +1,16 @@
 :root {
   --bg: #ffffff;
   --ink: #111827;
-  --muted: #667085;
-  --soft: #f7f9fc;
-  --line: #e4e7ec;
-  --line-strong: #cfd6df;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --line-strong: #d1d5db;
   --accent: #0f766e;
-  --accent-soft: #e8f7f4;
   --radius: 8px;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 * {
   box-sizing: border-box;
-}
-
-html {
-  min-height: 100%;
 }
 
 body {
@@ -26,8 +20,8 @@ body {
   color: var(--ink);
 }
 
-.landing {
-  width: min(1060px, calc(100% - 40px));
+.page {
+  width: min(980px, calc(100% - 40px));
   min-height: 100vh;
   margin: 0 auto;
   display: flex;
@@ -41,26 +35,7 @@ body {
   gap: 18px;
   padding: 24px 0 10px;
   color: var(--muted);
-  font-size: 14px;
-}
-
-.brand {
-  color: var(--ink);
-  font-weight: 900;
-}
-
-.local-note {
-  font-weight: 750;
-}
-
-.hero {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 24px 0 56px;
+  font-size: 13px;
 }
 
 p,
@@ -69,119 +44,117 @@ h1 {
   letter-spacing: 0;
 }
 
+.brand {
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.local-note {
+  font-weight: 700;
+}
+
+.landing {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 0 72px;
+}
+
 .version {
-  margin-bottom: 14px;
+  margin-bottom: 18px;
   color: var(--accent);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
 }
 
 h1 {
-  max-width: 940px;
-  font-size: clamp(48px, 7vw, 82px);
-  line-height: 0.98;
+  max-width: 900px;
+  font-size: clamp(46px, 7vw, 78px);
+  line-height: 1;
   font-weight: 900;
 }
 
 .subheadline {
-  max-width: 760px;
-  margin-top: 22px;
-  color: var(--ink);
-  font-size: clamp(21px, 2.3vw, 29px);
-  font-weight: 850;
-  line-height: 1.25;
-}
-
-.explanation {
-  max-width: 760px;
-  margin-top: 16px;
+  max-width: 680px;
+  margin-top: 18px;
   color: var(--muted);
-  font-size: 18px;
-  line-height: 1.52;
-}
-
-.control-line {
-  margin-top: 14px;
-  color: var(--ink);
-  font-size: 17px;
-  font-weight: 900;
-}
-
-.improvement-line {
-  margin-top: 8px;
-  color: var(--accent);
-  font-size: 15px;
-  font-weight: 850;
-  line-height: 1.45;
+  font-size: clamp(18px, 2.4vw, 24px);
+  line-height: 1.36;
 }
 
 .composer {
-  width: min(820px, 100%);
-  margin-top: 34px;
+  width: min(780px, 100%);
+  min-height: 74px;
+  margin-top: 42px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   background: #ffffff;
-  box-shadow: 0 26px 80px rgba(17, 24, 39, 0.09);
-  padding: 24px;
+  box-shadow: 0 24px 70px rgba(17, 24, 39, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
   text-align: left;
 }
 
 .placeholder {
-  min-height: 142px;
-  color: #98a2b3;
-  font-size: clamp(23px, 3vw, 32px);
-  line-height: 1.28;
-}
-
-.helper {
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.45;
-}
-
-.actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 18px;
+  flex: 1;
+  min-width: 0;
+  color: #9ca3af;
+  font-size: clamp(18px, 2.3vw, 24px);
+  line-height: 1.35;
 }
 
 button {
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
   background: #ffffff;
   color: var(--ink);
-  padding: 11px 16px;
   font: inherit;
-  font-weight: 850;
+  font-size: 20px;
+  font-weight: 800;
 }
 
-button:first-child {
+.send-button {
   border-color: var(--accent);
   background: var(--accent);
   color: #ffffff;
 }
 
-.model-strip {
-  margin-top: 22px;
+.hint {
+  max-width: 780px;
+  margin-top: 14px;
   color: var(--muted);
   font-size: 14px;
+  line-height: 1.45;
+}
+
+.model-strip {
+  margin-top: 30px;
+  color: var(--muted);
+  font-size: 13px;
   line-height: 1.5;
 }
 
 .model-strip p {
   color: var(--ink);
-  font-weight: 900;
+  font-weight: 850;
 }
 
 .model-strip span {
   display: block;
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
-@media (max-width: 680px) {
-  .landing {
-    width: min(100% - 24px, 1060px);
+@media (max-width: 640px) {
+  .page {
+    width: min(100% - 24px, 980px);
   }
 
   .topbar {
@@ -189,18 +162,14 @@ button:first-child {
     flex-direction: column;
   }
 
-  .hero {
+  .landing {
     align-items: stretch;
-    text-align: left;
     justify-content: flex-start;
-    padding-top: 34px;
+    text-align: left;
+    padding-top: 54px;
   }
 
   .composer {
-    padding: 20px;
-  }
-
-  .placeholder {
-    min-height: 120px;
+    margin-top: 34px;
   }
 }

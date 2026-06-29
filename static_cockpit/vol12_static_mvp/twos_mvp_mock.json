@@ -1,37 +1,27 @@
 {
   "meta": {
     "product": "Tianma Work OS",
-    "volume": "Vol.12.12",
-    "slice": "One-Screen Promise Landing",
+    "volume": "Vol.12.13",
+    "slice": "Ultra-Minimal Multi-Model New Chat Landing",
     "mode": "static_local_fixture_only",
     "canonicalVisibleUrl": "file:///Users/hj/Downloads/tianma-work-os/static_cockpit/vol12_static_mvp/index.html"
   },
   "landing": {
     "brand": "TWOS",
     "localNote": "Static local MVP · file://",
-    "headline": "You say it. TWOS gets it done.",
-    "subheadline": "Turn thoughts, tasks, and projects into coordinated AI work.",
-    "explanation": "TWOS brings together AI models — ChatGPT, Claude, Gemini, Grok, and more — to plan, act, check, and improve the result.",
-    "controlLine": "You stay in control before anything runs.",
-    "improvementLine": "Every run can become feedback, guardrails, and a better next run.",
-    "composerPlaceholder": "What do you want to get done?",
-    "composerHelper": "Describe an idea, decision, project, research question, document, workflow, or recap.",
-    "staticButtons": ["Start", "Form AI Team", "See Example"],
-    "modelStrip": "ChatGPT · Claude · Gemini · Grok · more",
+    "promise": "One prompt. Your AI team gets to work.",
+    "subheadline": "TWOS coordinates ChatGPT, Claude, Gemini, Grok, and more.",
+    "composerPlaceholder": "What do you want your AI team to do?",
+    "hint": "Ideas, tasks, research, writing, decisions, projects, recaps.",
+    "models": ["ChatGPT", "Claude", "Gemini", "Grok", "more"],
     "modelNote": "The AI team is generated for each task."
   },
   "constraints": {
     "staticFixtureOnly": true,
     "noApi": true,
     "noLiveData": true,
-    "noBrokerConnection": true,
-    "noBinanceConnection": true,
-    "noScheduler": true,
-    "noSchema": true,
-    "noValidator": true,
+    "noExecution": true,
     "noFramework": true,
-    "noJavaScript": true,
-    "noExecutionLogic": true,
-    "noPredictionLogic": true
+    "noJavaScript": true
   }
 }
