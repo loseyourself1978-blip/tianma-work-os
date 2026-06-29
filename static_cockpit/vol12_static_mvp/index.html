@@ -3,11 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TWOS Static Cockpit Vol.12.9</title>
+  <title>TWOS Static Cockpit Vol.12.10</title>
   <link rel="stylesheet" href="./styles.css" />
+  <link rel="alternate" type="application/json" href="./twos_mvp_mock.json" />
 </head>
 <body>
-  <main class="page-shell" aria-label="TWOS Static Cockpit Vol.12.9">
+  <main class="page-shell" aria-label="TWOS Static Cockpit Vol.12.10">
     <nav class="top-nav" aria-label="Primary navigation">
       <a class="brand" href="#top">TWOS</a>
       <div>
@@ -20,18 +21,20 @@
 
     <section class="hero" id="top">
       <div class="hero-copy">
-        <p class="version">Vol.12.9</p>
+        <p class="version">Vol.12.10</p>
         <h1>Your AI Board for high-context work.</h1>
         <div class="hero-lines">
-          <p>Input any task, project, sync, or recap.</p>
-          <p>TWOS assembles AI models — ChatGPT, Claude, Gemini, Grok, and more — into a team that plans, checks, builds, executes through approved tools, and reviews the work.</p>
-          <p>Every result feeds a self-improving loop of feedback, validation, and guardrails.</p>
-          <p class="approval-line">You approve every tool action before it runs.</p>
+          <p class="focus-line">Input your idea.</p>
+          <p class="focus-line">TWOS forms an AI model team for the task.</p>
+          <p class="approval-line">Review the plan and approve tool actions before anything runs.</p>
+          <p>Models may include ChatGPT, Claude, Gemini, Grok, and more.</p>
+          <p>Roles and models are generated for each task and can be edited before execution.</p>
+          <p class="feedback-line">Feedback becomes validation, guardrails, and a better next run.</p>
         </div>
         <p class="local-hint">file:// local static MVP</p>
 
         <div class="composer" aria-label="Static input composer">
-          <p>Input an idea, project task, sync, recap, or result...</p>
+          <p>Input an idea, task, project, sync, recap, or result...</p>
           <div class="composer-actions">
             <button type="button">Form AI Board</button>
             <button type="button">Open Workspace</button>
@@ -43,56 +46,41 @@
       <aside class="hero-panel" id="ai-board" aria-label="AI Board preview">
         <div class="board-preview">
           <p class="label">AI Board Auto-Formed</p>
-          <p class="board-explainer">An AI Board is a task-specific team of AI models. TWOS chooses the roles, locks the next step, and routes approved work to the right tools.</p>
-          <p class="model-pool">Model pool: ChatGPT · Claude · Gemini · Grok · Approved Tools</p>
+          <p class="board-explainer">An AI Board is a task-specific team of AI models. It is generated from your input and can be adjusted before tools run.</p>
+          <p class="model-pool">Models may include ChatGPT · Claude · Gemini · Grok · more</p>
+          <p class="board-note">TWOS generates the right roles for the task.</p>
           <div class="board-flow" aria-label="How TWOS works">
             <p class="label">How TWOS works</p>
             <ol>
-              <li><strong>Input</strong><span>Tell TWOS what you are working on.</span></li>
-              <li><strong>AI Board Formed</strong><span>TWOS assembles the model team.</span></li>
-              <li><strong>Tool Handoff Ready</strong><span>Approved tools wait for your confirmation.</span></li>
+              <li><strong>Input idea</strong><span>Describe what you are working on.</span></li>
+              <li><strong>AI team forms</strong><span>TWOS selects models and roles for the task.</span></li>
+              <li><strong>Approve tool actions</strong><span>Nothing runs until you approve.</span></li>
             </ol>
           </div>
-          <dl>
-            <div><dt>Lead Planner</dt><dd><strong>GPT-5.5 Pro slot</strong><span>turns your input into the next clear step.</span></dd></div>
-            <div><dt>Reality Checker</dt><dd><strong>GPT-5.4 slot</strong><span>checks risk, missing context, and contradictions.</span></dd></div>
-            <div><dt>Assumption Checker</dt><dd><strong>Claude slot</strong><span>filters noise before decisions.</span></dd></div>
-            <div><dt>Domain Analyst</dt><dd><strong>Gemini / GPT slot</strong><span>adapts to the project type.</span></dd></div>
-            <div><dt>Builder / Tool Handoff</dt><dd><strong>tool-ready model slot</strong><span>routes approved work to the right tool, such as code, docs, email, calendar, or review workflows.</span></dd></div>
-            <div><dt>Reviewer</dt><dd><strong>model slot</strong><span>validates results and turns mistakes into guardrails.</span></dd></div>
-          </dl>
           <p class="small-note">Model names are static mock slots in this MVP. No API, no live routing, no automation.</p>
-        </div>
-
-        <div class="active-next">
-          <p class="label">Active Next: LDD 2026-06-27 Pre</p>
-          <p>GOOG 340/335 · NVDA 190/198/204 · Memory stop-decline check</p>
         </div>
       </aside>
     </section>
 
     <section class="workspace-section" id="workspaces">
       <div class="section-heading">
-        <p class="label">Workspace</p>
-        <h2>Demo workspaces</h2>
+        <p class="label">Example workspaces</p>
+        <h2>Example workspaces</h2>
       </div>
       <div class="workspace-grid">
         <article>
           <h3>LDD Daily Ops</h3>
-          <p><strong>State:</strong> defensive / cash-heavy</p>
-          <p><strong>Signal:</strong> GOOG Pending Execution</p>
+          <p>Defensive / cash-heavy daily ops example.</p>
           <p><strong>Next:</strong> 2026-06-27 Pre</p>
         </article>
         <article>
           <h3>2026WC Multi-Ledger</h3>
-          <p><strong>State:</strong> 60 reviewed, 12/20, 60.0%</p>
-          <p><strong>Signal:</strong> Rotation Noise Filter</p>
+          <p>Manual review workspace with Rotation Noise Filter.</p>
           <p><strong>Next:</strong> G-L groups</p>
         </article>
         <article>
           <h3>TWOS Product Dev</h3>
-          <p><strong>State:</strong> Vol.12.9 hero board flow</p>
-          <p><strong>Signal:</strong> AI Board productization</p>
+          <p>Vol.12.10 first-screen simplification.</p>
           <p><strong>Next:</strong> UX simplification</p>
         </article>
       </div>

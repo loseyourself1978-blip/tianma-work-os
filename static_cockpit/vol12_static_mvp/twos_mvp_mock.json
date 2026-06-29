@@ -1,53 +1,30 @@
 {
   "meta": {
     "product": "Tianma Work OS",
-    "volume": "Vol.12.9",
-    "slice": "Hero Board + Flow Integration",
+    "volume": "Vol.12.10",
+    "slice": "First-Screen Simplification",
     "mode": "static_local_fixture_only",
     "canonicalVisibleUrl": "file:///Users/hj/Downloads/tianma-work-os/static_cockpit/vol12_static_mvp/index.html"
   },
   "homepage": {
     "title": "Your AI Board for high-context work.",
     "heroLines": [
-      "Input any task, project, sync, or recap.",
-      "TWOS assembles AI models — ChatGPT, Claude, Gemini, Grok, and more — into a team that plans, checks, builds, executes through approved tools, and reviews the work.",
-      "Every result feeds a self-improving loop of feedback, validation, and guardrails.",
-      "You approve every tool action before it runs."
+      "Input your idea.",
+      "TWOS forms an AI model team for the task.",
+      "Review the plan and approve tool actions before anything runs.",
+      "Models may include ChatGPT, Claude, Gemini, Grok, and more.",
+      "Roles and models are generated for each task and can be edited before execution.",
+      "Feedback becomes validation, guardrails, and a better next run."
     ],
     "localHint": "file:// local static MVP",
-    "composerPlaceholder": "Input an idea, project task, sync, recap, or result...",
+    "composerPlaceholder": "Input an idea, task, project, sync, recap, or result...",
     "staticButtons": ["Form AI Board", "Open Workspace", "Review Handoff"]
   },
   "aiBoardPreview": {
     "title": "AI Board Auto-Formed",
-    "explainer": "An AI Board is a task-specific team of AI models. TWOS chooses the roles, locks the next step, and routes approved work to the right tools.",
-    "modelPool": "ChatGPT · Claude · Gemini · Grok · Approved Tools",
-    "slots": {
-      "Lead Planner": {
-        "model": "GPT-5.5 Pro slot",
-        "text": "turns your input into the next clear step."
-      },
-      "Reality Checker": {
-        "model": "GPT-5.4 slot",
-        "text": "checks risk, missing context, and contradictions."
-      },
-      "Assumption Checker": {
-        "model": "Claude slot",
-        "text": "filters noise before decisions."
-      },
-      "Domain Analyst": {
-        "model": "Gemini / GPT slot",
-        "text": "adapts to the project type."
-      },
-      "Builder / Tool Handoff": {
-        "model": "tool-ready model slot",
-        "text": "routes approved work to the right tool, such as code, docs, email, calendar, or review workflows."
-      },
-      "Reviewer": {
-        "model": "model slot",
-        "text": "validates results and turns mistakes into guardrails."
-      }
-    },
+    "explainer": "An AI Board is a task-specific team of AI models. It is generated from your input and can be adjusted before tools run.",
+    "modelPool": "ChatGPT · Claude · Gemini · Grok · more",
+    "roleMode": "TWOS generates the right roles for the task.",
     "note": "Model names are static mock slots in this MVP. No API, no live routing, no automation."
   },
   "activeNext": {
@@ -69,7 +46,7 @@
     },
     {
       "name": "TWOS Product Dev",
-      "state": "Vol.12.9 hero board flow",
+      "state": "Vol.12.10 first-screen simplification",
       "signal": "AI Board productization",
       "next": "UX simplification"
     }
@@ -84,16 +61,16 @@
   ],
   "interactionFlow": [
     {
-      "state": "Input",
-      "text": "Tell TWOS what you are working on."
+      "state": "Input idea",
+      "text": "Describe what you are working on."
     },
     {
-      "state": "AI Board Formed",
-      "text": "TWOS assembles the model team."
+      "state": "AI team forms",
+      "text": "TWOS selects models and roles for the task."
     },
     {
-      "state": "Tool Handoff Ready",
-      "text": "Approved tools wait for your confirmation."
+      "state": "Approve tool actions",
+      "text": "Nothing runs until you approve."
     }
   ],
   "details": {
