@@ -3,105 +3,66 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TWOS Static Cockpit Vol.12.10</title>
+  <title>TWOS Static Cockpit Vol.12.11</title>
   <link rel="stylesheet" href="./styles.css" />
   <link rel="alternate" type="application/json" href="./twos_mvp_mock.json" />
 </head>
 <body>
-  <main class="page-shell" aria-label="TWOS Static Cockpit Vol.12.10">
+  <main class="page-shell" aria-label="TWOS Static Cockpit Vol.12.11">
     <nav class="top-nav" aria-label="Primary navigation">
       <a class="brand" href="#top">TWOS</a>
       <div>
+        <a href="#product">Product</a>
         <a href="#workspaces">Workspaces</a>
         <a href="#ai-board">AI Board</a>
-        <a href="#workflow">Handoff</a>
-        <a href="#firewall">Firewall</a>
+        <a href="#tools">Tools</a>
       </div>
     </nav>
 
     <section class="hero" id="top">
-      <div class="hero-copy">
-        <p class="version">Vol.12.10</p>
-        <h1>Your AI Board for high-context work.</h1>
-        <div class="hero-lines">
-          <p class="focus-line">Input your idea.</p>
-          <p class="focus-line">TWOS forms an AI model team for the task.</p>
-          <p class="approval-line">Review the plan and approve tool actions before anything runs.</p>
-          <p>Models may include ChatGPT, Claude, Gemini, Grok, and more.</p>
-          <p>Roles and models are generated for each task and can be edited before execution.</p>
-          <p class="feedback-line">Feedback becomes validation, guardrails, and a better next run.</p>
-        </div>
-        <p class="local-hint">file:// local static MVP</p>
+      <p class="version">Vol.12.11</p>
+      <p class="product-name">TWOS</p>
+      <h1>Your AI Work OS.</h1>
+      <p class="subheadline">Describe what you are working on. TWOS turns it into a workspace, forms an AI model team, and asks before using tools.</p>
+      <p class="trust-line">You approve every tool action before it runs.</p>
+      <p class="model-line">Models may include ChatGPT, Claude, Gemini, Grok, and more.</p>
 
-        <div class="composer" aria-label="Static input composer">
-          <p>Input an idea, task, project, sync, recap, or result...</p>
-          <div class="composer-actions">
-            <button type="button">Form AI Board</button>
-            <button type="button">Open Workspace</button>
-            <button type="button">Review Handoff</button>
-          </div>
+      <div class="composer" aria-label="Static input composer">
+        <p class="placeholder">What are you working on?</p>
+        <p class="helper">Input an idea, project, task, sync, recap, or result.</p>
+        <div class="composer-actions">
+          <button type="button">Start</button>
+          <button type="button">Create workspace</button>
+          <button type="button">View demo</button>
         </div>
       </div>
 
-      <aside class="hero-panel" id="ai-board" aria-label="AI Board preview">
-        <div class="board-preview">
-          <p class="label">AI Board Auto-Formed</p>
-          <p class="board-explainer">An AI Board is a task-specific team of AI models. It is generated from your input and can be adjusted before tools run.</p>
-          <p class="model-pool">Models may include ChatGPT · Claude · Gemini · Grok · more</p>
-          <p class="board-note">TWOS generates the right roles for the task.</p>
-          <div class="board-flow" aria-label="How TWOS works">
-            <p class="label">How TWOS works</p>
-            <ol>
-              <li><strong>Input idea</strong><span>Describe what you are working on.</span></li>
-              <li><strong>AI team forms</strong><span>TWOS selects models and roles for the task.</span></li>
-              <li><strong>Approve tool actions</strong><span>Nothing runs until you approve.</span></li>
-            </ol>
-          </div>
-          <p class="small-note">Model names are static mock slots in this MVP. No API, no live routing, no automation.</p>
+      <div class="zero-state" aria-label="Zero-state workspace cue">
+        <strong>No workspace yet.</strong>
+        <span>Create your first workspace by describing the work.</span>
+      </div>
+
+      <div class="product-loop" id="product" aria-label="Simple product loop">
+        <p>Input → AI Board → Workspace → Approved Tools → Review</p>
+        <span>TWOS keeps the plan, handoff, validation, and guardrails together.</span>
+      </div>
+
+      <p class="board-short" id="ai-board">An AI Board is generated for each task. Roles and models are editable before tools run.</p>
+      <p class="local-hint">file:// local static MVP</p>
+    </section>
+
+    <section class="archive-section" id="workspaces" aria-label="Optional demo archive">
+      <details>
+        <summary>Optional demo archive</summary>
+        <div class="detail-content demo-list">
+          <p><strong>LDD Daily Ops:</strong> defensive / cash-heavy example; next 2026-06-27 Pre.</p>
+          <p><strong>2026WC Multi-Ledger:</strong> manual review example; next G-L groups.</p>
+          <p><strong>TWOS Product Dev:</strong> Vol.12.11 zero-state onboarding.</p>
         </div>
-      </aside>
+      </details>
     </section>
 
-    <section class="workspace-section" id="workspaces">
-      <div class="section-heading">
-        <p class="label">Example workspaces</p>
-        <h2>Example workspaces</h2>
-      </div>
-      <div class="workspace-grid">
-        <article>
-          <h3>LDD Daily Ops</h3>
-          <p>Defensive / cash-heavy daily ops example.</p>
-          <p><strong>Next:</strong> 2026-06-27 Pre</p>
-        </article>
-        <article>
-          <h3>2026WC Multi-Ledger</h3>
-          <p>Manual review workspace with Rotation Noise Filter.</p>
-          <p><strong>Next:</strong> G-L groups</p>
-        </article>
-        <article>
-          <h3>TWOS Product Dev</h3>
-          <p>Vol.12.10 first-screen simplification.</p>
-          <p><strong>Next:</strong> UX simplification</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="workflow-section" id="workflow">
-      <div class="section-heading">
-        <p class="label">Approved Tool Handoff</p>
-        <h2>Route to Approved Tools</h2>
-      </div>
-      <ol class="workflow">
-        <li><strong>Input your task</strong><span>Any task, sync, recap, or result.</span></li>
-        <li><strong>TWOS forms AI Board</strong><span>Roles are selected for the work.</span></li>
-        <li><strong>Board locks Active Next</strong><span>One next checkpoint is named.</span></li>
-        <li><strong>Approved tools receive scoped work</strong><span>Only after confirmation.</span></li>
-        <li><strong>Results return for validation</strong><span>The output is checked.</span></li>
-        <li><strong>DUXD turns feedback into guardrails</strong><span>Lessons become rules.</span></li>
-      </ol>
-    </section>
-
-    <section class="details-section" aria-label="Progressive details">
+    <section class="details-section" id="tools" aria-label="Progressive details">
       <details>
         <summary>LDD Risk Details</summary>
         <div class="detail-content">
@@ -109,6 +70,14 @@
           <p>US equity cash about 19,669.55 / about 82.5%; Binance USDT about 73.2%.</p>
           <p>GOOG Pending Execution. NVDA 190/198/204. GOOG 340/335.</p>
           <p>Memory Pullback Watchlist and Theme Day-2 Failure Gate remain active.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>2026WC Review Details</summary>
+        <div class="detail-content">
+          <p>60 matches reviewed. Main direction 12/20, 60.0%.</p>
+          <p>Rotation Noise Filter active. G-L remaining 12 matches; knockout path next.</p>
         </div>
       </details>
 
@@ -148,14 +117,6 @@
         <div class="detail-content">
           <p>Account SoT: user-provided positions and cash snapshot.</p>
           <p>Market data: public quote/news layer. Account snapshots and public market data are separate ledgers.</p>
-        </div>
-      </details>
-
-      <details>
-        <summary>2026WC Review Details</summary>
-        <div class="detail-content">
-          <p>60 matches reviewed. Main direction 12/20, 60.0%.</p>
-          <p>Rotation Noise Filter active. G-L remaining 12 matches; knockout path next.</p>
         </div>
       </details>
 

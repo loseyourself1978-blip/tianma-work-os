@@ -1,76 +1,41 @@
 {
   "meta": {
     "product": "Tianma Work OS",
-    "volume": "Vol.12.10",
-    "slice": "First-Screen Simplification",
+    "volume": "Vol.12.11",
+    "slice": "Zero-State First Login Homepage",
     "mode": "static_local_fixture_only",
     "canonicalVisibleUrl": "file:///Users/hj/Downloads/tianma-work-os/static_cockpit/vol12_static_mvp/index.html"
   },
   "homepage": {
-    "title": "Your AI Board for high-context work.",
-    "heroLines": [
-      "Input your idea.",
-      "TWOS forms an AI model team for the task.",
-      "Review the plan and approve tool actions before anything runs.",
-      "Models may include ChatGPT, Claude, Gemini, Grok, and more.",
-      "Roles and models are generated for each task and can be edited before execution.",
-      "Feedback becomes validation, guardrails, and a better next run."
-    ],
-    "localHint": "file:// local static MVP",
-    "composerPlaceholder": "Input an idea, task, project, sync, recap, or result...",
-    "staticButtons": ["Form AI Board", "Open Workspace", "Review Handoff"]
+    "productName": "TWOS",
+    "headline": "Your AI Work OS.",
+    "subheadline": "Describe what you are working on. TWOS turns it into a workspace, forms an AI model team, and asks before using tools.",
+    "trustLine": "You approve every tool action before it runs.",
+    "modelLine": "Models may include ChatGPT, Claude, Gemini, Grok, and more.",
+    "composerPlaceholder": "What are you working on?",
+    "composerHelper": "Input an idea, project, task, sync, recap, or result.",
+    "staticButtons": ["Start", "Create workspace", "View demo"],
+    "zeroState": {
+      "title": "No workspace yet.",
+      "text": "Create your first workspace by describing the work."
+    },
+    "productLoop": "Input → AI Board → Workspace → Approved Tools → Review",
+    "loopSupport": "TWOS keeps the plan, handoff, validation, and guardrails together.",
+    "aiBoardShort": "An AI Board is generated for each task. Roles and models are editable before tools run.",
+    "localHint": "file:// local static MVP"
   },
-  "aiBoardPreview": {
-    "title": "AI Board Auto-Formed",
-    "explainer": "An AI Board is a task-specific team of AI models. It is generated from your input and can be adjusted before tools run.",
-    "modelPool": "ChatGPT · Claude · Gemini · Grok · more",
-    "roleMode": "TWOS generates the right roles for the task.",
-    "note": "Model names are static mock slots in this MVP. No API, no live routing, no automation."
-  },
-  "activeNext": {
-    "label": "Active Next: LDD 2026-06-27 Pre",
-    "summary": "GOOG 340/335 · NVDA 190/198/204 · Memory stop-decline check"
-  },
-  "workspaces": [
+  "optionalDemoArchive": [
     {
       "name": "LDD Daily Ops",
-      "state": "defensive / cash-heavy",
-      "signal": "GOOG Pending Execution",
-      "next": "2026-06-27 Pre"
+      "summary": "defensive / cash-heavy example; next 2026-06-27 Pre"
     },
     {
       "name": "2026WC Multi-Ledger",
-      "state": "60 reviewed, 12/20, 60.0%",
-      "signal": "Rotation Noise Filter",
-      "next": "G-L groups"
+      "summary": "manual review example; next G-L groups"
     },
     {
       "name": "TWOS Product Dev",
-      "state": "Vol.12.10 first-screen simplification",
-      "signal": "AI Board productization",
-      "next": "UX simplification"
-    }
-  ],
-  "workflow": [
-    "Input your task",
-    "TWOS forms AI Board",
-    "Board locks Active Next",
-    "Approved tools receive scoped work",
-    "Results return for validation",
-    "DUXD turns feedback into guardrails"
-  ],
-  "interactionFlow": [
-    {
-      "state": "Input idea",
-      "text": "Describe what you are working on."
-    },
-    {
-      "state": "AI team forms",
-      "text": "TWOS selects models and roles for the task."
-    },
-    {
-      "state": "Approve tool actions",
-      "text": "Nothing runs until you approve."
+      "summary": "Vol.12.11 zero-state onboarding"
     }
   ],
   "details": {
@@ -87,6 +52,12 @@
       "risk": ["GOOG Pending Execution", "NVDA 190/198/204", "GOOG 340/335"],
       "layers": ["Memory Pullback Watchlist", "Theme Day-2 Failure Gate"]
     },
+    "wc2026ReviewDetails": {
+      "matchesReviewed": 60,
+      "mainDirection": "12/20, 60.0%",
+      "filter": "Rotation Noise Filter",
+      "next": "G-L remaining 12 matches; knockout path next"
+    },
     "publicMarketDataEnforcement": {
       "columns": ["Symbol", "Current session", "Quote layer", "Price", "Change", "Source time", "Usable for judgment?"],
       "rows": ["NVDA", "GOOG", "MU", "SNDK", "DRAM", "WDC", "STX", "QCOM", "QQQ", "SMH"],
@@ -94,12 +65,6 @@
       "defaultChange": "not supplied in sync"
     },
     "accountSotMarketDataSplit": "Account snapshots and public market data are separate ledgers.",
-    "wc2026ReviewDetails": {
-      "matchesReviewed": 60,
-      "mainDirection": "12/20, 60.0%",
-      "filter": "Rotation Noise Filter",
-      "next": "G-L remaining 12 matches; knockout path next"
-    },
     "noiseFilterLayer": ["Rotation Noise Filter", "Quote-layer filter", "Theme Day-2 Failure Gate", "Account SoT / Market Data Split"],
     "permissionFirewall": {
       "state": "LOCKED",
