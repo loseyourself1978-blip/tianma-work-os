@@ -3,138 +3,39 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TWOS Static Cockpit Vol.12.11</title>
+  <title>TWOS Static Cockpit Vol.12.12</title>
   <link rel="stylesheet" href="./styles.css" />
   <link rel="alternate" type="application/json" href="./twos_mvp_mock.json" />
 </head>
 <body>
-  <main class="page-shell" aria-label="TWOS Static Cockpit Vol.12.11">
-    <nav class="top-nav" aria-label="Primary navigation">
-      <a class="brand" href="#top">TWOS</a>
-      <div>
-        <a href="#product">Product</a>
-        <a href="#workspaces">Workspaces</a>
-        <a href="#ai-board">AI Board</a>
-        <a href="#tools">Tools</a>
-      </div>
-    </nav>
+  <main class="landing" aria-label="TWOS Static Cockpit Vol.12.12">
+    <header class="topbar">
+      <p class="brand">TWOS</p>
+      <p class="local-note">Static local MVP · file://</p>
+    </header>
 
-    <section class="hero" id="top">
-      <p class="version">Vol.12.11</p>
-      <p class="product-name">TWOS</p>
-      <h1>Your AI Work OS.</h1>
-      <p class="subheadline">Describe what you are working on. TWOS turns it into a workspace, forms an AI model team, and asks before using tools.</p>
-      <p class="trust-line">You approve every tool action before it runs.</p>
-      <p class="model-line">Models may include ChatGPT, Claude, Gemini, Grok, and more.</p>
+    <section class="hero" aria-label="TWOS one-screen promise">
+      <p class="version">Vol.12.12</p>
+      <h1>You say it. TWOS gets it done.</h1>
+      <p class="subheadline">Turn thoughts, tasks, and projects into coordinated AI work.</p>
+      <p class="explanation">TWOS brings together AI models — ChatGPT, Claude, Gemini, Grok, and more — to plan, act, check, and improve the result.</p>
+      <p class="control-line">You stay in control before anything runs.</p>
+      <p class="improvement-line">Every run can become feedback, guardrails, and a better next run.</p>
 
       <div class="composer" aria-label="Static input composer">
-        <p class="placeholder">What are you working on?</p>
-        <p class="helper">Input an idea, project, task, sync, recap, or result.</p>
-        <div class="composer-actions">
+        <p class="placeholder">What do you want to get done?</p>
+        <p class="helper">Describe an idea, decision, project, research question, document, workflow, or recap.</p>
+        <div class="actions">
           <button type="button">Start</button>
-          <button type="button">Create workspace</button>
-          <button type="button">View demo</button>
+          <button type="button">Form AI Team</button>
+          <button type="button">See Example</button>
         </div>
       </div>
 
-      <div class="zero-state" aria-label="Zero-state workspace cue">
-        <strong>No workspace yet.</strong>
-        <span>Create your first workspace by describing the work.</span>
+      <div class="model-strip" aria-label="Static model strip">
+        <p>ChatGPT · Claude · Gemini · Grok · more</p>
+        <span>The AI team is generated for each task.</span>
       </div>
-
-      <div class="product-loop" id="product" aria-label="Simple product loop">
-        <p>Input → AI Board → Workspace → Approved Tools → Review</p>
-        <span>TWOS keeps the plan, handoff, validation, and guardrails together.</span>
-      </div>
-
-      <p class="board-short" id="ai-board">An AI Board is generated for each task. Roles and models are editable before tools run.</p>
-      <p class="local-hint">file:// local static MVP</p>
-    </section>
-
-    <section class="archive-section" id="workspaces" aria-label="Optional demo archive">
-      <details>
-        <summary>Optional demo archive</summary>
-        <div class="detail-content demo-list">
-          <p><strong>LDD Daily Ops:</strong> defensive / cash-heavy example; next 2026-06-27 Pre.</p>
-          <p><strong>2026WC Multi-Ledger:</strong> manual review example; next G-L groups.</p>
-          <p><strong>TWOS Product Dev:</strong> Vol.12.11 zero-state onboarding.</p>
-        </div>
-      </details>
-    </section>
-
-    <section class="details-section" id="tools" aria-label="Progressive details">
-      <details>
-        <summary>LDD Risk Details</summary>
-        <div class="detail-content">
-          <p>NVDA 5 · GOOG 5 · SPCX Dream Sleeve 10</p>
-          <p>US equity cash about 19,669.55 / about 82.5%; Binance USDT about 73.2%.</p>
-          <p>GOOG Pending Execution. NVDA 190/198/204. GOOG 340/335.</p>
-          <p>Memory Pullback Watchlist and Theme Day-2 Failure Gate remain active.</p>
-        </div>
-      </details>
-
-      <details>
-        <summary>2026WC Review Details</summary>
-        <div class="detail-content">
-          <p>60 matches reviewed. Main direction 12/20, 60.0%.</p>
-          <p>Rotation Noise Filter active. G-L remaining 12 matches; knockout path next.</p>
-        </div>
-      </details>
-
-      <details>
-        <summary>Public Market Data Enforcement</summary>
-        <div class="detail-content table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Symbol</th>
-                <th>Current session</th>
-                <th>Quote layer</th>
-                <th>Price</th>
-                <th>Change</th>
-                <th>Source time</th>
-                <th>Usable for judgment?</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>NVDA</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No</td></tr>
-              <tr><td>GOOG</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No</td></tr>
-              <tr><td>MU</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No</td></tr>
-              <tr><td>SNDK</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No</td></tr>
-              <tr><td>DRAM</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No</td></tr>
-              <tr><td>WDC</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No</td></tr>
-              <tr><td>STX</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No</td></tr>
-              <tr><td>QCOM</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No</td></tr>
-              <tr><td>QQQ</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No</td></tr>
-              <tr><td>SMH</td><td>not supplied in sync</td><td>public quote/news layer</td><td>not supplied in sync</td><td>not supplied in sync</td><td>not supplied in sync</td><td>No</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </details>
-
-      <details>
-        <summary>Account SoT / Market Data Split</summary>
-        <div class="detail-content">
-          <p>Account SoT: user-provided positions and cash snapshot.</p>
-          <p>Market data: public quote/news layer. Account snapshots and public market data are separate ledgers.</p>
-        </div>
-      </details>
-
-      <details>
-        <summary>Noise Filter Layer</summary>
-        <div class="detail-content">
-          <p>Rotation Noise Filter, quote-layer filter, Theme Day-2 Failure Gate, and Account SoT / Market Data Split.</p>
-          <p>Noise Filter prevents surface data from becoming premature decisions.</p>
-        </div>
-      </details>
-
-      <details id="firewall">
-        <summary>Permission Firewall</summary>
-        <div class="detail-content firewall-detail">
-          <p><strong>LOCKED.</strong> Static fixture only.</p>
-          <p>No API, No live data, No broker connection, No Binance connection, No scheduler, No schema, No validator, No framework, No JS, No market analysis logic, No trade execution logic, No match prediction logic.</p>
-        </div>
-      </details>
     </section>
   </main>
 </body>

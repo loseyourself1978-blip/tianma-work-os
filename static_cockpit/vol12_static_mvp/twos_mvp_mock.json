@@ -1,75 +1,37 @@
 {
   "meta": {
     "product": "Tianma Work OS",
-    "volume": "Vol.12.11",
-    "slice": "Zero-State First Login Homepage",
+    "volume": "Vol.12.12",
+    "slice": "One-Screen Promise Landing",
     "mode": "static_local_fixture_only",
     "canonicalVisibleUrl": "file:///Users/hj/Downloads/tianma-work-os/static_cockpit/vol12_static_mvp/index.html"
   },
-  "homepage": {
-    "productName": "TWOS",
-    "headline": "Your AI Work OS.",
-    "subheadline": "Describe what you are working on. TWOS turns it into a workspace, forms an AI model team, and asks before using tools.",
-    "trustLine": "You approve every tool action before it runs.",
-    "modelLine": "Models may include ChatGPT, Claude, Gemini, Grok, and more.",
-    "composerPlaceholder": "What are you working on?",
-    "composerHelper": "Input an idea, project, task, sync, recap, or result.",
-    "staticButtons": ["Start", "Create workspace", "View demo"],
-    "zeroState": {
-      "title": "No workspace yet.",
-      "text": "Create your first workspace by describing the work."
-    },
-    "productLoop": "Input → AI Board → Workspace → Approved Tools → Review",
-    "loopSupport": "TWOS keeps the plan, handoff, validation, and guardrails together.",
-    "aiBoardShort": "An AI Board is generated for each task. Roles and models are editable before tools run.",
-    "localHint": "file:// local static MVP"
+  "landing": {
+    "brand": "TWOS",
+    "localNote": "Static local MVP · file://",
+    "headline": "You say it. TWOS gets it done.",
+    "subheadline": "Turn thoughts, tasks, and projects into coordinated AI work.",
+    "explanation": "TWOS brings together AI models — ChatGPT, Claude, Gemini, Grok, and more — to plan, act, check, and improve the result.",
+    "controlLine": "You stay in control before anything runs.",
+    "improvementLine": "Every run can become feedback, guardrails, and a better next run.",
+    "composerPlaceholder": "What do you want to get done?",
+    "composerHelper": "Describe an idea, decision, project, research question, document, workflow, or recap.",
+    "staticButtons": ["Start", "Form AI Team", "See Example"],
+    "modelStrip": "ChatGPT · Claude · Gemini · Grok · more",
+    "modelNote": "The AI team is generated for each task."
   },
-  "optionalDemoArchive": [
-    {
-      "name": "LDD Daily Ops",
-      "summary": "defensive / cash-heavy example; next 2026-06-27 Pre"
-    },
-    {
-      "name": "2026WC Multi-Ledger",
-      "summary": "manual review example; next G-L groups"
-    },
-    {
-      "name": "TWOS Product Dev",
-      "summary": "Vol.12.11 zero-state onboarding"
-    }
-  ],
-  "details": {
-    "lddRiskDetails": {
-      "positions": {
-        "NVDA": 5,
-        "GOOG": 5,
-        "SPCX Dream Sleeve": 10
-      },
-      "cash": {
-        "usEquityCash": "about 19,669.55 / about 82.5%",
-        "binanceUsdt": "about 73.2%"
-      },
-      "risk": ["GOOG Pending Execution", "NVDA 190/198/204", "GOOG 340/335"],
-      "layers": ["Memory Pullback Watchlist", "Theme Day-2 Failure Gate"]
-    },
-    "wc2026ReviewDetails": {
-      "matchesReviewed": 60,
-      "mainDirection": "12/20, 60.0%",
-      "filter": "Rotation Noise Filter",
-      "next": "G-L remaining 12 matches; knockout path next"
-    },
-    "publicMarketDataEnforcement": {
-      "columns": ["Symbol", "Current session", "Quote layer", "Price", "Change", "Source time", "Usable for judgment?"],
-      "rows": ["NVDA", "GOOG", "MU", "SNDK", "DRAM", "WDC", "STX", "QCOM", "QQQ", "SMH"],
-      "defaultPrice": "not supplied in sync",
-      "defaultChange": "not supplied in sync"
-    },
-    "accountSotMarketDataSplit": "Account snapshots and public market data are separate ledgers.",
-    "noiseFilterLayer": ["Rotation Noise Filter", "Quote-layer filter", "Theme Day-2 Failure Gate", "Account SoT / Market Data Split"],
-    "permissionFirewall": {
-      "state": "LOCKED",
-      "mode": "Static fixture only",
-      "forbidden": ["No API", "No live data", "No broker connection", "No Binance connection", "No scheduler", "No schema", "No validator", "No framework", "No JS", "No market analysis logic", "No trade execution logic", "No match prediction logic"]
-    }
+  "constraints": {
+    "staticFixtureOnly": true,
+    "noApi": true,
+    "noLiveData": true,
+    "noBrokerConnection": true,
+    "noBinanceConnection": true,
+    "noScheduler": true,
+    "noSchema": true,
+    "noValidator": true,
+    "noFramework": true,
+    "noJavaScript": true,
+    "noExecutionLogic": true,
+    "noPredictionLogic": true
   }
 }
