@@ -2,107 +2,96 @@
   "meta": {
     "product": "Tianma Work OS",
     "volume": "Vol.13",
-    "slice": "Create First Project Flow Prototype",
+    "slice": "Stage A Thinking and AI Team Formation",
     "mode": "static_local_fixture_only",
-    "html": "./create_workspace.html",
+    "html": "./start_thinking.html",
     "css": "./create_workspace.css"
   },
   "user_prompt": "Predict and review 2026 World Cup matches every day.",
-  "inferred_goal": "Build a manual prediction review workspace for preparing predictions, reviewing outcomes, and recording learning notes.",
-  "workspace_name": "2026WC Prediction Workspace",
-  "ai_team_preset": [
+  "post_start_flow": [
+    "Prompt received",
+    "Thinking",
+    "AI team forming",
+    "Task decomposition",
+    "Workspace later"
+  ],
+  "thinking": {
+    "task_type": "Prediction preparation, review, and learning from outcomes.",
+    "likely_project_type": "2026WC prediction and review project with recurring manual check-ins.",
+    "cadence_assumption": "The phrase “every day” means a manual daily review rhythm, not an automated schedule.",
+    "clarification_notes": [
+      "What match context should the user supply?",
+      "Should odds notes be included, and from what source provided by the user?",
+      "How should prediction quality be scored?"
+    ],
+    "boundary": "Fixture text only, manual review only, no automatic data fetching."
+  },
+  "ai_team_formation": [
     {
-      "role": "Data Verifier",
-      "purpose": "Check that supplied inputs are clear, sourced by the user, and usable for manual review."
+      "role": "Mission Interpreter",
+      "responsibility": "Convert the prompt into a clear mission and scope.",
+      "why_needed": "Prevents the project from starting with vague goals.",
+      "suggested_model_type": "planning model / orchestrator",
+      "decided_by": "TWOS static preset for goal interpretation",
+      "replaceable": true
     },
     {
-      "role": "Match Analyst",
-      "purpose": "Structure match questions and prepare prediction reasoning from user-provided context."
+      "role": "Research / Data Scout",
+      "responsibility": "Organize user-supplied match and team context.",
+      "why_needed": "Predictions need grounded inputs before reasoning.",
+      "suggested_model_type": "research-focused model",
+      "decided_by": "TWOS static preset for context gathering",
+      "replaceable": true
     },
     {
-      "role": "Odds & Risk Officer",
-      "purpose": "Flag missing odds context and avoid treating unsupplied odds as facts."
+      "role": "Prediction Analyst",
+      "responsibility": "Prepare prediction reasoning and output tables.",
+      "why_needed": "Turns context into comparable predictions.",
+      "suggested_model_type": "analytical model",
+      "decided_by": "TWOS static preset for prediction tasks",
+      "replaceable": true
     },
     {
-      "role": "Final Commander",
-      "purpose": "Combine the plan into a concise next action for user review."
+      "role": "Risk & Calibration Officer",
+      "responsibility": "Track confidence, misses, and calibration rules.",
+      "why_needed": "Keeps prediction quality from drifting.",
+      "suggested_model_type": "critique / calibration model",
+      "decided_by": "TWOS static preset for review quality",
+      "replaceable": true
     },
     {
-      "role": "Review & Learning Agent",
-      "purpose": "Turn manual review notes into clearer future prompts and checks."
+      "role": "Output Editor",
+      "responsibility": "Compress the result into a readable daily sync.",
+      "why_needed": "Keeps the user-facing output compact.",
+      "suggested_model_type": "writing / summarization model",
+      "decided_by": "TWOS static preset for output clarity",
+      "replaceable": true
+    },
+    {
+      "role": "Review / Learning Officer",
+      "responsibility": "Collect user feedback and update review notes.",
+      "why_needed": "Makes the next run better than the last.",
+      "suggested_model_type": "reflection / learning model",
+      "decided_by": "TWOS static preset for feedback loops",
+      "replaceable": true
     }
   ],
-  "first_tasks": [
-    "setup prediction scope",
-    "prepare daily match review",
-    "generate next-day prediction table",
-    "record learning notes"
+  "task_decomposition": [
+    "gather latest match/team context",
+    "review completed predictions",
+    "compare prediction vs actual",
+    "update calibration rules",
+    "generate next-match predictions",
+    "produce daily compact sync",
+    "collect user feedback"
   ],
-  "manual_review_rhythm": "manual daily review rhythm",
-  "acceptance_checks": [
-    "Static page works from file:// as local fixture content.",
-    "Manual review only.",
-    "Match lists, odds context, and outcomes stay user-supplied.",
-    "Workspace content remains reviewable before any future implementation."
-  ],
-  "flow_state": [
-    "Prompt captured",
-    "Goal understood",
-    "Workspace created",
-    "AI team assigned",
-    "First tasks ready"
-  ],
-  "test_flow": [
-    "Open the Vol.12 landing page.",
-    "Enter or keep “Predict and review 2026 World Cup matches every day.”",
-    "Click Create Workspace.",
-    "Arrive at this workspace flow page."
-  ],
-  "prototype_proves": [
-    "A first user input can become a named workspace.",
-    "The workspace can receive a static AI team preset.",
-    "The first task plan can be reviewed before any implementation."
-  ],
-  "acceptance_gate": [
-    {
-      "status": "Pass",
-      "item": "inherited Vol.12 baseline preserved"
-    },
-    {
-      "status": "Pass",
-      "item": "landing entry wired"
-    },
-    {
-      "status": "Pass",
-      "item": "primary CTA static path works"
-    },
-    {
-      "status": "Pass",
-      "item": "no JS/API/live/scheduler/backend"
-    },
-    {
-      "status": "Pass",
-      "item": "no schema/validator/framework"
-    },
-    {
-      "status": "Pass",
-      "item": "workspace flow visible"
-    },
-    {
-      "status": "Pass",
-      "item": "AI team preset visible"
-    },
-    {
-      "status": "Pass",
-      "item": "task decomposition visible"
-    },
-    {
-      "status": "Pass",
-      "item": "copy remains manual-review-only"
-    },
-    {
-      "status": "Next",
-      "item": "one-page flow vs workspace preview page"
-    }
-  ]
+  "next_step": {
+    "label": "Next: Create Workspace / Project Matrix",
+    "created_from": [
+      "interpreted mission",
+      "selected AI team",
+      "task decomposition",
+      "manual review rhythm"
+    ]
+  }
 }

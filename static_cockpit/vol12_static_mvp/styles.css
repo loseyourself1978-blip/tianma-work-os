@@ -128,7 +128,7 @@ button {
   font-weight: 850;
 }
 
-.create-button {
+.start-button {
   border-color: var(--accent);
   background: var(--accent);
   color: #ffffff;

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TWOS Vol.13 Thinking + AI Team Formation</title>
+  <link rel="stylesheet" href="./create_workspace.css" />
+  <link rel="alternate" type="application/json" href="./workspace_mock.json" />
+</head>
+<body>
+  <main class="page" aria-label="TWOS Vol.13 post-start thinking flow">
+    <header class="topbar">
+      <p class="brand">TWOS</p>
+      <a class="back-link" href="../vol12_static_mvp/index.html">Back to landing</a>
+    </header>
+
+    <section class="hero">
+      <p class="eyebrow">Start / Thinking</p>
+      <h1>TWOS is forming the AI team.</h1>
+      <p class="intro">Started from the prompt: “Predict and review 2026 World Cup matches every day.” This static page shows how TWOS interprets the goal before any workspace is created.</p>
+    </section>
+
+    <nav class="progress-strip" aria-label="Static post-start flow">
+      <span>Prompt received</span>
+      <span>Thinking</span>
+      <span>AI team forming</span>
+      <span>Task decomposition</span>
+      <span>Workspace later</span>
+    </nav>
+
+    <section class="test-flow" aria-label="How to test this flow">
+      <p class="label">How to test this flow</p>
+      <ol>
+        <li>Open the Vol.12 landing page.</li>
+        <li>Enter or keep “Predict and review 2026 World Cup matches every day.”</li>
+        <li>Click Start.</li>
+        <li>Arrive at this thinking and AI team page.</li>
+      </ol>
+    </section>
+
+    <section class="thinking-panel" aria-label="What the system is trying to understand">
+      <div class="section-heading">
+        <p class="label">What the system is trying to understand</p>
+        <h2>Interpret the goal before assigning work.</h2>
+      </div>
+      <div class="thinking-grid">
+        <article>
+          <h3>Task type</h3>
+          <p>Prediction preparation, review, and learning from outcomes.</p>
+        </article>
+        <article>
+          <h3>Likely project type</h3>
+          <p>2026WC prediction and review project with recurring manual check-ins.</p>
+        </article>
+        <article>
+          <h3>Cadence assumption</h3>
+          <p>The phrase “every day” means a manual daily review rhythm, not an automated schedule.</p>
+        </article>
+        <article>
+          <h3>Clarification notes</h3>
+          <p>Later TWOS should ask what match context, odds notes, and scoring rules the user wants to supply.</p>
+        </article>
+      </div>
+      <p class="boundary-note">Static prototype boundary: fixture text only, manual review only, no automatic data fetching.</p>
+    </section>
+
+    <section class="section-block" aria-label="AI team formation">
+      <div class="section-heading">
+        <p class="label">AI Team Formation</p>
+        <h2>Roles are selected for this mission.</h2>
+        <p>Roles and models are manually replaceable now and can later adjust based on performance feedback.</p>
+      </div>
+      <div class="team-list">
+        <article>
+          <h3>Mission Interpreter</h3>
+          <p><strong>Responsibility:</strong> convert the prompt into a clear mission and scope.</p>
+          <p><strong>Why needed:</strong> prevents the project from starting with vague goals.</p>
+          <p><strong>Suggested type:</strong> planning model / orchestrator.</p>
+          <p><strong>Decided by:</strong> TWOS static preset for goal interpretation.</p>
+          <p><strong>Replaceable:</strong> user can swap this role later.</p>
+        </article>
+        <article>
+          <h3>Research / Data Scout</h3>
+          <p><strong>Responsibility:</strong> organize user-supplied match and team context.</p>
+          <p><strong>Why needed:</strong> predictions need grounded inputs before reasoning.</p>
+          <p><strong>Suggested type:</strong> research-focused model.</p>
+          <p><strong>Decided by:</strong> TWOS static preset for context gathering.</p>
+          <p><strong>Replaceable:</strong> user can swap this role later.</p>
+        </article>
+        <article>
+          <h3>Prediction Analyst</h3>
+          <p><strong>Responsibility:</strong> prepare prediction reasoning and output tables.</p>
+          <p><strong>Why needed:</strong> turns context into comparable predictions.</p>
+          <p><strong>Suggested type:</strong> analytical model.</p>
+          <p><strong>Decided by:</strong> TWOS static preset for prediction tasks.</p>
+          <p><strong>Replaceable:</strong> user can swap this role later.</p>
+        </article>
+        <article>
+          <h3>Risk &amp; Calibration Officer</h3>
+          <p><strong>Responsibility:</strong> track confidence, misses, and calibration rules.</p>
+          <p><strong>Why needed:</strong> keeps prediction quality from drifting.</p>
+          <p><strong>Suggested type:</strong> critique / calibration model.</p>
+          <p><strong>Decided by:</strong> TWOS static preset for review quality.</p>
+          <p><strong>Replaceable:</strong> user can swap this role later.</p>
+        </article>
+        <article>
+          <h3>Output Editor</h3>
+          <p><strong>Responsibility:</strong> compress the result into a readable daily sync.</p>
+          <p><strong>Why needed:</strong> keeps the user-facing output compact.</p>
+          <p><strong>Suggested type:</strong> writing / summarization model.</p>
+          <p><strong>Decided by:</strong> TWOS static preset for output clarity.</p>
+          <p><strong>Replaceable:</strong> user can swap this role later.</p>
+        </article>
+        <article>
+          <h3>Review / Learning Officer</h3>
+          <p><strong>Responsibility:</strong> collect user feedback and update review notes.</p>
+          <p><strong>Why needed:</strong> makes the next run better than the last.</p>
+          <p><strong>Suggested type:</strong> reflection / learning model.</p>
+          <p><strong>Decided by:</strong> TWOS static preset for feedback loops.</p>
+          <p><strong>Replaceable:</strong> user can swap this role later.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block" aria-label="Task decomposition">
+      <div class="section-heading">
+        <p class="label">Task decomposition</p>
+        <h2>The team breaks the 2026WC mission into workstreams.</h2>
+        <p>Grounded demo workflow only. Match context, outcomes, and feedback stay user-supplied.</p>
+      </div>
+      <div class="task-grid">
+        <article>
+          <h3>Gather context</h3>
+          <p>Collect latest match and team context supplied by the user.</p>
+        </article>
+        <article>
+          <h3>Review completed predictions</h3>
+          <p>Read the last prediction notes and what the user marked as complete.</p>
+        </article>
+        <article>
+          <h3>Compare prediction vs actual</h3>
+          <p>Compare the prediction with manually supplied outcomes.</p>
+        </article>
+        <article>
+          <h3>Update calibration rules</h3>
+          <p>Record what made the forecast too strong, too weak, or unclear.</p>
+        </article>
+        <article>
+          <h3>Generate next-match predictions</h3>
+          <p>Prepare the next prediction table from the reviewed context.</p>
+        </article>
+        <article>
+          <h3>Produce daily compact sync</h3>
+          <p>Summarize predictions, confidence notes, and review needs.</p>
+        </article>
+        <article>
+          <h3>Collect user feedback</h3>
+          <p>Capture what the user accepts, edits, rejects, or wants changed.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="next-step" aria-label="Next workspace step">
+      <p class="label">Next: Create Workspace / Project Matrix</p>
+      <h2>Workspace comes after the plan.</h2>
+      <p>The workspace can be generated from the interpreted mission, selected AI team, task decomposition, and manual review rhythm.</p>
+    </section>
+  </main>
+</body>
+</html>
