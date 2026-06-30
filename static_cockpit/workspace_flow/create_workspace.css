@@ -127,7 +127,8 @@ h1 {
 .seed-grid article,
 .team-list article,
 .task-grid article,
-.proof-block {
+.proof-block,
+.acceptance-gate {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: #ffffff;
@@ -137,7 +138,8 @@ h1 {
 .seed-grid article,
 .team-list article,
 .task-grid article,
-.proof-block {
+.proof-block,
+.acceptance-gate {
   padding: 18px;
 }
 
@@ -235,11 +237,42 @@ h3 {
   border-color: #b7e4dc;
 }
 
+.acceptance-gate {
+  margin-top: 18px;
+}
+
+.acceptance-gate ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.acceptance-gate li {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.acceptance-gate span {
+  display: inline-flex;
+  margin-right: 8px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 @media (max-width: 940px) {
   .flow-grid,
   .seed-grid,
   .team-list,
-  .task-grid {
+  .task-grid,
+  .acceptance-gate ul {
     grid-template-columns: 1fr;
   }
 

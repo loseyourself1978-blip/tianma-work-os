@@ -56,5 +56,35 @@
     "A first user input can become a named workspace.",
     "The workspace can receive a static AI team preset.",
     "The first task plan can be reviewed before any implementation."
+  ],
+  "acceptance_gate": [
+    {
+      "status": "Pass",
+      "item": "inherited Vol.12 baseline preserved"
+    },
+    {
+      "status": "Pass",
+      "item": "no JS/API/live/scheduler/backend"
+    },
+    {
+      "status": "Pass",
+      "item": "no schema/validator/framework"
+    },
+    {
+      "status": "Pass",
+      "item": "landing files untouched"
+    },
+    {
+      "status": "Pass",
+      "item": "workspace flow visible"
+    },
+    {
+      "status": "Pass",
+      "item": "copy remains manual-review-only"
+    },
+    {
+      "status": "Next",
+      "item": "one-page flow vs workspace preview page"
+    }
   ]
 }
