@@ -17,7 +17,7 @@
     <section class="hero">
       <p class="eyebrow">Start / Thinking</p>
       <h1>TWOS is forming the AI team.</h1>
-      <p class="intro">Started from the prompt: “Predict and review 2026 World Cup matches every day.” This static page shows how TWOS interprets the goal before any workspace is created.</p>
+      <p class="intro">Prototype demo context: “Predict and review 2026 World Cup matches every day.” This static page shows how TWOS interprets one mission, forms a team, and decomposes work before any workspace is created.</p>
     </section>
 
     <nav class="progress-strip" aria-label="Static post-start flow">
@@ -32,10 +32,32 @@
       <p class="label">How to test this flow</p>
       <ol>
         <li>Open the Vol.12 landing page.</li>
-        <li>Enter or keep “Predict and review 2026 World Cup matches every day.”</li>
+        <li>Type any goal, or use the demo idea: “Predict and review 2026 World Cup matches every day.”</li>
         <li>Click Start.</li>
         <li>Arrive at this thinking and AI team page.</li>
       </ol>
+    </section>
+
+    <section class="mission-seed" aria-label="Original mission seed">
+      <div class="section-heading">
+        <p class="label">Original mission seed</p>
+        <h2>The demo is grounded in the real 2026WC project request.</h2>
+        <p>The source request asks TWOS to analyze the full 2026 World Cup schedule, team quality, player condition, style, tactics, history, upset risk, and mainstream bookmaker odds, then predict each next Beijing-time match day only.</p>
+      </div>
+      <div class="seed-grid">
+        <article>
+          <h3>Prediction output</h3>
+          <p>Win/draw/loss, score, total goals, recommendation, upset watch, and confidence or priority.</p>
+        </article>
+        <article>
+          <h3>Review loop</h3>
+          <p>Review yesterday actual results vs predictions, record hits and misses, update calibration, then prepare the next-day forecast.</p>
+        </article>
+        <article>
+          <h3>Schedule base</h3>
+          <p>Use a 104-match Beijing-time schedule base for the 48-team, 12-group format and knockout path.</p>
+        </article>
+      </div>
     </section>
 
     <section class="thinking-panel" aria-label="What the system is trying to understand">
@@ -54,69 +76,77 @@
         </article>
         <article>
           <h3>Cadence assumption</h3>
-          <p>The phrase “every day” means a manual daily review rhythm, not an automated schedule.</p>
+          <p>Requested review rhythm: daily BJT/SGT 20:30 from 2026-06-10 to 2026-07-20.</p>
         </article>
         <article>
           <h3>Clarification notes</h3>
-          <p>Later TWOS should ask what match context, odds notes, and scoring rules the user wants to supply.</p>
+          <p>Later TWOS should ask which odds sources, injury notes, team news, and scoring rules the user wants to supply.</p>
         </article>
       </div>
-      <p class="boundary-note">Static prototype boundary: fixture text only, manual review only, no automatic data fetching.</p>
+      <p class="boundary-note">Static prototype boundary: the 20:30 cadence is an intended review contract only. This page does not send reminders, fetch odds, or run predictions.</p>
     </section>
 
     <section class="section-block" aria-label="AI team formation">
       <div class="section-heading">
         <p class="label">AI Team Formation</p>
-        <h2>Roles are selected for this mission.</h2>
+        <h2>Roles are selected from the World Cup prediction workflow.</h2>
         <p>Roles and models are manually replaceable now and can later adjust based on performance feedback.</p>
       </div>
       <div class="team-list">
         <article>
-          <h3>Mission Interpreter</h3>
-          <p><strong>Responsibility:</strong> convert the prompt into a clear mission and scope.</p>
-          <p><strong>Why needed:</strong> prevents the project from starting with vague goals.</p>
-          <p><strong>Suggested type:</strong> planning model / orchestrator.</p>
-          <p><strong>Decided by:</strong> TWOS static preset for goal interpretation.</p>
+          <h3>赛果复盘员</h3>
+          <p><strong>Responsibility:</strong> compare actual results with prior predictions.</p>
+          <p><strong>Why needed:</strong> keeps the daily loop grounded in hit and miss records.</p>
+          <p><strong>Suggested type:</strong> review / reconciliation model.</p>
+          <p><strong>Decided by:</strong> TWOS from the requested daily review workflow.</p>
           <p><strong>Replaceable:</strong> user can swap this role later.</p>
         </article>
         <article>
-          <h3>Research / Data Scout</h3>
-          <p><strong>Responsibility:</strong> organize user-supplied match and team context.</p>
-          <p><strong>Why needed:</strong> predictions need grounded inputs before reasoning.</p>
-          <p><strong>Suggested type:</strong> research-focused model.</p>
-          <p><strong>Decided by:</strong> TWOS static preset for context gathering.</p>
+          <h3>赔率盘口分析师</h3>
+          <p><strong>Responsibility:</strong> read user-supplied 1X2, handicap, totals, and score-odds notes.</p>
+          <p><strong>Why needed:</strong> separates market consensus from suspicious pricing.</p>
+          <p><strong>Suggested type:</strong> market-structure analysis model.</p>
+          <p><strong>Decided by:</strong> TWOS from the bookmaker-odds requirement.</p>
           <p><strong>Replaceable:</strong> user can swap this role later.</p>
         </article>
         <article>
-          <h3>Prediction Analyst</h3>
-          <p><strong>Responsibility:</strong> prepare prediction reasoning and output tables.</p>
-          <p><strong>Why needed:</strong> turns context into comparable predictions.</p>
-          <p><strong>Suggested type:</strong> analytical model.</p>
-          <p><strong>Decided by:</strong> TWOS static preset for prediction tasks.</p>
+          <h3>战术风格分析师</h3>
+          <p><strong>Responsibility:</strong> summarize style, tactics, formation, pressing, transition, and set pieces.</p>
+          <p><strong>Why needed:</strong> connects team identity to match-level prediction logic.</p>
+          <p><strong>Suggested type:</strong> football tactics model.</p>
+          <p><strong>Decided by:</strong> TWOS from the style and打法 analysis requirement.</p>
           <p><strong>Replaceable:</strong> user can swap this role later.</p>
         </article>
         <article>
-          <h3>Risk &amp; Calibration Officer</h3>
-          <p><strong>Responsibility:</strong> track confidence, misses, and calibration rules.</p>
-          <p><strong>Why needed:</strong> keeps prediction quality from drifting.</p>
-          <p><strong>Suggested type:</strong> critique / calibration model.</p>
-          <p><strong>Decided by:</strong> TWOS static preset for review quality.</p>
+          <h3>球员状态分析师</h3>
+          <p><strong>Responsibility:</strong> evaluate player form, injuries, rotation, load, and key-player condition when supplied.</p>
+          <p><strong>Why needed:</strong> prevents team-level strength from ignoring current form.</p>
+          <p><strong>Suggested type:</strong> roster and form analysis model.</p>
+          <p><strong>Decided by:</strong> TWOS from the player-condition requirement.</p>
           <p><strong>Replaceable:</strong> user can swap this role later.</p>
         </article>
         <article>
-          <h3>Output Editor</h3>
-          <p><strong>Responsibility:</strong> compress the result into a readable daily sync.</p>
-          <p><strong>Why needed:</strong> keeps the user-facing output compact.</p>
-          <p><strong>Suggested type:</strong> writing / summarization model.</p>
-          <p><strong>Decided by:</strong> TWOS static preset for output clarity.</p>
+          <h3>历史与大赛心理分析师</h3>
+          <p><strong>Responsibility:</strong> weigh history, tournament pressure, and big-match psychology.</p>
+          <p><strong>Why needed:</strong> World Cup results often differ from club-season form alone.</p>
+          <p><strong>Suggested type:</strong> historical pattern and psychology model.</p>
+          <p><strong>Decided by:</strong> TWOS from the history and tournament-psychology requirement.</p>
           <p><strong>Replaceable:</strong> user can swap this role later.</p>
         </article>
         <article>
-          <h3>Review / Learning Officer</h3>
-          <p><strong>Responsibility:</strong> collect user feedback and update review notes.</p>
-          <p><strong>Why needed:</strong> makes the next run better than the last.</p>
-          <p><strong>Suggested type:</strong> reflection / learning model.</p>
-          <p><strong>Decided by:</strong> TWOS static preset for feedback loops.</p>
+          <h3>爆冷审计员</h3>
+          <p><strong>Responsibility:</strong> challenge main picks and flag upset candidates.</p>
+          <p><strong>Why needed:</strong> the mission explicitly asks for upset results and upset watch.</p>
+          <p><strong>Suggested type:</strong> adversarial review model.</p>
+          <p><strong>Decided by:</strong> TWOS from the upset-audit requirement.</p>
+          <p><strong>Replaceable:</strong> user can swap this role later.</p>
+        </article>
+        <article>
+          <h3>总指挥</h3>
+          <p><strong>Responsibility:</strong> synthesize roles into final recommendations and daily sync.</p>
+          <p><strong>Why needed:</strong> the project needs one final commander for output priority.</p>
+          <p><strong>Suggested type:</strong> orchestration / final decision model.</p>
+          <p><strong>Decided by:</strong> TWOS from the multi-role decision mode.</p>
           <p><strong>Replaceable:</strong> user can swap this role later.</p>
         </article>
       </div>
@@ -126,44 +156,44 @@
       <div class="section-heading">
         <p class="label">Task decomposition</p>
         <h2>The team breaks the 2026WC mission into workstreams.</h2>
-        <p>Grounded demo workflow only. Match context, outcomes, and feedback stay user-supplied.</p>
+        <p>Grounded demo workflow only. Schedule data, odds, injuries, team news, outcomes, and feedback stay user-supplied in this static prototype.</p>
       </div>
       <div class="task-grid">
         <article>
-          <h3>Gather context</h3>
-          <p>Collect latest match and team context supplied by the user.</p>
+          <h3>Schedule Base</h3>
+          <p>Build and maintain a 104-match Beijing-time schedule, group stage plus knockout structure, match-day windows, and next-day prediction scope.</p>
         </article>
         <article>
-          <h3>Review completed predictions</h3>
-          <p>Read the last prediction notes and what the user marked as complete.</p>
+          <h3>Team Intelligence</h3>
+          <p>Track team level, player form, injuries or rotation when supplied, tactics, formation, pressing, transition, set pieces, club-season load, and key-player condition.</p>
         </article>
         <article>
-          <h3>Compare prediction vs actual</h3>
-          <p>Compare the prediction with manually supplied outcomes.</p>
+          <h3>Odds / Market Layer</h3>
+          <p>Review mainstream bookmaker odds, 1X2, handicap, totals, score odds when available, market consensus, and suspicious pricing.</p>
         </article>
         <article>
-          <h3>Update calibration rules</h3>
-          <p>Record what made the forecast too strong, too weak, or unclear.</p>
+          <h3>Prediction Layer</h3>
+          <p>Produce win/draw/loss, score, total goals, recommendation or main pick, upset watch, confidence, and priority.</p>
         </article>
         <article>
-          <h3>Generate next-match predictions</h3>
-          <p>Prepare the next prediction table from the reviewed context.</p>
+          <h3>Daily Review Loop</h3>
+          <p>Compare previous actual result vs predicted result, score hit/miss, total goals hit/miss, upset miss/hit, and calibration changes before next prediction.</p>
         </article>
         <article>
-          <h3>Produce daily compact sync</h3>
-          <p>Summarize predictions, confidence notes, and review needs.</p>
+          <h3>Multi-Role Decision</h3>
+          <p>Use 赛果复盘员, 赔率盘口分析师, 战术风格分析师, 球员状态分析师, 历史与大赛心理分析师, 爆冷审计员, and 总指挥.</p>
         </article>
         <article>
-          <h3>Collect user feedback</h3>
-          <p>Capture what the user accepts, edits, rejects, or wants changed.</p>
+          <h3>Output / Sync</h3>
+          <p>Generate a daily report, compact sync, feedback capture, and next-day prediction focus.</p>
         </article>
       </div>
     </section>
 
     <section class="next-step" aria-label="Next workspace step">
       <p class="label">Next: Create Workspace / Project Matrix</p>
-      <h2>Workspace comes after the plan.</h2>
-      <p>The workspace can be generated from the interpreted mission, selected AI team, task decomposition, and manual review rhythm.</p>
+      <h2>The workspace is generated from this need.</h2>
+      <p>The project matrix comes later, derived from the actual mission, selected team roles, review loop, output types, and user feedback instead of being imposed as a fixed universal format.</p>
     </section>
   </main>
 </body>

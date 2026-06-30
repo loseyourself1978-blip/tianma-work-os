@@ -18,80 +18,103 @@
   "thinking": {
     "task_type": "Prediction preparation, review, and learning from outcomes.",
     "likely_project_type": "2026WC prediction and review project with recurring manual check-ins.",
-    "cadence_assumption": "The phrase “every day” means a manual daily review rhythm, not an automated schedule.",
+    "cadence_assumption": "Requested review rhythm: daily BJT/SGT 20:30 from 2026-06-10 to 2026-07-20. Static prototype records the rhythm only and does not send reminders.",
     "clarification_notes": [
-      "What match context should the user supply?",
-      "Should odds notes be included, and from what source provided by the user?",
+      "Which odds sources should the user supply?",
+      "Which injury, rotation, and team-news inputs are trusted?",
       "How should prediction quality be scored?"
     ],
-    "boundary": "Fixture text only, manual review only, no automatic data fetching."
+    "boundary": "Fixture text only, manual review only, no automatic data fetching, no reminder sending, no prediction run."
+  },
+  "original_mission_seed": {
+    "summary": "Analyze the full 2026 World Cup schedule, team strength, player condition, style, tactics, history, upset angles, and mainstream bookmaker odds. Predict only the next Beijing-time match day and review the previous day before each prediction.",
+    "format_context": "48 teams, 104 matches, 12 groups, group top two plus best third-place teams advance, then knockout path.",
+    "output_requirements": [
+      "win/draw/loss",
+      "score",
+      "total goals",
+      "recommendation",
+      "upset result / upset watch",
+      "confidence or priority"
+    ],
+    "requested_review_rhythm": "BJT/SGT 20:30 daily, 2026-06-10 to 2026-07-20, recorded as a review rhythm only."
   },
   "ai_team_formation": [
     {
-      "role": "Mission Interpreter",
-      "responsibility": "Convert the prompt into a clear mission and scope.",
-      "why_needed": "Prevents the project from starting with vague goals.",
-      "suggested_model_type": "planning model / orchestrator",
-      "decided_by": "TWOS static preset for goal interpretation",
+      "role": "赛果复盘员",
+      "responsibility": "Compare actual results with prior predictions.",
+      "why_needed": "Keeps the daily loop grounded in hit and miss records.",
+      "suggested_model_type": "review / reconciliation model",
+      "decided_by": "TWOS from the requested daily review workflow",
       "replaceable": true
     },
     {
-      "role": "Research / Data Scout",
-      "responsibility": "Organize user-supplied match and team context.",
-      "why_needed": "Predictions need grounded inputs before reasoning.",
-      "suggested_model_type": "research-focused model",
-      "decided_by": "TWOS static preset for context gathering",
+      "role": "赔率盘口分析师",
+      "responsibility": "Read user-supplied 1X2, handicap, totals, and score-odds notes.",
+      "why_needed": "Separates market consensus from suspicious pricing.",
+      "suggested_model_type": "market-structure analysis model",
+      "decided_by": "TWOS from the bookmaker-odds requirement",
       "replaceable": true
     },
     {
-      "role": "Prediction Analyst",
-      "responsibility": "Prepare prediction reasoning and output tables.",
-      "why_needed": "Turns context into comparable predictions.",
-      "suggested_model_type": "analytical model",
-      "decided_by": "TWOS static preset for prediction tasks",
+      "role": "战术风格分析师",
+      "responsibility": "Summarize style, tactics, formation, pressing, transition, and set pieces.",
+      "why_needed": "Connects team identity to match-level prediction logic.",
+      "suggested_model_type": "football tactics model",
+      "decided_by": "TWOS from the style and tactics requirement",
       "replaceable": true
     },
     {
-      "role": "Risk & Calibration Officer",
-      "responsibility": "Track confidence, misses, and calibration rules.",
-      "why_needed": "Keeps prediction quality from drifting.",
-      "suggested_model_type": "critique / calibration model",
-      "decided_by": "TWOS static preset for review quality",
+      "role": "球员状态分析师",
+      "responsibility": "Evaluate player form, injuries, rotation, load, and key-player condition when supplied.",
+      "why_needed": "Prevents team-level strength from ignoring current form.",
+      "suggested_model_type": "roster and form analysis model",
+      "decided_by": "TWOS from the player-condition requirement",
       "replaceable": true
     },
     {
-      "role": "Output Editor",
-      "responsibility": "Compress the result into a readable daily sync.",
-      "why_needed": "Keeps the user-facing output compact.",
-      "suggested_model_type": "writing / summarization model",
-      "decided_by": "TWOS static preset for output clarity",
+      "role": "历史与大赛心理分析师",
+      "responsibility": "Weigh history, tournament pressure, and big-match psychology.",
+      "why_needed": "World Cup results often differ from club-season form alone.",
+      "suggested_model_type": "historical pattern and psychology model",
+      "decided_by": "TWOS from the history and tournament-psychology requirement",
       "replaceable": true
     },
     {
-      "role": "Review / Learning Officer",
-      "responsibility": "Collect user feedback and update review notes.",
-      "why_needed": "Makes the next run better than the last.",
-      "suggested_model_type": "reflection / learning model",
-      "decided_by": "TWOS static preset for feedback loops",
+      "role": "爆冷审计员",
+      "responsibility": "Challenge main picks and flag upset candidates.",
+      "why_needed": "The mission explicitly asks for upset results and upset watch.",
+      "suggested_model_type": "adversarial review model",
+      "decided_by": "TWOS from the upset-audit requirement",
+      "replaceable": true
+    },
+    {
+      "role": "总指挥",
+      "responsibility": "Synthesize roles into final recommendations and daily sync.",
+      "why_needed": "The project needs one final commander for output priority.",
+      "suggested_model_type": "orchestration / final decision model",
+      "decided_by": "TWOS from the multi-role decision mode",
       "replaceable": true
     }
   ],
-  "task_decomposition": [
-    "gather latest match/team context",
-    "review completed predictions",
-    "compare prediction vs actual",
-    "update calibration rules",
-    "generate next-match predictions",
-    "produce daily compact sync",
-    "collect user feedback"
-  ],
+  "task_decomposition": {
+    "Schedule Base": "Build and maintain a 104-match Beijing-time schedule, group stage plus knockout structure, match-day windows, and next-day prediction scope.",
+    "Team Intelligence": "Team level, player form, injuries or rotation when supplied, tactics, formation, pressing, transition, set pieces, club-season load, and key-player condition.",
+    "Odds / Market Layer": "Mainstream bookmaker odds, 1X2, handicap, totals, score odds when available, market consensus, and suspicious pricing.",
+    "Prediction Layer": "Win/draw/loss, score, total goals, recommendation or main pick, upset watch, confidence, and priority.",
+    "Daily Review Loop": "Previous actual result vs predicted result, score hit/miss, total goals hit/miss, upset miss/hit, and calibration changes before next prediction.",
+    "Multi-Role Decision": "赛果复盘员, 赔率盘口分析师, 战术风格分析师, 球员状态分析师, 历史与大赛心理分析师, 爆冷审计员, 总指挥.",
+    "Output / Sync": "Daily report, compact sync, feedback capture, and next-day prediction focus."
+  },
   "next_step": {
     "label": "Next: Create Workspace / Project Matrix",
+    "principle": "Generated from this need, not imposed as a fixed universal format.",
     "created_from": [
-      "interpreted mission",
-      "selected AI team",
-      "task decomposition",
-      "manual review rhythm"
+      "actual mission",
+      "selected team roles",
+      "review loop",
+      "output types",
+      "user feedback"
     ]
   }
 }

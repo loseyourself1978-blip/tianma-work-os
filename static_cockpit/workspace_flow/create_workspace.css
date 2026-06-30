@@ -113,6 +113,7 @@ h1 {
 }
 
 .test-flow,
+.mission-seed,
 .thinking-panel,
 .team-list article,
 .task-grid article,
@@ -123,6 +124,7 @@ h1 {
 }
 
 .test-flow,
+.mission-seed,
 .thinking-panel,
 .team-list article,
 .task-grid article,
@@ -133,6 +135,10 @@ h1 {
 .test-flow {
   margin: 18px 0;
   background: var(--soft);
+}
+
+.mission-seed {
+  margin-top: 24px;
 }
 
 .test-flow ol {
@@ -174,6 +180,7 @@ h1 {
 }
 
 .thinking-grid,
+.seed-grid,
 .task-grid {
   display: grid;
   gap: 14px;
@@ -184,12 +191,18 @@ h1 {
   margin-top: 16px;
 }
 
-.thinking-grid article {
+.seed-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.thinking-grid article,
+.seed-grid article {
   border-top: 1px solid var(--line);
   padding-top: 12px;
 }
 
 .thinking-grid p,
+.seed-grid p,
 .team-list p,
 .task-grid p {
   margin-top: 8px;
@@ -218,7 +231,7 @@ h3 {
 }
 
 .task-grid {
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .next-step {
@@ -233,6 +246,7 @@ h3 {
 
 @media (max-width: 1040px) {
   .thinking-grid,
+  .seed-grid,
   .team-list,
   .task-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -260,6 +274,7 @@ h3 {
 
   .test-flow ol,
   .thinking-grid,
+  .seed-grid,
   .team-list,
   .task-grid {
     grid-template-columns: 1fr;
