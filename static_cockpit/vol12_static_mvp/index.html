@@ -19,11 +19,10 @@
       <h1>One prompt.<br />Your AI team gets to work.</h1>
       <p class="subheadline">TWOS coordinates ChatGPT, Claude, Gemini, Grok, and more.</p>
 
-      <div class="composer" aria-label="Static prompt composer">
-        <button class="icon-button" type="button" aria-label="Add">+</button>
-        <p class="placeholder">What do you want your AI team to do?</p>
-        <button class="send-button" type="button" aria-label="Send">→</button>
-      </div>
+      <form class="composer" method="get" action="../workspace_flow/create_workspace.html" aria-label="Create workspace from prompt">
+        <input class="prompt-input" type="text" name="goal" value="Predict and review 2026 World Cup matches every day." aria-label="Workspace goal" />
+        <button class="create-button" type="submit">Create Workspace</button>
+      </form>
 
       <p class="hint">Ideas, tasks, research, writing, decisions, projects, recaps.</p>
 

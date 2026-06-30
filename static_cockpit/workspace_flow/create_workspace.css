@@ -56,8 +56,15 @@ blockquote {
   font-weight: 900;
 }
 
-.local-note {
+.local-note,
+.back-link {
   font-weight: 700;
+}
+
+.back-link {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px 10px;
 }
 
 .hero {
@@ -98,6 +105,25 @@ h1 {
   color: var(--muted);
   font-size: 13px;
   font-weight: 800;
+}
+
+.test-flow {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--soft);
+  margin-bottom: 18px;
+  padding: 18px;
+}
+
+.test-flow ol {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style-position: inside;
+  color: var(--muted);
+  line-height: 1.45;
 }
 
 .progress-strip span {
@@ -272,6 +298,7 @@ h3 {
   .seed-grid,
   .team-list,
   .task-grid,
+  .test-flow ol,
   .acceptance-gate ul {
     grid-template-columns: 1fr;
   }

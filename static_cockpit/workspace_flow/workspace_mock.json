@@ -52,6 +52,12 @@
     "AI team assigned",
     "First tasks ready"
   ],
+  "test_flow": [
+    "Open the Vol.12 landing page.",
+    "Enter or keep “Predict and review 2026 World Cup matches every day.”",
+    "Click Create Workspace.",
+    "Arrive at this workspace flow page."
+  ],
   "prototype_proves": [
     "A first user input can become a named workspace.",
     "The workspace can receive a static AI team preset.",
@@ -64,6 +70,14 @@
     },
     {
       "status": "Pass",
+      "item": "landing entry wired"
+    },
+    {
+      "status": "Pass",
+      "item": "primary CTA static path works"
+    },
+    {
+      "status": "Pass",
       "item": "no JS/API/live/scheduler/backend"
     },
     {
@@ -72,11 +86,15 @@
     },
     {
       "status": "Pass",
-      "item": "landing files untouched"
+      "item": "workspace flow visible"
     },
     {
       "status": "Pass",
-      "item": "workspace flow visible"
+      "item": "AI team preset visible"
+    },
+    {
+      "status": "Pass",
+      "item": "task decomposition visible"
     },
     {
       "status": "Pass",

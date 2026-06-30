@@ -11,13 +11,23 @@
   <main class="page" aria-label="TWOS Vol.13 create workspace flow prototype">
     <header class="topbar">
       <p class="brand">TWOS</p>
-      <p class="local-note">Vol.13 static workspace flow · file://</p>
+      <a class="back-link" href="../vol12_static_mvp/index.html">Back to landing</a>
     </header>
 
     <section class="hero">
       <p class="eyebrow">Create Workspace Flow</p>
       <h1>Turn one prompt into a ready workspace.</h1>
-      <p class="intro">This static prototype shows the first step after the Vol.12 landing: a user prompt becomes a named workspace, an AI team preset, and a first task plan.</p>
+      <p class="intro">Reached from the landing goal: “Predict and review 2026 World Cup matches every day.” TWOS turns that prompt into a named workspace, an AI team preset, and a first task plan.</p>
+    </section>
+
+    <section class="test-flow" aria-label="How to test this flow">
+      <p class="label">How to test this flow</p>
+      <ol>
+        <li>Open the Vol.12 landing page.</li>
+        <li>Enter or keep “Predict and review 2026 World Cup matches every day.”</li>
+        <li>Click Create Workspace.</li>
+        <li>Arrive at this workspace flow page.</li>
+      </ol>
     </section>
 
     <nav class="progress-strip" aria-label="Static flow state">
@@ -144,10 +154,13 @@
       </div>
       <ul>
         <li><span>Pass</span> inherited Vol.12 baseline preserved</li>
+        <li><span>Pass</span> landing entry wired</li>
+        <li><span>Pass</span> primary CTA static path works</li>
         <li><span>Pass</span> no JS/API/live/scheduler/backend</li>
         <li><span>Pass</span> no schema/validator/framework</li>
-        <li><span>Pass</span> landing files untouched</li>
         <li><span>Pass</span> workspace flow visible</li>
+        <li><span>Pass</span> AI team preset visible</li>
+        <li><span>Pass</span> task decomposition visible</li>
         <li><span>Pass</span> copy remains manual-review-only</li>
         <li><span>Next</span> one-page flow vs workspace preview page</li>
       </ul>

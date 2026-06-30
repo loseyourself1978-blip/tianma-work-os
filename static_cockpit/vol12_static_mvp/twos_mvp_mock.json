@@ -11,7 +11,9 @@
     "localNote": "Static local MVP · file://",
     "promise": "One prompt. Your AI team gets to work.",
     "subheadline": "TWOS coordinates ChatGPT, Claude, Gemini, Grok, and more.",
-    "composerPlaceholder": "What do you want your AI team to do?",
+    "composerPrompt": "Predict and review 2026 World Cup matches every day.",
+    "primaryCta": "Create Workspace",
+    "workspaceFlowPath": "../workspace_flow/create_workspace.html",
     "hint": "Ideas, tasks, research, writing, decisions, projects, recaps.",
     "models": ["ChatGPT", "Claude", "Gemini", "Grok", "more"],
     "modelNote": "The AI team is generated for each task."

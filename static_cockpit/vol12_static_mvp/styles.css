@@ -100,28 +100,35 @@ h1 {
   text-align: left;
 }
 
-.placeholder {
+.prompt-input {
   flex: 1;
   min-width: 0;
-  color: #9ca3af;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
   font-size: clamp(18px, 2.3vw, 24px);
+  font-family: inherit;
   line-height: 1.35;
+}
+
+.prompt-input::placeholder {
+  color: #9ca3af;
 }
 
 button {
   flex: 0 0 auto;
-  width: 42px;
-  height: 42px;
+  min-height: 42px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: #ffffff;
   color: var(--ink);
+  padding: 0 16px;
   font: inherit;
-  font-size: 20px;
-  font-weight: 800;
+  font-weight: 850;
 }
 
-.send-button {
+.create-button {
   border-color: var(--accent);
   background: var(--accent);
   color: #ffffff;
@@ -171,5 +178,7 @@ button {
 
   .composer {
     margin-top: 34px;
+    align-items: stretch;
+    flex-direction: column;
   }
 }
