@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TWOS Vol.13 Create Workspace Flow</title>
+  <link rel="stylesheet" href="./create_workspace.css" />
+  <link rel="alternate" type="application/json" href="./workspace_mock.json" />
+</head>
+<body>
+  <main class="page" aria-label="TWOS Vol.13 create workspace flow prototype">
+    <header class="topbar">
+      <p class="brand">TWOS</p>
+      <p class="local-note">Vol.13 static workspace flow · file://</p>
+    </header>
+
+    <section class="hero">
+      <p class="eyebrow">Create Workspace Flow</p>
+      <h1>Turn one prompt into a ready workspace.</h1>
+      <p class="intro">This static prototype shows the first step after the Vol.12 landing: a user prompt becomes a named workspace, an AI team preset, and a first task plan.</p>
+    </section>
+
+    <nav class="progress-strip" aria-label="Static flow state">
+      <span>Prompt captured</span>
+      <span>Goal understood</span>
+      <span>Workspace created</span>
+      <span>AI team assigned</span>
+      <span>First tasks ready</span>
+    </nav>
+
+    <section class="flow-grid" aria-label="Prompt to workspace result">
+      <article class="panel prompt-panel">
+        <p class="label">User prompt mock</p>
+        <blockquote>Predict and review 2026 World Cup matches every day.</blockquote>
+        <p class="helper">Static sample input. Fixture text only.</p>
+      </article>
+
+      <article class="panel">
+        <p class="label">Inferred goal</p>
+        <h2>Build a manual prediction review workspace.</h2>
+        <p>TWOS understands the request as a repeatable project: prepare predictions, review outcomes, and record learning notes by hand.</p>
+      </article>
+
+      <article class="panel steps-panel">
+        <p class="label">Create-workspace steps</p>
+        <ol>
+          <li>Capture the user prompt.</li>
+          <li>Name the workspace.</li>
+          <li>Assign a static AI team preset.</li>
+          <li>Prepare first manual tasks.</li>
+        </ol>
+      </article>
+    </section>
+
+    <section class="workspace-card" id="workspace-preview" aria-label="Created workspace preview">
+      <div>
+        <p class="label">Workspace created</p>
+        <h2>2026WC Prediction Workspace</h2>
+        <p class="workspace-copy">A static project shell for daily match prediction preparation, manual review, and learning notes. Match lists, odds context, and outcomes stay user-supplied.</p>
+      </div>
+      <a class="primary-action" href="#workspace-preview">Open Workspace Preview</a>
+    </section>
+
+    <section class="section-block" aria-label="Workspace seed content">
+      <div class="section-heading">
+        <p class="label">Seed content</p>
+        <h2>First generated project shell</h2>
+      </div>
+      <div class="seed-grid">
+        <article>
+          <h3>Manual daily review rhythm</h3>
+          <p>Open the workspace, prepare next-day predictions, review completed notes, and update learning by hand.</p>
+        </article>
+        <article>
+          <h3>Acceptance checks</h3>
+          <p>The page stays static, uses supplied fixture text only, and remains manually reviewed.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block" aria-label="AI team preset">
+      <div class="section-heading">
+        <p class="label">AI Team Preset</p>
+        <h2>Planned by AI team, reviewed by the user.</h2>
+      </div>
+      <div class="team-list">
+        <article>
+          <h3>Data Verifier</h3>
+          <p>Checks that supplied inputs are clear, sourced by the user, and usable for a manual review.</p>
+        </article>
+        <article>
+          <h3>Match Analyst</h3>
+          <p>Structures match questions and prepares prediction reasoning from user-provided context.</p>
+        </article>
+        <article>
+          <h3>Odds &amp; Risk Officer</h3>
+          <p>Flags missing odds context and avoids treating unsupplied odds as facts.</p>
+        </article>
+        <article>
+          <h3>Final Commander</h3>
+          <p>Combines the plan into a concise next action for user review.</p>
+        </article>
+        <article>
+          <h3>Review &amp; Learning Agent</h3>
+          <p>Turns manual review notes into clearer future prompts and checks.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block" aria-label="Task decomposition">
+      <div class="section-heading">
+        <p class="label">Task decomposition</p>
+        <h2>How the first prompt becomes work.</h2>
+      </div>
+      <div class="task-grid">
+        <article>
+          <h3>Inputs</h3>
+          <p>Set up prediction scope and list what the user must provide manually.</p>
+        </article>
+        <article>
+          <h3>Prediction</h3>
+          <p>Prepare a next-day prediction table template without live fixtures.</p>
+        </article>
+        <article>
+          <h3>Review</h3>
+          <p>Compare predictions with manually entered outcomes later.</p>
+        </article>
+        <article>
+          <h3>Learning</h3>
+          <p>Record learning notes so the next review starts cleaner.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="proof-block" aria-label="What this prototype proves">
+      <p class="label">What this prototype proves</p>
+      <p>First user input can become a named workspace, an AI team preset, and a first task plan while staying static, local, and reviewable.</p>
+    </section>
+  </main>
+</body>
+</html>

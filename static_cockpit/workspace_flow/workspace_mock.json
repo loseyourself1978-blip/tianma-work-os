@@ -1,0 +1,60 @@
+{
+  "meta": {
+    "product": "Tianma Work OS",
+    "volume": "Vol.13",
+    "slice": "Create First Project Flow Prototype",
+    "mode": "static_local_fixture_only",
+    "html": "./create_workspace.html",
+    "css": "./create_workspace.css"
+  },
+  "user_prompt": "Predict and review 2026 World Cup matches every day.",
+  "inferred_goal": "Build a manual prediction review workspace for preparing predictions, reviewing outcomes, and recording learning notes.",
+  "workspace_name": "2026WC Prediction Workspace",
+  "ai_team_preset": [
+    {
+      "role": "Data Verifier",
+      "purpose": "Check that supplied inputs are clear, sourced by the user, and usable for manual review."
+    },
+    {
+      "role": "Match Analyst",
+      "purpose": "Structure match questions and prepare prediction reasoning from user-provided context."
+    },
+    {
+      "role": "Odds & Risk Officer",
+      "purpose": "Flag missing odds context and avoid treating unsupplied odds as facts."
+    },
+    {
+      "role": "Final Commander",
+      "purpose": "Combine the plan into a concise next action for user review."
+    },
+    {
+      "role": "Review & Learning Agent",
+      "purpose": "Turn manual review notes into clearer future prompts and checks."
+    }
+  ],
+  "first_tasks": [
+    "setup prediction scope",
+    "prepare daily match review",
+    "generate next-day prediction table",
+    "record learning notes"
+  ],
+  "manual_review_rhythm": "manual daily review rhythm",
+  "acceptance_checks": [
+    "Static page works from file:// as local fixture content.",
+    "Manual review only.",
+    "Match lists, odds context, and outcomes stay user-supplied.",
+    "Workspace content remains reviewable before any future implementation."
+  ],
+  "flow_state": [
+    "Prompt captured",
+    "Goal understood",
+    "Workspace created",
+    "AI team assigned",
+    "First tasks ready"
+  ],
+  "prototype_proves": [
+    "A first user input can become a named workspace.",
+    "The workspace can receive a static AI team preset.",
+    "The first task plan can be reviewed before any implementation."
+  ]
+}
