@@ -373,23 +373,42 @@ h3 {
 
 .queue-grid,
 .readiness-grid,
-.feedback-steps {
+.feedback-steps,
+.source-stack,
+.snapshot-grid,
+.report-builder,
+.transition-grid {
   display: grid;
   gap: 14px;
 }
 
-.queue-grid {
+.queue-grid,
+.source-stack,
+.snapshot-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.source-stack {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .readiness-grid,
-.feedback-steps {
+.feedback-steps,
+.transition-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.report-builder {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .queue-grid article,
 .readiness-grid article,
-.feedback-steps article {
+.feedback-steps article,
+.source-stack article,
+.snapshot-grid article,
+.report-builder article,
+.transition-grid article {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: #ffffff;
@@ -397,10 +416,78 @@ h3 {
 }
 
 .queue-grid p,
-.feedback-steps p {
+.feedback-steps p,
+.source-stack p,
+.snapshot-grid p,
+.report-builder p,
+.transition-grid p {
   margin-top: 8px;
   color: var(--muted);
   line-height: 1.5;
+}
+
+.group-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.group-strip span {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--soft);
+  color: var(--muted);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.queue-table-wrap {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  background: #ffffff;
+}
+
+.queue-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.queue-table th,
+.queue-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 12px;
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.4;
+}
+
+.queue-table th {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.queue-table td {
+  color: var(--muted);
+}
+
+.queue-table td:nth-child(2),
+.queue-table td:nth-child(5) {
+  color: var(--ink);
+  font-weight: 850;
+}
+
+.queue-table td span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .execution-roles article {
@@ -507,7 +594,11 @@ h3 {
   .split-section,
   .queue-grid,
   .readiness-grid,
-  .feedback-steps {
+  .feedback-steps,
+  .source-stack,
+  .snapshot-grid,
+  .report-builder,
+  .transition-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -543,7 +634,11 @@ h3 {
   .split-section,
   .queue-grid,
   .readiness-grid,
-  .feedback-steps {
+  .feedback-steps,
+  .source-stack,
+  .snapshot-grid,
+  .report-builder,
+  .transition-grid {
     grid-template-columns: 1fr;
   }
 

@@ -19,215 +19,291 @@
     </header>
 
     <section class="hero matrix-hero">
-      <p class="eyebrow">Stage C / Workflow execution shell</p>
+      <p class="eyebrow">Stage C / Workflow execution</p>
       <h1>2026WC Workflow Execution</h1>
-      <p class="intro">From Project Matrix to today's AI-team work queue. This static/manual-review prototype shows how work begins without live odds, automation, reminders, or betting execution.</p>
+      <p class="intro">From Project Matrix to today's AI-team work queue. The page is grounded in the schedule base, the first daily output, the 73-match setup, and the 76-match settlement.</p>
+      <p class="manual-note">Static/manual-review prototype only: no live odds, no automation, no active reminder, no betting execution.</p>
     </section>
 
     <nav class="progress-strip" aria-label="Static Vol.13 execution flow">
       <span>Project Matrix</span>
-      <span>Today’s Work Queue</span>
-      <span>Role Assignment</span>
-      <span>Draft Output</span>
-      <span>Review Feedback</span>
-      <span>Rule Update Path</span>
+      <span>Source Stack</span>
+      <span>Run Queue</span>
+      <span>Report Builder</span>
+      <span>User Review</span>
+      <span>Next Sync</span>
     </nav>
 
-    <section class="matrix-section" aria-label="Today’s Work Queue">
+    <section class="matrix-section" aria-label="Execution Source Stack with Excel Schedule Base">
       <div class="section-heading">
-        <p class="label">Today’s Work Queue</p>
-        <h2>Start with the remaining Round-of-32 focus.</h2>
-        <p>Derived from the accepted Project Matrix: 76 matches reviewed, remaining focus is 12 Round-of-32 matches, with three immediate watch items.</p>
+        <p class="label">Execution Source Stack</p>
+        <h2>Today’s work starts from real project records.</h2>
+        <p>TWOS uses source assets and prior outputs as context, then prepares the next reviewable draft. The schedule base stays a source asset; this page shows a static summary rather than live file access.</p>
       </div>
-      <div class="queue-grid">
+      <div class="source-stack">
         <article>
-          <h3>Côte d’Ivoire / Norway</h3>
-          <p><strong>Focus:</strong> Round-of-32 preview path.</p>
-          <p><strong>Why queued:</strong> immediate watch item from the current project sync.</p>
-          <p><strong>Required inputs:</strong> user-supplied match context, odds notes, injuries, lineups, venue notes if available.</p>
-          <p><strong>Expected output:</strong> preview card with direction layers and upset check.</p>
-          <p><strong>Risk flag:</strong> modern-underdog and penalty-risk checklist required.</p>
+          <h3>Schedule Base</h3>
+          <p><strong>Contributes:</strong> 104 matches, Beijing / Singapore time, groups plus knockout path, and prediction fields.</p>
+          <p><strong>Affects next run:</strong> every active match must map back to a schedule row before drafting.</p>
         </article>
         <article>
-          <h3>France / Sweden</h3>
-          <p><strong>Focus:</strong> favorite exposure and champion-path check.</p>
-          <p><strong>Why queued:</strong> France retained in champion forecast and needs chance-quality confirmation.</p>
-          <p><strong>Required inputs:</strong> user-supplied odds layer, team condition, tactical match-up, lineup notes.</p>
-          <p><strong>Expected output:</strong> separated 90-minute, advance, spread, and budget-risk view.</p>
-          <p><strong>Risk flag:</strong> favorite exposure must be justified by chance quality.</p>
+          <h3>First Daily Output</h3>
+          <p><strong>Contributes:</strong> June 12 matchday structure: Mexico 2-0 South Africa, Korea 1-1 Czech, opening-day cautious structure.</p>
+          <p><strong>Affects next run:</strong> preserves the compact daily prediction style.</p>
         </article>
         <article>
-          <h3>Mexico / Ecuador</h3>
-          <p><strong>Focus:</strong> tactical-path and upset-watch review.</p>
-          <p><strong>Why queued:</strong> immediate watch item with possible matchup and market-tension questions.</p>
-          <p><strong>Required inputs:</strong> user-supplied form, tactical notes, odds notes, scoring context.</p>
-          <p><strong>Expected output:</strong> compact match card plus scoreline confidence warning.</p>
-          <p><strong>Risk flag:</strong> scoreline layers remain low-confidence.</p>
+          <h3>73-Match Setup</h3>
+          <p><strong>Contributes:</strong> first Round-of-32 budget plan, recorded screenshot prices, pending settlement mode.</p>
+          <p><strong>Affects next run:</strong> carries budget intent and 90-minute vs advance separation into review.</p>
+        </article>
+        <article>
+          <h3>76-Match Settlement</h3>
+          <p><strong>Contributes:</strong> Brazil/Japan, Germany/Paraguay, Netherlands/Morocco settlement, P/L, and rule updates.</p>
+          <p><strong>Affects next run:</strong> updates favorite exposure, underdog, penalty, and correlation rules.</p>
         </article>
       </div>
     </section>
 
-    <section class="matrix-section" aria-label="Role Assignment Matrix">
+    <section class="matrix-section" aria-label="Schedule Base Snapshot">
+      <div class="section-heading">
+        <p class="label">Schedule Base Snapshot</p>
+        <h2>The workbook is the project’s schedule spine.</h2>
+        <p>It stays compact here: enough for the user to see the asset behind the queue, not a 104-row spreadsheet dump.</p>
+      </div>
+      <div class="snapshot-grid">
+        <article><h3>Coverage</h3><p>104 matches across group stage and knockout rounds.</p></article>
+        <article><h3>Groups</h3><p>12 groups from A to L, with 48 teams total.</p></article>
+        <article><h3>Time base</h3><p>Beijing / Singapore match times already prepared.</p></article>
+        <article><h3>Prediction fields</h3><p>Status, 1X2, score, total goals, recommended pick, upset watch, notes.</p></article>
+        <article><h3>Source provenance</h3><p>FIFA official tournament page plus Sky Sports schedule.</p></article>
+      </div>
+      <div class="group-strip" aria-label="Compact group list">
+        <span>A Mexico / South Africa / South Korea / Czech Republic</span>
+        <span>C Brazil / Morocco / Haiti / Scotland</span>
+        <span>E Germany / Curacao / Ivory Coast / Ecuador</span>
+        <span>F Netherlands / Japan / Sweden / Tunisia</span>
+        <span>I France / Senegal / Iraq / Norway</span>
+        <span>K Portugal / DR Congo / Uzbekistan / Colombia</span>
+      </div>
+    </section>
+
+    <section class="matrix-section" aria-label="Current Run Queue with 12-match schedule cross-reference">
+      <div class="section-heading">
+        <p class="label">Current Run Queue — Remaining 12 Round-of-32 Matches</p>
+        <h2>The next run joins schedule metadata with v4.4 predictions.</h2>
+        <p>Times, venues, and slots come from the schedule base. Concrete teams and predictions come from the v4.4 report.</p>
+      </div>
+      <div class="queue-table-wrap">
+        <table class="queue-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Match</th>
+              <th>Venue</th>
+              <th>Schedule slot</th>
+              <th>Main prediction</th>
+              <th>Execution focus</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span>Seq 77 · M78</span>2026-07-01 01:00</td>
+              <td>Côte d’Ivoire vs Norway</td>
+              <td>Arlington, USA</td>
+              <td>Group E runners-up vs Group I runners-up</td>
+              <td>Norway 2-1</td>
+              <td>immediate watch; modern-underdog check</td>
+            </tr>
+            <tr>
+              <td><span>Seq 78 · M77</span>2026-07-01 05:00</td>
+              <td>France vs Sweden</td>
+              <td>New Jersey, USA</td>
+              <td>Group I winners vs C/D/F/G/H third place</td>
+              <td>France 3-1</td>
+              <td>favorite risk; chance-quality check</td>
+            </tr>
+            <tr>
+              <td><span>Seq 79 · M79</span>2026-07-01 09:00</td>
+              <td>Mexico vs Ecuador</td>
+              <td>Mexico City, Mexico</td>
+              <td>Group A winners vs C/E/F/H/I third place</td>
+              <td>Mexico 1-0</td>
+              <td>low-score / BTTS check</td>
+            </tr>
+            <tr>
+              <td><span>Seq 80 · M80</span>2026-07-02 00:00</td>
+              <td>England vs DR Congo</td>
+              <td>Atlanta, USA</td>
+              <td>Group L winners vs E/H/I/J/K third place</td>
+              <td>England 2-1</td>
+              <td>favorite exposure; spread separation</td>
+            </tr>
+            <tr>
+              <td><span>Seq 81 · M82</span>2026-07-02 04:00</td>
+              <td>Belgium vs Senegal</td>
+              <td>Seattle, USA</td>
+              <td>Group G winners vs A/E/H/I/J third place</td>
+              <td>1-1, Belgium advance</td>
+              <td>advance vs 90-minute split</td>
+            </tr>
+            <tr>
+              <td><span>Seq 82 · M81</span>2026-07-02 08:00</td>
+              <td>USA vs Bosnia and Herzegovina</td>
+              <td>Santa Clara, USA</td>
+              <td>Group D winners vs B/E/F/I/J third place</td>
+              <td>USA 2-1</td>
+              <td>home-region pressure check</td>
+            </tr>
+            <tr>
+              <td><span>Seq 83 · M84</span>2026-07-03 03:00</td>
+              <td>Spain vs Austria</td>
+              <td>Los Angeles, USA</td>
+              <td>Group H winners vs Group J runners-up</td>
+              <td>Spain 2-1</td>
+              <td>favorite risk; tactical-path check</td>
+            </tr>
+            <tr>
+              <td><span>Seq 84 · M83</span>2026-07-03 07:00</td>
+              <td>Portugal vs Croatia</td>
+              <td>Toronto, Canada</td>
+              <td>Group K runners-up vs Group L runners-up</td>
+              <td>1-1, Portugal advance</td>
+              <td>penalty-risk; advance split</td>
+            </tr>
+            <tr>
+              <td><span>Seq 85 · M85</span>2026-07-03 11:00</td>
+              <td>Switzerland vs Algeria</td>
+              <td>Vancouver, Canada</td>
+              <td>Group B winners vs E/F/G/I/J third place</td>
+              <td>Switzerland 2-1</td>
+              <td>modern-underdog check</td>
+            </tr>
+            <tr>
+              <td><span>Seq 86 · M88</span>2026-07-04 02:00</td>
+              <td>Australia vs Egypt</td>
+              <td>Arlington, USA</td>
+              <td>Group D runners-up vs Group G runners-up</td>
+              <td>1-1, Egypt advance</td>
+              <td>upset watch; penalty-risk</td>
+            </tr>
+            <tr>
+              <td><span>Seq 87 · M86</span>2026-07-04 06:00</td>
+              <td>Argentina vs Cabo Verde</td>
+              <td>Miami, USA</td>
+              <td>Group J winners vs Group H runners-up</td>
+              <td>Argentina 2-0</td>
+              <td>favorite exposure audit</td>
+            </tr>
+            <tr>
+              <td><span>Seq 88 · M87</span>2026-07-04 09:30</td>
+              <td>Colombia vs Ghana</td>
+              <td>Kansas City, USA</td>
+              <td>Group K winners vs D/E/I/J/L third place</td>
+              <td>Colombia 1-0</td>
+              <td>low-score / BTTS check</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="matrix-section" aria-label="Role Assignment mapped to report sections and workbook inputs">
       <div class="section-heading">
         <p class="label">Role Assignment Matrix</p>
-        <h2>Each AI role owns a piece of today’s work.</h2>
+        <h2>Each role owns a real report section.</h2>
       </div>
       <div class="role-matrix execution-roles">
-        <article>
-          <h3>赛果复盘员</h3>
-          <p><strong>Task today:</strong> carry forward 76-match review state.</p>
-          <p><strong>Input needed:</strong> latest settled results and prior prediction notes.</p>
-          <p><strong>Draft output:</strong> Previous Review Snapshot.</p>
-          <p><strong>Review signal:</strong> direction, score, total goals, upset hit/miss.</p>
-          <p><strong>Dependency:</strong> user-supplied actual results.</p>
-        </article>
-        <article>
-          <h3>赔率盘口分析师</h3>
-          <p><strong>Task today:</strong> prepare odds and market-read slots.</p>
-          <p><strong>Input needed:</strong> user-supplied odds, 1X2, handicap, totals, score odds.</p>
-          <p><strong>Draft output:</strong> market tension and suspicious pricing notes.</p>
-          <p><strong>Review signal:</strong> market read vs final result.</p>
-          <p><strong>Dependency:</strong> no odds are fetched by this prototype.</p>
-        </article>
-        <article>
-          <h3>战术风格分析师</h3>
-          <p><strong>Task today:</strong> apply five-back, low-block, cross-volume, and late-substitution checklist.</p>
-          <p><strong>Input needed:</strong> tactical context and matchup notes.</p>
-          <p><strong>Draft output:</strong> tactical path for each preview card.</p>
-          <p><strong>Review signal:</strong> whether expected match pattern appears.</p>
-          <p><strong>Dependency:</strong> team intelligence and match context.</p>
-        </article>
-        <article>
-          <h3>球员状态分析师</h3>
-          <p><strong>Task today:</strong> mark missing player and lineup inputs.</p>
-          <p><strong>Input needed:</strong> injuries, rotation, lineup, player form, load.</p>
-          <p><strong>Draft output:</strong> availability caveats and confidence limits.</p>
-          <p><strong>Review signal:</strong> whether player status explains prediction error.</p>
-          <p><strong>Dependency:</strong> user-supplied roster context.</p>
-        </article>
-        <article>
-          <h3>历史与大赛心理分析师</h3>
-          <p><strong>Task today:</strong> check knockout pressure and brand bias.</p>
-          <p><strong>Input needed:</strong> historical, tournament, and psychology context.</p>
-          <p><strong>Draft output:</strong> pressure-risk adjustment.</p>
-          <p><strong>Review signal:</strong> overreaction or underreaction to pressure.</p>
-          <p><strong>Dependency:</strong> matchup context.</p>
-        </article>
-        <article>
-          <h3>爆冷审计员</h3>
-          <p><strong>Task today:</strong> challenge favorite picks and identify upset paths.</p>
-          <p><strong>Input needed:</strong> underdog route, odds tension, tactical mismatch.</p>
-          <p><strong>Draft output:</strong> upset watch and low-confidence warnings.</p>
-          <p><strong>Review signal:</strong> upset hit/miss and missed warning signs.</p>
-          <p><strong>Dependency:</strong> tactical and market layers.</p>
-        </article>
-        <article>
-          <h3>总指挥</h3>
-          <p><strong>Task today:</strong> synthesize draft into a reviewable daily sync.</p>
-          <p><strong>Input needed:</strong> all role outputs plus user feedback.</p>
-          <p><strong>Draft output:</strong> Commander Final Summary and Daily Compact Sync.</p>
-          <p><strong>Review signal:</strong> whether final summary separates facts, assumptions, and missing inputs.</p>
-          <p><strong>Dependency:</strong> all role drafts complete.</p>
-        </article>
+        <article><h3>赛果复盘员</h3><p><strong>Source input:</strong> schedule/result rows.</p><p><strong>Report section:</strong> Completed Match Review Ledger.</p><p><strong>Draft output:</strong> hit/miss ledger.</p><p><strong>Review signal:</strong> result vs prediction.</p></article>
+        <article><h3>赔率盘口分析师</h3><p><strong>Source input:</strong> market inputs + price records.</p><p><strong>Report section:</strong> Budget P/L Ledger.</p><p><strong>Draft output:</strong> price-to-return check.</p><p><strong>Review signal:</strong> P/L and market-read miss.</p></article>
+        <article><h3>战术风格分析师</h3><p><strong>Source input:</strong> per-match cards.</p><p><strong>Report section:</strong> tactical-path checklist.</p><p><strong>Draft output:</strong> low-block / cross-volume / transition notes.</p><p><strong>Review signal:</strong> whether match pattern appeared.</p></article>
+        <article><h3>球员状态分析师</h3><p><strong>Source input:</strong> missing input readiness.</p><p><strong>Report section:</strong> injury / lineup notes.</p><p><strong>Draft output:</strong> confidence caveats.</p><p><strong>Review signal:</strong> lineup impact after settlement.</p></article>
+        <article><h3>历史与大赛心理分析师</h3><p><strong>Source input:</strong> knockout context.</p><p><strong>Report section:</strong> penalty / extra-time risk.</p><p><strong>Draft output:</strong> pressure adjustment.</p><p><strong>Review signal:</strong> pressure read vs outcome.</p></article>
+        <article><h3>爆冷审计员</h3><p><strong>Source input:</strong> upset watch.</p><p><strong>Report section:</strong> modern-underdog red flags.</p><p><strong>Draft output:</strong> upset warning and confidence limit.</p><p><strong>Review signal:</strong> upset hit/miss.</p></article>
+        <article><h3>总指挥</h3><p><strong>Source input:</strong> all sections.</p><p><strong>Report section:</strong> final conclusion + Structured Sync.</p><p><strong>Draft output:</strong> commander summary.</p><p><strong>Review signal:</strong> decision quality and rule drift.</p></article>
       </div>
     </section>
 
-    <section class="matrix-section split-section" aria-label="Input Readiness and Draft Output Shell">
-      <div>
-        <div class="section-heading">
-          <p class="label">Input Readiness</p>
-          <h2>Known inputs are separated from missing inputs.</h2>
-        </div>
-        <div class="readiness-grid">
-          <article>
-            <h3>Already known</h3>
-            <ul class="clean-list">
-              <li>76 reviewed matches</li>
-              <li>rule updates from 2026-06-30</li>
-              <li>next queue: 12 Round-of-32 matches</li>
-              <li>immediate watch list</li>
-            </ul>
-          </article>
-          <article>
-            <h3>Missing / future</h3>
-            <ul class="clean-list">
-              <li>live odds</li>
-              <li>latest injuries</li>
-              <li>final lineups</li>
-              <li>weather / venue context if needed</li>
-            </ul>
-          </article>
-        </div>
-        <p class="manual-note">Boundary: the static prototype does not fetch missing inputs.</p>
+    <section class="matrix-section" aria-label="v4.4 Report Builder">
+      <div class="section-heading">
+        <p class="label">v4.4 Report Builder</p>
+        <h2>The AI team drafts the next report in known sections.</h2>
+        <p>This mirrors the real v4.4 report shape without filling unsupported live facts.</p>
       </div>
-      <div>
-        <div class="section-heading">
-          <p class="label">Draft Output Shell</p>
-          <h2>Draft the output shape before unsupported facts.</h2>
-        </div>
-        <ol class="draft-shell">
-          <li>Previous Review Snapshot</li>
-          <li>Match Preview Cards</li>
-          <li>90-Minute Direction</li>
-          <li>Advance / Spread Separation</li>
-          <li>Total Goals View</li>
-          <li>Upset Watch</li>
-          <li>Budget Risk Notes</li>
-          <li>Commander Final Summary</li>
-          <li>Daily Compact Sync</li>
-        </ol>
-        <p class="manual-note">Unsupported predictions stay blank or marked as assumptions until the user supplies inputs.</p>
+      <div class="report-builder">
+        <article><h3>Scope / Time / Data Baseline</h3><p><strong>Source:</strong> schedule base + current sync.</p><p><strong>Owner:</strong> 总指挥.</p><p><strong>Purpose:</strong> set run scope and missing-input boundary.</p><p><strong>Check:</strong> next Beijing-time match day only.</p></article>
+        <article><h3>Completed Match Review Ledger</h3><p><strong>Source:</strong> settled results.</p><p><strong>Owner:</strong> 赛果复盘员.</p><p><strong>Purpose:</strong> review hit/miss evidence.</p><p><strong>Check:</strong> actual vs prediction is explicit.</p></article>
+        <article><h3>Budget P/L Ledger</h3><p><strong>Source:</strong> recorded price ledger.</p><p><strong>Owner:</strong> 赔率盘口分析师.</p><p><strong>Purpose:</strong> settle return and correlation risk.</p><p><strong>Check:</strong> price-to-return math is traceable.</p></article>
+        <article><h3>Rolling Accuracy / Trend Diagnosis</h3><p><strong>Source:</strong> 76-match scoreboard.</p><p><strong>Owner:</strong> 赛果复盘员.</p><p><strong>Purpose:</strong> show direction vs scoreline quality.</p><p><strong>Check:</strong> scoreline remains low-confidence.</p></article>
+        <article><h3>Intelligence Update</h3><p><strong>Source:</strong> review notes and user-supplied context.</p><p><strong>Owner:</strong> tactical and player-status roles.</p><p><strong>Purpose:</strong> update team and match assumptions.</p><p><strong>Check:</strong> no unsupported live facts.</p></article>
+        <article><h3>Post-match Data Intelligence Library</h3><p><strong>Source:</strong> settled match patterns.</p><p><strong>Owner:</strong> 战术风格分析师.</p><p><strong>Purpose:</strong> retain reusable lessons.</p><p><strong>Check:</strong> evidence links to rule changes.</p></article>
+        <article><h3>Remaining Match Prediction Table</h3><p><strong>Source:</strong> 12-row current queue.</p><p><strong>Owner:</strong> 总指挥.</p><p><strong>Purpose:</strong> prepare concise next-match table.</p><p><strong>Check:</strong> each match maps to schedule base.</p></article>
+        <article><h3>Per-Match Analysis Cards</h3><p><strong>Source:</strong> schedule row + role notes.</p><p><strong>Owner:</strong> all analyst roles.</p><p><strong>Purpose:</strong> explain each forecast.</p><p><strong>Check:</strong> assumptions and missing inputs visible.</p></article>
+        <article><h3>Champion Forecast</h3><p><strong>Source:</strong> rule updates and knockout path.</p><p><strong>Owner:</strong> 总指挥.</p><p><strong>Purpose:</strong> maintain forecast stance.</p><p><strong>Check:</strong> France retained; Morocco/Brazil upgraded; Germany removed.</p></article>
+        <article><h3>Commander Final Conclusion</h3><p><strong>Source:</strong> role outputs.</p><p><strong>Owner:</strong> 总指挥.</p><p><strong>Purpose:</strong> produce final daily stance.</p><p><strong>Check:</strong> separated 90-minute / advance / spread.</p></article>
+        <article><h3>Decision Team Changelog</h3><p><strong>Source:</strong> rule updates.</p><p><strong>Owner:</strong> review and risk roles.</p><p><strong>Purpose:</strong> explain what changed.</p><p><strong>Check:</strong> owner and next impact named.</p></article>
+        <article><h3>TWOS / LDD / DUXD Iteration Log</h3><p><strong>Source:</strong> feedback loop.</p><p><strong>Owner:</strong> 总指挥.</p><p><strong>Purpose:</strong> record project learning.</p><p><strong>Check:</strong> output → review → correction is visible.</p></article>
+        <article><h3>Structured Sync</h3><p><strong>Source:</strong> final report.</p><p><strong>Owner:</strong> 总指挥.</p><p><strong>Purpose:</strong> return compact user-facing sync.</p><p><strong>Check:</strong> next action is clear and manual.</p></article>
       </div>
     </section>
 
-    <section class="matrix-section split-section" aria-label="Review Checklist and Feedback Capture Path">
+    <section class="matrix-section split-section" aria-label="Run Transition 73-Match Setup to 76-Match Settlement">
       <div>
         <div class="section-heading">
-          <p class="label">Review Checklist</p>
-          <h2>Before a draft can be accepted.</h2>
+          <p class="label">Run Transition: 73-Match Setup → 76-Match Settlement</p>
+          <h2>One report becomes the next run’s rules.</h2>
+        </div>
+        <div class="transition-grid">
+          <article><h3>73 setup</h3><p>Pending 100 RMB Polymarket budget using screenshot prices.</p></article>
+          <article><h3>76 settlement</h3><p>Return 79.24 / P&amp;L -20.76 / ROI -20.8%.</p></article>
+          <article><h3>Germany exposure</h3><p>Correlation-risk rule update created after linked losses.</p></article>
+          <article><h3>Brazil/Japan</h3><p>Good hedge structure preserved.</p></article>
+          <article><h3>Netherlands/Morocco</h3><p>90-minute draw correct; advance call wrong.</p></article>
+          <article><h3>Next run</h3><p>Apply rule changes to remaining 12 matches.</p></article>
+        </div>
+      </div>
+      <div>
+        <div class="section-heading">
+          <p class="label">Workbook + v4.4 Review Checklist</p>
+          <h2>Every draft must pass these checks.</h2>
         </div>
         <ul class="clean-list strong-list">
-          <li>Are 90-minute, advance, and spread separated?</li>
-          <li>Is favorite exposure justified by chance quality?</li>
-          <li>Are modern-underdog and penalty risks checked?</li>
-          <li>Is correlated same-match exposure capped?</li>
+          <li>Does every active match map to a schedule row?</li>
+          <li>Are Beijing/Singapore time and venue visible?</li>
+          <li>Are 90-minute, advance, spread, BTTS, cover, and correct score separated?</li>
+          <li>Is budget correlation audited?</li>
+          <li>Are modern-underdog flags checked?</li>
+          <li>Are penalty and extra-time risks elevated?</li>
           <li>Are scoreline predictions treated as low-confidence?</li>
-          <li>Is Implementation disabled unless approved?</li>
+          <li>Is Budget P/L settled from recorded prices?</li>
+          <li>Is Structured Sync produced?</li>
+          <li>Is Implementation still No unless separately approved?</li>
         </ul>
-      </div>
-      <div>
-        <div class="section-heading">
-          <p class="label">Feedback Capture Path</p>
-          <h2>User review changes the next queue.</h2>
-        </div>
-        <div class="feedback-steps">
-          <article><h3>User reviews draft</h3><p>Accept, edit, reject, or mark uncertainty.</p></article>
-          <article><h3>User flags gaps</h3><p>Wrong assumption, missing data, unsupported odds, or tactical gap.</p></article>
-          <article><h3>AI team updates checklist</h3><p>Rules are revised manually for the next queue.</p></article>
-          <article><h3>Next queue receives constraints</h3><p>Updated rules feed the following preview cycle.</p></article>
-        </div>
       </div>
     </section>
 
-    <section class="next-step boundary-panel" aria-label="Rule Update Return Path">
-      <p class="label">Rule Update Return Path</p>
-      <h2>Execution returns to the learning loop.</h2>
+    <section class="next-step boundary-panel" aria-label="Feedback / Rule Return Path">
+      <p class="label">Feedback / Rule Return Path</p>
+      <h2>Review turns today’s draft into the next sync.</h2>
       <div class="feedback-flow">
-        <span>Today’s Draft</span>
+        <span>Schedule Base</span>
+        <span>v4.4 Report Draft</span>
         <span>User Review</span>
-        <span>Error / Missing Input</span>
+        <span>Result Settlement</span>
+        <span>Budget P/L Ledger</span>
         <span>Rule Update</span>
-        <span>Project Matrix Learning Loop</span>
-        <span>Next Work Queue</span>
+        <span>Decision Team Changelog</span>
+        <span>Next Structured Sync</span>
+        <span>Current Run Queue</span>
       </div>
       <a class="primary-link" href="./project_matrix.html#learning-updates">Return to Project Matrix Learning Loop</a>
     </section>
 
-    <section class="next-step boundary-panel" aria-label="Boundary / No Implementation">
-      <p class="label">Boundary / No Implementation</p>
-      <h2>Work structure only.</h2>
+    <section class="next-step boundary-panel" aria-label="Boundary">
+      <p class="label">Boundary</p>
+      <h2>Manual review, no execution.</h2>
       <ul class="clean-list">
         <li>Static prototype only.</li>
+        <li>Schedule base is referenced only as a static source asset.</li>
         <li>No live odds fetch.</li>
         <li>No automatic predictions.</li>
         <li>No automatic reminders.</li>

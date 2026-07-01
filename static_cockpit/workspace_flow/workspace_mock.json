@@ -287,143 +287,214 @@
     "title": "2026WC Workflow Execution",
     "subtitle": "From Project Matrix to today's AI-team work queue",
     "mode": "static_manual_review_only",
-    "today_work_queue": {
-      "remaining_focus": "12 Round-of-32 matches",
-      "immediate_watch": [
-        {
-          "match": "Côte d’Ivoire / Norway",
-          "focus": "Round-of-32 preview path",
-          "why_queued": "Immediate watch item from the current project sync.",
-          "required_inputs": "user-supplied match context, odds notes, injuries, lineups, venue notes if available",
-          "expected_output": "preview card with direction layers and upset check",
-          "risk_flag": "modern-underdog and penalty-risk checklist required"
-        },
-        {
-          "match": "France / Sweden",
-          "focus": "favorite exposure and champion-path check",
-          "why_queued": "France retained in champion forecast and needs chance-quality confirmation.",
-          "required_inputs": "user-supplied odds layer, team condition, tactical match-up, lineup notes",
-          "expected_output": "separated 90-minute, advance, spread, and budget-risk view",
-          "risk_flag": "favorite exposure must be justified by chance quality"
-        },
-        {
-          "match": "Mexico / Ecuador",
-          "focus": "tactical-path and upset-watch review",
-          "why_queued": "Immediate watch item with possible matchup and market-tension questions.",
-          "required_inputs": "user-supplied form, tactical notes, odds notes, scoring context",
-          "expected_output": "compact match card plus scoreline confidence warning",
-          "risk_flag": "scoreline layers remain low-confidence"
-        }
-      ]
-    },
-    "role_assignment_matrix": [
+    "execution_source_stack": [
       {
-        "role": "赛果复盘员",
-        "task_today": "carry forward 76-match review state",
-        "input_needed": "latest settled results and prior prediction notes",
-        "draft_output": "Previous Review Snapshot",
-        "review_signal": "direction, score, total goals, upset hit/miss",
-        "dependency": "user-supplied actual results"
+        "label": "Schedule Base",
+        "contributes": "104 matches, Beijing / Singapore time, groups plus knockout path, prediction fields.",
+        "next_run_effect": "Every active match must map back to a schedule row before drafting."
       },
       {
-        "role": "赔率盘口分析师",
-        "task_today": "prepare odds and market-read slots",
-        "input_needed": "user-supplied odds, 1X2, handicap, totals, score odds",
-        "draft_output": "market tension and suspicious pricing notes",
-        "review_signal": "market read vs final result",
-        "dependency": "no odds are fetched by this prototype"
+        "label": "First Daily Output",
+        "contributes": "June 12 matchday: Mexico 2-0 South Africa, Korea 1-1 Czech, opening-day cautious structure.",
+        "next_run_effect": "Preserves the compact daily prediction style."
       },
       {
-        "role": "战术风格分析师",
-        "task_today": "apply five-back, low-block, cross-volume, and late-substitution checklist",
-        "input_needed": "tactical context and matchup notes",
-        "draft_output": "tactical path for each preview card",
-        "review_signal": "whether expected match pattern appears",
-        "dependency": "team intelligence and match context"
+        "label": "73-Match Setup",
+        "contributes": "First Round-of-32 budget plan, recorded screenshot prices, pending settlement mode.",
+        "next_run_effect": "Carries budget intent and 90-minute vs advance separation into review."
       },
       {
-        "role": "球员状态分析师",
-        "task_today": "mark missing player and lineup inputs",
-        "input_needed": "injuries, rotation, lineup, player form, load",
-        "draft_output": "availability caveats and confidence limits",
-        "review_signal": "whether player status explains prediction error",
-        "dependency": "user-supplied roster context"
-      },
-      {
-        "role": "历史与大赛心理分析师",
-        "task_today": "check knockout pressure and brand bias",
-        "input_needed": "historical, tournament, and psychology context",
-        "draft_output": "pressure-risk adjustment",
-        "review_signal": "overreaction or underreaction to pressure",
-        "dependency": "matchup context"
-      },
-      {
-        "role": "爆冷审计员",
-        "task_today": "challenge favorite picks and identify upset paths",
-        "input_needed": "underdog route, odds tension, tactical mismatch",
-        "draft_output": "upset watch and low-confidence warnings",
-        "review_signal": "upset hit/miss and missed warning signs",
-        "dependency": "tactical and market layers"
-      },
-      {
-        "role": "总指挥",
-        "task_today": "synthesize draft into a reviewable daily sync",
-        "input_needed": "all role outputs plus user feedback",
-        "draft_output": "Commander Final Summary and Daily Compact Sync",
-        "review_signal": "whether final summary separates facts, assumptions, and missing inputs",
-        "dependency": "all role drafts complete"
+        "label": "76-Match Settlement",
+        "contributes": "Brazil/Japan, Germany/Paraguay, Netherlands/Morocco settlement, P/L, and rule updates.",
+        "next_run_effect": "Updates favorite exposure, underdog, penalty, and correlation rules."
       }
     ],
-    "input_readiness": {
-      "already_known": [
-        "76 reviewed matches",
-        "rule updates from 2026-06-30",
-        "next queue: 12 Round-of-32 matches",
-        "immediate watch list"
+    "schedule_base_snapshot": {
+      "coverage": "104 matches across group stage and knockout rounds",
+      "groups": "12 groups from A to L, 48 teams total",
+      "time_base": "Beijing / Singapore match times already prepared",
+      "prediction_fields": [
+        "status",
+        "1X2",
+        "score",
+        "total goals",
+        "recommended pick",
+        "upset watch",
+        "notes"
       ],
-      "missing_future": [
-        "live odds",
-        "latest injuries",
-        "final lineups",
-        "weather / venue context if needed"
-      ],
-      "boundary": "static prototype does not fetch missing inputs"
+      "source_provenance": "FIFA official tournament page plus Sky Sports schedule"
     },
-    "draft_output_shell": [
-      "Previous Review Snapshot",
-      "Match Preview Cards",
-      "90-Minute Direction",
-      "Advance / Spread Separation",
-      "Total Goals View",
-      "Upset Watch",
-      "Budget Risk Notes",
-      "Commander Final Summary",
-      "Daily Compact Sync"
+    "current_run_queue": [
+      {
+        "seq": 77,
+        "match_no": "78",
+        "time": "2026-07-01 01:00",
+        "match": "Côte d’Ivoire vs Norway",
+        "venue": "Arlington, USA",
+        "schedule_slot": "Group E runners-up vs Group I runners-up",
+        "main_prediction": "Norway 2-1",
+        "execution_focus": "immediate watch; modern-underdog check"
+      },
+      {
+        "seq": 78,
+        "match_no": "77",
+        "time": "2026-07-01 05:00",
+        "match": "France vs Sweden",
+        "venue": "New Jersey, USA",
+        "schedule_slot": "Group I winners vs C/D/F/G/H third place",
+        "main_prediction": "France 3-1",
+        "execution_focus": "favorite risk; chance-quality check"
+      },
+      {
+        "seq": 79,
+        "match_no": "79",
+        "time": "2026-07-01 09:00",
+        "match": "Mexico vs Ecuador",
+        "venue": "Mexico City, Mexico",
+        "schedule_slot": "Group A winners vs C/E/F/H/I third place",
+        "main_prediction": "Mexico 1-0",
+        "execution_focus": "low-score / BTTS check"
+      },
+      {
+        "seq": 80,
+        "match_no": "80",
+        "time": "2026-07-02 00:00",
+        "match": "England vs DR Congo",
+        "venue": "Atlanta, USA",
+        "schedule_slot": "Group L winners vs E/H/I/J/K third place",
+        "main_prediction": "England 2-1",
+        "execution_focus": "favorite exposure; spread separation"
+      },
+      {
+        "seq": 81,
+        "match_no": "82",
+        "time": "2026-07-02 04:00",
+        "match": "Belgium vs Senegal",
+        "venue": "Seattle, USA",
+        "schedule_slot": "Group G winners vs A/E/H/I/J third place",
+        "main_prediction": "1-1, Belgium advance",
+        "execution_focus": "advance vs 90-minute split"
+      },
+      {
+        "seq": 82,
+        "match_no": "81",
+        "time": "2026-07-02 08:00",
+        "match": "USA vs Bosnia and Herzegovina",
+        "venue": "Santa Clara, USA",
+        "schedule_slot": "Group D winners vs B/E/F/I/J third place",
+        "main_prediction": "USA 2-1",
+        "execution_focus": "home-region pressure check"
+      },
+      {
+        "seq": 83,
+        "match_no": "84",
+        "time": "2026-07-03 03:00",
+        "match": "Spain vs Austria",
+        "venue": "Los Angeles, USA",
+        "schedule_slot": "Group H winners vs Group J runners-up",
+        "main_prediction": "Spain 2-1",
+        "execution_focus": "favorite risk; tactical-path check"
+      },
+      {
+        "seq": 84,
+        "match_no": "83",
+        "time": "2026-07-03 07:00",
+        "match": "Portugal vs Croatia",
+        "venue": "Toronto, Canada",
+        "schedule_slot": "Group K runners-up vs Group L runners-up",
+        "main_prediction": "1-1, Portugal advance",
+        "execution_focus": "penalty-risk; advance split"
+      },
+      {
+        "seq": 85,
+        "match_no": "85",
+        "time": "2026-07-03 11:00",
+        "match": "Switzerland vs Algeria",
+        "venue": "Vancouver, Canada",
+        "schedule_slot": "Group B winners vs E/F/G/I/J third place",
+        "main_prediction": "Switzerland 2-1",
+        "execution_focus": "modern-underdog check"
+      },
+      {
+        "seq": 86,
+        "match_no": "88",
+        "time": "2026-07-04 02:00",
+        "match": "Australia vs Egypt",
+        "venue": "Arlington, USA",
+        "schedule_slot": "Group D runners-up vs Group G runners-up",
+        "main_prediction": "1-1, Egypt advance",
+        "execution_focus": "upset watch; penalty-risk"
+      },
+      {
+        "seq": 87,
+        "match_no": "86",
+        "time": "2026-07-04 06:00",
+        "match": "Argentina vs Cabo Verde",
+        "venue": "Miami, USA",
+        "schedule_slot": "Group J winners vs Group H runners-up",
+        "main_prediction": "Argentina 2-0",
+        "execution_focus": "favorite exposure audit"
+      },
+      {
+        "seq": 88,
+        "match_no": "87",
+        "time": "2026-07-04 09:30",
+        "match": "Colombia vs Ghana",
+        "venue": "Kansas City, USA",
+        "schedule_slot": "Group K winners vs D/E/I/J/L third place",
+        "main_prediction": "Colombia 1-0",
+        "execution_focus": "low-score / BTTS check"
+      }
+    ],
+    "report_builder_sections": [
+      "Scope / Time / Data Baseline",
+      "Completed Match Review Ledger",
+      "Budget P/L Ledger",
+      "Rolling Accuracy / Trend Diagnosis",
+      "Intelligence Update",
+      "Post-match Data Intelligence Library",
+      "Remaining Match Prediction Table",
+      "Per-Match Analysis Cards",
+      "Champion Forecast",
+      "Commander Final Conclusion",
+      "Decision Team Changelog",
+      "TWOS / LDD / DUXD Iteration Log",
+      "Structured Sync"
+    ],
+    "run_transition": [
+      "73 report: pending 100 RMB Polymarket budget using screenshot prices",
+      "76 report: settled return 79.24 / P&L -20.76 / ROI -20.8%",
+      "Germany exposure error created correlation-risk rule update",
+      "Brazil/Japan good hedge structure preserved",
+      "Netherlands/Morocco 90-minute draw correct, advance call wrong",
+      "Next run applies rule changes to remaining 12 matches"
     ],
     "review_checklist": [
-      "Are 90-minute, advance, and spread separated?",
-      "Is favorite exposure justified by chance quality?",
-      "Are modern-underdog and penalty risks checked?",
-      "Is correlated same-match exposure capped?",
+      "Does every active match map to a schedule row?",
+      "Are Beijing/Singapore time and venue visible?",
+      "Are 90-minute, advance, spread, BTTS, cover, and correct score separated?",
+      "Is budget correlation audited?",
+      "Are modern-underdog flags checked?",
+      "Are penalty and extra-time risks elevated?",
       "Are scoreline predictions treated as low-confidence?",
-      "Is Implementation disabled unless approved?"
+      "Is Budget P/L settled from recorded prices?",
+      "Is Structured Sync produced?",
+      "Is Implementation still No unless separately approved?"
     ],
-    "feedback_capture_path": [
-      "User reviews draft.",
-      "User flags wrong assumptions or missing data.",
-      "AI team updates rule/checklist.",
-      "Next queue receives updated constraints."
-    ],
-    "rule_update_return_path": [
-      "Today’s Draft",
+    "feedback_rule_return_path": [
+      "Schedule Base",
+      "v4.4 Report Draft",
       "User Review",
-      "Error / Missing Input",
+      "Result Settlement",
+      "Budget P/L Ledger",
       "Rule Update",
-      "Project Matrix Learning Loop",
-      "Next Work Queue"
+      "Decision Team Changelog",
+      "Next Structured Sync",
+      "Current Run Queue"
     ],
     "boundary": [
       "static prototype only",
+      "no runtime Excel parser",
       "no live odds fetch",
       "no automatic predictions",
       "no automatic reminders",
