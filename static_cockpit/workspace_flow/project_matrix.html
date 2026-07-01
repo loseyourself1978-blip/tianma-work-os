@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TWOS Vol.13 2026WC Project Matrix</title>
+  <link rel="stylesheet" href="./create_workspace.css" />
+  <link rel="alternate" type="application/json" href="./workspace_mock.json" />
+</head>
+<body>
+  <main class="page matrix-page" aria-label="TWOS Vol.13 2026WC Project Matrix">
+    <header class="topbar">
+      <p class="brand">TWOS</p>
+      <nav class="top-actions" aria-label="Project matrix navigation">
+        <a class="back-link" href="./start_thinking.html">Back to thinking</a>
+        <a class="back-link" href="../vol12_static_mvp/index.html">Landing</a>
+      </nav>
+    </header>
+
+    <section class="hero matrix-hero">
+      <p class="eyebrow">Stage B / Demand-generated matrix</p>
+      <h1>2026WC Project Matrix</h1>
+      <p class="intro">Generated from the initial mission, real daily review loop, multi-role decision team, and 2026-06-30 sync. This is a static prototype: it structures the project; it does not fetch odds, send reminders, or execute bets.</p>
+    </section>
+
+    <nav class="progress-strip" aria-label="Static Vol.13 flow">
+      <span>Landing</span>
+      <span>Thinking</span>
+      <span>AI team</span>
+      <span>Task plan</span>
+      <span>Project Matrix</span>
+    </nav>
+
+    <section class="matrix-section mission-matrix" aria-label="Mission Matrix">
+      <div class="section-heading">
+        <p class="label">Mission Matrix</p>
+        <h2>Turn the World Cup mission into a working project shape.</h2>
+        <p>Predict only the next Beijing-time match day, review yesterday before each prediction, and keep all match context user-supplied in this static prototype.</p>
+      </div>
+      <div class="matrix-grid four-up">
+        <article>
+          <h3>Original mission</h3>
+          <p>Analyze schedule, team level, player form, style, tactics, history, upset factors, and mainstream odds to produce match predictions.</p>
+        </article>
+        <article>
+          <h3>Schedule base</h3>
+          <p>48 teams, 104 matches, 12 groups, group top two plus best third-place teams, then knockout path.</p>
+        </article>
+        <article>
+          <h3>Next-day scope</h3>
+          <p>Only the next Beijing-time match day is predicted after prior results are reviewed.</p>
+        </article>
+        <article>
+          <h3>Review rhythm</h3>
+          <p>Requested rhythm: BJT/SGT 20:30 daily from 2026-06-10 to 2026-07-20. Rhythm only, no automatic reminder here.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="matrix-section" aria-label="AI Decision Team">
+      <div class="section-heading">
+        <p class="label">AI Decision Team</p>
+        <h2>Roles are derived from the 2026WC workflow.</h2>
+        <p>Each role shows the input it needs, output it produces, and review signal used to improve the next run.</p>
+      </div>
+      <div class="role-matrix">
+        <article>
+          <h3>赛果复盘员</h3>
+          <p><strong>Responsibility:</strong> compare actual results with prior predictions.</p>
+          <p><strong>Input:</strong> actual score, prediction record, settled result.</p>
+          <p><strong>Output:</strong> hit/miss review and correction notes.</p>
+          <p><strong>Review signal:</strong> direction, score, totals, and upset accuracy.</p>
+        </article>
+        <article>
+          <h3>赔率盘口分析师</h3>
+          <p><strong>Responsibility:</strong> interpret user-supplied market notes.</p>
+          <p><strong>Input:</strong> 1X2, handicap, totals, score odds, consensus notes.</p>
+          <p><strong>Output:</strong> market layer and suspicious pricing flags.</p>
+          <p><strong>Review signal:</strong> pricing read vs match outcome.</p>
+        </article>
+        <article>
+          <h3>战术风格分析师</h3>
+          <p><strong>Responsibility:</strong> evaluate style, formation, pressing, transition, and set pieces.</p>
+          <p><strong>Input:</strong> team tactics and match-up notes.</p>
+          <p><strong>Output:</strong> tactical path and match state assumptions.</p>
+          <p><strong>Review signal:</strong> whether the expected match pattern appeared.</p>
+        </article>
+        <article>
+          <h3>球员状态分析师</h3>
+          <p><strong>Responsibility:</strong> assess form, injuries, rotation, load, and key-player condition.</p>
+          <p><strong>Input:</strong> user-supplied roster and availability context.</p>
+          <p><strong>Output:</strong> player-condition adjustment.</p>
+          <p><strong>Review signal:</strong> whether player condition changed match quality.</p>
+        </article>
+        <article>
+          <h3>历史与大赛心理分析师</h3>
+          <p><strong>Responsibility:</strong> weigh history, pressure, and tournament psychology.</p>
+          <p><strong>Input:</strong> history, knockout pressure, rivalry, and big-match context.</p>
+          <p><strong>Output:</strong> pressure-risk adjustment.</p>
+          <p><strong>Review signal:</strong> overreaction or underreaction to big-match effects.</p>
+        </article>
+        <article>
+          <h3>爆冷审计员</h3>
+          <p><strong>Responsibility:</strong> challenge main picks and flag upset candidates.</p>
+          <p><strong>Input:</strong> underdog path, odds tension, tactical mismatch.</p>
+          <p><strong>Output:</strong> upset watch and confidence warning.</p>
+          <p><strong>Review signal:</strong> upset hit/miss and missed warning signs.</p>
+        </article>
+        <article>
+          <h3>总指挥</h3>
+          <p><strong>Responsibility:</strong> synthesize roles into final daily recommendations.</p>
+          <p><strong>Input:</strong> all role outputs and user feedback.</p>
+          <p><strong>Output:</strong> final picks, priority, and compact sync.</p>
+          <p><strong>Review signal:</strong> final decision quality and rule drift.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="matrix-section" aria-label="Workstream Matrix">
+      <div class="section-heading">
+        <p class="label">Workstream Matrix</p>
+        <h2>The project repeats through grounded workstreams.</h2>
+      </div>
+      <div class="matrix-grid">
+        <article><h3>Schedule Base</h3><p>Maintain match order, Beijing-time windows, group structure, knockout path, and next-day scope.</p></article>
+        <article><h3>Team Intelligence</h3><p>Summarize team level, player condition, rotation, tactics, formation, pressing, transition, and set pieces.</p></article>
+        <article><h3>Odds / Market Layer</h3><p>Use user-supplied odds notes to compare consensus, handicap tension, totals, and suspicious pricing.</p></article>
+        <article><h3>Prediction Layer</h3><p>Produce direction, score, totals, main pick, upset watch, confidence, and priority.</p></article>
+        <article><h3>Daily Review Loop</h3><p>Compare actual result against prediction before the next forecast.</p></article>
+        <article><h3>Output / Sync</h3><p>Return a compact daily prediction and review note.</p></article>
+        <article><h3>Feedback / Calibration</h3><p>Turn misses, user edits, and settled results into rule updates.</p></article>
+      </div>
+    </section>
+
+    <section class="matrix-section split-section" aria-label="Prediction Output Layers and Daily Review Loop">
+      <div>
+        <div class="section-heading">
+          <p class="label">Prediction Output Layers</p>
+          <h2>Each match output has explicit layers.</h2>
+        </div>
+        <ul class="clean-list">
+          <li>win/draw/loss</li>
+          <li>score</li>
+          <li>total goals</li>
+          <li>recommendation / main pick</li>
+          <li>upset watch</li>
+          <li>confidence / priority</li>
+        </ul>
+      </div>
+      <div>
+        <div class="section-heading">
+          <p class="label">Daily Review Loop</p>
+          <h2>Review creates the next rule update.</h2>
+        </div>
+        <ul class="clean-list">
+          <li>actual vs prediction</li>
+          <li>direction hit/miss</li>
+          <li>score hit/miss</li>
+          <li>total goals hit/miss</li>
+          <li>upset hit/miss</li>
+          <li>rule update</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="matrix-section" aria-label="Performance Scoreboard">
+      <div class="section-heading">
+        <p class="label">Performance Scoreboard</p>
+        <h2>2026-06-30 review evidence.</h2>
+        <p>76 matches reviewed. New completed matches: Brazil 2-1 Japan; Germany 1-1 Paraguay, Paraguay win pens; Netherlands 1-1 Morocco, Morocco win pens.</p>
+      </div>
+      <div class="scoreboard">
+        <article><span>Total reviewed</span><strong>76</strong></article>
+        <article><span>Main direction</span><strong>48/76 · 63.2%</strong></article>
+        <article><span>Recommendation direction</span><strong>25/36 · 69.4%</strong></article>
+        <article><span>Main score</span><strong>9/76 · 11.8%</strong></article>
+        <article><span>Upset score</span><strong>7/76 · 9.2%</strong></article>
+        <article><span>Big-score</span><strong>9/74 · 12.2%</strong></article>
+        <article><span>High-odds score</span><strong>3/21 · 14.3%</strong></article>
+      </div>
+    </section>
+
+    <section class="matrix-section split-section" aria-label="Budget P/L Ledger and Learning Rule Updates">
+      <div>
+        <div class="section-heading">
+          <p class="label">Budget P/L Ledger</p>
+          <h2>Budget lesson from the 100 RMB plan.</h2>
+        </div>
+        <dl class="ledger-list">
+          <div><dt>Plan</dt><dd>100 RMB settled</dd></div>
+          <div><dt>Return</dt><dd>79.24</dd></div>
+          <div><dt>P/L</dt><dd>-20.76</dd></div>
+          <div><dt>ROI</dt><dd>-20.8%</dd></div>
+          <div><dt>Key error</dt><dd>excessive correlated Germany exposure</dd></div>
+        </dl>
+        <p class="mini-note">Winning legs: Brazil ML, Brazil advance, Japan +1.5, Morocco +1.5, NLD-MAR draw. Losing legs: Germany ML, Germany BTTS No, Germany -1.5, Netherlands advance.</p>
+      </div>
+      <div>
+        <div class="section-heading">
+          <p class="label">Learning / Rule Updates</p>
+          <h2>The project changes rules after misses.</h2>
+        </div>
+        <ul class="clean-list">
+          <li>separate 90-minute vs advance vs spread</li>
+          <li>upgrade modern-underdog risk</li>
+          <li>upgrade penalty-risk</li>
+          <li>upgrade five-back / low-block / cross-volume / late-substitution paths</li>
+          <li>France retained; Morocco and Brazil upgraded; Germany removed</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="matrix-section split-section" aria-label="Next Match Queue and Champion Forecast">
+      <div>
+        <div class="section-heading">
+          <p class="label">Next Match Queue</p>
+          <h2>What the team reviews next.</h2>
+        </div>
+        <p class="mini-note">Preview remaining 12 Round-of-32 matches.</p>
+        <ul class="clean-list">
+          <li>Côte d’Ivoire/Norway</li>
+          <li>France/Sweden</li>
+          <li>Mexico/Ecuador</li>
+        </ul>
+      </div>
+      <div>
+        <div class="section-heading">
+          <p class="label">Champion Forecast</p>
+          <h2>Current forecast stance.</h2>
+        </div>
+        <ul class="clean-list">
+          <li>France retained</li>
+          <li>Morocco upgraded</li>
+          <li>Brazil upgraded</li>
+          <li>Germany removed</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="next-step boundary-panel" aria-label="Boundaries / No Implementation">
+      <p class="label">Boundaries / No Implementation</p>
+      <h2>Static project matrix only.</h2>
+      <ul class="clean-list">
+        <li>No live odds fetch.</li>
+        <li>No automatic reminders.</li>
+        <li>No betting execution.</li>
+        <li>Implementation: No unless separately approved.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

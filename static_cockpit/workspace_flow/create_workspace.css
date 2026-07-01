@@ -62,6 +62,13 @@ h3 {
   font-weight: 800;
 }
 
+.top-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .hero {
   max-width: 840px;
   padding: 64px 0 28px;
@@ -244,11 +251,132 @@ h3 {
   max-width: 760px;
 }
 
+.primary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 16px;
+  min-height: 42px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #ffffff;
+  padding: 0 16px;
+  font-weight: 900;
+}
+
+.matrix-hero {
+  max-width: 920px;
+}
+
+.matrix-section {
+  margin-top: 34px;
+}
+
+.matrix-grid,
+.role-matrix,
+.scoreboard,
+.split-section {
+  display: grid;
+  gap: 14px;
+}
+
+.matrix-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.matrix-grid.four-up {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.role-matrix {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.matrix-grid article,
+.role-matrix article,
+.scoreboard article,
+.split-section > div {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #ffffff;
+  padding: 18px;
+}
+
+.matrix-grid p,
+.role-matrix p,
+.mini-note {
+  margin-top: 8px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.split-section {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.clean-list {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.scoreboard {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.scoreboard span {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.scoreboard strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.ledger-list {
+  margin: 12px 0 0;
+}
+
+.ledger-list div {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.42fr) 1fr;
+  gap: 14px;
+  border-top: 1px solid var(--line);
+  padding: 10px 0;
+}
+
+.ledger-list dt {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.ledger-list dd {
+  margin: 0;
+  font-weight: 850;
+}
+
+.boundary-panel .clean-list {
+  color: var(--ink);
+  font-weight: 800;
+}
+
 @media (max-width: 1040px) {
   .thinking-grid,
   .seed-grid,
   .team-list,
-  .task-grid {
+  .task-grid,
+  .matrix-grid,
+  .matrix-grid.four-up,
+  .role-matrix,
+  .scoreboard,
+  .split-section {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -276,7 +404,17 @@ h3 {
   .thinking-grid,
   .seed-grid,
   .team-list,
-  .task-grid {
+  .task-grid,
+  .matrix-grid,
+  .matrix-grid.four-up,
+  .role-matrix,
+  .scoreboard,
+  .split-section {
     grid-template-columns: 1fr;
+  }
+
+  .ledger-list div {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 }

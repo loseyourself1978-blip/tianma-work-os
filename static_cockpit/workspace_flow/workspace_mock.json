@@ -109,6 +109,7 @@
   "next_step": {
     "label": "Next: Create Workspace / Project Matrix",
     "principle": "Generated from this need, not imposed as a fixed universal format.",
+    "stage_b_page": "./project_matrix.html",
     "created_from": [
       "actual mission",
       "selected team roles",
@@ -116,5 +117,132 @@
       "output types",
       "user feedback"
     ]
+  },
+  "project_matrix": {
+    "title": "2026WC Project Matrix",
+    "source": "Initial mission, real review loop, and 2026-06-30 sync.",
+    "mission_matrix": {
+      "original_mission": "Analyze schedule, team level, player form, style, tactics, history, upset factors, and mainstream odds to predict next Beijing-time match day only.",
+      "schedule_base": "48 teams, 104 matches, 12 groups, group top two plus best third-place teams, then knockout path.",
+      "review_rhythm": "BJT/SGT 20:30 daily from 2026-06-10 to 2026-07-20, recorded as a review rhythm only.",
+      "scope": "Prediction and review use user-supplied context in this static prototype."
+    },
+    "ai_decision_team": [
+      {
+        "role": "赛果复盘员",
+        "input_needed": "actual score, prediction record, settled result",
+        "output_produced": "hit/miss review and correction notes",
+        "review_signal": "direction, score, totals, and upset accuracy"
+      },
+      {
+        "role": "赔率盘口分析师",
+        "input_needed": "1X2, handicap, totals, score odds, consensus notes",
+        "output_produced": "market layer and suspicious pricing flags",
+        "review_signal": "pricing read vs match outcome"
+      },
+      {
+        "role": "战术风格分析师",
+        "input_needed": "team tactics and match-up notes",
+        "output_produced": "tactical path and match state assumptions",
+        "review_signal": "whether the expected match pattern appeared"
+      },
+      {
+        "role": "球员状态分析师",
+        "input_needed": "roster and availability context",
+        "output_produced": "player-condition adjustment",
+        "review_signal": "whether player condition changed match quality"
+      },
+      {
+        "role": "历史与大赛心理分析师",
+        "input_needed": "history, knockout pressure, rivalry, and big-match context",
+        "output_produced": "pressure-risk adjustment",
+        "review_signal": "overreaction or underreaction to big-match effects"
+      },
+      {
+        "role": "爆冷审计员",
+        "input_needed": "underdog path, odds tension, tactical mismatch",
+        "output_produced": "upset watch and confidence warning",
+        "review_signal": "upset hit/miss and missed warning signs"
+      },
+      {
+        "role": "总指挥",
+        "input_needed": "all role outputs and user feedback",
+        "output_produced": "final picks, priority, and compact sync",
+        "review_signal": "final decision quality and rule drift"
+      }
+    ],
+    "workstream_matrix": [
+      "Schedule Base",
+      "Team Intelligence",
+      "Odds / Market Layer",
+      "Prediction Layer",
+      "Daily Review Loop",
+      "Output / Sync",
+      "Feedback / Calibration"
+    ],
+    "prediction_output_layers": [
+      "win/draw/loss",
+      "score",
+      "total goals",
+      "recommendation / main pick",
+      "upset watch",
+      "confidence / priority"
+    ],
+    "daily_review_loop": [
+      "actual vs prediction",
+      "direction hit/miss",
+      "score hit/miss",
+      "total goals hit/miss",
+      "upset hit/miss",
+      "rule update"
+    ],
+    "sync_2026_06_30": {
+      "total_reviewed": 76,
+      "new_completed_matches": [
+        "Brazil 2-1 Japan",
+        "Germany 1-1 Paraguay, Paraguay win pens",
+        "Netherlands 1-1 Morocco, Morocco win pens"
+      ],
+      "performance": {
+        "main_direction": "48/76 = 63.2%",
+        "recommendation_direction": "25/36 = 69.4%",
+        "main_score": "9/76 = 11.8%",
+        "upset_score": "7/76 = 9.2%",
+        "big_score": "9/74 = 12.2%",
+        "high_odds_score": "3/21 = 14.3%"
+      },
+      "budget_pl": {
+        "plan": "100 RMB settled",
+        "return": "79.24",
+        "pl": "-20.76",
+        "roi": "-20.8%",
+        "key_error": "excessive correlated Germany exposure"
+      },
+      "learning_updates": [
+        "separate 90-minute vs advance vs spread",
+        "upgrade modern-underdog risk",
+        "upgrade penalty-risk",
+        "upgrade five-back / low-block / cross-volume / late-substitution paths",
+        "France retained; Morocco and Brazil upgraded; Germany removed"
+      ],
+      "next_match_queue": [
+        "Côte d’Ivoire/Norway",
+        "France/Sweden",
+        "Mexico/Ecuador"
+      ],
+      "champion_forecast": [
+        "France retained",
+        "Morocco upgraded",
+        "Brazil upgraded",
+        "Germany removed"
+      ],
+      "boundary": [
+        "static prototype only",
+        "no live odds fetch",
+        "no automatic reminders",
+        "no betting execution",
+        "Implementation: No unless separately approved"
+      ]
+    }
   }
 }
