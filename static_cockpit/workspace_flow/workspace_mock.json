@@ -2,9 +2,9 @@
   "meta": {
     "product": "Tianma Work OS",
     "volume": "Vol.13",
-    "slice": "Stage A Thinking and AI Team Formation",
+    "slice": "Stage A-C Landing to Project Workspace Flow",
     "mode": "static_local_fixture_only",
-    "html": "./start_thinking.html",
+    "html": "./workflow_execution.html",
     "css": "./create_workspace.css"
   },
   "user_prompt": "Predict and review 2026 World Cup matches every day.",
@@ -284,214 +284,140 @@
     }
   },
   "workflow_execution": {
-    "title": "2026WC Workflow Execution",
-    "subtitle": "From Project Matrix to today's AI-team work queue",
+    "title": "2026WC Project Workspace",
     "mode": "static_manual_review_only",
-    "execution_source_stack": [
-      {
-        "label": "Schedule Base",
-        "contributes": "104 matches, Beijing / Singapore time, groups plus knockout path, prediction fields.",
-        "next_run_effect": "Every active match must map back to a schedule row before drafting."
-      },
-      {
-        "label": "First Daily Output",
-        "contributes": "June 12 matchday: Mexico 2-0 South Africa, Korea 1-1 Czech, opening-day cautious structure.",
-        "next_run_effect": "Preserves the compact daily prediction style."
-      },
-      {
-        "label": "73-Match Setup",
-        "contributes": "First Round-of-32 budget plan, recorded screenshot prices, pending settlement mode.",
-        "next_run_effect": "Carries budget intent and 90-minute vs advance separation into review."
-      },
-      {
-        "label": "76-Match Settlement",
-        "contributes": "Brazil/Japan, Germany/Paraguay, Netherlands/Morocco settlement, P/L, and rule updates.",
-        "next_run_effect": "Updates favorite exposure, underdog, penalty, and correlation rules."
-      }
+    "layout": [
+      "left project timeline",
+      "main latest report",
+      "compact AI team strip",
+      "bottom static feedback bar"
     ],
-    "schedule_base_snapshot": {
-      "coverage": "104 matches across group stage and knockout rounds",
-      "groups": "12 groups from A to L, 48 teams total",
-      "time_base": "Beijing / Singapore match times already prepared",
-      "prediction_fields": [
-        "status",
-        "1X2",
-        "score",
-        "total goals",
-        "recommended pick",
-        "upset watch",
-        "notes"
-      ],
-      "source_provenance": "FIFA official tournament page plus Sky Sports schedule"
+    "timeline": [
+      "Latest · 2026-06-30 · 76-match report",
+      "2026-06-29 · 73-match setup",
+      "First run · 2026-06-12",
+      "Project setup · Schedule base"
+    ],
+    "latest_report": {
+      "title": "2026 世界杯 LDD 每日复盘预测",
+      "template": "v4.4 Structured TWOS Sync + v4.3 Budget P/L Ledger",
+      "report": "76 场结算 + 32 强剩余 12 场预测",
+      "baseline": "北京时间 2026-06-30 16:00",
+      "cumulative": "76 场",
+      "boundary": "Manual-review prototype"
     },
-    "current_run_queue": [
+    "ai_team_strip": [
       {
-        "seq": 77,
-        "match_no": "78",
-        "time": "2026-07-01 01:00",
-        "match": "Côte d’Ivoire vs Norway",
-        "venue": "Arlington, USA",
-        "schedule_slot": "Group E runners-up vs Group I runners-up",
-        "main_prediction": "Norway 2-1",
-        "execution_focus": "immediate watch; modern-underdog check"
+        "role": "赛果复盘员",
+        "responsibility": "复盘命中与偏差"
       },
       {
-        "seq": 78,
-        "match_no": "77",
-        "time": "2026-07-01 05:00",
-        "match": "France vs Sweden",
-        "venue": "New Jersey, USA",
-        "schedule_slot": "Group I winners vs C/D/F/G/H third place",
-        "main_prediction": "France 3-1",
-        "execution_focus": "favorite risk; chance-quality check"
+        "role": "赔率盘口分析师",
+        "responsibility": "检查价格与预算"
       },
       {
-        "seq": 79,
-        "match_no": "79",
-        "time": "2026-07-01 09:00",
-        "match": "Mexico vs Ecuador",
-        "venue": "Mexico City, Mexico",
-        "schedule_slot": "Group A winners vs C/E/F/H/I third place",
-        "main_prediction": "Mexico 1-0",
-        "execution_focus": "low-score / BTTS check"
+        "role": "战术风格分析师",
+        "responsibility": "识别比赛路径"
       },
       {
-        "seq": 80,
-        "match_no": "80",
-        "time": "2026-07-02 00:00",
-        "match": "England vs DR Congo",
-        "venue": "Atlanta, USA",
-        "schedule_slot": "Group L winners vs E/H/I/J/K third place",
-        "main_prediction": "England 2-1",
-        "execution_focus": "favorite exposure; spread separation"
+        "role": "球员状态分析师",
+        "responsibility": "标记阵容变量"
       },
       {
-        "seq": 81,
-        "match_no": "82",
-        "time": "2026-07-02 04:00",
-        "match": "Belgium vs Senegal",
-        "venue": "Seattle, USA",
-        "schedule_slot": "Group G winners vs A/E/H/I/J third place",
-        "main_prediction": "1-1, Belgium advance",
-        "execution_focus": "advance vs 90-minute split"
+        "role": "历史与大赛心理分析师",
+        "responsibility": "评估淘汰赛压力"
       },
       {
-        "seq": 82,
-        "match_no": "81",
-        "time": "2026-07-02 08:00",
-        "match": "USA vs Bosnia and Herzegovina",
-        "venue": "Santa Clara, USA",
-        "schedule_slot": "Group D winners vs B/E/F/I/J third place",
-        "main_prediction": "USA 2-1",
-        "execution_focus": "home-region pressure check"
+        "role": "爆冷审计员",
+        "responsibility": "挑战热门结论"
       },
       {
-        "seq": 83,
-        "match_no": "84",
-        "time": "2026-07-03 03:00",
-        "match": "Spain vs Austria",
-        "venue": "Los Angeles, USA",
-        "schedule_slot": "Group H winners vs Group J runners-up",
-        "main_prediction": "Spain 2-1",
-        "execution_focus": "favorite risk; tactical-path check"
-      },
-      {
-        "seq": 84,
-        "match_no": "83",
-        "time": "2026-07-03 07:00",
-        "match": "Portugal vs Croatia",
-        "venue": "Toronto, Canada",
-        "schedule_slot": "Group K runners-up vs Group L runners-up",
-        "main_prediction": "1-1, Portugal advance",
-        "execution_focus": "penalty-risk; advance split"
-      },
-      {
-        "seq": 85,
-        "match_no": "85",
-        "time": "2026-07-03 11:00",
-        "match": "Switzerland vs Algeria",
-        "venue": "Vancouver, Canada",
-        "schedule_slot": "Group B winners vs E/F/G/I/J third place",
-        "main_prediction": "Switzerland 2-1",
-        "execution_focus": "modern-underdog check"
-      },
-      {
-        "seq": 86,
-        "match_no": "88",
-        "time": "2026-07-04 02:00",
-        "match": "Australia vs Egypt",
-        "venue": "Arlington, USA",
-        "schedule_slot": "Group D runners-up vs Group G runners-up",
-        "main_prediction": "1-1, Egypt advance",
-        "execution_focus": "upset watch; penalty-risk"
-      },
-      {
-        "seq": 87,
-        "match_no": "86",
-        "time": "2026-07-04 06:00",
-        "match": "Argentina vs Cabo Verde",
-        "venue": "Miami, USA",
-        "schedule_slot": "Group J winners vs Group H runners-up",
-        "main_prediction": "Argentina 2-0",
-        "execution_focus": "favorite exposure audit"
-      },
-      {
-        "seq": 88,
-        "match_no": "87",
-        "time": "2026-07-04 09:30",
-        "match": "Colombia vs Ghana",
-        "venue": "Kansas City, USA",
-        "schedule_slot": "Group K winners vs D/E/I/J/L third place",
-        "main_prediction": "Colombia 1-0",
-        "execution_focus": "low-score / BTTS check"
+        "role": "总指挥",
+        "responsibility": "输出最终同步"
       }
     ],
-    "report_builder_sections": [
-      "Scope / Time / Data Baseline",
-      "Completed Match Review Ledger",
-      "Budget P/L Ledger",
-      "Rolling Accuracy / Trend Diagnosis",
-      "Intelligence Update",
-      "Post-match Data Intelligence Library",
-      "Remaining Match Prediction Table",
-      "Per-Match Analysis Cards",
-      "Champion Forecast",
-      "Commander Final Conclusion",
-      "Decision Team Changelog",
-      "TWOS / LDD / DUXD Iteration Log",
-      "Structured Sync"
+    "completed_match_review": [
+      {
+        "match": "Brazil vs Japan",
+        "actual": "Brazil 2-1",
+        "main_prediction": "Brazil 2-1",
+        "review": "Direction hit; recommendation hit."
+      },
+      {
+        "match": "Germany vs Paraguay",
+        "actual": "1-1, Paraguay pens",
+        "main_prediction": "Germany 2-0",
+        "review": "Direction miss; upset score 1-1 hit; recommendation miss."
+      },
+      {
+        "match": "Netherlands vs Morocco",
+        "actual": "1-1, Morocco pens",
+        "main_prediction": "1-1, Netherlands advance",
+        "review": "90-minute score/direction hit; advance call miss; recommendation hit."
+      }
     ],
-    "run_transition": [
-      "73 report: pending 100 RMB Polymarket budget using screenshot prices",
-      "76 report: settled return 79.24 / P&L -20.76 / ROI -20.8%",
-      "Germany exposure error created correlation-risk rule update",
-      "Brazil/Japan good hedge structure preserved",
-      "Netherlands/Morocco 90-minute draw correct, advance call wrong",
-      "Next run applies rule changes to remaining 12 matches"
+    "budget_pl": {
+      "total投入": "100.00",
+      "total_return": "79.24",
+      "pl": "-20.76",
+      "roi": "-20.8%",
+      "winning_legs": [
+        "Brazil ML",
+        "Brazil advance",
+        "Japan +1.5",
+        "Morocco +1.5",
+        "NLD-MAR draw"
+      ],
+      "losing_legs": [
+        "Germany ML",
+        "Germany BTTS No",
+        "Germany -1.5",
+        "Netherlands advance"
+      ],
+      "key_error": "excessive correlated Germany exposure"
+    },
+    "rolling_accuracy": {
+      "main_direction": "48/76 · 63.2%",
+      "recommendation": "25/36 · 69.4%",
+      "main_score": "9/76 · 11.8%",
+      "upset_score": "7/76 · 9.2%",
+      "big_score": "9/74 · 12.2%",
+      "high_odds_score": "3/21 · 14.3%"
+    },
+    "remaining_12_predictions": [
+      "Côte d’Ivoire vs Norway: Norway 2-1",
+      "France vs Sweden: France 3-1",
+      "Mexico vs Ecuador: Mexico 1-0",
+      "England vs DR Congo: England 2-1",
+      "Belgium vs Senegal: 1-1, Belgium advance",
+      "USA vs Bosnia and Herzegovina: USA 2-1",
+      "Spain vs Austria: Spain 2-1",
+      "Portugal vs Croatia: 1-1, Portugal advance",
+      "Switzerland vs Algeria: Switzerland 2-1",
+      "Australia vs Egypt: 1-1, Egypt advance",
+      "Argentina vs Cabo Verde: Argentina 2-0",
+      "Colombia vs Ghana: Colombia 1-0"
     ],
-    "review_checklist": [
-      "Does every active match map to a schedule row?",
-      "Are Beijing/Singapore time and venue visible?",
-      "Are 90-minute, advance, spread, BTTS, cover, and correct score separated?",
-      "Is budget correlation audited?",
-      "Are modern-underdog flags checked?",
-      "Are penalty and extra-time risks elevated?",
-      "Are scoreline predictions treated as low-confidence?",
-      "Is Budget P/L settled from recorded prices?",
-      "Is Structured Sync produced?",
-      "Is Implementation still No unless separately approved?"
+    "commander_final_conclusion": [
+      "Separate 90-minute, advance, spread, BTTS, cover, correct score.",
+      "Upgrade modern underdog and penalty risk.",
+      "Recommendation layer remains strongest, but budget must de-correlate.",
+      "Budget priority: advance / spread protection > 90-minute ML > BTTS > cover > correct score.",
+      "France remains champion forecast; Morocco becomes real variable."
     ],
-    "feedback_rule_return_path": [
-      "Schedule Base",
-      "v4.4 Report Draft",
-      "User Review",
-      "Result Settlement",
-      "Budget P/L Ledger",
-      "Rule Update",
-      "Decision Team Changelog",
-      "Next Structured Sync",
-      "Current Run Queue"
-    ],
+    "archive_previews": {
+      "schedule_base": "104-match schedule base, Beijing/Singapore time, 48 teams, 12 groups, daily review rhythm at 20:30 BJT/SGT from 2026-06-10 to 2026-07-20. Static prototype does not set reminders.",
+      "first_run": "No prior result to review. Mexico vs South Africa: Mexico 2-0. Korea vs Czech: 1-1. Commander conclusion: opening-day cautious structure.",
+      "setup_73": "Total reviewed: 73. New review: South Africa 0-1 Canada. Focus: Brazil/Japan, Germany/Paraguay, Netherlands/Morocco. Pending 100 RMB budget plan. Main direction 46/73 = 63.0%; recommendation direction 23/33 = 69.7%."
+    },
+    "feedback_bar": {
+      "placeholder": "Tell the AI team what to adjust next…",
+      "buttons": [
+        "Send feedback",
+        "Next report draft"
+      ],
+      "note": "Static prototype: feedback is not submitted yet."
+    },
     "boundary": [
       "static prototype only",
       "no runtime Excel parser",

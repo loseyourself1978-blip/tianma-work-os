@@ -3,314 +3,230 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TWOS Vol.13 2026WC Workflow Execution</title>
+  <title>TWOS Vol.13 2026WC Project Workspace</title>
   <link rel="stylesheet" href="./create_workspace.css" />
   <link rel="alternate" type="application/json" href="./workspace_mock.json" />
 </head>
 <body>
-  <main class="page execution-page" aria-label="TWOS Vol.13 2026WC Workflow Execution">
-    <header class="topbar">
-      <p class="brand">TWOS</p>
-      <nav class="top-actions" aria-label="Workflow execution navigation">
-        <a class="back-link" href="./project_matrix.html">Project Matrix</a>
-        <a class="back-link" href="./project_matrix.html#learning-updates">Learning Loop</a>
-        <a class="back-link" href="../vol12_static_mvp/index.html">Landing</a>
-      </nav>
-    </header>
+  <main class="project-workspace" aria-label="TWOS 2026WC project workspace">
+    <aside class="workspace-sidebar" aria-label="Project timeline">
+      <div class="sidebar-brand">
+        <p>TWOS</p>
+        <h1>2026世界杯</h1>
+      </div>
 
-    <section class="hero matrix-hero">
-      <p class="eyebrow">Stage C / Workflow execution</p>
-      <h1>2026WC Workflow Execution</h1>
-      <p class="intro">From Project Matrix to today's AI-team work queue. The page is grounded in the schedule base, the first daily output, the 73-match setup, and the 76-match settlement.</p>
-      <p class="manual-note">Static/manual-review prototype only: no live odds, no automation, no active reminder, no betting execution.</p>
-    </section>
+      <section class="sidebar-block" aria-label="Projects">
+        <p class="sidebar-label">Projects</p>
+        <button class="sidebar-action" type="button" disabled>New task · future</button>
+        <a class="sidebar-link active" href="#latest-report">2026世界杯</a>
+        <span class="sidebar-link muted">天马行空</span>
+        <span class="sidebar-link muted">LLM Daredevil Desk</span>
+        <span class="sidebar-link muted">大算度</span>
+      </section>
 
-    <nav class="progress-strip" aria-label="Static Vol.13 execution flow">
-      <span>Project Matrix</span>
-      <span>Source Stack</span>
-      <span>Run Queue</span>
-      <span>Report Builder</span>
-      <span>User Review</span>
-      <span>Next Sync</span>
-    </nav>
+      <section class="sidebar-block" aria-label="Report timeline">
+        <p class="sidebar-label">Project timeline</p>
+        <a class="timeline-link active" href="#latest-report">Latest · 2026-06-30 · 76-match report</a>
+        <a class="timeline-link" href="#setup-73">2026-06-29 · 73-match setup</a>
+        <a class="timeline-link" href="#first-run">First run · 2026-06-12</a>
+        <a class="timeline-link" href="#schedule-base">Project setup · Schedule base</a>
+      </section>
 
-    <section class="matrix-section" aria-label="Execution Source Stack with Excel Schedule Base">
-      <div class="section-heading">
-        <p class="label">Execution Source Stack</p>
-        <h2>Today’s work starts from real project records.</h2>
-        <p>TWOS uses source assets and prior outputs as context, then prepares the next reviewable draft. The schedule base stays a source asset; this page shows a static summary rather than live file access.</p>
-      </div>
-      <div class="source-stack">
-        <article>
-          <h3>Schedule Base</h3>
-          <p><strong>Contributes:</strong> 104 matches, Beijing / Singapore time, groups plus knockout path, and prediction fields.</p>
-          <p><strong>Affects next run:</strong> every active match must map back to a schedule row before drafting.</p>
-        </article>
-        <article>
-          <h3>First Daily Output</h3>
-          <p><strong>Contributes:</strong> June 12 matchday structure: Mexico 2-0 South Africa, Korea 1-1 Czech, opening-day cautious structure.</p>
-          <p><strong>Affects next run:</strong> preserves the compact daily prediction style.</p>
-        </article>
-        <article>
-          <h3>73-Match Setup</h3>
-          <p><strong>Contributes:</strong> first Round-of-32 budget plan, recorded screenshot prices, pending settlement mode.</p>
-          <p><strong>Affects next run:</strong> carries budget intent and 90-minute vs advance separation into review.</p>
-        </article>
-        <article>
-          <h3>76-Match Settlement</h3>
-          <p><strong>Contributes:</strong> Brazil/Japan, Germany/Paraguay, Netherlands/Morocco settlement, P/L, and rule updates.</p>
-          <p><strong>Affects next run:</strong> updates favorite exposure, underdog, penalty, and correlation rules.</p>
-        </article>
-      </div>
-    </section>
+      <section class="sidebar-block" aria-label="Navigation">
+        <p class="sidebar-label">Back</p>
+        <a class="timeline-link" href="./project_matrix.html">Project Matrix</a>
+        <a class="timeline-link" href="./start_thinking.html">Thinking</a>
+        <a class="timeline-link" href="../vol12_static_mvp/index.html">Landing</a>
+      </section>
+    </aside>
 
-    <section class="matrix-section" aria-label="Schedule Base Snapshot">
-      <div class="section-heading">
-        <p class="label">Schedule Base Snapshot</p>
-        <h2>The workbook is the project’s schedule spine.</h2>
-        <p>It stays compact here: enough for the user to see the asset behind the queue, not a 104-row spreadsheet dump.</p>
-      </div>
-      <div class="snapshot-grid">
-        <article><h3>Coverage</h3><p>104 matches across group stage and knockout rounds.</p></article>
-        <article><h3>Groups</h3><p>12 groups from A to L, with 48 teams total.</p></article>
-        <article><h3>Time base</h3><p>Beijing / Singapore match times already prepared.</p></article>
-        <article><h3>Prediction fields</h3><p>Status, 1X2, score, total goals, recommended pick, upset watch, notes.</p></article>
-        <article><h3>Source provenance</h3><p>FIFA official tournament page plus Sky Sports schedule.</p></article>
-      </div>
-      <div class="group-strip" aria-label="Compact group list">
-        <span>A Mexico / South Africa / South Korea / Czech Republic</span>
-        <span>C Brazil / Morocco / Haiti / Scotland</span>
-        <span>E Germany / Curacao / Ivory Coast / Ecuador</span>
-        <span>F Netherlands / Japan / Sweden / Tunisia</span>
-        <span>I France / Senegal / Iraq / Norway</span>
-        <span>K Portugal / DR Congo / Uzbekistan / Colombia</span>
-      </div>
-    </section>
+    <section class="workspace-main" aria-label="Latest 2026WC report">
+      <header class="workspace-topbar">
+        <p class="workspace-kicker">2026WC Project Workspace</p>
+        <nav class="workspace-nav" aria-label="Workspace navigation">
+          <a href="./project_matrix.html">Project Matrix</a>
+          <a href="./project_matrix.html#learning-updates">Learning Loop</a>
+          <a href="../vol12_static_mvp/index.html">Landing</a>
+        </nav>
+      </header>
 
-    <section class="matrix-section" aria-label="Current Run Queue with 12-match schedule cross-reference">
-      <div class="section-heading">
-        <p class="label">Current Run Queue — Remaining 12 Round-of-32 Matches</p>
-        <h2>The next run joins schedule metadata with v4.4 predictions.</h2>
-        <p>Times, venues, and slots come from the schedule base. Concrete teams and predictions come from the v4.4 report.</p>
-      </div>
-      <div class="queue-table-wrap">
-        <table class="queue-table">
-          <thead>
-            <tr>
-              <th>Time</th>
-              <th>Match</th>
-              <th>Venue</th>
-              <th>Schedule slot</th>
-              <th>Main prediction</th>
-              <th>Execution focus</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><span>Seq 77 · M78</span>2026-07-01 01:00</td>
-              <td>Côte d’Ivoire vs Norway</td>
-              <td>Arlington, USA</td>
-              <td>Group E runners-up vs Group I runners-up</td>
-              <td>Norway 2-1</td>
-              <td>immediate watch; modern-underdog check</td>
-            </tr>
-            <tr>
-              <td><span>Seq 78 · M77</span>2026-07-01 05:00</td>
-              <td>France vs Sweden</td>
-              <td>New Jersey, USA</td>
-              <td>Group I winners vs C/D/F/G/H third place</td>
-              <td>France 3-1</td>
-              <td>favorite risk; chance-quality check</td>
-            </tr>
-            <tr>
-              <td><span>Seq 79 · M79</span>2026-07-01 09:00</td>
-              <td>Mexico vs Ecuador</td>
-              <td>Mexico City, Mexico</td>
-              <td>Group A winners vs C/E/F/H/I third place</td>
-              <td>Mexico 1-0</td>
-              <td>low-score / BTTS check</td>
-            </tr>
-            <tr>
-              <td><span>Seq 80 · M80</span>2026-07-02 00:00</td>
-              <td>England vs DR Congo</td>
-              <td>Atlanta, USA</td>
-              <td>Group L winners vs E/H/I/J/K third place</td>
-              <td>England 2-1</td>
-              <td>favorite exposure; spread separation</td>
-            </tr>
-            <tr>
-              <td><span>Seq 81 · M82</span>2026-07-02 04:00</td>
-              <td>Belgium vs Senegal</td>
-              <td>Seattle, USA</td>
-              <td>Group G winners vs A/E/H/I/J third place</td>
-              <td>1-1, Belgium advance</td>
-              <td>advance vs 90-minute split</td>
-            </tr>
-            <tr>
-              <td><span>Seq 82 · M81</span>2026-07-02 08:00</td>
-              <td>USA vs Bosnia and Herzegovina</td>
-              <td>Santa Clara, USA</td>
-              <td>Group D winners vs B/E/F/I/J third place</td>
-              <td>USA 2-1</td>
-              <td>home-region pressure check</td>
-            </tr>
-            <tr>
-              <td><span>Seq 83 · M84</span>2026-07-03 03:00</td>
-              <td>Spain vs Austria</td>
-              <td>Los Angeles, USA</td>
-              <td>Group H winners vs Group J runners-up</td>
-              <td>Spain 2-1</td>
-              <td>favorite risk; tactical-path check</td>
-            </tr>
-            <tr>
-              <td><span>Seq 84 · M83</span>2026-07-03 07:00</td>
-              <td>Portugal vs Croatia</td>
-              <td>Toronto, Canada</td>
-              <td>Group K runners-up vs Group L runners-up</td>
-              <td>1-1, Portugal advance</td>
-              <td>penalty-risk; advance split</td>
-            </tr>
-            <tr>
-              <td><span>Seq 85 · M85</span>2026-07-03 11:00</td>
-              <td>Switzerland vs Algeria</td>
-              <td>Vancouver, Canada</td>
-              <td>Group B winners vs E/F/G/I/J third place</td>
-              <td>Switzerland 2-1</td>
-              <td>modern-underdog check</td>
-            </tr>
-            <tr>
-              <td><span>Seq 86 · M88</span>2026-07-04 02:00</td>
-              <td>Australia vs Egypt</td>
-              <td>Arlington, USA</td>
-              <td>Group D runners-up vs Group G runners-up</td>
-              <td>1-1, Egypt advance</td>
-              <td>upset watch; penalty-risk</td>
-            </tr>
-            <tr>
-              <td><span>Seq 87 · M86</span>2026-07-04 06:00</td>
-              <td>Argentina vs Cabo Verde</td>
-              <td>Miami, USA</td>
-              <td>Group J winners vs Group H runners-up</td>
-              <td>Argentina 2-0</td>
-              <td>favorite exposure audit</td>
-            </tr>
-            <tr>
-              <td><span>Seq 88 · M87</span>2026-07-04 09:30</td>
-              <td>Colombia vs Ghana</td>
-              <td>Kansas City, USA</td>
-              <td>Group K winners vs D/E/I/J/L third place</td>
-              <td>Colombia 1-0</td>
-              <td>low-score / BTTS check</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+      <article id="latest-report" class="report-document">
+        <header class="report-header">
+          <p class="report-eyebrow">Latest report</p>
+          <h2>2026 世界杯 LDD 每日复盘预测</h2>
+          <div class="report-meta">
+            <span>Template: v4.4 Structured TWOS Sync + v4.3 Budget P/L Ledger</span>
+            <span>Report: 76 场结算 + 32 强剩余 12 场预测</span>
+            <span>Baseline: 北京时间 2026-06-30 16:00</span>
+            <span>Cumulative: 76 场</span>
+            <span>Manual-review prototype</span>
+            <span>Boundary: no live data, no automatic reminders, no betting execution</span>
+          </div>
+        </header>
 
-    <section class="matrix-section" aria-label="Role Assignment mapped to report sections and workbook inputs">
-      <div class="section-heading">
-        <p class="label">Role Assignment Matrix</p>
-        <h2>Each role owns a real report section.</h2>
-      </div>
-      <div class="role-matrix execution-roles">
-        <article><h3>赛果复盘员</h3><p><strong>Source input:</strong> schedule/result rows.</p><p><strong>Report section:</strong> Completed Match Review Ledger.</p><p><strong>Draft output:</strong> hit/miss ledger.</p><p><strong>Review signal:</strong> result vs prediction.</p></article>
-        <article><h3>赔率盘口分析师</h3><p><strong>Source input:</strong> market inputs + price records.</p><p><strong>Report section:</strong> Budget P/L Ledger.</p><p><strong>Draft output:</strong> price-to-return check.</p><p><strong>Review signal:</strong> P/L and market-read miss.</p></article>
-        <article><h3>战术风格分析师</h3><p><strong>Source input:</strong> per-match cards.</p><p><strong>Report section:</strong> tactical-path checklist.</p><p><strong>Draft output:</strong> low-block / cross-volume / transition notes.</p><p><strong>Review signal:</strong> whether match pattern appeared.</p></article>
-        <article><h3>球员状态分析师</h3><p><strong>Source input:</strong> missing input readiness.</p><p><strong>Report section:</strong> injury / lineup notes.</p><p><strong>Draft output:</strong> confidence caveats.</p><p><strong>Review signal:</strong> lineup impact after settlement.</p></article>
-        <article><h3>历史与大赛心理分析师</h3><p><strong>Source input:</strong> knockout context.</p><p><strong>Report section:</strong> penalty / extra-time risk.</p><p><strong>Draft output:</strong> pressure adjustment.</p><p><strong>Review signal:</strong> pressure read vs outcome.</p></article>
-        <article><h3>爆冷审计员</h3><p><strong>Source input:</strong> upset watch.</p><p><strong>Report section:</strong> modern-underdog red flags.</p><p><strong>Draft output:</strong> upset warning and confidence limit.</p><p><strong>Review signal:</strong> upset hit/miss.</p></article>
-        <article><h3>总指挥</h3><p><strong>Source input:</strong> all sections.</p><p><strong>Report section:</strong> final conclusion + Structured Sync.</p><p><strong>Draft output:</strong> commander summary.</p><p><strong>Review signal:</strong> decision quality and rule drift.</p></article>
-      </div>
-    </section>
+        <section class="ai-team-strip" aria-label="AI team for this project">
+          <div class="strip-heading">
+            <p class="report-eyebrow">AI team for this project</p>
+            <p>Models and roles are configurable in future versions.</p>
+          </div>
+          <div class="team-pills">
+            <span><strong>赛果复盘员</strong>复盘命中与偏差</span>
+            <span><strong>赔率盘口分析师</strong>检查价格与预算</span>
+            <span><strong>战术风格分析师</strong>识别比赛路径</span>
+            <span><strong>球员状态分析师</strong>标记阵容变量</span>
+            <span><strong>历史与大赛心理分析师</strong>评估淘汰赛压力</span>
+            <span><strong>爆冷审计员</strong>挑战热门结论</span>
+            <span><strong>总指挥</strong>输出最终同步</span>
+          </div>
+        </section>
 
-    <section class="matrix-section" aria-label="v4.4 Report Builder">
-      <div class="section-heading">
-        <p class="label">v4.4 Report Builder</p>
-        <h2>The AI team drafts the next report in known sections.</h2>
-        <p>This mirrors the real v4.4 report shape without filling unsupported live facts.</p>
-      </div>
-      <div class="report-builder">
-        <article><h3>Scope / Time / Data Baseline</h3><p><strong>Source:</strong> schedule base + current sync.</p><p><strong>Owner:</strong> 总指挥.</p><p><strong>Purpose:</strong> set run scope and missing-input boundary.</p><p><strong>Check:</strong> next Beijing-time match day only.</p></article>
-        <article><h3>Completed Match Review Ledger</h3><p><strong>Source:</strong> settled results.</p><p><strong>Owner:</strong> 赛果复盘员.</p><p><strong>Purpose:</strong> review hit/miss evidence.</p><p><strong>Check:</strong> actual vs prediction is explicit.</p></article>
-        <article><h3>Budget P/L Ledger</h3><p><strong>Source:</strong> recorded price ledger.</p><p><strong>Owner:</strong> 赔率盘口分析师.</p><p><strong>Purpose:</strong> settle return and correlation risk.</p><p><strong>Check:</strong> price-to-return math is traceable.</p></article>
-        <article><h3>Rolling Accuracy / Trend Diagnosis</h3><p><strong>Source:</strong> 76-match scoreboard.</p><p><strong>Owner:</strong> 赛果复盘员.</p><p><strong>Purpose:</strong> show direction vs scoreline quality.</p><p><strong>Check:</strong> scoreline remains low-confidence.</p></article>
-        <article><h3>Intelligence Update</h3><p><strong>Source:</strong> review notes and user-supplied context.</p><p><strong>Owner:</strong> tactical and player-status roles.</p><p><strong>Purpose:</strong> update team and match assumptions.</p><p><strong>Check:</strong> no unsupported live facts.</p></article>
-        <article><h3>Post-match Data Intelligence Library</h3><p><strong>Source:</strong> settled match patterns.</p><p><strong>Owner:</strong> 战术风格分析师.</p><p><strong>Purpose:</strong> retain reusable lessons.</p><p><strong>Check:</strong> evidence links to rule changes.</p></article>
-        <article><h3>Remaining Match Prediction Table</h3><p><strong>Source:</strong> 12-row current queue.</p><p><strong>Owner:</strong> 总指挥.</p><p><strong>Purpose:</strong> prepare concise next-match table.</p><p><strong>Check:</strong> each match maps to schedule base.</p></article>
-        <article><h3>Per-Match Analysis Cards</h3><p><strong>Source:</strong> schedule row + role notes.</p><p><strong>Owner:</strong> all analyst roles.</p><p><strong>Purpose:</strong> explain each forecast.</p><p><strong>Check:</strong> assumptions and missing inputs visible.</p></article>
-        <article><h3>Champion Forecast</h3><p><strong>Source:</strong> rule updates and knockout path.</p><p><strong>Owner:</strong> 总指挥.</p><p><strong>Purpose:</strong> maintain forecast stance.</p><p><strong>Check:</strong> France retained; Morocco/Brazil upgraded; Germany removed.</p></article>
-        <article><h3>Commander Final Conclusion</h3><p><strong>Source:</strong> role outputs.</p><p><strong>Owner:</strong> 总指挥.</p><p><strong>Purpose:</strong> produce final daily stance.</p><p><strong>Check:</strong> separated 90-minute / advance / spread.</p></article>
-        <article><h3>Decision Team Changelog</h3><p><strong>Source:</strong> rule updates.</p><p><strong>Owner:</strong> review and risk roles.</p><p><strong>Purpose:</strong> explain what changed.</p><p><strong>Check:</strong> owner and next impact named.</p></article>
-        <article><h3>TWOS / LDD / DUXD Iteration Log</h3><p><strong>Source:</strong> feedback loop.</p><p><strong>Owner:</strong> 总指挥.</p><p><strong>Purpose:</strong> record project learning.</p><p><strong>Check:</strong> output → review → correction is visible.</p></article>
-        <article><h3>Structured Sync</h3><p><strong>Source:</strong> final report.</p><p><strong>Owner:</strong> 总指挥.</p><p><strong>Purpose:</strong> return compact user-facing sync.</p><p><strong>Check:</strong> next action is clear and manual.</p></article>
-      </div>
-    </section>
+        <section class="report-section">
+          <h3>1. Scope / Time / Data Baseline</h3>
+          <p>32 强已完成 4 场：Canada 1-0 South Africa；Brazil 2-1 Japan；Germany 1-1 Paraguay, Paraguay win pens；Netherlands 1-1 Morocco, Morocco win pens.</p>
+          <p>Remaining focus: Côte d’Ivoire/Norway, France/Sweden, Mexico/Ecuador, England/DR Congo, Belgium/Senegal, USA/Bosnia, Spain/Austria, Portugal/Croatia, Switzerland/Algeria, Australia/Egypt, Argentina/Cabo Verde, Colombia/Ghana.</p>
+        </section>
 
-    <section class="matrix-section split-section" aria-label="Run Transition 73-Match Setup to 76-Match Settlement">
-      <div>
-        <div class="section-heading">
-          <p class="label">Run Transition: 73-Match Setup → 76-Match Settlement</p>
-          <h2>One report becomes the next run’s rules.</h2>
-        </div>
-        <div class="transition-grid">
-          <article><h3>73 setup</h3><p>Pending 100 RMB Polymarket budget using screenshot prices.</p></article>
-          <article><h3>76 settlement</h3><p>Return 79.24 / P&amp;L -20.76 / ROI -20.8%.</p></article>
-          <article><h3>Germany exposure</h3><p>Correlation-risk rule update created after linked losses.</p></article>
-          <article><h3>Brazil/Japan</h3><p>Good hedge structure preserved.</p></article>
-          <article><h3>Netherlands/Morocco</h3><p>90-minute draw correct; advance call wrong.</p></article>
-          <article><h3>Next run</h3><p>Apply rule changes to remaining 12 matches.</p></article>
-        </div>
-      </div>
-      <div>
-        <div class="section-heading">
-          <p class="label">Workbook + v4.4 Review Checklist</p>
-          <h2>Every draft must pass these checks.</h2>
-        </div>
-        <ul class="clean-list strong-list">
-          <li>Does every active match map to a schedule row?</li>
-          <li>Are Beijing/Singapore time and venue visible?</li>
-          <li>Are 90-minute, advance, spread, BTTS, cover, and correct score separated?</li>
-          <li>Is budget correlation audited?</li>
-          <li>Are modern-underdog flags checked?</li>
-          <li>Are penalty and extra-time risks elevated?</li>
-          <li>Are scoreline predictions treated as low-confidence?</li>
-          <li>Is Budget P/L settled from recorded prices?</li>
-          <li>Is Structured Sync produced?</li>
-          <li>Is Implementation still No unless separately approved?</li>
-        </ul>
-      </div>
-    </section>
+        <section class="report-section">
+          <h3>2. Completed Match Review Ledger</h3>
+          <div class="report-table-wrap">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>Match</th>
+                  <th>Actual</th>
+                  <th>Main prediction</th>
+                  <th>Review</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Brazil vs Japan</td>
+                  <td>Brazil 2-1</td>
+                  <td>Brazil 2-1</td>
+                  <td>Direction hit; recommendation hit.</td>
+                </tr>
+                <tr>
+                  <td>Germany vs Paraguay</td>
+                  <td>1-1, Paraguay pens</td>
+                  <td>Germany 2-0</td>
+                  <td>Direction miss; upset score 1-1 hit; recommendation miss.</td>
+                </tr>
+                <tr>
+                  <td>Netherlands vs Morocco</td>
+                  <td>1-1, Morocco pens</td>
+                  <td>1-1, Netherlands advance</td>
+                  <td>90-minute score/direction hit; advance call miss; recommendation hit.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-    <section class="next-step boundary-panel" aria-label="Feedback / Rule Return Path">
-      <p class="label">Feedback / Rule Return Path</p>
-      <h2>Review turns today’s draft into the next sync.</h2>
-      <div class="feedback-flow">
-        <span>Schedule Base</span>
-        <span>v4.4 Report Draft</span>
-        <span>User Review</span>
-        <span>Result Settlement</span>
-        <span>Budget P/L Ledger</span>
-        <span>Rule Update</span>
-        <span>Decision Team Changelog</span>
-        <span>Next Structured Sync</span>
-        <span>Current Run Queue</span>
-      </div>
-      <a class="primary-link" href="./project_matrix.html#learning-updates">Return to Project Matrix Learning Loop</a>
-    </section>
+        <section class="report-section">
+          <h3>3. Budget P/L Ledger</h3>
+          <div class="summary-line">
+            <span>Total投入 100.00</span>
+            <span>Total return 79.24</span>
+            <span>P/L -20.76</span>
+            <span>ROI -20.8%</span>
+          </div>
+          <p><strong>Winning legs:</strong> Brazil ML, Brazil advance, Japan +1.5, Morocco +1.5, NLD-MAR draw.</p>
+          <p><strong>Losing legs:</strong> Germany ML, Germany BTTS No, Germany -1.5, Netherlands advance.</p>
+          <p><strong>Key error:</strong> excessive correlated Germany exposure.</p>
+        </section>
 
-    <section class="next-step boundary-panel" aria-label="Boundary">
-      <p class="label">Boundary</p>
-      <h2>Manual review, no execution.</h2>
-      <ul class="clean-list">
-        <li>Static prototype only.</li>
-        <li>Schedule base is referenced only as a static source asset.</li>
-        <li>No live odds fetch.</li>
-        <li>No automatic predictions.</li>
-        <li>No automatic reminders.</li>
-        <li>No betting execution.</li>
-        <li>No model retraining claim.</li>
-        <li>Implementation: No unless separately approved.</li>
-      </ul>
+        <section class="report-section">
+          <h3>4. Rolling Accuracy / Trend Diagnosis</h3>
+          <div class="metrics-row">
+            <span>Main direction <strong>48/76 · 63.2%</strong></span>
+            <span>Recommendation <strong>25/36 · 69.4%</strong></span>
+            <span>Main score <strong>9/76 · 11.8%</strong></span>
+            <span>Upset score <strong>7/76 · 9.2%</strong></span>
+            <span>Big-score <strong>9/74 · 12.2%</strong></span>
+            <span>High-odds score <strong>3/21 · 14.3%</strong></span>
+          </div>
+        </section>
+
+        <section class="report-section">
+          <h3>5. Post-match Data Intelligence Library</h3>
+          <p>Germany possession quality was downgraded because possession without chance quality created false favorite confidence. Morocco’s chance quality and penalty path upgraded modern-underdog and penalty-risk weights. Scoreline layers remain weak and should stay low-confidence.</p>
+        </section>
+
+        <section class="report-section">
+          <h3>6. Remaining 12 Match Prediction Table</h3>
+          <div class="report-table-wrap">
+            <table class="report-table compact">
+              <thead>
+                <tr>
+                  <th>Match</th>
+                  <th>Main prediction</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Côte d’Ivoire vs Norway</td><td>Norway 2-1</td></tr>
+                <tr><td>France vs Sweden</td><td>France 3-1</td></tr>
+                <tr><td>Mexico vs Ecuador</td><td>Mexico 1-0</td></tr>
+                <tr><td>England vs DR Congo</td><td>England 2-1</td></tr>
+                <tr><td>Belgium vs Senegal</td><td>1-1, Belgium advance</td></tr>
+                <tr><td>USA vs Bosnia and Herzegovina</td><td>USA 2-1</td></tr>
+                <tr><td>Spain vs Austria</td><td>Spain 2-1</td></tr>
+                <tr><td>Portugal vs Croatia</td><td>1-1, Portugal advance</td></tr>
+                <tr><td>Switzerland vs Algeria</td><td>Switzerland 2-1</td></tr>
+                <tr><td>Australia vs Egypt</td><td>1-1, Egypt advance</td></tr>
+                <tr><td>Argentina vs Cabo Verde</td><td>Argentina 2-0</td></tr>
+                <tr><td>Colombia vs Ghana</td><td>Colombia 1-0</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="report-section">
+          <h3>7. Commander Final Conclusion</h3>
+          <ol class="report-list">
+            <li>Separate 90-minute, advance, spread, BTTS, cover, correct score.</li>
+            <li>Upgrade modern underdog and penalty risk.</li>
+            <li>Recommendation layer remains strongest, but budget must de-correlate.</li>
+            <li>Budget priority: advance / spread protection > 90-minute ML > BTTS > cover > correct score.</li>
+            <li>France remains champion forecast; Morocco becomes real variable.</li>
+          </ol>
+        </section>
+
+        <section class="report-section">
+          <h3>8. Decision Team Changelog</h3>
+          <p>Commander enforces strict market-layer separation. Risk role caps correlated same-match exposure. Tactical role upgrades five-back / low-block / cross-volume / late-substitution paths. Odds role keeps France first, upgrades Morocco and Brazil, and removes Germany from champion path.</p>
+        </section>
+
+        <section class="report-section sync-block">
+          <h3>9. Structured Sync</h3>
+          <p><strong>Progress:</strong> 76 reviewed; remaining 12 Round-of-32 matches queued.</p>
+          <p><strong>Budget P/L:</strong> 100 RMB plan settled; return 79.24; P/L -20.76; ROI -20.8%.</p>
+          <p><strong>Decision Team:</strong> modern-underdog, penalty-risk, and correlation controls upgraded.</p>
+          <p><strong>Next:</strong> review the remaining 12 matches with separated 90-minute / advance / spread logic.</p>
+          <p><strong>Implementation:</strong> No unless separately approved.</p>
+        </section>
+
+        <section id="schedule-base" class="archive-section">
+          <h3>Project setup · Schedule base</h3>
+          <p>104-match schedule base, Beijing/Singapore time, 48 teams, 12 groups, daily review rhythm at 20:30 BJT/SGT from 2026-06-10 to 2026-07-20. Static prototype does not set reminders.</p>
+        </section>
+
+        <section id="first-run" class="archive-section">
+          <h3>First run · 2026-06-12</h3>
+          <p>No prior result to review. Mexico vs South Africa: Mexico 2-0. Korea vs Czech: 1-1. Commander conclusion: opening-day cautious structure.</p>
+        </section>
+
+        <section id="setup-73" class="archive-section">
+          <h3>2026-06-29 · 73-match setup</h3>
+          <p>Total reviewed: 73. New review: South Africa 0-1 Canada. Focus: Brazil/Japan, Germany/Paraguay, Netherlands/Morocco. Polymarket screenshot-price P/L mode started; pending 100 RMB budget plan. Main direction 46/73 = 63.0%; recommendation direction 23/33 = 69.7%.</p>
+        </section>
+      </article>
+
+      <section class="feedback-bar" aria-label="Give feedback">
+        <div class="feedback-input" aria-label="Static feedback input">Tell the AI team what to adjust next…</div>
+        <button type="button" disabled>Send feedback</button>
+        <button type="button" disabled>Next report draft</button>
+        <p>Static prototype: feedback is not submitted yet.</p>
+      </section>
     </section>
   </main>
 </body>
