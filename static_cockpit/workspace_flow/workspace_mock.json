@@ -286,108 +286,82 @@
   "workflow_execution": {
     "title": "2026WC Project Workspace",
     "mode": "static_manual_review_only",
+    "version": "Stage C v1.6",
     "layout": [
-      "left project timeline",
-      "main latest report",
-      "compact AI team strip",
-      "bottom static feedback bar"
+      "ChatGPT-project-like left sidebar",
+      "centered full long-form report",
+      "lightweight AI Board strip",
+      "sticky bottom feedback input"
     ],
     "timeline": [
-      "Latest · 2026-06-30 · 76-match report",
-      "2026-06-29 · 73-match setup",
-      "First run · 2026-06-12",
-      "Project setup · Schedule base"
+      "2026-07-01 · 79 场结算",
+      "2026-06-30 · 76 场结算",
+      "2026-06-29 · 73 场 setup",
+      "First run · 2026-06-12"
     ],
     "latest_report": {
       "title": "2026 世界杯 LDD 每日复盘预测",
       "template": "v4.4 Structured TWOS Sync + v4.3 Budget P/L Ledger",
-      "report": "76 场结算 + 32 强剩余 12 场预测",
-      "baseline": "北京时间 2026-06-30 16:00",
-      "cumulative": "76 场",
-      "boundary": "Manual-review prototype"
+      "report": "79 场结算 + 32 强剩余 9 场预测",
+      "baseline": "北京时间 2026-07-01 16:00",
+      "new_review": "Norway 2-1 Côte d’Ivoire、France 3-0 Sweden、Mexico 2-0 Ecuador",
+      "cumulative": "79 场",
+      "current_baseline": "以本报告为后续 2026WC 主线程新基准"
     },
-    "ai_team_strip": [
-      {
-        "role": "赛果复盘员",
-        "responsibility": "复盘命中与偏差"
-      },
-      {
-        "role": "赔率盘口分析师",
-        "responsibility": "检查价格与预算"
-      },
-      {
-        "role": "战术风格分析师",
-        "responsibility": "识别比赛路径"
-      },
-      {
-        "role": "球员状态分析师",
-        "responsibility": "标记阵容变量"
-      },
-      {
-        "role": "历史与大赛心理分析师",
-        "responsibility": "评估淘汰赛压力"
-      },
-      {
-        "role": "爆冷审计员",
-        "responsibility": "挑战热门结论"
-      },
+    "ai_board_strip": [
       {
         "role": "总指挥",
-        "responsibility": "输出最终同步"
+        "model": "GPT-5.5 Thinking",
+        "responsibility": "最终结论与优先级"
+      },
+      {
+        "role": "主分析师",
+        "model": "Claude",
+        "responsibility": "逐场分析"
+      },
+      {
+        "role": "数据官",
+        "model": "Gemini",
+        "responsibility": "结果与趋势入库"
+      },
+      {
+        "role": "风险官",
+        "model": "GPT-5.5 Thinking",
+        "responsibility": "预算与爆冷路径"
+      },
+      {
+        "role": "赔率官",
+        "model": "Claude",
+        "responsibility": "赔率与盘口解释"
+      },
+      {
+        "role": "复盘账本官",
+        "model": "GPT-5.5 Thinking",
+        "responsibility": "命中率与 P/L"
       }
     ],
-    "completed_match_review": [
-      {
-        "match": "Brazil vs Japan",
-        "actual": "Brazil 2-1",
-        "main_prediction": "Brazil 2-1",
-        "review": "Direction hit; recommendation hit."
-      },
-      {
-        "match": "Germany vs Paraguay",
-        "actual": "1-1, Paraguay pens",
-        "main_prediction": "Germany 2-0",
-        "review": "Direction miss; upset score 1-1 hit; recommendation miss."
-      },
-      {
-        "match": "Netherlands vs Morocco",
-        "actual": "1-1, Morocco pens",
-        "main_prediction": "1-1, Netherlands advance",
-        "review": "90-minute score/direction hit; advance call miss; recommendation hit."
-      }
+    "new_completed_review": [
+      "Côte d’Ivoire vs Norway: Norway 2-1, main score hit, recommendation hit",
+      "France vs Sweden: France 3-0, direction hit, recommendation hit",
+      "Mexico vs Ecuador: Mexico 2-0, direction hit, recommendation hit"
     ],
     "budget_pl": {
-      "total投入": "100.00",
-      "total_return": "79.24",
+      "latest_settled": "2026-06-29",
+      "return": "79.24",
       "pl": "-20.76",
       "roi": "-20.8%",
-      "winning_legs": [
-        "Brazil ML",
-        "Brazil advance",
-        "Japan +1.5",
-        "Morocco +1.5",
-        "NLD-MAR draw"
-      ],
-      "losing_legs": [
-        "Germany ML",
-        "Germany BTTS No",
-        "Germany -1.5",
-        "Netherlands advance"
-      ],
-      "key_error": "excessive correlated Germany exposure"
+      "new_budget_status": "No new real P/L because no new pre-match odds screenshots were provided.",
+      "key_lesson": "avoid correlated exposure across ML + handicap + BTTS on the same favorite"
     },
     "rolling_accuracy": {
-      "main_direction": "48/76 · 63.2%",
-      "recommendation": "25/36 · 69.4%",
-      "main_score": "9/76 · 11.8%",
-      "upset_score": "7/76 · 9.2%",
-      "big_score": "9/74 · 12.2%",
+      "main_direction": "51/79 · 64.6%",
+      "recommendation": "28/39 · 71.8%",
+      "main_score": "10/79 · 12.7%",
+      "upset_score": "7/79 · 8.9%",
+      "big_score": "9/77 · 11.7%",
       "high_odds_score": "3/21 · 14.3%"
     },
-    "remaining_12_predictions": [
-      "Côte d’Ivoire vs Norway: Norway 2-1",
-      "France vs Sweden: France 3-1",
-      "Mexico vs Ecuador: Mexico 1-0",
+    "remaining_9_predictions": [
       "England vs DR Congo: England 2-1",
       "Belgium vs Senegal: 1-1, Belgium advance",
       "USA vs Bosnia and Herzegovina: USA 2-1",
@@ -399,33 +373,25 @@
       "Colombia vs Ghana: Colombia 1-0"
     ],
     "commander_final_conclusion": [
-      "Separate 90-minute, advance, spread, BTTS, cover, correct score.",
-      "Upgrade modern underdog and penalty risk.",
-      "Recommendation layer remains strongest, but budget must de-correlate.",
-      "Budget priority: advance / spread protection > 90-minute ML > BTTS > cover > correct score.",
-      "France remains champion forecast; Morocco becomes real variable."
+      "Direction layer continues to rise; score layer remains low-weight.",
+      "France champion-first model is further confirmed.",
+      "Mexico is upgraded into a real knockout variable.",
+      "England/DR Congo, Portugal/Croatia, and Belgium/Senegal are the key risk matches."
     ],
-    "archive_previews": {
-      "schedule_base": "104-match schedule base, Beijing/Singapore time, 48 teams, 12 groups, daily review rhythm at 20:30 BJT/SGT from 2026-06-10 to 2026-07-20. Static prototype does not set reminders.",
-      "first_run": "No prior result to review. Mexico vs South Africa: Mexico 2-0. Korea vs Czech: 1-1. Commander conclusion: opening-day cautious structure.",
-      "setup_73": "Total reviewed: 73. New review: South Africa 0-1 Canada. Focus: Brazil/Japan, Germany/Paraguay, Netherlands/Morocco. Pending 100 RMB budget plan. Main direction 46/73 = 63.0%; recommendation direction 23/33 = 69.7%."
-    },
-    "feedback_bar": {
-      "placeholder": "Tell the AI team what to adjust next…",
-      "buttons": [
-        "Send feedback",
-        "Next report draft"
-      ],
+    "sticky_feedback_input": {
+      "placeholder": "给“2026世界杯”发送消息",
+      "visible_while_scrolling": true,
+      "next_path": "Feedback → Next report draft → AI Board adjustment",
       "note": "Static prototype: feedback is not submitted yet."
     },
     "boundary": [
       "static prototype only",
-      "no runtime Excel parser",
-      "no live odds fetch",
-      "no automatic predictions",
-      "no automatic reminders",
+      "no live records",
+      "no backend",
+      "no scheduler",
+      "no fake chat submission",
+      "no fake model routing",
       "no betting execution",
-      "no model retraining claim",
       "Implementation: No unless separately approved"
     ]
   },

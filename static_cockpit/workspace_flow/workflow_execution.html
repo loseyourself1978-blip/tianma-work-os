@@ -7,235 +7,512 @@
   <link rel="stylesheet" href="./create_workspace.css" />
   <link rel="alternate" type="application/json" href="./workspace_mock.json" />
 </head>
-<body>
-  <main class="project-workspace" aria-label="TWOS 2026WC project workspace">
-    <aside class="workspace-sidebar" aria-label="Project timeline">
-      <div class="sidebar-brand">
-        <p>TWOS</p>
-        <h1>2026世界杯</h1>
-      </div>
+<body class="chat-project-body">
+  <main class="chat-project-shell" aria-label="TWOS 2026世界杯 project workspace">
+    <aside class="chat-sidebar" aria-label="Project navigation">
+      <div class="sidebar-search" aria-label="Search placeholder">Search projects</div>
 
-      <section class="sidebar-block" aria-label="Projects">
+      <section class="chat-nav-section" aria-label="Projects">
         <p class="sidebar-label">Projects</p>
-        <button class="sidebar-action" type="button" disabled>New task · future</button>
-        <a class="sidebar-link active" href="#latest-report">2026世界杯</a>
-        <span class="sidebar-link muted">天马行空</span>
-        <span class="sidebar-link muted">LLM Daredevil Desk</span>
-        <span class="sidebar-link muted">大算度</span>
+        <button class="chat-nav-item future" type="button" disabled>新建项目</button>
+        <a class="chat-nav-item" href="#project-note">天马行空</a>
+        <a class="chat-nav-item" href="#project-note">LLM Daredevil Desk</a>
+        <a class="chat-nav-item active" href="#latest-report">2026世界杯</a>
+        <a class="chat-nav-item" href="#project-note">大算度</a>
       </section>
 
-      <section class="sidebar-block" aria-label="Report timeline">
-        <p class="sidebar-label">Project timeline</p>
-        <a class="timeline-link active" href="#latest-report">Latest · 2026-06-30 · 76-match report</a>
-        <a class="timeline-link" href="#setup-73">2026-06-29 · 73-match setup</a>
-        <a class="timeline-link" href="#first-run">First run · 2026-06-12</a>
-        <a class="timeline-link" href="#schedule-base">Project setup · Schedule base</a>
+      <section class="chat-nav-section" aria-label="Report timeline">
+        <p class="sidebar-label">Recent</p>
+        <a class="chat-nav-item active" href="#latest-report">2026-07-01 · 79 场结算</a>
+        <a class="chat-nav-item" href="#archive-76">2026-06-30 · 76 场结算</a>
+        <a class="chat-nav-item" href="#archive-73">2026-06-29 · 73 场 setup</a>
+        <a class="chat-nav-item" href="#archive-first">First run · 2026-06-12</a>
       </section>
 
-      <section class="sidebar-block" aria-label="Navigation">
-        <p class="sidebar-label">Back</p>
-        <a class="timeline-link" href="./project_matrix.html">Project Matrix</a>
-        <a class="timeline-link" href="./start_thinking.html">Thinking</a>
-        <a class="timeline-link" href="../vol12_static_mvp/index.html">Landing</a>
+      <section class="chat-nav-section" aria-label="Static navigation">
+        <p class="sidebar-label">Flow</p>
+        <a class="chat-nav-item" href="./project_matrix.html">Project Matrix</a>
+        <a class="chat-nav-item" href="./start_thinking.html">Thinking</a>
+        <a class="chat-nav-item" href="../vol12_static_mvp/index.html">Landing</a>
       </section>
     </aside>
 
-    <section class="workspace-main" aria-label="Latest 2026WC report">
-      <header class="workspace-topbar">
-        <p class="workspace-kicker">2026WC Project Workspace</p>
+    <section class="chat-main" aria-label="Latest report">
+      <header class="chat-topbar">
+        <div>
+          <p class="workspace-kicker">TWOS Project</p>
+          <h1>2026世界杯</h1>
+        </div>
         <nav class="workspace-nav" aria-label="Workspace navigation">
+          <a href="./ai_board_gate.html">AI Board Gate</a>
           <a href="./project_matrix.html">Project Matrix</a>
-          <a href="./project_matrix.html#learning-updates">Learning Loop</a>
           <a href="../vol12_static_mvp/index.html">Landing</a>
         </nav>
       </header>
 
-      <article id="latest-report" class="report-document">
-        <header class="report-header">
-          <p class="report-eyebrow">Latest report</p>
+      <article id="latest-report" class="report-shell">
+        <section class="report-title-block">
+          <p class="report-eyebrow">Latest report · 2026-07-01</p>
           <h2>2026 世界杯 LDD 每日复盘预测</h2>
-          <div class="report-meta">
-            <span>Template: v4.4 Structured TWOS Sync + v4.3 Budget P/L Ledger</span>
-            <span>Report: 76 场结算 + 32 强剩余 12 场预测</span>
-            <span>Baseline: 北京时间 2026-06-30 16:00</span>
-            <span>Cumulative: 76 场</span>
-            <span>Manual-review prototype</span>
-            <span>Boundary: no live data, no automatic reminders, no betting execution</span>
+          <div class="report-meta compact-meta">
+            <span>模板版本：v4.4 Structured TWOS Sync + v4.3 Budget P/L Ledger</span>
+            <span>报告版本：79 场结算 + 32 强剩余 9 场预测</span>
+            <span>基准时间：北京时间 2026-07-01 16:00</span>
+            <span>本次新增复盘：Norway 2-1 Côte d’Ivoire、France 3-0 Sweden、Mexico 2-0 Ecuador</span>
+            <span>累计复盘：79 场</span>
+            <span>当前基准：以本报告为后续 2026WC 主线程新基准</span>
           </div>
-        </header>
-
-        <section class="board-entry" aria-label="AI Board Gate">
-          <div>
-            <p class="report-eyebrow">AI Board Gate</p>
-            <h3>Needs revision</h3>
-            <p>Governance check required before the next Codex instruction or Stage C refinement.</p>
-          </div>
-          <a href="./ai_board_gate.html">Open Board Gate</a>
         </section>
 
-        <section class="ai-team-strip" aria-label="AI team for this project">
+        <section class="project-ai-strip" aria-label="AI Board for this project">
           <div class="strip-heading">
-            <p class="report-eyebrow">AI team for this project</p>
-            <p>Models and roles are configurable in future versions.</p>
+            <div>
+              <p class="report-eyebrow">AI Board</p>
+              <p>Roles and models are configurable. Static prototype only.</p>
+            </div>
+            <a href="./ai_board_gate.html">AI Board Gate</a>
           </div>
-          <div class="team-pills">
-            <span><strong>赛果复盘员</strong>复盘命中与偏差</span>
-            <span><strong>赔率盘口分析师</strong>检查价格与预算</span>
-            <span><strong>战术风格分析师</strong>识别比赛路径</span>
-            <span><strong>球员状态分析师</strong>标记阵容变量</span>
-            <span><strong>历史与大赛心理分析师</strong>评估淘汰赛压力</span>
-            <span><strong>爆冷审计员</strong>挑战热门结论</span>
-            <span><strong>总指挥</strong>输出最终同步</span>
+          <div class="model-strip">
+            <span><strong>总指挥 · GPT-5.5 Thinking</strong>最终结论与优先级</span>
+            <span><strong>主分析师 · Claude</strong>逐场分析</span>
+            <span><strong>数据官 · Gemini</strong>结果与趋势入库</span>
+            <span><strong>风险官 · GPT-5.5 Thinking</strong>预算与爆冷路径</span>
+            <span><strong>赔率官 · Claude</strong>赔率与盘口解释</span>
+            <span><strong>复盘账本官 · GPT-5.5 Thinking</strong>命中率与 P/L</span>
           </div>
+          <p class="next-path">Feedback → Next report draft → AI Board adjustment</p>
         </section>
 
-        <section class="report-section">
-          <h3>1. Scope / Time / Data Baseline</h3>
-          <p>32 强已完成 4 场：Canada 1-0 South Africa；Brazil 2-1 Japan；Germany 1-1 Paraguay, Paraguay win pens；Netherlands 1-1 Morocco, Morocco win pens.</p>
-          <p>Remaining focus: Côte d’Ivoire/Norway, France/Sweden, Mexico/Ecuador, England/DR Congo, Belgium/Senegal, USA/Bosnia, Spain/Austria, Portugal/Croatia, Switzerland/Algeria, Australia/Egypt, Argentina/Cabo Verde, Colombia/Ghana.</p>
+        <div class="report-divider"></div>
+
+        <section class="long-report-section">
+          <h3>1）Scope / Time / Data Baseline</h3>
+          <p>32 强最新完成 3 场：Norway 2-1 Côte d’Ivoire，France 3-0 Sweden，Mexico 2-0 Ecuador。Norway 靠 Haaland 制胜晋级；France 由 Mbappé 双响，3-0 轻取 Sweden，晋级后将对阵 Paraguay；Mexico 2-0 Ecuador，结束自 1986 年以来的淘汰赛不胜纪录，将等待 England vs DR Congo 的胜者。</p>
+          <p>结合上一版，32 强目前已完成 7 场：Canada、Brazil、Paraguay、Morocco、Norway、France、Mexico 晋级。剩余 9 场为：England vs DR Congo、Belgium vs Senegal、USA vs Bosnia and Herzegovina、Spain vs Austria、Portugal vs Croatia、Switzerland vs Algeria、Australia vs Egypt、Argentina vs Cabo Verde、Colombia vs Ghana。Fox 的 32 强赔率页显示 USA 对 Bosnia、Belgium 对 Senegal、England 对 DR Congo 等比赛仍有明确市场倾向；其中 USA 与 England 晋级赔率明显占优，而 Belgium vs Senegal 更接近。</p>
         </section>
 
-        <section class="report-section">
-          <h3>2. Completed Match Review Ledger</h3>
+        <section class="long-report-section">
+          <h3>2）完成比赛复盘账本：新增 3 场</h3>
+          <div class="report-table-wrap">
+            <table class="report-table wide">
+              <thead>
+                <tr>
+                  <th>比赛</th>
+                  <th>实际比分</th>
+                  <th>主预测比分</th>
+                  <th>主比分</th>
+                  <th>爆冷比分</th>
+                  <th>爆冷</th>
+                  <th>大比分比分</th>
+                  <th>大比分</th>
+                  <th>高赔率比分</th>
+                  <th>高赔率比分</th>
+                  <th>胜平负方向</th>
+                  <th>BTTS</th>
+                  <th>高赔率方向</th>
+                  <th>推荐方向</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Côte d’Ivoire vs Norway</td>
+                  <td>Norway 2-1</td>
+                  <td>Norway 2-1</td>
+                  <td>命中</td>
+                  <td>Côte d’Ivoire 2-1</td>
+                  <td>不命中</td>
+                  <td>2-2</td>
+                  <td>不命中</td>
+                  <td>未给出</td>
+                  <td>未给出</td>
+                  <td>命中</td>
+                  <td>命中</td>
+                  <td>命中</td>
+                  <td>命中</td>
+                </tr>
+                <tr>
+                  <td>France vs Sweden</td>
+                  <td>France 3-0</td>
+                  <td>France 3-1</td>
+                  <td>不命中</td>
+                  <td>1-1</td>
+                  <td>不命中</td>
+                  <td>France 4-1</td>
+                  <td>不命中</td>
+                  <td>未给出</td>
+                  <td>未给出</td>
+                  <td>命中</td>
+                  <td>不命中</td>
+                  <td>命中</td>
+                  <td>命中</td>
+                </tr>
+                <tr>
+                  <td>Mexico vs Ecuador</td>
+                  <td>Mexico 2-0</td>
+                  <td>Mexico 1-0</td>
+                  <td>不命中</td>
+                  <td>Ecuador 1-0</td>
+                  <td>不命中</td>
+                  <td>Mexico 2-1</td>
+                  <td>不命中</td>
+                  <td>未给出</td>
+                  <td>未给出</td>
+                  <td>命中</td>
+                  <td>命中</td>
+                  <td>命中</td>
+                  <td>命中</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>复盘结论：新增 3 场主比分 1/3，胜平负方向 3/3，BTTS 2/3，推荐方向 3/3。France 3-0 Sweden 说明 France 冠军模型继续增强；Mexico 2-0 Ecuador 是东道主 + 防守纪律 + 前场效率的强样本；Norway 2-1 Côte d’Ivoire 完整命中主预测，也验证 Haaland 在淘汰赛的单点决定性。</p>
+        </section>
+
+        <section class="long-report-section">
+          <h3>3）Budget P/L Ledger</h3>
+          <p>上一版 Brazil / Germany / Netherlands-Morocco 预算已结算：100 元预算返还 79.24，P/L -20.76，ROI -20.8%。本轮暂无你提供的新 Polymarket 截图赔率，因此不做真实预算结算，只进行预测层复盘。后续如果要加入今日剩余 9 场预算，请继续提供 Polymarket 截图或明确每项赛前十进制赔率。</p>
           <div class="report-table-wrap">
             <table class="report-table">
               <thead>
                 <tr>
-                  <th>Match</th>
-                  <th>Actual</th>
-                  <th>Main prediction</th>
-                  <th>Review</th>
+                  <th>日期</th>
+                  <th>总投入</th>
+                  <th>总返还</th>
+                  <th>当日盈亏</th>
+                  <th>ROI</th>
+                  <th>状态</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>Brazil vs Japan</td>
-                  <td>Brazil 2-1</td>
-                  <td>Brazil 2-1</td>
-                  <td>Direction hit; recommendation hit.</td>
+                  <td>2026-06-29</td>
+                  <td>100</td>
+                  <td>79.24</td>
+                  <td>-20.76</td>
+                  <td>-20.8%</td>
+                  <td>已结算</td>
                 </tr>
                 <tr>
-                  <td>Germany vs Paraguay</td>
-                  <td>1-1, Paraguay pens</td>
-                  <td>Germany 2-0</td>
-                  <td>Direction miss; upset score 1-1 hit; recommendation miss.</td>
-                </tr>
-                <tr>
-                  <td>Netherlands vs Morocco</td>
-                  <td>1-1, Morocco pens</td>
-                  <td>1-1, Netherlands advance</td>
-                  <td>90-minute score/direction hit; advance call miss; recommendation hit.</td>
+                  <td>2026-07-01</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>未提供新预算赔率，暂不结算</td>
                 </tr>
               </tbody>
             </table>
           </div>
+          <p>预算账本官结论：上一轮亏损主因是 Germany 相关仓位过度相关：Germany ML、BTTS No、Germany -1.5 同时失败。后续预算应执行 Correlation Risk Check：同一强队不能同时重仓 ML、让胜、BTTS No。</p>
         </section>
 
-        <section class="report-section">
-          <h3>3. Budget P/L Ledger</h3>
-          <div class="summary-line">
-            <span>Total投入 100.00</span>
-            <span>Total return 79.24</span>
-            <span>P/L -20.76</span>
-            <span>ROI -20.8%</span>
-          </div>
-          <p><strong>Winning legs:</strong> Brazil ML, Brazil advance, Japan +1.5, Morocco +1.5, NLD-MAR draw.</p>
-          <p><strong>Losing legs:</strong> Germany ML, Germany BTTS No, Germany -1.5, Netherlands advance.</p>
-          <p><strong>Key error:</strong> excessive correlated Germany exposure.</p>
-        </section>
-
-        <section class="report-section">
-          <h3>4. Rolling Accuracy / Trend Diagnosis</h3>
-          <div class="metrics-row">
-            <span>Main direction <strong>48/76 · 63.2%</strong></span>
-            <span>Recommendation <strong>25/36 · 69.4%</strong></span>
-            <span>Main score <strong>9/76 · 11.8%</strong></span>
-            <span>Upset score <strong>7/76 · 9.2%</strong></span>
-            <span>Big-score <strong>9/74 · 12.2%</strong></span>
-            <span>High-odds score <strong>3/21 · 14.3%</strong></span>
-          </div>
-        </section>
-
-        <section class="report-section">
-          <h3>5. Post-match Data Intelligence Library</h3>
-          <p>Germany possession quality was downgraded because possession without chance quality created false favorite confidence. Morocco’s chance quality and penalty path upgraded modern-underdog and penalty-risk weights. Scoreline layers remain weak and should stay low-confidence.</p>
-        </section>
-
-        <section class="report-section">
-          <h3>6. Remaining 12 Match Prediction Table</h3>
+        <section class="long-report-section">
+          <h3>4）79 场滚动命中率统计 + 趋势诊断</h3>
           <div class="report-table-wrap">
-            <table class="report-table compact">
+            <table class="report-table">
               <thead>
                 <tr>
-                  <th>Match</th>
-                  <th>Main prediction</th>
+                  <th>指标</th>
+                  <th>覆盖场次</th>
+                  <th>命中场次</th>
+                  <th>命中率</th>
+                  <th>vs 76 场节点</th>
+                  <th>模型动作</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td>Côte d’Ivoire vs Norway</td><td>Norway 2-1</td></tr>
-                <tr><td>France vs Sweden</td><td>France 3-1</td></tr>
-                <tr><td>Mexico vs Ecuador</td><td>Mexico 1-0</td></tr>
-                <tr><td>England vs DR Congo</td><td>England 2-1</td></tr>
-                <tr><td>Belgium vs Senegal</td><td>1-1, Belgium advance</td></tr>
-                <tr><td>USA vs Bosnia and Herzegovina</td><td>USA 2-1</td></tr>
-                <tr><td>Spain vs Austria</td><td>Spain 2-1</td></tr>
-                <tr><td>Portugal vs Croatia</td><td>1-1, Portugal advance</td></tr>
-                <tr><td>Switzerland vs Algeria</td><td>Switzerland 2-1</td></tr>
-                <tr><td>Australia vs Egypt</td><td>1-1, Egypt advance</td></tr>
-                <tr><td>Argentina vs Cabo Verde</td><td>Argentina 2-0</td></tr>
-                <tr><td>Colombia vs Ghana</td><td>Colombia 1-0</td></tr>
+                <tr><td>主预测比分</td><td>79</td><td>10</td><td>12.7%</td><td>上升：11.8% → 12.7%</td><td>Norway 2-1 拉升；仍不作为预算核心</td></tr>
+                <tr><td>爆冷比分</td><td>79</td><td>7</td><td>8.9%</td><td>下降：9.2% → 8.9%</td><td>爆冷比分继续低权重</td></tr>
+                <tr><td>大比分比分</td><td>77</td><td>9</td><td>11.7%</td><td>下降：12.2% → 11.7%</td><td>淘汰赛大比分继续降权</td></tr>
+                <tr><td>高赔率比分</td><td>21</td><td>3</td><td>14.3%</td><td>不变</td><td>无新增明确高赔率比分</td></tr>
+                <tr><td>胜平负方向</td><td>79</td><td>51</td><td>64.6%</td><td>上升：63.2% → 64.6%</td><td>方向层继续稳定</td></tr>
+                <tr><td>BTTS</td><td>79</td><td>51</td><td>64.6%</td><td>小升：64.5% → 64.6%</td><td>BTTS 场景化仍有效</td></tr>
+                <tr><td>高赔率方向</td><td>79</td><td>约 46</td><td>约 58.2%</td><td>上升：约 56.6% → 约 58.2%</td><td>球星/零封/BTTS 方向有效</td></tr>
+                <tr><td>推荐方向</td><td>39</td><td>28</td><td>71.8%</td><td>上升：69.4% → 71.8%</td><td>推荐层继续最强</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>趋势节点表</h4>
+          <div class="report-table-wrap">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>节点</th>
+                  <th>主预测胜平负</th>
+                  <th>主预测比分</th>
+                  <th>爆冷比分</th>
+                  <th>大比分比分</th>
+                  <th>高赔率比分</th>
+                  <th>BTTS</th>
+                  <th>推荐方向</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>20 场</td><td>55.0%</td><td>10.0%</td><td>20.0%</td><td>16.7%</td><td>42.9%</td><td>90.0%</td><td>未开始</td></tr>
+                <tr><td>40 场</td><td>55.0%</td><td>5.0%</td><td>15.0%</td><td>13.2%</td><td>20.0%</td><td>72.5%</td><td>v4.2 起</td></tr>
+                <tr><td>60 场</td><td>56.7%</td><td>8.3%</td><td>10.0%</td><td>12.1%</td><td>16.7%</td><td>66.7%</td><td>60.0%</td></tr>
+                <tr><td>66 场</td><td>60.6%</td><td>9.1%</td><td>9.1%</td><td>10.9%</td><td>15.8%</td><td>66.7%</td><td>65.4%</td></tr>
+                <tr><td>72 场</td><td>62.5%</td><td>9.7%</td><td>8.3%</td><td>12.9%</td><td>14.3%</td><td>65.3%</td><td>68.8%</td></tr>
+                <tr><td>73 场</td><td>63.0%</td><td>9.6%</td><td>8.2%</td><td>12.7%</td><td>14.3%</td><td>64.4%</td><td>69.7%</td></tr>
+                <tr><td>76 场</td><td>63.2%</td><td>11.8%</td><td>9.2%</td><td>12.2%</td><td>14.3%</td><td>64.5%</td><td>69.4%</td></tr>
+                <tr><td>79 场</td><td>64.6%</td><td>12.7%</td><td>8.9%</td><td>11.7%</td><td>14.3%</td><td>64.6%</td><td>71.8%</td></tr>
               </tbody>
             </table>
           </div>
         </section>
 
-        <section class="report-section">
-          <h3>7. Commander Final Conclusion</h3>
+        <section class="long-report-section">
+          <h3>5）情报更新：伤停 / 首发 / 赔率 / 欧洲化下狗</h3>
+          <p>France 冠军模型继续增强。Reuters 报道 Mbappé 双响帮助 France 3-0 Sweden，France 保持四战全胜并将在 16 强对 Paraguay；France 现在不仅有 Mbappé，还具备 Dembélé、Olise、Barcola 等多点进攻冗余。</p>
+          <p>Mexico 2-0 Ecuador 是本届东道主势能与防守纪律的强确认。Reuters 报道 Mexico 结束 40 年淘汰赛不胜，Quiñones 和 Raúl Jiménez 上半场破门；The Guardian 指出 Mexico 连续第四场胜利且保持零封，17 岁 Gilberto Mora 的中场表现也极具价值。</p>
+          <p>剩余场次情报：England 对 DR Congo 是右路防守与破低位测试；Belgium vs Senegal 并非单边局，Fox 赔率显示 Belgium 晋级约 -194、Senegal +158，90 分钟 Belgium +105、Draw +220、Senegal +290；USA 对 Bosnia 是明显热门，Fox 显示 USA 晋级 -800、90 分钟 -280；England 对 DR Congo 也极热，晋级 -1200，但 DR Congo 已证明低位和转换质量。</p>
+        </section>
+
+        <section class="long-report-section">
+          <h3>6）Post-match Data Intelligence Library：淘汰赛新增 3 场</h3>
+          <div class="report-table-wrap">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>比赛</th>
+                  <th>数据入库</th>
+                  <th>关键球员 / 事件</th>
+                  <th>战术备注</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Côte d’Ivoire 1-2 Norway</td><td>Norway 晋级，Haaland 关键制胜</td><td>Haaland 再次决定淘汰赛</td><td>Norway 控球未必压制，但终结点硬</td></tr>
+                <tr><td>France 3-0 Sweden</td><td>France 四战全胜，Mbappé 双响</td><td>Mbappé 两球，France 下轮对 Paraguay</td><td>France 多点进攻 + 防守稳定，是冠军第一模型</td></tr>
+                <tr><td>Mexico 2-0 Ecuador</td><td>Mexico 连续 4 胜 + 4 零封</td><td>Quiñones、Raúl Jiménez 破门；Gilberto Mora 中场亮眼</td><td>Mexico 主场势能 + 防守纪律已是淘汰赛级武器</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="long-report-section">
+          <h3>7）32 强剩余 9 场完整预测表</h3>
+          <div class="report-table-wrap">
+            <table class="report-table wide">
+              <thead>
+                <tr>
+                  <th>比赛 / 北京时间</th>
+                  <th>主预测</th>
+                  <th>BTTS判断</th>
+                  <th>防守预测</th>
+                  <th>爆冷预测</th>
+                  <th>大比分预测</th>
+                  <th>高赔率预测</th>
+                  <th>推荐优先级</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>England vs DR Congo / 7-2 00:00</td><td>England 2-1</td><td>是</td><td>England 晋级 / DR Congo +1.5</td><td>1-1</td><td>England 3-2</td><td>England 胜+BTTS / Wissa 射正</td><td>B+</td></tr>
+                <tr><td>Belgium vs Senegal / 7-2 04:00</td><td>1-1，Belgium 晋级</td><td>是</td><td>Senegal +1.5 / 小3.5</td><td>Senegal 2-1</td><td>Belgium 3-2</td><td>90 分钟平局 / BTTS</td><td>B</td></tr>
+                <tr><td>USA vs Bosnia and Herzegovina / 7-2 08:00</td><td>USA 2-1</td><td>是</td><td>USA 晋级 / USA 不败</td><td>1-1</td><td>USA 3-1</td><td>USA 胜+BTTS</td><td>B</td></tr>
+                <tr><td>Spain vs Austria / 7-3 03:00</td><td>Spain 2-1</td><td>是</td><td>Spain 晋级 / 小3.5</td><td>1-1</td><td>Spain 3-1</td><td>Spain 一球胜 / BTTS</td><td>B+</td></tr>
+                <tr><td>Portugal vs Croatia / 7-3 07:00</td><td>1-1，Portugal 晋级</td><td>是</td><td>Croatia +1.5 / 小3.5</td><td>Croatia 2-1</td><td>Portugal 3-2</td><td>90 分钟平局 / BTTS</td><td>B</td></tr>
+                <tr><td>Switzerland vs Algeria / 7-3 11:00</td><td>Switzerland 2-1</td><td>是</td><td>Switzerland 晋级 / 小3.5</td><td>1-1</td><td>Switzerland 3-1</td><td>BTTS / Switzerland 一球胜</td><td>B</td></tr>
+                <tr><td>Australia vs Egypt / 7-4 02:00</td><td>1-1，Egypt 晋级</td><td>是</td><td>Egypt 晋级 / Egypt +1.5</td><td>Egypt 2-1</td><td>Australia 2-1</td><td>平局+BTTS</td><td>B</td></tr>
+                <tr><td>Argentina vs Cabo Verde / 7-4 06:00</td><td>Argentina 2-0</td><td>否</td><td>Argentina 胜 / 小4.5</td><td>1-1</td><td>Argentina 3-1</td><td>Argentina win to nil / Messi参与</td><td>A-</td></tr>
+                <tr><td>Colombia vs Ghana / 7-4 09:30</td><td>Colombia 1-0</td><td>否</td><td>Colombia 晋级 / 小3.5</td><td>1-1</td><td>Colombia 2-1</td><td>Colombia 小胜 / no BTTS</td><td>B+</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="long-report-section">
+          <h3>8）剩余赛事逐场分析卡</h3>
+          <h4>England vs DR Congo</h4>
+          <p>England 实力更强，但 DR Congo 是本届“欧洲化下狗”典型：Wissa、Wan-Bissaka、身体速度、转换冲击都有真实杀伤。Fox 赔率给 England 晋级强热门，但 Yahoo 的赛前分析也指出 England 对低位有过挣扎，DR Congo 小组赛场均总 xG 很低，具备拖小能力。</p>
+          <p>主预测：England 2-1；BTTS：是；爆冷：1-1；高赔率：England 胜+BTTS / Wissa 射正；主推：DR Congo +1.5。</p>
+
+          <h4>Belgium vs Senegal</h4>
+          <p>Belgium 用 5-1 修复形象，但前两场不稳；Senegal 5-0 Iraq 也证明火力。Fox 赔率显示 Belgium 晋级只是中等优势，不是碾压盘。双方都有进球路径。</p>
+          <p>主预测：1-1，Belgium 晋级；BTTS：是；爆冷：Senegal 2-1；高赔率：90 分钟平局 / BTTS；主推：Senegal +1.5 / 小3.5。</p>
+
+          <h4>USA vs Bosnia and Herzegovina</h4>
+          <p>USA 主场和节奏优势明显，Bosnia 有欧洲体系与硬度，不会轻易崩。Fox 赔率显示 USA 是明显热门，晋级 -800，90 分钟 -280。</p>
+          <p>主预测：USA 2-1；BTTS：是；爆冷：1-1；高赔率：USA 胜+BTTS；主推：USA 不败 / USA 晋级。</p>
+
+          <h4>Spain vs Austria</h4>
+          <p>Spain 控制力强，但小组赛并非碾压。Austria 3-3 Algeria 暴露防线，也显示进攻和压迫质量。淘汰赛里 Austria 的高压会比普通下狗更有威胁。</p>
+          <p>主预测：Spain 2-1；BTTS：是；爆冷：1-1；高赔率：Spain 一球胜 / BTTS；主推：Spain 不败。</p>
+
+          <h4>Portugal vs Croatia</h4>
+          <p>Portugal 热度高但 0-0 Colombia 暴露创造力不稳定；Croatia 是慢热淘汰赛队，Modrić 状态回升。90 分钟平局价值很大。</p>
+          <p>主预测：1-1，Portugal 晋级倾向；BTTS：是；高赔率：平局+BTTS；主推：Croatia +1.5。</p>
+
+          <h4>Switzerland vs Algeria</h4>
+          <p>Switzerland 稳定性更强，Algeria 刚踢出 3-3，高转化率未必可持续。</p>
+          <p>主预测：Switzerland 2-1；BTTS：是；爆冷：1-1；高赔率：BTTS / Switzerland 一球胜；主推：Switzerland 不败。</p>
+
+          <h4>Australia vs Egypt</h4>
+          <p>Australia 身体和定位球强，Egypt 防守韧性和 Salah 牵制仍在。90 分钟平局概率高。</p>
+          <p>主预测：1-1，Egypt 晋级倾向；BTTS：是；主推：Egypt +1.5。</p>
+
+          <h4>Argentina vs Cabo Verde</h4>
+          <p>Argentina 轮换后仍 3-1 赢球，体系深度极强。Cape Verde 是现代黑马，但三连平晋级说明主要武器是低位纪律，不是对攻。</p>
+          <p>主预测：Argentina 2-0；BTTS：否；主推：Argentina 胜。</p>
+
+          <h4>Colombia vs Ghana</h4>
+          <p>Colombia 对 Portugal 的强度说明上限真实，Ghana 防守韧性强但进攻稳定性一般。</p>
+          <p>主预测：Colombia 1-0；BTTS：否；爆冷：1-1；主推：Colombia 不败 + 小3.5。</p>
+        </section>
+
+        <section class="long-report-section">
+          <h3>9）冠军预测</h3>
+          <p>上一版冠军预测：France</p>
+          <p>本版冠军预测：France，继续第一；Mexico 上调，Norway 上调但待 Brazil 检验。</p>
+          <div class="report-table-wrap">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>排名</th>
+                  <th>球队</th>
+                  <th>当前判断</th>
+                  <th>升降原因</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td>France</td><td>第一热门</td><td>3-0 Sweden，Mbappé 状态，Germany 出局路径减压</td></tr>
+                <tr><td>2</td><td>Argentina</td><td>非常接近</td><td>三连胜，轮换仍赢，Messi 状态极佳</td></tr>
+                <tr><td>3</td><td>Spain</td><td>保持前三但有隐患</td><td>控制力强，但 Austria 高压是测试</td></tr>
+                <tr><td>4</td><td>Brazil</td><td>上调后观察</td><td>已过 Japan，下一轮 Norway 是硬仗</td></tr>
+                <tr><td>5</td><td>England</td><td>第一梯队边缘</td><td>路径仍好，但 DR Congo 是风险测试</td></tr>
+                <tr><td>6</td><td>Mexico</td><td>上调</td><td>东道主 + 四连胜 + 四零封，真实淘汰赛威胁</td></tr>
+                <tr><td>7</td><td>Portugal</td><td>小降</td><td>0-0 Colombia 后创造力疑问</td></tr>
+                <tr><td>8</td><td>Colombia / Morocco</td><td>黑马第一梯队</td><td>Morocco 已淘汰 Netherlands，Colombia 数据强</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="long-report-section">
+          <h3>10）总指挥最终结论</h3>
           <ol class="report-list">
-            <li>Separate 90-minute, advance, spread, BTTS, cover, correct score.</li>
-            <li>Upgrade modern underdog and penalty risk.</li>
-            <li>Recommendation layer remains strongest, but budget must de-correlate.</li>
-            <li>Budget priority: advance / spread protection > 90-minute ML > BTTS > cover > correct score.</li>
-            <li>France remains champion forecast; Morocco becomes real variable.</li>
+            <li>淘汰赛方向层继续上升，比分层仍低权重。79 场后胜平负方向 64.6%，推荐方向 71.8%，主比分仅 12.7%。</li>
+            <li>France 冠军第一得到进一步确认。3-0 Sweden，Mbappé 双响，Germany 出局减轻潜在路径压力。</li>
+            <li>Mexico 是新晋强势变量。四连胜、四零封、东道主氛围，使 Mexico 从普通东道主升为淘汰赛危险队。</li>
+            <li>剩余 9 场最重要风险：England vs DR Congo、Portugal vs Croatia、Belgium vs Senegal。这三场都不能只看名气，必须看低位、反击、加时、点球和 90 分钟平局路径。</li>
           </ol>
         </section>
 
-        <section class="report-section">
-          <h3>8. Decision Team Changelog</h3>
-          <p>Commander enforces strict market-layer separation. Risk role caps correlated same-match exposure. Tactical role upgrades five-back / low-block / cross-volume / late-substitution paths. Odds role keeps France first, upgrades Morocco and Brazil, and removes Germany from champion path.</p>
+        <section class="long-report-section">
+          <h3>11）决策团队变更日志</h3>
+          <div class="report-table-wrap">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>决策团队角色</th>
+                  <th>状态</th>
+                  <th>本次调整</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>总指挥</td><td>保留</td><td>淘汰赛继续分离 90 分钟 / 晋级 / 受让</td></tr>
+                <tr><td>主分析师</td><td>小幅恢复</td><td>Norway 2-1 命中，Mexico/France 方向命中</td></tr>
+                <tr><td>数据官</td><td>强化</td><td>Canada 1-0、Mexico 2-0、France 3-0 入库为淘汰赛低比分/零封样本</td></tr>
+                <tr><td>风险官</td><td>强化</td><td>DR Congo、Senegal、Croatia、Cape Verde 风险继续上调</td></tr>
+                <tr><td>战术官</td><td>强化</td><td>低位、点球、加时、强队控风险维持一级变量</td></tr>
+                <tr><td>赔率官</td><td>保留</td><td>后续仍需 Polymarket 截图或明确赔率才能结算预算 P/L</td></tr>
+                <tr><td>情报官</td><td>强化</td><td>England 伤情、USA 主场、Belgium 状态、Austria 高压需继续跟踪</td></tr>
+                <tr><td>趋势图官</td><td>保留</td><td>79 场节点已更新</td></tr>
+                <tr><td>冠军预测官</td><td>强化</td><td>France 不变；Mexico 上调；Norway 待 Brazil 检验</td></tr>
+                <tr><td>BTTS专项官</td><td>场景化</td><td>Belgium/Senegal、Portugal/Croatia、Spain/Austria 保持 BTTS</td></tr>
+                <tr><td>爆冷审计员</td><td>保留</td><td>90 分钟平局比爆冷胜更常见</td></tr>
+                <tr><td>大比分审计员</td><td>限制</td><td>淘汰赛大比分继续低权重</td></tr>
+                <tr><td>高赔率观察员</td><td>保留</td><td>高赔率应偏向平局、BTTS、受让，不追强队打穿</td></tr>
+                <tr><td>复盘账本官</td><td>强化</td><td>Budget P/L 暂无新赔率，不生成真实 P/L</td></tr>
+              </tbody>
+            </table>
+          </div>
         </section>
 
-        <section class="report-section sync-block">
-          <h3>9. Structured Sync</h3>
-          <p><strong>Progress:</strong> 76 reviewed; remaining 12 Round-of-32 matches queued.</p>
-          <p><strong>Budget P/L:</strong> 100 RMB plan settled; return 79.24; P/L -20.76; ROI -20.8%.</p>
-          <p><strong>Decision Team:</strong> modern-underdog, penalty-risk, and correlation controls upgraded.</p>
-          <p><strong>Next:</strong> review the remaining 12 matches with separated 90-minute / advance / spread logic.</p>
+        <section class="long-report-section">
+          <h3>12）TWOS / LDD / DUXD 迭代记录</h3>
+          <div class="report-table-wrap">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>迭代项</th>
+                  <th>本次结论</th>
+                  <th>后续执行</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>LDD 分账思想</td><td>方向层继续最强</td><td>预算主仓仍跟主推方向，不跟正比分</td></tr>
+                <tr><td>Tianma 决策团队</td><td>风险官和数据官继续升权</td><td>每场必须标注下狗破坏路径</td></tr>
+                <tr><td>DUXD 反漂移</td><td>强队名气仍会误导预算</td><td>继续分离 90 分钟 vs 晋级</td></tr>
+                <tr><td>预算账本</td><td>无新增赔率不结算</td><td>等用户提供 Polymarket 截图后再做真实 P/L</td></tr>
+                <tr><td>冠军模型</td><td>France 稳第一，Mexico 上调</td><td>下轮看 Brazil vs Norway / Mexico vs England 或 DR Congo 路径</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="long-report-section structured-sync">
+          <h3>13）2026WC Structured Sync</h3>
+          <p><strong>2026WC Sync 2026-07-01</strong></p>
+          <p><strong>Progress:</strong></p>
+          <ul>
+            <li>total reviewed: 79</li>
+            <li>new completed matches: Norway 2-1 Côte d’Ivoire; France 3-0 Sweden; Mexico 2-0 Ecuador</li>
+            <li>main direction: 51/79 = 64.6%, up vs 76-match baseline</li>
+            <li>recommendation direction: 28/39 = 71.8%, strongest active layer</li>
+            <li>scoreline layer: main score 10/79 = 12.7%; upset score 7/79 = 8.9%; big-score 9/77 = 11.7%; high-odds score 3/21 = 14.3%</li>
+          </ul>
+          <p><strong>Budget P/L Ledger:</strong></p>
+          <ul>
+            <li>latest settled budget remains 2026-06-29: return 79.24, P/L -20.76, ROI -20.8%</li>
+            <li>no new real P/L today because no new pre-match odds screenshots were provided</li>
+            <li>key budget lesson remains: avoid correlated exposure across ML + handicap + BTTS on the same favorite</li>
+          </ul>
+          <p><strong>Decision Team:</strong></p>
+          <ul>
+            <li>commander: continue strict 90-minute vs advance vs spread separation</li>
+            <li>data officer: France 3-0 and Mexico 2-0 logged as knockout clean-sheet samples</li>
+            <li>risk officer: DR Congo/Senegal/Croatia/Cape Verde upset paths remain active</li>
+            <li>tactical officer: low-block, extra-time and penalty paths kept first-class</li>
+            <li>odds officer: await next Polymarket screenshot/decimal odds for budget ledger</li>
+            <li>review ledger officer: binary scoring maintained</li>
+          </ul>
+          <p><strong>Next:</strong></p>
+          <ul>
+            <li>preview remaining 9 Round-of-32 matches</li>
+            <li>immediate watch: England/DR Congo, Belgium/Senegal, USA/Bosnia</li>
+            <li>champion forecast: France retained; Mexico upgraded; Norway upgraded but Brazil test pending</li>
+          </ul>
           <p><strong>Implementation:</strong> No unless separately approved.</p>
         </section>
 
-        <section id="schedule-base" class="archive-section">
-          <h3>Project setup · Schedule base</h3>
-          <p>104-match schedule base, Beijing/Singapore time, 48 teams, 12 groups, daily review rhythm at 20:30 BJT/SGT from 2026-06-10 to 2026-07-20. Static prototype does not set reminders.</p>
+        <section id="archive-76" class="archive-section compact-archive">
+          <h3>2026-06-30 · 76 场结算</h3>
+          <p>Previous baseline: Brazil/Japan, Germany/Paraguay, Netherlands/Morocco settled. Germany correlation error created the budget risk rule that remains active.</p>
         </section>
-
-        <section id="first-run" class="archive-section">
+        <section id="archive-73" class="archive-section compact-archive">
+          <h3>2026-06-29 · 73 场 setup</h3>
+          <p>First Round-of-32 budget plan entered screenshot-price P/L mode. Pending 100 RMB budget plan; main direction 46/73 = 63.0%.</p>
+        </section>
+        <section id="archive-first" class="archive-section compact-archive">
           <h3>First run · 2026-06-12</h3>
           <p>No prior result to review. Mexico vs South Africa: Mexico 2-0. Korea vs Czech: 1-1. Commander conclusion: opening-day cautious structure.</p>
         </section>
-
-        <section id="setup-73" class="archive-section">
-          <h3>2026-06-29 · 73-match setup</h3>
-          <p>Total reviewed: 73. New review: South Africa 0-1 Canada. Focus: Brazil/Japan, Germany/Paraguay, Netherlands/Morocco. Polymarket screenshot-price P/L mode started; pending 100 RMB budget plan. Main direction 46/73 = 63.0%; recommendation direction 23/33 = 69.7%.</p>
+        <section id="project-note" class="archive-section compact-archive">
+          <h3>Project note</h3>
+          <p>Static TWOS prototype. Related project links are placeholders for continuity only.</p>
         </section>
       </article>
+    </section>
 
-      <section class="feedback-bar" aria-label="Give feedback">
-        <div class="feedback-input" aria-label="Static feedback input">Tell the AI team what to adjust next…</div>
-        <button type="button" disabled>Send feedback</button>
-        <button type="button" disabled>Next report draft</button>
-        <p>Static prototype: feedback is not submitted yet.</p>
-      </section>
+    <section class="floating-composer" aria-label="Static feedback input">
+      <div class="composer-card">
+        <button class="composer-icon" type="button" disabled aria-label="Add attachment placeholder">+</button>
+        <textarea placeholder="给“2026世界杯”发送消息" aria-label="Message to 2026世界杯 AI team"></textarea>
+        <button class="composer-tool" type="button" disabled aria-label="Tool placeholder">⋯</button>
+        <button class="composer-send" type="button" disabled aria-label="Send placeholder">→</button>
+      </div>
+      <p>Static prototype: feedback is not submitted yet.</p>
     </section>
   </main>
 </body>
