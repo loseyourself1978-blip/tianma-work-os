@@ -180,7 +180,7 @@
       </div>
     </section>
 
-    <section class="matrix-section split-section" aria-label="Budget P/L Ledger and Learning Rule Updates">
+    <section class="matrix-section split-section learning-split" aria-label="Budget P/L Ledger and Learning Rule Updates">
       <div>
         <div class="section-heading">
           <p class="label">Budget P/L Ledger</p>
@@ -198,15 +198,70 @@
       <div>
         <div class="section-heading">
           <p class="label">Learning / Rule Updates</p>
-          <h2>The project changes rules after misses.</h2>
+          <h2>Evidence changes the next prediction workflow.</h2>
+          <p>Each update is grounded in the 2026-06-30 review: outcome evidence becomes diagnosis, rule change, owner role, and next workflow impact.</p>
         </div>
-        <ul class="clean-list">
-          <li>separate 90-minute vs advance vs spread</li>
-          <li>upgrade modern-underdog risk</li>
-          <li>upgrade penalty-risk</li>
-          <li>upgrade five-back / low-block / cross-volume / late-substitution paths</li>
-          <li>France retained; Morocco and Brazil upgraded; Germany removed</li>
-        </ul>
+        <div class="learning-loop" aria-label="Evidence to rule update loop">
+          <article>
+            <h3>Germany low-quality possession</h3>
+            <dl class="learning-fields">
+              <div><dt>Evidence</dt><dd>Germany low-quality possession</dd></div>
+              <div><dt>Diagnosis</dt><dd>Possession without chance quality is overvalued.</dd></div>
+              <div><dt>Rule Update</dt><dd>Downgrade sterile-possession favorites.</dd></div>
+              <div><dt>Owner Role</dt><dd>Data Officer + Tactical Officer</dd></div>
+              <div><dt>Next Workflow Impact</dt><dd>Require chance-quality check before favorite exposure.</dd></div>
+            </dl>
+          </article>
+          <article>
+            <h3>Germany-Paraguay penalty outcome</h3>
+            <dl class="learning-fields">
+              <div><dt>Evidence</dt><dd>Germany 1-1 Paraguay, Paraguay win pens.</dd></div>
+              <div><dt>Diagnosis</dt><dd>Knockout advance risk differs from 90-minute strength.</dd></div>
+              <div><dt>Rule Update</dt><dd>Separate 90-minute / advance / spread.</dd></div>
+              <div><dt>Owner Role</dt><dd>Commander + Risk Officer</dd></div>
+              <div><dt>Next Workflow Impact</dt><dd>No correlated exposure across ML, advance, spread unless separately justified.</dd></div>
+            </dl>
+          </article>
+          <article>
+            <h3>Morocco xG dominance and penalty win</h3>
+            <dl class="learning-fields">
+              <div><dt>Evidence</dt><dd>Morocco xG dominance and penalty win over Netherlands.</dd></div>
+              <div><dt>Diagnosis</dt><dd>Modern underdog can control chance quality despite lower brand heat.</dd></div>
+              <div><dt>Rule Update</dt><dd>Upgrade modern-underdog weight.</dd></div>
+              <div><dt>Owner Role</dt><dd>Tactical Officer + Odds Officer</dd></div>
+              <div><dt>Next Workflow Impact</dt><dd>Raise Morocco/Brazil, remove Germany from champion path.</dd></div>
+            </dl>
+          </article>
+          <article>
+            <h3>Netherlands-Morocco low-block / late-path</h3>
+            <dl class="learning-fields">
+              <div><dt>Evidence</dt><dd>Netherlands-Morocco low-block / late-path pressure pattern.</dd></div>
+              <div><dt>Diagnosis</dt><dd>Five-back, low-block, cross-volume, and late-substitution paths matter in knockout games.</dd></div>
+              <div><dt>Rule Update</dt><dd>Upgrade tactical-path checklist.</dd></div>
+              <div><dt>Owner Role</dt><dd>Tactical Officer</dd></div>
+              <div><dt>Next Workflow Impact</dt><dd>Apply to remaining R32 previews.</dd></div>
+            </dl>
+          </article>
+          <article>
+            <h3>Budget P/L Germany correlation error</h3>
+            <dl class="learning-fields">
+              <div><dt>Evidence</dt><dd>Excessive correlated Germany exposure drove linked losses.</dd></div>
+              <div><dt>Diagnosis</dt><dd>One wrong thesis created multiple linked losses.</dd></div>
+              <div><dt>Rule Update</dt><dd>Cap correlated same-match exposure.</dd></div>
+              <div><dt>Owner Role</dt><dd>Risk Officer + Review Ledger Officer</dd></div>
+              <div><dt>Next Workflow Impact</dt><dd>Budget plans must separate independent edges from repeated same-view bets.</dd></div>
+            </dl>
+          </article>
+        </div>
+        <div class="feedback-flow" aria-label="Feedback-to-rule flow">
+          <span>Actual Result</span>
+          <span>Prediction Review</span>
+          <span>Error Type</span>
+          <span>Rule Update</span>
+          <span>Next Match Checklist</span>
+          <span>User Feedback</span>
+        </div>
+        <p class="manual-note">Manual-review prototype only: this is not live model retraining, automatic changes, or betting execution.</p>
       </div>
     </section>
 

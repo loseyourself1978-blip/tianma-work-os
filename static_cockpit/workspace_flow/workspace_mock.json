@@ -218,12 +218,50 @@
         "roi": "-20.8%",
         "key_error": "excessive correlated Germany exposure"
       },
-      "learning_updates": [
-        "separate 90-minute vs advance vs spread",
-        "upgrade modern-underdog risk",
-        "upgrade penalty-risk",
-        "upgrade five-back / low-block / cross-volume / late-substitution paths",
-        "France retained; Morocco and Brazil upgraded; Germany removed"
+      "learning_loop": [
+        {
+          "evidence": "Germany low-quality possession",
+          "diagnosis": "Possession without chance quality is overvalued.",
+          "rule_update": "Downgrade sterile-possession favorites.",
+          "owner_role": "Data Officer + Tactical Officer",
+          "next_workflow_impact": "Require chance-quality check before favorite exposure."
+        },
+        {
+          "evidence": "Germany 1-1 Paraguay, Paraguay win pens",
+          "diagnosis": "Knockout advance risk differs from 90-minute strength.",
+          "rule_update": "Separate 90-minute / advance / spread.",
+          "owner_role": "Commander + Risk Officer",
+          "next_workflow_impact": "No correlated exposure across ML, advance, spread unless separately justified."
+        },
+        {
+          "evidence": "Morocco xG dominance and penalty win over Netherlands",
+          "diagnosis": "Modern underdog can control chance quality despite lower brand heat.",
+          "rule_update": "Upgrade modern-underdog weight.",
+          "owner_role": "Tactical Officer + Odds Officer",
+          "next_workflow_impact": "Raise Morocco/Brazil, remove Germany from champion path."
+        },
+        {
+          "evidence": "Netherlands-Morocco low-block / late-path pressure pattern",
+          "diagnosis": "Five-back, low-block, cross-volume, and late-substitution paths matter in knockout games.",
+          "rule_update": "Upgrade tactical-path checklist.",
+          "owner_role": "Tactical Officer",
+          "next_workflow_impact": "Apply to remaining R32 previews."
+        },
+        {
+          "evidence": "Excessive correlated Germany exposure drove linked losses.",
+          "diagnosis": "One wrong thesis created multiple linked losses.",
+          "rule_update": "Cap correlated same-match exposure.",
+          "owner_role": "Risk Officer + Review Ledger Officer",
+          "next_workflow_impact": "Budget plans must separate independent edges from repeated same-view bets."
+        }
+      ],
+      "feedback_to_rule_flow": [
+        "Actual Result",
+        "Prediction Review",
+        "Error Type",
+        "Rule Update",
+        "Next Match Checklist",
+        "User Feedback"
       ],
       "next_match_queue": [
         "Côte d’Ivoire/Norway",
