@@ -282,5 +282,154 @@
         "Implementation: No unless separately approved"
       ]
     }
+  },
+  "workflow_execution": {
+    "title": "2026WC Workflow Execution",
+    "subtitle": "From Project Matrix to today's AI-team work queue",
+    "mode": "static_manual_review_only",
+    "today_work_queue": {
+      "remaining_focus": "12 Round-of-32 matches",
+      "immediate_watch": [
+        {
+          "match": "Côte d’Ivoire / Norway",
+          "focus": "Round-of-32 preview path",
+          "why_queued": "Immediate watch item from the current project sync.",
+          "required_inputs": "user-supplied match context, odds notes, injuries, lineups, venue notes if available",
+          "expected_output": "preview card with direction layers and upset check",
+          "risk_flag": "modern-underdog and penalty-risk checklist required"
+        },
+        {
+          "match": "France / Sweden",
+          "focus": "favorite exposure and champion-path check",
+          "why_queued": "France retained in champion forecast and needs chance-quality confirmation.",
+          "required_inputs": "user-supplied odds layer, team condition, tactical match-up, lineup notes",
+          "expected_output": "separated 90-minute, advance, spread, and budget-risk view",
+          "risk_flag": "favorite exposure must be justified by chance quality"
+        },
+        {
+          "match": "Mexico / Ecuador",
+          "focus": "tactical-path and upset-watch review",
+          "why_queued": "Immediate watch item with possible matchup and market-tension questions.",
+          "required_inputs": "user-supplied form, tactical notes, odds notes, scoring context",
+          "expected_output": "compact match card plus scoreline confidence warning",
+          "risk_flag": "scoreline layers remain low-confidence"
+        }
+      ]
+    },
+    "role_assignment_matrix": [
+      {
+        "role": "赛果复盘员",
+        "task_today": "carry forward 76-match review state",
+        "input_needed": "latest settled results and prior prediction notes",
+        "draft_output": "Previous Review Snapshot",
+        "review_signal": "direction, score, total goals, upset hit/miss",
+        "dependency": "user-supplied actual results"
+      },
+      {
+        "role": "赔率盘口分析师",
+        "task_today": "prepare odds and market-read slots",
+        "input_needed": "user-supplied odds, 1X2, handicap, totals, score odds",
+        "draft_output": "market tension and suspicious pricing notes",
+        "review_signal": "market read vs final result",
+        "dependency": "no odds are fetched by this prototype"
+      },
+      {
+        "role": "战术风格分析师",
+        "task_today": "apply five-back, low-block, cross-volume, and late-substitution checklist",
+        "input_needed": "tactical context and matchup notes",
+        "draft_output": "tactical path for each preview card",
+        "review_signal": "whether expected match pattern appears",
+        "dependency": "team intelligence and match context"
+      },
+      {
+        "role": "球员状态分析师",
+        "task_today": "mark missing player and lineup inputs",
+        "input_needed": "injuries, rotation, lineup, player form, load",
+        "draft_output": "availability caveats and confidence limits",
+        "review_signal": "whether player status explains prediction error",
+        "dependency": "user-supplied roster context"
+      },
+      {
+        "role": "历史与大赛心理分析师",
+        "task_today": "check knockout pressure and brand bias",
+        "input_needed": "historical, tournament, and psychology context",
+        "draft_output": "pressure-risk adjustment",
+        "review_signal": "overreaction or underreaction to pressure",
+        "dependency": "matchup context"
+      },
+      {
+        "role": "爆冷审计员",
+        "task_today": "challenge favorite picks and identify upset paths",
+        "input_needed": "underdog route, odds tension, tactical mismatch",
+        "draft_output": "upset watch and low-confidence warnings",
+        "review_signal": "upset hit/miss and missed warning signs",
+        "dependency": "tactical and market layers"
+      },
+      {
+        "role": "总指挥",
+        "task_today": "synthesize draft into a reviewable daily sync",
+        "input_needed": "all role outputs plus user feedback",
+        "draft_output": "Commander Final Summary and Daily Compact Sync",
+        "review_signal": "whether final summary separates facts, assumptions, and missing inputs",
+        "dependency": "all role drafts complete"
+      }
+    ],
+    "input_readiness": {
+      "already_known": [
+        "76 reviewed matches",
+        "rule updates from 2026-06-30",
+        "next queue: 12 Round-of-32 matches",
+        "immediate watch list"
+      ],
+      "missing_future": [
+        "live odds",
+        "latest injuries",
+        "final lineups",
+        "weather / venue context if needed"
+      ],
+      "boundary": "static prototype does not fetch missing inputs"
+    },
+    "draft_output_shell": [
+      "Previous Review Snapshot",
+      "Match Preview Cards",
+      "90-Minute Direction",
+      "Advance / Spread Separation",
+      "Total Goals View",
+      "Upset Watch",
+      "Budget Risk Notes",
+      "Commander Final Summary",
+      "Daily Compact Sync"
+    ],
+    "review_checklist": [
+      "Are 90-minute, advance, and spread separated?",
+      "Is favorite exposure justified by chance quality?",
+      "Are modern-underdog and penalty risks checked?",
+      "Is correlated same-match exposure capped?",
+      "Are scoreline predictions treated as low-confidence?",
+      "Is Implementation disabled unless approved?"
+    ],
+    "feedback_capture_path": [
+      "User reviews draft.",
+      "User flags wrong assumptions or missing data.",
+      "AI team updates rule/checklist.",
+      "Next queue receives updated constraints."
+    ],
+    "rule_update_return_path": [
+      "Today’s Draft",
+      "User Review",
+      "Error / Missing Input",
+      "Rule Update",
+      "Project Matrix Learning Loop",
+      "Next Work Queue"
+    ],
+    "boundary": [
+      "static prototype only",
+      "no live odds fetch",
+      "no automatic predictions",
+      "no automatic reminders",
+      "no betting execution",
+      "no model retraining claim",
+      "Implementation: No unless separately approved"
+    ]
   }
 }
