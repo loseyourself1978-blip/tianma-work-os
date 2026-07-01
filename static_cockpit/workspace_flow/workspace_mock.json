@@ -428,5 +428,108 @@
       "no model retraining claim",
       "Implementation: No unless separately approved"
     ]
+  },
+  "ai_board_gate": {
+    "title": "AI Board Governance Layer",
+    "subheading": "Control layer before analysis, design, or Codex execution",
+    "first_principles_loop": [
+      "Essence",
+      "Why",
+      "Can solve",
+      "How",
+      "Better",
+      "No best, only better"
+    ],
+    "current_task": {
+      "task": "Vol.13 Stage C v1.5 — 2026WC Project Workspace UI",
+      "status": "Needs revision before next Codex instruction",
+      "reason": [
+        "latest 2026WC full report template should be copied directly",
+        "feedback input should be sticky/floating",
+        "next-step path from feedback to next report / AI Board adjustment is weak"
+      ]
+    },
+    "board_checks": [
+      {
+        "role": "Source Keeper",
+        "question": "What existing source should be used first?",
+        "finding": "Existing 2026WC project page and latest v4.4 report already exist.",
+        "decision": "Copy existing project/report pattern before inventing UI.",
+        "status": "Needs revision"
+      },
+      {
+        "role": "First-Principles Diagnoser",
+        "question": "What is the essence?",
+        "finding": "The user wants to continue an existing 2026WC project inside TWOS.",
+        "decision": "Preserve familiar project/chat experience.",
+        "status": "Passed"
+      },
+      {
+        "role": "DUXD Officer",
+        "question": "Are we using real project experience first?",
+        "finding": "v1.5 moved closer, but report and input experience are not fully copied.",
+        "decision": "Adopt existing first, adapt lightly, invent only if needed.",
+        "status": "Needs revision"
+      },
+      {
+        "role": "UX Minimalist",
+        "question": "Is the UI simpler than the mature baseline?",
+        "finding": "Feedback at the page bottom is worse than a sticky input.",
+        "decision": "Use sticky/floating input pattern.",
+        "status": "Needs revision"
+      },
+      {
+        "role": "Acceptance Officer",
+        "question": "How will the user validate?",
+        "finding": "User compares against the current 2026世界杯 project page.",
+        "decision": "Acceptance requires latest full report, sticky feedback, and next-report path.",
+        "status": "Needs revision"
+      },
+      {
+        "role": "Boundary Officer",
+        "question": "Are we faking capability?",
+        "finding": "Static boundary remains clean.",
+        "decision": "Keep no live / scheduler / backend / execution.",
+        "status": "Passed"
+      },
+      {
+        "role": "Commander",
+        "question": "Can Codex proceed?",
+        "finding": "Not until refinements are encoded.",
+        "decision": "REVISE BEFORE CODEX.",
+        "status": "Blocked"
+      }
+    ],
+    "duxd_decision": [
+      "Adopt existing: use current 2026WC project/chat page pattern, latest v4.4 report template directly, and familiar sticky input behavior.",
+      "Adapt lightly: add compact AI team strip, timeline/report versions if helpful, and Board Gate visibility.",
+      "Invent only if needed: create new UI only when no mature pattern exists."
+    ],
+    "commander_decision": "REVISE BEFORE CODEX",
+    "required_next_actions": [
+      "copy latest full 2026WC report template",
+      "make feedback input sticky/floating",
+      "add clear next path: feedback → next report draft → AI Board adjustment"
+    ],
+    "future_use_pattern": [
+      "User request",
+      "AI Board Gate",
+      "Source / DUXD / UX / Boundary checks",
+      "Commander decision",
+      "Codex instruction only if PASS"
+    ],
+    "sync_intake_gate": {
+      "source_type": "LDD / 2026WC / TWOS Sync",
+      "status": "RECORD ONLY",
+      "boundary": "No implementation unless separately approved",
+      "commander": "RECORD"
+    },
+    "boundary": [
+      "static prototype only",
+      "no fake model routing",
+      "no automation",
+      "no live data",
+      "no execution is implied"
+    ]
   }
 }
