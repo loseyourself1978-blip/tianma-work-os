@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TWOS Vol.13 AI Board Governance Gate</title>
+  <title>TWOS Vol.13 AI Board Gate Enforcement</title>
   <link rel="stylesheet" href="./create_workspace.css" />
   <link rel="alternate" type="application/json" href="./workspace_mock.json" />
 </head>
 <body>
-  <main class="page gate-page" aria-label="AI Board Governance Gate">
+  <main class="page gate-page" aria-label="AI Board Gate Enforcement">
     <header class="topbar">
       <a class="back-link" href="./workflow_execution.html">Back to 2026WC workspace</a>
       <div class="top-actions">
@@ -18,9 +18,9 @@
     </header>
 
     <section class="hero gate-hero">
-      <p class="eyebrow">AI Board Governance Layer</p>
-      <h1>Control layer before analysis, design, or Codex execution</h1>
-      <p class="intro">First-Principles Loop, DUXD grounding, UX minimalism, acceptance, boundary, and commander decision must be visible before work begins.</p>
+      <p class="eyebrow">AI Board Gate</p>
+      <h1>Visible control before work begins</h1>
+      <p class="intro">Every Codex task, product requirement, design analysis, or sync intake must show a short AI Board discussion audit before the next action.</p>
     </section>
 
     <section class="first-principles-panel" aria-label="First-Principles Loop">
@@ -35,30 +35,70 @@
       </div>
     </section>
 
-    <section class="gate-status-card" aria-label="Current Task">
+    <section class="gate-status-card" aria-label="Commander rule">
       <div>
-        <p class="label">Current Task</p>
-        <h2>Vol.13 Stage C v1.5 — 2026WC Project Workspace UI</h2>
-        <p>Latest 2026WC full report template should be copied directly; feedback input should be sticky/floating; next-step path from feedback to next report / AI Board adjustment is weak.</p>
+        <p class="label">Commander Rule</p>
+        <h2>Codex only after PASS</h2>
+        <p>Before implementation instructions are generated, Commander must show PASS. If the gate says REVISE or BLOCKED, TWOS refines or stops first.</p>
       </div>
-      <div class="gate-status revise">
-        <span>Gate Status</span>
-        <strong>Needs revision before next Codex instruction</strong>
+      <div class="gate-status pass">
+        <span>Stage D.2 Gate Status</span>
+        <strong>PASS</strong>
       </div>
     </section>
 
     <section class="section-block">
       <div class="section-heading">
-        <p class="label">Board Checks</p>
-        <h2>Decision review before work proceeds</h2>
+        <p class="label">Gate Pattern</p>
+        <h2>Canonical AI Board discussion audit</h2>
+      </div>
+      <div class="gate-state-strip" aria-label="Gate states">
+        <span class="status-pill pass">PASS</span>
+        <span class="status-pill revise">REVISE</span>
+        <span class="status-pill blocked">BLOCKED</span>
+        <span class="status-pill record">RECORD ONLY</span>
+        <span class="status-pill analyze">ANALYZE FIRST</span>
+        <span class="status-pill update">WORKFLOW-LEVEL UPDATE</span>
+      </div>
+      <div class="gate-pattern-list">
+        <span>Task</span>
+        <span>Gate Status</span>
+        <span>Source Keeper</span>
+        <span>First-Principles Diagnoser</span>
+        <span>DUXD Officer</span>
+        <span>UX Minimalist</span>
+        <span>Acceptance Officer</span>
+        <span>Boundary Officer</span>
+        <span>Commander Decision</span>
+        <span>Next Action</span>
+      </div>
+      <div class="gate-type-row" aria-label="Gate types">
+        <article>
+          <h3>Before Codex Gate</h3>
+          <p>Used before implementation instructions. Commander must PASS.</p>
+        </article>
+        <article>
+          <h3>New Requirement Gate</h3>
+          <p>Used for product or design feedback. Default state is ANALYZE FIRST.</p>
+        </article>
+        <article>
+          <h3>Sync Intake Gate</h3>
+          <p>Used for LDD / 2026WC / TWOS sync. Default state is RECORD ONLY.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-heading">
+        <p class="label">Example: Before Codex Gate — Stage C v1.6</p>
+        <h2>Implementation may proceed only because Commander passed</h2>
       </div>
       <div class="gate-table-wrap">
         <table class="gate-table">
           <thead>
             <tr>
               <th>Role</th>
-              <th>Check / Question</th>
-              <th>Finding</th>
+              <th>Discussion / Audit</th>
               <th>Decision</th>
               <th>Status</th>
             </tr>
@@ -66,52 +106,45 @@
           <tbody>
             <tr>
               <td>Source Keeper</td>
-              <td>What existing source should be used first?</td>
-              <td>Existing 2026WC project page and latest v4.4 report already exist.</td>
-              <td>Copy existing project/report pattern before inventing UI.</td>
-              <td><span class="status-pill revise">Needs revision</span></td>
+              <td>Existing 2026WC project page screenshots and full v4.4 report are the source of truth.</td>
+              <td>Use existing project UX and report content first.</td>
+              <td><span class="status-pill pass">PASS</span></td>
             </tr>
             <tr>
               <td>First-Principles Diagnoser</td>
-              <td>What is the essence?</td>
-              <td>The user wants to continue an existing 2026WC project inside TWOS.</td>
-              <td>Preserve familiar project/chat experience.</td>
-              <td><span class="status-pill pass">Passed</span></td>
+              <td>The task is not to design a dashboard; it is to copy the existing project UX into TWOS.</td>
+              <td>Keep the familiar project/chat reading experience.</td>
+              <td><span class="status-pill pass">PASS</span></td>
             </tr>
             <tr>
               <td>DUXD Officer</td>
-              <td>Are we using real project experience first?</td>
-              <td>v1.5 moved closer, but report and input experience are not fully copied.</td>
               <td>Adopt existing first, adapt lightly, invent only if needed.</td>
-              <td><span class="status-pill revise">Needs revision</span></td>
+              <td>Use real project page, real report, real feedback pattern.</td>
+              <td><span class="status-pill pass">PASS</span></td>
             </tr>
             <tr>
               <td>UX Minimalist</td>
-              <td>Is the UI simpler than the mature baseline?</td>
-              <td>Feedback at the page bottom is worse than a sticky input.</td>
-              <td>Use sticky/floating input pattern.</td>
-              <td><span class="status-pill revise">Needs revision</span></td>
+              <td>Use existing project layout and sticky input; avoid dashboard cards.</td>
+              <td>Left sidebar, central report, sticky feedback input.</td>
+              <td><span class="status-pill pass">PASS</span></td>
             </tr>
             <tr>
               <td>Acceptance Officer</td>
-              <td>How will the user validate?</td>
-              <td>User compares against the current 2026世界杯 project page.</td>
-              <td>Acceptance requires latest full report, sticky feedback, and next-report path.</td>
-              <td><span class="status-pill revise">Needs revision</span></td>
+              <td>User will compare against the current 2026世界杯 ChatGPT project page.</td>
+              <td>Acceptance is visual familiarity plus full report readability.</td>
+              <td><span class="status-pill pass">PASS</span></td>
             </tr>
             <tr>
               <td>Boundary Officer</td>
-              <td>Are we faking capability?</td>
-              <td>Static boundary remains clean.</td>
-              <td>Keep no live / scheduler / backend / execution.</td>
-              <td><span class="status-pill pass">Passed</span></td>
+              <td>Static only; no fake send/live/backend.</td>
+              <td>Keep prototype static and honest.</td>
+              <td><span class="status-pill pass">PASS</span></td>
             </tr>
             <tr>
               <td>Commander</td>
-              <td>Can Codex proceed?</td>
-              <td>Not until refinements are encoded.</td>
-              <td>REVISE BEFORE CODEX.</td>
-              <td><span class="status-pill blocked">Blocked</span></td>
+              <td>All checks align with the accepted direction.</td>
+              <td>PASS; generate Codex instruction.</td>
+              <td><span class="status-pill pass">PASS</span></td>
             </tr>
           </tbody>
         </table>
@@ -120,52 +153,66 @@
 
     <section class="section-block">
       <div class="section-heading">
-        <p class="label">DUXD Decision</p>
-        <h2>Use the real product experience first</h2>
+        <p class="label">Example: Sync Intake Gate — FactorMiner</p>
+        <h2>Syncs may update workflow without becoming implementation</h2>
       </div>
-      <div class="duxd-grid">
-        <article>
-          <h3>Adopt existing</h3>
-          <p>Use current 2026WC project/chat page pattern, latest v4.4 report template directly, and familiar sticky input behavior.</p>
-        </article>
-        <article>
-          <h3>Adapt lightly</h3>
-          <p>Add compact AI team strip, timeline/report versions if helpful, and Board Gate visibility.</p>
-        </article>
-        <article>
-          <h3>Invent only if needed</h3>
-          <p>Create new UI only when no mature pattern exists.</p>
-        </article>
+      <div class="gate-table-wrap">
+        <table class="gate-table">
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>Discussion / Audit</th>
+              <th>Decision</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Source Keeper</td>
+              <td>FactorMiner paper intake is an external mechanism source.</td>
+              <td>Record source and preserve provenance.</td>
+              <td><span class="status-pill update">WORKFLOW-LEVEL UPDATE</span></td>
+            </tr>
+            <tr>
+              <td>DUXD Officer</td>
+              <td>Use it to improve LDD/TWOS workflow, not as a direct trading signal.</td>
+              <td>Convert into method learning, not execution.</td>
+              <td><span class="status-pill update">WORKFLOW-LEVEL UPDATE</span></td>
+            </tr>
+            <tr>
+              <td>Boundary Officer</td>
+              <td>No code unless separately approved.</td>
+              <td>Implementation: No unless separately approved.</td>
+              <td><span class="status-pill record">RECORD ONLY</span></td>
+            </tr>
+            <tr>
+              <td>Commander</td>
+              <td>Sync has workflow value but is not an implementation request.</td>
+              <td>WORKFLOW-LEVEL UPDATE / RECORD.</td>
+              <td><span class="status-pill update">WORKFLOW-LEVEL UPDATE</span></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-    </section>
-
-    <section class="go-no-go" aria-label="Commander go/no-go">
-      <p class="label">Go / No-Go</p>
-      <h2>Commander Decision: REVISE BEFORE CODEX</h2>
-      <ul>
-        <li>Copy latest full 2026WC report template.</li>
-        <li>Make feedback input sticky/floating.</li>
-        <li>Add clear next path: feedback → next report draft → AI Board adjustment.</li>
-      </ul>
     </section>
 
     <section class="section-block">
       <div class="section-heading">
-        <p class="label">How this runs next time</p>
-        <h2>Governance before work begins</h2>
+        <p class="label">How this runs every time</p>
+        <h2>Pre-work enforcement path</h2>
       </div>
       <div class="future-flow">
-        <span>User request</span>
+        <span>New request / Sync / Codex task</span>
         <span>AI Board Gate</span>
-        <span>Source / DUXD / UX / Boundary checks</span>
+        <span>Board discussion audit</span>
         <span>Commander decision</span>
-        <span>Codex instruction only if PASS</span>
+        <span>Next action</span>
       </div>
       <div class="sync-intake">
-        <h3>Sync Intake Gate</h3>
-        <p>LDD / 2026WC / TWOS Sync → AI Board Sync Gate → RECORD ONLY → No implementation unless separately approved.</p>
+        <h3>Sync Intake Rule</h3>
+        <p>LDD / 2026WC / TWOS sync starts as RECORD ONLY unless the user explicitly approves workflow-level implementation. Implementation: No unless separately approved.</p>
       </div>
-      <p class="manual-note">Static prototype only. No fake model routing, no automation, no live data, and no execution is implied.</p>
+      <p class="manual-note">Static prototype only. No hidden reasoning display, fake model routing, automation, live data, backend, or execution is implied.</p>
     </section>
   </main>
 </body>

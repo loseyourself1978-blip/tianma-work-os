@@ -396,8 +396,8 @@
     ]
   },
   "ai_board_gate": {
-    "title": "AI Board Governance Layer",
-    "subheading": "Control layer before analysis, design, or Codex execution",
+    "title": "AI Board Gate Enforcement",
+    "subheading": "Visible control before work begins",
     "first_principles_loop": [
       "Essence",
       "Why",
@@ -406,95 +406,139 @@
       "Better",
       "No best, only better"
     ],
-    "current_task": {
-      "task": "Vol.13 Stage C v1.5 — 2026WC Project Workspace UI",
-      "status": "Needs revision before next Codex instruction",
-      "reason": [
-        "latest 2026WC full report template should be copied directly",
-        "feedback input should be sticky/floating",
-        "next-step path from feedback to next report / AI Board adjustment is weak"
-      ]
-    },
-    "board_checks": [
+    "commander_rule": "Codex only after PASS",
+    "gate_states": [
+      "PASS",
+      "REVISE",
+      "BLOCKED",
+      "RECORD ONLY",
+      "ANALYZE FIRST",
+      "WORKFLOW-LEVEL UPDATE",
+      "IMPLEMENTATION REQUESTED"
+    ],
+    "gate_pattern": [
+      "Task",
+      "Gate Status",
+      "Source Keeper",
+      "First-Principles Diagnoser",
+      "DUXD Officer",
+      "UX Minimalist",
+      "Acceptance Officer",
+      "Boundary Officer",
+      "Commander Decision",
+      "Next Action"
+    ],
+    "gate_types": [
       {
-        "role": "Source Keeper",
-        "question": "What existing source should be used first?",
-        "finding": "Existing 2026WC project page and latest v4.4 report already exist.",
-        "decision": "Copy existing project/report pattern before inventing UI.",
-        "status": "Needs revision"
+        "type": "Before Codex Gate",
+        "use": "Used before implementation instructions.",
+        "default_rule": "Commander must PASS."
       },
       {
-        "role": "First-Principles Diagnoser",
-        "question": "What is the essence?",
-        "finding": "The user wants to continue an existing 2026WC project inside TWOS.",
-        "decision": "Preserve familiar project/chat experience.",
-        "status": "Passed"
+        "type": "New Requirement Gate",
+        "use": "Used for product or design feedback.",
+        "default_rule": "Default state is ANALYZE FIRST."
       },
       {
-        "role": "DUXD Officer",
-        "question": "Are we using real project experience first?",
-        "finding": "v1.5 moved closer, but report and input experience are not fully copied.",
-        "decision": "Adopt existing first, adapt lightly, invent only if needed.",
-        "status": "Needs revision"
-      },
-      {
-        "role": "UX Minimalist",
-        "question": "Is the UI simpler than the mature baseline?",
-        "finding": "Feedback at the page bottom is worse than a sticky input.",
-        "decision": "Use sticky/floating input pattern.",
-        "status": "Needs revision"
-      },
-      {
-        "role": "Acceptance Officer",
-        "question": "How will the user validate?",
-        "finding": "User compares against the current 2026世界杯 project page.",
-        "decision": "Acceptance requires latest full report, sticky feedback, and next-report path.",
-        "status": "Needs revision"
-      },
-      {
-        "role": "Boundary Officer",
-        "question": "Are we faking capability?",
-        "finding": "Static boundary remains clean.",
-        "decision": "Keep no live / scheduler / backend / execution.",
-        "status": "Passed"
-      },
-      {
-        "role": "Commander",
-        "question": "Can Codex proceed?",
-        "finding": "Not until refinements are encoded.",
-        "decision": "REVISE BEFORE CODEX.",
-        "status": "Blocked"
+        "type": "Sync Intake Gate",
+        "use": "Used for LDD / 2026WC / TWOS sync.",
+        "default_rule": "Default state is RECORD ONLY."
       }
     ],
-    "duxd_decision": [
-      "Adopt existing: use current 2026WC project/chat page pattern, latest v4.4 report template directly, and familiar sticky input behavior.",
-      "Adapt lightly: add compact AI team strip, timeline/report versions if helpful, and Board Gate visibility.",
-      "Invent only if needed: create new UI only when no mature pattern exists."
-    ],
-    "commander_decision": "REVISE BEFORE CODEX",
-    "required_next_actions": [
-      "copy latest full 2026WC report template",
-      "make feedback input sticky/floating",
-      "add clear next path: feedback → next report draft → AI Board adjustment"
-    ],
-    "future_use_pattern": [
-      "User request",
-      "AI Board Gate",
-      "Source / DUXD / UX / Boundary checks",
-      "Commander decision",
-      "Codex instruction only if PASS"
-    ],
-    "sync_intake_gate": {
-      "source_type": "LDD / 2026WC / TWOS Sync",
-      "status": "RECORD ONLY",
-      "boundary": "No implementation unless separately approved",
-      "commander": "RECORD"
+    "before_codex_example": {
+      "title": "Example: Before Codex Gate — Stage C v1.6",
+      "task": "Generate Stage C v1.6 Codex instruction",
+      "gate_result": "PASS",
+      "checks": [
+        {
+          "role": "Source Keeper",
+          "audit": "Existing 2026WC project page screenshots and full v4.4 report are the source of truth.",
+          "decision": "Use existing project UX and report content first.",
+          "status": "PASS"
+        },
+        {
+          "role": "First-Principles Diagnoser",
+          "audit": "The task is not to design a dashboard; it is to copy the existing project UX into TWOS.",
+          "decision": "Keep the familiar project/chat reading experience.",
+          "status": "PASS"
+        },
+        {
+          "role": "DUXD Officer",
+          "audit": "Adopt existing first, adapt lightly, invent only if needed.",
+          "decision": "Use real project page, real report, real feedback pattern.",
+          "status": "PASS"
+        },
+        {
+          "role": "UX Minimalist",
+          "audit": "Use existing project layout and sticky input; avoid dashboard cards.",
+          "decision": "Left sidebar, central report, sticky feedback input.",
+          "status": "PASS"
+        },
+        {
+          "role": "Acceptance Officer",
+          "audit": "User will compare against the current 2026世界杯 ChatGPT project page.",
+          "decision": "Acceptance is visual familiarity plus full report readability.",
+          "status": "PASS"
+        },
+        {
+          "role": "Boundary Officer",
+          "audit": "Static only; no fake send/live/backend.",
+          "decision": "Keep prototype static and honest.",
+          "status": "PASS"
+        },
+        {
+          "role": "Commander",
+          "audit": "All checks align with the accepted direction.",
+          "decision": "PASS; generate Codex instruction.",
+          "status": "PASS"
+        }
+      ]
     },
+    "sync_intake_example": {
+      "title": "Example: Sync Intake Gate — FactorMiner",
+      "task": "LDD / TWOS Sync｜FactorMiner Intake",
+      "gate_result": "WORKFLOW-LEVEL UPDATE",
+      "checks": [
+        {
+          "role": "Source Keeper",
+          "audit": "FactorMiner paper intake is an external mechanism source.",
+          "decision": "Record source and preserve provenance.",
+          "status": "WORKFLOW-LEVEL UPDATE"
+        },
+        {
+          "role": "DUXD Officer",
+          "audit": "Use it to improve LDD/TWOS workflow, not as a direct trading signal.",
+          "decision": "Convert into method learning, not execution.",
+          "status": "WORKFLOW-LEVEL UPDATE"
+        },
+        {
+          "role": "Boundary Officer",
+          "audit": "No code unless separately approved.",
+          "decision": "Implementation: No unless separately approved.",
+          "status": "RECORD ONLY"
+        },
+        {
+          "role": "Commander",
+          "audit": "Sync has workflow value but is not an implementation request.",
+          "decision": "WORKFLOW-LEVEL UPDATE / RECORD.",
+          "status": "WORKFLOW-LEVEL UPDATE"
+        }
+      ]
+    },
+    "future_use_pattern": [
+      "New request / Sync / Codex task",
+      "AI Board Gate",
+      "Board discussion audit",
+      "Commander decision",
+      "Next action"
+    ],
     "boundary": [
       "static prototype only",
       "no fake model routing",
       "no automation",
       "no live data",
+      "no backend",
+      "no hidden reasoning display",
       "no execution is implied"
     ]
   }
