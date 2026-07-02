@@ -39,6 +39,12 @@ Vol.9 Phase 9.3 - Future Implementation Boundary Matrix and Static Prototype Gat
 | `CODEX_GITHUB_SYNC_INSTRUCTIONS.md` | Codex execution guide |
 | `GITHUB_ISSUES_BACKLOG.md` | v0.1.7 staging backlog for GitHub-ready issues, Signal Command Layer work, workstream coordination, strategy-state risk monitoring, runtime continuity, execution-resource scheduling, and financial cockpit rule-ledger improvements; first 8 trunk issues have been created; do not create GitHub Projects yet |
 
+## Vol.13 Closeout / Vol.14 Readiness
+
+- `docs/runtime/VOL13_CLOSEOUT_SUMMARY_v0.1.md`
+- `docs/runtime/VOL14_READINESS_GATE_v0.1.md`
+- `docs/governance/TWOS_AI_BOARD_GATE_PROTOCOL_v0.1.md`
+
 ## Examples
 
 - `examples/llm-daredevil-desk/CASE_STUDY_LLM_DAREDEVIL_DESK.md`
