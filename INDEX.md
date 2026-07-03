@@ -44,6 +44,7 @@ Vol.9 Phase 9.3 - Future Implementation Boundary Matrix and Static Prototype Gat
 - `docs/runtime/VOL13_CLOSEOUT_SUMMARY_v0.1.md`
 - `docs/runtime/VOL14_READINESS_GATE_v0.1.md`
 - [docs/runtime/VOL14_AI_BOARD_MEMORY_GATE_CONTRACT_v0.1.md](docs/runtime/VOL14_AI_BOARD_MEMORY_GATE_CONTRACT_v0.1.md)
+- [docs/runtime/VOL14_AI_BOARD_ACTIVE_CONTROL_PROTOCOL_v0.1.md](docs/runtime/VOL14_AI_BOARD_ACTIVE_CONTROL_PROTOCOL_v0.1.md)
 - `docs/governance/TWOS_AI_BOARD_GATE_PROTOCOL_v0.1.md`
 
 ## Examples
