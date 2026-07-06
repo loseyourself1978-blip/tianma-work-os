@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TWOS Command Center MVP</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="page command-page" aria-label="TWOS Command Center MVP">
+    <header class="topbar command-topbar">
+      <p class="brand">TWOS</p>
+      <nav class="top-actions" aria-label="TWOS navigation">
+        <a class="nav-link" href="./index.html">Landing</a>
+        <a class="nav-link" href="../workspace_flow/workflow_execution.html">2026WC Workspace</a>
+      </nav>
+    </header>
+
+    <section class="command-hero" aria-label="Command center header">
+      <div>
+        <p class="version">MVP-1</p>
+        <h1>TWOS Command Center</h1>
+        <p class="subheadline">One local page for LDD, 2026WC, TWOS product work, and manual Codex handoff.</p>
+      </div>
+      <p class="safety-note">MVP safety: no live orders, no betting/trading execution, no backend execution. Codex handoff is manual unless an existing integration already exists.</p>
+    </section>
+
+    <section class="sync-inbox" aria-label="Global Sync Inbox">
+      <div class="section-title">
+        <p class="version">Global Sync Inbox</p>
+        <h2>Paste once, assign to a lane.</h2>
+      </div>
+      <form class="sync-form" id="sync-form">
+        <label>
+          <span>Incoming sync</span>
+          <textarea id="sync-inbox-text" rows="5" placeholder="Paste a new LDD, 2026WC, or TWOS sync here."></textarea>
+        </label>
+        <div class="sync-actions">
+          <label>
+            <span>Assign to</span>
+            <select id="sync-target">
+              <option value="ldd">LDD</option>
+              <option value="wc">2026WC</option>
+              <option value="twos">TWOS</option>
+            </select>
+          </label>
+          <button class="start-button" type="submit">Add Sync</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="lane-grid" aria-label="Project lanes">
+      <article class="lane-card" data-lane="ldd">
+        <div class="lane-heading">
+          <p class="version">LDD</p>
+          <select data-field="status" aria-label="LDD status">
+            <option>Active</option>
+            <option>Needs Review</option>
+            <option>Blocked</option>
+            <option>Paused</option>
+          </select>
+        </div>
+        <h2>LLM Daredevil Desk</h2>
+        <div class="role-pair" aria-label="LDD roles">
+          <span>Market Intelligence</span>
+          <span>Execution/Risk Actuary</span>
+        </div>
+        <label>
+          <span>Latest sync</span>
+          <textarea data-field="latestSync" rows="6" placeholder="Current LDD state, source of truth, exposure notes, and sync summary."></textarea>
+        </label>
+        <label>
+          <span>Active next</span>
+          <input data-field="activeNext" type="text" placeholder="Next LDD action or review focus" />
+        </label>
+        <div>
+          <div class="history-head">
+            <span>Local sync history</span>
+            <button type="button" data-action="clear-history">Clear</button>
+          </div>
+          <ol class="history-list" data-history></ol>
+        </div>
+      </article>
+
+      <article class="lane-card" data-lane="wc">
+        <div class="lane-heading">
+          <p class="version">2026WC</p>
+          <select data-field="status" aria-label="2026WC status">
+            <option>Active</option>
+            <option>Needs Review</option>
+            <option>Blocked</option>
+            <option>Paused</option>
+          </select>
+        </div>
+        <h2>World Cup Workbench</h2>
+        <div class="role-pair" aria-label="2026WC roles">
+          <span>Football Intelligence Analyst</span>
+          <span>Odds Actuary</span>
+        </div>
+        <label>
+          <span>Latest sync</span>
+          <textarea data-field="latestSync" rows="6" placeholder="Current match-day baseline, review result, odds notes, and next prediction scope."></textarea>
+        </label>
+        <label>
+          <span>Active next</span>
+          <input data-field="activeNext" type="text" placeholder="Next 2026WC review or prediction focus" />
+        </label>
+        <div>
+          <div class="history-head">
+            <span>Local sync history</span>
+            <button type="button" data-action="clear-history">Clear</button>
+          </div>
+          <ol class="history-list" data-history></ol>
+        </div>
+      </article>
+
+      <article class="lane-card" data-lane="twos">
+        <div class="lane-heading">
+          <p class="version">TWOS</p>
+          <select data-field="status" aria-label="TWOS status">
+            <option>Active</option>
+            <option>Needs Review</option>
+            <option>Blocked</option>
+            <option>Paused</option>
+          </select>
+        </div>
+        <h2>Product Development</h2>
+        <div class="role-pair" aria-label="TWOS roles">
+          <span>Product Goal</span>
+          <span>Build/Codex Path</span>
+        </div>
+        <label>
+          <span>Latest sync</span>
+          <textarea data-field="latestSync" rows="6" placeholder="Current product goal, approved scope, blocker, and Codex-ready context."></textarea>
+        </label>
+        <label>
+          <span>Active next</span>
+          <input data-field="activeNext" type="text" placeholder="Next TWOS product or build step" />
+        </label>
+        <div>
+          <div class="history-head">
+            <span>Local sync history</span>
+            <button type="button" data-action="clear-history">Clear</button>
+          </div>
+          <ol class="history-list" data-history></ol>
+        </div>
+      </article>
+    </section>
+
+    <section class="codex-pad" aria-label="Codex Command Pad">
+      <div class="section-title">
+        <p class="version">Codex Command Pad</p>
+        <h2>Prepare the handoff without leaving the page.</h2>
+      </div>
+      <div class="codex-grid">
+        <label>
+          <span>Current Codex instruction</span>
+          <textarea id="codex-instruction" rows="8" placeholder="Write the current Codex instruction here. Keep scope, files, validation, commit, and push rules explicit."></textarea>
+        </label>
+        <label>
+          <span>Feedback</span>
+          <textarea id="codex-feedback" rows="8" placeholder="Paste Codex feedback, blockers, validation results, or next-step notes here."></textarea>
+        </label>
+      </div>
+      <div class="codex-actions">
+        <label>
+          <span>Acceptance status</span>
+          <select id="codex-status">
+            <option>Draft</option>
+            <option>Ready for Codex</option>
+            <option>Feedback Required</option>
+            <option>Accepted</option>
+            <option>Blocked</option>
+          </select>
+        </label>
+        <button class="start-button" id="copy-instruction" type="button">Copy Instruction</button>
+        <span class="copy-status" id="copy-status" aria-live="polite"></span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var storageKey = "twos.commandCenter.v1";
+      var laneIds = ["ldd", "wc", "twos"];
+      var defaultState = {
+        lanes: {
+          ldd: { status: "Active", latestSync: "", activeNext: "", history: [] },
+          wc: { status: "Active", latestSync: "", activeNext: "", history: [] },
+          twos: { status: "Active", latestSync: "", activeNext: "", history: [] }
+        },
+        inbox: "",
+        target: "ldd",
+        codex: { instruction: "", feedback: "", status: "Draft" }
+      };
+
+      var state = loadState();
+
+      function loadState() {
+        try {
+          var saved = JSON.parse(localStorage.getItem(storageKey));
+          if (!saved || !saved.lanes || !saved.codex) return defaultState;
+          laneIds.forEach(function (laneId) {
+            saved.lanes[laneId] = Object.assign({}, defaultState.lanes[laneId], saved.lanes[laneId]);
+          });
+          saved.codex = Object.assign({}, defaultState.codex, saved.codex);
+          return Object.assign({}, defaultState, saved);
+        } catch (error) {
+          return defaultState;
+        }
+      }
+
+      function saveState() {
+        localStorage.setItem(storageKey, JSON.stringify(state));
+      }
+
+      function renderHistory(laneId) {
+        var list = document.querySelector('[data-lane="' + laneId + '"] [data-history]');
+        list.innerHTML = "";
+        var history = state.lanes[laneId].history.slice(0, 5);
+        if (!history.length) {
+          var empty = document.createElement("li");
+          empty.textContent = "No local syncs yet.";
+          empty.className = "empty-history";
+          list.appendChild(empty);
+          return;
+        }
+        history.forEach(function (entry) {
+          var item = document.createElement("li");
+          item.textContent = entry;
+          list.appendChild(item);
+        });
+      }
+
+      function hydrateLane(laneId) {
+        var lane = document.querySelector('[data-lane="' + laneId + '"]');
+        lane.querySelector('[data-field="status"]').value = state.lanes[laneId].status;
+        lane.querySelector('[data-field="latestSync"]').value = state.lanes[laneId].latestSync;
+        lane.querySelector('[data-field="activeNext"]').value = state.lanes[laneId].activeNext;
+        renderHistory(laneId);
+      }
+
+      laneIds.forEach(function (laneId) {
+        hydrateLane(laneId);
+        var lane = document.querySelector('[data-lane="' + laneId + '"]');
+        lane.addEventListener("input", function (event) {
+          var field = event.target.getAttribute("data-field");
+          if (!field) return;
+          state.lanes[laneId][field] = event.target.value;
+          saveState();
+        });
+        lane.addEventListener("change", function (event) {
+          var field = event.target.getAttribute("data-field");
+          if (!field) return;
+          state.lanes[laneId][field] = event.target.value;
+          saveState();
+        });
+        lane.querySelector('[data-action="clear-history"]').addEventListener("click", function () {
+          state.lanes[laneId].history = [];
+          saveState();
+          renderHistory(laneId);
+        });
+      });
+
+      var inboxText = document.getElementById("sync-inbox-text");
+      var syncTarget = document.getElementById("sync-target");
+      inboxText.value = state.inbox;
+      syncTarget.value = state.target;
+
+      inboxText.addEventListener("input", function () {
+        state.inbox = inboxText.value;
+        saveState();
+      });
+      syncTarget.addEventListener("change", function () {
+        state.target = syncTarget.value;
+        saveState();
+      });
+
+      document.getElementById("sync-form").addEventListener("submit", function (event) {
+        event.preventDefault();
+        var text = inboxText.value.trim();
+        if (!text) return;
+        var laneId = syncTarget.value;
+        var stamp = new Date().toLocaleString();
+        var compactText = text.replace(/\s+/g, " ").slice(0, 220);
+        state.lanes[laneId].latestSync = text;
+        state.lanes[laneId].history.unshift(stamp + " - " + compactText);
+        state.lanes[laneId].history = state.lanes[laneId].history.slice(0, 10);
+        state.inbox = "";
+        inboxText.value = "";
+        saveState();
+        hydrateLane(laneId);
+      });
+
+      var instruction = document.getElementById("codex-instruction");
+      var feedback = document.getElementById("codex-feedback");
+      var codexStatus = document.getElementById("codex-status");
+      instruction.value = state.codex.instruction;
+      feedback.value = state.codex.feedback;
+      codexStatus.value = state.codex.status;
+
+      instruction.addEventListener("input", function () {
+        state.codex.instruction = instruction.value;
+        saveState();
+      });
+      feedback.addEventListener("input", function () {
+        state.codex.feedback = feedback.value;
+        saveState();
+      });
+      codexStatus.addEventListener("change", function () {
+        state.codex.status = codexStatus.value;
+        saveState();
+      });
+
+      document.getElementById("copy-instruction").addEventListener("click", function () {
+        var copyStatus = document.getElementById("copy-status");
+        var text = instruction.value;
+        if (!text.trim()) {
+          copyStatus.textContent = "Nothing to copy.";
+          return;
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            copyStatus.textContent = "Copied.";
+          }, function () {
+            copyStatus.textContent = "Copy unavailable.";
+          });
+        } else {
+          instruction.select();
+          document.execCommand("copy");
+          copyStatus.textContent = "Copied.";
+        }
+      });
+    }());
+  </script>
+</body>
+</html>
