@@ -62,8 +62,8 @@
         </div>
         <h2>LLM Daredevil Desk</h2>
         <div class="role-pair" aria-label="LDD roles">
-          <span>Market Intelligence</span>
-          <span>Execution/Risk Actuary</span>
+          <span>Market Analyst</span>
+          <span>Risk/Execution Analyst</span>
         </div>
         <label>
           <span>Latest sync</span>
@@ -74,6 +74,15 @@
           <small class="field-help">Use this for the single current next action for this project, not a long-term plan.</small>
           <input data-field="activeNext" type="text" placeholder="Next Pre Review with Active Veto before any orders" />
         </label>
+        <label>
+          <span>Compact Sync</span>
+          <textarea data-field="compactSync" rows="7" readonly placeholder="Generate a compact sync for this lane."></textarea>
+        </label>
+        <div class="compact-sync-actions">
+          <button type="button" data-action="generate-sync">Generate Compact Sync</button>
+          <button type="button" data-action="copy-sync">Copy Compact Sync</button>
+          <span class="copy-status" data-copy-status aria-live="polite"></span>
+        </div>
         <div>
           <div class="history-head">
             <span>Local sync history</span>
@@ -107,6 +116,15 @@
           <small class="field-help">Use this for the single current next action for this project, not a long-term plan.</small>
           <input data-field="activeNext" type="text" placeholder="Wait for odds PDF + balance screenshot, then run v4.8.2 allocation" />
         </label>
+        <label>
+          <span>Compact Sync</span>
+          <textarea data-field="compactSync" rows="7" readonly placeholder="Generate a compact sync for this lane."></textarea>
+        </label>
+        <div class="compact-sync-actions">
+          <button type="button" data-action="generate-sync">Generate Compact Sync</button>
+          <button type="button" data-action="copy-sync">Copy Compact Sync</button>
+          <span class="copy-status" data-copy-status aria-live="polite"></span>
+        </div>
         <div>
           <div class="history-head">
             <span>Local sync history</span>
@@ -140,6 +158,15 @@
           <small class="field-help">Use this for the single current next action for this project, not a long-term plan.</small>
           <input data-field="activeNext" type="text" placeholder="Current product/build next, e.g. MVP-1.1 UX fix" />
         </label>
+        <label>
+          <span>Compact Sync</span>
+          <textarea data-field="compactSync" rows="7" readonly placeholder="Generate a compact sync for this lane."></textarea>
+        </label>
+        <div class="compact-sync-actions">
+          <button type="button" data-action="generate-sync">Generate Compact Sync</button>
+          <button type="button" data-action="copy-sync">Copy Compact Sync</button>
+          <span class="copy-status" data-copy-status aria-live="polite"></span>
+        </div>
         <div>
           <div class="history-head">
             <span>Local sync history</span>
@@ -148,6 +175,16 @@
           <ol class="history-list" data-history></ol>
         </div>
       </article>
+    </section>
+
+    <section class="compact-sync-global" aria-label="Global Compact Sync Copy">
+      <div>
+        <p class="version">Compact Sync</p>
+        <h2>Copy all project syncs together.</h2>
+      </div>
+      <button class="start-button" id="copy-all-syncs" type="button">Copy All Compact Syncs</button>
+      <span class="copy-status" id="all-copy-status" aria-live="polite"></span>
+      <textarea class="global-sync-output" id="all-compact-sync-output" rows="7" readonly placeholder="Generated all-lane compact sync appears here."></textarea>
     </section>
 
     <section class="codex-pad" aria-label="Codex Command Pad">
@@ -186,11 +223,26 @@
     (function () {
       var storageKey = "twos.commandCenter.v1";
       var laneIds = ["ldd", "wc", "twos"];
+      var laneMeta = {
+        ldd: {
+          project: "LDD - LLM Daredevil Desk",
+          roles: "Market Analyst + Risk/Execution Analyst"
+        },
+        wc: {
+          project: "2026WC - World Cup Workbench",
+          roles: "Football Intelligence Analyst + Odds Actuary"
+        },
+        twos: {
+          project: "TWOS - Product Development",
+          roles: "Product Goal + Build/Codex Path"
+        }
+      };
+      var implementationBoundary = "Browser-local compact sync only; no backend, API, scheduler, live trading, live betting, or execution.";
       var defaultState = {
         lanes: {
-          ldd: { status: "Active", latestSync: "", activeNext: "", history: [] },
-          wc: { status: "Active", latestSync: "", activeNext: "", history: [] },
-          twos: { status: "Active", latestSync: "", activeNext: "", history: [] }
+          ldd: { status: "Active", latestSync: "", activeNext: "", compactSync: "", history: [] },
+          wc: { status: "Active", latestSync: "", activeNext: "", compactSync: "", history: [] },
+          twos: { status: "Active", latestSync: "", activeNext: "", compactSync: "", history: [] }
         },
         inbox: "",
         target: "ldd",
@@ -240,7 +292,56 @@
         lane.querySelector('[data-field="status"]').value = state.lanes[laneId].status;
         lane.querySelector('[data-field="latestSync"]').value = state.lanes[laneId].latestSync;
         lane.querySelector('[data-field="activeNext"]').value = state.lanes[laneId].activeNext;
+        lane.querySelector('[data-field="compactSync"]').value = state.lanes[laneId].compactSync;
         renderHistory(laneId);
+      }
+
+      function cleanValue(value) {
+        return value && value.trim() ? value.trim() : "Not set";
+      }
+
+      function buildCompactSync(laneId) {
+        var laneState = state.lanes[laneId];
+        var meta = laneMeta[laneId];
+        return [
+          "Project: " + meta.project,
+          "Status: " + cleanValue(laneState.status),
+          "Latest Sync Summary: " + cleanValue(laneState.latestSync),
+          "One Active Next: " + cleanValue(laneState.activeNext),
+          "Roles: " + meta.roles,
+          "Implementation Boundary: " + implementationBoundary
+        ].join("\n");
+      }
+
+      function setCopyFeedback(target, message) {
+        target.textContent = message;
+      }
+
+      function copyText(text, output, feedback) {
+        if (!text.trim()) {
+          setCopyFeedback(feedback, "Generate first.");
+          return;
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            setCopyFeedback(feedback, "Copied.");
+          }, function () {
+            output.focus();
+            output.select();
+            setCopyFeedback(feedback, "Select text to copy.");
+          });
+          return;
+        }
+        output.focus();
+        output.select();
+        setCopyFeedback(feedback, "Select text to copy.");
+      }
+
+      function generateLaneSync(laneId) {
+        state.lanes[laneId].compactSync = buildCompactSync(laneId);
+        saveState();
+        hydrateLane(laneId);
+        return state.lanes[laneId].compactSync;
       }
 
       laneIds.forEach(function (laneId) {
@@ -263,6 +364,25 @@
           saveState();
           renderHistory(laneId);
         });
+        lane.querySelector('[data-action="generate-sync"]').addEventListener("click", function () {
+          generateLaneSync(laneId);
+          setCopyFeedback(lane.querySelector("[data-copy-status]"), "Generated.");
+        });
+        lane.querySelector('[data-action="copy-sync"]').addEventListener("click", function () {
+          var output = lane.querySelector('[data-field="compactSync"]');
+          var text = state.lanes[laneId].compactSync || generateLaneSync(laneId);
+          copyText(text, output, lane.querySelector("[data-copy-status]"));
+        });
+      });
+
+      document.getElementById("copy-all-syncs").addEventListener("click", function () {
+        var output = document.getElementById("all-compact-sync-output");
+        var feedback = document.getElementById("all-copy-status");
+        var allSyncs = laneIds.map(function (laneId) {
+          return state.lanes[laneId].compactSync || generateLaneSync(laneId);
+        }).join("\n\n---\n\n");
+        output.value = allSyncs;
+        copyText(allSyncs, output, feedback);
       });
 
       var inboxText = document.getElementById("sync-inbox-text");

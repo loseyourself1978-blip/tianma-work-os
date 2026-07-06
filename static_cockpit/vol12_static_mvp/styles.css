@@ -231,6 +231,7 @@ button {
 
 .sync-inbox,
 .codex-pad,
+.compact-sync-global,
 .lane-card {
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -238,7 +239,8 @@ button {
 }
 
 .sync-inbox,
-.codex-pad {
+.codex-pad,
+.compact-sync-global {
   padding: 18px;
 }
 
@@ -306,6 +308,10 @@ select {
 
 textarea {
   resize: vertical;
+}
+
+textarea[readonly] {
+  background: #f7f9fc;
 }
 
 select {
@@ -392,6 +398,42 @@ select {
   color: #9ca3af;
 }
 
+.compact-sync-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  align-items: center;
+}
+
+.compact-sync-actions button {
+  min-height: 38px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.compact-sync-actions .copy-status {
+  grid-column: 1 / -1;
+  min-height: 18px;
+}
+
+.compact-sync-global {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(120px, 180px);
+  gap: 14px;
+  align-items: end;
+  margin-top: 14px;
+}
+
+.compact-sync-global h2 {
+  margin-top: 6px;
+  font-size: 22px;
+  line-height: 1.18;
+}
+
+.global-sync-output {
+  grid-column: 1 / -1;
+}
+
 .codex-pad {
   margin-top: 14px;
 }
@@ -445,7 +487,8 @@ select {
   .command-hero,
   .sync-form,
   .codex-grid,
-  .codex-actions {
+  .codex-actions,
+  .compact-sync-global {
     grid-template-columns: 1fr;
   }
 
