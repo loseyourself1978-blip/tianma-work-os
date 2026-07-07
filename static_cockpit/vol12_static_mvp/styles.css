@@ -272,6 +272,10 @@ button {
   gap: 12px;
 }
 
+.sync-confirmation {
+  min-height: 18px;
+}
+
 label {
   display: grid;
   gap: 7px;

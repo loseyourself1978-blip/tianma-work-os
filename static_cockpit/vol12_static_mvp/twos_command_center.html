@@ -44,7 +44,9 @@
               <option value="twos">TWOS</option>
             </select>
           </label>
+          <button type="button" id="auto-apply-sync">Auto Detect + Apply Sync</button>
           <button class="start-button" type="submit">Add Sync</button>
+          <span class="copy-status sync-confirmation" id="sync-apply-status" aria-live="polite"></span>
         </div>
       </form>
     </section>
@@ -238,6 +240,11 @@
         }
       };
       var implementationBoundary = "Browser-local compact sync only; no backend, API, scheduler, live trading, live betting, or execution.";
+      var detectionRules = {
+        ldd: [/\bldd\b/i, /longbridge/i, /\bgoog\b/i, /\bnvda\b/i, /strategy book/i, /binance/i],
+        wc: [/2026wc/i, /world cup/i, /polymarket/i, /bankroll/i, /scoreline/i, /betting ledger/i, /match ledger/i, /\bodds\b/i, /\bstake\b/i, /\bwager\b/i, /\bfixture\b/i, /\bmatch\b/i, /\bbet\b/i],
+        twos: [/\btwos\b/i, /\bmvp\b/i, /codex/i, /\bcommit\b/i, /origin\/main/i, /command center/i]
+      };
       var defaultState = {
         lanes: {
           ldd: { status: "Active", latestSync: "", activeNext: "", compactSync: "", history: [] },
@@ -344,6 +351,95 @@
         return state.lanes[laneId].compactSync;
       }
 
+      function laneLabel(laneId) {
+        if (laneId === "wc") return "2026WC";
+        return laneId.toUpperCase();
+      }
+
+      function shortText(value, limit) {
+        var compact = value.replace(/\s+/g, " ").trim();
+        if (compact.length <= limit) return compact;
+        return compact.slice(0, limit - 1) + "...";
+      }
+
+      function extractLabeledValue(text, pattern) {
+        var lines = text.split(/\r?\n/);
+        for (var index = 0; index < lines.length; index += 1) {
+          var line = lines[index].trim().replace(/^[-*]\s*/, "");
+          var match = line.match(pattern);
+          if (match && match[2]) return shortText(match[2], 120);
+        }
+        return "";
+      }
+
+      function extractShortStatus(text) {
+        return extractLabeledValue(text, /^(state|progress|decision)\s*(?::|：|-|–|—)\s*(.+)$/i);
+      }
+
+      function extractActiveNext(text) {
+        return extractLabeledValue(text, /^(one\s+active\s+next|next)\s*(?::|：|-|–|—)\s*(.+)$/i);
+      }
+
+      function resolveLaneStatus(statusText) {
+        var lower = statusText.toLowerCase();
+        if (/block|missing|cannot|can't|fail|reject|stop|no-go|no go|waiting/.test(lower)) return "Blocked";
+        if (/pause|paused|hold|standby/.test(lower)) return "Paused";
+        if (/review|veto|pending|needs|approval|check|verify/.test(lower)) return "Needs Review";
+        return "Active";
+      }
+
+      function detectLane(text, fallbackLaneId) {
+        var scores = {};
+        laneIds.forEach(function (laneId) {
+          scores[laneId] = detectionRules[laneId].reduce(function (count, rule) {
+            return count + (rule.test(text) ? 1 : 0);
+          }, 0);
+        });
+        var bestLane = fallbackLaneId;
+        var bestScore = 0;
+        var tied = false;
+        laneIds.forEach(function (laneId) {
+          if (scores[laneId] > bestScore) {
+            bestLane = laneId;
+            bestScore = scores[laneId];
+            tied = false;
+          } else if (scores[laneId] === bestScore && bestScore > 0) {
+            tied = true;
+          }
+        });
+        if (!bestScore) return { laneId: fallbackLaneId, matched: false, tied: false };
+        if (tied && scores[fallbackLaneId] === bestScore) {
+          return { laneId: fallbackLaneId, matched: true, tied: true };
+        }
+        return { laneId: bestLane, matched: true, tied: tied };
+      }
+
+      function applySyncToLane(laneId, text) {
+        var stamp = new Date().toLocaleString();
+        var compactText = shortText(text, 220);
+        var statusText = extractShortStatus(text);
+        var nextText = extractActiveNext(text);
+        var historyParts = [stamp + " - " + compactText];
+
+        state.lanes[laneId].latestSync = text;
+        if (statusText) {
+          state.lanes[laneId].status = resolveLaneStatus(statusText);
+          historyParts.push("Status: " + statusText);
+        }
+        if (nextText) {
+          state.lanes[laneId].activeNext = nextText;
+          historyParts.push("Next: " + nextText);
+        }
+        state.lanes[laneId].compactSync = "";
+        state.lanes[laneId].history.unshift(historyParts.join(" | "));
+        state.lanes[laneId].history = state.lanes[laneId].history.slice(0, 10);
+        state.inbox = "";
+        inboxText.value = "";
+        saveState();
+        hydrateLane(laneId);
+        return { statusText: statusText, nextText: nextText };
+      }
+
       laneIds.forEach(function (laneId) {
         hydrateLane(laneId);
         var lane = document.querySelector('[data-lane="' + laneId + '"]');
@@ -387,6 +483,7 @@
 
       var inboxText = document.getElementById("sync-inbox-text");
       var syncTarget = document.getElementById("sync-target");
+      var syncApplyStatus = document.getElementById("sync-apply-status");
       inboxText.value = state.inbox;
       syncTarget.value = state.target;
 
@@ -399,20 +496,27 @@
         saveState();
       });
 
+      document.getElementById("auto-apply-sync").addEventListener("click", function () {
+        var text = inboxText.value.trim();
+        if (!text) {
+          syncApplyStatus.textContent = "Paste sync first.";
+          return;
+        }
+        var detection = detectLane(text, syncTarget.value);
+        var laneId = detection.laneId;
+        syncTarget.value = laneId;
+        state.target = laneId;
+        applySyncToLane(laneId, text);
+        syncApplyStatus.textContent = "Applied to " + laneLabel(laneId) + (detection.matched ? "" : " (selected lane)");
+      });
+
       document.getElementById("sync-form").addEventListener("submit", function (event) {
         event.preventDefault();
         var text = inboxText.value.trim();
         if (!text) return;
         var laneId = syncTarget.value;
-        var stamp = new Date().toLocaleString();
-        var compactText = text.replace(/\s+/g, " ").slice(0, 220);
-        state.lanes[laneId].latestSync = text;
-        state.lanes[laneId].history.unshift(stamp + " - " + compactText);
-        state.lanes[laneId].history = state.lanes[laneId].history.slice(0, 10);
-        state.inbox = "";
-        inboxText.value = "";
-        saveState();
-        hydrateLane(laneId);
+        applySyncToLane(laneId, text);
+        syncApplyStatus.textContent = "Applied to " + laneLabel(laneId);
       });
 
       var instruction = document.getElementById("codex-instruction");
