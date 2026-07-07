@@ -29,6 +29,7 @@
       <div class="section-title">
         <p class="version">Global Sync Inbox</p>
         <h2>Paste once, assign to a lane.</h2>
+        <p class="hub-note">TWOS is the hub. LDD, 2026WC, and Codex sync only through TWOS.</p>
       </div>
       <form class="sync-form" id="sync-form">
         <label>
@@ -37,15 +38,15 @@
         </label>
         <div class="sync-actions">
           <label>
-            <span>Assign to</span>
+            <span>Manual override / fallback</span>
             <select id="sync-target">
-              <option value="ldd">LDD</option>
-              <option value="wc">2026WC</option>
-              <option value="twos">TWOS</option>
+              <option value="auto">Auto detect</option>
+              <option value="ldd">LDD override</option>
+              <option value="wc">2026WC override</option>
+              <option value="twos">TWOS override</option>
             </select>
           </label>
-          <button type="button" id="auto-apply-sync">Auto Detect + Apply Sync</button>
-          <button class="start-button" type="submit">Add Sync</button>
+          <button class="start-button" type="button" id="auto-apply-sync">Auto Apply Sync</button>
           <span class="copy-status sync-confirmation" id="sync-apply-status" aria-live="polite"></span>
         </div>
       </form>
@@ -69,7 +70,7 @@
         </div>
         <label>
           <span>Latest sync</span>
-          <textarea data-field="latestSync" rows="6" placeholder="Current LDD state, source of truth, exposure notes, and sync summary."></textarea>
+          <textarea data-field="latestSync" rows="4" placeholder="Current LDD state, source of truth, exposure notes, and sync summary."></textarea>
         </label>
         <label>
           <span>One Active Next / 下一步唯一动作</span>
@@ -78,11 +79,11 @@
         </label>
         <label>
           <span>Compact Sync</span>
-          <textarea data-field="compactSync" rows="7" readonly placeholder="Generate a compact sync for this lane."></textarea>
+          <textarea data-field="compactSync" rows="5" readonly placeholder="Generate a compact sync for this lane."></textarea>
         </label>
         <div class="compact-sync-actions">
           <button type="button" data-action="generate-sync">Generate Compact Sync</button>
-          <button type="button" data-action="copy-sync">Copy Compact Sync</button>
+          <button type="button" data-action="copy-sync">Copy LDD Handoff</button>
           <span class="copy-status" data-copy-status aria-live="polite"></span>
         </div>
         <div>
@@ -111,7 +112,7 @@
         </div>
         <label>
           <span>Latest sync</span>
-          <textarea data-field="latestSync" rows="6" placeholder="Current match-day baseline, review result, odds notes, and next prediction scope."></textarea>
+          <textarea data-field="latestSync" rows="4" placeholder="Current match-day baseline, review result, odds notes, and next prediction scope."></textarea>
         </label>
         <label>
           <span>One Active Next / 下一步唯一动作</span>
@@ -120,11 +121,11 @@
         </label>
         <label>
           <span>Compact Sync</span>
-          <textarea data-field="compactSync" rows="7" readonly placeholder="Generate a compact sync for this lane."></textarea>
+          <textarea data-field="compactSync" rows="5" readonly placeholder="Generate a compact sync for this lane."></textarea>
         </label>
         <div class="compact-sync-actions">
           <button type="button" data-action="generate-sync">Generate Compact Sync</button>
-          <button type="button" data-action="copy-sync">Copy Compact Sync</button>
+          <button type="button" data-action="copy-sync">Copy 2026WC Handoff</button>
           <span class="copy-status" data-copy-status aria-live="polite"></span>
         </div>
         <div>
@@ -153,7 +154,7 @@
         </div>
         <label>
           <span>Latest sync</span>
-          <textarea data-field="latestSync" rows="6" placeholder="Current product goal, approved scope, blocker, and Codex-ready context."></textarea>
+          <textarea data-field="latestSync" rows="4" placeholder="Current product goal, approved scope, blocker, and Codex-ready context."></textarea>
         </label>
         <label>
           <span>One Active Next / 下一步唯一动作</span>
@@ -162,11 +163,11 @@
         </label>
         <label>
           <span>Compact Sync</span>
-          <textarea data-field="compactSync" rows="7" readonly placeholder="Generate a compact sync for this lane."></textarea>
+          <textarea data-field="compactSync" rows="5" readonly placeholder="Generate a compact sync for this lane."></textarea>
         </label>
         <div class="compact-sync-actions">
           <button type="button" data-action="generate-sync">Generate Compact Sync</button>
-          <button type="button" data-action="copy-sync">Copy Compact Sync</button>
+          <button type="button" data-action="copy-sync">Copy TWOS Handoff</button>
           <span class="copy-status" data-copy-status aria-live="polite"></span>
         </div>
         <div>
@@ -215,7 +216,7 @@
             <option>Blocked</option>
           </select>
         </label>
-        <button class="start-button" id="copy-instruction" type="button">Copy Instruction</button>
+        <button class="start-button" id="copy-instruction" type="button">Copy Codex Instruction</button>
         <span class="copy-status" id="copy-status" aria-live="polite"></span>
       </div>
     </section>
@@ -252,7 +253,7 @@
           twos: { status: "Active", latestSync: "", activeNext: "", compactSync: "", history: [] }
         },
         inbox: "",
-        target: "ldd",
+        target: "auto",
         codex: { instruction: "", feedback: "", status: "Draft" }
       };
 
@@ -266,6 +267,7 @@
             saved.lanes[laneId] = Object.assign({}, defaultState.lanes[laneId], saved.lanes[laneId]);
           });
           saved.codex = Object.assign({}, defaultState.codex, saved.codex);
+          if (["auto"].concat(laneIds).indexOf(saved.target) === -1) saved.target = "auto";
           return Object.assign({}, defaultState, saved);
         } catch (error) {
           return defaultState;
@@ -389,6 +391,7 @@
       }
 
       function detectLane(text, fallbackLaneId) {
+        fallbackLaneId = laneIds.indexOf(fallbackLaneId) === -1 ? "twos" : fallbackLaneId;
         var scores = {};
         laneIds.forEach(function (laneId) {
           scores[laneId] = detectionRules[laneId].reduce(function (count, rule) {
@@ -412,6 +415,23 @@
           return { laneId: fallbackLaneId, matched: true, tied: true };
         }
         return { laneId: bestLane, matched: true, tied: tied };
+      }
+
+      function resolveInboundLane(text) {
+        if (syncTarget.value !== "auto") {
+          return { laneId: syncTarget.value, matched: false, override: true, tied: false };
+        }
+        var detection = detectLane(text, "twos");
+        detection.override = false;
+        return detection;
+      }
+
+      function applyStatusMessage(route) {
+        var message = "Applied locally to " + laneLabel(route.laneId);
+        if (route.override) return message + " (manual override)";
+        if (!route.matched) return message + " (fallback)";
+        if (route.tied) return message + " (tie fallback)";
+        return message;
       }
 
       function applySyncToLane(laneId, text) {
@@ -502,21 +522,18 @@
           syncApplyStatus.textContent = "Paste sync first.";
           return;
         }
-        var detection = detectLane(text, syncTarget.value);
-        var laneId = detection.laneId;
-        syncTarget.value = laneId;
-        state.target = laneId;
+        var route = resolveInboundLane(text);
+        var laneId = route.laneId;
+        state.target = syncTarget.value;
         applySyncToLane(laneId, text);
-        syncApplyStatus.textContent = "Applied to " + laneLabel(laneId) + (detection.matched ? "" : " (selected lane)");
+        syncApplyStatus.textContent = applyStatusMessage(route);
       });
 
       document.getElementById("sync-form").addEventListener("submit", function (event) {
         event.preventDefault();
         var text = inboxText.value.trim();
         if (!text) return;
-        var laneId = syncTarget.value;
-        applySyncToLane(laneId, text);
-        syncApplyStatus.textContent = "Applied to " + laneLabel(laneId);
+        document.getElementById("auto-apply-sync").click();
       });
 
       var instruction = document.getElementById("codex-instruction");
