@@ -18,12 +18,12 @@
 
     <section class="workbench-hero" aria-label="Workbench header">
       <div>
-        <p class="version">Vol.15 MVP-6</p>
+        <p class="version">Vol.15 MVP-7</p>
         <h1>TWOS 1.0 Unified AI Team Workbench</h1>
-        <p class="subheadline">One command center for LDD, 2026WC, and TWOS Product Development, grounded in manual review and static milestone acceptance.</p>
+        <p class="subheadline">One command center for LDD, 2026WC, and TWOS Product Development, now with a simulated composition planner for choosing the minimum useful AI team.</p>
       </div>
       <aside class="boundary-notice" aria-label="Boundary notice">
-        <p>No backend, API, scheduler, real tool integration, auto-send, live trading, live betting, or real multi-model routing is active.</p>
+        <p>No backend, API, scheduler, real tool integration, auto-send, live trading, live betting, or real multi-model routing has been opened.</p>
       </aside>
     </section>
 
@@ -129,8 +129,51 @@
     <section class="workbench-region ai-team-zone" aria-label="AI team zone">
       <div class="section-title">
         <p class="version">AI Team Zone</p>
-        <h2>Simulated AI Team / AI Board composition.</h2>
-        <p class="hub-note">These are display profiles for planning and verification. They are not live provider integrations or autonomous agents.</p>
+        <h2>Simulated AI Team Composition Workbench.</h2>
+        <p class="hub-note">This is a simulated composition planner. It does not call external models.</p>
+      </div>
+
+      <div class="composition-layout">
+        <div class="workbench-card composition-controls" aria-label="AI composition controls">
+          <h3>Composition controls</h3>
+          <div class="control-grid">
+            <label>
+              <span>Project</span>
+              <select id="composition-project">
+                <option value="ldd">LDD</option>
+                <option value="wc">2026WC</option>
+                <option value="twos">TWOS Product Development</option>
+              </select>
+            </label>
+            <label>
+              <span>Task type</span>
+              <select id="composition-task-type">
+                <option value="Strategy Review">Strategy Review</option>
+                <option value="Product Build">Product Build</option>
+                <option value="Risk Check">Risk Check</option>
+                <option value="Sync Intake">Sync Intake</option>
+                <option value="Acceptance Review">Acceptance Review</option>
+              </select>
+            </label>
+            <label>
+              <span>Urgency</span>
+              <select id="composition-urgency">
+                <option value="Normal">Normal</option>
+                <option value="High">High</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <article class="workbench-card recommendation-card" aria-label="Minimum Effective Role Recommendation">
+          <div class="card-kicker">
+            <span>Recommendation</span>
+            <strong id="role-count">Default: 2 roles</strong>
+          </div>
+          <h3>Minimum Effective Role Count</h3>
+          <div class="team-chip-row" id="recommended-team" aria-label="Recommended simulated team"></div>
+          <p class="recommendation-copy" id="team-why">Select a project and task type to view the minimum useful simulated team.</p>
+        </article>
       </div>
 
       <div class="profile-grid">
@@ -151,9 +194,27 @@
         </article>
       </div>
 
+      <div class="preset-grid" aria-label="Project-specific composition presets">
+        <article class="workbench-card preset-card" data-preset="ldd">
+          <h3>LDD preset</h3>
+          <p><strong>Commander + Verifier</strong></p>
+          <p>Risk and boundary emphasis keeps trading analysis separated from any live execution path.</p>
+        </article>
+        <article class="workbench-card preset-card" data-preset="wc">
+          <h3>2026WC preset</h3>
+          <p><strong>Commander + Verifier</strong></p>
+          <p>Payout and risk-tail emphasis keeps prediction review separate from betting execution.</p>
+        </article>
+        <article class="workbench-card preset-card" data-preset="twos">
+          <h3>TWOS Product Development preset</h3>
+          <p><strong>Commander + Builder + Verifier</strong></p>
+          <p>Build and acceptance emphasis supports static UI/product implementation without backend or tool integration.</p>
+        </article>
+      </div>
+
       <div class="rule-band">
-        <p>Add roles/models only when they improve decision quality, execution quality, or verification.</p>
-        <strong>No real Gemini, Claude, calendar, Outlook, IM, or external tool integration exists yet.</strong>
+        <p>Add roles/models only when they improve decision quality, execution quality, or verification. Default to 2 roles; add Verifier when boundary, risk, or acceptance quality matters. Do not add roles for decoration.</p>
+        <strong>LDD and 2026WC support analysis/review only; no live trading or betting execution. TWOS Product Development supports planning and UI/product implementation only. No real Gemini, Claude, calendar, Outlook, IM, or external tool integration exists yet.</strong>
       </div>
     </section>
 
@@ -172,32 +233,36 @@
         <li><span>06</span><strong>Sync</strong></li>
       </ol>
 
-      <article class="workbench-card task-card" aria-label="Static sample task">
+      <article class="workbench-card task-card" aria-label="Composition-linked task preview">
         <div class="card-kicker">
-          <span>Sample task</span>
-          <strong>Static</strong>
+          <span>Task preview</span>
+          <strong>Local UI state only</strong>
         </div>
-        <h3>Build Unified Project Workbench UI</h3>
+        <h3 id="task-preview-title">Build Unified Project Workbench UI</h3>
         <dl class="task-fields">
           <div>
-            <dt>Assigned profile</dt>
-            <dd>GPT-5.4 / Builder with GPT-5.3 / Verifier review</dd>
+            <dt>Selected project</dt>
+            <dd id="task-project">TWOS Product Development</dd>
           </div>
           <div>
-            <dt>Status</dt>
-            <dd>Execution placeholder visible; no real execution trigger</dd>
+            <dt>Task type</dt>
+            <dd id="task-type">Product Build</dd>
+          </div>
+          <div>
+            <dt>Recommended team</dt>
+            <dd id="task-team">GPT-5.5 Commander + GPT-5.4 Builder + GPT-5.3 Verifier</dd>
           </div>
           <div>
             <dt>Output expected</dt>
-            <dd>One static workbench surface showing projects, simulated team, lifecycle, review, acceptance, and sync areas</dd>
+            <dd id="task-output">Static UI/product structure with acceptance-ready implementation notes</dd>
           </div>
           <div>
             <dt>Acceptance gate</dt>
-            <dd>User confirms MVP-6 UI surface satisfies Vol.15 architecture contract</dd>
+            <dd id="task-acceptance">User confirms MVP-7 composition workbench maps context to the minimum useful simulated team</dd>
           </div>
           <div>
             <dt>Boundary risk</dt>
-            <dd>Must not auto-send, call tools, connect accounts, trade, bet, or claim real multi-model execution</dd>
+            <dd id="task-boundary">Must not auto-send, call tools, connect accounts, trade, bet, or claim real multi-model execution</dd>
           </div>
         </dl>
       </article>
@@ -223,27 +288,39 @@
         <article class="workbench-card review-card">
           <h3>Stage self-check summary</h3>
           <ul class="check-list">
-            <li>Stage A: visible shell and top-level zones.</li>
-            <li>Stage B: three static project cards.</li>
-            <li>Stage C: simulated profiles only.</li>
-            <li>Stage D: lifecycle lane and sample task.</li>
-            <li>Stage E: review, acceptance, and compact sync surface.</li>
+            <li>Stage A: composition controls for project, task type, and urgency.</li>
+            <li>Stage B: Minimum Effective Role Count and why-this-team explanation.</li>
+            <li>Stage C: distinct project presets with execution boundaries.</li>
+            <li>Stage D: selected composition updates the task preview.</li>
+            <li>Stage E: MVP-7 acceptance checklist and compact sync placeholder.</li>
           </ul>
         </article>
 
         <article class="workbench-card review-card">
-          <h3>Milestone acceptance checklist</h3>
+          <h3>MVP-7 milestone acceptance checklist</h3>
           <ul class="check-list">
-            <li>LDD, 2026WC, and TWOS Product Development are visible together.</li>
-            <li>AI Team / AI Board composition is labeled as simulation.</li>
-            <li>Task lifecycle runs from intake to sync.</li>
-            <li>Boundary notice is visible before release acceptance.</li>
+            <li>Can select or view project/task context.</li>
+            <li>Can see recommended simulated team.</li>
+            <li>Can see why the team is selected.</li>
+            <li>Can see Minimum Effective Role Count.</li>
+            <li>Can see lifecycle impact.</li>
+            <li>Can see boundaries.</li>
+          </ul>
+        </article>
+
+        <article class="workbench-card review-card">
+          <h3>Owner Acceptance checklist</h3>
+          <ul class="check-list">
+            <li>Project/task selectors are understandable.</li>
+            <li>Recommended profiles feel minimal, not theatrical.</li>
+            <li>Lifecycle preview matches the selected context.</li>
+            <li>Boundary warnings are visible enough for acceptance.</li>
           </ul>
         </article>
 
         <article class="workbench-card review-card compact-sync-card">
           <h3>Compact Sync output placeholder</h3>
-          <p class="sync-placeholder">Vol.15 MVP-6 Sync: Unified Project Workbench UI created; backend/API/tool integration closed; next pending acceptance.</p>
+          <p class="sync-placeholder">Vol.15 MVP-7 Sync: Simulated AI Team Composition Workbench added; operator can map project/task context to minimum useful AI profiles; no real multi-model or tool integration opened.</p>
         </article>
       </div>
     </section>
@@ -252,5 +329,120 @@
       <p>Strategy belongs to the user. AI assists planning, execution tracking, and review. No live execution without explicit approval.</p>
     </section>
   </main>
+  <script>
+    (function () {
+      var profiles = {
+        commander: "GPT-5.5 Commander",
+        builder: "GPT-5.4 Builder",
+        verifier: "GPT-5.3 Verifier"
+      };
+      var projectData = {
+        ldd: {
+          label: "LDD",
+          preset: [profiles.commander, profiles.verifier],
+          output: "Risk-aware review notes and source-of-truth framing",
+          acceptance: "User confirms analysis remains review-only and no trading execution is implied",
+          boundary: "Analysis/review only; no broker, market data, Binance, order, or account mutation path",
+          why: "LDD is risk-sensitive, so Commander frames the decision and Verifier checks boundary, exposure, and acceptance evidence."
+        },
+        wc: {
+          label: "2026WC",
+          preset: [profiles.commander, profiles.verifier],
+          output: "Prediction review framing with payout and risk-tail notes",
+          acceptance: "User confirms prediction review remains separate from betting execution",
+          boundary: "Analysis/review only; no live odds feed, bookmaker connection, wager action, or auto-published prediction",
+          why: "2026WC needs decision framing plus risk-tail verification, especially where favorite-score paths can be misread."
+        },
+        twos: {
+          label: "TWOS Product Development",
+          preset: [profiles.commander, profiles.builder, profiles.verifier],
+          output: "Static UI/product structure with acceptance-ready implementation notes",
+          acceptance: "User confirms MVP-7 composition workbench maps context to the minimum useful simulated team",
+          boundary: "Planning and UI/product implementation only; no backend, API, scheduler, schema, validator, or tool integration",
+          why: "TWOS product work needs Commander synthesis, Builder structure, and Verifier acceptance/boundary review."
+        }
+      };
+      var taskAdditions = {
+        "Product Build": profiles.builder,
+        "Risk Check": profiles.verifier,
+        "Acceptance Review": profiles.verifier,
+        "Sync Intake": profiles.verifier
+      };
+
+      var projectInput = document.getElementById("composition-project");
+      var taskInput = document.getElementById("composition-task-type");
+      var urgencyInput = document.getElementById("composition-urgency");
+      var recommendedTeam = document.getElementById("recommended-team");
+      var roleCount = document.getElementById("role-count");
+      var teamWhy = document.getElementById("team-why");
+      var taskProject = document.getElementById("task-project");
+      var taskType = document.getElementById("task-type");
+      var taskTeam = document.getElementById("task-team");
+      var taskOutput = document.getElementById("task-output");
+      var taskAcceptance = document.getElementById("task-acceptance");
+      var taskBoundary = document.getElementById("task-boundary");
+      var taskPreviewTitle = document.getElementById("task-preview-title");
+
+      function uniqueTeam(team) {
+        return team.filter(function (profile, index) {
+          return team.indexOf(profile) === index;
+        });
+      }
+
+      function resolveTeam(projectKey, taskTypeValue, urgencyValue) {
+        var team = projectData[projectKey].preset.slice();
+        var addition = taskAdditions[taskTypeValue];
+        if (addition) team.push(addition);
+        if (urgencyValue === "High") team.push(profiles.verifier);
+        if (projectKey !== "twos" && taskTypeValue === "Product Build") team = [profiles.commander, profiles.verifier];
+        return uniqueTeam(team);
+      }
+
+      function renderTeam(team) {
+        recommendedTeam.innerHTML = "";
+        team.forEach(function (profile) {
+          var chip = document.createElement("span");
+          chip.textContent = profile;
+          recommendedTeam.appendChild(chip);
+        });
+      }
+
+      function renderPresetState(projectKey) {
+        document.querySelectorAll("[data-preset]").forEach(function (preset) {
+          preset.classList.toggle("is-active", preset.getAttribute("data-preset") === projectKey);
+        });
+      }
+
+      function updateComposition() {
+        var projectKey = projectInput.value;
+        var taskTypeValue = taskInput.value;
+        var urgencyValue = urgencyInput.value;
+        var data = projectData[projectKey];
+        var team = resolveTeam(projectKey, taskTypeValue, urgencyValue);
+        var extraWhy = urgencyValue === "High" ? " High urgency keeps verification visible." : "";
+
+        renderTeam(team);
+        renderPresetState(projectKey);
+        roleCount.textContent = "Minimum useful team: " + team.length + " roles";
+        teamWhy.textContent = data.why + " Task type: " + taskTypeValue + "." + extraWhy + " This remains a local simulation and does not call external models.";
+        taskProject.textContent = data.label;
+        taskType.textContent = taskTypeValue + " / " + urgencyValue;
+        taskTeam.textContent = team.join(" + ");
+        taskOutput.textContent = data.output;
+        taskAcceptance.textContent = data.acceptance;
+        taskBoundary.textContent = data.boundary;
+        taskPreviewTitle.textContent = taskTypeValue + " for " + data.label;
+      }
+
+      [projectInput, taskInput, urgencyInput].forEach(function (input) {
+        input.addEventListener("change", updateComposition);
+      });
+
+      projectInput.value = "twos";
+      taskInput.value = "Product Build";
+      urgencyInput.value = "Normal";
+      updateComposition();
+    }());
+  </script>
 </body>
 </html>

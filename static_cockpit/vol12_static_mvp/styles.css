@@ -516,7 +516,9 @@ select {
 
 .project-card-grid,
 .profile-grid,
-.review-grid {
+.review-grid,
+.composition-layout,
+.preset-grid {
   display: grid;
   gap: 14px;
 }
@@ -526,8 +528,14 @@ select {
 }
 
 .profile-grid,
-.review-grid {
+.review-grid,
+.composition-layout {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.preset-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 14px;
 }
 
 .workbench-card {
@@ -547,10 +555,24 @@ select {
 .project-card,
 .task-card,
 .review-card,
-.profile-card {
+.profile-card,
+.composition-controls,
+.recommendation-card,
+.preset-card {
   display: grid;
   gap: 12px;
   align-content: start;
+}
+
+.composition-controls h3,
+.recommendation-card h3 {
+  margin-top: 0;
+}
+
+.control-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .card-kicker {
@@ -611,6 +633,40 @@ select {
   font-size: 14px;
   font-weight: 700;
   line-height: 1.45;
+}
+
+.team-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.team-chip-row span {
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: #f7f9fc;
+  padding: 7px 10px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.recommendation-copy,
+.preset-card p {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.preset-card p strong {
+  color: var(--ink);
+}
+
+.preset-card.is-active {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .rule-band {
@@ -719,6 +775,9 @@ select {
   .project-card-grid,
   .profile-grid,
   .review-grid,
+  .composition-layout,
+  .control-grid,
+  .preset-grid,
   .rule-band {
     grid-template-columns: 1fr;
   }
