@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TWOS Command Center MVP</title>
+  <title>TWOS 1.0 Unified AI Team Workbench</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <main class="page command-page" aria-label="TWOS Command Center MVP">
+  <main class="page command-page workbench-page" aria-label="TWOS 1.0 Unified AI Team Workbench">
     <header class="topbar command-topbar">
       <p class="brand">TWOS</p>
       <nav class="top-actions" aria-label="TWOS navigation">
@@ -16,566 +16,241 @@
       </nav>
     </header>
 
-    <section class="command-hero" aria-label="Command center header">
+    <section class="workbench-hero" aria-label="Workbench header">
       <div>
-        <p class="version">MVP-1</p>
-        <h1>TWOS Command Center</h1>
-        <p class="subheadline">One local page for LDD, 2026WC, TWOS product work, and manual Codex handoff.</p>
+        <p class="version">Vol.15 MVP-6</p>
+        <h1>TWOS 1.0 Unified AI Team Workbench</h1>
+        <p class="subheadline">One command center for LDD, 2026WC, and TWOS Product Development, grounded in manual review and static milestone acceptance.</p>
       </div>
-      <p class="safety-note">MVP safety: no live orders, no betting/trading execution, no backend execution. Codex handoff is manual unless an existing integration already exists.</p>
+      <aside class="boundary-notice" aria-label="Boundary notice">
+        <p>No backend, API, scheduler, real tool integration, auto-send, live trading, live betting, or real multi-model routing is active.</p>
+      </aside>
     </section>
 
-    <section class="sync-inbox" aria-label="Global Sync Inbox">
+    <section class="workbench-region project-zone" aria-label="Project zone">
       <div class="section-title">
-        <p class="version">Global Sync Inbox</p>
-        <h2>Paste once, assign to a lane.</h2>
-        <p class="hub-note">TWOS is the hub. LDD, 2026WC, and Codex sync only through TWOS.</p>
+        <p class="version">Project Zone</p>
+        <h2>Three project lanes share one command center.</h2>
       </div>
-      <form class="sync-form" id="sync-form">
-        <label>
-          <span>Incoming sync</span>
-          <textarea id="sync-inbox-text" rows="5" placeholder="Paste a new LDD, 2026WC, or TWOS sync here."></textarea>
-        </label>
-        <div class="sync-actions">
-          <label>
-            <span>Manual override / fallback</span>
-            <select id="sync-target">
-              <option value="auto">Auto detect</option>
-              <option value="ldd">LDD override</option>
-              <option value="wc">2026WC override</option>
-              <option value="twos">TWOS override</option>
-            </select>
-          </label>
-          <button class="start-button" type="button" id="auto-apply-sync">Auto Apply Sync</button>
-          <span class="copy-status sync-confirmation" id="sync-apply-status" aria-live="polite"></span>
-        </div>
-      </form>
-    </section>
 
-    <section class="lane-grid" aria-label="Project lanes">
-      <article class="lane-card" data-lane="ldd">
-        <div class="lane-heading">
-          <p class="version">LDD</p>
-          <select data-field="status" aria-label="LDD status">
-            <option>Active</option>
-            <option>Needs Review</option>
-            <option>Blocked</option>
-            <option>Paused</option>
-          </select>
-        </div>
-        <h2>LLM Daredevil Desk</h2>
-        <div class="role-pair" aria-label="LDD roles">
-          <span>Market Analyst</span>
-          <span>Risk/Execution Analyst</span>
-        </div>
-        <label>
-          <span>Latest sync</span>
-          <textarea data-field="latestSync" rows="4" placeholder="Current LDD state, source of truth, exposure notes, and sync summary."></textarea>
-        </label>
-        <label>
-          <span>One Active Next / 下一步唯一动作</span>
-          <small class="field-help">Use this for the single current next action for this project, not a long-term plan.</small>
-          <input data-field="activeNext" type="text" placeholder="Next Pre Review with Active Veto before any orders" />
-        </label>
-        <label>
-          <span>Compact Sync</span>
-          <textarea data-field="compactSync" rows="5" readonly placeholder="Generate a compact sync for this lane."></textarea>
-        </label>
-        <div class="compact-sync-actions">
-          <button type="button" data-action="generate-sync">Generate Compact Sync</button>
-          <button type="button" data-action="copy-sync">Copy LDD Handoff</button>
-          <span class="copy-status" data-copy-status aria-live="polite"></span>
-        </div>
-        <div>
-          <div class="history-head">
-            <span>Local sync history</span>
-            <button type="button" data-action="clear-history">Clear</button>
+      <div class="project-card-grid">
+        <article class="workbench-card project-card" aria-label="LDD project card">
+          <div class="card-kicker">
+            <span>LDD</span>
+            <strong>Seed battlefield</strong>
           </div>
-          <ol class="history-list" data-history></ol>
-        </div>
-      </article>
+          <h3>LLM Daredevil Desk</h3>
+          <dl class="field-list">
+            <div>
+              <dt>Current state</dt>
+              <dd>Runtime discipline and source-of-truth separation remain active planning constraints.</dd>
+            </div>
+            <div>
+              <dt>Active next</dt>
+              <dd>Keep LDD surfaced as a manual review lane inside the unified workbench.</dd>
+            </div>
+            <div>
+              <dt>Latest sync</dt>
+              <dd>Vol.15 architecture baseline accepted and synced to origin/main.</dd>
+            </div>
+            <div>
+              <dt>Risk / blocker</dt>
+              <dd>No broker, market data, Binance, order, or account mutation path may be implied.</dd>
+            </div>
+            <div>
+              <dt>Acceptance focus</dt>
+              <dd>Show risk, review, and sync state without live trading execution.</dd>
+            </div>
+          </dl>
+        </article>
 
-      <article class="lane-card" data-lane="wc">
-        <div class="lane-heading">
-          <p class="version">2026WC</p>
-          <select data-field="status" aria-label="2026WC status">
-            <option>Active</option>
-            <option>Needs Review</option>
-            <option>Blocked</option>
-            <option>Paused</option>
-          </select>
-        </div>
-        <h2>World Cup Workbench</h2>
-        <div class="role-pair" aria-label="2026WC roles">
-          <span>Football Intelligence Analyst</span>
-          <span>Odds Actuary</span>
-        </div>
-        <label>
-          <span>Latest sync</span>
-          <textarea data-field="latestSync" rows="4" placeholder="Current match-day baseline, review result, odds notes, and next prediction scope."></textarea>
-        </label>
-        <label>
-          <span>One Active Next / 下一步唯一动作</span>
-          <small class="field-help">Use this for the single current next action for this project, not a long-term plan.</small>
-          <input data-field="activeNext" type="text" placeholder="Wait for odds PDF + balance screenshot, then run v4.8.2 allocation" />
-        </label>
-        <label>
-          <span>Compact Sync</span>
-          <textarea data-field="compactSync" rows="5" readonly placeholder="Generate a compact sync for this lane."></textarea>
-        </label>
-        <div class="compact-sync-actions">
-          <button type="button" data-action="generate-sync">Generate Compact Sync</button>
-          <button type="button" data-action="copy-sync">Copy 2026WC Handoff</button>
-          <span class="copy-status" data-copy-status aria-live="polite"></span>
-        </div>
-        <div>
-          <div class="history-head">
-            <span>Local sync history</span>
-            <button type="button" data-action="clear-history">Clear</button>
+        <article class="workbench-card project-card" aria-label="2026WC project card">
+          <div class="card-kicker">
+            <span>2026WC</span>
+            <strong>Prediction project</strong>
           </div>
-          <ol class="history-list" data-history></ol>
-        </div>
-      </article>
+          <h3>World Cup Workbench</h3>
+          <dl class="field-list">
+            <div>
+              <dt>Current state</dt>
+              <dd>Long-running prediction and review project remains a static project lane.</dd>
+            </div>
+            <div>
+              <dt>Active next</dt>
+              <dd>Represent match-day review flow without odds feed, bookmaker, or betting connection.</dd>
+            </div>
+            <div>
+              <dt>Latest sync</dt>
+              <dd>Correction lesson retained: favorite-win main scenario should not make common favorite-score paths negative unless explicitly contrarian.</dd>
+            </div>
+            <div>
+              <dt>Risk / blocker</dt>
+              <dd>No live odds, betting execution, auto-published prediction, or wager action exists.</dd>
+            </div>
+            <div>
+              <dt>Acceptance focus</dt>
+              <dd>Make prediction review visible as evidence-first planning, not betting automation.</dd>
+            </div>
+          </dl>
+        </article>
 
-      <article class="lane-card" data-lane="twos">
-        <div class="lane-heading">
-          <p class="version">TWOS</p>
-          <select data-field="status" aria-label="TWOS status">
-            <option>Active</option>
-            <option>Needs Review</option>
-            <option>Blocked</option>
-            <option>Paused</option>
-          </select>
-        </div>
-        <h2>Product Development</h2>
-        <div class="role-pair" aria-label="TWOS roles">
-          <span>Product Goal</span>
-          <span>Build/Codex Path</span>
-        </div>
-        <label>
-          <span>Latest sync</span>
-          <textarea data-field="latestSync" rows="4" placeholder="Current product goal, approved scope, blocker, and Codex-ready context."></textarea>
-        </label>
-        <label>
-          <span>One Active Next / 下一步唯一动作</span>
-          <small class="field-help">Use this for the single current next action for this project, not a long-term plan.</small>
-          <input data-field="activeNext" type="text" placeholder="Current product/build next, e.g. MVP-1.1 UX fix" />
-        </label>
-        <label>
-          <span>Compact Sync</span>
-          <textarea data-field="compactSync" rows="5" readonly placeholder="Generate a compact sync for this lane."></textarea>
-        </label>
-        <div class="compact-sync-actions">
-          <button type="button" data-action="generate-sync">Generate Compact Sync</button>
-          <button type="button" data-action="copy-sync">Copy TWOS Handoff</button>
-          <span class="copy-status" data-copy-status aria-live="polite"></span>
-        </div>
-        <div>
-          <div class="history-head">
-            <span>Local sync history</span>
-            <button type="button" data-action="clear-history">Clear</button>
+        <article class="workbench-card project-card" aria-label="TWOS product development project card">
+          <div class="card-kicker">
+            <span>TWOS</span>
+            <strong>Product development</strong>
           </div>
-          <ol class="history-list" data-history></ol>
-        </div>
-      </article>
-    </section>
-
-    <section class="compact-sync-global" aria-label="Global Compact Sync Copy">
-      <div>
-        <p class="version">Compact Sync</p>
-        <h2>Copy all project syncs together.</h2>
+          <h3>Product Development</h3>
+          <dl class="field-list">
+            <div>
+              <dt>Current state</dt>
+              <dd>Vol.15 Phase 15.1 architecture map is the synced product contract.</dd>
+            </div>
+            <div>
+              <dt>Active next</dt>
+              <dd>Build the first visible Unified Project Workbench UI within static scope.</dd>
+            </div>
+            <div>
+              <dt>Latest sync</dt>
+              <dd>Commit 2084d6f is accepted on local main and origin/main.</dd>
+            </div>
+            <div>
+              <dt>Risk / blocker</dt>
+              <dd>Do not start backend, API, scheduler, schema, fixture, validator, or tool integration work.</dd>
+            </div>
+            <div>
+              <dt>Acceptance focus</dt>
+              <dd>Milestone surface must be visible, honest, static, and ready for user review.</dd>
+            </div>
+          </dl>
+        </article>
       </div>
-      <button class="start-button" id="copy-all-syncs" type="button">Copy All Compact Syncs</button>
-      <span class="copy-status" id="all-copy-status" aria-live="polite"></span>
-      <textarea class="global-sync-output" id="all-compact-sync-output" rows="7" readonly placeholder="Generated all-lane compact sync appears here."></textarea>
     </section>
 
-    <section class="codex-pad" aria-label="Codex Command Pad">
+    <section class="workbench-region ai-team-zone" aria-label="AI team zone">
       <div class="section-title">
-        <p class="version">Codex Command Pad</p>
-        <h2>Prepare the handoff without leaving the page.</h2>
+        <p class="version">AI Team Zone</p>
+        <h2>Simulated AI Team / AI Board composition.</h2>
+        <p class="hub-note">These are display profiles for planning and verification. They are not live provider integrations or autonomous agents.</p>
       </div>
-      <div class="codex-grid">
-        <label>
-          <span>Current Codex instruction</span>
-          <textarea id="codex-instruction" rows="8" placeholder="Write the current Codex instruction here. Keep scope, files, validation, commit, and push rules explicit."></textarea>
-        </label>
-        <label>
-          <span>Feedback</span>
-          <textarea id="codex-feedback" rows="8" placeholder="Paste Codex feedback, blockers, validation results, or next-step notes here."></textarea>
-        </label>
+
+      <div class="profile-grid">
+        <article class="workbench-card profile-card">
+          <p class="simulation-label">Simulation only</p>
+          <h3>GPT-5.5 / Commander</h3>
+          <p>Final synthesis, user-facing decision framing, and milestone verdict.</p>
+        </article>
+        <article class="workbench-card profile-card">
+          <p class="simulation-label">Simulation only</p>
+          <h3>GPT-5.4 / Builder</h3>
+          <p>Implementation planning, static UI structure, and scoped build sequencing.</p>
+        </article>
+        <article class="workbench-card profile-card">
+          <p class="simulation-label">Simulation only</p>
+          <h3>GPT-5.3 / Verifier</h3>
+          <p>Boundary check, acceptance check, and regression-risk review.</p>
+        </article>
       </div>
-      <div class="codex-actions">
-        <label>
-          <span>Acceptance status</span>
-          <select id="codex-status">
-            <option>Draft</option>
-            <option>Ready for Codex</option>
-            <option>Feedback Required</option>
-            <option>Accepted</option>
-            <option>Blocked</option>
-          </select>
-        </label>
-        <button class="start-button" id="copy-instruction" type="button">Copy Codex Instruction</button>
-        <span class="copy-status" id="copy-status" aria-live="polite"></span>
+
+      <div class="rule-band">
+        <p>Add roles/models only when they improve decision quality, execution quality, or verification.</p>
+        <strong>No real Gemini, Claude, calendar, Outlook, IM, or external tool integration exists yet.</strong>
       </div>
+    </section>
+
+    <section class="workbench-region lifecycle-zone" aria-label="Task lifecycle zone">
+      <div class="section-title">
+        <p class="version">Task Lifecycle Zone</p>
+        <h2>Intake &rarr; Assignment &rarr; Execution Placeholder &rarr; Review &rarr; Acceptance &rarr; Sync</h2>
+      </div>
+
+      <ol class="lifecycle-track" aria-label="Lifecycle sequence">
+        <li><span>01</span><strong>Intake</strong></li>
+        <li><span>02</span><strong>Assignment</strong></li>
+        <li><span>03</span><strong>Execution Placeholder</strong></li>
+        <li><span>04</span><strong>Review</strong></li>
+        <li><span>05</span><strong>Acceptance</strong></li>
+        <li><span>06</span><strong>Sync</strong></li>
+      </ol>
+
+      <article class="workbench-card task-card" aria-label="Static sample task">
+        <div class="card-kicker">
+          <span>Sample task</span>
+          <strong>Static</strong>
+        </div>
+        <h3>Build Unified Project Workbench UI</h3>
+        <dl class="task-fields">
+          <div>
+            <dt>Assigned profile</dt>
+            <dd>GPT-5.4 / Builder with GPT-5.3 / Verifier review</dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd>Execution placeholder visible; no real execution trigger</dd>
+          </div>
+          <div>
+            <dt>Output expected</dt>
+            <dd>One static workbench surface showing projects, simulated team, lifecycle, review, acceptance, and sync areas</dd>
+          </div>
+          <div>
+            <dt>Acceptance gate</dt>
+            <dd>User confirms MVP-6 UI surface satisfies Vol.15 architecture contract</dd>
+          </div>
+          <div>
+            <dt>Boundary risk</dt>
+            <dd>Must not auto-send, call tools, connect accounts, trade, bet, or claim real multi-model execution</dd>
+          </div>
+        </dl>
+      </article>
+    </section>
+
+    <section class="workbench-region review-zone" aria-label="Review acceptance sync zone">
+      <div class="section-title">
+        <p class="version">Review / Acceptance / Sync Zone</p>
+        <h2>Milestone review before any next action.</h2>
+      </div>
+
+      <div class="review-grid">
+        <article class="workbench-card review-card">
+          <h3>Before-Codex gate</h3>
+          <ul class="check-list">
+            <li>Source contract: Vol.15 architecture map.</li>
+            <li>Scope: static UI only.</li>
+            <li>Allowed files: existing static cockpit UI files.</li>
+            <li>Blocked: backend, API, scheduler, tool integration, auto-send, trading, betting.</li>
+          </ul>
+        </article>
+
+        <article class="workbench-card review-card">
+          <h3>Stage self-check summary</h3>
+          <ul class="check-list">
+            <li>Stage A: visible shell and top-level zones.</li>
+            <li>Stage B: three static project cards.</li>
+            <li>Stage C: simulated profiles only.</li>
+            <li>Stage D: lifecycle lane and sample task.</li>
+            <li>Stage E: review, acceptance, and compact sync surface.</li>
+          </ul>
+        </article>
+
+        <article class="workbench-card review-card">
+          <h3>Milestone acceptance checklist</h3>
+          <ul class="check-list">
+            <li>LDD, 2026WC, and TWOS Product Development are visible together.</li>
+            <li>AI Team / AI Board composition is labeled as simulation.</li>
+            <li>Task lifecycle runs from intake to sync.</li>
+            <li>Boundary notice is visible before release acceptance.</li>
+          </ul>
+        </article>
+
+        <article class="workbench-card review-card compact-sync-card">
+          <h3>Compact Sync output placeholder</h3>
+          <p class="sync-placeholder">Vol.15 MVP-6 Sync: Unified Project Workbench UI created; backend/API/tool integration closed; next pending acceptance.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="final-boundary" aria-label="Final boundary notice">
+      <p>Strategy belongs to the user. AI assists planning, execution tracking, and review. No live execution without explicit approval.</p>
     </section>
   </main>
-
-  <script>
-    (function () {
-      var storageKey = "twos.commandCenter.v1";
-      var laneIds = ["ldd", "wc", "twos"];
-      var laneMeta = {
-        ldd: {
-          project: "LDD - LLM Daredevil Desk",
-          roles: "Market Analyst + Risk/Execution Analyst"
-        },
-        wc: {
-          project: "2026WC - World Cup Workbench",
-          roles: "Football Intelligence Analyst + Odds Actuary"
-        },
-        twos: {
-          project: "TWOS - Product Development",
-          roles: "Product Goal + Build/Codex Path"
-        }
-      };
-      var implementationBoundary = "Browser-local compact sync only; no backend, API, scheduler, live trading, live betting, or execution.";
-      var detectionRules = {
-        ldd: [/\bldd\b/i, /longbridge/i, /\bgoog\b/i, /\bnvda\b/i, /strategy book/i, /binance/i],
-        wc: [/2026wc/i, /world cup/i, /polymarket/i, /bankroll/i, /scoreline/i, /betting ledger/i, /match ledger/i, /\bodds\b/i, /\bstake\b/i, /\bwager\b/i, /\bfixture\b/i, /\bmatch\b/i, /\bbet\b/i],
-        twos: [/\btwos\b/i, /\bmvp\b/i, /codex/i, /\bcommit\b/i, /origin\/main/i, /command center/i]
-      };
-      var defaultState = {
-        lanes: {
-          ldd: { status: "Active", latestSync: "", activeNext: "", compactSync: "", history: [] },
-          wc: { status: "Active", latestSync: "", activeNext: "", compactSync: "", history: [] },
-          twos: { status: "Active", latestSync: "", activeNext: "", compactSync: "", history: [] }
-        },
-        inbox: "",
-        target: "auto",
-        codex: { instruction: "", feedback: "", status: "Draft" }
-      };
-
-      var state = loadState();
-
-      function loadState() {
-        try {
-          var saved = JSON.parse(localStorage.getItem(storageKey));
-          if (!saved || !saved.lanes || !saved.codex) return defaultState;
-          laneIds.forEach(function (laneId) {
-            saved.lanes[laneId] = Object.assign({}, defaultState.lanes[laneId], saved.lanes[laneId]);
-          });
-          saved.codex = Object.assign({}, defaultState.codex, saved.codex);
-          if (["auto"].concat(laneIds).indexOf(saved.target) === -1) saved.target = "auto";
-          return Object.assign({}, defaultState, saved);
-        } catch (error) {
-          return defaultState;
-        }
-      }
-
-      function saveState() {
-        localStorage.setItem(storageKey, JSON.stringify(state));
-      }
-
-      function renderHistory(laneId) {
-        var list = document.querySelector('[data-lane="' + laneId + '"] [data-history]');
-        list.innerHTML = "";
-        var history = state.lanes[laneId].history.slice(0, 5);
-        if (!history.length) {
-          var empty = document.createElement("li");
-          empty.textContent = "No local syncs yet.";
-          empty.className = "empty-history";
-          list.appendChild(empty);
-          return;
-        }
-        history.forEach(function (entry) {
-          var item = document.createElement("li");
-          item.textContent = entry;
-          list.appendChild(item);
-        });
-      }
-
-      function hydrateLane(laneId) {
-        var lane = document.querySelector('[data-lane="' + laneId + '"]');
-        lane.querySelector('[data-field="status"]').value = state.lanes[laneId].status;
-        lane.querySelector('[data-field="latestSync"]').value = state.lanes[laneId].latestSync;
-        lane.querySelector('[data-field="activeNext"]').value = state.lanes[laneId].activeNext;
-        lane.querySelector('[data-field="compactSync"]').value = state.lanes[laneId].compactSync;
-        renderHistory(laneId);
-      }
-
-      function cleanValue(value) {
-        return value && value.trim() ? value.trim() : "Not set";
-      }
-
-      function buildCompactSync(laneId) {
-        var laneState = state.lanes[laneId];
-        var meta = laneMeta[laneId];
-        return [
-          "Project: " + meta.project,
-          "Status: " + cleanValue(laneState.status),
-          "Latest Sync Summary: " + cleanValue(laneState.latestSync),
-          "One Active Next: " + cleanValue(laneState.activeNext),
-          "Roles: " + meta.roles,
-          "Implementation Boundary: " + implementationBoundary
-        ].join("\n");
-      }
-
-      function setCopyFeedback(target, message) {
-        target.textContent = message;
-      }
-
-      function copyText(text, output, feedback) {
-        if (!text.trim()) {
-          setCopyFeedback(feedback, "Generate first.");
-          return;
-        }
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(function () {
-            setCopyFeedback(feedback, "Copied.");
-          }, function () {
-            output.focus();
-            output.select();
-            setCopyFeedback(feedback, "Select text to copy.");
-          });
-          return;
-        }
-        output.focus();
-        output.select();
-        setCopyFeedback(feedback, "Select text to copy.");
-      }
-
-      function generateLaneSync(laneId) {
-        state.lanes[laneId].compactSync = buildCompactSync(laneId);
-        saveState();
-        hydrateLane(laneId);
-        return state.lanes[laneId].compactSync;
-      }
-
-      function laneLabel(laneId) {
-        if (laneId === "wc") return "2026WC";
-        return laneId.toUpperCase();
-      }
-
-      function shortText(value, limit) {
-        var compact = value.replace(/\s+/g, " ").trim();
-        if (compact.length <= limit) return compact;
-        return compact.slice(0, limit - 1) + "...";
-      }
-
-      function extractLabeledValue(text, pattern) {
-        var lines = text.split(/\r?\n/);
-        for (var index = 0; index < lines.length; index += 1) {
-          var line = lines[index].trim().replace(/^[-*]\s*/, "");
-          var match = line.match(pattern);
-          if (match && match[2]) return shortText(match[2], 120);
-        }
-        return "";
-      }
-
-      function extractShortStatus(text) {
-        return extractLabeledValue(text, /^(state|progress|decision)\s*(?::|：|-|–|—)\s*(.+)$/i);
-      }
-
-      function extractActiveNext(text) {
-        return extractLabeledValue(text, /^(one\s+active\s+next|next)\s*(?::|：|-|–|—)\s*(.+)$/i);
-      }
-
-      function resolveLaneStatus(statusText) {
-        var lower = statusText.toLowerCase();
-        if (/block|missing|cannot|can't|fail|reject|stop|no-go|no go|waiting/.test(lower)) return "Blocked";
-        if (/pause|paused|hold|standby/.test(lower)) return "Paused";
-        if (/review|veto|pending|needs|approval|check|verify/.test(lower)) return "Needs Review";
-        return "Active";
-      }
-
-      function detectLane(text, fallbackLaneId) {
-        fallbackLaneId = laneIds.indexOf(fallbackLaneId) === -1 ? "twos" : fallbackLaneId;
-        var scores = {};
-        laneIds.forEach(function (laneId) {
-          scores[laneId] = detectionRules[laneId].reduce(function (count, rule) {
-            return count + (rule.test(text) ? 1 : 0);
-          }, 0);
-        });
-        var bestLane = fallbackLaneId;
-        var bestScore = 0;
-        var tied = false;
-        laneIds.forEach(function (laneId) {
-          if (scores[laneId] > bestScore) {
-            bestLane = laneId;
-            bestScore = scores[laneId];
-            tied = false;
-          } else if (scores[laneId] === bestScore && bestScore > 0) {
-            tied = true;
-          }
-        });
-        if (!bestScore) return { laneId: fallbackLaneId, matched: false, tied: false };
-        if (tied && scores[fallbackLaneId] === bestScore) {
-          return { laneId: fallbackLaneId, matched: true, tied: true };
-        }
-        return { laneId: bestLane, matched: true, tied: tied };
-      }
-
-      function resolveInboundLane(text) {
-        if (syncTarget.value !== "auto") {
-          return { laneId: syncTarget.value, matched: false, override: true, tied: false };
-        }
-        var detection = detectLane(text, "twos");
-        detection.override = false;
-        return detection;
-      }
-
-      function applyStatusMessage(route) {
-        var message = "Applied locally to " + laneLabel(route.laneId);
-        if (route.override) return message + " (manual override)";
-        if (!route.matched) return message + " (fallback)";
-        if (route.tied) return message + " (tie fallback)";
-        return message;
-      }
-
-      function applySyncToLane(laneId, text) {
-        var stamp = new Date().toLocaleString();
-        var compactText = shortText(text, 220);
-        var statusText = extractShortStatus(text);
-        var nextText = extractActiveNext(text);
-        var historyParts = [stamp + " - " + compactText];
-
-        state.lanes[laneId].latestSync = text;
-        if (statusText) {
-          state.lanes[laneId].status = resolveLaneStatus(statusText);
-          historyParts.push("Status: " + statusText);
-        }
-        if (nextText) {
-          state.lanes[laneId].activeNext = nextText;
-          historyParts.push("Next: " + nextText);
-        }
-        state.lanes[laneId].compactSync = "";
-        state.lanes[laneId].history.unshift(historyParts.join(" | "));
-        state.lanes[laneId].history = state.lanes[laneId].history.slice(0, 10);
-        state.inbox = "";
-        inboxText.value = "";
-        saveState();
-        hydrateLane(laneId);
-        return { statusText: statusText, nextText: nextText };
-      }
-
-      laneIds.forEach(function (laneId) {
-        hydrateLane(laneId);
-        var lane = document.querySelector('[data-lane="' + laneId + '"]');
-        lane.addEventListener("input", function (event) {
-          var field = event.target.getAttribute("data-field");
-          if (!field) return;
-          state.lanes[laneId][field] = event.target.value;
-          saveState();
-        });
-        lane.addEventListener("change", function (event) {
-          var field = event.target.getAttribute("data-field");
-          if (!field) return;
-          state.lanes[laneId][field] = event.target.value;
-          saveState();
-        });
-        lane.querySelector('[data-action="clear-history"]').addEventListener("click", function () {
-          state.lanes[laneId].history = [];
-          saveState();
-          renderHistory(laneId);
-        });
-        lane.querySelector('[data-action="generate-sync"]').addEventListener("click", function () {
-          generateLaneSync(laneId);
-          setCopyFeedback(lane.querySelector("[data-copy-status]"), "Generated.");
-        });
-        lane.querySelector('[data-action="copy-sync"]').addEventListener("click", function () {
-          var output = lane.querySelector('[data-field="compactSync"]');
-          var text = state.lanes[laneId].compactSync || generateLaneSync(laneId);
-          copyText(text, output, lane.querySelector("[data-copy-status]"));
-        });
-      });
-
-      document.getElementById("copy-all-syncs").addEventListener("click", function () {
-        var output = document.getElementById("all-compact-sync-output");
-        var feedback = document.getElementById("all-copy-status");
-        var allSyncs = laneIds.map(function (laneId) {
-          return state.lanes[laneId].compactSync || generateLaneSync(laneId);
-        }).join("\n\n---\n\n");
-        output.value = allSyncs;
-        copyText(allSyncs, output, feedback);
-      });
-
-      var inboxText = document.getElementById("sync-inbox-text");
-      var syncTarget = document.getElementById("sync-target");
-      var syncApplyStatus = document.getElementById("sync-apply-status");
-      inboxText.value = state.inbox;
-      syncTarget.value = state.target;
-
-      inboxText.addEventListener("input", function () {
-        state.inbox = inboxText.value;
-        saveState();
-      });
-      syncTarget.addEventListener("change", function () {
-        state.target = syncTarget.value;
-        saveState();
-      });
-
-      document.getElementById("auto-apply-sync").addEventListener("click", function () {
-        var text = inboxText.value.trim();
-        if (!text) {
-          syncApplyStatus.textContent = "Paste sync first.";
-          return;
-        }
-        var route = resolveInboundLane(text);
-        var laneId = route.laneId;
-        state.target = syncTarget.value;
-        applySyncToLane(laneId, text);
-        syncApplyStatus.textContent = applyStatusMessage(route);
-      });
-
-      document.getElementById("sync-form").addEventListener("submit", function (event) {
-        event.preventDefault();
-        var text = inboxText.value.trim();
-        if (!text) return;
-        document.getElementById("auto-apply-sync").click();
-      });
-
-      var instruction = document.getElementById("codex-instruction");
-      var feedback = document.getElementById("codex-feedback");
-      var codexStatus = document.getElementById("codex-status");
-      instruction.value = state.codex.instruction;
-      feedback.value = state.codex.feedback;
-      codexStatus.value = state.codex.status;
-
-      instruction.addEventListener("input", function () {
-        state.codex.instruction = instruction.value;
-        saveState();
-      });
-      feedback.addEventListener("input", function () {
-        state.codex.feedback = feedback.value;
-        saveState();
-      });
-      codexStatus.addEventListener("change", function () {
-        state.codex.status = codexStatus.value;
-        saveState();
-      });
-
-      document.getElementById("copy-instruction").addEventListener("click", function () {
-        var copyStatus = document.getElementById("copy-status");
-        var text = instruction.value;
-        if (!text.trim()) {
-          copyStatus.textContent = "Nothing to copy.";
-          return;
-        }
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(function () {
-            copyStatus.textContent = "Copied.";
-          }, function () {
-            copyStatus.textContent = "Copy unavailable.";
-          });
-        } else {
-          instruction.select();
-          document.execCommand("copy");
-          copyStatus.textContent = "Copied.";
-        }
-      });
-    }());
-  </script>
 </body>
 </html>

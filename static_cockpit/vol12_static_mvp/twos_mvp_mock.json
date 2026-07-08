@@ -10,13 +10,13 @@
     "brand": "TWOS",
     "localNote": "Static local MVP · file://",
     "promise": "One prompt. Your AI team gets to work.",
-    "subheadline": "TWOS coordinates ChatGPT, Claude, Gemini, Grok, and more.",
+    "subheadline": "TWOS shows simulated AI team planning profiles. Real external model and tool integrations are not active.",
     "composerPlaceholder": "What do you want your AI team to do?",
     "primaryCta": "Start",
     "postStartFlowPath": "../workspace_flow/start_thinking.html",
     "hint": "Ideas, tasks, research, writing, decisions, projects, recaps.",
-    "models": ["ChatGPT", "Claude", "Gemini", "Grok", "more"],
-    "modelNote": "The AI team is generated for each task."
+    "models": ["Commander", "Builder", "Verifier"],
+    "modelNote": "Static simulation only; no external provider routing."
   },
   "constraints": {
     "staticFixtureOnly": true,
