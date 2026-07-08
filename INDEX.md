@@ -47,6 +47,10 @@ Vol.9 Phase 9.3 - Future Implementation Boundary Matrix and Static Prototype Gat
 - [docs/runtime/VOL14_AI_BOARD_ACTIVE_CONTROL_PROTOCOL_v0.1.md](docs/runtime/VOL14_AI_BOARD_ACTIVE_CONTROL_PROTOCOL_v0.1.md)
 - `docs/governance/TWOS_AI_BOARD_GATE_PROTOCOL_v0.1.md`
 
+## Vol.15 Product Architecture
+
+- [docs/product/TWOS_1_0_WORKBENCH_ARCHITECTURE_MAP_v0.1.md](docs/product/TWOS_1_0_WORKBENCH_ARCHITECTURE_MAP_v0.1.md)
+
 ## Examples
 
 - `examples/llm-daredevil-desk/CASE_STUDY_LLM_DAREDEVIL_DESK.md`
