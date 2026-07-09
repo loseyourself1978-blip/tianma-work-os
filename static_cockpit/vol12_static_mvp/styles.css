@@ -506,6 +506,92 @@ select {
   line-height: 1.45;
 }
 
+.section-index {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #f7f9fc;
+}
+
+.section-index a {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: #ffffff;
+  padding: 8px 10px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.workbench-page > .command-topbar {
+  order: 0;
+}
+
+.workbench-hero {
+  order: 1;
+}
+
+.launch-overview-zone {
+  order: 2;
+}
+
+.section-index {
+  order: 3;
+}
+
+.project-zone {
+  order: 4;
+}
+
+.ai-team-zone {
+  order: 5;
+}
+
+.task-intake-zone {
+  order: 6;
+}
+
+.lifecycle-zone {
+  order: 7;
+}
+
+.tool-route-zone {
+  order: 8;
+}
+
+.demo-flow-zone {
+  order: 9;
+}
+
+.launch-demo-zone {
+  order: 10;
+}
+
+.integration-boundary-zone {
+  order: 11;
+}
+
+.launch-scorecard-zone {
+  order: 12;
+}
+
+.acceptance-gate-zone {
+  order: 13;
+}
+
+.review-zone {
+  order: 14;
+}
+
+.final-boundary {
+  order: 15;
+}
+
 .workbench-region {
   margin-top: 14px;
   padding: 18px;
@@ -530,7 +616,10 @@ select {
 .integration-gate-layout,
 .risk-ledger-grid,
 .first-path-grid,
-.integration-sync-layout {
+.integration-sync-layout,
+.launch-proof-grid,
+.demo-path-grid,
+.scorecard-grid {
   display: grid;
   gap: 14px;
 }
@@ -554,14 +643,17 @@ select {
 .preset-grid,
 .sync-sample-grid,
 .demo-scenario-grid,
-.first-path-grid {
+.first-path-grid,
+.launch-proof-grid,
+.demo-path-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 14px;
 }
 
 .route-matrix,
 .integration-candidate-grid,
-.risk-ledger-grid {
+.risk-ledger-grid,
+.scorecard-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
@@ -569,7 +661,8 @@ select {
 .integration-gate-layout,
 .integration-candidate-grid,
 .risk-ledger-grid,
-.integration-sync-layout {
+.integration-sync-layout,
+.scorecard-grid {
   margin-top: 14px;
 }
 
@@ -613,7 +706,11 @@ select {
 .risk-card,
 .first-path-card,
 .integration-sync-card,
-.integration-owner-card {
+.integration-owner-card,
+.launch-proof-card,
+.demo-path-card,
+.scorecard-card,
+.launch-sync-card {
   display: grid;
   gap: 12px;
   align-content: start;
@@ -633,7 +730,8 @@ select {
 .demo-sync-card h3,
 .open-scope-gate-card h3,
 .risk-card h3,
-.first-path-card h3 {
+.first-path-card h3,
+.demo-path-card h3 {
   margin-top: 0;
 }
 
@@ -669,6 +767,43 @@ select {
   border-color: var(--accent);
   background: #eef8f6;
   box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.script-step-list {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.script-step-list li {
+  min-height: 100px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #f7f9fc;
+  padding: 10px;
+}
+
+.script-step-list strong,
+.script-step-list span {
+  display: block;
+  line-height: 1.3;
+}
+
+.script-step-list strong {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.script-step-list span {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
 }
 
 .scenario-button {
@@ -960,15 +1095,32 @@ select {
 
 .route-gate-card.is-pass,
 .demo-outcome-card.is-pass,
-.open-scope-gate-card.is-pass {
+.open-scope-gate-card.is-pass,
+.scorecard-card.is-pass {
   border-color: var(--accent);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .open-scope-gate-card.is-blocked,
-.integration-candidate-card--blocked {
+.integration-candidate-card--blocked,
+.scorecard-card.is-blocked,
+.scorecard-card--blocked {
   border-color: #b45309;
   background: #fffbeb;
+}
+
+.scorecard-card.is-needs-review {
+  border-color: #b45309;
+}
+
+.scorecard-card.is-not-opened,
+.scorecard-card--not-opened {
+  background: #f7f9fc;
+}
+
+.scorecard-actions button {
+  min-width: 0;
+  white-space: normal;
 }
 
 .route-card p {
@@ -1065,6 +1217,10 @@ select {
   .risk-ledger-grid,
   .first-path-grid,
   .integration-sync-layout,
+  .launch-proof-grid,
+  .script-step-list,
+  .demo-path-grid,
+  .scorecard-grid,
   .rule-band {
     grid-template-columns: 1fr;
   }
