@@ -523,7 +523,9 @@ select {
 .acceptance-layout,
 .route-matrix,
 .route-planning-layout,
-.sync-sample-grid {
+.sync-sample-grid,
+.demo-scenario-grid,
+.demo-flow-layout {
   display: grid;
   gap: 14px;
 }
@@ -537,12 +539,14 @@ select {
 .composition-layout,
 .intake-layout,
 .acceptance-layout,
-.route-planning-layout {
+.route-planning-layout,
+.demo-flow-layout {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .preset-grid,
-.sync-sample-grid {
+.sync-sample-grid,
+.demo-scenario-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 14px;
 }
@@ -583,7 +587,11 @@ select {
 .route-card,
 .route-recommendation-card,
 .route-gate-card,
-.sync-sample-card {
+.sync-sample-card,
+.demo-guidance-card,
+.demo-binding-card,
+.demo-outcome-card,
+.demo-sync-card {
   display: grid;
   gap: 12px;
   align-content: start;
@@ -596,7 +604,11 @@ select {
 .acceptance-card h3,
 .compact-sync-preview-card h3,
 .route-recommendation-card h3,
-.route-gate-card h3 {
+.route-gate-card h3,
+.demo-guidance-card h3,
+.demo-binding-card h3,
+.demo-outcome-card h3,
+.demo-sync-card h3 {
   margin-top: 0;
 }
 
@@ -626,6 +638,86 @@ select {
   min-height: 38px;
   padding: 0 10px;
   font-size: 12px;
+}
+
+.scenario-button {
+  display: grid;
+  gap: 8px;
+  min-height: 96px;
+  align-content: start;
+  justify-items: start;
+  text-align: left;
+}
+
+.scenario-button span {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.scenario-button strong {
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.scenario-button.is-active {
+  border-color: var(--accent);
+  background: #eef8f6;
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.demo-stepper,
+.demo-flow-layout {
+  margin-top: 14px;
+}
+
+.demo-step-list {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.demo-step-list li {
+  min-height: 62px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #f7f9fc;
+  padding: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.demo-step-list li.is-active {
+  border-color: var(--accent);
+  background: #eef8f6;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.demo-step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.demo-step-actions button {
+  min-height: 38px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.demo-step-actions span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
 }
 
 .lifecycle-actions span {
@@ -835,7 +927,8 @@ select {
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 
-.route-gate-card.is-pass {
+.route-gate-card.is-pass,
+.demo-outcome-card.is-pass {
   border-color: var(--accent);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
@@ -925,6 +1018,9 @@ select {
   .route-matrix,
   .route-planning-layout,
   .sync-sample-grid,
+  .demo-scenario-grid,
+  .demo-flow-layout,
+  .demo-step-list,
   .rule-band {
     grid-template-columns: 1fr;
   }
