@@ -18,12 +18,12 @@
 
     <section class="workbench-hero" aria-label="Workbench header">
       <div>
-        <p class="version">Vol.15 MVP-7</p>
+        <p class="version">Vol.15 MVP-8</p>
         <h1>TWOS 1.0 Unified AI Team Workbench</h1>
-        <p class="subheadline">One command center for LDD, 2026WC, and TWOS Product Development, now with a simulated composition planner for choosing the minimum useful AI team.</p>
+        <p class="subheadline">One command center for turning project sync into a task, assigning a simulated AI team, moving lifecycle state, checking acceptance, and previewing compact sync.</p>
       </div>
       <aside class="boundary-notice" aria-label="Boundary notice">
-        <p>No backend, API, scheduler, real tool integration, auto-send, live trading, live betting, or real multi-model routing has been opened.</p>
+        <p>No backend, API, scheduler, persistence, clipboard API, real tool integration, auto-send, live trading, live betting, or real multi-model routing has been opened.</p>
       </aside>
     </section>
 
@@ -126,6 +126,72 @@
       </div>
     </section>
 
+    <section class="workbench-region task-intake-zone" aria-label="Task Intake Builder">
+      <div class="section-title">
+        <p class="version">Task Intake Builder</p>
+        <h2>Convert real project context into an assignable task.</h2>
+        <p class="hub-note">Plain front-end behavior only. State lives in memory for this page view; no backend, API, storage, model call, clipboard action, or external tool call.</p>
+      </div>
+
+      <div class="intake-layout">
+        <article class="workbench-card intake-card" aria-label="Task intake fields">
+          <h3>Current task</h3>
+          <div class="intake-grid">
+            <label>
+              <span>Project</span>
+              <select id="intake-project">
+                <option value="ldd">LDD</option>
+                <option value="wc">2026WC</option>
+                <option value="twos">TWOS Product Development</option>
+              </select>
+            </label>
+            <label>
+              <span>Task title</span>
+              <input id="intake-title" type="text" value="Turn MVP feedback into next product task" />
+            </label>
+            <label>
+              <span>Task type</span>
+              <select id="intake-task-type">
+                <option value="Strategy Review">Strategy Review</option>
+                <option value="Product Build">Product Build</option>
+                <option value="Risk Check">Risk Check</option>
+                <option value="Sync Intake">Sync Intake</option>
+                <option value="Acceptance Review">Acceptance Review</option>
+              </select>
+            </label>
+            <label>
+              <span>Source sync summary</span>
+              <textarea id="intake-source" rows="4">MVP-7 Owner Acceptance passed; next task should make assignment and acceptance operational inside the static workbench.</textarea>
+            </label>
+            <label>
+              <span>Required output</span>
+              <textarea id="intake-output" rows="4">Task assignment preview, lifecycle state, project-specific acceptance gate, and compact sync preview.</textarea>
+            </label>
+            <label>
+              <span>Boundary risk</span>
+              <textarea id="intake-boundary" rows="4">No backend, API, storage, external model call, external tool call, auto-send, live trading, or live betting.</textarea>
+            </label>
+          </div>
+          <div class="quick-fill-row" aria-label="Quick-fill examples">
+            <button type="button" data-example="ldd">LDD: SPCX Legacy risk review after 150 break</button>
+            <button type="button" data-example="wc">2026WC: Favorite-win payout correction review</button>
+            <button type="button" data-example="twos">TWOS: Turn MVP feedback into next product task</button>
+          </div>
+        </article>
+
+        <article class="workbench-card assignment-card" aria-label="Assignment recommendation">
+          <div class="card-kicker">
+            <span>Assignment</span>
+            <strong id="assignment-role-count">Minimum Effective Role Count: 2 roles</strong>
+          </div>
+          <h3>Recommended simulated team</h3>
+          <div class="team-chip-row" id="assignment-team" aria-label="Task assignment team"></div>
+          <p class="recommendation-copy" id="assignment-why">Task context drives the minimum useful team.</p>
+          <p class="recommendation-copy" id="assignment-trim">Extra roles are not added for decoration.</p>
+        </article>
+      </div>
+    </section>
+
     <section class="workbench-region ai-team-zone" aria-label="AI team zone">
       <div class="section-title">
         <p class="version">AI Team Zone</p>
@@ -222,16 +288,66 @@
       <div class="section-title">
         <p class="version">Task Lifecycle Zone</p>
         <h2>Intake &rarr; Assignment &rarr; Execution Placeholder &rarr; Review &rarr; Acceptance &rarr; Sync</h2>
+        <p class="hub-note">Move the current task through local-only lifecycle states. Execution is a placeholder only; no external tool call.</p>
       </div>
 
       <ol class="lifecycle-track" aria-label="Lifecycle sequence">
-        <li><span>01</span><strong>Intake</strong></li>
-        <li><span>02</span><strong>Assignment</strong></li>
-        <li><span>03</span><strong>Execution Placeholder</strong></li>
-        <li><span>04</span><strong>Review</strong></li>
-        <li><span>05</span><strong>Acceptance</strong></li>
-        <li><span>06</span><strong>Sync</strong></li>
+        <li data-lifecycle-state="Intake">
+          <span>01</span>
+          <strong>Intake</strong>
+          <p><b>Status</b> <em data-state-status>Pending</em></p>
+          <p><b>Output</b> <em data-state-output>Task captured from sync.</em></p>
+          <p><b>Gate</b> <em data-state-gate>Source context is clear.</em></p>
+          <p><b>Risk</b> <em data-state-risk>Do not auto-ingest sources.</em></p>
+        </li>
+        <li data-lifecycle-state="Assignment">
+          <span>02</span>
+          <strong>Assignment</strong>
+          <p><b>Status</b> <em data-state-status>Pending</em></p>
+          <p><b>Output</b> <em data-state-output>Minimum team selected.</em></p>
+          <p><b>Gate</b> <em data-state-gate>Roles are necessary.</em></p>
+          <p><b>Risk</b> <em data-state-risk>No fake model routing.</em></p>
+        </li>
+        <li data-lifecycle-state="Execution Placeholder">
+          <span>03</span>
+          <strong>Execution Placeholder</strong>
+          <small>placeholder only; no external tool call</small>
+          <p><b>Status</b> <em data-state-status>Pending</em></p>
+          <p><b>Output</b> <em data-state-output>Manual implementation intent.</em></p>
+          <p><b>Gate</b> <em data-state-gate>Scope remains open.</em></p>
+          <p><b>Risk</b> <em data-state-risk>No backend/API/tool call.</em></p>
+        </li>
+        <li data-lifecycle-state="Review">
+          <span>04</span>
+          <strong>Review</strong>
+          <p><b>Status</b> <em data-state-status>Pending</em></p>
+          <p><b>Output</b> <em data-state-output>Evidence and risks checked.</em></p>
+          <p><b>Gate</b> <em data-state-gate>Verifier concerns closed.</em></p>
+          <p><b>Risk</b> <em data-state-risk>No decorative approval.</em></p>
+        </li>
+        <li data-lifecycle-state="Acceptance">
+          <span>05</span>
+          <strong>Acceptance</strong>
+          <p><b>Status</b> <em data-state-status>Pending</em></p>
+          <p><b>Output</b> <em data-state-output>Owner acceptance ready.</em></p>
+          <p><b>Gate</b> <em data-state-gate>Checklist can pass.</em></p>
+          <p><b>Risk</b> <em data-state-risk>No approval bypass.</em></p>
+        </li>
+        <li data-lifecycle-state="Sync">
+          <span>06</span>
+          <strong>Sync</strong>
+          <p><b>Status</b> <em data-state-status>Pending</em></p>
+          <p><b>Output</b> <em data-state-output>Compact sync preview.</em></p>
+          <p><b>Gate</b> <em data-state-gate>Manual copy only.</em></p>
+          <p><b>Risk</b> <em data-state-risk>No auto-send.</em></p>
+        </li>
       </ol>
+
+      <div class="lifecycle-actions" aria-label="Lifecycle controls">
+        <button type="button" id="lifecycle-prev">Previous state</button>
+        <button type="button" id="lifecycle-next">Next state</button>
+        <span id="lifecycle-current">Current state: Intake</span>
+      </div>
 
       <article class="workbench-card task-card" aria-label="Composition-linked task preview">
         <div class="card-kicker">
@@ -268,10 +384,42 @@
       </article>
     </section>
 
+    <section class="workbench-region acceptance-gate-zone" aria-label="Acceptance Gate Builder">
+      <div class="section-title">
+        <p class="version">Acceptance Gate Builder</p>
+        <h2>Project-specific checks for the current task.</h2>
+        <p class="hub-note">Pass / Needs Review toggles are local visual states only. They do not approve trades, bets, sends, commits, or external actions.</p>
+      </div>
+
+      <div class="acceptance-layout">
+        <article class="workbench-card acceptance-card">
+          <div class="card-kicker">
+            <span>Gate state</span>
+            <strong id="acceptance-state-label">Needs Review</strong>
+          </div>
+          <h3 id="acceptance-title">TWOS acceptance gate</h3>
+          <ul class="check-list" id="acceptance-checklist"></ul>
+          <div class="gate-actions" aria-label="Acceptance visual state controls">
+            <button type="button" data-acceptance-state="Pass">Pass</button>
+            <button type="button" data-acceptance-state="Needs Review">Needs Review</button>
+          </div>
+        </article>
+
+        <article class="workbench-card compact-sync-preview-card" aria-label="Compact Sync Preview">
+          <div class="card-kicker">
+            <span>Compact Sync Preview</span>
+            <strong>Manual text only</strong>
+          </div>
+          <h3>Copyable-looking preview</h3>
+          <pre id="compact-sync-preview" class="compact-sync-preview">Vol.15 MVP-8 Sync: Task Assignment + Acceptance Workbench added; operator can convert project sync into task, assign simulated team, move lifecycle state, build acceptance gate, and preview compact sync; backend/API/tool integration remains closed.</pre>
+        </article>
+      </div>
+    </section>
+
     <section class="workbench-region review-zone" aria-label="Review acceptance sync zone">
       <div class="section-title">
         <p class="version">Review / Acceptance / Sync Zone</p>
-        <h2>Milestone review before any next action.</h2>
+        <h2>MVP-8 owner acceptance before any next action.</h2>
       </div>
 
       <div class="review-grid">
@@ -288,39 +436,37 @@
         <article class="workbench-card review-card">
           <h3>Stage self-check summary</h3>
           <ul class="check-list">
-            <li>Stage A: composition controls for project, task type, and urgency.</li>
-            <li>Stage B: Minimum Effective Role Count and why-this-team explanation.</li>
-            <li>Stage C: distinct project presets with execution boundaries.</li>
-            <li>Stage D: selected composition updates the task preview.</li>
-            <li>Stage E: MVP-7 acceptance checklist and compact sync placeholder.</li>
+            <li>Stage A: Task Intake Builder converts project sync into task context.</li>
+            <li>Stage B: assignment recommendation follows project/task type.</li>
+            <li>Stage C: lifecycle board can preview task movement through states.</li>
+            <li>Stage D: project-specific acceptance gates are visible.</li>
+            <li>Stage E: compact sync preview and owner acceptance are embedded.</li>
           </ul>
         </article>
 
         <article class="workbench-card review-card">
-          <h3>MVP-7 milestone acceptance checklist</h3>
+          <h3>MVP-8 milestone acceptance checklist</h3>
           <ul class="check-list">
-            <li>Can select or view project/task context.</li>
+            <li>Can create/preview a task from LDD/2026WC/TWOS context.</li>
             <li>Can see recommended simulated team.</li>
-            <li>Can see why the team is selected.</li>
-            <li>Can see Minimum Effective Role Count.</li>
-            <li>Can see lifecycle impact.</li>
-            <li>Can see boundaries.</li>
+            <li>Can move or preview task lifecycle state.</li>
+            <li>Can see project-specific acceptance gates.</li>
+            <li>Can see compact sync preview.</li>
+            <li>Can see all boundaries.</li>
+            <li>UI feels materially more useful than MVP-7.</li>
           </ul>
         </article>
 
         <article class="workbench-card review-card">
           <h3>Owner Acceptance checklist</h3>
           <ul class="check-list">
-            <li>Project/task selectors are understandable.</li>
+            <li>Task Intake Builder reads like a real sync-to-task workflow.</li>
             <li>Recommended profiles feel minimal, not theatrical.</li>
-            <li>Lifecycle preview matches the selected context.</li>
+            <li>Lifecycle controls make state visible without pretending to execute.</li>
+            <li>Acceptance gates reflect LDD, 2026WC, or TWOS lessons.</li>
+            <li>Compact sync preview is useful but not fake auto-send.</li>
             <li>Boundary warnings are visible enough for acceptance.</li>
           </ul>
-        </article>
-
-        <article class="workbench-card review-card compact-sync-card">
-          <h3>Compact Sync output placeholder</h3>
-          <p class="sync-placeholder">Vol.15 MVP-7 Sync: Simulated AI Team Composition Workbench added; operator can map project/task context to minimum useful AI profiles; no real multi-model or tool integration opened.</p>
         </article>
       </div>
     </section>
@@ -339,42 +485,55 @@
       var projectData = {
         ldd: {
           label: "LDD",
-          preset: [profiles.commander, profiles.verifier],
-          output: "Risk-aware review notes and source-of-truth framing",
-          acceptance: "User confirms analysis remains review-only and no trading execution is implied",
-          boundary: "Analysis/review only; no broker, market data, Binance, order, or account mutation path",
+          defaultTitle: "SPCX Legacy risk review after 150 break",
+          defaultType: "Risk Check",
+          source: "SPCX Legacy context requires repair discipline after a 150 break and must avoid chase behavior.",
+          output: "Risk review notes with confirmation conditions, invalidation points, and review-only next action.",
+          acceptance: "Repair != Chase; H2 first ticket needs dual confirmation such as NVDA >204 + SMH >600; no live trading execution.",
+          boundary: "Analysis/review only; no broker, market data, Binance, order, or account mutation path.",
           why: "LDD is risk-sensitive, so Commander frames the decision and Verifier checks boundary, exposure, and acceptance evidence."
         },
         wc: {
           label: "2026WC",
-          preset: [profiles.commander, profiles.verifier],
-          output: "Prediction review framing with payout and risk-tail notes",
-          acceptance: "User confirms prediction review remains separate from betting execution",
-          boundary: "Analysis/review only; no live odds feed, bookmaker connection, wager action, or auto-published prediction",
+          defaultTitle: "Favorite-win payout correction review",
+          defaultType: "Acceptance Review",
+          source: "Recent correction lesson: favorite-win main scenario should not make common favorite-score paths negative unless intentionally contrarian.",
+          output: "Prediction review notes with payout logic, risk-tail check, and no betting execution.",
+          acceptance: "Favorite-win main scenario should keep common favorite-score paths positive unless intentionally contrarian; no live betting execution.",
+          boundary: "Analysis/review only; no live odds feed, bookmaker connection, wager action, or auto-published prediction.",
           why: "2026WC needs decision framing plus risk-tail verification, especially where favorite-score paths can be misread."
         },
         twos: {
           label: "TWOS Product Development",
-          preset: [profiles.commander, profiles.builder, profiles.verifier],
+          defaultTitle: "Turn MVP feedback into next product task",
+          defaultType: "Product Build",
+          source: "MVP-7 Owner Acceptance passed; next task should make assignment and acceptance operational inside the static workbench.",
           output: "Static UI/product structure with acceptance-ready implementation notes",
-          acceptance: "User confirms MVP-7 composition workbench maps context to the minimum useful simulated team",
-          boundary: "Planning and UI/product implementation only; no backend, API, scheduler, schema, validator, or tool integration",
+          acceptance: "Task must reduce distance to TWOS 1.0; no backend/API/tool integration unless milestone opens scope.",
+          boundary: "Planning and UI/product implementation only; no backend, API, scheduler, schema, validator, storage, or tool integration.",
           why: "TWOS product work needs Commander synthesis, Builder structure, and Verifier acceptance/boundary review."
         }
       };
-      var taskAdditions = {
-        "Product Build": profiles.builder,
-        "Risk Check": profiles.verifier,
-        "Acceptance Review": profiles.verifier,
-        "Sync Intake": profiles.verifier
-      };
+      var lifecycleStates = ["Intake", "Assignment", "Execution Placeholder", "Review", "Acceptance", "Sync"];
+      var currentStateIndex = 0;
+      var acceptanceState = "Needs Review";
 
-      var projectInput = document.getElementById("composition-project");
-      var taskInput = document.getElementById("composition-task-type");
+      var intakeProject = document.getElementById("intake-project");
+      var intakeTitle = document.getElementById("intake-title");
+      var intakeTaskType = document.getElementById("intake-task-type");
+      var intakeSource = document.getElementById("intake-source");
+      var intakeOutput = document.getElementById("intake-output");
+      var intakeBoundary = document.getElementById("intake-boundary");
+      var compositionProject = document.getElementById("composition-project");
+      var compositionTask = document.getElementById("composition-task-type");
       var urgencyInput = document.getElementById("composition-urgency");
       var recommendedTeam = document.getElementById("recommended-team");
       var roleCount = document.getElementById("role-count");
       var teamWhy = document.getElementById("team-why");
+      var assignmentTeam = document.getElementById("assignment-team");
+      var assignmentRoleCount = document.getElementById("assignment-role-count");
+      var assignmentWhy = document.getElementById("assignment-why");
+      var assignmentTrim = document.getElementById("assignment-trim");
       var taskProject = document.getElementById("task-project");
       var taskType = document.getElementById("task-type");
       var taskTeam = document.getElementById("task-team");
@@ -382,6 +541,11 @@
       var taskAcceptance = document.getElementById("task-acceptance");
       var taskBoundary = document.getElementById("task-boundary");
       var taskPreviewTitle = document.getElementById("task-preview-title");
+      var lifecycleCurrent = document.getElementById("lifecycle-current");
+      var acceptanceTitle = document.getElementById("acceptance-title");
+      var acceptanceChecklist = document.getElementById("acceptance-checklist");
+      var acceptanceStateLabel = document.getElementById("acceptance-state-label");
+      var compactSyncPreview = document.getElementById("compact-sync-preview");
 
       function uniqueTeam(team) {
         return team.filter(function (profile, index) {
@@ -390,20 +554,21 @@
       }
 
       function resolveTeam(projectKey, taskTypeValue, urgencyValue) {
-        var team = projectData[projectKey].preset.slice();
-        var addition = taskAdditions[taskTypeValue];
-        if (addition) team.push(addition);
-        if (urgencyValue === "High") team.push(profiles.verifier);
-        if (projectKey !== "twos" && taskTypeValue === "Product Build") team = [profiles.commander, profiles.verifier];
+        var team = [profiles.commander];
+        var needsBuilder = projectKey === "twos" && taskTypeValue === "Product Build";
+        var needsVerifier = projectKey !== "twos" || taskTypeValue === "Risk Check" || taskTypeValue === "Sync Intake" || taskTypeValue === "Acceptance Review" || urgencyValue === "High" || taskTypeValue === "Product Build";
+        if (needsBuilder) team.push(profiles.builder);
+        if (needsVerifier) team.push(profiles.verifier);
+        if (team.length === 1) team.push(profiles.verifier);
         return uniqueTeam(team);
       }
 
-      function renderTeam(team) {
-        recommendedTeam.innerHTML = "";
+      function renderTeam(container, team) {
+        container.innerHTML = "";
         team.forEach(function (profile) {
           var chip = document.createElement("span");
           chip.textContent = profile;
-          recommendedTeam.appendChild(chip);
+          container.appendChild(chip);
         });
       }
 
@@ -413,35 +578,165 @@
         });
       }
 
-      function updateComposition() {
-        var projectKey = projectInput.value;
-        var taskTypeValue = taskInput.value;
+      function roleTrimReason(team, projectKey, taskTypeValue) {
+        if (team.indexOf(profiles.builder) === -1 && projectKey !== "twos") {
+          return "Builder is omitted because this task is analysis/review only, not implementation.";
+        }
+        if (team.length === 2 && taskTypeValue !== "Product Build") {
+          return "Extra roles are not added because Commander + Verifier is enough for decision framing and boundary review.";
+        }
+        return "No extra decorative roles are added beyond the minimum useful team.";
+      }
+
+      function gateItems(projectKey) {
+        if (projectKey === "ldd") {
+          return [
+            "Repair ≠ Chase.",
+            "H2 first ticket needs dual confirmation such as NVDA >204 + SMH >600.",
+            "No live trading execution.",
+            "Boundary risk must stay visible before acceptance."
+          ];
+        }
+        if (projectKey === "wc") {
+          return [
+            "Favorite-win main scenario should keep common favorite-score paths positive unless intentionally contrarian.",
+            "Payout/risk-tail logic must be reviewed before acceptance.",
+            "No live betting execution.",
+            "Prediction review must not become auto-published advice."
+          ];
+        }
+        return [
+          "Task must reduce distance to TWOS 1.0.",
+          "Required output must be visible in the product surface.",
+          "No backend/API/tool integration unless milestone opens scope.",
+          "Owner acceptance must remain explicit."
+        ];
+      }
+
+      function renderAcceptance(projectKey) {
+        acceptanceTitle.textContent = projectData[projectKey].label + " acceptance gate";
+        acceptanceChecklist.innerHTML = "";
+        gateItems(projectKey).forEach(function (item) {
+          var li = document.createElement("li");
+          li.textContent = item;
+          acceptanceChecklist.appendChild(li);
+        });
+        acceptanceStateLabel.textContent = acceptanceState;
+        document.querySelector(".acceptance-card").classList.toggle("is-pass", acceptanceState === "Pass");
+      }
+
+      function renderLifecycle(output, gate, risk) {
+        lifecycleStates.forEach(function (stateName, index) {
+          var item = document.querySelector('[data-lifecycle-state="' + stateName + '"]');
+          item.classList.toggle("is-active", index === currentStateIndex);
+          item.classList.toggle("is-complete", index < currentStateIndex);
+          item.querySelector('[data-state-status]').textContent = index < currentStateIndex ? "Complete" : index === currentStateIndex ? "Current" : "Pending";
+          item.querySelector('[data-state-output]').textContent = stateName === "Sync" ? "Compact sync preview is ready." : output;
+          item.querySelector('[data-state-gate]').textContent = gate;
+          item.querySelector('[data-state-risk]').textContent = stateName === "Execution Placeholder" ? "Placeholder only; no external tool call." : risk;
+        });
+        lifecycleCurrent.textContent = "Current state: " + lifecycleStates[currentStateIndex];
+      }
+
+      function compactSync(team) {
+        return [
+          "Vol.15 MVP-8 Sync: Task Assignment + Acceptance Workbench added; operator can convert project sync into task, assign simulated team, move lifecycle state, build acceptance gate, and preview compact sync; backend/API/tool integration remains closed.",
+          "Task: " + intakeTitle.value,
+          "Project: " + projectData[intakeProject.value].label,
+          "Task Type: " + intakeTaskType.value,
+          "Lifecycle State: " + lifecycleStates[currentStateIndex],
+          "Recommended Team: " + team.join(" + "),
+          "Acceptance State: " + acceptanceState,
+          "Boundary: " + intakeBoundary.value
+        ].join("\n");
+      }
+
+      function updateAll() {
+        var projectKey = intakeProject.value;
+        var taskTypeValue = intakeTaskType.value;
         var urgencyValue = urgencyInput.value;
         var data = projectData[projectKey];
         var team = resolveTeam(projectKey, taskTypeValue, urgencyValue);
         var extraWhy = urgencyValue === "High" ? " High urgency keeps verification visible." : "";
+        var trim = roleTrimReason(team, projectKey, taskTypeValue);
 
-        renderTeam(team);
+        compositionProject.value = projectKey;
+        compositionTask.value = taskTypeValue;
+        renderTeam(recommendedTeam, team);
+        renderTeam(assignmentTeam, team);
         renderPresetState(projectKey);
         roleCount.textContent = "Minimum useful team: " + team.length + " roles";
+        assignmentRoleCount.textContent = "Minimum Effective Role Count: " + team.length + " roles";
         teamWhy.textContent = data.why + " Task type: " + taskTypeValue + "." + extraWhy + " This remains a local simulation and does not call external models.";
+        assignmentWhy.textContent = data.why + " " + extraWhy;
+        assignmentTrim.textContent = trim;
         taskProject.textContent = data.label;
         taskType.textContent = taskTypeValue + " / " + urgencyValue;
         taskTeam.textContent = team.join(" + ");
-        taskOutput.textContent = data.output;
+        taskOutput.textContent = intakeOutput.value;
         taskAcceptance.textContent = data.acceptance;
-        taskBoundary.textContent = data.boundary;
-        taskPreviewTitle.textContent = taskTypeValue + " for " + data.label;
+        taskBoundary.textContent = intakeBoundary.value;
+        taskPreviewTitle.textContent = intakeTitle.value;
+        renderAcceptance(projectKey);
+        renderLifecycle(intakeOutput.value, data.acceptance, intakeBoundary.value);
+        compactSyncPreview.textContent = compactSync(team);
       }
 
-      [projectInput, taskInput, urgencyInput].forEach(function (input) {
-        input.addEventListener("change", updateComposition);
+      function loadExample(projectKey) {
+        var data = projectData[projectKey];
+        intakeProject.value = projectKey;
+        intakeTitle.value = data.defaultTitle;
+        intakeTaskType.value = data.defaultType;
+        intakeSource.value = data.source;
+        intakeOutput.value = data.output;
+        intakeBoundary.value = data.boundary;
+        currentStateIndex = 0;
+        acceptanceState = "Needs Review";
+        updateAll();
+      }
+
+      [intakeProject, intakeTitle, intakeTaskType, intakeSource, intakeOutput, intakeBoundary, urgencyInput].forEach(function (input) {
+        input.addEventListener("input", updateAll);
+        input.addEventListener("change", updateAll);
       });
 
-      projectInput.value = "twos";
-      taskInput.value = "Product Build";
+      [compositionProject, compositionTask].forEach(function (input) {
+        input.addEventListener("change", function () {
+          intakeProject.value = compositionProject.value;
+          intakeTaskType.value = compositionTask.value;
+          updateAll();
+        });
+      });
+
+      document.querySelectorAll("[data-example]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          loadExample(button.getAttribute("data-example"));
+        });
+      });
+
+      document.getElementById("lifecycle-prev").addEventListener("click", function () {
+        currentStateIndex = Math.max(0, currentStateIndex - 1);
+        updateAll();
+      });
+
+      document.getElementById("lifecycle-next").addEventListener("click", function () {
+        currentStateIndex = Math.min(lifecycleStates.length - 1, currentStateIndex + 1);
+        updateAll();
+      });
+
+      document.querySelectorAll("[data-acceptance-state]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          acceptanceState = button.getAttribute("data-acceptance-state");
+          updateAll();
+        });
+      });
+
+      intakeProject.value = "twos";
+      intakeTaskType.value = "Product Build";
+      compositionProject.value = "twos";
+      compositionTask.value = "Product Build";
       urgencyInput.value = "Normal";
-      updateComposition();
+      updateAll();
     }());
   </script>
 </body>

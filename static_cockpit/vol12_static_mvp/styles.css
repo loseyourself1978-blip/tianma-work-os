@@ -518,7 +518,9 @@ select {
 .profile-grid,
 .review-grid,
 .composition-layout,
-.preset-grid {
+.preset-grid,
+.intake-layout,
+.acceptance-layout {
   display: grid;
   gap: 14px;
 }
@@ -529,7 +531,9 @@ select {
 
 .profile-grid,
 .review-grid,
-.composition-layout {
+.composition-layout,
+.intake-layout,
+.acceptance-layout {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -558,21 +562,57 @@ select {
 .profile-card,
 .composition-controls,
 .recommendation-card,
-.preset-card {
+.preset-card,
+.intake-card,
+.assignment-card,
+.acceptance-card,
+.compact-sync-preview-card {
   display: grid;
   gap: 12px;
   align-content: start;
 }
 
 .composition-controls h3,
-.recommendation-card h3 {
+.recommendation-card h3,
+.intake-card h3,
+.assignment-card h3,
+.acceptance-card h3,
+.compact-sync-preview-card h3 {
   margin-top: 0;
 }
 
-.control-grid {
+.control-grid,
+.intake-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+}
+
+.intake-grid label:nth-child(n + 4) {
+  grid-column: span 3;
+}
+
+.quick-fill-row,
+.lifecycle-actions,
+.gate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.quick-fill-row button,
+.lifecycle-actions button,
+.gate-actions button {
+  min-height: 38px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.lifecycle-actions span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
 }
 
 .card-kicker {
@@ -691,11 +731,21 @@ select {
 }
 
 .lifecycle-track li {
-  min-height: 82px;
+  min-height: 250px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: #f7f9fc;
   padding: 12px;
+}
+
+.lifecycle-track li.is-active {
+  border-color: var(--accent);
+  background: #eef8f6;
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.lifecycle-track li.is-complete {
+  background: #f3f6fa;
 }
 
 .lifecycle-track span {
@@ -710,6 +760,34 @@ select {
   margin-top: 8px;
   font-size: 13px;
   line-height: 1.25;
+}
+
+.lifecycle-track small {
+  display: block;
+  margin-top: 7px;
+  color: #7a4b00;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.lifecycle-track p {
+  display: grid;
+  gap: 3px;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.lifecycle-track b {
+  color: var(--ink);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.lifecycle-track em {
+  font-style: normal;
 }
 
 .check-list {
@@ -731,6 +809,26 @@ select {
   font-size: 14px;
   font-weight: 800;
   line-height: 1.45;
+}
+
+.acceptance-card.is-pass {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.compact-sync-preview {
+  min-height: 220px;
+  margin: 0;
+  white-space: pre-wrap;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: #f7f9fc;
+  padding: 12px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.45;
+  overflow: auto;
 }
 
 .final-boundary {
@@ -777,9 +875,16 @@ select {
   .review-grid,
   .composition-layout,
   .control-grid,
+  .intake-layout,
+  .intake-grid,
+  .acceptance-layout,
   .preset-grid,
   .rule-band {
     grid-template-columns: 1fr;
+  }
+
+  .intake-grid label:nth-child(n + 4) {
+    grid-column: auto;
   }
 
   .lane-grid,
