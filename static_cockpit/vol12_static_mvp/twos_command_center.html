@@ -18,12 +18,12 @@
 
     <section class="workbench-hero" aria-label="Workbench header">
       <div>
-        <p class="version">Vol.15 MVP-10</p>
+        <p class="version">Vol.15 MVP-11</p>
         <h1>TWOS 1.0 Unified AI Team Workbench</h1>
-        <p class="subheadline">One coherent front-end demo flow for turning real project sync into task, team, route, lifecycle, acceptance review, and compact sync.</p>
+        <p class="subheadline">One coherent front-end demo flow plus an integration boundary gate for deciding when future real tool scope may safely open.</p>
       </div>
       <aside class="boundary-notice" aria-label="Boundary notice">
-        <p>No backend, API, scheduler, persistence, clipboard API, real tool integration, auto-send, live trading, live betting, or real multi-model routing has been opened.</p>
+        <p>No backend, API, auth, scheduler, persistence, clipboard API, real tool integration, auto-send, live trading, live betting, or real multi-model routing has been opened.</p>
       </aside>
     </section>
 
@@ -245,7 +245,7 @@
             </label>
             <label>
               <span>Task title</span>
-              <input id="intake-title" type="text" value="Turn MVP feedback into next product task" />
+              <input id="intake-title" type="text" value="Add Integration Boundary Gate" />
             </label>
             <label>
               <span>Task type</span>
@@ -259,21 +259,21 @@
             </label>
             <label>
               <span>Source sync summary</span>
-              <textarea id="intake-source" rows="4">MVP-9 Owner Acceptance passed; next task should connect the static workbench into one end-to-end TWOS 1.0 demo flow.</textarea>
+              <textarea id="intake-source" rows="4">MVP-10 Owner Acceptance passed; next task should add an Integration Boundary Gate before any future real integration scope.</textarea>
             </label>
             <label>
               <span>Required output</span>
-              <textarea id="intake-output" rows="4">Task assignment preview, lifecycle state, project-specific acceptance gate, and compact sync preview.</textarea>
+              <textarea id="intake-output" rows="4">Integration readiness, blocked scope, recommended first path, and MVP-11 compact sync preview.</textarea>
             </label>
             <label>
               <span>Boundary risk</span>
-              <textarea id="intake-boundary" rows="4">No backend, API, storage, external model call, external tool call, auto-send, live trading, or live betting.</textarea>
+              <textarea id="intake-boundary" rows="4">No backend, API, auth, persistence, external model call, external tool call, auto-send, live trading, or live betting.</textarea>
             </label>
           </div>
           <div class="quick-fill-row" aria-label="Quick-fill examples">
             <button type="button" data-example="ldd">LDD: SPCX Legacy risk review after 150 break</button>
             <button type="button" data-example="wc">2026WC: Favorite-win payout correction review</button>
-            <button type="button" data-example="twos">TWOS: Turn MVP feedback into next product task</button>
+            <button type="button" data-example="twos">TWOS: Add Integration Boundary Gate</button>
           </div>
         </article>
 
@@ -631,10 +631,259 @@
       </div>
     </section>
 
+    <section class="workbench-region integration-boundary-zone" aria-label="Integration Boundary Gate">
+      <div class="section-title">
+        <p class="version">Integration Boundary Gate</p>
+        <h2>Decide when real integration scope may safely open later.</h2>
+        <p class="hub-note">MVP-11 is UI-only readiness and decision support. It separates manual route, future integration, blocked scope, and owner-approved scope without opening backend, API, auth, or tool calls.</p>
+      </div>
+
+      <article class="workbench-card integration-overview-card" aria-label="Integration Candidate Matrix">
+        <div class="card-kicker">
+          <span>Integration Candidate Matrix</span>
+          <strong>UI-only readiness</strong>
+        </div>
+        <p class="recommendation-copy">Candidate slots are classified before any future implementation milestone. A slot can look valuable and still remain closed until the gate is explicit.</p>
+      </article>
+
+      <div class="integration-candidate-grid" aria-label="Integration Candidate Matrix cards">
+        <article class="workbench-card integration-candidate-card">
+          <div class="card-kicker"><span>Codex</span><strong>Manual route</strong></div>
+          <dl class="field-list">
+            <div><dt>Current status</dt><dd>Manual route / safest first candidate.</dd></div>
+            <div><dt>What it would enable</dt><dd>Reviewed instruction-pack handoff for product work.</dd></div>
+            <div><dt>Why it is not open yet</dt><dd>Automatic Codex calls and repository mutation are outside MVP-11.</dd></div>
+            <div><dt>Required gate before opening</dt><dd>Owner-approved design milestone, manual fallback, and no automatic call.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card integration-candidate-card">
+          <div class="card-kicker"><span>Calendar</span><strong>Future integration</strong></div>
+          <dl class="field-list">
+            <div><dt>Current status</dt><dd>Future integration.</dd></div>
+            <div><dt>What it would enable</dt><dd>Scheduling/readiness windows for review or handoff.</dd></div>
+            <div><dt>Why it is not open yet</dt><dd>No account auth, event creation, reminders, or scheduler scope exists.</dd></div>
+            <div><dt>Required gate before opening</dt><dd>Read/write boundary, owner approval, and no auto-create default.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card integration-candidate-card">
+          <div class="card-kicker"><span>Outlook / Email</span><strong>Future integration</strong></div>
+          <dl class="field-list">
+            <div><dt>Current status</dt><dd>Future integration.</dd></div>
+            <div><dt>What it would enable</dt><dd>Draft/review status notes for manual communication.</dd></div>
+            <div><dt>Why it is not open yet</dt><dd>No mailbox access, account auth, or auto-send permission exists.</dd></div>
+            <div><dt>Required gate before opening</dt><dd>Draft-only design, privacy review, and explicit send approval.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card integration-candidate-card">
+          <div class="card-kicker"><span>IM / Chat</span><strong>Future integration</strong></div>
+          <dl class="field-list">
+            <div><dt>Current status</dt><dd>Future integration.</dd></div>
+            <div><dt>What it would enable</dt><dd>Reviewable message snippets for team sync.</dd></div>
+            <div><dt>Why it is not open yet</dt><dd>No Slack, Teams, WeChat, or chat account connection exists.</dd></div>
+            <div><dt>Required gate before opening</dt><dd>Manual approval, channel permission design, and no auto-post.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card integration-candidate-card">
+          <div class="card-kicker"><span>Task tracker</span><strong>Future integration</strong></div>
+          <dl class="field-list">
+            <div><dt>Current status</dt><dd>Future integration.</dd></div>
+            <div><dt>What it would enable</dt><dd>Manual-first task export into a tracker workflow.</dd></div>
+            <div><dt>Why it is not open yet</dt><dd>No Jira, Linear, GitHub Issues, or task-tool write path exists.</dd></div>
+            <div><dt>Required gate before opening</dt><dd>Data contract, owner approval, acceptance mapping, and rollback path.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card integration-candidate-card">
+          <div class="card-kicker"><span>File / document workspace</span><strong>Future integration</strong></div>
+          <dl class="field-list">
+            <div><dt>Current status</dt><dd>Future integration.</dd></div>
+            <div><dt>What it would enable</dt><dd>Shared instruction packs, review notes, and document workspace context.</dd></div>
+            <div><dt>Why it is not open yet</dt><dd>No file sync, document auth, persistence, or account access scope exists.</dd></div>
+            <div><dt>Required gate before opening</dt><dd>Privacy model, owner-visible file boundary, and manual fallback.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card integration-candidate-card">
+          <div class="card-kicker"><span>Market / odds data source</span><strong>Owner approval required</strong></div>
+          <dl class="field-list">
+            <div><dt>Current status</dt><dd>Owner approval required.</dd></div>
+            <div><dt>What it would enable</dt><dd>Read-only evidence context for LDD or 2026WC review.</dd></div>
+            <div><dt>Why it is not open yet</dt><dd>Source quality, liability, and execution boundaries are not designed.</dd></div>
+            <div><dt>Required gate before opening</dt><dd>Explicit owner milestone, read-only proof, and no execution route.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card integration-candidate-card integration-candidate-card--blocked">
+          <div class="card-kicker"><span>Trading / betting execution</span><strong>Blocked</strong></div>
+          <dl class="field-list">
+            <div><dt>Current status</dt><dd>Blocked.</dd></div>
+            <div><dt>What it would enable</dt><dd>Live financial or wagering action, which is not a TWOS 1.0 UI milestone.</dd></div>
+            <div><dt>Why it is not open yet</dt><dd>Live trading execution and live betting execution remain forbidden.</dd></div>
+            <div><dt>Required gate before opening</dt><dd>A future milestone with explicit owner approval; default state remains blocked.</dd></div>
+          </dl>
+        </article>
+      </div>
+
+      <div class="integration-gate-layout">
+        <article class="workbench-card open-scope-gate-card" aria-label="Open-Scope Decision Gate">
+          <div class="card-kicker">
+            <span>Open-Scope Decision Gate</span>
+            <strong id="integration-gate-state-label">Ready for design only</strong>
+          </div>
+          <h3>Before any real integration milestone</h3>
+          <ul class="check-list integration-gate-list">
+            <li>Owner approval exists.</li>
+            <li>User value is clear.</li>
+            <li>Manual workflow pain is high.</li>
+            <li>Safety boundary is clear.</li>
+            <li>No fake auto-send.</li>
+            <li>No live trading/betting execution.</li>
+            <li>Acceptance gate is defined.</li>
+            <li>Rollback/manual fallback exists.</li>
+          </ul>
+          <div class="gate-actions decision-state-row" aria-label="Open-scope decision visual states">
+            <button type="button" data-integration-gate-state="Not ready">Not ready</button>
+            <button type="button" data-integration-gate-state="Ready for design only">Ready for design only</button>
+            <button type="button" data-integration-gate-state="Ready for implementation in a future milestone">Ready for implementation in a future milestone</button>
+            <button type="button" data-integration-gate-state="Blocked">Blocked</button>
+          </div>
+          <p class="recommendation-copy">This is a local-only visual decision state. It does not open backend/API/tool scope.</p>
+        </article>
+
+        <article class="workbench-card integration-recommendation-card">
+          <div class="card-kicker">
+            <span>Default recommendation</span>
+            <strong>Manual-first</strong>
+          </div>
+          <dl class="field-list">
+            <div><dt>Codex</dt><dd>Ready for design only / manual-first. Safest first candidate is a Codex handoff instruction pack, not an automatic call.</dd></div>
+            <div><dt>Calendar/Outlook/IM/task tools</dt><dd>Not ready; future design needed before account access, posting, sending, or task writes.</dd></div>
+            <div><dt>Trading/betting execution</dt><dd>Blocked. Live execution remains closed unless a future milestone explicitly opens it with owner approval.</dd></div>
+          </dl>
+        </article>
+      </div>
+
+      <div class="risk-ledger-grid" aria-label="Integration Risk Ledger">
+        <article class="workbench-card risk-card">
+          <h3>Fake multi-model claim</h3>
+          <dl class="field-list">
+            <div><dt>Why it matters</dt><dd>Users may overtrust simulated profiles if they look like real model routing.</dd></div>
+            <div><dt>Current mitigation</dt><dd>Profiles stay labeled as simulated.</dd></div>
+            <div><dt>Blocking condition</dt><dd>No external model is named as real without an implemented integration.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card risk-card">
+          <h3>Fake tool integration claim</h3>
+          <dl class="field-list">
+            <div><dt>Why it matters</dt><dd>Tool-looking UI can imply actual calendar, email, chat, or task access.</dd></div>
+            <div><dt>Current mitigation</dt><dd>Routes are marked manual route, future integration, blocked, or owner approval required.</dd></div>
+            <div><dt>Blocking condition</dt><dd>No integration is described as live until it exists.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card risk-card">
+          <h3>Auto-send / auto-post</h3>
+          <dl class="field-list">
+            <div><dt>Why it matters</dt><dd>Messages can create external commitments before owner review.</dd></div>
+            <div><dt>Current mitigation</dt><dd>All sync, email, and chat text remains manual copy only.</dd></div>
+            <div><dt>Blocking condition</dt><dd>No auto-send, no auto-post, and no clipboard API.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card risk-card">
+          <h3>Live trading / betting execution</h3>
+          <dl class="field-list">
+            <div><dt>Why it matters</dt><dd>Financial and betting actions are high-risk and outside the static workbench.</dd></div>
+            <div><dt>Current mitigation</dt><dd>LDD and 2026WC are analysis/review only.</dd></div>
+            <div><dt>Blocking condition</dt><dd>Execution remains blocked unless a future owner-approved milestone opens it.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card risk-card">
+          <h3>Auth / privacy / account access</h3>
+          <dl class="field-list">
+            <div><dt>Why it matters</dt><dd>Account connections expose private calendars, mailboxes, chats, files, and tasks.</dd></div>
+            <div><dt>Current mitigation</dt><dd>MVP-11 adds no auth and no account connection.</dd></div>
+            <div><dt>Blocking condition</dt><dd>Any future auth needs explicit design, consent, and fallback.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card risk-card">
+          <h3>Persistence / memory leakage</h3>
+          <dl class="field-list">
+            <div><dt>Why it matters</dt><dd>Task context can contain sensitive project details.</dd></div>
+            <div><dt>Current mitigation</dt><dd>All MVP-11 state is front-end-only for the current page view.</dd></div>
+            <div><dt>Blocking condition</dt><dd>No browser storage, backend persistence, or account sync.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card risk-card">
+          <h3>Bad acceptance gate</h3>
+          <dl class="field-list">
+            <div><dt>Why it matters</dt><dd>Weak gates let unclear work move forward as if it were accepted.</dd></div>
+            <div><dt>Current mitigation</dt><dd>Acceptance checks stay project-specific and visible.</dd></div>
+            <div><dt>Blocking condition</dt><dd>No future integration opens without a defined acceptance gate.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card risk-card">
+          <h3>Human approval bypass</h3>
+          <dl class="field-list">
+            <div><dt>Why it matters</dt><dd>TWOS should assist decisions, not replace owner approval.</dd></div>
+            <div><dt>Current mitigation</dt><dd>Owner approval remains central in task, route, and integration gates.</dd></div>
+            <div><dt>Blocking condition</dt><dd>No automatic execution path may skip explicit owner approval.</dd></div>
+          </dl>
+        </article>
+      </div>
+
+      <div class="first-path-grid" aria-label="Recommended First Integration Path">
+        <article class="workbench-card first-path-card">
+          <div class="card-kicker">
+            <span>Recommended First Integration Path</span>
+            <strong>Safest candidate</strong>
+          </div>
+          <h3>Codex Handoff / Instruction Pack route</h3>
+          <p class="recommendation-copy">MVP-11 does not call Codex automatically. The next safe step is improving manual Codex handoff quality before any real API/tool automation.</p>
+        </article>
+        <article class="workbench-card first-path-card">
+          <div class="card-kicker"><span>Secondary future candidates</span><strong>Design later</strong></div>
+          <ul class="check-list">
+            <li>Calendar: scheduling/readiness only, no auto-create yet.</li>
+            <li>Outlook/Email: draft/review only, no auto-send.</li>
+            <li>IM/Chat: reviewable message only, no auto-post.</li>
+            <li>Task tracker: manual task export first.</li>
+          </ul>
+        </article>
+        <article class="workbench-card first-path-card integration-candidate-card--blocked">
+          <div class="card-kicker"><span>Hard blocked category</span><strong>Closed</strong></div>
+          <p class="recommendation-copy">Trading/betting execution remains blocked unless a future milestone explicitly opens live execution with owner approval.</p>
+        </article>
+      </div>
+
+      <div class="integration-sync-layout">
+        <article class="workbench-card integration-sync-card">
+          <div class="card-kicker">
+            <span>MVP-11 Compact Sync Preview</span>
+            <strong>Manual text only</strong>
+          </div>
+          <pre id="integration-sync-preview" class="compact-sync-preview">Vol.15 MVP-11 Sync: Integration Boundary Gate added; TWOS can now classify tool slots as manual route, future integration, blocked, or owner-approval required. Recommended first future path is Codex handoff/instruction-pack readiness, not automatic tool calling. Backend/API/live execution remain closed.</pre>
+        </article>
+
+        <article class="workbench-card integration-owner-card">
+          <div class="card-kicker">
+            <span>Owner Acceptance checklist</span>
+            <strong>MVP-11</strong>
+          </div>
+          <ul class="check-list">
+            <li>Can see candidate integration matrix.</li>
+            <li>Can see open-scope decision gate.</li>
+            <li>Can see integration risk ledger.</li>
+            <li>Can see recommended first integration path.</li>
+            <li>Can see blocked trading/betting execution.</li>
+            <li>Can see Codex is manual-first, not auto-call.</li>
+            <li>Can see Calendar/Outlook/IM are future integrations, not real.</li>
+            <li>Can see compact sync preview.</li>
+            <li>UI makes the next integration decision clearer than MVP-10.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
     <section class="workbench-region review-zone" aria-label="Review acceptance sync zone">
       <div class="section-title">
         <p class="version">Review / Acceptance / Sync Zone</p>
-        <h2>MVP-10 owner acceptance before any next action.</h2>
+        <h2>MVP-11 owner acceptance before any future integration scope.</h2>
       </div>
 
       <div class="review-grid">
@@ -644,43 +893,45 @@
             <li>Source contract: Vol.15 architecture map.</li>
             <li>Scope: static UI only.</li>
             <li>Allowed files: existing static cockpit UI files.</li>
-            <li>Blocked: backend, API, scheduler, tool integration, auto-send, trading, betting.</li>
+            <li>Blocked: backend, API, auth, scheduler, persistence, tool integration, auto-send, trading, betting.</li>
           </ul>
         </article>
 
         <article class="workbench-card review-card">
           <h3>Stage self-check summary</h3>
           <ul class="check-list">
-            <li>Stage A: demo scenario selector preloads source sync, task, output, boundary, and acceptance focus.</li>
-            <li>Stage B: one flow stepper connects Sync Intake through Compact Sync.</li>
-            <li>Stage C: scenario changes bind simulated team and route together.</li>
-            <li>Stage D: acceptance outcome review is scenario-aware.</li>
-            <li>Stage E: end-to-end compact sync and owner acceptance are embedded.</li>
+            <li>Stage A: integration candidate matrix classifies manual route, future integration, blocked, and owner-approval scope.</li>
+            <li>Stage B: open-scope decision gate keeps owner approval and safety checks explicit.</li>
+            <li>Stage C: integration risk ledger turns fake claims, auto-send, auth, persistence, and approval bypass into visible blockers.</li>
+            <li>Stage D: recommended first integration path is Codex handoff/instruction-pack readiness, not automatic tool calling.</li>
+            <li>Stage E: MVP-11 compact sync and owner acceptance are embedded on the product surface.</li>
           </ul>
         </article>
 
         <article class="workbench-card review-card">
-          <h3>MVP-10 milestone acceptance checklist</h3>
+          <h3>MVP-11 milestone acceptance checklist</h3>
           <ul class="check-list">
-            <li>Can select a real project scenario.</li>
-            <li>Can follow Sync -> Task -> Team -> Route -> Lifecycle -> Acceptance -> Sync.</li>
-            <li>Scenario changes affect team and route.</li>
-            <li>Acceptance outcome is project-specific.</li>
-            <li>Compact Sync preview is useful.</li>
-            <li>All live/tool boundaries are visible.</li>
-            <li>UI feels like an end-to-end TWOS 1.0 demo, not separate widgets.</li>
+            <li>Can see candidate integration matrix.</li>
+            <li>Can see open-scope decision gate.</li>
+            <li>Can see integration risk ledger.</li>
+            <li>Can see recommended first integration path.</li>
+            <li>Can see blocked trading/betting execution.</li>
+            <li>Can see Codex is manual-first, not auto-call.</li>
+            <li>Can see Calendar/Outlook/IM are future integrations, not real.</li>
+            <li>Can see compact sync preview.</li>
+            <li>UI makes the next integration decision clearer than MVP-10.</li>
           </ul>
         </article>
 
         <article class="workbench-card review-card">
           <h3>Owner Acceptance checklist</h3>
           <ul class="check-list">
-            <li>Scenario selector feels grounded in real LDD, 2026WC, and TWOS work.</li>
-            <li>Stepper makes the whole workflow understandable.</li>
-            <li>Team and route binding changes with scenario.</li>
-            <li>Acceptance outcome shows unresolved risk and next manual action.</li>
-            <li>End-to-end compact sync preview proves the loop.</li>
-            <li>Boundary warnings are visible enough for acceptance.</li>
+            <li>Integration readiness is visible without claiming real integrations.</li>
+            <li>Codex is clearly manual-first and safest for future design only.</li>
+            <li>Calendar, Outlook, IM, task tracker, and file workspace remain future integrations.</li>
+            <li>Trading/betting execution remains blocked.</li>
+            <li>Risk ledger explains why backend/API/auth/tool scope stays closed.</li>
+            <li>MVP-11 compact sync is ready for manual owner review.</li>
           </ul>
         </article>
       </div>
@@ -720,12 +971,12 @@
         },
         twos: {
           label: "TWOS Product Development",
-          defaultTitle: "Turn MVP feedback into next product task",
+          defaultTitle: "Add Integration Boundary Gate",
           defaultType: "Product Build",
-          source: "MVP-9 Owner Acceptance passed; next task should connect the static workbench into one end-to-end TWOS 1.0 demo flow.",
-          output: "Static UI/product structure with acceptance-ready implementation notes",
+          source: "MVP-10 Owner Acceptance passed; next task should add an Integration Boundary Gate before any future real integration scope.",
+          output: "Static UI/product structure with integration readiness, blocked scope, and acceptance-ready implementation notes.",
           acceptance: "Task must reduce distance to TWOS 1.0; no backend/API/tool integration unless milestone opens scope.",
-          boundary: "Planning and UI/product implementation only; no backend, API, scheduler, schema, validator, storage, or tool integration.",
+          boundary: "Planning and UI/product implementation only; no backend, API, auth, scheduler, schema, validator, storage, or tool integration.",
           why: "TWOS product work needs Commander synthesis, Builder structure, and Verifier acceptance/boundary review."
         }
       };
@@ -835,6 +1086,7 @@
       var demoStepIndex = 0;
       var demoAcceptanceState = "Needs Review";
       var currentDemoScenario = "twos";
+      var integrationGateState = "Ready for design only";
 
       var intakeProject = document.getElementById("intake-project");
       var intakeTitle = document.getElementById("intake-title");
@@ -890,6 +1142,8 @@
       var demoUnresolvedRisk = document.getElementById("demo-unresolved-risk");
       var demoNextAction = document.getElementById("demo-next-action");
       var e2eSyncPreview = document.getElementById("e2e-sync-preview");
+      var integrationGateStateLabel = document.getElementById("integration-gate-state-label");
+      var integrationSyncPreview = document.getElementById("integration-sync-preview");
 
       function uniqueTeam(team) {
         return team.filter(function (profile, index) {
@@ -1108,6 +1362,23 @@
         e2eSyncPreview.textContent = e2eCompactSync(team, route);
       }
 
+      function renderIntegrationGate(route) {
+        if (!integrationGateStateLabel || !integrationSyncPreview) return;
+        integrationGateStateLabel.textContent = integrationGateState;
+        document.querySelectorAll("[data-integration-gate-state]").forEach(function (button) {
+          button.classList.toggle("is-active", button.getAttribute("data-integration-gate-state") === integrationGateState);
+        });
+        document.querySelector(".open-scope-gate-card").classList.toggle("is-pass", integrationGateState === "Ready for design only" || integrationGateState === "Ready for implementation in a future milestone");
+        document.querySelector(".open-scope-gate-card").classList.toggle("is-blocked", integrationGateState === "Blocked");
+        integrationSyncPreview.textContent = [
+          "Vol.15 MVP-11 Sync: Integration Boundary Gate added; TWOS can now classify tool slots as manual route, future integration, blocked, or owner-approval required. Recommended first future path is Codex handoff/instruction-pack readiness, not automatic tool calling. Backend/API/live execution remain closed.",
+          "Current visual decision state: " + integrationGateState,
+          "Current task route context: " + route.title + " / " + route.status,
+          "First future path: Codex Handoff / Instruction Pack route.",
+          "Blocked: backend/API/auth/tool calls, auto-send, auto-post, live trading, live betting, persistence."
+        ].join("\n");
+      }
+
       function updateAll() {
         var projectKey = intakeProject.value;
         var taskTypeValue = intakeTaskType.value;
@@ -1146,6 +1417,7 @@
         renderLifecycle(intakeOutput.value, data.acceptance, intakeBoundary.value);
         compactSyncPreview.textContent = compactSync(team);
         renderDemo(team, route);
+        renderIntegrationGate(route);
       }
 
       function loadExample(projectKey) {
@@ -1232,6 +1504,13 @@
       document.querySelectorAll("[data-route-gate-state]").forEach(function (button) {
         button.addEventListener("click", function () {
           routeGateState = button.getAttribute("data-route-gate-state");
+          updateAll();
+        });
+      });
+
+      document.querySelectorAll("[data-integration-gate-state]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          integrationGateState = button.getAttribute("data-integration-gate-state");
           updateAll();
         });
       });

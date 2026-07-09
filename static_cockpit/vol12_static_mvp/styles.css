@@ -525,7 +525,12 @@ select {
 .route-planning-layout,
 .sync-sample-grid,
 .demo-scenario-grid,
-.demo-flow-layout {
+.demo-flow-layout,
+.integration-candidate-grid,
+.integration-gate-layout,
+.risk-ledger-grid,
+.first-path-grid,
+.integration-sync-layout {
   display: grid;
   gap: 14px;
 }
@@ -540,22 +545,31 @@ select {
 .intake-layout,
 .acceptance-layout,
 .route-planning-layout,
-.demo-flow-layout {
+.demo-flow-layout,
+.integration-gate-layout,
+.integration-sync-layout {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .preset-grid,
 .sync-sample-grid,
-.demo-scenario-grid {
+.demo-scenario-grid,
+.first-path-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 14px;
 }
 
-.route-matrix {
+.route-matrix,
+.integration-candidate-grid,
+.risk-ledger-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.route-planning-layout {
+.route-planning-layout,
+.integration-gate-layout,
+.integration-candidate-grid,
+.risk-ledger-grid,
+.integration-sync-layout {
   margin-top: 14px;
 }
 
@@ -591,7 +605,15 @@ select {
 .demo-guidance-card,
 .demo-binding-card,
 .demo-outcome-card,
-.demo-sync-card {
+.demo-sync-card,
+.integration-overview-card,
+.integration-candidate-card,
+.open-scope-gate-card,
+.integration-recommendation-card,
+.risk-card,
+.first-path-card,
+.integration-sync-card,
+.integration-owner-card {
   display: grid;
   gap: 12px;
   align-content: start;
@@ -608,7 +630,10 @@ select {
 .demo-guidance-card h3,
 .demo-binding-card h3,
 .demo-outcome-card h3,
-.demo-sync-card h3 {
+.demo-sync-card h3,
+.open-scope-gate-card h3,
+.risk-card h3,
+.first-path-card h3 {
   margin-top: 0;
 }
 
@@ -638,6 +663,12 @@ select {
   min-height: 38px;
   padding: 0 10px;
   font-size: 12px;
+}
+
+.gate-actions button.is-active {
+  border-color: var(--accent);
+  background: #eef8f6;
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .scenario-button {
@@ -928,9 +959,16 @@ select {
 }
 
 .route-gate-card.is-pass,
-.demo-outcome-card.is-pass {
+.demo-outcome-card.is-pass,
+.open-scope-gate-card.is-pass {
   border-color: var(--accent);
   box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.open-scope-gate-card.is-blocked,
+.integration-candidate-card--blocked {
+  border-color: #b45309;
+  background: #fffbeb;
 }
 
 .route-card p {
@@ -948,7 +986,8 @@ select {
   text-transform: uppercase;
 }
 
-.route-gate-list {
+.route-gate-list,
+.integration-gate-list {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -1021,11 +1060,17 @@ select {
   .demo-scenario-grid,
   .demo-flow-layout,
   .demo-step-list,
+  .integration-candidate-grid,
+  .integration-gate-layout,
+  .risk-ledger-grid,
+  .first-path-grid,
+  .integration-sync-layout,
   .rule-band {
     grid-template-columns: 1fr;
   }
 
-  .route-gate-list {
+  .route-gate-list,
+  .integration-gate-list {
     grid-template-columns: 1fr;
   }
 
