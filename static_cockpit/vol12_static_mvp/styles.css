@@ -520,7 +520,10 @@ select {
 .composition-layout,
 .preset-grid,
 .intake-layout,
-.acceptance-layout {
+.acceptance-layout,
+.route-matrix,
+.route-planning-layout,
+.sync-sample-grid {
   display: grid;
   gap: 14px;
 }
@@ -533,12 +536,22 @@ select {
 .review-grid,
 .composition-layout,
 .intake-layout,
-.acceptance-layout {
+.acceptance-layout,
+.route-planning-layout {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.preset-grid {
+.preset-grid,
+.sync-sample-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.route-matrix {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.route-planning-layout {
   margin-top: 14px;
 }
 
@@ -566,7 +579,11 @@ select {
 .intake-card,
 .assignment-card,
 .acceptance-card,
-.compact-sync-preview-card {
+.compact-sync-preview-card,
+.route-card,
+.route-recommendation-card,
+.route-gate-card,
+.sync-sample-card {
   display: grid;
   gap: 12px;
   align-content: start;
@@ -577,7 +594,9 @@ select {
 .intake-card h3,
 .assignment-card h3,
 .acceptance-card h3,
-.compact-sync-preview-card h3 {
+.compact-sync-preview-card h3,
+.route-recommendation-card h3,
+.route-gate-card h3 {
   margin-top: 0;
 }
 
@@ -816,6 +835,30 @@ select {
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 
+.route-gate-card.is-pass {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.route-card p {
+  display: grid;
+  gap: 3px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.route-card b {
+  color: var(--ink);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.route-gate-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .compact-sync-preview {
   min-height: 220px;
   margin: 0;
@@ -879,7 +922,14 @@ select {
   .intake-grid,
   .acceptance-layout,
   .preset-grid,
+  .route-matrix,
+  .route-planning-layout,
+  .sync-sample-grid,
   .rule-band {
+    grid-template-columns: 1fr;
+  }
+
+  .route-gate-list {
     grid-template-columns: 1fr;
   }
 

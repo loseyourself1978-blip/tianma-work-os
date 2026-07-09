@@ -18,9 +18,9 @@
 
     <section class="workbench-hero" aria-label="Workbench header">
       <div>
-        <p class="version">Vol.15 MVP-8</p>
+        <p class="version">Vol.15 MVP-9</p>
         <h1>TWOS 1.0 Unified AI Team Workbench</h1>
-        <p class="subheadline">One command center for turning project sync into a task, assigning a simulated AI team, moving lifecycle state, checking acceptance, and previewing compact sync.</p>
+        <p class="subheadline">One command center for turning project sync into a task, assigning a simulated AI team, checking route readiness, and previewing compact sync.</p>
       </div>
       <aside class="boundary-notice" aria-label="Boundary notice">
         <p>No backend, API, scheduler, persistence, clipboard API, real tool integration, auto-send, live trading, live betting, or real multi-model routing has been opened.</p>
@@ -411,7 +411,124 @@
             <strong>Manual text only</strong>
           </div>
           <h3>Copyable-looking preview</h3>
-          <pre id="compact-sync-preview" class="compact-sync-preview">Vol.15 MVP-8 Sync: Task Assignment + Acceptance Workbench added; operator can convert project sync into task, assign simulated team, move lifecycle state, build acceptance gate, and preview compact sync; backend/API/tool integration remains closed.</pre>
+          <pre id="compact-sync-preview" class="compact-sync-preview">Vol.15 MVP-9 Sync: Tool Routing Readiness Layer added; tasks can map to human approval, Codex manual route, manual settlement/review, and future calendar/Outlook/IM/task-tool slots; no real integration or live execution opened.</pre>
+        </article>
+      </div>
+    </section>
+
+    <section class="workbench-region tool-route-zone" aria-label="Tool Routing Readiness Layer">
+      <div class="section-title">
+        <p class="version">Tool Routing Readiness</p>
+        <h2>Plan the route without pretending to integrate.</h2>
+        <p class="hub-note">All routes are UI-only readiness planning. External tools are manual-only or future integration unless explicitly opened in a later milestone.</p>
+      </div>
+
+      <div class="route-matrix" aria-label="Tool route matrix">
+        <article class="workbench-card route-card">
+          <div class="card-kicker"><span>Human approval</span><strong>Ready</strong></div>
+          <p><b>Can do now</b> Review context, pass/hold decisions, owner acceptance.</p>
+          <p><b>Must not do yet</b> Bypass owner judgment or trigger external action.</p>
+        </article>
+        <article class="workbench-card route-card">
+          <div class="card-kicker"><span>Codex</span><strong>Manual-only</strong></div>
+          <p><b>Can do now</b> Receive copied instruction after owner approval.</p>
+          <p><b>Must not do yet</b> Automatic Codex call, repository mutation, or push.</p>
+        </article>
+        <article class="workbench-card route-card">
+          <div class="card-kicker"><span>Calendar</span><strong>Future integration</strong></div>
+          <p><b>Can do now</b> Show a review-window planning slot.</p>
+          <p><b>Must not do yet</b> No event creation, reminders, or scheduler jobs.</p>
+        </article>
+        <article class="workbench-card route-card">
+          <div class="card-kicker"><span>Outlook / Email</span><strong>Future integration</strong></div>
+          <p><b>Can do now</b> Prepare email-style status text for manual use.</p>
+          <p><b>Must not do yet</b> Read mailboxes, connect accounts, or auto-send.</p>
+        </article>
+        <article class="workbench-card route-card">
+          <div class="card-kicker"><span>IM / Chat</span><strong>Future integration</strong></div>
+          <p><b>Can do now</b> Draft a short approval or sync note.</p>
+          <p><b>Must not do yet</b> No auto-post to Slack, Teams, WeChat, or any chat tool.</p>
+        </article>
+        <article class="workbench-card route-card">
+          <div class="card-kicker"><span>Task tracker</span><strong>Future integration</strong></div>
+          <p><b>Can do now</b> Shape task metadata and acceptance text.</p>
+          <p><b>Must not do yet</b> Create Jira, Linear, GitHub Issues, or task API records.</p>
+        </article>
+        <article class="workbench-card route-card">
+          <div class="card-kicker"><span>Manual settlement / review</span><strong>Manual-only</strong></div>
+          <p><b>Can do now</b> Support manual evidence review and settlement notes.</p>
+          <p><b>Must not do yet</b> Live trading, live betting, or financial execution.</p>
+        </article>
+      </div>
+
+      <div class="route-planning-layout">
+        <article class="workbench-card route-recommendation-card" aria-label="Task to route recommendation">
+          <div class="card-kicker">
+            <span>Task → Route</span>
+            <strong id="route-status">Manual approval required</strong>
+          </div>
+          <h3 id="route-title">Codex manual route</h3>
+          <dl class="task-fields">
+            <div>
+              <dt>Why this route</dt>
+              <dd id="route-why">Product build work can be prepared for manual Codex instruction after owner approval.</dd>
+            </div>
+            <div>
+              <dt>Blocked action</dt>
+              <dd id="route-blocked">No automatic Codex call, no backend/API/tool integration, no auto-send.</dd>
+            </div>
+          </dl>
+        </article>
+
+        <article class="workbench-card route-gate-card" aria-label="Route Readiness Gate">
+          <div class="card-kicker">
+            <span>Route Readiness Gate</span>
+            <strong id="route-gate-state-label">Needs Review</strong>
+          </div>
+          <h3>Before any simulated route</h3>
+          <ul class="check-list route-gate-list">
+            <li>Is task context clear?</li>
+            <li>Is owner approval required?</li>
+            <li>Is route manual-only or future integration?</li>
+            <li>Is live execution forbidden?</li>
+            <li>Is acceptance gate defined?</li>
+            <li>Is compact sync needed?</li>
+          </ul>
+          <p class="recommendation-copy" id="route-warning">Codex can receive copied instruction only; no automatic call.</p>
+          <div class="gate-actions" aria-label="Route readiness visual state controls">
+            <button type="button" data-route-gate-state="Pass">Pass</button>
+            <button type="button" data-route-gate-state="Needs Review">Needs Review</button>
+          </div>
+        </article>
+      </div>
+
+      <div class="sync-sample-grid" aria-label="Real Sync Samples">
+        <article class="workbench-card sync-sample-card">
+          <h3>LDD 2026-07-08 Post</h3>
+          <dl class="field-list">
+            <div><dt>Source</dt><dd>Repair ≠ Chase; H2 first ticket needs NVDA &gt;204 + SMH &gt;600; SPCX Legacy risk review.</dd></div>
+            <div><dt>Recommended route</dt><dd>Manual review, no live trading.</dd></div>
+            <div><dt>Acceptance focus</dt><dd>Dual confirmation and review-only framing.</dd></div>
+            <div><dt>Blocked action</dt><dd>No broker order, no market execution, no account mutation.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card sync-sample-card">
+          <h3>2026WC 2026-07-09 Pre</h3>
+          <dl class="field-list">
+            <div><dt>Source</dt><dd>France–Morocco single-match plan.</dd></div>
+            <div><dt>Recommended route</dt><dd>Manual settlement/review only, no live betting execution.</dd></div>
+            <div><dt>Acceptance focus</dt><dd>Payout logic and risk-tail review before any conclusion.</dd></div>
+            <div><dt>Blocked action</dt><dd>No wager, no bookmaker integration, no auto-published prediction.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card sync-sample-card">
+          <h3>TWOS Vol.15</h3>
+          <dl class="field-list">
+            <div><dt>Source</dt><dd>MVP feedback becomes next product task.</dd></div>
+            <div><dt>Recommended route</dt><dd>Codex instruction copied manually, no automatic tool call.</dd></div>
+            <div><dt>Acceptance focus</dt><dd>Task reduces distance to TWOS 1.0 while staying inside static UI scope.</dd></div>
+            <div><dt>Blocked action</dt><dd>No backend, API, scheduler, task-tool write, or auto-send.</dd></div>
+          </dl>
         </article>
       </div>
     </section>
@@ -419,7 +536,7 @@
     <section class="workbench-region review-zone" aria-label="Review acceptance sync zone">
       <div class="section-title">
         <p class="version">Review / Acceptance / Sync Zone</p>
-        <h2>MVP-8 owner acceptance before any next action.</h2>
+        <h2>MVP-9 owner acceptance before any next action.</h2>
       </div>
 
       <div class="review-grid">
@@ -436,35 +553,36 @@
         <article class="workbench-card review-card">
           <h3>Stage self-check summary</h3>
           <ul class="check-list">
-            <li>Stage A: Task Intake Builder converts project sync into task context.</li>
-            <li>Stage B: assignment recommendation follows project/task type.</li>
-            <li>Stage C: lifecycle board can preview task movement through states.</li>
-            <li>Stage D: project-specific acceptance gates are visible.</li>
-            <li>Stage E: compact sync preview and owner acceptance are embedded.</li>
+            <li>Stage A: route matrix shows current readiness for human and tool routes.</li>
+            <li>Stage B: task context maps to a local-only route recommendation.</li>
+            <li>Stage C: route readiness gate keeps approval and boundary checks visible.</li>
+            <li>Stage D: real sync samples route safely without live execution.</li>
+            <li>Stage E: compact sync and owner acceptance mention route readiness.</li>
           </ul>
         </article>
 
         <article class="workbench-card review-card">
-          <h3>MVP-8 milestone acceptance checklist</h3>
+          <h3>MVP-9 milestone acceptance checklist</h3>
           <ul class="check-list">
-            <li>Can create/preview a task from LDD/2026WC/TWOS context.</li>
-            <li>Can see recommended simulated team.</li>
-            <li>Can move or preview task lifecycle state.</li>
-            <li>Can see project-specific acceptance gates.</li>
+            <li>Can see tool route matrix.</li>
+            <li>Can see task-to-route recommendation.</li>
+            <li>Can see route readiness gate.</li>
+            <li>Can see blocked actions.</li>
+            <li>Can see real sync samples routed safely.</li>
             <li>Can see compact sync preview.</li>
-            <li>Can see all boundaries.</li>
-            <li>UI feels materially more useful than MVP-7.</li>
+            <li>No fake integration or live execution.</li>
+            <li>UI feels more useful than MVP-8.</li>
           </ul>
         </article>
 
         <article class="workbench-card review-card">
           <h3>Owner Acceptance checklist</h3>
           <ul class="check-list">
-            <li>Task Intake Builder reads like a real sync-to-task workflow.</li>
-            <li>Recommended profiles feel minimal, not theatrical.</li>
-            <li>Lifecycle controls make state visible without pretending to execute.</li>
-            <li>Acceptance gates reflect LDD, 2026WC, or TWOS lessons.</li>
-            <li>Compact sync preview is useful but not fake auto-send.</li>
+            <li>Route matrix is understandable.</li>
+            <li>Recommendation explains route and blocked action.</li>
+            <li>Route readiness gate keeps owner approval central.</li>
+            <li>Real sync samples make route planning concrete.</li>
+            <li>Compact sync preview includes route readiness.</li>
             <li>Boundary warnings are visible enough for acceptance.</li>
           </ul>
         </article>
@@ -517,6 +635,7 @@
       var lifecycleStates = ["Intake", "Assignment", "Execution Placeholder", "Review", "Acceptance", "Sync"];
       var currentStateIndex = 0;
       var acceptanceState = "Needs Review";
+      var routeGateState = "Needs Review";
 
       var intakeProject = document.getElementById("intake-project");
       var intakeTitle = document.getElementById("intake-title");
@@ -546,6 +665,12 @@
       var acceptanceChecklist = document.getElementById("acceptance-checklist");
       var acceptanceStateLabel = document.getElementById("acceptance-state-label");
       var compactSyncPreview = document.getElementById("compact-sync-preview");
+      var routeTitle = document.getElementById("route-title");
+      var routeStatus = document.getElementById("route-status");
+      var routeWhy = document.getElementById("route-why");
+      var routeBlocked = document.getElementById("route-blocked");
+      var routeWarning = document.getElementById("route-warning");
+      var routeGateStateLabel = document.getElementById("route-gate-state-label");
 
       function uniqueTeam(team) {
         return team.filter(function (profile, index) {
@@ -613,6 +738,61 @@
         ];
       }
 
+      function routeRecommendation(projectKey, taskTypeValue) {
+        if (projectKey === "twos" && taskTypeValue === "Product Build") {
+          return {
+            title: "Codex manual route",
+            status: "Manual approval required",
+            why: "TWOS Product Build work can become a copied Codex instruction after owner approval.",
+            blocked: "No automatic Codex call, no repository mutation, no backend/API/tool integration, no auto-send.",
+            warning: "Codex can receive copied instruction only; no automatic call."
+          };
+        }
+        if (projectKey === "ldd" && taskTypeValue === "Risk Check") {
+          return {
+            title: "Human approval + manual review route",
+            status: "No live trading",
+            why: "LDD risk checks require owner judgment and manual evidence review before any interpretation is accepted.",
+            blocked: "No broker order, no Binance action, no market data call, no live trading execution.",
+            warning: "Trading-sensitive work is manual review only; live execution is forbidden."
+          };
+        }
+        if (projectKey === "wc" && (taskTypeValue === "Acceptance Review" || taskTypeValue === "Strategy Review")) {
+          return {
+            title: "Manual settlement / review route",
+            status: "No live betting",
+            why: "2026WC settlement or review needs manual payout/risk-tail checking, not a betting workflow.",
+            blocked: "No wager, no bookmaker connection, no live odds feed, no auto-published prediction.",
+            warning: "Betting-sensitive work is manual settlement/review only; live execution is forbidden."
+          };
+        }
+        if (taskTypeValue === "Sync Intake") {
+          return {
+            title: "Compact Sync manual route",
+            status: "Manual copy only",
+            why: "Sync intake should become concise handoff text for the selected project lane.",
+            blocked: "No auto-send, no IM post, no email send, no task-tool write.",
+            warning: "Compact Sync is manual text only; no clipboard API or auto-send."
+          };
+        }
+        if (taskTypeValue === "Acceptance Review") {
+          return {
+            title: "Human approval route",
+            status: "Owner approval required",
+            why: "Acceptance review depends on human judgment before the task can be considered accepted.",
+            blocked: "No approval bypass, no external action, no automatic route execution.",
+            warning: "Owner approval remains central before any next step."
+          };
+        }
+        return {
+          title: "Human approval route",
+          status: "Ready for manual review",
+          why: "The task needs manual review before any downstream route is considered.",
+          blocked: "No real integration, no auto-send, no live execution.",
+          warning: "Future integrations remain unopened."
+        };
+      }
+
       function renderAcceptance(projectKey) {
         acceptanceTitle.textContent = projectData[projectKey].label + " acceptance gate";
         acceptanceChecklist.innerHTML = "";
@@ -639,14 +819,17 @@
       }
 
       function compactSync(team) {
+        var route = routeRecommendation(intakeProject.value, intakeTaskType.value);
         return [
-          "Vol.15 MVP-8 Sync: Task Assignment + Acceptance Workbench added; operator can convert project sync into task, assign simulated team, move lifecycle state, build acceptance gate, and preview compact sync; backend/API/tool integration remains closed.",
+          "Vol.15 MVP-9 Sync: Tool Routing Readiness Layer added; tasks can map to human approval, Codex manual route, manual settlement/review, and future calendar/Outlook/IM/task-tool slots; no real integration or live execution opened.",
           "Task: " + intakeTitle.value,
           "Project: " + projectData[intakeProject.value].label,
           "Task Type: " + intakeTaskType.value,
           "Lifecycle State: " + lifecycleStates[currentStateIndex],
           "Recommended Team: " + team.join(" + "),
+          "Recommended Route: " + route.title + " / " + route.status,
           "Acceptance State: " + acceptanceState,
+          "Route Gate State: " + routeGateState,
           "Boundary: " + intakeBoundary.value
         ].join("\n");
       }
@@ -657,6 +840,7 @@
         var urgencyValue = urgencyInput.value;
         var data = projectData[projectKey];
         var team = resolveTeam(projectKey, taskTypeValue, urgencyValue);
+        var route = routeRecommendation(projectKey, taskTypeValue);
         var extraWhy = urgencyValue === "High" ? " High urgency keeps verification visible." : "";
         var trim = roleTrimReason(team, projectKey, taskTypeValue);
 
@@ -677,6 +861,13 @@
         taskAcceptance.textContent = data.acceptance;
         taskBoundary.textContent = intakeBoundary.value;
         taskPreviewTitle.textContent = intakeTitle.value;
+        routeTitle.textContent = route.title;
+        routeStatus.textContent = route.status;
+        routeWhy.textContent = route.why;
+        routeBlocked.textContent = route.blocked;
+        routeWarning.textContent = route.warning;
+        routeGateStateLabel.textContent = routeGateState;
+        document.querySelector(".route-gate-card").classList.toggle("is-pass", routeGateState === "Pass");
         renderAcceptance(projectKey);
         renderLifecycle(intakeOutput.value, data.acceptance, intakeBoundary.value);
         compactSyncPreview.textContent = compactSync(team);
@@ -727,6 +918,13 @@
       document.querySelectorAll("[data-acceptance-state]").forEach(function (button) {
         button.addEventListener("click", function () {
           acceptanceState = button.getAttribute("data-acceptance-state");
+          updateAll();
+        });
+      });
+
+      document.querySelectorAll("[data-route-gate-state]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          routeGateState = button.getAttribute("data-route-gate-state");
           updateAll();
         });
       });
