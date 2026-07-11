@@ -544,68 +544,91 @@ select {
   order: 3;
 }
 
-.release-control-zone {
-  order: 4;
+.runtime-status-zone {
+  order: 2;
 }
 
-.scope-lock-zone {
+.advanced-workbench {
+  order: 5;
+  margin: 14px 0 28px;
+  border-top: 1px solid var(--line);
+}
+
+.advanced-workbench > summary {
+  cursor: pointer;
+  padding: 16px 2px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.advanced-workbench-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.capability-delivery-zone {
   order: 5;
 }
 
-.project-zone {
+.scope-lock-zone {
   order: 6;
 }
 
-.ai-team-zone {
+.project-zone {
   order: 7;
 }
 
-.task-intake-zone {
+.ai-team-zone {
   order: 8;
 }
 
-.lifecycle-zone {
+.task-intake-zone {
   order: 9;
 }
 
-.tool-route-zone {
+.lifecycle-zone {
   order: 10;
 }
 
-.demo-flow-zone {
+.tool-route-zone {
   order: 11;
 }
 
-.launch-demo-zone {
+.demo-flow-zone {
   order: 12;
 }
 
-.integration-boundary-zone {
+.launch-demo-zone {
   order: 13;
 }
 
-.rule-ledger-zone {
+.integration-boundary-zone {
   order: 14;
 }
 
-.release-risk-zone {
+.rule-ledger-zone {
   order: 15;
 }
 
-.launch-scorecard-zone {
+.release-risk-zone {
   order: 16;
 }
 
-.acceptance-gate-zone {
+.launch-scorecard-zone {
   order: 17;
 }
 
-.review-zone {
+.acceptance-gate-zone {
   order: 18;
 }
 
-.final-boundary {
+.review-zone {
   order: 19;
+}
+
+.final-boundary {
+  order: 20;
 }
 
 .workbench-region {
@@ -634,6 +657,8 @@ select {
 .first-path-grid,
 .integration-sync-layout,
 .launch-proof-grid,
+.runtime-grid,
+.runtime-verification-grid,
 .demo-path-grid,
 .scorecard-grid,
 .release-control-grid,
@@ -658,6 +683,8 @@ select {
 .demo-flow-layout,
 .integration-gate-layout,
 .integration-sync-layout,
+.runtime-grid,
+.runtime-verification-grid,
 .release-blocker-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -736,6 +763,7 @@ select {
 .integration-sync-card,
 .integration-owner-card,
 .launch-proof-card,
+.runtime-card,
 .demo-path-card,
 .scorecard-card,
 .launch-sync-card,
@@ -747,6 +775,164 @@ select {
   display: grid;
   gap: 12px;
   align-content: start;
+}
+
+.runtime-verification-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.runtime-current-task,
+.runtime-output-card,
+.runtime-owner-status {
+  grid-column: span 2;
+}
+
+.runtime-task-toolbar,
+.runtime-auth-row,
+.runtime-schedule-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.runtime-task-toolbar {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.runtime-task-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.runtime-field-wide {
+  grid-column: span 2;
+}
+
+.runtime-result-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.runtime-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.runtime-flow li {
+  min-height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #f7f9fc;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.runtime-flow li.is-complete {
+  border-color: #86b9ae;
+  background: #eef8f6;
+  color: #0f5c54;
+}
+
+.runtime-flow li.is-failed {
+  border-color: #d8a0a0;
+  background: #fff1f1;
+  color: #9b1c1c;
+}
+
+.runtime-evidence-list,
+.runtime-run-history {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.runtime-evidence-list li,
+.runtime-run-history li {
+  border-left: 3px solid var(--line-strong);
+  padding: 8px 10px;
+  background: #f7f9fc;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.runtime-evidence-list li.is-pass {
+  border-left-color: var(--accent);
+  background: #eef8f6;
+  color: #0f5c54;
+}
+
+.runtime-evidence-list li.is-fail {
+  border-left-color: #b91c1c;
+  background: #fff1f1;
+  color: #9b1c1c;
+}
+
+.runtime-detail,
+.runtime-advanced {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.runtime-detail > summary,
+.runtime-advanced > summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.runtime-detail[open] > summary,
+.runtime-advanced[open] > summary {
+  margin-bottom: 12px;
+}
+
+.runtime-schedule-panel {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.runtime-inline-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: none;
+}
+
+.runtime-inline-input input {
+  width: 88px;
+}
+
+.runtime-schedule-facts {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.runtime-advanced h3 {
+  margin: 14px 0 8px;
+  font-size: 14px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
 }
 
 .composition-controls h3,
@@ -765,19 +951,51 @@ select {
 .risk-card h3,
 .first-path-card h3,
 .demo-path-card h3,
+.runtime-registry-card h3,
 .release-lock-card h3 {
   margin-top: 0;
 }
 
 .control-grid,
-.intake-grid {
+.intake-grid,
+.runtime-form-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
-.intake-grid label:nth-child(n + 4) {
+.intake-grid label:nth-child(n + 4),
+.runtime-form-grid label:nth-child(n + 4) {
   grid-column: span 3;
+}
+
+.runtime-schedule-card label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.runtime-message {
+  min-height: 22px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.runtime-actions {
+  justify-content: flex-start;
+}
+
+.runtime-lifecycle-card,
+.runtime-registry-card {
+  grid-column: span 2;
+}
+
+.runtime-registry-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .quick-fill-row,
@@ -1254,6 +1472,14 @@ select {
   .first-path-grid,
   .integration-sync-layout,
   .launch-proof-grid,
+  .runtime-grid,
+  .runtime-verification-grid,
+  .runtime-form-grid,
+  .runtime-task-form,
+  .runtime-task-toolbar,
+  .runtime-auth-row,
+  .runtime-schedule-controls,
+  .runtime-registry-columns,
   .script-step-list,
   .demo-path-grid,
   .scorecard-grid,
@@ -1271,8 +1497,21 @@ select {
     grid-template-columns: 1fr;
   }
 
-  .intake-grid label:nth-child(n + 4) {
+  .intake-grid label:nth-child(n + 4),
+  .runtime-form-grid label:nth-child(n + 4),
+  .runtime-field-wide,
+  .runtime-current-task,
+  .runtime-output-card,
+  .runtime-owner-status,
+  .runtime-lifecycle-card,
+  .runtime-registry-card {
     grid-column: auto;
+  }
+
+  .runtime-flow,
+  .runtime-result-fields,
+  .runtime-schedule-facts {
+    grid-template-columns: 1fr;
   }
 
   .lane-grid,

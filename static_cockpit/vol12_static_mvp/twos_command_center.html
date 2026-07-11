@@ -18,14 +18,191 @@
 
     <section class="workbench-hero" aria-label="Workbench header">
       <div>
-        <p class="version">Vol.15 MVP-13R</p>
+        <p class="version">Vol.15 MVP-14 Repair</p>
         <h1>TWOS 1.0 Unified AI Team Workbench</h1>
         <p class="subheadline">One command center for LDD, 2026WC, and TWOS Product Development. Operating loop: Sync → Task → Team → Route → Lifecycle → Acceptance → Compact Sync.</p>
       </div>
       <aside class="boundary-notice" aria-label="Boundary notice">
-        <p>TWOS 1.0 requires backend, API, auth, scheduler, persistence, real model/provider integration, real tool integration, auto-run, auto-review, auto-accept, and auto-send. They must not be represented as active until configured and verified. Live trading and live betting execution remain blocked.</p>
+        <p>The local backend, API, auth, persistence, scheduler, Compact Sync worker, and deterministic acceptance path are active and owner-verifiable. External providers and tools remain unconfigured. Live trading and live betting execution remain blocked.</p>
       </aside>
     </section>
+
+    <section id="runtime-status" class="workbench-region runtime-status-zone" aria-label="Owner Verification Runtime">
+      <div class="section-title">
+        <p class="version">MVP-14 Repair</p>
+        <h2>Owner Verification Runtime</h2>
+        <p class="hub-note">Create a real task, run Compact Sync, see why it was accepted, and verify recurring execution without reading backend internals.</p>
+      </div>
+
+      <div class="runtime-verification-grid">
+        <article id="current-task" class="workbench-card runtime-card runtime-current-task" aria-label="Current Task">
+          <div class="card-kicker"><span>1. Current Task</span><strong id="runtime-task-state">No task selected</strong></div>
+          <div class="runtime-task-toolbar">
+            <label>
+              <span>Saved task</span>
+              <select id="runtime-task-select" aria-label="Saved task"></select>
+            </label>
+            <button type="button" id="runtime-new-task">New task</button>
+          </div>
+          <div class="runtime-task-form">
+            <label>
+              <span>Project</span>
+              <select id="runtime-project"></select>
+            </label>
+            <label>
+              <span>Task title</span>
+              <input id="runtime-task-title" type="text" value="SPCX risk review" />
+            </label>
+            <label class="runtime-field-wide">
+              <span>Source sync</span>
+              <textarea id="runtime-source-sync" rows="4">Pasted LDD compact sync...</textarea>
+            </label>
+            <label>
+              <span>Action</span>
+              <select id="runtime-task-action">
+                <option>Analyze</option>
+                <option selected>Compact Sync</option>
+                <option>Acceptance Review</option>
+              </select>
+            </label>
+            <label>
+              <span>Required output</span>
+              <textarea id="runtime-required-output" rows="3">Persisted compact sync with acceptance evidence.</textarea>
+            </label>
+            <label class="runtime-field-wide">
+              <span>Boundary</span>
+              <textarea id="runtime-boundary-risk" rows="3">No live trading or live betting execution.</textarea>
+            </label>
+          </div>
+          <div class="gate-actions runtime-actions">
+            <button type="button" id="runtime-save-task">Save task</button>
+            <button type="button" id="runtime-run-task">Run Compact Sync</button>
+          </div>
+          <p class="runtime-message" id="runtime-message">Log in under Runtime Status, then save an owner-readable task.</p>
+        </article>
+
+        <article id="execution-result" class="workbench-card runtime-card runtime-result-card" aria-label="Execution Result">
+          <div class="card-kicker"><span>2. Execution Result</span><strong id="runtime-result-status">Not run</strong></div>
+          <dl class="task-fields runtime-result-fields">
+            <div><dt>Task</dt><dd id="runtime-result-task">None</dd></div>
+            <div><dt>Status</dt><dd id="runtime-lifecycle">Waiting</dd></div>
+            <div><dt>Result</dt><dd id="runtime-result-summary">No result yet</dd></div>
+            <div><dt>Saved</dt><dd id="runtime-result-saved">No</dd></div>
+          </dl>
+          <ol class="runtime-flow" aria-label="Execution flow">
+            <li data-runtime-flow="created"><span>Created</span></li>
+            <li data-runtime-flow="running"><span>Running</span></li>
+            <li data-runtime-flow="completed"><span>Completed</span></li>
+            <li data-runtime-flow="acceptance"><span>Acceptance</span></li>
+          </ol>
+          <details class="runtime-detail">
+            <summary>Execution details</summary>
+            <dl class="task-fields">
+              <div><dt>Run record</dt><dd id="runtime-run-id">None</dd></div>
+              <div><dt>Internal action</dt><dd id="runtime-run-action">Hidden until a run exists</dd></div>
+              <div><dt>Started</dt><dd id="runtime-run-started">Not started</dd></div>
+              <div><dt>Finished</dt><dd id="runtime-run-finished">Not finished</dd></div>
+              <div><dt>Error</dt><dd id="runtime-run-error">None</dd></div>
+            </dl>
+          </details>
+        </article>
+
+        <article id="acceptance-evidence" class="workbench-card runtime-card runtime-acceptance-card" aria-label="Acceptance Evidence">
+          <div class="card-kicker"><span>3. Acceptance</span><strong id="runtime-acceptance-decision">Waiting for execution</strong></div>
+          <ul class="runtime-evidence-list" id="runtime-acceptance-checks">
+            <li class="is-pending">Required output generated</li>
+            <li class="is-pending">Boundary check passed</li>
+            <li class="is-pending">Result persisted</li>
+          </ul>
+          <dl class="task-fields">
+            <div><dt>Reason</dt><dd id="runtime-acceptance-reason">Run Compact Sync to create acceptance evidence.</dd></div>
+            <div><dt>Audit</dt><dd id="runtime-acceptance-audit">Waiting</dd></div>
+          </dl>
+          <details class="runtime-detail">
+            <summary>Acceptance details</summary>
+            <dl class="task-fields">
+              <div><dt>Acceptance engine</dt><dd id="runtime-acceptance-engine">None</dd></div>
+              <div><dt>Acceptance record</dt><dd id="runtime-acceptance-id">None</dd></div>
+              <div><dt>Acceptance records</dt><dd id="runtime-acceptance-count">0</dd></div>
+              <div><dt>Check IDs</dt><dd id="runtime-acceptance-check-ids">None</dd></div>
+            </dl>
+            <ul class="check-list" id="runtime-acceptance-audit-events">
+              <li>No acceptance audit event yet.</li>
+            </ul>
+          </details>
+        </article>
+
+        <article id="compact-sync-output" class="workbench-card runtime-card runtime-output-card" aria-label="Compact Sync Output">
+          <div class="card-kicker"><span>4. Compact Sync Output</span><strong id="runtime-output-state">Not generated</strong></div>
+          <pre id="runtime-compact-sync" class="compact-sync-preview">Persisted compact sync will appear after a real worker run.</pre>
+        </article>
+
+        <article id="owner-runtime-status" class="workbench-card runtime-card runtime-owner-status" aria-label="Runtime Status">
+          <div class="card-kicker"><span>5. Runtime Status</span><strong id="runtime-health">Checking API...</strong></div>
+          <p class="recommendation-copy" id="runtime-owner">Owner: not authenticated.</p>
+          <div class="runtime-auth-row">
+            <label>
+              <span>Owner username</span>
+              <input id="runtime-username" type="text" value="owner" autocomplete="username" />
+            </label>
+            <label>
+              <span>Password</span>
+              <input id="runtime-password" type="password" autocomplete="current-password" />
+            </label>
+          </div>
+          <div class="gate-actions runtime-actions">
+            <button type="button" id="runtime-init-owner">Initialize owner</button>
+            <button type="button" id="runtime-login">Log in</button>
+            <button type="button" id="runtime-logout">Log out</button>
+            <button type="button" id="runtime-refresh">Refresh</button>
+          </div>
+
+          <div class="runtime-schedule-panel" aria-label="Recurring Compact Sync schedule">
+            <div class="card-kicker"><span>Recurring Compact Sync</span><strong id="runtime-schedule-state">No schedule</strong></div>
+            <div class="runtime-schedule-controls">
+              <label>
+                <span>Every</span>
+                <span class="runtime-inline-input"><input id="runtime-schedule-interval" type="number" min="1" value="6" /> seconds</span>
+              </label>
+              <div class="gate-actions runtime-actions">
+                <button type="button" id="runtime-create-schedule">Create</button>
+                <button type="button" id="runtime-pause-schedule">Pause</button>
+                <button type="button" id="runtime-resume-schedule">Resume</button>
+              </div>
+            </div>
+            <dl class="task-fields runtime-schedule-facts">
+              <div><dt>Status</dt><dd id="runtime-schedule-status">Not created</dd></div>
+              <div><dt>Last run</dt><dd id="runtime-schedule-last">Never</dd></div>
+              <div><dt>Next run</dt><dd id="runtime-schedule-next">Not scheduled</dd></div>
+              <div><dt>Executions</dt><dd id="runtime-schedule-count">0</dd></div>
+            </dl>
+            <ol class="runtime-run-history" id="runtime-schedule-runs">
+              <li>No recurring executions yet.</li>
+            </ol>
+          </div>
+
+          <details class="runtime-advanced">
+            <summary>Advanced</summary>
+            <div class="runtime-registry-columns">
+              <div>
+                <h3>Provider registry</h3>
+                <ul class="check-list" id="runtime-provider-list"><li>Authenticate to load providers.</li></ul>
+              </div>
+              <div>
+                <h3>Tool registry</h3>
+                <ul class="check-list" id="runtime-tool-list"><li>Authenticate to load tools.</li></ul>
+              </div>
+            </div>
+            <h3>Full audit ledger</h3>
+            <ul class="check-list" id="runtime-audit-list"><li>Authenticate to load audit events.</li></ul>
+          </details>
+        </article>
+      </div>
+    </section>
+
+    <details class="advanced-workbench">
+      <summary>Advanced workbench</summary>
+      <div class="advanced-workbench-content">
 
     <section id="overview" class="workbench-region launch-overview-zone" aria-label="1.0 Overview">
       <div class="section-title">
@@ -56,6 +233,7 @@
 
     <nav class="section-index" aria-label="Launch candidate section index">
       <a href="#overview">1.0 Overview</a>
+      <a href="#runtime-status">Runtime Status</a>
       <a href="#capability-delivery">Capability Delivery</a>
       <a href="#scope-lock">1.0 Scope</a>
       <a href="#project-command-center">Project Command Center</a>
@@ -1309,6 +1487,22 @@
         </article>
 
         <article class="workbench-card review-card">
+          <h3>MVP-14 runtime foundation checklist</h3>
+          <ul class="check-list">
+            <li>Login works through the same-origin API.</li>
+            <li>API health is real and reads the database.</li>
+            <li>Tasks persist after refresh.</li>
+            <li>Run-now executes a real internal compact_sync worker.</li>
+            <li>Lifecycle, compact sync, acceptance, and audit update from backend state.</li>
+            <li>Schedules can be created, paused, resumed, and run now.</li>
+            <li>Auto-accept works only for deterministic safe internal compact_sync checks.</li>
+            <li>live_trade and live_bet are rejected by backend policy.</li>
+            <li>Provider/tool statuses are honest: unconfigured, configured, healthy, degraded, failed, disabled, or blocked.</li>
+            <li>No external model or tool call is active in MVP-14.</li>
+          </ul>
+        </article>
+
+        <article class="workbench-card review-card">
           <h3>Owner Acceptance checklist</h3>
           <ul class="check-list">
             <li>1.0 scope includes real runtime, integrations, and automation.</li>
@@ -1333,6 +1527,8 @@
     <section class="final-boundary" aria-label="Final boundary notice">
       <p>TWOS 1.0 readiness requires real runtime foundations with honest capability status. Strategy belongs to the user. AI assists planning, execution tracking, and review. Live trading and live betting execution remain blocked.</p>
     </section>
+      </div>
+    </details>
   </main>
   <script>
     (function () {
@@ -1791,6 +1987,507 @@
         ].join("\n");
       }
 
+      var runtimeState = {
+        authenticated: false,
+        projects: [],
+        tasks: [],
+        runs: [],
+        schedules: [],
+        providers: [],
+        tools: [],
+        audit: [],
+        acceptance: null,
+        selectedTaskId: null,
+        selectedScheduleId: null,
+        renderedTaskId: null,
+        creatingTask: false,
+        registryLoaded: false,
+        refreshing: false
+      };
+      var runtimeEls = {
+        health: document.getElementById("runtime-health"),
+        owner: document.getElementById("runtime-owner"),
+        username: document.getElementById("runtime-username"),
+        password: document.getElementById("runtime-password"),
+        message: document.getElementById("runtime-message"),
+        taskSelect: document.getElementById("runtime-task-select"),
+        project: document.getElementById("runtime-project"),
+        title: document.getElementById("runtime-task-title"),
+        source: document.getElementById("runtime-source-sync"),
+        action: document.getElementById("runtime-task-action"),
+        output: document.getElementById("runtime-required-output"),
+        boundary: document.getElementById("runtime-boundary-risk"),
+        taskState: document.getElementById("runtime-task-state"),
+        lifecycle: document.getElementById("runtime-lifecycle"),
+        resultStatus: document.getElementById("runtime-result-status"),
+        resultTask: document.getElementById("runtime-result-task"),
+        resultSummary: document.getElementById("runtime-result-summary"),
+        resultSaved: document.getElementById("runtime-result-saved"),
+        runId: document.getElementById("runtime-run-id"),
+        runAction: document.getElementById("runtime-run-action"),
+        runStarted: document.getElementById("runtime-run-started"),
+        runFinished: document.getElementById("runtime-run-finished"),
+        runError: document.getElementById("runtime-run-error"),
+        acceptanceDecision: document.getElementById("runtime-acceptance-decision"),
+        acceptanceChecks: document.getElementById("runtime-acceptance-checks"),
+        acceptanceReason: document.getElementById("runtime-acceptance-reason"),
+        acceptanceAudit: document.getElementById("runtime-acceptance-audit"),
+        acceptanceEngine: document.getElementById("runtime-acceptance-engine"),
+        acceptanceId: document.getElementById("runtime-acceptance-id"),
+        acceptanceCount: document.getElementById("runtime-acceptance-count"),
+        acceptanceCheckIds: document.getElementById("runtime-acceptance-check-ids"),
+        acceptanceAuditEvents: document.getElementById("runtime-acceptance-audit-events"),
+        compactSync: document.getElementById("runtime-compact-sync"),
+        outputState: document.getElementById("runtime-output-state"),
+        scheduleState: document.getElementById("runtime-schedule-state"),
+        scheduleInterval: document.getElementById("runtime-schedule-interval"),
+        scheduleStatus: document.getElementById("runtime-schedule-status"),
+        scheduleLast: document.getElementById("runtime-schedule-last"),
+        scheduleNext: document.getElementById("runtime-schedule-next"),
+        scheduleCount: document.getElementById("runtime-schedule-count"),
+        scheduleRuns: document.getElementById("runtime-schedule-runs"),
+        providers: document.getElementById("runtime-provider-list"),
+        tools: document.getElementById("runtime-tool-list"),
+        auditList: document.getElementById("runtime-audit-list"),
+        saveTask: document.getElementById("runtime-save-task"),
+        runTask: document.getElementById("runtime-run-task"),
+        createSchedule: document.getElementById("runtime-create-schedule"),
+        pauseSchedule: document.getElementById("runtime-pause-schedule"),
+        resumeSchedule: document.getElementById("runtime-resume-schedule")
+      };
+
+      function setRuntimeMessage(message) {
+        if (runtimeEls.message) runtimeEls.message.textContent = message;
+      }
+
+      async function runtimeApi(path, options) {
+        var requestOptions = Object.assign({ credentials: "same-origin", headers: {} }, options || {});
+        if (requestOptions.body && typeof requestOptions.body !== "string") {
+          requestOptions.headers = Object.assign({ "Content-Type": "application/json" }, requestOptions.headers);
+          requestOptions.body = JSON.stringify(requestOptions.body);
+        }
+        var response = await fetch(path, requestOptions);
+        var text = await response.text();
+        var data = text ? JSON.parse(text) : {};
+        if (!response.ok) {
+          var message = data && data.error ? data.error.message : response.statusText;
+          throw new Error(message);
+        }
+        return data;
+      }
+
+      function runtimeTask() {
+        if (runtimeState.creatingTask) return null;
+        if (!runtimeState.selectedTaskId && runtimeState.tasks.length) {
+          runtimeState.selectedTaskId = runtimeState.tasks[runtimeState.tasks.length - 1].id;
+        }
+        return runtimeState.tasks.find(function (task) {
+          return task.id === runtimeState.selectedTaskId;
+        });
+      }
+
+      function runtimeTaskRuns() {
+        var task = runtimeTask();
+        if (!task) return [];
+        return runtimeState.runs.filter(function (run) { return run.task_id === task.id; });
+      }
+
+      function runtimeTaskSchedules() {
+        var task = runtimeTask();
+        if (!task) return [];
+        return runtimeState.schedules.filter(function (schedule) { return schedule.task_id === task.id; });
+      }
+
+      function runtimeSchedule() {
+        var schedules = runtimeTaskSchedules();
+        if (!schedules.some(function (schedule) { return schedule.id === runtimeState.selectedScheduleId; })) {
+          runtimeState.selectedScheduleId = schedules.length ? schedules[schedules.length - 1].id : null;
+        }
+        return schedules.find(function (schedule) {
+          return schedule.id === runtimeState.selectedScheduleId;
+        });
+      }
+
+      function formatRuntimeTime(value) {
+        if (!value) return "Not scheduled";
+        var date = new Date(value);
+        return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+      }
+
+      function runtimeScheduledRuns(schedule) {
+        if (!schedule) return [];
+        var runIds = runtimeState.audit.filter(function (event) {
+          return event.action === "schedule_run_completed" && event.entity_id === schedule.id;
+        }).map(function (event) {
+          var match = /task_run=(\d+)/.exec(event.details || "");
+          return match ? Number(match[1]) : null;
+        }).filter(Boolean);
+        return runtimeState.runs.filter(function (run) { return runIds.indexOf(run.id) !== -1; }).reverse();
+      }
+
+      function renderRuntimeRegistry(list, target) {
+        if (!target) return;
+        target.innerHTML = "";
+        if (!list.length) {
+          var empty = document.createElement("li");
+          empty.textContent = runtimeState.authenticated ? "No registry rows loaded." : "Authenticate to load registry.";
+          target.appendChild(empty);
+          return;
+        }
+        list.forEach(function (item) {
+          var li = document.createElement("li");
+          li.textContent = item.name + " / " + item.kind + ": " + item.status + " — " + item.details;
+          target.appendChild(li);
+        });
+      }
+
+      function renderRuntimeAudit() {
+        if (!runtimeEls.auditList) return;
+        runtimeEls.auditList.innerHTML = "";
+        if (!runtimeState.audit.length) {
+          var empty = document.createElement("li");
+          empty.textContent = runtimeState.authenticated ? "No audit events yet." : "Authenticate to load audit events.";
+          runtimeEls.auditList.appendChild(empty);
+          return;
+        }
+        runtimeState.audit.forEach(function (event) {
+          var li = document.createElement("li");
+          li.textContent = formatRuntimeTime(event.created_at) + " / " + event.action + " / " + event.details;
+          runtimeEls.auditList.appendChild(li);
+        });
+      }
+
+      function renderRuntimeSchedules() {
+        var selected = runtimeSchedule();
+        var scheduledRuns = runtimeScheduledRuns(selected);
+        if (runtimeEls.scheduleState) {
+          runtimeEls.scheduleState.textContent = selected ? (selected.paused ? "Paused" : "Active") : "No schedule";
+        }
+        if (runtimeEls.scheduleStatus) runtimeEls.scheduleStatus.textContent = selected ? (selected.paused ? "Paused" : "Active") : "Not created";
+        if (runtimeEls.scheduleLast) runtimeEls.scheduleLast.textContent = selected && selected.last_run_at ? formatRuntimeTime(selected.last_run_at) : "Never";
+        if (runtimeEls.scheduleNext) runtimeEls.scheduleNext.textContent = selected && selected.next_run_at ? formatRuntimeTime(selected.next_run_at) : (selected && selected.paused ? "Paused" : "Not scheduled");
+        if (runtimeEls.scheduleCount) runtimeEls.scheduleCount.textContent = selected ? String(selected.run_count || 0) : "0";
+        if (runtimeEls.scheduleRuns) {
+          runtimeEls.scheduleRuns.innerHTML = "";
+          if (!scheduledRuns.length) {
+            var empty = document.createElement("li");
+            empty.textContent = selected ? "Waiting for the first recurring execution." : "No recurring executions yet.";
+            runtimeEls.scheduleRuns.appendChild(empty);
+          } else {
+            scheduledRuns.forEach(function (run, index) {
+              var li = document.createElement("li");
+              li.textContent = "Run " + (index + 1) + " / " + (run.status === "accepted" ? "Completed and accepted" : run.status.replace("_", " ")) + " / " + formatRuntimeTime(run.finished_at);
+              runtimeEls.scheduleRuns.appendChild(li);
+            });
+          }
+        }
+        if (runtimeEls.createSchedule) runtimeEls.createSchedule.disabled = !runtimeState.authenticated || !runtimeTask() || runtimeTask().action !== "Compact Sync";
+        if (runtimeEls.pauseSchedule) runtimeEls.pauseSchedule.disabled = !selected || selected.paused;
+        if (runtimeEls.resumeSchedule) runtimeEls.resumeSchedule.disabled = !selected || !selected.paused;
+      }
+
+      function renderRuntimeProjects() {
+        if (!runtimeEls.project) return;
+        var current = runtimeEls.project.value;
+        runtimeEls.project.innerHTML = "";
+        runtimeState.projects.forEach(function (project) {
+          var option = document.createElement("option");
+          option.value = String(project.id);
+          option.textContent = project.name;
+          runtimeEls.project.appendChild(option);
+        });
+        if (current) runtimeEls.project.value = current;
+      }
+
+      function renderRuntimeTaskSelect() {
+        if (!runtimeEls.taskSelect) return;
+        runtimeEls.taskSelect.innerHTML = "";
+        var draft = document.createElement("option");
+        draft.value = "";
+        draft.textContent = runtimeState.tasks.length ? "Choose a saved task" : "No saved tasks yet";
+        runtimeEls.taskSelect.appendChild(draft);
+        runtimeState.tasks.forEach(function (task) {
+          var option = document.createElement("option");
+          option.value = String(task.id);
+          option.textContent = task.title;
+          runtimeEls.taskSelect.appendChild(option);
+        });
+        runtimeEls.taskSelect.value = runtimeState.creatingTask ? "" : String(runtimeState.selectedTaskId || "");
+      }
+
+      function populateRuntimeTaskForm(task) {
+        if (!task || runtimeState.renderedTaskId === task.id) return;
+        runtimeEls.project.value = String(task.project_id);
+        runtimeEls.title.value = task.title;
+        runtimeEls.source.value = task.source_sync_summary || "";
+        runtimeEls.action.value = task.action || "Analyze";
+        runtimeEls.output.value = task.required_output || "";
+        runtimeEls.boundary.value = task.boundary_risk || "";
+        runtimeState.renderedTaskId = task.id;
+      }
+
+      function renderRuntimeFlow(task, run) {
+        var complete = {
+          created: Boolean(task),
+          running: Boolean(run && run.started_at),
+          completed: Boolean(run && run.finished_at && run.status !== "failed"),
+          acceptance: Boolean(runtimeState.acceptance && runtimeState.acceptance.decision !== "pending")
+        };
+        document.querySelectorAll("[data-runtime-flow]").forEach(function (item) {
+          var key = item.getAttribute("data-runtime-flow");
+          item.classList.toggle("is-complete", complete[key]);
+          item.classList.toggle("is-failed", key === "completed" && Boolean(run && run.status === "failed"));
+        });
+      }
+
+      function renderRuntimeResult(task, run) {
+        var completed = Boolean(run && run.finished_at && run.status !== "failed");
+        var saved = Boolean(task && run && run.result && task.compact_sync_result === run.result);
+        if (runtimeEls.resultStatus) runtimeEls.resultStatus.textContent = run ? (run.status === "failed" ? "Failed" : "Completed") : "Not run";
+        if (runtimeEls.resultTask) runtimeEls.resultTask.textContent = task ? task.title : "None";
+        if (runtimeEls.lifecycle) runtimeEls.lifecycle.textContent = run ? (run.status === "failed" ? "Failed" : completed ? "Completed" : run.status.replace("_", " ")) : task ? "Created" : "Waiting";
+        if (runtimeEls.resultSummary) runtimeEls.resultSummary.textContent = run && run.result ? "Generated compact sync" : run && run.error ? "Execution failed" : "No result yet";
+        if (runtimeEls.resultSaved) runtimeEls.resultSaved.textContent = saved ? "Yes" : "No";
+        if (runtimeEls.runId) runtimeEls.runId.textContent = run ? "#" + run.id : "None";
+        if (runtimeEls.runAction) runtimeEls.runAction.textContent = run ? run.action : "Hidden until a run exists";
+        if (runtimeEls.runStarted) runtimeEls.runStarted.textContent = run ? formatRuntimeTime(run.started_at) : "Not started";
+        if (runtimeEls.runFinished) runtimeEls.runFinished.textContent = run ? formatRuntimeTime(run.finished_at) : "Not finished";
+        if (runtimeEls.runError) runtimeEls.runError.textContent = run && run.error ? run.error : "None";
+        renderRuntimeFlow(task, run);
+      }
+
+      function renderRuntimeAcceptance() {
+        var acceptance = runtimeState.acceptance;
+        var checks = acceptance && acceptance.checks ? acceptance.checks : [];
+        if (runtimeEls.acceptanceDecision) runtimeEls.acceptanceDecision.textContent = acceptance ? acceptance.display_decision : "Waiting for execution";
+        if (runtimeEls.acceptanceReason) runtimeEls.acceptanceReason.textContent = acceptance ? acceptance.reason : "Run Compact Sync to create acceptance evidence.";
+        if (runtimeEls.acceptanceAudit) runtimeEls.acceptanceAudit.textContent = acceptance && acceptance.audit_created ? "Created" : "Waiting";
+        if (runtimeEls.acceptanceEngine) runtimeEls.acceptanceEngine.textContent = acceptance && acceptance.engine ? acceptance.engine : "None";
+        if (runtimeEls.acceptanceId) runtimeEls.acceptanceId.textContent = acceptance && acceptance.id ? "#" + acceptance.id : "None";
+        if (runtimeEls.acceptanceCount) runtimeEls.acceptanceCount.textContent = acceptance ? String(acceptance.record_count || 0) : "0";
+        if (runtimeEls.acceptanceCheckIds) runtimeEls.acceptanceCheckIds.textContent = checks.length ? checks.map(function (check) { return check.id; }).join(", ") : "None";
+        if (runtimeEls.acceptanceChecks) {
+          runtimeEls.acceptanceChecks.innerHTML = "";
+          var visibleChecks = checks.length ? checks : [
+            { label: "Required output generated", passed: null },
+            { label: "Boundary check passed", passed: null },
+            { label: "Result persisted", passed: null }
+          ];
+          visibleChecks.forEach(function (check) {
+            var li = document.createElement("li");
+            li.className = check.passed === true ? "is-pass" : check.passed === false ? "is-fail" : "is-pending";
+            li.textContent = (check.passed === true ? "✓ " : check.passed === false ? "Needs review: " : "") + check.label;
+            runtimeEls.acceptanceChecks.appendChild(li);
+          });
+        }
+        if (runtimeEls.acceptanceAuditEvents) {
+          runtimeEls.acceptanceAuditEvents.innerHTML = "";
+          var events = acceptance && acceptance.audit_events ? acceptance.audit_events : [];
+          if (!events.length) {
+            var empty = document.createElement("li");
+            empty.textContent = "No acceptance audit event yet.";
+            runtimeEls.acceptanceAuditEvents.appendChild(empty);
+          } else {
+            events.forEach(function (event) {
+              var li = document.createElement("li");
+              li.textContent = formatRuntimeTime(event.created_at) + " / " + event.action + " / " + event.details;
+              runtimeEls.acceptanceAuditEvents.appendChild(li);
+            });
+          }
+        }
+      }
+
+      function renderRuntime() {
+        renderRuntimeProjects();
+        var task = runtimeTask();
+        var runs = runtimeTaskRuns();
+        var latestRun = runs.length ? runs[0] : null;
+        renderRuntimeTaskSelect();
+        populateRuntimeTaskForm(task);
+        if (runtimeEls.taskState) runtimeEls.taskState.textContent = task ? (task.status === "accepted" ? "Saved / accepted" : "Saved / " + task.status.replace("_", " ")) : runtimeState.creatingTask ? "New task" : "No task selected";
+        if (runtimeEls.compactSync) runtimeEls.compactSync.textContent = task && task.compact_sync_result ? task.compact_sync_result : "Persisted compact sync will appear after a real worker run.";
+        if (runtimeEls.outputState) runtimeEls.outputState.textContent = task && task.compact_sync_result ? "Saved" : "Not generated";
+        if (runtimeEls.saveTask) runtimeEls.saveTask.disabled = !runtimeState.authenticated;
+        if (runtimeEls.runTask) {
+          runtimeEls.runTask.disabled = !runtimeState.authenticated || !task || task.action !== "Compact Sync";
+          runtimeEls.runTask.title = task && task.action !== "Compact Sync" ? "Save a Compact Sync task to use the internal worker." : "Run the selected Compact Sync task.";
+        }
+        renderRuntimeResult(task, latestRun);
+        renderRuntimeAcceptance();
+        renderRuntimeSchedules();
+        renderRuntimeRegistry(runtimeState.providers, runtimeEls.providers);
+        renderRuntimeRegistry(runtimeState.tools, runtimeEls.tools);
+        renderRuntimeAudit();
+      }
+
+      async function refreshRuntime() {
+        if (!runtimeEls.health) return;
+        if (runtimeState.refreshing) return;
+        runtimeState.refreshing = true;
+        try {
+          var health = await runtimeApi("/api/health");
+          runtimeEls.health.textContent = health.status === "healthy" && health.database === "ok" ? "Healthy" : health.status;
+        } catch (error) {
+          runtimeEls.health.textContent = "API unavailable";
+          setRuntimeMessage(error.message);
+          runtimeState.refreshing = false;
+          return;
+        }
+        try {
+          var me = await runtimeApi("/api/auth/me");
+          runtimeState.authenticated = true;
+          runtimeEls.owner.textContent = "Owner: " + me.owner.username;
+          if (runtimeEls.message.textContent.indexOf("Log in under Runtime Status") === 0) {
+            setRuntimeMessage("Authenticated. Select a saved task or create a new one.");
+          }
+        } catch (error) {
+          runtimeState.authenticated = false;
+          runtimeEls.owner.textContent = "Owner: not authenticated.";
+          runtimeState.projects = [];
+          runtimeState.tasks = [];
+          runtimeState.runs = [];
+          runtimeState.schedules = [];
+          runtimeState.providers = [];
+          runtimeState.tools = [];
+          runtimeState.audit = [];
+          runtimeState.acceptance = null;
+          runtimeState.registryLoaded = false;
+          renderRuntime();
+          runtimeState.refreshing = false;
+          return;
+        }
+        try {
+          var runtimeData = await Promise.all([
+            runtimeApi("/api/projects"),
+            runtimeApi("/api/tasks"),
+            runtimeApi("/api/runs"),
+            runtimeApi("/api/schedules"),
+            runtimeApi("/api/audit")
+          ]);
+          runtimeState.projects = runtimeData[0];
+          runtimeState.tasks = runtimeData[1];
+          runtimeState.runs = runtimeData[2];
+          runtimeState.schedules = runtimeData[3];
+          runtimeState.audit = runtimeData[4];
+          if (!runtimeState.registryLoaded) {
+            var registryData = await Promise.all([runtimeApi("/api/providers"), runtimeApi("/api/tools")]);
+            runtimeState.providers = registryData[0];
+            runtimeState.tools = registryData[1];
+            runtimeState.registryLoaded = true;
+          }
+          var task = runtimeTask();
+          runtimeState.acceptance = task ? await runtimeApi("/api/tasks/" + task.id + "/acceptance") : null;
+          renderRuntime();
+        } finally {
+          runtimeState.refreshing = false;
+        }
+      }
+
+      async function initializeOwner() {
+        await runtimeApi("/api/auth/init", {
+          method: "POST",
+          body: { username: runtimeEls.username.value, password: runtimeEls.password.value }
+        });
+        setRuntimeMessage("Owner initialized. Log in to begin verification.");
+      }
+
+      async function loginRuntime() {
+        await runtimeApi("/api/auth/login", {
+          method: "POST",
+          body: { username: runtimeEls.username.value, password: runtimeEls.password.value }
+        });
+        setRuntimeMessage("Logged in. Runtime verification is ready.");
+        runtimeEls.password.value = "";
+        await refreshRuntime();
+      }
+
+      async function logoutRuntime() {
+        await runtimeApi("/api/auth/logout", { method: "POST" });
+        setRuntimeMessage("Logged out.");
+        await refreshRuntime();
+      }
+
+      async function saveRuntimeTask() {
+        if (!runtimeEls.project.value) throw new Error("No project loaded. Log in first.");
+        var task = await runtimeApi("/api/tasks", {
+          method: "POST",
+          body: {
+            project_id: Number(runtimeEls.project.value),
+            title: runtimeEls.title.value,
+            action: runtimeEls.action.value,
+            source_sync_summary: runtimeEls.source.value,
+            required_output: runtimeEls.output.value,
+            boundary_risk: runtimeEls.boundary.value
+          }
+        });
+        runtimeState.creatingTask = false;
+        runtimeState.selectedTaskId = task.id;
+        runtimeState.renderedTaskId = null;
+        setRuntimeMessage("Task saved. Source sync and owner fields will remain after refresh.");
+        await refreshRuntime();
+      }
+
+      async function runRuntimeTask() {
+        var task = runtimeTask();
+        if (!task) throw new Error("Save or select a task first.");
+        if (task.action !== "Compact Sync") throw new Error("Choose and save the Compact Sync action before running the internal worker.");
+        await runtimeApi("/api/tasks/" + task.id + "/run", { method: "POST", body: { action: "compact_sync" } });
+        setRuntimeMessage("Compact Sync completed. Result, acceptance evidence, and audit are saved.");
+        await refreshRuntime();
+      }
+
+      function newRuntimeTask() {
+        runtimeState.creatingTask = true;
+        runtimeState.selectedTaskId = null;
+        runtimeState.selectedScheduleId = null;
+        runtimeState.renderedTaskId = null;
+        runtimeState.acceptance = null;
+        runtimeEls.title.value = "";
+        runtimeEls.source.value = "";
+        runtimeEls.action.value = "Compact Sync";
+        runtimeEls.output.value = "";
+        runtimeEls.boundary.value = "No live trading or live betting execution.";
+        renderRuntime();
+        runtimeEls.title.focus();
+      }
+
+      async function createRuntimeSchedule() {
+        var task = runtimeTask();
+        if (!task) throw new Error("Save or select a task before creating a schedule.");
+        if (task.action !== "Compact Sync") throw new Error("Recurring execution is available only for a saved Compact Sync task.");
+        var schedule = await runtimeApi("/api/schedules", {
+          method: "POST",
+          body: {
+            task_id: task.id,
+            name: "Compact Sync every " + Number(runtimeEls.scheduleInterval.value || 6) + " seconds",
+            interval_seconds: Number(runtimeEls.scheduleInterval.value || 6)
+          }
+        });
+        runtimeState.selectedScheduleId = schedule.id;
+        setRuntimeMessage("Recurring Compact Sync is active and persisted.");
+        await refreshRuntime();
+      }
+
+      async function patchRuntimeSchedule(payload) {
+        var schedule = runtimeSchedule();
+        if (!schedule) throw new Error("Create a schedule first.");
+        await runtimeApi("/api/schedules/" + schedule.id, { method: "PATCH", body: payload });
+        setRuntimeMessage(payload.paused ? "Schedule paused. No recurring run will start while paused." : "Schedule resumed. The next run has been recalculated.");
+        await refreshRuntime();
+      }
+
+      function bindRuntimeAction(id, handler) {
+        var button = document.getElementById(id);
+        if (!button) return;
+        button.addEventListener("click", async function () {
+          try {
+            await handler();
+          } catch (error) {
+            setRuntimeMessage(error.message);
+          }
+        });
+      }
+
       function updateAll() {
         var projectKey = intakeProject.value;
         var taskTypeValue = intakeTaskType.value;
@@ -1940,9 +2637,33 @@
         });
       });
 
+      bindRuntimeAction("runtime-init-owner", initializeOwner);
+      bindRuntimeAction("runtime-login", loginRuntime);
+      bindRuntimeAction("runtime-logout", logoutRuntime);
+      bindRuntimeAction("runtime-refresh", refreshRuntime);
+      bindRuntimeAction("runtime-new-task", newRuntimeTask);
+      bindRuntimeAction("runtime-save-task", saveRuntimeTask);
+      bindRuntimeAction("runtime-run-task", runRuntimeTask);
+      bindRuntimeAction("runtime-create-schedule", createRuntimeSchedule);
+      bindRuntimeAction("runtime-pause-schedule", function () { return patchRuntimeSchedule({ paused: true }); });
+      bindRuntimeAction("runtime-resume-schedule", function () { return patchRuntimeSchedule({ paused: false }); });
+
+      runtimeEls.taskSelect.addEventListener("change", function () {
+        runtimeState.creatingTask = !runtimeEls.taskSelect.value;
+        runtimeState.selectedTaskId = runtimeEls.taskSelect.value ? Number(runtimeEls.taskSelect.value) : null;
+        runtimeState.selectedScheduleId = null;
+        runtimeState.renderedTaskId = null;
+        runtimeState.acceptance = null;
+        refreshRuntime();
+      });
+
       urgencyInput.value = "Normal";
       initializeScorecard();
       loadDemoScenario("twos");
+      refreshRuntime();
+      window.setInterval(function () {
+        if (runtimeState.authenticated) refreshRuntime();
+      }, 3000);
     }());
   </script>
 </body>
