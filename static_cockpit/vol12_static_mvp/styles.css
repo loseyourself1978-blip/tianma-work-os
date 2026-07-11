@@ -544,52 +544,68 @@ select {
   order: 3;
 }
 
-.project-zone {
+.release-control-zone {
   order: 4;
 }
 
-.ai-team-zone {
+.scope-lock-zone {
   order: 5;
 }
 
-.task-intake-zone {
+.project-zone {
   order: 6;
 }
 
-.lifecycle-zone {
+.ai-team-zone {
   order: 7;
 }
 
-.tool-route-zone {
+.task-intake-zone {
   order: 8;
 }
 
-.demo-flow-zone {
+.lifecycle-zone {
   order: 9;
 }
 
-.launch-demo-zone {
+.tool-route-zone {
   order: 10;
 }
 
-.integration-boundary-zone {
+.demo-flow-zone {
   order: 11;
 }
 
-.launch-scorecard-zone {
+.launch-demo-zone {
   order: 12;
 }
 
-.acceptance-gate-zone {
+.integration-boundary-zone {
   order: 13;
 }
 
-.review-zone {
+.rule-ledger-zone {
   order: 14;
 }
 
-.final-boundary {
+.release-risk-zone {
   order: 15;
+}
+
+.launch-scorecard-zone {
+  order: 16;
+}
+
+.acceptance-gate-zone {
+  order: 17;
+}
+
+.review-zone {
+  order: 18;
+}
+
+.final-boundary {
+  order: 19;
 }
 
 .workbench-region {
@@ -619,7 +635,12 @@ select {
 .integration-sync-layout,
 .launch-proof-grid,
 .demo-path-grid,
-.scorecard-grid {
+.scorecard-grid,
+.release-control-grid,
+.scope-lock-grid,
+.rule-ledger-grid,
+.release-risk-grid,
+.release-blocker-grid {
   display: grid;
   gap: 14px;
 }
@@ -636,7 +657,8 @@ select {
 .route-planning-layout,
 .demo-flow-layout,
 .integration-gate-layout,
-.integration-sync-layout {
+.integration-sync-layout,
+.release-blocker-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -645,7 +667,10 @@ select {
 .demo-scenario-grid,
 .first-path-grid,
 .launch-proof-grid,
-.demo-path-grid {
+.demo-path-grid,
+.release-control-grid,
+.scope-lock-grid,
+.rule-ledger-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 14px;
 }
@@ -653,7 +678,8 @@ select {
 .route-matrix,
 .integration-candidate-grid,
 .risk-ledger-grid,
-.scorecard-grid {
+.scorecard-grid,
+.release-risk-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
@@ -662,7 +688,9 @@ select {
 .integration-candidate-grid,
 .risk-ledger-grid,
 .integration-sync-layout,
-.scorecard-grid {
+.scorecard-grid,
+.release-risk-grid,
+.release-blocker-grid {
   margin-top: 14px;
 }
 
@@ -710,7 +738,12 @@ select {
 .launch-proof-card,
 .demo-path-card,
 .scorecard-card,
-.launch-sync-card {
+.launch-sync-card,
+.release-lock-card,
+.scope-column-card,
+.rule-ledger-card,
+.release-risk-card,
+.release-blocker-card {
   display: grid;
   gap: 12px;
   align-content: start;
@@ -731,7 +764,8 @@ select {
 .open-scope-gate-card h3,
 .risk-card h3,
 .first-path-card h3,
-.demo-path-card h3 {
+.demo-path-card h3,
+.release-lock-card h3 {
   margin-top: 0;
 }
 
@@ -1104,7 +1138,9 @@ select {
 .open-scope-gate-card.is-blocked,
 .integration-candidate-card--blocked,
 .scorecard-card.is-blocked,
-.scorecard-card--blocked {
+.scorecard-card--blocked,
+.scope-column-card--closed,
+.release-blocker-card {
   border-color: #b45309;
   background: #fffbeb;
 }
@@ -1221,6 +1257,11 @@ select {
   .script-step-list,
   .demo-path-grid,
   .scorecard-grid,
+  .release-control-grid,
+  .scope-lock-grid,
+  .rule-ledger-grid,
+  .release-risk-grid,
+  .release-blocker-grid,
   .rule-band {
     grid-template-columns: 1fr;
   }

@@ -18,12 +18,12 @@
 
     <section class="workbench-hero" aria-label="Workbench header">
       <div>
-        <p class="version">Vol.15 MVP-12</p>
+        <p class="version">Vol.15 MVP-13R</p>
         <h1>TWOS 1.0 Unified AI Team Workbench</h1>
         <p class="subheadline">One command center for LDD, 2026WC, and TWOS Product Development. Operating loop: Sync → Task → Team → Route → Lifecycle → Acceptance → Compact Sync.</p>
       </div>
       <aside class="boundary-notice" aria-label="Boundary notice">
-        <p>Current status: static launch-candidate prototype. Real integrations remain closed: no backend, API, auth, scheduler, persistence, clipboard API, real tool integration, auto-send, live trading, live betting, or real multi-model routing.</p>
+        <p>TWOS 1.0 requires backend, API, auth, scheduler, persistence, real model/provider integration, real tool integration, auto-run, auto-review, auto-accept, and auto-send. They must not be represented as active until configured and verified. Live trading and live betting execution remain blocked.</p>
       </aside>
     </section>
 
@@ -45,7 +45,7 @@
         </article>
         <article class="workbench-card launch-proof-card">
           <div class="card-kicker"><span>Safe routing</span><strong>Route</strong></div>
-          <p class="recommendation-copy">Human approval, manual Codex handoff, future integrations, and blocked actions can be separated clearly.</p>
+          <p class="recommendation-copy">Human approval, manual handoff, required-but-unconfigured integrations, and blocked actions can be separated clearly.</p>
         </article>
         <article class="workbench-card launch-proof-card">
           <div class="card-kicker"><span>Review closure</span><strong>Acceptance → Sync</strong></div>
@@ -56,6 +56,8 @@
 
     <nav class="section-index" aria-label="Launch candidate section index">
       <a href="#overview">1.0 Overview</a>
+      <a href="#capability-delivery">Capability Delivery</a>
+      <a href="#scope-lock">1.0 Scope</a>
       <a href="#project-command-center">Project Command Center</a>
       <a href="#ai-team-composition">AI Team Composition</a>
       <a href="#task-assignment">Task Assignment</a>
@@ -63,9 +65,96 @@
       <a href="#demo-flow">End-to-End Demo Flow</a>
       <a href="#launch-demo-script">Demo Script</a>
       <a href="#integration-boundary">Integration Boundary Gate</a>
+      <a href="#rule-ledger">Rule Ledger</a>
+      <a href="#release-risks">Release Risks</a>
       <a href="#acceptance-scorecard">1.0 Scorecard</a>
       <a href="#acceptance-sync">Acceptance / Compact Sync</a>
     </nav>
+
+    <section id="capability-delivery" class="workbench-region capability-delivery-zone" aria-label="TWOS 1.0 Capability Delivery Control">
+      <div class="section-title">
+        <p class="version">TWOS 1.0 Capability Delivery Control</p>
+        <h2>Real runtime capability is required for 1.0, but status must stay honest.</h2>
+        <p class="hub-note">Every capability must be represented as required, implemented, configured, healthy, failed, or blocked. No provider/tool is active until it is actually configured and verified.</p>
+      </div>
+
+      <div class="release-control-grid" aria-label="Capability delivery control surface">
+        <article class="workbench-card release-lock-card">
+          <div class="card-kicker"><span>1.0 runtime requirement</span><strong>Required</strong></div>
+          <dl class="field-list">
+            <div><dt>Runtime foundation</dt><dd>Backend, API, auth, scheduler, and persistence are required by TWOS 1.0.</dd></div>
+            <div><dt>Real integrations</dt><dd>Real multi-provider model integration and real tool integration are required, but not active until configured and verified.</dd></div>
+            <div><dt>Automation</dt><dd>Auto-run, auto-review, auto-accept, and auto-send are required 1.0 capabilities with policy gates.</dd></div>
+            <div><dt>Orchestration</dt><dd>LDD / 2026WC / TWOS orchestration is required for the unified workbench.</dd></div>
+          </dl>
+        </article>
+
+        <article class="workbench-card release-lock-card">
+          <div class="card-kicker"><span>Capability truth model</span><strong>Status ledger</strong></div>
+          <ul class="check-list">
+            <li>Required means TWOS 1.0 needs the capability.</li>
+            <li>Implemented means local code exists.</li>
+            <li>Configured means owner setup exists.</li>
+            <li>Healthy means the capability passed a real check.</li>
+            <li>Failed means implementation or configuration exists but is not working.</li>
+            <li>Blocked means policy denies the capability.</li>
+          </ul>
+        </article>
+
+        <article class="workbench-card release-lock-card">
+          <div class="card-kicker"><span>Current correction</span><strong>Not active yet</strong></div>
+          <p class="recommendation-copy">Runtime and integration capabilities are required by TWOS 1.0, but must be shown as not yet implemented, unconfigured, disabled, failed, or blocked until they are real.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="scope-lock" class="workbench-region scope-lock-zone" aria-label="1.0 Scope Lock Board">
+      <div class="section-title">
+        <p class="version">1.0 Scope Lock Board</p>
+        <h2>Real runtime and integrations belong inside TWOS 1.0 scope.</h2>
+        <p class="hub-note">Real runtime and integration capability stays inside TWOS 1.0 scope. Only live trading and live betting execution remain blocked.</p>
+      </div>
+
+      <div class="scope-lock-grid">
+        <article class="workbench-card scope-column-card">
+          <div class="card-kicker"><span>Required for 1.0</span><strong>Required</strong></div>
+          <ul class="check-list">
+            <li>Backend.</li>
+            <li>API.</li>
+            <li>Auth.</li>
+            <li>Scheduler.</li>
+            <li>Persistence.</li>
+            <li>Real multi-provider model integration.</li>
+            <li>Real tool integration.</li>
+            <li>Auto-run.</li>
+            <li>Auto-review.</li>
+            <li>Auto-accept.</li>
+            <li>Auto-send.</li>
+            <li>LDD / 2026WC / TWOS orchestration.</li>
+          </ul>
+        </article>
+
+        <article class="workbench-card scope-column-card">
+          <div class="card-kicker"><span>In development</span><strong>Runtime path</strong></div>
+          <ul class="check-list">
+            <li>Unified command center for LDD / 2026WC / TWOS Product Development.</li>
+            <li>End-to-end flow: Sync → Task → Team → Route → Lifecycle → Acceptance → Compact Sync.</li>
+            <li>Task Assignment + Acceptance Workbench.</li>
+            <li>Tool Routing Readiness.</li>
+            <li>Integration status ledger with required / implemented / configured / healthy / failed / blocked states.</li>
+            <li>Provider/tool registry must show unconfigured until real adapters exist.</li>
+          </ul>
+        </article>
+
+        <article class="workbench-card scope-column-card scope-column-card--closed">
+          <div class="card-kicker"><span>Blocked</span><strong>Policy denied</strong></div>
+          <ul class="check-list">
+            <li>Live trading execution.</li>
+            <li>Live betting execution.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
 
     <section id="project-command-center" class="workbench-region project-zone" aria-label="Project Command Center">
       <div class="section-title">
@@ -244,7 +333,7 @@
           <h3 id="demo-outcome-title">TWOS acceptance outcome</h3>
           <ul class="check-list" id="demo-outcome-checklist"></ul>
           <dl class="task-fields">
-            <div><dt>Unresolved risk</dt><dd id="demo-unresolved-risk">Backend/API/tool integration remains closed.</dd></div>
+            <div><dt>Unresolved risk</dt><dd id="demo-unresolved-risk">Required runtime capability is not active until implemented, configured, and verified.</dd></div>
             <div><dt>Next manual action</dt><dd id="demo-next-action">Owner reviews MVP output and decides next milestone.</dd></div>
           </dl>
           <div class="gate-actions" aria-label="Demo acceptance visual state controls">
@@ -259,7 +348,7 @@
             <strong>Manual text only</strong>
           </div>
           <h3>Scenario-aware sync preview</h3>
-          <pre id="e2e-sync-preview" class="compact-sync-preview">Vol.15 MVP-12 Sync: TWOS 1.0 Launch Candidate Readiness added; selected scenario maps sync to task, simulated team, route readiness, lifecycle, acceptance outcome, and compact sync preview; backend/API/real tool integration and live execution remain closed.</pre>
+          <pre id="e2e-sync-preview" class="compact-sync-preview">Vol.15 MVP-13R Sync: TWOS 1.0 scope corrected; selected scenario maps sync to task, simulated team, route readiness, lifecycle, acceptance outcome, rule awareness, and compact sync preview; runtime and integrations are required but not yet represented as active; live execution remains blocked.</pre>
         </article>
       </div>
     </section>
@@ -303,7 +392,7 @@
           <dl class="field-list">
             <div><dt>What to click/view</dt><dd>Select TWOS scenario, inspect task assignment, simulated team, Codex manual route, and scorecard.</dd></div>
             <div><dt>Operator decision</dt><dd>Whether the product surface is clear enough to accept as a 1.0 launch-candidate prototype.</dd></div>
-            <div><dt>Boundary remains closed</dt><dd>No backend, API, auth, scheduler, real tool call, or auto-send.</dd></div>
+            <div><dt>Boundary remains closed</dt><dd>Required backend, API, auth, scheduler, real tool call, and auto-send must not be shown active until configured and verified.</dd></div>
           </dl>
         </article>
       </div>
@@ -313,7 +402,7 @@
       <div class="section-title">
         <p class="version">Task Assignment</p>
         <h2>Convert real project context into an assignable task.</h2>
-        <p class="hub-note">Plain front-end behavior only. State lives in memory for this page view; no backend, API, storage, model call, clipboard action, or external tool call.</p>
+        <p class="hub-note">Plain front-end behavior only for this corrected checkpoint. Backend, API, storage, model calls, and external tool calls are required by 1.0 but not yet implemented here.</p>
       </div>
 
       <div class="intake-layout">
@@ -330,7 +419,7 @@
             </label>
             <label>
               <span>Task title</span>
-              <input id="intake-title" type="text" value="Prepare TWOS 1.0 launch candidate readiness" />
+              <input id="intake-title" type="text" value="Correct TWOS 1.0 runtime scope" />
             </label>
             <label>
               <span>Task type</span>
@@ -344,21 +433,21 @@
             </label>
             <label>
               <span>Source sync summary</span>
-              <textarea id="intake-source" rows="4">MVP-11 Owner Acceptance passed; next task should make the static TWOS 1.0 workbench coherent enough for launch-candidate review.</textarea>
+              <textarea id="intake-source" rows="4">MVP-12 Owner Acceptance passed; product scope correction requires runtime and integration capabilities to be included in TWOS 1.0 instead of treated as stretch scope.</textarea>
             </label>
             <label>
               <span>Required output</span>
-              <textarea id="intake-output" rows="4">Launch-candidate-ready static product surface with clear story, section hierarchy, demo script, scorecard, and compact sync preview.</textarea>
+              <textarea id="intake-output" rows="4">Capability Delivery Control, corrected 1.0 scope board, complete rule ledger, release risk board, and MVP-13R compact sync preview.</textarea>
             </label>
             <label>
               <span>Boundary risk</span>
-              <textarea id="intake-boundary" rows="4">No backend, API, auth, persistence, external model call, external tool call, auto-send, live trading, or live betting.</textarea>
+              <textarea id="intake-boundary" rows="4">Runtime capabilities are required but not yet active. Providers/tools must show unconfigured or failed until verified. Live trading and live betting remain blocked.</textarea>
             </label>
           </div>
           <div class="quick-fill-row" aria-label="Quick-fill examples">
             <button type="button" data-example="ldd">LDD: SPCX Legacy risk review after 150 break</button>
             <button type="button" data-example="wc">2026WC: Favorite-win payout correction review</button>
-            <button type="button" data-example="twos">TWOS: Prepare 1.0 launch candidate readiness</button>
+            <button type="button" data-example="twos">TWOS: Correct 1.0 runtime scope</button>
           </div>
         </article>
 
@@ -457,13 +546,13 @@
         <article class="workbench-card preset-card" data-preset="twos">
           <h3>TWOS Product Development preset</h3>
           <p><strong>Commander + Builder + Verifier</strong></p>
-          <p>Build and acceptance emphasis supports static UI/product implementation without backend or tool integration.</p>
+          <p>Build and acceptance emphasis supports product implementation while real runtime capabilities move from required scope to implemented, configured, and verified status.</p>
         </article>
       </div>
 
       <div class="rule-band">
         <p>Add roles/models only when they improve decision quality, execution quality, or verification. Default to 2 roles; add Verifier when boundary, risk, or acceptance quality matters. Do not add roles for decoration.</p>
-        <strong>LDD and 2026WC support analysis/review only; no live trading or betting execution. TWOS Product Development supports planning and UI/product implementation only. No real Gemini, Claude, calendar, Outlook, IM, or external tool integration exists yet.</strong>
+        <strong>LDD and 2026WC support analysis/review only; no live trading or betting execution. TWOS Product Development supports planning, implementation, and verification. Real model and tool providers must remain unconfigured, disabled, failed, or blocked until they are actually implemented, configured, and verified.</strong>
       </div>
     </section>
 
@@ -498,7 +587,7 @@
           <p><b>Status</b> <em data-state-status>Pending</em></p>
           <p><b>Output</b> <em data-state-output>Manual implementation intent.</em></p>
           <p><b>Gate</b> <em data-state-gate>Scope remains open.</em></p>
-          <p><b>Risk</b> <em data-state-risk>No backend/API/tool call.</em></p>
+          <p><b>Risk</b> <em data-state-risk>Required runtime not yet active.</em></p>
         </li>
         <li data-lifecycle-state="Review">
           <span>04</span>
@@ -594,7 +683,7 @@
             <strong>Manual text only</strong>
           </div>
           <h3>Copyable-looking preview</h3>
-          <pre id="compact-sync-preview" class="compact-sync-preview">Vol.15 MVP-12 Sync: TWOS 1.0 Launch Candidate Readiness added; project sync maps to task, simulated AI team, route readiness, lifecycle, acceptance, and compact sync; backend/API/real tool integration and live execution remain closed.</pre>
+          <pre id="compact-sync-preview" class="compact-sync-preview">Vol.15 MVP-13R Sync: TWOS 1.0 scope corrected; backend/API/auth/scheduler/persistence, real model/provider integration, real tool integration, and automation are required for 1.0; Spain-Belgium and LDD/DUXD rules are preserved; live trading/betting execution remains blocked.</pre>
         </article>
       </div>
     </section>
@@ -603,7 +692,7 @@
       <div class="section-title">
         <p class="version">Tool Routing</p>
         <h2>Plan the route without pretending to integrate.</h2>
-        <p class="hub-note">All routes are UI-only readiness planning. External tools are manual-only or future integration unless explicitly opened in a later milestone.</p>
+        <p class="hub-note">Routes show current implementation truth. External tools are required by TWOS 1.0 but remain unconfigured until real adapters, credentials, and health checks exist.</p>
       </div>
 
       <div class="route-matrix" aria-label="Tool route matrix">
@@ -618,22 +707,22 @@
           <p><b>Must not do yet</b> Automatic Codex call, repository mutation, or push.</p>
         </article>
         <article class="workbench-card route-card">
-          <div class="card-kicker"><span>Calendar</span><strong>Future integration</strong></div>
+          <div class="card-kicker"><span>Calendar</span><strong>Required / unconfigured</strong></div>
           <p><b>Can do now</b> Show a review-window planning slot.</p>
           <p><b>Must not do yet</b> No event creation, reminders, or scheduler jobs.</p>
         </article>
         <article class="workbench-card route-card">
-          <div class="card-kicker"><span>Outlook / Email</span><strong>Future integration</strong></div>
+          <div class="card-kicker"><span>Outlook / Email</span><strong>Required / unconfigured</strong></div>
           <p><b>Can do now</b> Prepare email-style status text for manual use.</p>
           <p><b>Must not do yet</b> Read mailboxes, connect accounts, or auto-send.</p>
         </article>
         <article class="workbench-card route-card">
-          <div class="card-kicker"><span>IM / Chat</span><strong>Future integration</strong></div>
+          <div class="card-kicker"><span>IM / Chat</span><strong>Required / unconfigured</strong></div>
           <p><b>Can do now</b> Draft a short approval or sync note.</p>
           <p><b>Must not do yet</b> No auto-post to Slack, Teams, WeChat, or any chat tool.</p>
         </article>
         <article class="workbench-card route-card">
-          <div class="card-kicker"><span>Task tracker</span><strong>Future integration</strong></div>
+          <div class="card-kicker"><span>Task tracker</span><strong>Required / unconfigured</strong></div>
           <p><b>Can do now</b> Shape task metadata and acceptance text.</p>
           <p><b>Must not do yet</b> Create Jira, Linear, GitHub Issues, or task API records.</p>
         </article>
@@ -658,7 +747,7 @@
             </div>
             <div>
               <dt>Blocked action</dt>
-              <dd id="route-blocked">No automatic Codex call, no backend/API/tool integration, no auto-send.</dd>
+              <dd id="route-blocked">Automatic Codex/API/tool integration is required by 1.0 but not active until implemented, configured, and verified.</dd>
             </div>
           </dl>
         </article>
@@ -672,7 +761,7 @@
           <ul class="check-list route-gate-list">
             <li>Is task context clear?</li>
             <li>Is owner approval required?</li>
-            <li>Is route manual-only or future integration?</li>
+            <li>Is route manual, unconfigured, failed, healthy, or blocked?</li>
             <li>Is live execution forbidden?</li>
             <li>Is acceptance gate defined?</li>
             <li>Is compact sync needed?</li>
@@ -710,7 +799,7 @@
             <div><dt>Source</dt><dd>MVP feedback becomes next product task.</dd></div>
             <div><dt>Recommended route</dt><dd>Codex instruction copied manually, no automatic tool call.</dd></div>
             <div><dt>Acceptance focus</dt><dd>Task reduces distance to TWOS 1.0 while staying inside static UI scope.</dd></div>
-            <div><dt>Blocked action</dt><dd>No backend, API, scheduler, task-tool write, or auto-send.</dd></div>
+            <div><dt>Blocked action</dt><dd>Backend/API/scheduler/task-tool write/auto-send must not be shown active until implemented, configured, and verified.</dd></div>
           </dl>
         </article>
       </div>
@@ -719,8 +808,8 @@
     <section id="integration-boundary" class="workbench-region integration-boundary-zone" aria-label="Integration Boundary Gate">
       <div class="section-title">
         <p class="version">Integration Boundary Gate</p>
-        <h2>Decide when real integration scope may safely open later.</h2>
-        <p class="hub-note">This layer is UI-only readiness and decision support. It separates manual route, future integration, blocked scope, and owner-approved scope without opening backend, API, auth, or tool calls.</p>
+        <h2>Track required integrations without faking active providers.</h2>
+        <p class="hub-note">This layer separates required, implemented, configured, healthy, failed, disabled, unconfigured, and blocked states. Required integrations must not be represented as active until configured and verified.</p>
       </div>
 
       <article class="workbench-card integration-overview-card" aria-label="Integration Candidate Matrix">
@@ -728,62 +817,62 @@
           <span>Integration Candidate Matrix</span>
           <strong>UI-only readiness</strong>
         </div>
-        <p class="recommendation-copy">Candidate slots are classified before any future implementation milestone. A slot can look valuable and still remain closed until the gate is explicit.</p>
+        <p class="recommendation-copy">Candidate slots are required for TWOS 1.0 unless policy-blocked. A slot can be required and still be unconfigured, failed, disabled, or not yet implemented.</p>
       </article>
 
       <div class="integration-candidate-grid" aria-label="Integration Candidate Matrix cards">
         <article class="workbench-card integration-candidate-card">
-          <div class="card-kicker"><span>Codex</span><strong>Manual route</strong></div>
+          <div class="card-kicker"><span>Codex</span><strong>Required / unconfigured</strong></div>
           <dl class="field-list">
-            <div><dt>Current status</dt><dd>Manual route / safest first candidate.</dd></div>
+            <div><dt>Current status</dt><dd>Required for 1.0; manual handoff only until real adapter is configured and healthy.</dd></div>
             <div><dt>What it would enable</dt><dd>Reviewed instruction-pack handoff for product work.</dd></div>
             <div><dt>Why it is not open yet</dt><dd>Automatic Codex calls and repository mutation are outside this static prototype.</dd></div>
-            <div><dt>Required gate before opening</dt><dd>Owner-approved design milestone, manual fallback, and no automatic call.</dd></div>
+            <div><dt>Required gate before active use</dt><dd>Implementation, configuration, health check, owner approval, audit log, and manual fallback.</dd></div>
           </dl>
         </article>
         <article class="workbench-card integration-candidate-card">
-          <div class="card-kicker"><span>Calendar</span><strong>Future integration</strong></div>
+          <div class="card-kicker"><span>Calendar</span><strong>Required / unconfigured</strong></div>
           <dl class="field-list">
-            <div><dt>Current status</dt><dd>Future integration.</dd></div>
+            <div><dt>Current status</dt><dd>Required for 1.0; unconfigured.</dd></div>
             <div><dt>What it would enable</dt><dd>Scheduling/readiness windows for review or handoff.</dd></div>
             <div><dt>Why it is not open yet</dt><dd>No account auth, event creation, reminders, or scheduler scope exists.</dd></div>
-            <div><dt>Required gate before opening</dt><dd>Read/write boundary, owner approval, and no auto-create default.</dd></div>
+            <div><dt>Required gate before active use</dt><dd>Read/write boundary, owner approval, real auth, and health check.</dd></div>
           </dl>
         </article>
         <article class="workbench-card integration-candidate-card">
-          <div class="card-kicker"><span>Outlook / Email</span><strong>Future integration</strong></div>
+          <div class="card-kicker"><span>Outlook / Email</span><strong>Required / unconfigured</strong></div>
           <dl class="field-list">
-            <div><dt>Current status</dt><dd>Future integration.</dd></div>
+            <div><dt>Current status</dt><dd>Required for 1.0; unconfigured.</dd></div>
             <div><dt>What it would enable</dt><dd>Draft/review status notes for manual communication.</dd></div>
             <div><dt>Why it is not open yet</dt><dd>No mailbox access, account auth, or auto-send permission exists.</dd></div>
-            <div><dt>Required gate before opening</dt><dd>Draft-only design, privacy review, and explicit send approval.</dd></div>
+            <div><dt>Required gate before active use</dt><dd>Draft/review policy, privacy review, explicit send approval, and health check.</dd></div>
           </dl>
         </article>
         <article class="workbench-card integration-candidate-card">
-          <div class="card-kicker"><span>IM / Chat</span><strong>Future integration</strong></div>
+          <div class="card-kicker"><span>IM / Chat</span><strong>Required / unconfigured</strong></div>
           <dl class="field-list">
-            <div><dt>Current status</dt><dd>Future integration.</dd></div>
+            <div><dt>Current status</dt><dd>Required for 1.0; unconfigured.</dd></div>
             <div><dt>What it would enable</dt><dd>Reviewable message snippets for team sync.</dd></div>
             <div><dt>Why it is not open yet</dt><dd>No Slack, Teams, WeChat, or chat account connection exists.</dd></div>
-            <div><dt>Required gate before opening</dt><dd>Manual approval, channel permission design, and no auto-post.</dd></div>
+            <div><dt>Required gate before active use</dt><dd>Channel permission design, owner approval, posting policy, and health check.</dd></div>
           </dl>
         </article>
         <article class="workbench-card integration-candidate-card">
-          <div class="card-kicker"><span>Task tracker</span><strong>Future integration</strong></div>
+          <div class="card-kicker"><span>Task tracker</span><strong>Required / unconfigured</strong></div>
           <dl class="field-list">
-            <div><dt>Current status</dt><dd>Future integration.</dd></div>
+            <div><dt>Current status</dt><dd>Required for 1.0; unconfigured.</dd></div>
             <div><dt>What it would enable</dt><dd>Manual-first task export into a tracker workflow.</dd></div>
             <div><dt>Why it is not open yet</dt><dd>No Jira, Linear, GitHub Issues, or task-tool write path exists.</dd></div>
-            <div><dt>Required gate before opening</dt><dd>Data contract, owner approval, acceptance mapping, and rollback path.</dd></div>
+            <div><dt>Required gate before active use</dt><dd>Data contract, owner approval, acceptance mapping, rollback path, and health check.</dd></div>
           </dl>
         </article>
         <article class="workbench-card integration-candidate-card">
-          <div class="card-kicker"><span>File / document workspace</span><strong>Future integration</strong></div>
+          <div class="card-kicker"><span>File / document workspace</span><strong>Required / unconfigured</strong></div>
           <dl class="field-list">
-            <div><dt>Current status</dt><dd>Future integration.</dd></div>
+            <div><dt>Current status</dt><dd>Required for 1.0; unconfigured.</dd></div>
             <div><dt>What it would enable</dt><dd>Shared instruction packs, review notes, and document workspace context.</dd></div>
             <div><dt>Why it is not open yet</dt><dd>No file sync, document auth, persistence, or account access scope exists.</dd></div>
-            <div><dt>Required gate before opening</dt><dd>Privacy model, owner-visible file boundary, and manual fallback.</dd></div>
+            <div><dt>Required gate before active use</dt><dd>Privacy model, owner-visible file boundary, secret handling, and health check.</dd></div>
           </dl>
         </article>
         <article class="workbench-card integration-candidate-card">
@@ -801,7 +890,7 @@
             <div><dt>Current status</dt><dd>Blocked.</dd></div>
             <div><dt>What it would enable</dt><dd>Live financial or wagering action, which is not a TWOS 1.0 UI milestone.</dd></div>
             <div><dt>Why it is not open yet</dt><dd>Live trading execution and live betting execution remain forbidden.</dd></div>
-            <div><dt>Required gate before opening</dt><dd>A future milestone with explicit owner approval; default state remains blocked.</dd></div>
+            <div><dt>Required gate before opening</dt><dd>Separate explicit owner approval and backend policy change; default state remains blocked.</dd></div>
           </dl>
         </article>
       </div>
@@ -826,10 +915,10 @@
           <div class="gate-actions decision-state-row" aria-label="Open-scope decision visual states">
             <button type="button" data-integration-gate-state="Not ready">Not ready</button>
             <button type="button" data-integration-gate-state="Ready for design only">Ready for design only</button>
-            <button type="button" data-integration-gate-state="Ready for implementation in a future milestone">Ready for implementation in a future milestone</button>
+            <button type="button" data-integration-gate-state="Ready for implementation">Ready for implementation</button>
             <button type="button" data-integration-gate-state="Blocked">Blocked</button>
           </div>
-          <p class="recommendation-copy">This is a local-only visual decision state. It does not open backend/API/tool scope.</p>
+          <p class="recommendation-copy">This is a local-only visual decision state. Backend/API/tool capability is required, but must remain inactive until implemented, configured, and verified.</p>
         </article>
 
         <article class="workbench-card integration-recommendation-card">
@@ -838,9 +927,9 @@
             <strong>Manual-first</strong>
           </div>
           <dl class="field-list">
-            <div><dt>Codex</dt><dd>Ready for design only / manual-first. Safest first candidate is a Codex handoff instruction pack, not an automatic call.</dd></div>
-            <div><dt>Calendar/Outlook/IM/task tools</dt><dd>Not ready; future design needed before account access, posting, sending, or task writes.</dd></div>
-            <div><dt>Trading/betting execution</dt><dd>Blocked. Live execution remains closed unless a future milestone explicitly opens it with owner approval.</dd></div>
+            <div><dt>Codex</dt><dd>Required / unconfigured. Manual handoff is the current fallback until a real adapter is implemented and healthy.</dd></div>
+            <div><dt>Calendar/Outlook/IM/task tools</dt><dd>Required / unconfigured. They need auth, policy, health checks, audit, and owner controls before active use.</dd></div>
+            <div><dt>Trading/betting execution</dt><dd>Blocked. Live execution remains denied by policy.</dd></div>
           </dl>
         </article>
       </div>
@@ -858,7 +947,7 @@
           <h3>Fake tool integration claim</h3>
           <dl class="field-list">
             <div><dt>Why it matters</dt><dd>Tool-looking UI can imply actual calendar, email, chat, or task access.</dd></div>
-            <div><dt>Current mitigation</dt><dd>Routes are marked manual route, future integration, blocked, or owner approval required.</dd></div>
+            <div><dt>Current mitigation</dt><dd>Routes are marked required, implemented, configured, healthy, failed, disabled, unconfigured, or blocked.</dd></div>
             <div><dt>Blocking condition</dt><dd>No integration is described as live until it exists.</dd></div>
           </dl>
         </article>
@@ -866,32 +955,32 @@
           <h3>Auto-send / auto-post</h3>
           <dl class="field-list">
             <div><dt>Why it matters</dt><dd>Messages can create external commitments before owner review.</dd></div>
-            <div><dt>Current mitigation</dt><dd>All sync, email, and chat text remains manual copy only.</dd></div>
-            <div><dt>Blocking condition</dt><dd>No auto-send, no auto-post, and no clipboard API.</dd></div>
+            <div><dt>Current mitigation</dt><dd>Auto-send/auto-post are required capabilities but not active until policy, auth, audit, and health checks exist.</dd></div>
+            <div><dt>Blocking condition</dt><dd>No active auto-send, no active auto-post, and no clipboard API in this checkpoint.</dd></div>
           </dl>
         </article>
         <article class="workbench-card risk-card">
           <h3>Live trading / betting execution</h3>
           <dl class="field-list">
             <div><dt>Why it matters</dt><dd>Financial and betting actions are high-risk and outside the static workbench.</dd></div>
-            <div><dt>Current mitigation</dt><dd>LDD and 2026WC are analysis/review only.</dd></div>
-            <div><dt>Blocking condition</dt><dd>Execution remains blocked unless a future owner-approved milestone opens it.</dd></div>
+            <div><dt>Current mitigation</dt><dd>LDD and 2026WC may analyze, review, settle, sync, and notify only.</dd></div>
+            <div><dt>Blocking condition</dt><dd>Live trading and live betting execution remain blocked.</dd></div>
           </dl>
         </article>
         <article class="workbench-card risk-card">
           <h3>Auth / privacy / account access</h3>
           <dl class="field-list">
             <div><dt>Why it matters</dt><dd>Account connections expose private calendars, mailboxes, chats, files, and tasks.</dd></div>
-            <div><dt>Current mitigation</dt><dd>This prototype adds no auth and no account connection.</dd></div>
-            <div><dt>Blocking condition</dt><dd>Any future auth needs explicit design, consent, and fallback.</dd></div>
+            <div><dt>Current mitigation</dt><dd>Auth is required for 1.0 but not yet implemented in this corrected static checkpoint.</dd></div>
+            <div><dt>Blocking condition</dt><dd>Auth must not be shown healthy until implemented, configured, and verified.</dd></div>
           </dl>
         </article>
         <article class="workbench-card risk-card">
           <h3>Persistence / memory leakage</h3>
           <dl class="field-list">
             <div><dt>Why it matters</dt><dd>Task context can contain sensitive project details.</dd></div>
-            <div><dt>Current mitigation</dt><dd>All state is front-end-only for the current page view.</dd></div>
-            <div><dt>Blocking condition</dt><dd>No browser storage, backend persistence, or account sync.</dd></div>
+            <div><dt>Current mitigation</dt><dd>Persistence is required for 1.0 but not yet implemented in this corrected static checkpoint.</dd></div>
+            <div><dt>Blocking condition</dt><dd>Persistence must not be shown healthy until real restart-safe storage is verified.</dd></div>
           </dl>
         </article>
         <article class="workbench-card risk-card">
@@ -899,7 +988,7 @@
           <dl class="field-list">
             <div><dt>Why it matters</dt><dd>Weak gates let unclear work move forward as if it were accepted.</dd></div>
             <div><dt>Current mitigation</dt><dd>Acceptance checks stay project-specific and visible.</dd></div>
-            <div><dt>Blocking condition</dt><dd>No future integration opens without a defined acceptance gate.</dd></div>
+            <div><dt>Blocking condition</dt><dd>No required integration can be marked healthy without a defined acceptance gate.</dd></div>
           </dl>
         </article>
         <article class="workbench-card risk-card">
@@ -919,20 +1008,20 @@
             <strong>Safest candidate</strong>
           </div>
           <h3>Codex Handoff / Instruction Pack route</h3>
-          <p class="recommendation-copy">This surface does not call Codex automatically. The next safe step is improving manual Codex handoff quality before any real API/tool automation.</p>
+          <p class="recommendation-copy">This surface does not call Codex automatically yet. Codex integration is required, but must remain unconfigured until a real adapter, policy, and health check exist.</p>
         </article>
         <article class="workbench-card first-path-card">
-          <div class="card-kicker"><span>Secondary future candidates</span><strong>Design later</strong></div>
+          <div class="card-kicker"><span>Required unconfigured candidates</span><strong>1.0 scope</strong></div>
           <ul class="check-list">
-            <li>Calendar: scheduling/readiness only, no auto-create yet.</li>
-            <li>Outlook/Email: draft/review only, no auto-send.</li>
-            <li>IM/Chat: reviewable message only, no auto-post.</li>
-            <li>Task tracker: manual task export first.</li>
+            <li>Calendar: required, unconfigured.</li>
+            <li>Outlook/Email: required, unconfigured.</li>
+            <li>IM/Chat: required, unconfigured.</li>
+            <li>Task tracker: required, unconfigured.</li>
           </ul>
         </article>
         <article class="workbench-card first-path-card integration-candidate-card--blocked">
           <div class="card-kicker"><span>Hard blocked category</span><strong>Closed</strong></div>
-          <p class="recommendation-copy">Trading/betting execution remains blocked unless a future milestone explicitly opens live execution with owner approval.</p>
+          <p class="recommendation-copy">Trading/betting execution remains blocked by policy.</p>
         </article>
       </div>
 
@@ -942,7 +1031,7 @@
             <span>Integration Boundary Compact Sync</span>
             <strong>Manual text only</strong>
           </div>
-          <pre id="integration-sync-preview" class="compact-sync-preview">Integration Boundary Sync: TWOS classifies tool slots as manual route, future integration, blocked, or owner-approval required. Recommended first future path is Codex handoff/instruction-pack readiness, not automatic tool calling. Backend/API/live execution remain closed.</pre>
+          <pre id="integration-sync-preview" class="compact-sync-preview">Integration Boundary Sync: TWOS classifies tool slots as required, implemented, configured, healthy, failed, disabled, unconfigured, or blocked. Codex/calendar/Outlook/IM/task/file integrations are required by 1.0 but not active until verified. Live trading/betting execution remains blocked.</pre>
         </article>
 
         <article class="workbench-card integration-owner-card">
@@ -957,10 +1046,138 @@
             <li>Can see recommended first integration path.</li>
             <li>Can see blocked trading/betting execution.</li>
             <li>Can see Codex is manual-first, not auto-call.</li>
-            <li>Can see Calendar/Outlook/IM are future integrations, not real.</li>
+            <li>Can see Calendar/Outlook/IM are required but unconfigured.</li>
             <li>Can see compact sync preview.</li>
             <li>UI makes the next integration decision clearer than route-only planning.</li>
           </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="rule-ledger" class="workbench-region rule-ledger-zone" aria-label="Real Rule Ledger">
+      <div class="section-title">
+        <p class="version">Real Rule Ledger</p>
+        <h2>Product-facing rules carried forward from live project feedback.</h2>
+        <p class="hub-note">Rules are preserved for review, settlement, sync, and product feedback only. They do not enable trading, betting, broker, or automatic execution authority.</p>
+      </div>
+
+      <div class="rule-ledger-grid">
+        <article class="workbench-card rule-ledger-card">
+          <div class="card-kicker"><span>Betting / 2026WC</span><strong>Review only</strong></div>
+          <ul class="check-list">
+            <li>When main scenario is favorite normal win, common favorite-win paths such as 1-0 / 2-0 / 2-1 / 3-0 must be positive before approving the betting card.</li>
+            <li>France 2-0 Morocco validated favorite-normal-win + margin weighting.</li>
+            <li>Exact-score primary miss and defensive-score hit must be distinguished.</li>
+            <li>2026WC 2026-07-10 Pre: Spain–Belgium single-match mode, Budget 800.</li>
+            <li>Spain 90min win 470 @59.75c; Spain -1.5 210 @33.75c; Belgium +1.5 60 @66.50c; Spain advance 40 @74c; Draw 20 @24.50c.</li>
+            <li>Spain 1-goal win P/L +130.89; Spain 2+ goal win P/L +662.88; Belgium 90min win is the main uncovered tail.</li>
+            <li>Spain 1-0 / 2-0 / 2-1 / 3-0 are profitable.</li>
+            <li>Exact-score verification is separate from budget settlement.</li>
+            <li>Settlement must be ticket-by-ticket.</li>
+            <li>TWOS may analyze, review, settle, sync, and notify.</li>
+            <li>TWOS may settle/review/sync, but must not execute betting orders.</li>
+          </ul>
+        </article>
+
+        <article class="workbench-card rule-ledger-card">
+          <div class="card-kicker"><span>Trading / LDD + DUXD</span><strong>Execution closed</strong></div>
+          <ul class="check-list">
+            <li>Cancelled order and filled-0 evidence enters Execution Ledger.</li>
+            <li>Holdings page alone cannot prove execution.</li>
+            <li>After-hours quote carries into next premarket judgment.</li>
+            <li>Index/sector confirmation cannot replace leader confirmation.</li>
+            <li>H2 first ticket remains empty unless admission gate passes.</li>
+            <li>Admission requires NVDA >204 + SMH >600 + QQQ >712.</li>
+            <li>SMH preferred for clean H2 attribution.</li>
+            <li>Repair ≠ Chase.</li>
+            <li>Strong sector ≠ chase permission.</li>
+            <li>SPCX 150/155 gate: 150 is not safe; 155 is required before de-risk conclusion.</li>
+            <li>Full Market Scan cannot be deleted.</li>
+            <li>Pending Order requires continuous re-review.</li>
+            <li>No broker/API execution authority.</li>
+          </ul>
+        </article>
+
+        <article class="workbench-card rule-ledger-card scope-column-card--closed">
+          <div class="card-kicker"><span>TWOS product boundaries</span><strong>Owner-controlled</strong></div>
+          <ul class="check-list">
+            <li>TWOS may receive compact sync and product feedback.</li>
+            <li>Required runtime capabilities must be labeled not yet implemented until real code exists.</li>
+            <li>Provider/tool statuses must be configured, healthy, failed, disabled, unconfigured, or blocked; no fake active status.</li>
+            <li>Live trading execution and live betting execution remain blocked.</li>
+            <li>TWOS 1.0 readiness means a usable, honest, owner-controlled workbench with real runtime foundations.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="release-risks" class="workbench-region release-risk-zone" aria-label="Release Risk and Blocker Board">
+      <div class="section-title">
+        <p class="version">Release Risk + Blocker Board</p>
+        <h2>Track runtime hardening risks without faking active integration.</h2>
+        <p class="hub-note">Required capabilities can be in development, configured, healthy, failed, disabled, unconfigured, or blocked. They must not be represented as active until verified.</p>
+      </div>
+
+      <div class="release-risk-grid">
+        <article class="workbench-card release-risk-card">
+          <div class="card-kicker"><span>Page too large / accumulated UI</span><strong>Medium</strong></div>
+          <dl class="field-list">
+            <div><dt>Current mitigation</dt><dd>Section index, capability delivery layer, and grouped boards keep the story scannable.</dd></div>
+            <div><dt>Next action</dt><dd>Prefer consolidation and hierarchy cleanup over adding new product areas.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card release-risk-card">
+          <div class="card-kicker"><span>Required runtime not implemented yet</span><strong>High</strong></div>
+          <dl class="field-list">
+            <div><dt>Current mitigation</dt><dd>Scope board marks backend, API, auth, scheduler, persistence, integrations, and automation as required.</dd></div>
+            <div><dt>Next action</dt><dd>Build the real runtime foundation before claiming those capabilities are implemented.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card release-risk-card">
+          <div class="card-kicker"><span>Manual-only workflow may still require copy/paste</span><strong>Medium</strong></div>
+          <dl class="field-list">
+            <div><dt>Current mitigation</dt><dd>Compact sync previews and demo script make manual transfer predictable.</dd></div>
+            <div><dt>Next action</dt><dd>Replace manual-only handoff with authenticated, audited runtime paths.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card release-risk-card">
+          <div class="card-kicker"><span>Fake-integration risk</span><strong>High</strong></div>
+          <dl class="field-list">
+            <div><dt>Current mitigation</dt><dd>Capability truth model distinguishes required, implemented, configured, healthy, failed, disabled, unconfigured, and blocked.</dd></div>
+            <div><dt>Next action</dt><dd>Provider/tool registry must report real status from backend checks.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card release-risk-card">
+          <div class="card-kicker"><span>Live execution boundary risk</span><strong>High</strong></div>
+          <dl class="field-list">
+            <div><dt>Current mitigation</dt><dd>LDD and 2026WC rules explicitly forbid live trading and live betting execution.</dd></div>
+            <div><dt>Next action</dt><dd>Preserve owner approval and blocked execution language in every release pass.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card release-risk-card">
+          <div class="card-kicker"><span>Rule ledger may become stale if sync updates are not reflected</span><strong>Medium</strong></div>
+          <dl class="field-list">
+            <div><dt>Current mitigation</dt><dd>Latest 2026WC and LDD/DUXD rules are product-visible.</dd></div>
+            <div><dt>Next action</dt><dd>Update the ledger whenever accepted sync changes rule meaning.</dd></div>
+          </dl>
+        </article>
+        <article class="workbench-card release-risk-card">
+          <div class="card-kicker"><span>Owner acceptance drift</span><strong>Medium</strong></div>
+          <dl class="field-list">
+            <div><dt>Current mitigation</dt><dd>Acceptance checklist, scorecard, capability delivery control, and compact sync are page-based.</dd></div>
+            <div><dt>Next action</dt><dd>Keep acceptance visible in the product surface, not only in chat reports.</dd></div>
+          </dl>
+        </article>
+      </div>
+
+      <div class="release-blocker-grid">
+        <article class="workbench-card release-blocker-card scope-column-card--closed">
+          <div class="card-kicker"><span>Blocker</span><strong>Policy denied</strong></div>
+          <p class="recommendation-copy">Live trading execution remains blocked.</p>
+        </article>
+        <article class="workbench-card release-blocker-card scope-column-card--closed">
+          <div class="card-kicker"><span>Blocker</span><strong>Policy denied</strong></div>
+          <p class="recommendation-copy">Live betting execution remains blocked.</p>
         </article>
       </div>
     </section>
@@ -969,7 +1186,7 @@
       <div class="section-title">
         <p class="version">TWOS 1.0 Acceptance Scorecard</p>
         <h2>Evaluate launch-candidate product-surface readiness.</h2>
-        <p class="hub-note">Pass means the prototype feature is visible on this page. Not Opened means real integration scope is intentionally closed, not failed.</p>
+        <p class="hub-note">Pass means the prototype feature is visible on this page. Required / In Development means runtime scope belongs in TWOS 1.0 but is not yet active until implemented, configured, and verified.</p>
       </div>
 
       <div class="scorecard-grid" aria-label="TWOS 1.0 scorecard">
@@ -1005,7 +1222,7 @@
         </article>
         <article class="workbench-card scorecard-card" data-scorecard-card data-scorecard-default="Pass">
           <div class="card-kicker"><span>Tool route readiness</span><strong data-scorecard-label>Pass</strong></div>
-          <p class="recommendation-copy">Routes are visible as manual, future, or blocked planning slots.</p>
+          <p class="recommendation-copy">Routes are visible as manual, required/unconfigured, healthy, failed, disabled, or blocked planning slots.</p>
           <div class="gate-actions scorecard-actions"><button type="button" data-scorecard-state="Pass">Pass</button><button type="button" data-scorecard-state="Needs Review">Needs Review</button><button type="button" data-scorecard-state="Not Opened">Not Opened</button></div>
         </article>
         <article class="workbench-card scorecard-card" data-scorecard-card data-scorecard-default="Pass">
@@ -1020,12 +1237,12 @@
         </article>
         <article class="workbench-card scorecard-card" data-scorecard-card data-scorecard-default="Pass">
           <div class="card-kicker"><span>Compact sync</span><strong data-scorecard-label>Pass</strong></div>
-          <p class="recommendation-copy">Manual compact sync previews exist for task, demo, integration, and MVP-12 acceptance.</p>
+          <p class="recommendation-copy">Manual compact sync previews exist for task, demo, integration, capability delivery, and MVP-13R acceptance.</p>
           <div class="gate-actions scorecard-actions"><button type="button" data-scorecard-state="Pass">Pass</button><button type="button" data-scorecard-state="Needs Review">Needs Review</button><button type="button" data-scorecard-state="Not Opened">Not Opened</button></div>
         </article>
         <article class="workbench-card scorecard-card" data-scorecard-card data-scorecard-default="Pass">
           <div class="card-kicker"><span>Boundary honesty</span><strong data-scorecard-label>Pass</strong></div>
-          <p class="recommendation-copy">Prototype features are separated from unopened backend, API, auth, and tool integration.</p>
+          <p class="recommendation-copy">Prototype features are separated from required runtime capabilities that are not yet implemented, configured, and verified.</p>
           <div class="gate-actions scorecard-actions"><button type="button" data-scorecard-state="Pass">Pass</button><button type="button" data-scorecard-state="Needs Review">Needs Review</button><button type="button" data-scorecard-state="Not Opened">Not Opened</button></div>
         </article>
         <article class="workbench-card scorecard-card" data-scorecard-card data-scorecard-default="Pass">
@@ -1033,14 +1250,14 @@
           <p class="recommendation-copy">Header, section index, script, scorecard, and acceptance areas clarify the product story.</p>
           <div class="gate-actions scorecard-actions"><button type="button" data-scorecard-state="Pass">Pass</button><button type="button" data-scorecard-state="Needs Review">Needs Review</button><button type="button" data-scorecard-state="Not Opened">Not Opened</button></div>
         </article>
-        <article class="workbench-card scorecard-card scorecard-card--not-opened" data-scorecard-card data-scorecard-default="Not Opened">
-          <div class="card-kicker"><span>Backend/API/real tool integration</span><strong data-scorecard-label>Not Opened</strong></div>
-          <p class="recommendation-copy">This is intentionally unopened real integration scope, not a failed launch-candidate feature.</p>
-          <div class="gate-actions scorecard-actions"><button type="button" data-scorecard-state="Needs Review">Needs Review</button><button type="button" data-scorecard-state="Not Opened">Not Opened</button></div>
+        <article class="workbench-card scorecard-card scorecard-card--not-opened" data-scorecard-card data-scorecard-default="Required / In Development">
+          <div class="card-kicker"><span>Backend/API/real tool integration</span><strong data-scorecard-label>Required / In Development</strong></div>
+          <p class="recommendation-copy">This is TWOS 1.0 required runtime scope, but it must stay inactive until implemented, configured, and verified.</p>
+          <div class="gate-actions scorecard-actions"><button type="button" data-scorecard-state="Needs Review">Needs Review</button><button type="button" data-scorecard-state="Required / In Development">Required / In Development</button></div>
         </article>
         <article class="workbench-card scorecard-card scorecard-card--blocked" data-scorecard-card data-scorecard-default="Blocked / Not Opened">
           <div class="card-kicker"><span>Trading/betting execution</span><strong data-scorecard-label>Blocked / Not Opened</strong></div>
-          <p class="recommendation-copy">Live trading execution and live betting execution remain blocked unless a future milestone explicitly opens them with owner approval.</p>
+          <p class="recommendation-copy">Live trading execution and live betting execution remain blocked.</p>
           <div class="gate-actions scorecard-actions"><button type="button" data-scorecard-state="Needs Review">Needs Review</button><button type="button" data-scorecard-state="Blocked / Not Opened">Blocked / Not Opened</button></div>
         </article>
       </div>
@@ -1049,7 +1266,7 @@
     <section class="workbench-region review-zone" aria-label="Review acceptance sync zone">
       <div class="section-title">
         <p class="version">Review / Acceptance / Sync Zone</p>
-        <h2>MVP-12 owner acceptance for TWOS 1.0 launch-candidate readiness.</h2>
+        <h2>MVP-13R owner acceptance for corrected TWOS 1.0 capability scope.</h2>
       </div>
 
       <div class="review-grid">
@@ -1057,61 +1274,64 @@
           <h3>Before-Codex gate</h3>
           <ul class="check-list">
             <li>Source contract: Vol.15 architecture map.</li>
-            <li>Scope: static UI only.</li>
+            <li>Scope: MVP-13R product-surface correction only.</li>
             <li>Allowed files: existing static cockpit UI files.</li>
-            <li>Blocked: backend, API, auth, scheduler, persistence, tool integration, auto-send, trading, betting.</li>
+            <li>Corrected: backend, API, auth, scheduler, persistence, real integrations, and automation are required for TWOS 1.0 but are not represented as active until implemented, configured, and verified.</li>
+            <li>Blocked: live trading execution and live betting execution.</li>
           </ul>
         </article>
 
         <article class="workbench-card review-card">
           <h3>Stage self-check summary</h3>
           <ul class="check-list">
-            <li>Stage A: product story header explains TWOS 1.0, the operating loop, and closed real integrations.</li>
-            <li>Stage B: section index and renamed sections make the page scan like one product surface.</li>
-            <li>Stage C: launch candidate demo script supports LDD, 2026WC, and TWOS demo paths.</li>
-            <li>Stage D: TWOS 1.0 Acceptance Scorecard separates visible prototype features from unopened integrations.</li>
-            <li>Stage E: MVP-12 compact sync and owner acceptance are embedded on the page.</li>
+            <li>Stage A: product UI removes the launch-date display and uses TWOS 1.0 Capability Delivery Control.</li>
+            <li>Stage B: 1.0 scope uses Required for 1.0, In development, and Blocked.</li>
+            <li>Stage C: Spain–Belgium plus accepted 2026WC and LDD/DUXD rules are preserved in the product-facing Rule Ledger.</li>
+            <li>Stage D: release risks track runtime implementation, fake-integration risk, stale rules, and blocked live execution.</li>
+            <li>Stage E: MVP-13R compact sync and owner acceptance are embedded on the page.</li>
           </ul>
         </article>
 
         <article class="workbench-card review-card">
-          <h3>MVP-12 milestone acceptance checklist</h3>
+          <h3>MVP-13R milestone acceptance checklist</h3>
           <ul class="check-list">
-            <li>Can understand TWOS 1.0 from the top of the page.</li>
-            <li>Can navigate the main sections.</li>
-            <li>Can demo the end-to-end flow without conversation memory.</li>
-            <li>Can see LDD / 2026WC / TWOS demo paths.</li>
-            <li>Can see 1.0 acceptance scorecard.</li>
-            <li>Can distinguish prototype features from unopened integrations.</li>
+            <li>Release date is absent from product UI.</li>
+            <li>Can see backend/API/auth/scheduler/persistence are required for 1.0.</li>
+            <li>Can see real model/provider and tool integrations are required for 1.0.</li>
+            <li>Can see auto-run, auto-review, auto-accept, and auto-send are required capabilities.</li>
+            <li>Can see provider/tool status must be honest: unconfigured, configured, healthy, degraded, failed, disabled, or blocked.</li>
+            <li>Can see 2026WC rules preserved.</li>
+            <li>Can see LDD / DUXD rules preserved.</li>
+            <li>Can see Spain–Belgium 7/10 Pre.</li>
+            <li>Can see only live trading/betting execution remains blocked.</li>
             <li>Can see compact sync preview.</li>
-            <li>UI feels ready to serve as TWOS 1.0 launch-candidate prototype.</li>
           </ul>
         </article>
 
         <article class="workbench-card review-card">
           <h3>Owner Acceptance checklist</h3>
           <ul class="check-list">
-            <li>Top story states one command center for LDD, 2026WC, and TWOS Product Development.</li>
-            <li>Operating loop is visible: Sync → Task → Team → Route → Lifecycle → Acceptance → Compact Sync.</li>
-            <li>Demo script can guide an owner demo without relying on chat context.</li>
-            <li>Scorecard marks prototype features as visible and real integrations as Not Opened.</li>
-            <li>Trading/betting execution is blocked / not opened.</li>
-            <li>Launch candidate readiness means product-surface readiness, not live integration readiness.</li>
+            <li>1.0 scope includes real runtime, integrations, and automation.</li>
+            <li>Runtime capabilities are required but not represented as active until verified.</li>
+            <li>Rule Ledger carries real project feedback forward without enabling trading/betting execution.</li>
+            <li>Provider/tool statuses remain honest.</li>
+            <li>Only live trading/betting execution remains blocked.</li>
+            <li>TWOS 1.0 readiness means a usable, honest, owner-controlled workbench with real runtime foundations.</li>
           </ul>
         </article>
 
         <article class="workbench-card launch-sync-card">
           <div class="card-kicker">
-            <span>MVP-12 Compact Sync Preview</span>
+            <span>MVP-13R Compact Sync Preview</span>
             <strong>Manual text only</strong>
           </div>
-          <pre id="launch-sync-preview" class="compact-sync-preview">Vol.15 MVP-12 Sync: TWOS 1.0 Launch Candidate Readiness added; the workbench now presents a coherent operating loop from project sync to task, simulated AI team, route readiness, lifecycle, acceptance, and compact sync. Backend/API/real tool integration and live execution remain closed.</pre>
+          <pre id="launch-sync-preview" class="compact-sync-preview">Vol.15 MVP-13R Sync: TWOS 1.0 scope corrected; release date removed from product UI; backend/API/auth/scheduler/persistence, real multi-provider model integration, real tool integration, auto-run, auto-review, auto-accept, and auto-send are required for 1.0; Spain–Belgium 7/10 Pre and LDD/DUXD rules are preserved; live trading/betting execution remains blocked.</pre>
         </article>
       </div>
     </section>
 
     <section class="final-boundary" aria-label="Final boundary notice">
-      <p>Launch candidate readiness means product-surface readiness, not live integration readiness. Strategy belongs to the user. AI assists planning, execution tracking, and review. No live execution without explicit approval.</p>
+      <p>TWOS 1.0 readiness requires real runtime foundations with honest capability status. Strategy belongs to the user. AI assists planning, execution tracking, and review. Live trading and live betting execution remain blocked.</p>
     </section>
   </main>
   <script>
@@ -1144,12 +1364,12 @@
         },
         twos: {
           label: "TWOS Product Development",
-          defaultTitle: "Prepare TWOS 1.0 launch candidate readiness",
+          defaultTitle: "Correct TWOS 1.0 runtime scope",
           defaultType: "Product Build",
-          source: "MVP-11 Owner Acceptance passed; next task should make the static TWOS 1.0 workbench coherent enough for launch-candidate review.",
-          output: "Launch-candidate-ready static product surface with clear story, section hierarchy, demo script, scorecard, and compact sync preview.",
-          acceptance: "Task must reduce distance to TWOS 1.0; no backend/API/tool integration unless milestone opens scope.",
-          boundary: "Planning and UI/product implementation only; no backend, API, auth, scheduler, schema, validator, storage, or tool integration.",
+          source: "MVP-13R correction: backend, API, auth, scheduler, persistence, real integrations, and automation belong inside TWOS 1.0 scope.",
+          output: "Capability Delivery Control, corrected 1.0 scope board, complete rule ledger, honest provider/tool status model, and MVP-13R compact sync preview.",
+          acceptance: "Task must reduce distance to TWOS 1.0 by keeping required runtime capabilities visible without representing them as active before implementation, configuration, and verification.",
+          boundary: "Required capabilities are not active until implemented, configured, and verified. Live trading and live betting execution remain blocked.",
           why: "TWOS product work needs Commander synthesis, Builder structure, and Verifier acceptance/boundary review."
         }
       };
@@ -1182,10 +1402,10 @@
         {
           label: "Tool Route",
           area: "Tool Routing",
-          title: "Choose the manual or future route.",
+          title: "Choose the manual, unconfigured, failed, healthy, or blocked route.",
           decision: "Which route is appropriate and what remains blocked.",
-          help: "Separating human approval, manual Codex copy, manual review, and future integrations.",
-          blocked: "No real Codex/calendar/Outlook/IM/task-tool call."
+          help: "Separating human approval, manual Codex copy, manual review, required runtime capability, and blocked live execution.",
+          blocked: "No provider or tool can be represented as active until implemented, configured, and verified."
         },
         {
           label: "Lifecycle",
@@ -1224,7 +1444,7 @@
           acceptanceFocus: "Repair ≠ Chase; H2 first ticket requires dual confirmation such as NVDA >204 + SMH >600; SPCX risk review; no live trading.",
           unresolvedRisk: "SPCX repair can become chase behavior if confirmation is weak.",
           nextAction: "Manual owner review of confirmation evidence before any external action.",
-          notMore: "Builder and future tools are omitted because this is review-only, not implementation."
+          notMore: "Builder and extra tools are omitted because this is review-only, not implementation."
         },
         wc: {
           projectKey: "wc",
@@ -1237,20 +1457,20 @@
           acceptanceFocus: "favorite-win normal paths must stay profitable unless intentionally contrarian; settlement is ticket-by-ticket; no live betting.",
           unresolvedRisk: "Payout/risk-tail interpretation can drift if common favorite-score paths are treated as negative without intent.",
           nextAction: "Manual ticket-by-ticket settlement review before any conclusion.",
-          notMore: "Builder and future tools are omitted because this is settlement/review only."
+          notMore: "Builder and extra tools are omitted because this is settlement/review only."
         },
         twos: {
           projectKey: "twos",
           label: "TWOS: MVP feedback becomes next product task",
           title: "MVP feedback becomes next product task",
           taskType: "Product Build",
-          source: "TWOS Vol.15: MVP feedback should become the next product task inside the static command center.",
-          output: "A launch-candidate-ready static product surface that connects sync, task, team, route, lifecycle, acceptance, and compact sync.",
-          boundary: "No backend, API, auth, persistence, scheduler, external tool call, clipboard API, or real model integration.",
-          acceptanceFocus: "every phase must reduce distance to 1.0; no backend/API/tool integration unless milestone opens scope.",
-          unresolvedRisk: "The UI must feel integrated without implying real automation.",
-          nextAction: "Owner reviews TWOS 1.0 launch-candidate product-surface readiness and decides the next manual milestone.",
-          notMore: "No future tools are added because manual Codex copy is enough for this milestone."
+          source: "TWOS Vol.15: MVP feedback should become the next product task and the 1.0 scope must include real runtime capabilities.",
+          output: "A capability-delivery-ready product surface that keeps required runtime, scope, rules, risks, and compact sync visible.",
+          boundary: "Required runtime and providers are not active until implemented, configured, and verified. Live trading and live betting execution remain blocked.",
+          acceptanceFocus: "every phase must reduce distance to 1.0 and distinguish required, implemented, configured, healthy, failed, disabled, unconfigured, and blocked status.",
+          unresolvedRisk: "The UI must harden release readiness without pretending required integrations already work.",
+          nextAction: "Owner reviews TWOS 1.0 capability delivery readiness and decides the next runtime milestone.",
+          notMore: "Extra providers and tools are not shown as active because honest status matters more than decorative expansion."
         }
       };
       var currentStateIndex = 0;
@@ -1398,7 +1618,7 @@
         return [
           "Task must reduce distance to TWOS 1.0.",
           "Required output must be visible in the product surface.",
-          "No backend/API/tool integration unless milestone opens scope.",
+          "Required runtime capability must not be represented as active until implemented, configured, and verified.",
           "Owner acceptance must remain explicit."
         ];
       }
@@ -1408,9 +1628,9 @@
           return {
             title: "Codex manual route",
             status: "Manual approval required",
-            why: "TWOS Product Build work can become a copied Codex instruction after owner approval.",
-            blocked: "No automatic Codex call, no repository mutation, no backend/API/tool integration, no auto-send.",
-            warning: "Codex can receive copied instruction only; no automatic call."
+            why: "TWOS Product Build work can use manual Codex handoff now while real backend/API/tool routing remains required but unconfigured until verified.",
+            blocked: "No automatic Codex call, no repository mutation, and no provider/tool status may be shown active before implementation, configuration, and verification.",
+            warning: "Codex remains manual unless a real adapter is implemented, configured, and verified."
           };
         }
         if (projectKey === "ldd" && taskTypeValue === "Risk Check") {
@@ -1453,8 +1673,8 @@
           title: "Human approval route",
           status: "Ready for manual review",
           why: "The task needs manual review before any downstream route is considered.",
-          blocked: "No real integration, no auto-send, no live execution.",
-          warning: "Future integrations remain unopened."
+          blocked: "No unverified integration, no auto-send before configured approval policy, no live execution.",
+          warning: "Required integrations remain unconfigured until verified."
         };
       }
 
@@ -1486,7 +1706,7 @@
       function compactSync(team) {
         var route = routeRecommendation(intakeProject.value, intakeTaskType.value);
         return [
-          "Vol.15 MVP-12 Sync: TWOS 1.0 Launch Candidate Readiness added; project sync maps to task, simulated AI team, route readiness, lifecycle, acceptance, and compact sync; backend/API/real tool integration and live execution remain closed.",
+          "Vol.15 MVP-13R Sync: TWOS 1.0 scope corrected; release date removed from product UI; backend/API/auth/scheduler/persistence, real multi-provider model integration, real tool integration, auto-run, auto-review, auto-accept, and auto-send are required for 1.0; Spain–Belgium 7/10 Pre and LDD/DUXD rules are preserved; live trading/betting execution remains blocked.",
           "Task: " + intakeTitle.value,
           "Project: " + projectData[intakeProject.value].label,
           "Task Type: " + intakeTaskType.value,
@@ -1502,7 +1722,7 @@
       function e2eCompactSync(team, route) {
         var scenario = demoScenarios[currentDemoScenario];
         return [
-          "Vol.15 MVP-12 Sync: TWOS 1.0 Launch Candidate Readiness added; selected scenario maps sync to task, simulated team, route readiness, lifecycle, acceptance outcome, and compact sync preview; backend/API/real tool integration and live execution remain closed.",
+          "Vol.15 MVP-13R Sync: corrected TWOS 1.0 scope keeps real runtime and integrations required but honestly unconfigured until implemented and verified; selected scenario maps sync to task, simulated team, route readiness, lifecycle, acceptance outcome, rule awareness, and compact sync preview; live trading/betting execution remains blocked.",
           "Scenario: " + scenario.label,
           "Task: " + intakeTitle.value,
           "Simulated Team: " + team.join(" + "),
@@ -1559,14 +1779,15 @@
         document.querySelectorAll("[data-integration-gate-state]").forEach(function (button) {
           button.classList.toggle("is-active", button.getAttribute("data-integration-gate-state") === integrationGateState);
         });
-        document.querySelector(".open-scope-gate-card").classList.toggle("is-pass", integrationGateState === "Ready for design only" || integrationGateState === "Ready for implementation in a future milestone");
+        document.querySelector(".open-scope-gate-card").classList.toggle("is-pass", integrationGateState === "Ready for design only" || integrationGateState === "Ready for implementation");
         document.querySelector(".open-scope-gate-card").classList.toggle("is-blocked", integrationGateState === "Blocked");
         integrationSyncPreview.textContent = [
-          "Integration Boundary Sync: TWOS classifies tool slots as manual route, future integration, blocked, or owner-approval required. Recommended first future path is Codex handoff/instruction-pack readiness, not automatic tool calling. Backend/API/live execution remain closed.",
+          "Integration Boundary Sync: TWOS classifies tool slots as manual route, required/unconfigured, configured, healthy, failed, disabled, blocked, or owner-approval required. Recommended first runtime path is Codex handoff/instruction-pack readiness, not fake automatic tool calling.",
           "Current visual decision state: " + integrationGateState,
           "Current task route context: " + route.title + " / " + route.status,
-          "First future path: Codex Handoff / Instruction Pack route.",
-          "Blocked: backend/API/auth/tool calls, auto-send, auto-post, live trading, live betting, persistence."
+          "First runtime path: Codex Handoff / Instruction Pack route.",
+          "Required but not active until implemented and verified: backend/API/auth/tool calls, auto-send, auto-post, and persistence.",
+          "Blocked: live trading and live betting execution."
         ].join("\n");
       }
 
