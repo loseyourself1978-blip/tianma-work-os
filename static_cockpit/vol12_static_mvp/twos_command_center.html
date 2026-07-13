@@ -18,20 +18,20 @@
 
     <section class="workbench-hero" aria-label="Workbench header">
       <div>
-        <p class="version">Vol.15 MVP-14 Repair</p>
+        <p class="version">Vol.15 MVP-15 Repair</p>
         <h1>TWOS 1.0 Unified AI Team Workbench</h1>
         <p class="subheadline">One command center for LDD, 2026WC, and TWOS Product Development. Operating loop: Sync → Task → Team → Route → Lifecycle → Acceptance → Compact Sync.</p>
       </div>
       <aside class="boundary-notice" aria-label="Boundary notice">
-        <p>The local backend, API, auth, persistence, scheduler, Compact Sync worker, and deterministic acceptance path are active and owner-verifiable. External providers and tools remain unconfigured. Live trading and live betting execution remain blocked.</p>
+        <p>The local runtime now composes task-driven AI capabilities and records explainable provider/model routing decisions. External providers remain unconfigured until real adapters are configured and verified. Live trading and live betting execution remain blocked.</p>
       </aside>
     </section>
 
     <section id="runtime-status" class="workbench-region runtime-status-zone" aria-label="Owner Verification Runtime">
       <div class="section-title">
-        <p class="version">MVP-14 Repair</p>
+        <p class="version">MVP-15 Owner-Visible AI Routing</p>
         <h2>Owner Verification Runtime</h2>
-        <p class="hub-note">Create a real task, run Compact Sync, see why it was accepted, and verify recurring execution without reading backend internals.</p>
+        <p class="hub-note">Save a task to compose its minimum useful AI Team and complete an explainable routing evaluation, including a persisted unavailable decision when providers are not configured.</p>
       </div>
 
       <div class="runtime-verification-grid">
@@ -74,8 +74,85 @@
               <textarea id="runtime-boundary-risk" rows="3">No live trading or live betting execution.</textarea>
             </label>
           </div>
+          <details class="runtime-ai-request">
+            <summary>AI capability request</summary>
+            <div class="runtime-ai-request-controls">
+              <label>
+                <span>Capability focus</span>
+                <select id="runtime-capability-focus">
+                  <option value="">Auto-select from task</option>
+                </select>
+              </label>
+              <label>
+                <span>Risk level</span>
+                <select id="runtime-risk-level">
+                  <option value="low">Low</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </label>
+              <label>
+                <span>Urgency</span>
+                <select id="runtime-ai-urgency">
+                  <option value="normal" selected>Normal</option>
+                  <option value="high">High</option>
+                </select>
+              </label>
+            </div>
+            <p class="recommendation-copy">TWOS starts with two task-relevant capabilities and adds another only when quality, risk, or acceptance requires it.</p>
+          </details>
+
+          <section class="runtime-ai-plan" aria-label="AI Team Plan">
+            <div class="card-kicker"><span>AI Team Plan</span><strong id="runtime-ai-team-count">Waiting for task</strong></div>
+            <dl class="task-fields runtime-ai-plan-facts">
+              <div><dt>Selected capabilities</dt><dd id="runtime-ai-execution-plan">Save a task to compose its plan</dd></div>
+              <div><dt>Minimum Effective Role Count</dt><dd id="runtime-ai-minimum-count">Waiting</dd></div>
+              <div><dt>Plan status</dt><dd id="runtime-ai-plan-status">Waiting</dd></div>
+            </dl>
+            <div class="runtime-ai-explanation">
+              <strong>Why this team</strong>
+              <p class="recommendation-copy" id="runtime-ai-why">Save a task to create its task-specific AI Team Plan.</p>
+              <ul class="check-list runtime-ai-capability-reasons" id="runtime-ai-capability-reasons">
+                <li>Capability reasons appear after composition.</li>
+              </ul>
+              <strong>Why no more</strong>
+              <p class="recommendation-copy" id="runtime-ai-omitted">Omitted capabilities appear after composition.</p>
+            </div>
+            <div class="runtime-routing-summary" aria-label="Routing decision">
+              <div class="card-kicker"><span>Routing</span><strong id="runtime-ai-status">Waiting</strong></div>
+              <dl class="task-fields runtime-ai-routing-summary-facts">
+                <div><dt>Selected provider</dt><dd id="runtime-ai-provider">Waiting</dd></div>
+                <div><dt>Selected model</dt><dd id="runtime-ai-model">Waiting</dd></div>
+                <div><dt>Fallback</dt><dd id="runtime-ai-fallback">Waiting</dd></div>
+              </dl>
+              <div class="runtime-ai-decision-copy">
+                <strong>Reason</strong>
+                <p id="runtime-ai-route-reason">Save a task to evaluate routing.</p>
+                <strong>Next action</strong>
+                <p id="runtime-ai-next-action">Save a task first.</p>
+              </div>
+            </div>
+            <details class="runtime-detail">
+              <summary>Advanced AI and routing details</summary>
+              <dl class="task-fields runtime-ai-routing-facts">
+                <div><dt>Cost</dt><dd id="runtime-ai-route-cost">Unknown</dd></div>
+                <div><dt>Latency</dt><dd id="runtime-ai-route-latency">Unknown</dd></div>
+                <div><dt>Routing records</dt><dd id="runtime-ai-route-records">None</dd></div>
+                <div><dt>Decision count</dt><dd id="runtime-ai-route-count">0</dd></div>
+              </dl>
+              <ul class="check-list" id="runtime-ai-route-details">
+                <li>Save a task to generate capability and routing evidence.</li>
+              </ul>
+            </details>
+          </section>
+          <ol class="runtime-orchestration-status" aria-label="Task orchestration completion">
+            <li id="runtime-task-saved-state">Task saved: waiting</li>
+            <li id="runtime-team-composed-state">AI Team composed: waiting</li>
+            <li id="runtime-routing-evaluated-state">Routing evaluated: waiting</li>
+          </ol>
           <div class="gate-actions runtime-actions">
             <button type="button" id="runtime-save-task">Save task</button>
+            <button type="button" id="runtime-compose-team">Recompose AI Team</button>
             <button type="button" id="runtime-run-task">Run Compact Sync</button>
           </div>
           <p class="runtime-message" id="runtime-message">Log in under Runtime Status, then save an owner-readable task.</p>
@@ -217,8 +294,8 @@
           <p class="recommendation-copy">LDD, 2026WC, and TWOS Product Development context can become concrete task intake.</p>
         </article>
         <article class="workbench-card launch-proof-card">
-          <div class="card-kicker"><span>Simulated AI team</span><strong>Team</strong></div>
-          <p class="recommendation-copy">Minimum useful simulated profiles can be assigned with visible reasons and role-count discipline.</p>
+          <div class="card-kicker"><span>Task-driven AI team</span><strong>Team</strong></div>
+          <p class="recommendation-copy">Persisted capability requirements can be composed with visible reasons and Minimum Effective Role Count discipline.</p>
         </article>
         <article class="workbench-card launch-proof-card">
           <div class="card-kicker"><span>Safe routing</span><strong>Route</strong></div>
@@ -493,7 +570,7 @@
           </div>
           <h3 id="demo-scenario-title">TWOS: MVP feedback becomes next product task</h3>
           <dl class="task-fields">
-            <div><dt>Simulated team</dt><dd id="demo-team">GPT-5.5 Commander + GPT-5.4 Builder + GPT-5.3 Verifier</dd></div>
+            <div><dt>Capability team</dt><dd id="demo-team">Reasoning + Planning + Verification</dd></div>
             <div><dt>Route</dt><dd id="demo-route">Codex manual route</dd></div>
             <div><dt>Why this team</dt><dd id="demo-team-why">Product build needs synthesis, structure, and verification.</dd></div>
             <div><dt>Why this route</dt><dd id="demo-route-why">Manual Codex instruction copy after owner approval.</dd></div>
@@ -526,7 +603,7 @@
             <strong>Manual text only</strong>
           </div>
           <h3>Scenario-aware sync preview</h3>
-          <pre id="e2e-sync-preview" class="compact-sync-preview">Vol.15 MVP-13R Sync: TWOS 1.0 scope corrected; selected scenario maps sync to task, simulated team, route readiness, lifecycle, acceptance outcome, rule awareness, and compact sync preview; runtime and integrations are required but not yet represented as active; live execution remains blocked.</pre>
+          <pre id="e2e-sync-preview" class="compact-sync-preview">Vol.15 MVP-15 Sync: selected scenario maps sync to task, capability team, explainable route, lifecycle, acceptance outcome, and compact sync preview; external providers remain unconfigured until verified; live execution remains blocked.</pre>
         </article>
       </div>
     </section>
@@ -535,13 +612,13 @@
       <div class="section-title">
         <p class="version">Launch Candidate Demo Script</p>
         <h2>Demonstrate TWOS 1.0 without remembering the whole build history.</h2>
-        <p class="hub-note">Use this concise operator script to show the end-to-end loop from real project sync to task, simulated team, route, lifecycle, acceptance, and compact sync.</p>
+        <p class="hub-note">Use this concise operator script to show the end-to-end loop from real project sync to task, capability team, route, lifecycle, acceptance, and compact sync.</p>
       </div>
 
       <ol class="script-step-list" aria-label="TWOS 1.0 demo script steps">
         <li><strong>Choose scenario</strong><span>Select LDD, 2026WC, or TWOS in the End-to-End Demo Flow.</span></li>
         <li><strong>Convert sync</strong><span>Check the Task Assignment fields loaded from project context.</span></li>
-        <li><strong>Confirm team</strong><span>Review the simulated AI team and Minimum Effective Role Count.</span></li>
+        <li><strong>Confirm team</strong><span>Review the task-driven capability team and Minimum Effective Role Count.</span></li>
         <li><strong>Confirm route</strong><span>Read the tool route, manual approval state, and blocked actions.</span></li>
         <li><strong>Move lifecycle</strong><span>Advance the local-only lifecycle board through review and acceptance.</span></li>
         <li><strong>Review gate</strong><span>Use project-specific acceptance checks before marking Pass or Needs Review.</span></li>
@@ -568,7 +645,7 @@
         <article class="workbench-card demo-path-card">
           <div class="card-kicker"><span>TWOS product task path</span><strong>Static product work</strong></div>
           <dl class="field-list">
-            <div><dt>What to click/view</dt><dd>Select TWOS scenario, inspect task assignment, simulated team, Codex manual route, and scorecard.</dd></div>
+            <div><dt>What to click/view</dt><dd>Select TWOS scenario, inspect task assignment, capability team, Codex manual route, and scorecard.</dd></div>
             <div><dt>Operator decision</dt><dd>Whether the product surface is clear enough to accept as a 1.0 launch-candidate prototype.</dd></div>
             <div><dt>Boundary remains closed</dt><dd>Required backend, API, auth, scheduler, real tool call, and auto-send must not be shown active until configured and verified.</dd></div>
           </dl>
@@ -634,7 +711,7 @@
             <span>Assignment</span>
             <strong id="assignment-role-count">Minimum Effective Role Count: 2 roles</strong>
           </div>
-          <h3>Recommended simulated team</h3>
+          <h3>Recommended capability team</h3>
           <div class="team-chip-row" id="assignment-team" aria-label="Task assignment team"></div>
           <p class="recommendation-copy" id="assignment-why">Task context drives the minimum useful team.</p>
           <p class="recommendation-copy" id="assignment-trim">Extra roles are not added for decoration.</p>
@@ -645,8 +722,8 @@
     <section id="ai-team-composition" class="workbench-region ai-team-zone" aria-label="AI Team Composition">
       <div class="section-title">
         <p class="version">AI Team Composition</p>
-        <h2>Simulated AI Team Composition Workbench.</h2>
-        <p class="hub-note">This is a simulated composition planner. It does not call external models.</p>
+        <h2>AI Capability Composition Reference.</h2>
+        <p class="hub-note">The live Owner Runtime above now persists backend-generated capability plans. This advanced panel remains a local planning reference and does not call external models.</p>
       </div>
 
       <div class="composition-layout">
@@ -687,49 +764,49 @@
             <strong id="role-count">Default: 2 roles</strong>
           </div>
           <h3>Minimum Effective Role Count</h3>
-          <div class="team-chip-row" id="recommended-team" aria-label="Recommended simulated team"></div>
-          <p class="recommendation-copy" id="team-why">Select a project and task type to view the minimum useful simulated team.</p>
+          <div class="team-chip-row" id="recommended-team" aria-label="Recommended capability team"></div>
+          <p class="recommendation-copy" id="team-why">Select a project and task type to view the minimum useful capability team.</p>
         </article>
       </div>
 
       <div class="profile-grid">
         <article class="workbench-card profile-card">
-          <p class="simulation-label">Simulation only</p>
-          <h3>GPT-5.5 / Commander</h3>
-          <p>Final synthesis, user-facing decision framing, and milestone verdict.</p>
+          <p class="simulation-label">Capability definition</p>
+          <h3>Reasoning</h3>
+          <p>Decision framing, multi-step analysis, and owner-readable synthesis.</p>
         </article>
         <article class="workbench-card profile-card">
-          <p class="simulation-label">Simulation only</p>
-          <h3>GPT-5.4 / Builder</h3>
-          <p>Implementation planning, static UI structure, and scoped build sequencing.</p>
+          <p class="simulation-label">Capability definition</p>
+          <h3>Coding / Planning</h3>
+          <p>Implementation structure, scoped sequencing, and product build quality.</p>
         </article>
         <article class="workbench-card profile-card">
-          <p class="simulation-label">Simulation only</p>
-          <h3>GPT-5.3 / Verifier</h3>
-          <p>Boundary check, acceptance check, and regression-risk review.</p>
+          <p class="simulation-label">Capability definition</p>
+          <h3>Verification</h3>
+          <p>Boundary checks, acceptance evidence, and regression-risk review.</p>
         </article>
       </div>
 
       <div class="preset-grid" aria-label="Project-specific composition presets">
         <article class="workbench-card preset-card" data-preset="ldd">
           <h3>LDD preset</h3>
-          <p><strong>Commander + Verifier</strong></p>
+          <p><strong>Reasoning + Verification</strong></p>
           <p>Risk and boundary emphasis keeps trading analysis separated from any live execution path.</p>
         </article>
         <article class="workbench-card preset-card" data-preset="wc">
           <h3>2026WC preset</h3>
-          <p><strong>Commander + Verifier</strong></p>
+          <p><strong>Reasoning + Verification</strong></p>
           <p>Payout and risk-tail emphasis keeps prediction review separate from betting execution.</p>
         </article>
         <article class="workbench-card preset-card" data-preset="twos">
           <h3>TWOS Product Development preset</h3>
-          <p><strong>Commander + Builder + Verifier</strong></p>
+          <p><strong>Coding + Planning + Verification</strong></p>
           <p>Build and acceptance emphasis supports product implementation while real runtime capabilities move from required scope to implemented, configured, and verified status.</p>
         </article>
       </div>
 
       <div class="rule-band">
-        <p>Add roles/models only when they improve decision quality, execution quality, or verification. Default to 2 roles; add Verifier when boundary, risk, or acceptance quality matters. Do not add roles for decoration.</p>
+        <p>Add capabilities only when they improve decision quality, execution quality, risk handling, or verification. Default to 2 capabilities; add another only when task evidence requires it.</p>
         <strong>LDD and 2026WC support analysis/review only; no live trading or betting execution. TWOS Product Development supports planning, implementation, and verification. Real model and tool providers must remain unconfigured, disabled, failed, or blocked until they are actually implemented, configured, and verified.</strong>
       </div>
     </section>
@@ -772,7 +849,7 @@
           <strong>Review</strong>
           <p><b>Status</b> <em data-state-status>Pending</em></p>
           <p><b>Output</b> <em data-state-output>Evidence and risks checked.</em></p>
-          <p><b>Gate</b> <em data-state-gate>Verifier concerns closed.</em></p>
+          <p><b>Gate</b> <em data-state-gate>Verification concerns closed.</em></p>
           <p><b>Risk</b> <em data-state-risk>No decorative approval.</em></p>
         </li>
         <li data-lifecycle-state="Acceptance">
@@ -816,7 +893,7 @@
           </div>
           <div>
             <dt>Recommended team</dt>
-            <dd id="task-team">GPT-5.5 Commander + GPT-5.4 Builder + GPT-5.3 Verifier</dd>
+            <dd id="task-team">Reasoning + Planning + Verification</dd>
           </div>
           <div>
             <dt>Output expected</dt>
@@ -824,7 +901,7 @@
           </div>
           <div>
             <dt>Acceptance gate</dt>
-            <dd id="task-acceptance">User confirms MVP-7 composition workbench maps context to the minimum useful simulated team</dd>
+            <dd id="task-acceptance">Owner confirms task context maps to the minimum useful capability team</dd>
           </div>
           <div>
             <dt>Boundary risk</dt>
@@ -1379,8 +1456,8 @@
           <div class="gate-actions scorecard-actions"><button type="button" data-scorecard-state="Pass">Pass</button><button type="button" data-scorecard-state="Needs Review">Needs Review</button><button type="button" data-scorecard-state="Not Opened">Not Opened</button></div>
         </article>
         <article class="workbench-card scorecard-card" data-scorecard-card data-scorecard-default="Pass">
-          <div class="card-kicker"><span>Simulated AI team composition</span><strong data-scorecard-label>Pass</strong></div>
-          <p class="recommendation-copy">Commander, Builder, and Verifier profiles are clearly marked as simulated.</p>
+          <div class="card-kicker"><span>AI capability composition</span><strong data-scorecard-label>Pass</strong></div>
+          <p class="recommendation-copy">Task-driven capabilities and Minimum Effective Role Count are visible without fixed provider assignments.</p>
           <div class="gate-actions scorecard-actions"><button type="button" data-scorecard-state="Pass">Pass</button><button type="button" data-scorecard-state="Needs Review">Needs Review</button><button type="button" data-scorecard-state="Not Opened">Not Opened</button></div>
         </article>
         <article class="workbench-card scorecard-card" data-scorecard-card data-scorecard-default="Pass">
@@ -1533,9 +1610,9 @@
   <script>
     (function () {
       var profiles = {
-        commander: "GPT-5.5 Commander",
-        builder: "GPT-5.4 Builder",
-        verifier: "GPT-5.3 Verifier"
+        commander: "Reasoning",
+        builder: "Coding / Planning",
+        verifier: "Verification"
       };
       var projectData = {
         ldd: {
@@ -1546,7 +1623,7 @@
           output: "Risk review notes with confirmation conditions, invalidation points, and review-only next action.",
           acceptance: "Repair ≠ Chase; H2 first ticket needs dual confirmation such as NVDA >204 + SMH >600; no live trading execution.",
           boundary: "Analysis/review only; no broker, market data, Binance, order, or account mutation path.",
-          why: "LDD is risk-sensitive, so Commander frames the decision and Verifier checks boundary, exposure, and acceptance evidence."
+          why: "LDD is risk-sensitive, so reasoning frames the decision and verification checks boundary, exposure, and acceptance evidence."
         },
         wc: {
           label: "2026WC",
@@ -1566,7 +1643,7 @@
           output: "Capability Delivery Control, corrected 1.0 scope board, complete rule ledger, honest provider/tool status model, and MVP-13R compact sync preview.",
           acceptance: "Task must reduce distance to TWOS 1.0 by keeping required runtime capabilities visible without representing them as active before implementation, configuration, and verification.",
           boundary: "Required capabilities are not active until implemented, configured, and verified. Live trading and live betting execution remain blocked.",
-          why: "TWOS product work needs Commander synthesis, Builder structure, and Verifier acceptance/boundary review."
+          why: "TWOS product work needs coding, planning, and verification capabilities for build and acceptance quality."
         }
       };
       var lifecycleStates = ["Intake", "Assignment", "Execution Placeholder", "Review", "Acceptance", "Sync"];
@@ -1590,9 +1667,9 @@
         {
           label: "AI Team",
           area: "AI Team Composition",
-          title: "Check the minimum useful simulated team.",
-          decision: "Whether Commander, Builder, and Verifier are enough.",
-          help: "Recommending simulated profiles and avoiding decorative roles.",
+          title: "Check the minimum useful capability team.",
+          decision: "Whether the minimum capability team is enough.",
+          help: "Recommending task-relevant capabilities and avoiding decorative roles.",
           blocked: "No real model call, no fake Gemini/Claude integration."
         },
         {
@@ -1640,7 +1717,7 @@
           acceptanceFocus: "Repair ≠ Chase; H2 first ticket requires dual confirmation such as NVDA >204 + SMH >600; SPCX risk review; no live trading.",
           unresolvedRisk: "SPCX repair can become chase behavior if confirmation is weak.",
           nextAction: "Manual owner review of confirmation evidence before any external action.",
-          notMore: "Builder and extra tools are omitted because this is review-only, not implementation."
+          notMore: "Coding and extra tools are omitted because this is review-only, not implementation."
         },
         wc: {
           projectKey: "wc",
@@ -1653,7 +1730,7 @@
           acceptanceFocus: "favorite-win normal paths must stay profitable unless intentionally contrarian; settlement is ticket-by-ticket; no live betting.",
           unresolvedRisk: "Payout/risk-tail interpretation can drift if common favorite-score paths are treated as negative without intent.",
           nextAction: "Manual ticket-by-ticket settlement review before any conclusion.",
-          notMore: "Builder and extra tools are omitted because this is settlement/review only."
+          notMore: "Coding and extra tools are omitted because this is settlement/review only."
         },
         twos: {
           projectKey: "twos",
@@ -1785,10 +1862,10 @@
 
       function roleTrimReason(team, projectKey, taskTypeValue) {
         if (team.indexOf(profiles.builder) === -1 && projectKey !== "twos") {
-          return "Builder is omitted because this task is analysis/review only, not implementation.";
+          return "Coding is omitted because this task is analysis/review only, not implementation.";
         }
         if (team.length === 2 && taskTypeValue !== "Product Build") {
-          return "Extra roles are not added because Commander + Verifier is enough for decision framing and boundary review.";
+          return "Extra capabilities are not added because Reasoning + Verification is enough for decision framing and boundary review.";
         }
         return "No extra decorative roles are added beyond the minimum useful team.";
       }
@@ -1918,7 +1995,7 @@
       function e2eCompactSync(team, route) {
         var scenario = demoScenarios[currentDemoScenario];
         return [
-          "Vol.15 MVP-13R Sync: corrected TWOS 1.0 scope keeps real runtime and integrations required but honestly unconfigured until implemented and verified; selected scenario maps sync to task, simulated team, route readiness, lifecycle, acceptance outcome, rule awareness, and compact sync preview; live trading/betting execution remains blocked.",
+          "Vol.15 MVP-15 Sync: selected scenario maps sync to task, capability team, explainable route, lifecycle, acceptance outcome, and compact sync preview; providers remain unconfigured until implemented and verified; live trading/betting execution remains blocked.",
           "Scenario: " + scenario.label,
           "Task: " + intakeTitle.value,
           "Simulated Team: " + team.join(" + "),
@@ -1995,11 +2072,14 @@
         schedules: [],
         providers: [],
         tools: [],
+        aiCapabilities: [],
+        aiPlan: null,
         audit: [],
         acceptance: null,
         selectedTaskId: null,
         selectedScheduleId: null,
         renderedTaskId: null,
+        renderedPlanId: null,
         creatingTask: false,
         registryLoaded: false,
         refreshing: false
@@ -2017,6 +2097,30 @@
         action: document.getElementById("runtime-task-action"),
         output: document.getElementById("runtime-required-output"),
         boundary: document.getElementById("runtime-boundary-risk"),
+        capabilityFocus: document.getElementById("runtime-capability-focus"),
+        riskLevel: document.getElementById("runtime-risk-level"),
+        aiUrgency: document.getElementById("runtime-ai-urgency"),
+        aiTeamCount: document.getElementById("runtime-ai-team-count"),
+        aiExecutionPlan: document.getElementById("runtime-ai-execution-plan"),
+        aiMinimumCount: document.getElementById("runtime-ai-minimum-count"),
+        aiPlanStatus: document.getElementById("runtime-ai-plan-status"),
+        aiProvider: document.getElementById("runtime-ai-provider"),
+        aiModel: document.getElementById("runtime-ai-model"),
+        aiFallback: document.getElementById("runtime-ai-fallback"),
+        aiStatus: document.getElementById("runtime-ai-status"),
+        aiWhy: document.getElementById("runtime-ai-why"),
+        aiCapabilityReasons: document.getElementById("runtime-ai-capability-reasons"),
+        aiOmitted: document.getElementById("runtime-ai-omitted"),
+        aiRouteCost: document.getElementById("runtime-ai-route-cost"),
+        aiRouteLatency: document.getElementById("runtime-ai-route-latency"),
+        aiRouteReason: document.getElementById("runtime-ai-route-reason"),
+        aiNextAction: document.getElementById("runtime-ai-next-action"),
+        aiRouteRecords: document.getElementById("runtime-ai-route-records"),
+        aiRouteCount: document.getElementById("runtime-ai-route-count"),
+        aiRouteDetails: document.getElementById("runtime-ai-route-details"),
+        taskSavedState: document.getElementById("runtime-task-saved-state"),
+        teamComposedState: document.getElementById("runtime-team-composed-state"),
+        routingEvaluatedState: document.getElementById("runtime-routing-evaluated-state"),
         taskState: document.getElementById("runtime-task-state"),
         lifecycle: document.getElementById("runtime-lifecycle"),
         resultStatus: document.getElementById("runtime-result-status"),
@@ -2049,6 +2153,7 @@
         providers: document.getElementById("runtime-provider-list"),
         tools: document.getElementById("runtime-tool-list"),
         auditList: document.getElementById("runtime-audit-list"),
+        composeTeam: document.getElementById("runtime-compose-team"),
         saveTask: document.getElementById("runtime-save-task"),
         runTask: document.getElementById("runtime-run-task"),
         createSchedule: document.getElementById("runtime-create-schedule"),
@@ -2199,6 +2304,141 @@
         if (current) runtimeEls.project.value = current;
       }
 
+      function capabilityLabel(name) {
+        return String(name || "").split("_").map(function (part) {
+          return part.charAt(0).toUpperCase() + part.slice(1);
+        }).join(" ");
+      }
+
+      function renderRuntimeCapabilities() {
+        if (!runtimeEls.capabilityFocus) return;
+        var current = runtimeEls.capabilityFocus.value;
+        runtimeEls.capabilityFocus.innerHTML = "";
+        var automatic = document.createElement("option");
+        automatic.value = "";
+        automatic.textContent = "Auto-select from task";
+        runtimeEls.capabilityFocus.appendChild(automatic);
+        runtimeState.aiCapabilities.filter(function (capability) {
+          return capability.enabled;
+        }).forEach(function (capability) {
+          var option = document.createElement("option");
+          option.value = capability.name;
+          option.textContent = capabilityLabel(capability.name);
+          runtimeEls.capabilityFocus.appendChild(option);
+        });
+        runtimeEls.capabilityFocus.value = current;
+      }
+
+      function setRuntimeOrchestrationState(element, label, complete) {
+        if (!element) return;
+        element.classList.toggle("is-complete", complete);
+        element.textContent = (complete ? "✓ " : "") + label + (complete ? "" : ": waiting");
+      }
+
+      function renderRuntimeAIPlan() {
+        var payload = runtimeState.aiPlan;
+        var plan = payload && payload.plan ? payload.plan : null;
+        var routes = payload && payload.routes ? payload.routes : [];
+        var routing = payload && payload.routing_summary ? payload.routing_summary : null;
+        var task = runtimeTask();
+        if (!plan) {
+          runtimeEls.aiTeamCount.textContent = "Waiting for task";
+          runtimeEls.aiExecutionPlan.textContent = "Save a task to compose its plan";
+          runtimeEls.aiMinimumCount.textContent = "Waiting";
+          runtimeEls.aiPlanStatus.textContent = "Waiting";
+          runtimeEls.aiWhy.textContent = "Save a task to create its task-specific AI Team Plan.";
+          runtimeEls.aiCapabilityReasons.innerHTML = "<li>Capability reasons appear after composition.</li>";
+          runtimeEls.aiOmitted.textContent = "Omitted capabilities appear after composition.";
+          runtimeEls.aiStatus.textContent = "Waiting";
+          runtimeEls.aiProvider.textContent = "Waiting";
+          runtimeEls.aiModel.textContent = "Waiting";
+          runtimeEls.aiFallback.textContent = "Waiting";
+          runtimeEls.aiRouteReason.textContent = "Save a task to evaluate routing.";
+          runtimeEls.aiNextAction.textContent = task ? "Recompose the AI Team to evaluate routing." : "Save a task first.";
+          runtimeEls.aiRouteCost.textContent = "Unknown";
+          runtimeEls.aiRouteLatency.textContent = "Unknown";
+          runtimeEls.aiRouteRecords.textContent = "None";
+          runtimeEls.aiRouteCount.textContent = "0";
+          runtimeEls.aiRouteDetails.innerHTML = "<li>Save a task to generate capability and routing evidence.</li>";
+          setRuntimeOrchestrationState(runtimeEls.taskSavedState, "Task saved", Boolean(task));
+          setRuntimeOrchestrationState(runtimeEls.teamComposedState, "AI Team composed", false);
+          setRuntimeOrchestrationState(runtimeEls.routingEvaluatedState, "Routing evaluated", false);
+          return;
+        }
+
+        var capabilities = plan.required_capabilities || [];
+        var team = plan.team || [];
+        var primary = routes.length ? routes[0] : null;
+        var selected = primary && primary.selected ? primary.selected : null;
+        var fallback = primary && primary.fallback ? primary.fallback : null;
+        var evaluationCompleted = Boolean(routing && routing.evaluation_completed);
+        runtimeEls.aiTeamCount.textContent = capabilities.length + " AI capabilities selected";
+        runtimeEls.aiExecutionPlan.textContent = capabilities.map(capabilityLabel).join(" + ");
+        runtimeEls.aiMinimumCount.textContent = String(plan.minimum_role_count) + " capabilities";
+        runtimeEls.aiPlanStatus.textContent = "Composed";
+        runtimeEls.aiWhy.textContent = plan.explanation;
+        runtimeEls.aiCapabilityReasons.innerHTML = "";
+        team.forEach(function (item) {
+          var li = document.createElement("li");
+          var metadata = runtimeState.aiCapabilities.find(function (capability) {
+            return capability.name === item.capability;
+          });
+          var reason = item.selection_reason || (metadata ? metadata.description : "Required by this saved plan.");
+          li.textContent = capabilityLabel(item.capability) + ": " + reason;
+          runtimeEls.aiCapabilityReasons.appendChild(li);
+        });
+        runtimeEls.aiOmitted.textContent = plan.omission_explanation
+          || "Recompose this earlier plan to record task-specific omitted-capability evidence.";
+
+        var routingStatus = routing ? routing.status : "pending";
+        runtimeEls.aiStatus.textContent = routingStatus === "ready"
+          ? "Evaluated / ready"
+          : routingStatus === "unavailable"
+            ? "Evaluated / unavailable"
+            : routingStatus === "partial"
+              ? "Evaluated / partial"
+              : "Evaluation pending";
+        runtimeEls.aiProvider.textContent = routing && routing.selected_provider
+          ? routing.selected_provider
+          : evaluationCompleted ? "None" : "Waiting";
+        runtimeEls.aiModel.textContent = routing && routing.selected_model
+          ? routing.selected_model
+          : evaluationCompleted ? "None" : "Waiting";
+        runtimeEls.aiFallback.textContent = routing && routing.fallback_status === "available" && fallback
+          ? fallback.provider + " / " + fallback.model_name
+          : routing && routing.fallback_status === "unavailable"
+            ? "Unavailable. " + routing.fallback_reason
+            : "Waiting";
+        runtimeEls.aiRouteReason.textContent = routing ? routing.reason : "Routing evaluation is pending for this plan.";
+        runtimeEls.aiNextAction.textContent = routing ? routing.next_action : "Recompose the AI Team to evaluate routing.";
+        runtimeEls.aiRouteCost.textContent = selected ? selected.cost_metadata : "Unknown";
+        runtimeEls.aiRouteLatency.textContent = selected ? selected.latency_metadata : "Unknown";
+        runtimeEls.aiRouteRecords.textContent = routes.length ? routes.map(function (route) { return "#" + route.id; }).join(", ") : "None";
+        runtimeEls.aiRouteCount.textContent = String(routes.length);
+        runtimeEls.aiRouteDetails.innerHTML = "";
+        if (!routes.length) {
+          var empty = document.createElement("li");
+          empty.textContent = "Recompose the AI Team to complete and persist routing evaluation.";
+          runtimeEls.aiRouteDetails.appendChild(empty);
+        } else {
+          routes.forEach(function (route) {
+            var li = document.createElement("li");
+            var target = route.selected ? route.selected.provider + " / " + route.selected.model_name : "No provider or model selected";
+            li.textContent = capabilityLabel(route.capability) + " / " + route.status + " / " + target + ". "
+              + route.reason + " " + route.fallback_reason + " Next: " + route.next_action;
+            runtimeEls.aiRouteDetails.appendChild(li);
+          });
+        }
+        setRuntimeOrchestrationState(runtimeEls.taskSavedState, "Task saved", Boolean(task));
+        setRuntimeOrchestrationState(runtimeEls.teamComposedState, "AI Team composed", true);
+        setRuntimeOrchestrationState(runtimeEls.routingEvaluatedState, "Routing evaluated", evaluationCompleted);
+        if (runtimeState.renderedPlanId !== plan.id) {
+          if (runtimeEls.riskLevel) runtimeEls.riskLevel.value = plan.risk_level;
+          if (runtimeEls.aiUrgency) runtimeEls.aiUrgency.value = plan.urgency;
+          runtimeState.renderedPlanId = plan.id;
+        }
+      }
+
       function renderRuntimeTaskSelect() {
         if (!runtimeEls.taskSelect) return;
         runtimeEls.taskSelect.innerHTML = "";
@@ -2299,6 +2539,7 @@
 
       function renderRuntime() {
         renderRuntimeProjects();
+        renderRuntimeCapabilities();
         var task = runtimeTask();
         var runs = runtimeTaskRuns();
         var latestRun = runs.length ? runs[0] : null;
@@ -2308,11 +2549,13 @@
         if (runtimeEls.compactSync) runtimeEls.compactSync.textContent = task && task.compact_sync_result ? task.compact_sync_result : "Persisted compact sync will appear after a real worker run.";
         if (runtimeEls.outputState) runtimeEls.outputState.textContent = task && task.compact_sync_result ? "Saved" : "Not generated";
         if (runtimeEls.saveTask) runtimeEls.saveTask.disabled = !runtimeState.authenticated;
+        if (runtimeEls.composeTeam) runtimeEls.composeTeam.disabled = !runtimeState.authenticated || !task;
         if (runtimeEls.runTask) {
           runtimeEls.runTask.disabled = !runtimeState.authenticated || !task || task.action !== "Compact Sync";
           runtimeEls.runTask.title = task && task.action !== "Compact Sync" ? "Save a Compact Sync task to use the internal worker." : "Run the selected Compact Sync task.";
         }
         renderRuntimeResult(task, latestRun);
+        renderRuntimeAIPlan();
         renderRuntimeAcceptance();
         renderRuntimeSchedules();
         renderRuntimeRegistry(runtimeState.providers, runtimeEls.providers);
@@ -2349,6 +2592,8 @@
           runtimeState.schedules = [];
           runtimeState.providers = [];
           runtimeState.tools = [];
+          runtimeState.aiCapabilities = [];
+          runtimeState.aiPlan = null;
           runtimeState.audit = [];
           runtimeState.acceptance = null;
           runtimeState.registryLoaded = false;
@@ -2370,13 +2615,28 @@
           runtimeState.schedules = runtimeData[3];
           runtimeState.audit = runtimeData[4];
           if (!runtimeState.registryLoaded) {
-            var registryData = await Promise.all([runtimeApi("/api/providers"), runtimeApi("/api/tools")]);
+            var registryData = await Promise.all([
+              runtimeApi("/api/providers"),
+              runtimeApi("/api/tools"),
+              runtimeApi("/api/ai/capabilities")
+            ]);
             runtimeState.providers = registryData[0];
             runtimeState.tools = registryData[1];
+            runtimeState.aiCapabilities = registryData[2];
             runtimeState.registryLoaded = true;
           }
           var task = runtimeTask();
-          runtimeState.acceptance = task ? await runtimeApi("/api/tasks/" + task.id + "/acceptance") : null;
+          if (task) {
+            var taskDetails = await Promise.all([
+              runtimeApi("/api/tasks/" + task.id + "/acceptance"),
+              runtimeApi("/api/tasks/" + task.id + "/ai-plan")
+            ]);
+            runtimeState.acceptance = taskDetails[0];
+            runtimeState.aiPlan = taskDetails[1];
+          } else {
+            runtimeState.acceptance = null;
+            runtimeState.aiPlan = null;
+          }
           renderRuntime();
         } finally {
           runtimeState.refreshing = false;
@@ -2407,23 +2667,63 @@
         await refreshRuntime();
       }
 
-      async function saveRuntimeTask() {
-        if (!runtimeEls.project.value) throw new Error("No project loaded. Log in first.");
-        var task = await runtimeApi("/api/tasks", {
+      async function composeRuntimeAITeam(task) {
+        var capabilityOverride = runtimeEls.capabilityFocus.value ? [runtimeEls.capabilityFocus.value] : [];
+        await runtimeApi("/api/ai/team-compose", {
           method: "POST",
           body: {
-            project_id: Number(runtimeEls.project.value),
-            title: runtimeEls.title.value,
-            action: runtimeEls.action.value,
-            source_sync_summary: runtimeEls.source.value,
-            required_output: runtimeEls.output.value,
-            boundary_risk: runtimeEls.boundary.value
+            task_id: task.id,
+            risk_level: runtimeEls.riskLevel.value,
+            urgency: runtimeEls.aiUrgency.value,
+            capability_override: capabilityOverride
           }
         });
+        runtimeState.aiPlan = await runtimeApi("/api/tasks/" + task.id + "/ai-plan");
+        runtimeState.renderedPlanId = null;
+        return runtimeState.aiPlan;
+      }
+
+      function runtimeTaskPayload() {
+        return {
+          project_id: Number(runtimeEls.project.value),
+          title: runtimeEls.title.value,
+          action: runtimeEls.action.value,
+          source_sync_summary: runtimeEls.source.value,
+          required_output: runtimeEls.output.value,
+          boundary_risk: runtimeEls.boundary.value
+        };
+      }
+
+      async function persistRuntimeTask(task) {
+        if (task) {
+          return runtimeApi("/api/tasks/" + task.id, {
+            method: "PATCH",
+            body: runtimeTaskPayload()
+          });
+        }
+        return runtimeApi("/api/tasks", {
+          method: "POST",
+          body: runtimeTaskPayload()
+        });
+      }
+
+      async function recomposeRuntimeAITeam() {
+        var task = runtimeTask();
+        if (!task) throw new Error("Save or select a task before recomposing the AI Team.");
+        task = await persistRuntimeTask(task);
+        await composeRuntimeAITeam(task);
+        setRuntimeMessage("Task saved. AI Team recomposed. Routing evaluated.");
+        await refreshRuntime();
+      }
+
+      async function saveRuntimeTask() {
+        if (!runtimeEls.project.value) throw new Error("No project loaded. Log in first.");
+        var task = await persistRuntimeTask(runtimeTask());
         runtimeState.creatingTask = false;
         runtimeState.selectedTaskId = task.id;
         runtimeState.renderedTaskId = null;
-        setRuntimeMessage("Task saved. Source sync and owner fields will remain after refresh.");
+        await composeRuntimeAITeam(task);
+        setRuntimeMessage("Task saved. AI Team composed. Routing evaluated.");
         await refreshRuntime();
       }
 
@@ -2441,12 +2741,18 @@
         runtimeState.selectedTaskId = null;
         runtimeState.selectedScheduleId = null;
         runtimeState.renderedTaskId = null;
+        runtimeState.renderedPlanId = null;
         runtimeState.acceptance = null;
+        runtimeState.aiPlan = null;
         runtimeEls.title.value = "";
         runtimeEls.source.value = "";
-        runtimeEls.action.value = "Compact Sync";
+        runtimeEls.action.value = "Analyze";
         runtimeEls.output.value = "";
-        runtimeEls.boundary.value = "No live trading or live betting execution.";
+        runtimeEls.boundary.value = "";
+        runtimeEls.capabilityFocus.value = "";
+        runtimeEls.riskLevel.value = "medium";
+        runtimeEls.aiUrgency.value = "normal";
+        setRuntimeMessage("New blank task. Save task to compose the AI Team and evaluate routing.");
         renderRuntime();
         runtimeEls.title.focus();
       }
@@ -2643,6 +2949,7 @@
       bindRuntimeAction("runtime-refresh", refreshRuntime);
       bindRuntimeAction("runtime-new-task", newRuntimeTask);
       bindRuntimeAction("runtime-save-task", saveRuntimeTask);
+      bindRuntimeAction("runtime-compose-team", recomposeRuntimeAITeam);
       bindRuntimeAction("runtime-run-task", runRuntimeTask);
       bindRuntimeAction("runtime-create-schedule", createRuntimeSchedule);
       bindRuntimeAction("runtime-pause-schedule", function () { return patchRuntimeSchedule({ paused: true }); });
@@ -2653,7 +2960,9 @@
         runtimeState.selectedTaskId = runtimeEls.taskSelect.value ? Number(runtimeEls.taskSelect.value) : null;
         runtimeState.selectedScheduleId = null;
         runtimeState.renderedTaskId = null;
+        runtimeState.renderedPlanId = null;
         runtimeState.acceptance = null;
+        runtimeState.aiPlan = null;
         refreshRuntime();
       });
 

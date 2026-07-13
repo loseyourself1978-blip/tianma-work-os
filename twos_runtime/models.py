@@ -95,6 +95,8 @@ class Task(Base):
     runs: Mapped[list["TaskRun"]] = relationship(back_populates="task")
     acceptance_checks: Mapped[list["AcceptanceCheck"]] = relationship(back_populates="task")
     schedules: Mapped[list["Schedule"]] = relationship(back_populates="task")
+    ai_team_plans: Mapped[list["AITeamPlan"]] = relationship(back_populates="task")
+    routing_decisions: Mapped[list["RoutingDecision"]] = relationship(back_populates="task")
 
 
 class TaskRun(Base):
@@ -154,6 +156,102 @@ class Provider(Base):
     enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     details: Mapped[str] = mapped_column(Text, default="")
     last_checked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    models: Mapped[list["AIModel"]] = relationship(back_populates="provider")
+
+
+class AICapability(Base):
+    __tablename__ = "ai_capabilities"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    description: Mapped[str] = mapped_column(Text)
+    quality_requirement: Mapped[str] = mapped_column(String(40))
+    latency_sensitivity: Mapped[str] = mapped_column(String(40))
+    requires_tool_capability: Mapped[bool] = mapped_column(Boolean, default=False)
+    requires_verification: Mapped[bool] = mapped_column(Boolean, default=False)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class AIModel(Base):
+    __tablename__ = "ai_models"
+    __table_args__ = (UniqueConstraint("provider_id", "model_name", name="uq_ai_model_provider_name"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    provider_id: Mapped[int] = mapped_column(ForeignKey("providers.id"), index=True)
+    model_name: Mapped[str] = mapped_column(String(160))
+    capability_tags: Mapped[str] = mapped_column(Text, default="[]")
+    context_limit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    cost_metadata: Mapped[str] = mapped_column(String(40), default="unknown")
+    latency_metadata: Mapped[str] = mapped_column(String(40), default="unknown")
+    status: Mapped[str] = mapped_column(String(40), default="unconfigured", index=True)
+    routing_priority: Mapped[int] = mapped_column(Integer, default=100)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+    provider: Mapped[Provider] = relationship(back_populates="models")
+
+
+class AITeamPlan(Base):
+    __tablename__ = "ai_team_plans"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), index=True)
+    risk_level: Mapped[str] = mapped_column(String(40), default="medium")
+    urgency: Mapped[str] = mapped_column(String(40), default="normal")
+    required_capabilities: Mapped[str] = mapped_column(Text, default="[]")
+    omitted_capabilities: Mapped[str] = mapped_column(Text, default="[]")
+    minimum_role_count: Mapped[int] = mapped_column(Integer, default=2)
+    status: Mapped[str] = mapped_column(String(40), default="composed")
+    explanation: Mapped[str] = mapped_column(Text)
+    omission_explanation: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    task: Mapped[Task] = relationship(back_populates="ai_team_plans")
+    items: Mapped[list["AITeamPlanItem"]] = relationship(back_populates="plan")
+
+
+class AITeamPlanItem(Base):
+    __tablename__ = "ai_team_plan_items"
+    __table_args__ = (UniqueConstraint("plan_id", "capability_id", name="uq_ai_team_plan_capability"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    plan_id: Mapped[int] = mapped_column(ForeignKey("ai_team_plans.id"), index=True)
+    capability_id: Mapped[int] = mapped_column(ForeignKey("ai_capabilities.id"), index=True)
+    role_label: Mapped[str] = mapped_column(String(120))
+    selection_reason: Mapped[str] = mapped_column(Text, default="")
+    ordinal: Mapped[int] = mapped_column(Integer, default=0)
+
+    plan: Mapped[AITeamPlan] = relationship(back_populates="items")
+    capability: Mapped[AICapability] = relationship()
+
+
+class RoutingDecision(Base):
+    __tablename__ = "routing_decisions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), index=True)
+    team_plan_id: Mapped[Optional[int]] = mapped_column(ForeignKey("ai_team_plans.id"), nullable=True, index=True)
+    capability_id: Mapped[int] = mapped_column(ForeignKey("ai_capabilities.id"), index=True)
+    urgency: Mapped[str] = mapped_column(String(40), default="normal")
+    cost_sensitivity: Mapped[str] = mapped_column(String(40), default="balanced")
+    latency_sensitivity: Mapped[str] = mapped_column(String(40), default="balanced")
+    requested_capabilities: Mapped[str] = mapped_column(Text, default="[]")
+    selected_model_id: Mapped[Optional[int]] = mapped_column(ForeignKey("ai_models.id"), nullable=True)
+    fallback_model_id: Mapped[Optional[int]] = mapped_column(ForeignKey("ai_models.id"), nullable=True)
+    status: Mapped[str] = mapped_column(String(40), default="unavailable")
+    reason: Mapped[str] = mapped_column(Text)
+    fallback_status: Mapped[str] = mapped_column(String(40), default="unavailable")
+    fallback_reason: Mapped[str] = mapped_column(Text, default="")
+    next_action: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    task: Mapped[Task] = relationship(back_populates="routing_decisions")
+    team_plan: Mapped[Optional[AITeamPlan]] = relationship()
+    capability: Mapped[AICapability] = relationship()
+    selected_model: Mapped[Optional[AIModel]] = relationship(foreign_keys=[selected_model_id])
+    fallback_model: Mapped[Optional[AIModel]] = relationship(foreign_keys=[fallback_model_id])
 
 
 class Tool(Base):

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import json
 import uuid
 from contextlib import asynccontextmanager
 from datetime import timedelta
-from typing import Any, Callable, Iterator, Optional
+from typing import Any, Callable, Iterator, Literal, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
@@ -14,10 +15,28 @@ from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from . import __version__
+from .ai_orchestration import compose_team, decode_capability_tags, route_capability
 from .config import Settings, get_settings
-from .db import initialize_database, make_engine, make_session_factory, seed_registry
-from .models import AcceptanceCheck, AuditEvent, Project, Provider, Schedule, Task, TaskRun, Tool, User, utc_now
+from .db import initialize_database, make_engine, make_session_factory, seed_ai_registry, seed_registry
+from .models import (
+    AICapability,
+    AIModel,
+    AITeamPlan,
+    AITeamPlanItem,
+    AcceptanceCheck,
+    AuditEvent,
+    Project,
+    Provider,
+    RoutingDecision,
+    Schedule,
+    Task,
+    TaskRun,
+    Tool,
+    User,
+    utc_now,
+)
 from .policy import ACTION_POLICIES, CONNECTOR_STATUSES, LIFECYCLE_STATES, evaluate_action
+from .provider_gateway import ProviderGateway
 from .scheduler import RuntimeScheduler, compute_next_run
 from .security import authenticate, create_owner, revoke_token, user_for_token
 from .workers import parse_acceptance, run_task
@@ -54,6 +73,7 @@ class TaskIn(BaseModel):
 
 
 class TaskPatchIn(BaseModel):
+    project_id: Optional[int] = None
     title: Optional[str] = None
     action: Optional[str] = None
     task_type: Optional[str] = None
@@ -77,6 +97,22 @@ class SchedulePatchIn(BaseModel):
     paused: Optional[bool] = None
     run_now: bool = False
     interval_seconds: Optional[int] = Field(default=None, ge=1)
+
+
+class TeamComposeIn(BaseModel):
+    task_id: int
+    risk_level: Literal["low", "medium", "high"] = "medium"
+    urgency: Literal["normal", "high"] = "normal"
+    capability_override: list[str] = Field(default_factory=list)
+
+
+class RouteIn(BaseModel):
+    task_id: int
+    capability: str = Field(min_length=1, max_length=80)
+    team_plan_id: Optional[int] = None
+    urgency: Literal["normal", "high"] = "normal"
+    cost_sensitivity: Literal["low", "balanced", "high"] = "balanced"
+    latency_sensitivity: Literal["low", "balanced", "high"] = "balanced"
 
 
 def iso(value) -> str | None:
@@ -161,6 +197,164 @@ def registry_out(item: Provider | Tool) -> dict[str, Any]:
         "enabled": item.enabled,
         "details": item.details,
         "last_checked_at": iso(item.last_checked_at),
+    }
+
+
+def provider_out(provider: Provider, health) -> dict[str, Any]:
+    output = registry_out(provider)
+    output.update(
+        {
+            "available": health.available,
+            "health_reason": health.reason,
+        }
+    )
+    return output
+
+
+def capability_out(capability: AICapability) -> dict[str, Any]:
+    return {
+        "id": capability.id,
+        "name": capability.name,
+        "description": capability.description,
+        "quality_requirement": capability.quality_requirement,
+        "latency_sensitivity": capability.latency_sensitivity,
+        "requires_tool_capability": capability.requires_tool_capability,
+        "requires_verification": capability.requires_verification,
+        "enabled": capability.enabled,
+    }
+
+
+def model_out(model: AIModel | None) -> dict[str, Any] | None:
+    if not model:
+        return None
+    provider = model.provider
+    available = bool(
+        provider.enabled
+        and provider.status in {"healthy", "degraded"}
+        and model.status in {"healthy", "degraded"}
+    )
+    return {
+        "id": model.id,
+        "provider": provider.name,
+        "provider_status": provider.status,
+        "model_name": model.model_name,
+        "capability_tags": decode_capability_tags(model),
+        "context_limit": model.context_limit,
+        "cost_metadata": model.cost_metadata,
+        "latency_metadata": model.latency_metadata,
+        "status": model.status,
+        "routing_priority": model.routing_priority,
+        "available": available,
+    }
+
+
+def decoded_list(value: str) -> list[Any]:
+    try:
+        decoded = json.loads(value)
+    except (TypeError, json.JSONDecodeError):
+        return []
+    return decoded if isinstance(decoded, list) else []
+
+
+def team_plan_out(session: Session, plan: AITeamPlan) -> dict[str, Any]:
+    items = session.scalars(
+        select(AITeamPlanItem).where(AITeamPlanItem.plan_id == plan.id).order_by(AITeamPlanItem.ordinal)
+    ).all()
+    required_capabilities = decoded_list(plan.required_capabilities)
+    omitted_capabilities = decoded_list(plan.omitted_capabilities)
+    return {
+        "id": plan.id,
+        "task_id": plan.task_id,
+        "risk_level": plan.risk_level,
+        "urgency": plan.urgency,
+        "minimum_role_count": plan.minimum_role_count,
+        "status": plan.status,
+        "explanation": plan.explanation,
+        "omission_explanation": plan.omission_explanation,
+        "required_capabilities": required_capabilities,
+        "omitted_capabilities": omitted_capabilities,
+        "team": [
+            {
+                "capability": item.capability.name,
+                "role_label": item.role_label,
+                "selection_reason": item.selection_reason,
+                "quality_requirement": item.capability.quality_requirement,
+                "requires_tool_capability": item.capability.requires_tool_capability,
+                "requires_verification": item.capability.requires_verification,
+            }
+            for item in items
+        ],
+        "created_at": iso(plan.created_at),
+    }
+
+
+def routing_out(decision: RoutingDecision) -> dict[str, Any]:
+    requested_capabilities = decoded_list(decision.requested_capabilities)
+    if not requested_capabilities and decision.team_plan:
+        requested_capabilities = decoded_list(decision.team_plan.required_capabilities)
+    fallback_status = decision.fallback_status or ("available" if decision.fallback_model else "unavailable")
+    fallback_reason = decision.fallback_reason
+    if not fallback_reason and decision.fallback_model:
+        fallback_reason = (
+            f"Fallback is {decision.fallback_model.provider.name} / {decision.fallback_model.model_name}."
+        )
+    elif not fallback_reason:
+        fallback_reason = "No fallback is available because this persisted route has no eligible compatible model."
+    next_action = decision.next_action or (
+        "Configure and verify a compatible provider, then recompose the AI Team."
+        if decision.status == "unavailable"
+        else "Proceed under the task's approval and acceptance policies."
+    )
+    return {
+        "id": decision.id,
+        "task_id": decision.task_id,
+        "team_plan_id": decision.team_plan_id,
+        "capability": decision.capability.name,
+        "urgency": decision.urgency,
+        "cost_sensitivity": decision.cost_sensitivity,
+        "latency_sensitivity": decision.latency_sensitivity,
+        "requested_capabilities": requested_capabilities,
+        "status": decision.status,
+        "selected": model_out(decision.selected_model),
+        "fallback": model_out(decision.fallback_model),
+        "reason": decision.reason,
+        "fallback_status": fallback_status,
+        "fallback_reason": fallback_reason,
+        "next_action": next_action,
+        "created_at": iso(decision.created_at),
+    }
+
+
+def routing_summary_out(plan: AITeamPlan, routes: list[RoutingDecision]) -> dict[str, Any]:
+    requested = decoded_list(plan.required_capabilities)
+    selected_routes = [route for route in routes if route.status == "selected" and route.selected_model]
+    completed = len(routes) == len(requested) and all(
+        route.status in {"selected", "unavailable"} for route in routes
+    )
+    if completed and len(selected_routes) == len(requested):
+        status = "ready"
+    elif completed and not selected_routes:
+        status = "unavailable"
+    elif completed:
+        status = "partial"
+    else:
+        status = "pending"
+
+    primary = routes[0] if routes else None
+    primary_output = routing_out(primary) if primary else None
+    providers = sorted({route.selected_model.provider.name for route in selected_routes})
+    models = sorted({route.selected_model.model_name for route in selected_routes})
+    return {
+        "status": status,
+        "evaluation_completed": completed,
+        "decision_count": len(routes),
+        "requested_capabilities": requested,
+        "selected_provider": ", ".join(providers) if providers else None,
+        "selected_model": ", ".join(models) if models else None,
+        "reason": primary.reason if primary else "Routing evaluation is pending for this plan.",
+        "fallback_status": primary_output["fallback_status"] if primary_output else "pending",
+        "fallback_reason": primary_output["fallback_reason"] if primary_output else "Routing evaluation has not completed.",
+        "next_action": primary_output["next_action"] if primary_output else "Recompose the AI Team to evaluate routing.",
     }
 
 
@@ -428,6 +622,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         if not task:
             raise HTTPException(status_code=404, detail="Task not found.")
         data = payload.model_dump(exclude_unset=True)
+        updated_fields = list(data.keys())
         if "action" in data:
             try:
                 data["task_type"] = persisted_action(data.pop("action"), None)
@@ -435,10 +630,163 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
         if "status" in data and data["status"] not in LIFECYCLE_STATES:
             raise HTTPException(status_code=400, detail="Unsupported task status.")
+        if "project_id" in data:
+            project = session.get(Project, data.pop("project_id"))
+            if not project:
+                raise HTTPException(status_code=404, detail="Project not found.")
+            task.project = project
         for key, value in data.items():
             setattr(task, key, value)
-        audit(session, request, "task_updated", "task", task.id, ",".join(data.keys()), user)
+        audit(session, request, "task_updated", "task", task.id, ",".join(updated_fields), user)
         return task_out(task)
+
+    @app.get("/api/ai/capabilities")
+    def ai_capabilities(
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> list[dict[str, Any]]:
+        seed_ai_registry(session)
+        session.flush()
+        capabilities = session.scalars(select(AICapability).order_by(AICapability.id)).all()
+        return [capability_out(item) for item in capabilities]
+
+    @app.get("/api/models")
+    def models(
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> list[dict[str, Any]]:
+        seed_ai_registry(session)
+        session.flush()
+        model_rows = session.scalars(select(AIModel).order_by(AIModel.provider_id, AIModel.id)).all()
+        return [model_out(item) for item in model_rows]
+
+    @app.post("/api/ai/team-compose")
+    def compose_ai_team(
+        payload: TeamComposeIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        task = session.get(Task, payload.task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found.")
+        try:
+            plan = compose_team(
+                session,
+                task,
+                risk_level=payload.risk_level,
+                urgency=payload.urgency,
+                capability_override=payload.capability_override,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        audit(
+            session,
+            request,
+            "ai_team_composed",
+            "ai_team_plan",
+            plan.id,
+            f"task={task.id}; capabilities={plan.required_capabilities}",
+            user,
+        )
+        plan_output = team_plan_out(session, plan)
+        routes: list[RoutingDecision] = []
+        for capability_name in plan_output["required_capabilities"]:
+            capability = session.scalar(
+                select(AICapability).where(AICapability.name == capability_name, AICapability.enabled == True)  # noqa: E712
+            )
+            if not capability:
+                raise HTTPException(status_code=409, detail=f"Composed capability is unavailable: {capability_name}.")
+            decision = route_capability(
+                session,
+                task,
+                capability,
+                team_plan_id=plan.id,
+                requested_capabilities=plan_output["required_capabilities"],
+                urgency=payload.urgency,
+                cost_sensitivity="balanced",
+                latency_sensitivity="high" if payload.urgency == "high" else "balanced",
+            )
+            routes.append(decision)
+            audit(
+                session,
+                request,
+                "ai_route_decided",
+                "routing_decision",
+                decision.id,
+                f"capability={capability.name}; status={decision.status}; automatic=true",
+                user,
+            )
+        plan_output["routes"] = [routing_out(item) for item in routes]
+        plan_output["routing_summary"] = routing_summary_out(plan, routes)
+        return plan_output
+
+    @app.post("/api/ai/route")
+    def route_ai_capability(
+        payload: RouteIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        task = session.get(Task, payload.task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found.")
+        capability = session.scalar(
+            select(AICapability).where(AICapability.name == payload.capability, AICapability.enabled == True)  # noqa: E712
+        )
+        if not capability:
+            raise HTTPException(status_code=404, detail="AI capability not found or disabled.")
+        if payload.team_plan_id is not None:
+            plan = session.get(AITeamPlan, payload.team_plan_id)
+            if not plan or plan.task_id != task.id:
+                raise HTTPException(status_code=400, detail="AI team plan does not belong to this task.")
+        decision = route_capability(
+            session,
+            task,
+            capability,
+            team_plan_id=payload.team_plan_id,
+            requested_capabilities=(
+                decoded_list(plan.required_capabilities) if payload.team_plan_id is not None else [capability.name]
+            ),
+            urgency=payload.urgency,
+            cost_sensitivity=payload.cost_sensitivity,
+            latency_sensitivity=payload.latency_sensitivity,
+        )
+        audit(
+            session,
+            request,
+            "ai_route_decided",
+            "routing_decision",
+            decision.id,
+            f"capability={capability.name}; status={decision.status}",
+            user,
+        )
+        return routing_out(decision)
+
+    @app.get("/api/tasks/{task_id}/ai-plan")
+    def latest_ai_plan(
+        task_id: int,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        if not session.get(Task, task_id):
+            raise HTTPException(status_code=404, detail="Task not found.")
+        plan = session.scalar(
+            select(AITeamPlan).where(AITeamPlan.task_id == task_id).order_by(AITeamPlan.id.desc())
+        )
+        if not plan:
+            return {"task_id": task_id, "plan": None, "routes": [], "routing_summary": None}
+        routes = session.scalars(
+            select(RoutingDecision)
+            .where(RoutingDecision.team_plan_id == plan.id)
+            .order_by(RoutingDecision.id)
+        ).all()
+        return {
+            "task_id": task_id,
+            "plan": team_plan_out(session, plan),
+            "routes": [routing_out(item) for item in routes],
+            "routing_summary": routing_summary_out(plan, routes),
+        }
 
     @app.get("/api/runs")
     def list_runs(session: Session = Depends(get_db), user: User = Depends(current_user)) -> list[dict[str, Any]]:
@@ -528,7 +876,11 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     @app.get("/api/providers")
     def providers(session: Session = Depends(get_db), user: User = Depends(current_user)) -> list[dict[str, Any]]:
         seed_registry(session)
-        return [registry_out(item) for item in session.scalars(select(Provider).order_by(Provider.id)).all()]
+        session.flush()
+        gateway = ProviderGateway.from_session(session)
+        health = gateway.health_snapshot()
+        provider_rows = session.scalars(select(Provider).where(Provider.kind == "model").order_by(Provider.id)).all()
+        return [provider_out(item, health[item.name]) for item in provider_rows]
 
     @app.get("/api/tools")
     def tools(session: Session = Depends(get_db), user: User = Depends(current_user)) -> list[dict[str, Any]]:

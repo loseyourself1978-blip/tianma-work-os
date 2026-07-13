@@ -3,10 +3,14 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
 from twos_runtime.app import create_app
 from twos_runtime.config import STATIC_COCKPIT_DIR, TWOS_UI_PATH, Settings
+from twos_runtime.models import AIModel, Provider, RoutingDecision
+from twos_runtime.provider_gateway import ProviderExecutionUnavailable, ProviderGateway
 
 
 OWNER_PASSWORD = "owner-password-123"
@@ -50,6 +54,31 @@ def create_runtime_task(client: TestClient, headers: dict[str, str]) -> int:
     )
     assert task.status_code == 200
     return task.json()["id"]
+
+
+def create_project_task(
+    client: TestClient,
+    headers: dict[str, str],
+    project_key: str,
+    title: str,
+    required_output: str,
+) -> int:
+    projects = client.get("/api/projects", headers=headers).json()
+    project = next(item for item in projects if item["key"] == project_key)
+    response = client.post(
+        "/api/tasks",
+        headers=headers,
+        json={
+            "project_id": project["id"],
+            "title": title,
+            "action": "Analyze",
+            "source_sync_summary": "Owner-provided source sync.",
+            "required_output": required_output,
+            "boundary_risk": "No live trading or live betting execution.",
+        },
+    )
+    assert response.status_code == 200
+    return response.json()["id"]
 
 
 def test_auth_health_and_protected_routes(tmp_path: Path) -> None:
@@ -192,3 +221,273 @@ def test_provider_and_tool_statuses_are_honest(tmp_path: Path) -> None:
         assert "unconfigured" in tool_statuses
         assert any(item["kind"] == "live_trade" and item["status"] == "blocked" for item in tools.json())
         assert any(item["kind"] == "live_bet" and item["status"] == "blocked" for item in tools.json())
+
+
+def test_ai_capability_provider_and_model_registries_are_honest(tmp_path: Path) -> None:
+    with make_client(tmp_path) as client:
+        headers = init_and_login(client)
+        capabilities = client.get("/api/ai/capabilities", headers=headers)
+        providers = client.get("/api/providers", headers=headers)
+        models = client.get("/api/models", headers=headers)
+
+        assert capabilities.status_code == 200
+        assert {item["name"] for item in capabilities.json()} == {
+            "reasoning",
+            "coding",
+            "research",
+            "verification",
+            "summarization",
+            "planning",
+            "risk_analysis",
+            "data_analysis",
+        }
+        assert providers.status_code == 200
+        assert {item["name"] for item in providers.json()} == {
+            "OpenAI",
+            "Gemini",
+            "Claude",
+            "DeepSeek",
+            "GLM",
+        }
+        assert all(item["status"] == "unconfigured" and item["available"] is False for item in providers.json())
+
+        assert models.status_code == 200
+        assert len(models.json()) == 10
+        assert all(item["status"] == "unconfigured" and item["available"] is False for item in models.json())
+        models_per_provider = {
+            provider: len([item for item in models.json() if item["provider"] == provider])
+            for provider in {item["provider"] for item in models.json()}
+        }
+        assert all(count >= 2 for count in models_per_provider.values())
+
+        factory = client.app.state.session_factory
+        with factory() as session:
+            gateway = ProviderGateway.from_session(session)
+            adapter = gateway.get("OpenAI")
+            assert adapter is not None
+            assert len(adapter.list_models()) == 2
+            assert adapter.health_check().available is False
+            with pytest.raises(ProviderExecutionUnavailable):
+                adapter.execute({"prompt": "must not leave the local runtime"})
+
+
+def test_ai_team_composition_and_unavailable_routing_persist(tmp_path: Path) -> None:
+    with make_client(tmp_path) as client:
+        headers = init_and_login(client)
+        twos_task_id = create_project_task(
+            client,
+            headers,
+            "twos",
+            "TWOS Product Build",
+            "Implement the owner-visible AI Team and routing decision surface.",
+        )
+        product_response = client.post(
+            "/api/ai/team-compose",
+            headers=headers,
+            json={"task_id": twos_task_id, "risk_level": "medium", "urgency": "normal"},
+        )
+        assert product_response.status_code == 200
+        product_plan = product_response.json()
+        assert product_plan["required_capabilities"] == ["planning", "coding", "verification"]
+        assert product_plan["minimum_role_count"] == 3
+        assert "ordered build plan" in product_plan["explanation"]
+        product_reasons = {item["capability"]: item["selection_reason"] for item in product_plan["team"]}
+        assert "implementation path" in product_reasons["planning"]
+        assert "implementation artifact" in product_reasons["coding"]
+        assert "acceptance conditions" in product_reasons["verification"]
+        assert {item["capability"] for item in product_plan["omitted_capabilities"]} == {
+            "reasoning",
+            "research",
+            "summarization",
+            "risk_analysis",
+            "data_analysis",
+        }
+        assert "Not added" in product_plan["omission_explanation"]
+
+        product_routes = product_plan["routes"]
+        assert len(product_routes) == 3
+        for decision in product_routes:
+            assert decision["status"] == "unavailable"
+            assert decision["selected"] is None
+            assert decision["fallback"] is None
+            assert decision["requested_capabilities"] == ["planning", "coding", "verification"]
+            assert decision["reason"] == (
+                "No configured and healthy provider is available for the requested capabilities."
+            )
+            assert decision["fallback_status"] == "unavailable"
+            assert decision["fallback_reason"] == (
+                "No fallback is available because all compatible providers are unconfigured."
+            )
+            assert decision["next_action"] == (
+                "Configure and verify at least one compatible provider, then recompose the AI Team."
+            )
+        assert product_plan["routing_summary"]["status"] == "unavailable"
+        assert product_plan["routing_summary"]["evaluation_completed"] is True
+
+        ldd_task_id = create_project_task(
+            client,
+            headers,
+            "ldd",
+            "LDD Risk Review",
+            "Review SPCX downside and admission gates with owner-readable acceptance evidence.",
+        )
+        composed = client.post(
+            "/api/ai/team-compose",
+            headers=headers,
+            json={"task_id": ldd_task_id, "risk_level": "medium", "urgency": "normal"},
+        )
+        assert composed.status_code == 200
+        ldd_plan = composed.json()
+        assert ldd_plan["required_capabilities"] == ["reasoning", "risk_analysis", "verification"]
+        assert ldd_plan["required_capabilities"] != product_plan["required_capabilities"]
+        assert ldd_plan["minimum_role_count"] == 3
+        assert "downside and admission-gate review" in ldd_plan["explanation"]
+        ldd_reasons = {item["capability"]: item["selection_reason"] for item in ldd_plan["team"]}
+        assert "supplied LDD evidence" in ldd_reasons["reasoning"]
+        assert "downside, admission gates" in ldd_reasons["risk_analysis"]
+        assert "no live trading action" in ldd_reasons["verification"]
+        assert "bounded risk review" in ldd_plan["omission_explanation"]
+        assert len(ldd_plan["routes"]) == 3
+        assert all(item["status"] == "unavailable" for item in ldd_plan["routes"])
+        assert ldd_plan["routing_summary"]["status"] == "unavailable"
+        assert all("provider" not in item and "model" not in item for item in ldd_plan["team"])
+
+        persisted = client.get(f"/api/tasks/{ldd_task_id}/ai-plan", headers=headers)
+        assert persisted.status_code == 200
+        assert persisted.json()["plan"]["id"] == ldd_plan["id"]
+        assert len(persisted.json()["routes"]) == 3
+        assert persisted.json()["routing_summary"]["evaluation_completed"] is True
+
+    with make_client(tmp_path) as restarted:
+        headers = init_and_login(restarted)
+        persisted_ldd = restarted.get(f"/api/tasks/{ldd_task_id}/ai-plan", headers=headers)
+        persisted_product = restarted.get(f"/api/tasks/{twos_task_id}/ai-plan", headers=headers)
+        assert persisted_ldd.status_code == 200
+        assert persisted_product.status_code == 200
+        assert persisted_ldd.json()["plan"]["required_capabilities"] == [
+            "reasoning",
+            "risk_analysis",
+            "verification",
+        ]
+        assert persisted_product.json()["plan"]["required_capabilities"] == [
+            "planning",
+            "coding",
+            "verification",
+        ]
+        assert len(persisted_ldd.json()["routes"]) == 3
+        assert len(persisted_product.json()["routes"]) == 3
+        assert persisted_ldd.json()["routing_summary"]["evaluation_completed"] is True
+        assert persisted_product.json()["routing_summary"]["evaluation_completed"] is True
+
+
+def test_saved_task_context_updates_and_recomposes_in_place(tmp_path: Path) -> None:
+    with make_client(tmp_path) as client:
+        headers = init_and_login(client)
+        task_id = create_project_task(
+            client,
+            headers,
+            "twos",
+            "TWOS Product Build",
+            "Implement an owner-visible workbench surface.",
+        )
+        first_plan = client.post(
+            "/api/ai/team-compose",
+            headers=headers,
+            json={"task_id": task_id},
+        ).json()
+        assert first_plan["required_capabilities"] == ["planning", "coding", "verification"]
+
+        projects = client.get("/api/projects", headers=headers).json()
+        ldd = next(item for item in projects if item["key"] == "ldd")
+        updated = client.patch(
+            f"/api/tasks/{task_id}",
+            headers=headers,
+            json={
+                "project_id": ldd["id"],
+                "title": "LDD Risk Review",
+                "action": "Analyze",
+                "source_sync_summary": "SPCX and admission-gate evidence.",
+                "required_output": "Review downside and admission gates.",
+                "boundary_risk": "No live trading execution.",
+            },
+        )
+        assert updated.status_code == 200
+        assert updated.json()["project"]["key"] == "ldd"
+        second_plan = client.post(
+            "/api/ai/team-compose",
+            headers=headers,
+            json={"task_id": task_id},
+        ).json()
+        assert second_plan["required_capabilities"] == ["reasoning", "risk_analysis", "verification"]
+        assert second_plan["id"] != first_plan["id"]
+        assert len(client.get("/api/tasks", headers=headers).json()) == 1
+        latest = client.get(f"/api/tasks/{task_id}/ai-plan", headers=headers).json()
+        assert latest["plan"]["id"] == second_plan["id"]
+        assert latest["routing_summary"]["evaluation_completed"] is True
+
+
+def test_routing_selects_healthy_models_and_falls_back_from_failed_provider(tmp_path: Path) -> None:
+    with make_client(tmp_path) as client:
+        headers = init_and_login(client)
+        task_id = create_project_task(
+            client,
+            headers,
+            "ldd",
+            "Analyze LDD risk",
+            "Reasoning and verification output.",
+        )
+        factory = client.app.state.session_factory
+        with factory() as session:
+            providers = {
+                item.name: item
+                for item in session.scalars(select(Provider).where(Provider.kind == "model")).all()
+            }
+            for provider_name in ("OpenAI", "Claude", "Gemini"):
+                providers[provider_name].status = "healthy"
+                providers[provider_name].enabled = True
+            providers["DeepSeek"].status = "blocked"
+            providers["DeepSeek"].enabled = True
+
+            for model in session.scalars(select(AIModel)).all():
+                if "reasoning" in model.capability_tags and model.provider.name in {
+                    "OpenAI",
+                    "Claude",
+                    "Gemini",
+                    "DeepSeek",
+                }:
+                    model.status = "healthy"
+                    model.cost_metadata = "medium"
+                    model.latency_metadata = "medium"
+            session.commit()
+
+        first = client.post(
+            "/api/ai/route",
+            headers=headers,
+            json={"task_id": task_id, "capability": "reasoning"},
+        )
+        assert first.status_code == 200
+        assert first.json()["status"] == "selected"
+        assert first.json()["selected"]["provider"] == "OpenAI"
+        assert first.json()["fallback"]["provider"] == "Claude"
+
+        with factory() as session:
+            openai = session.scalar(select(Provider).where(Provider.name == "OpenAI"))
+            openai.status = "failed"
+            session.commit()
+
+        second = client.post(
+            "/api/ai/route",
+            headers=headers,
+            json={"task_id": task_id, "capability": "reasoning"},
+        )
+        assert second.status_code == 200
+        assert second.json()["selected"]["provider"] == "Claude"
+        assert second.json()["fallback"]["provider"] == "Gemini"
+        assert second.json()["selected"]["provider"] != "DeepSeek"
+
+        with factory() as session:
+            decisions = session.scalars(
+                select(RoutingDecision).where(RoutingDecision.task_id == task_id).order_by(RoutingDecision.id)
+            ).all()
+            assert len(decisions) == 2
+            assert decisions[0].fallback_model_id is not None

@@ -811,6 +811,109 @@ select {
   grid-column: span 2;
 }
 
+.runtime-ai-request {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.runtime-ai-request > summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.runtime-ai-request[open] > summary {
+  margin-bottom: 12px;
+}
+
+.runtime-ai-request-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.runtime-ai-request button {
+  margin-top: 10px;
+}
+
+.runtime-ai-plan {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: #f7f9fc;
+  padding: 14px;
+}
+
+.runtime-ai-plan-facts {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.runtime-ai-explanation,
+.runtime-routing-summary,
+.runtime-ai-decision-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.runtime-ai-explanation > strong,
+.runtime-ai-decision-copy > strong {
+  color: var(--ink);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.runtime-ai-capability-reasons {
+  margin-bottom: 4px;
+}
+
+.runtime-routing-summary {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.runtime-ai-routing-summary-facts {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.runtime-ai-decision-copy p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.runtime-ai-routing-facts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.runtime-orchestration-status {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.runtime-orchestration-status li {
+  min-height: 42px;
+  display: grid;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 9px 11px;
+  color: var(--muted);
+  background: #f7f9fc;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.runtime-orchestration-status li.is-complete {
+  border-color: #86b9ae;
+  color: #0f5c54;
+  background: #eef8f6;
+}
+
 .runtime-result-fields {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -1477,6 +1580,7 @@ button:disabled {
   .runtime-form-grid,
   .runtime-task-form,
   .runtime-task-toolbar,
+  .runtime-ai-request-controls,
   .runtime-auth-row,
   .runtime-schedule-controls,
   .runtime-registry-columns,
@@ -1510,6 +1614,10 @@ button:disabled {
 
   .runtime-flow,
   .runtime-result-fields,
+  .runtime-ai-plan-facts,
+  .runtime-ai-routing-summary-facts,
+  .runtime-ai-routing-facts,
+  .runtime-orchestration-status,
   .runtime-schedule-facts {
     grid-template-columns: 1fr;
   }
