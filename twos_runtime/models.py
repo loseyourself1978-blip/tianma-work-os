@@ -85,6 +85,13 @@ class Task(Base):
     source_sync_summary: Mapped[str] = mapped_column(Text, default="")
     required_output: Mapped[str] = mapped_column(Text, default="")
     boundary_risk: Mapped[str] = mapped_column(Text, default="")
+    workflow_type: Mapped[str] = mapped_column(String(80), default="general", index=True)
+    objective: Mapped[str] = mapped_column(Text, default="")
+    implementation_scope: Mapped[str] = mapped_column(Text, default="")
+    forbidden_scope: Mapped[str] = mapped_column(Text, default="")
+    acceptance_target: Mapped[str] = mapped_column(Text, default="")
+    repository_identity: Mapped[str] = mapped_column(String(240), default="")
+    source_baseline_commit: Mapped[str] = mapped_column(String(80), default="")
     status: Mapped[str] = mapped_column(String(40), default="queued", index=True)
     acceptance_state: Mapped[str] = mapped_column(String(40), default="needs_review")
     compact_sync_result: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -97,6 +104,9 @@ class Task(Base):
     schedules: Mapped[list["Schedule"]] = relationship(back_populates="task")
     ai_team_plans: Mapped[list["AITeamPlan"]] = relationship(back_populates="task")
     routing_decisions: Mapped[list["RoutingDecision"]] = relationship(back_populates="task")
+    codex_packs: Mapped[list["CodexInstructionPack"]] = relationship(back_populates="task")
+    codex_runs: Mapped[list["CodexRun"]] = relationship(back_populates="task")
+    owner_acceptance_sessions: Mapped[list["OwnerAcceptanceSession"]] = relationship(back_populates="task")
 
 
 class TaskRun(Base):
@@ -252,6 +262,101 @@ class RoutingDecision(Base):
     capability: Mapped[AICapability] = relationship()
     selected_model: Mapped[Optional[AIModel]] = relationship(foreign_keys=[selected_model_id])
     fallback_model: Mapped[Optional[AIModel]] = relationship(foreign_keys=[fallback_model_id])
+
+
+class CodexInstructionPack(Base):
+    __tablename__ = "codex_instruction_packs"
+    __table_args__ = (UniqueConstraint("task_id", "version", name="uq_codex_pack_task_version"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), index=True)
+    version: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(40), default="approval_required", index=True)
+    content: Mapped[str] = mapped_column(Text)
+    stage_summary: Mapped[str] = mapped_column(Text)
+    key_boundaries: Mapped[str] = mapped_column(Text)
+    acceptance_target: Mapped[str] = mapped_column(Text)
+    source_baseline_commit: Mapped[str] = mapped_column(String(80))
+    ai_team_plan_id: Mapped[Optional[int]] = mapped_column(ForeignKey("ai_team_plans.id"), nullable=True)
+    routing_decision_ids: Mapped[str] = mapped_column(Text, default="[]")
+    generation_metadata: Mapped[str] = mapped_column(Text, default="{}")
+    approved_by_user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)
+    approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    invalidated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    task: Mapped[Task] = relationship(back_populates="codex_packs")
+    ai_team_plan: Mapped[Optional[AITeamPlan]] = relationship()
+    runs: Mapped[list["CodexRun"]] = relationship(back_populates="pack")
+
+
+class CodexRun(Base):
+    __tablename__ = "codex_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), index=True)
+    pack_id: Mapped[int] = mapped_column(ForeignKey("codex_instruction_packs.id"), index=True)
+    status: Mapped[str] = mapped_column(String(40), default="approval_required", index=True)
+    executable_status: Mapped[str] = mapped_column(String(40), default="unconfigured")
+    source_repo: Mapped[str] = mapped_column(Text, default="")
+    source_branch: Mapped[str] = mapped_column(String(240), default="")
+    source_commit: Mapped[str] = mapped_column(String(80), default="")
+    worktree_path: Mapped[str] = mapped_column(Text, default="")
+    worktree_branch: Mapped[str] = mapped_column(String(240), default="")
+    stdout: Mapped[str] = mapped_column(Text, default="")
+    stderr: Mapped[str] = mapped_column(Text, default="")
+    output_truncated: Mapped[bool] = mapped_column(Boolean, default=False)
+    structured_result: Mapped[str] = mapped_column(Text, default="{}")
+    owner_summary: Mapped[str] = mapped_column(Text, default="")
+    exit_code: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    duration_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    timed_out: Mapped[bool] = mapped_column(Boolean, default=False)
+    cancelled: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    task: Mapped[Task] = relationship(back_populates="codex_runs")
+    pack: Mapped[CodexInstructionPack] = relationship(back_populates="runs")
+    acceptance_session: Mapped[Optional["OwnerAcceptanceSession"]] = relationship(back_populates="codex_run")
+
+
+class OwnerAcceptanceSession(Base):
+    __tablename__ = "owner_acceptance_sessions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), index=True)
+    codex_run_id: Mapped[int] = mapped_column(ForeignKey("codex_runs.id"), unique=True, index=True)
+    status: Mapped[str] = mapped_column(String(40), default="owner_review", index=True)
+    owner_note: Mapped[str] = mapped_column(Text, default="")
+    compact_sync_result: Mapped[str] = mapped_column(Text, default="")
+    decided_by_user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+    decided_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    task: Mapped[Task] = relationship(back_populates="owner_acceptance_sessions")
+    codex_run: Mapped[CodexRun] = relationship(back_populates="acceptance_session")
+    items: Mapped[list["OwnerAcceptanceItem"]] = relationship(back_populates="session")
+
+
+class OwnerAcceptanceItem(Base):
+    __tablename__ = "owner_acceptance_items"
+    __table_args__ = (UniqueConstraint("session_id", "key", name="uq_owner_acceptance_item_key"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    session_id: Mapped[int] = mapped_column(ForeignKey("owner_acceptance_sessions.id"), index=True)
+    key: Mapped[str] = mapped_column(String(120))
+    label: Mapped[str] = mapped_column(String(240))
+    inspect_target: Mapped[str] = mapped_column(Text)
+    ui_path: Mapped[str] = mapped_column(Text)
+    pass_standard: Mapped[str] = mapped_column(Text)
+    required: Mapped[bool] = mapped_column(Boolean, default=True)
+    status: Mapped[str] = mapped_column(String(40), default="pending")
+    note: Mapped[str] = mapped_column(Text, default="")
+    ordinal: Mapped[int] = mapped_column(Integer, default=0)
+
+    session: Mapped[OwnerAcceptanceSession] = relationship(back_populates="items")
 
 
 class Tool(Base):

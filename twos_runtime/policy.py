@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 ACTION_POLICIES = {
     "compact_sync": "auto",
+    "codex_execute": "approval_required",
     "sync_review": "approval_required",
     "manual_handoff": "manual",
     "live_trade": "blocked",
@@ -14,7 +15,22 @@ ACTION_POLICIES = {
 }
 
 CONNECTOR_STATUSES = ["unconfigured", "configured", "healthy", "degraded", "failed", "disabled", "blocked"]
-LIFECYCLE_STATES = ["queued", "running", "review", "accepted", "needs_review", "failed", "cancelled"]
+LIFECYCLE_STATES = [
+    "draft",
+    "planned",
+    "pack_ready",
+    "approval_required",
+    "queued",
+    "running",
+    "result_ready",
+    "owner_review",
+    "review",
+    "accepted",
+    "rejected",
+    "needs_review",
+    "failed",
+    "cancelled",
+]
 
 
 @dataclass(frozen=True)

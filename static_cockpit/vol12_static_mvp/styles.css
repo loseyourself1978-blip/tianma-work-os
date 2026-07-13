@@ -194,6 +194,78 @@ button {
   border-bottom: 1px solid var(--line);
 }
 
+.global-owner-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: auto minmax(210px, 1fr) minmax(420px, auto);
+  align-items: center;
+  padding: 10px 0;
+  background: rgba(255, 255, 255, 0.97);
+}
+
+.global-brand-block,
+.global-runtime-state,
+.global-auth-panel,
+.global-auth-fields,
+.global-auth-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.global-brand-block {
+  flex-wrap: wrap;
+}
+
+.global-runtime-state {
+  justify-content: center;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.global-auth-panel {
+  justify-content: flex-end;
+}
+
+.global-auth-panel > strong {
+  min-width: max-content;
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.global-auth-fields label {
+  display: grid;
+  grid-template-columns: auto minmax(96px, 130px);
+  align-items: center;
+  gap: 6px;
+}
+
+.global-auth-fields label span {
+  font-size: 10px;
+}
+
+.global-auth-fields input {
+  min-height: 36px;
+  padding: 7px 8px;
+}
+
+.global-feedback {
+  min-height: 30px;
+  border-bottom: 1px solid var(--line);
+  padding: 7px 0;
+  color: #0f5c54;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.global-feedback.is-error,
+.runtime-message.is-error {
+  color: #9b1c1c;
+}
+
 .command-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
@@ -783,6 +855,11 @@ select {
 }
 
 .runtime-current-task,
+.runtime-ai-card,
+.runtime-pack-card,
+.runtime-execution-card,
+.runtime-result-card,
+.runtime-acceptance-card,
 .runtime-output-card,
 .runtime-owner-status {
   grid-column: span 2;
@@ -840,10 +917,9 @@ select {
 .runtime-ai-plan {
   display: grid;
   gap: 12px;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  border: 0;
   background: #f7f9fc;
-  padding: 14px;
+  padding: 0;
 }
 
 .runtime-ai-plan-facts {
@@ -916,6 +992,82 @@ select {
 
 .runtime-result-fields {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.runtime-pack-facts,
+.runtime-execution-facts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.runtime-fact-wide {
+  grid-column: span 2;
+}
+
+.runtime-execution-boundary,
+.runtime-final-boundary {
+  margin: 0;
+}
+
+.runtime-view-result {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+}
+
+.runtime-owner-checklist {
+  display: grid;
+  gap: 10px;
+}
+
+.runtime-owner-item {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 12px;
+  background: #f7f9fc;
+}
+
+.runtime-owner-item.status-pass {
+  border-left-color: var(--accent);
+  background: #eef8f6;
+}
+
+.runtime-owner-item.status-fail {
+  border-left-color: #b91c1c;
+  background: #fff1f1;
+}
+
+.runtime-owner-item.status-needs_review {
+  border-left-color: #c27a0a;
+  background: #fff8db;
+}
+
+.runtime-owner-item p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.runtime-item-actions {
+  justify-content: flex-start;
+}
+
+#runtime-save-task,
+#runtime-generate-pack,
+#runtime-approve-pack,
+#runtime-run-codex,
+#runtime-accept-result,
+#runtime-auth-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+}
+
+button[aria-busy="true"] {
+  cursor: wait;
 }
 
 .runtime-flow {
@@ -1529,6 +1681,24 @@ button:disabled {
     flex-direction: column;
   }
 
+  .global-auth-panel,
+  .global-auth-fields,
+  .global-auth-fields label,
+  .global-auth-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+
+  .global-auth-fields label {
+    gap: 5px;
+  }
+
+  .global-auth-actions button {
+    width: 100%;
+  }
+
   .top-actions {
     justify-content: flex-start;
   }
@@ -1548,6 +1718,7 @@ button:disabled {
 }
 
 @media (max-width: 1080px) {
+  .global-owner-header,
   .command-hero,
   .workbench-hero,
   .sync-form,
@@ -1605,6 +1776,11 @@ button:disabled {
   .runtime-form-grid label:nth-child(n + 4),
   .runtime-field-wide,
   .runtime-current-task,
+  .runtime-ai-card,
+  .runtime-pack-card,
+  .runtime-execution-card,
+  .runtime-result-card,
+  .runtime-acceptance-card,
   .runtime-output-card,
   .runtime-owner-status,
   .runtime-lifecycle-card,
@@ -1614,12 +1790,27 @@ button:disabled {
 
   .runtime-flow,
   .runtime-result-fields,
+  .runtime-pack-facts,
+  .runtime-execution-facts,
   .runtime-ai-plan-facts,
   .runtime-ai-routing-summary-facts,
   .runtime-ai-routing-facts,
   .runtime-orchestration-status,
   .runtime-schedule-facts {
     grid-template-columns: 1fr;
+  }
+
+  .global-owner-header {
+    align-items: stretch;
+  }
+
+  .global-runtime-state,
+  .global-auth-panel {
+    justify-content: flex-start;
+  }
+
+  .runtime-fact-wide {
+    grid-column: auto;
   }
 
   .lane-grid,

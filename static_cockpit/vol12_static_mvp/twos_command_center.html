@@ -8,35 +8,53 @@
 </head>
 <body>
   <main class="page command-page workbench-page" aria-label="TWOS 1.0 Unified AI Team Workbench">
-    <header class="topbar command-topbar">
-      <p class="brand">TWOS</p>
-      <nav class="top-actions" aria-label="TWOS navigation">
-        <a class="nav-link" href="./index.html">Landing</a>
-        <a class="nav-link" href="../workspace_flow/workflow_execution.html">2026WC Workspace</a>
-      </nav>
+    <header class="topbar command-topbar global-owner-header">
+      <div class="global-brand-block">
+        <strong class="brand">TWOS 1.0</strong>
+        <nav class="top-actions" aria-label="TWOS navigation">
+          <a class="nav-link" href="./index.html">Landing</a>
+          <a class="nav-link" href="../workspace_flow/workflow_execution.html">2026WC Workspace</a>
+        </nav>
+      </div>
+      <div class="global-runtime-state" aria-label="Global runtime and Owner state">
+        <span>Runtime: <strong id="runtime-health">Checking...</strong></span>
+        <span id="runtime-owner">Owner: checking...</span>
+      </div>
+      <div class="global-auth-panel" id="global-auth-panel">
+        <strong id="global-auth-title">Create Owner Account</strong>
+        <div class="global-auth-fields" id="global-auth-fields">
+          <label><span>Username</span><input id="runtime-username" type="text" value="owner" autocomplete="username" /></label>
+          <label><span>Password</span><input id="runtime-password" type="password" autocomplete="current-password" /></label>
+        </div>
+        <div class="gate-actions global-auth-actions">
+          <button type="button" id="runtime-auth-primary">Create Owner Account</button>
+          <button type="button" id="runtime-logout" hidden>Log out</button>
+        </div>
+      </div>
     </header>
+    <p class="global-feedback" id="global-feedback" role="status" aria-live="polite">Checking Owner and runtime state.</p>
 
     <section class="workbench-hero" aria-label="Workbench header">
       <div>
-        <p class="version">Vol.15 MVP-15 Repair</p>
-        <h1>TWOS 1.0 Unified AI Team Workbench</h1>
-        <p class="subheadline">One command center for LDD, 2026WC, and TWOS Product Development. Operating loop: Sync → Task → Team → Route → Lifecycle → Acceptance → Compact Sync.</p>
+        <p class="version">Tianma Work OS Vol.16</p>
+        <h1>TWOS 1.0 Self-Hosting Workbench</h1>
+        <p class="subheadline">Development Goal → Task → AI Team → Codex Pack → Owner Approval → Isolated Run → Result → Acceptance → Compact Sync.</p>
       </div>
       <aside class="boundary-notice" aria-label="Boundary notice">
-        <p>The local runtime now composes task-driven AI capabilities and records explainable provider/model routing decisions. External providers remain unconfigured until real adapters are configured and verified. Live trading and live betting execution remain blocked.</p>
+        <p>Codex execution requires explicit Owner approval and an isolated Git worktree. TWOS does not merge or push in Sprint 1. Live trading and live betting execution remain blocked.</p>
       </aside>
     </section>
 
     <section id="runtime-status" class="workbench-region runtime-status-zone" aria-label="Owner Verification Runtime">
       <div class="section-title">
-        <p class="version">MVP-15 Owner-Visible AI Routing</p>
-        <h2>Owner Verification Runtime</h2>
-        <p class="hub-note">Save a task to compose its minimum useful AI Team and complete an explainable routing evaluation, including a persisted unavailable decision when providers are not configured.</p>
+        <p class="version">TWOS 1.0 Productization Sprint 1</p>
+        <h2>Self-Hosting Verification Mode</h2>
+        <p class="hub-note">Prepare, approve, run, inspect, and accept one TWOS development task without manually moving Codex output between tools.</p>
       </div>
 
       <div class="runtime-verification-grid">
-        <article id="current-task" class="workbench-card runtime-card runtime-current-task" aria-label="Current Task">
-          <div class="card-kicker"><span>1. Current Task</span><strong id="runtime-task-state">No task selected</strong></div>
+        <article id="current-task" class="workbench-card runtime-card runtime-current-task" aria-label="Current Development Task">
+          <div class="card-kicker"><span>1. Current Development Task</span><strong id="runtime-task-state">No task selected</strong></div>
           <div class="runtime-task-toolbar">
             <label>
               <span>Saved task</span>
@@ -50,30 +68,57 @@
               <select id="runtime-project"></select>
             </label>
             <label>
-              <span>Task title</span>
-              <input id="runtime-task-title" type="text" value="SPCX risk review" />
-            </label>
-            <label class="runtime-field-wide">
-              <span>Source sync</span>
-              <textarea id="runtime-source-sync" rows="4">Pasted LDD compact sync...</textarea>
-            </label>
-            <label>
-              <span>Action</span>
-              <select id="runtime-task-action">
-                <option>Analyze</option>
-                <option selected>Compact Sync</option>
-                <option>Acceptance Review</option>
+              <span>Workflow</span>
+              <select id="runtime-workflow-type">
+                <option value="product_development" selected>TWOS product development</option>
+                <option value="general">General task</option>
               </select>
             </label>
             <label>
-              <span>Required output</span>
-              <textarea id="runtime-required-output" rows="3">Persisted compact sync with acceptance evidence.</textarea>
+              <span>Development task</span>
+              <input id="runtime-task-title" type="text" value="Build TWOS self-hosting verification flow" />
+            </label>
+            <label>
+              <span>Objective</span>
+              <textarea id="runtime-objective" rows="3">Create an Owner-verifiable Codex development loop.</textarea>
             </label>
             <label class="runtime-field-wide">
-              <span>Boundary</span>
-              <textarea id="runtime-boundary-risk" rows="3">No live trading or live betting execution.</textarea>
+              <span>Source feedback / context</span>
+              <textarea id="runtime-source-sync" rows="4">Vol.16 Productization Sprint 1 handoff.</textarea>
+            </label>
+            <label>
+              <span>Required output</span>
+              <textarea id="runtime-required-output" rows="3">A persistent self-hosting workflow with visible acceptance evidence.</textarea>
+            </label>
+            <label>
+              <span>Acceptance target</span>
+              <textarea id="runtime-acceptance-target" rows="3">Owner can verify Git-derived results and accept or reject the run.</textarea>
+            </label>
+            <label>
+              <span>Implementation scope</span>
+              <textarea id="runtime-implementation-scope" rows="4">Existing TWOS runtime and command-center UI.</textarea>
+            </label>
+            <label>
+              <span>Forbidden scope</span>
+              <textarea id="runtime-forbidden-scope" rows="4">No automatic merge, push, live trading, live betting, or unrestricted command execution.</textarea>
             </label>
           </div>
+          <input id="runtime-boundary-risk" type="hidden" value="No automatic merge or push." />
+          <details class="runtime-detail">
+            <summary>Advanced task metadata</summary>
+            <label>
+              <span>Safe internal action</span>
+              <select id="runtime-task-action">
+                <option value="Analyze" selected>Analyze</option>
+                <option value="Compact Sync">Compact Sync</option>
+                <option value="Acceptance Review">Acceptance Review</option>
+              </select>
+            </label>
+            <dl class="task-fields">
+              <div><dt>Repository</dt><dd id="runtime-repository-identity">Assigned on save</dd></div>
+              <div><dt>Source baseline</dt><dd id="runtime-source-baseline">Assigned on save</dd></div>
+            </dl>
+          </details>
           <details class="runtime-ai-request">
             <summary>AI capability request</summary>
             <div class="runtime-ai-request-controls">
@@ -102,8 +147,23 @@
             <p class="recommendation-copy">TWOS starts with two task-relevant capabilities and adds another only when quality, risk, or acceptance requires it.</p>
           </details>
 
-          <section class="runtime-ai-plan" aria-label="AI Team Plan">
-            <div class="card-kicker"><span>AI Team Plan</span><strong id="runtime-ai-team-count">Waiting for task</strong></div>
+          <ol class="runtime-orchestration-status" aria-label="Task orchestration completion">
+            <li id="runtime-task-saved-state">Task saved: waiting</li>
+            <li id="runtime-team-composed-state">AI Team composed: waiting</li>
+            <li id="runtime-routing-evaluated-state">Routing evaluated: waiting</li>
+          </ol>
+          <div class="gate-actions runtime-actions">
+            <button type="button" id="runtime-save-task">Save Task</button>
+            <button type="button" id="runtime-compose-team">Recompose AI Team</button>
+            <button type="button" id="runtime-generate-pack">Generate Codex Pack</button>
+            <button type="button" id="runtime-run-task">Run Compact Sync</button>
+          </div>
+          <p class="runtime-message" id="runtime-message">Create or log in as Owner, then save an owner-readable development task.</p>
+        </article>
+
+        <article id="ai-team-plan" class="workbench-card runtime-card runtime-ai-card" aria-label="AI Team Plan">
+          <section class="runtime-ai-plan">
+            <div class="card-kicker"><span>2. AI Team Plan</span><strong id="runtime-ai-team-count">Waiting for task</strong></div>
             <dl class="task-fields runtime-ai-plan-facts">
               <div><dt>Selected capabilities</dt><dd id="runtime-ai-execution-plan">Save a task to compose its plan</dd></div>
               <div><dt>Minimum Effective Role Count</dt><dd id="runtime-ai-minimum-count">Waiting</dd></div>
@@ -145,26 +205,72 @@
               </ul>
             </details>
           </section>
-          <ol class="runtime-orchestration-status" aria-label="Task orchestration completion">
-            <li id="runtime-task-saved-state">Task saved: waiting</li>
-            <li id="runtime-team-composed-state">AI Team composed: waiting</li>
-            <li id="runtime-routing-evaluated-state">Routing evaluated: waiting</li>
-          </ol>
-          <div class="gate-actions runtime-actions">
-            <button type="button" id="runtime-save-task">Save task</button>
-            <button type="button" id="runtime-compose-team">Recompose AI Team</button>
-            <button type="button" id="runtime-run-task">Run Compact Sync</button>
-          </div>
-          <p class="runtime-message" id="runtime-message">Log in under Runtime Status, then save an owner-readable task.</p>
         </article>
 
-        <article id="execution-result" class="workbench-card runtime-card runtime-result-card" aria-label="Execution Result">
-          <div class="card-kicker"><span>2. Execution Result</span><strong id="runtime-result-status">Not run</strong></div>
+        <article id="codex-instruction-pack" class="workbench-card runtime-card runtime-pack-card" aria-label="Codex Instruction Pack">
+          <div class="card-kicker"><span>3. Codex Instruction Pack</span><strong id="runtime-pack-status">Not generated</strong></div>
+          <dl class="task-fields runtime-pack-facts">
+            <div><dt>Current version</dt><dd id="runtime-pack-version">None</dd></div>
+            <div><dt>Owner approval</dt><dd id="runtime-pack-approval">Required before execution</dd></div>
+            <div><dt>Ordered stages</dt><dd id="runtime-pack-stage-summary">Generate a pack after saving the task.</dd></div>
+            <div><dt>Acceptance target</dt><dd id="runtime-pack-acceptance-target">Waiting for task</dd></div>
+            <div class="runtime-fact-wide"><dt>Key boundaries</dt><dd id="runtime-pack-boundaries">No merge, push, live trading, or live betting.</dd></div>
+          </dl>
+          <div class="gate-actions runtime-actions">
+            <button type="button" id="runtime-approve-pack">Approve Codex Pack</button>
+          </div>
+          <details class="runtime-detail">
+            <summary>Advanced pack versions and raw instruction</summary>
+            <label>
+              <span>Persisted versions</span>
+              <select id="runtime-pack-history" aria-label="Persisted Codex pack versions"></select>
+            </label>
+            <pre id="runtime-pack-raw" class="compact-sync-preview">No instruction pack generated.</pre>
+            <dl class="task-fields">
+              <div><dt>Pack record</dt><dd id="runtime-pack-id">None</dd></div>
+              <div><dt>Source baseline</dt><dd id="runtime-pack-baseline">None</dd></div>
+            </dl>
+          </details>
+        </article>
+
+        <article id="codex-execution" class="workbench-card runtime-card runtime-execution-card" aria-label="Codex Execution">
+          <div class="card-kicker"><span>4. Codex Execution</span><strong id="runtime-codex-status">Checking local Codex</strong></div>
+          <dl class="task-fields runtime-execution-facts">
+            <div><dt>Execution status</dt><dd id="runtime-codex-run-status">Not started</dd></div>
+            <div><dt>Local Codex</dt><dd id="runtime-codex-version">Checking</dd></div>
+            <div class="runtime-fact-wide"><dt>Readiness reason</dt><dd id="runtime-codex-reason">Detecting the supported local non-interactive command.</dd></div>
+            <div class="runtime-fact-wide"><dt>Next action</dt><dd id="runtime-codex-next-action">Save the task and generate a pack.</dd></div>
+          </dl>
+          <div class="boundary-notice runtime-execution-boundary">
+            <p>Execution uses only the approved pack in an isolated Git worktree. TWOS never merges or pushes automatically.</p>
+          </div>
+          <div class="gate-actions runtime-actions">
+            <button type="button" id="runtime-run-codex">Run Codex</button>
+            <button type="button" id="runtime-cancel-codex">Cancel Run</button>
+            <a class="nav-link runtime-view-result" id="runtime-view-result" href="#execution-result">View Result</a>
+          </div>
+          <details class="runtime-detail">
+            <summary>Advanced execution details</summary>
+            <dl class="task-fields">
+              <div><dt>Run record</dt><dd id="runtime-codex-run-id">None</dd></div>
+              <div><dt>Worktree branch</dt><dd id="runtime-codex-worktree-branch">None</dd></div>
+              <div><dt>Worktree path</dt><dd id="runtime-codex-worktree-path">Hidden until a run exists</dd></div>
+              <div><dt>Exit code</dt><dd id="runtime-codex-exit-code">None</dd></div>
+            </dl>
+          </details>
+        </article>
+
+        <article id="execution-result" class="workbench-card runtime-card runtime-result-card" aria-label="Result">
+          <div class="card-kicker"><span>5. Result</span><strong id="runtime-result-status">Not run</strong></div>
           <dl class="task-fields runtime-result-fields">
             <div><dt>Task</dt><dd id="runtime-result-task">None</dd></div>
-            <div><dt>Status</dt><dd id="runtime-lifecycle">Waiting</dd></div>
-            <div><dt>Result</dt><dd id="runtime-result-summary">No result yet</dd></div>
-            <div><dt>Saved</dt><dd id="runtime-result-saved">No</dd></div>
+            <div><dt>Overall result</dt><dd id="runtime-lifecycle">Waiting</dd></div>
+            <div><dt>Changed files</dt><dd id="runtime-result-changed-files">None</dd></div>
+            <div><dt>What completed</dt><dd id="runtime-result-summary">No result yet</dd></div>
+            <div><dt>Tests</dt><dd id="runtime-result-tests">Not run</dd></div>
+            <div><dt>Commit state</dt><dd id="runtime-result-commit">No commit</dd></div>
+            <div><dt>Boundary confirmation</dt><dd id="runtime-result-boundary">No merge or push performed.</dd></div>
+            <div><dt>Owner review</dt><dd id="runtime-result-owner-review">Run Codex to create review evidence.</dd></div>
           </dl>
           <ol class="runtime-flow" aria-label="Execution flow">
             <li data-runtime-flow="created"><span>Created</span></li>
@@ -173,7 +279,7 @@
             <li data-runtime-flow="acceptance"><span>Acceptance</span></li>
           </ol>
           <details class="runtime-detail">
-            <summary>Execution details</summary>
+            <summary>Advanced raw execution output</summary>
             <dl class="task-fields">
               <div><dt>Run record</dt><dd id="runtime-run-id">None</dd></div>
               <div><dt>Internal action</dt><dd id="runtime-run-action">Hidden until a run exists</dd></div>
@@ -181,11 +287,30 @@
               <div><dt>Finished</dt><dd id="runtime-run-finished">Not finished</dd></div>
               <div><dt>Error</dt><dd id="runtime-run-error">None</dd></div>
             </dl>
+            <h3>Standard output</h3>
+            <pre id="runtime-codex-stdout" class="compact-sync-preview">No output.</pre>
+            <h3>Standard error</h3>
+            <pre id="runtime-codex-stderr" class="compact-sync-preview">No errors.</pre>
           </details>
         </article>
 
-        <article id="acceptance-evidence" class="workbench-card runtime-card runtime-acceptance-card" aria-label="Acceptance Evidence">
-          <div class="card-kicker"><span>3. Acceptance</span><strong id="runtime-acceptance-decision">Waiting for execution</strong></div>
+        <article id="acceptance-evidence" class="workbench-card runtime-card runtime-acceptance-card" aria-label="Owner Acceptance">
+          <div class="card-kicker"><span>6. Owner Acceptance</span><strong id="runtime-owner-acceptance-status">Waiting for result</strong></div>
+          <p class="recommendation-copy">Inspect each visible product path, record Pass / Needs Review / Fail, then make the explicit Owner decision.</p>
+          <div class="runtime-owner-checklist" id="runtime-owner-acceptance-items">
+            <p>No Codex result is ready for Owner review.</p>
+          </div>
+          <label>
+            <span>Owner decision note</span>
+            <textarea id="runtime-owner-acceptance-note" rows="3" placeholder="Record the reason for acceptance or rejection."></textarea>
+          </label>
+          <div class="gate-actions runtime-actions">
+            <button type="button" id="runtime-accept-result">Accept Result</button>
+            <button type="button" id="runtime-reject-result">Reject Result</button>
+          </div>
+          <details class="runtime-detail">
+            <summary>Built-in Compact Sync acceptance evidence</summary>
+          <div class="card-kicker"><span>Deterministic worker acceptance</span><strong id="runtime-acceptance-decision">Waiting for execution</strong></div>
           <ul class="runtime-evidence-list" id="runtime-acceptance-checks">
             <li class="is-pending">Required output generated</li>
             <li class="is-pending">Boundary check passed</li>
@@ -196,7 +321,7 @@
             <div><dt>Audit</dt><dd id="runtime-acceptance-audit">Waiting</dd></div>
           </dl>
           <details class="runtime-detail">
-            <summary>Acceptance details</summary>
+            <summary>Advanced acceptance details</summary>
             <dl class="task-fields">
               <div><dt>Acceptance engine</dt><dd id="runtime-acceptance-engine">None</dd></div>
               <div><dt>Acceptance record</dt><dd id="runtime-acceptance-id">None</dd></div>
@@ -207,33 +332,19 @@
               <li>No acceptance audit event yet.</li>
             </ul>
           </details>
+          </details>
         </article>
 
         <article id="compact-sync-output" class="workbench-card runtime-card runtime-output-card" aria-label="Compact Sync Output">
-          <div class="card-kicker"><span>4. Compact Sync Output</span><strong id="runtime-output-state">Not generated</strong></div>
-          <pre id="runtime-compact-sync" class="compact-sync-preview">Persisted compact sync will appear after a real worker run.</pre>
+          <div class="card-kicker"><span>7. Compact Sync</span><strong id="runtime-output-state">Not generated</strong></div>
+          <pre id="runtime-compact-sync" class="compact-sync-preview">Persisted compact sync will appear after Owner Acceptance or a safe internal worker run.</pre>
+          <p class="boundary-notice runtime-final-boundary">Accepted in TWOS does not mean merged or pushed.</p>
         </article>
 
-        <article id="owner-runtime-status" class="workbench-card runtime-card runtime-owner-status" aria-label="Runtime Status">
-          <div class="card-kicker"><span>5. Runtime Status</span><strong id="runtime-health">Checking API...</strong></div>
-          <p class="recommendation-copy" id="runtime-owner">Owner: not authenticated.</p>
-          <div class="runtime-auth-row">
-            <label>
-              <span>Owner username</span>
-              <input id="runtime-username" type="text" value="owner" autocomplete="username" />
-            </label>
-            <label>
-              <span>Password</span>
-              <input id="runtime-password" type="password" autocomplete="current-password" />
-            </label>
-          </div>
-          <div class="gate-actions runtime-actions">
-            <button type="button" id="runtime-init-owner">Initialize owner</button>
-            <button type="button" id="runtime-login">Log in</button>
-            <button type="button" id="runtime-logout">Log out</button>
-            <button type="button" id="runtime-refresh">Refresh</button>
-          </div>
-
+        <article id="owner-runtime-status" class="workbench-card runtime-card runtime-owner-status" aria-label="Advanced Runtime Status">
+          <div class="card-kicker"><span>Advanced Runtime</span><strong>Available on demand</strong></div>
+          <details class="runtime-advanced">
+            <summary>Scheduler, provider/tool registry, and audit ledger</summary>
           <div class="runtime-schedule-panel" aria-label="Recurring Compact Sync schedule">
             <div class="card-kicker"><span>Recurring Compact Sync</span><strong id="runtime-schedule-state">No schedule</strong></div>
             <div class="runtime-schedule-controls">
@@ -258,8 +369,6 @@
             </ol>
           </div>
 
-          <details class="runtime-advanced">
-            <summary>Advanced</summary>
             <div class="runtime-registry-columns">
               <div>
                 <h3>Provider registry</h3>
@@ -2066,104 +2175,90 @@
 
       var runtimeState = {
         authenticated: false,
-        projects: [],
-        tasks: [],
-        runs: [],
-        schedules: [],
-        providers: [],
-        tools: [],
-        aiCapabilities: [],
-        aiPlan: null,
-        audit: [],
-        acceptance: null,
-        selectedTaskId: null,
-        selectedScheduleId: null,
-        renderedTaskId: null,
-        renderedPlanId: null,
-        creatingTask: false,
-        registryLoaded: false,
-        refreshing: false
+        authMode: "setup",
+        authOwner: null,
+        projects: [], tasks: [], runs: [], schedules: [], providers: [], tools: [], audit: [],
+        aiCapabilities: [], aiPlan: null, acceptance: null,
+        codexStatus: null, codexStatusLoaded: false, packs: [], codexRuns: [], ownerAcceptance: null,
+        selectedTaskId: null, selectedScheduleId: null, selectedPackId: null,
+        renderedTaskId: null, renderedPlanId: null, creatingTask: false,
+        registryLoaded: false, refreshing: false, pendingActions: new Set()
       };
       var runtimeEls = {
-        health: document.getElementById("runtime-health"),
-        owner: document.getElementById("runtime-owner"),
-        username: document.getElementById("runtime-username"),
-        password: document.getElementById("runtime-password"),
-        message: document.getElementById("runtime-message"),
-        taskSelect: document.getElementById("runtime-task-select"),
-        project: document.getElementById("runtime-project"),
-        title: document.getElementById("runtime-task-title"),
-        source: document.getElementById("runtime-source-sync"),
-        action: document.getElementById("runtime-task-action"),
-        output: document.getElementById("runtime-required-output"),
-        boundary: document.getElementById("runtime-boundary-risk"),
-        capabilityFocus: document.getElementById("runtime-capability-focus"),
-        riskLevel: document.getElementById("runtime-risk-level"),
-        aiUrgency: document.getElementById("runtime-ai-urgency"),
-        aiTeamCount: document.getElementById("runtime-ai-team-count"),
-        aiExecutionPlan: document.getElementById("runtime-ai-execution-plan"),
-        aiMinimumCount: document.getElementById("runtime-ai-minimum-count"),
-        aiPlanStatus: document.getElementById("runtime-ai-plan-status"),
-        aiProvider: document.getElementById("runtime-ai-provider"),
-        aiModel: document.getElementById("runtime-ai-model"),
-        aiFallback: document.getElementById("runtime-ai-fallback"),
-        aiStatus: document.getElementById("runtime-ai-status"),
-        aiWhy: document.getElementById("runtime-ai-why"),
-        aiCapabilityReasons: document.getElementById("runtime-ai-capability-reasons"),
-        aiOmitted: document.getElementById("runtime-ai-omitted"),
-        aiRouteCost: document.getElementById("runtime-ai-route-cost"),
-        aiRouteLatency: document.getElementById("runtime-ai-route-latency"),
-        aiRouteReason: document.getElementById("runtime-ai-route-reason"),
-        aiNextAction: document.getElementById("runtime-ai-next-action"),
-        aiRouteRecords: document.getElementById("runtime-ai-route-records"),
-        aiRouteCount: document.getElementById("runtime-ai-route-count"),
-        aiRouteDetails: document.getElementById("runtime-ai-route-details"),
-        taskSavedState: document.getElementById("runtime-task-saved-state"),
-        teamComposedState: document.getElementById("runtime-team-composed-state"),
-        routingEvaluatedState: document.getElementById("runtime-routing-evaluated-state"),
-        taskState: document.getElementById("runtime-task-state"),
-        lifecycle: document.getElementById("runtime-lifecycle"),
-        resultStatus: document.getElementById("runtime-result-status"),
-        resultTask: document.getElementById("runtime-result-task"),
-        resultSummary: document.getElementById("runtime-result-summary"),
-        resultSaved: document.getElementById("runtime-result-saved"),
-        runId: document.getElementById("runtime-run-id"),
-        runAction: document.getElementById("runtime-run-action"),
-        runStarted: document.getElementById("runtime-run-started"),
-        runFinished: document.getElementById("runtime-run-finished"),
-        runError: document.getElementById("runtime-run-error"),
-        acceptanceDecision: document.getElementById("runtime-acceptance-decision"),
-        acceptanceChecks: document.getElementById("runtime-acceptance-checks"),
-        acceptanceReason: document.getElementById("runtime-acceptance-reason"),
-        acceptanceAudit: document.getElementById("runtime-acceptance-audit"),
-        acceptanceEngine: document.getElementById("runtime-acceptance-engine"),
-        acceptanceId: document.getElementById("runtime-acceptance-id"),
-        acceptanceCount: document.getElementById("runtime-acceptance-count"),
-        acceptanceCheckIds: document.getElementById("runtime-acceptance-check-ids"),
-        acceptanceAuditEvents: document.getElementById("runtime-acceptance-audit-events"),
-        compactSync: document.getElementById("runtime-compact-sync"),
-        outputState: document.getElementById("runtime-output-state"),
-        scheduleState: document.getElementById("runtime-schedule-state"),
-        scheduleInterval: document.getElementById("runtime-schedule-interval"),
-        scheduleStatus: document.getElementById("runtime-schedule-status"),
-        scheduleLast: document.getElementById("runtime-schedule-last"),
-        scheduleNext: document.getElementById("runtime-schedule-next"),
-        scheduleCount: document.getElementById("runtime-schedule-count"),
-        scheduleRuns: document.getElementById("runtime-schedule-runs"),
-        providers: document.getElementById("runtime-provider-list"),
-        tools: document.getElementById("runtime-tool-list"),
-        auditList: document.getElementById("runtime-audit-list"),
-        composeTeam: document.getElementById("runtime-compose-team"),
-        saveTask: document.getElementById("runtime-save-task"),
-        runTask: document.getElementById("runtime-run-task"),
-        createSchedule: document.getElementById("runtime-create-schedule"),
-        pauseSchedule: document.getElementById("runtime-pause-schedule"),
+        health: document.getElementById("runtime-health"), owner: document.getElementById("runtime-owner"),
+        authTitle: document.getElementById("global-auth-title"), authFields: document.getElementById("global-auth-fields"),
+        authPrimary: document.getElementById("runtime-auth-primary"), logout: document.getElementById("runtime-logout"),
+        username: document.getElementById("runtime-username"), password: document.getElementById("runtime-password"),
+        feedback: document.getElementById("global-feedback"), message: document.getElementById("runtime-message"),
+        taskSelect: document.getElementById("runtime-task-select"), project: document.getElementById("runtime-project"),
+        workflowType: document.getElementById("runtime-workflow-type"), title: document.getElementById("runtime-task-title"),
+        objective: document.getElementById("runtime-objective"), source: document.getElementById("runtime-source-sync"),
+        action: document.getElementById("runtime-task-action"), output: document.getElementById("runtime-required-output"),
+        acceptanceTarget: document.getElementById("runtime-acceptance-target"),
+        implementationScope: document.getElementById("runtime-implementation-scope"),
+        forbiddenScope: document.getElementById("runtime-forbidden-scope"), boundary: document.getElementById("runtime-boundary-risk"),
+        repositoryIdentity: document.getElementById("runtime-repository-identity"),
+        sourceBaseline: document.getElementById("runtime-source-baseline"),
+        capabilityFocus: document.getElementById("runtime-capability-focus"), riskLevel: document.getElementById("runtime-risk-level"),
+        aiUrgency: document.getElementById("runtime-ai-urgency"), aiTeamCount: document.getElementById("runtime-ai-team-count"),
+        aiExecutionPlan: document.getElementById("runtime-ai-execution-plan"), aiMinimumCount: document.getElementById("runtime-ai-minimum-count"),
+        aiPlanStatus: document.getElementById("runtime-ai-plan-status"), aiProvider: document.getElementById("runtime-ai-provider"),
+        aiModel: document.getElementById("runtime-ai-model"), aiFallback: document.getElementById("runtime-ai-fallback"),
+        aiStatus: document.getElementById("runtime-ai-status"), aiWhy: document.getElementById("runtime-ai-why"),
+        aiCapabilityReasons: document.getElementById("runtime-ai-capability-reasons"), aiOmitted: document.getElementById("runtime-ai-omitted"),
+        aiRouteCost: document.getElementById("runtime-ai-route-cost"), aiRouteLatency: document.getElementById("runtime-ai-route-latency"),
+        aiRouteReason: document.getElementById("runtime-ai-route-reason"), aiNextAction: document.getElementById("runtime-ai-next-action"),
+        aiRouteRecords: document.getElementById("runtime-ai-route-records"), aiRouteCount: document.getElementById("runtime-ai-route-count"),
+        aiRouteDetails: document.getElementById("runtime-ai-route-details"), taskSavedState: document.getElementById("runtime-task-saved-state"),
+        teamComposedState: document.getElementById("runtime-team-composed-state"), routingEvaluatedState: document.getElementById("runtime-routing-evaluated-state"),
+        taskState: document.getElementById("runtime-task-state"), lifecycle: document.getElementById("runtime-lifecycle"),
+        packStatus: document.getElementById("runtime-pack-status"), packVersion: document.getElementById("runtime-pack-version"),
+        packApproval: document.getElementById("runtime-pack-approval"), packStageSummary: document.getElementById("runtime-pack-stage-summary"),
+        packAcceptanceTarget: document.getElementById("runtime-pack-acceptance-target"), packBoundaries: document.getElementById("runtime-pack-boundaries"),
+        packHistory: document.getElementById("runtime-pack-history"), packRaw: document.getElementById("runtime-pack-raw"),
+        packId: document.getElementById("runtime-pack-id"), packBaseline: document.getElementById("runtime-pack-baseline"),
+        codexStatus: document.getElementById("runtime-codex-status"), codexRunStatus: document.getElementById("runtime-codex-run-status"),
+        codexVersion: document.getElementById("runtime-codex-version"), codexReason: document.getElementById("runtime-codex-reason"),
+        codexNextAction: document.getElementById("runtime-codex-next-action"),
+        codexRunId: document.getElementById("runtime-codex-run-id"), codexWorktreeBranch: document.getElementById("runtime-codex-worktree-branch"),
+        codexWorktreePath: document.getElementById("runtime-codex-worktree-path"), codexExitCode: document.getElementById("runtime-codex-exit-code"),
+        resultStatus: document.getElementById("runtime-result-status"), resultTask: document.getElementById("runtime-result-task"),
+        resultChangedFiles: document.getElementById("runtime-result-changed-files"), resultSummary: document.getElementById("runtime-result-summary"),
+        resultTests: document.getElementById("runtime-result-tests"), resultCommit: document.getElementById("runtime-result-commit"),
+        resultBoundary: document.getElementById("runtime-result-boundary"), resultOwnerReview: document.getElementById("runtime-result-owner-review"),
+        runId: document.getElementById("runtime-run-id"), runAction: document.getElementById("runtime-run-action"),
+        runStarted: document.getElementById("runtime-run-started"), runFinished: document.getElementById("runtime-run-finished"),
+        runError: document.getElementById("runtime-run-error"), codexStdout: document.getElementById("runtime-codex-stdout"),
+        codexStderr: document.getElementById("runtime-codex-stderr"), ownerAcceptanceStatus: document.getElementById("runtime-owner-acceptance-status"),
+        ownerAcceptanceItems: document.getElementById("runtime-owner-acceptance-items"), ownerAcceptanceNote: document.getElementById("runtime-owner-acceptance-note"),
+        acceptanceDecision: document.getElementById("runtime-acceptance-decision"), acceptanceChecks: document.getElementById("runtime-acceptance-checks"),
+        acceptanceReason: document.getElementById("runtime-acceptance-reason"), acceptanceAudit: document.getElementById("runtime-acceptance-audit"),
+        acceptanceEngine: document.getElementById("runtime-acceptance-engine"), acceptanceId: document.getElementById("runtime-acceptance-id"),
+        acceptanceCount: document.getElementById("runtime-acceptance-count"), acceptanceCheckIds: document.getElementById("runtime-acceptance-check-ids"),
+        acceptanceAuditEvents: document.getElementById("runtime-acceptance-audit-events"), compactSync: document.getElementById("runtime-compact-sync"),
+        outputState: document.getElementById("runtime-output-state"), scheduleState: document.getElementById("runtime-schedule-state"),
+        scheduleInterval: document.getElementById("runtime-schedule-interval"), scheduleStatus: document.getElementById("runtime-schedule-status"),
+        scheduleLast: document.getElementById("runtime-schedule-last"), scheduleNext: document.getElementById("runtime-schedule-next"),
+        scheduleCount: document.getElementById("runtime-schedule-count"), scheduleRuns: document.getElementById("runtime-schedule-runs"),
+        providers: document.getElementById("runtime-provider-list"), tools: document.getElementById("runtime-tool-list"),
+        auditList: document.getElementById("runtime-audit-list"), composeTeam: document.getElementById("runtime-compose-team"),
+        saveTask: document.getElementById("runtime-save-task"), generatePack: document.getElementById("runtime-generate-pack"),
+        approvePack: document.getElementById("runtime-approve-pack"), runCodex: document.getElementById("runtime-run-codex"),
+        cancelCodex: document.getElementById("runtime-cancel-codex"), acceptResult: document.getElementById("runtime-accept-result"),
+        rejectResult: document.getElementById("runtime-reject-result"), runTask: document.getElementById("runtime-run-task"),
+        createSchedule: document.getElementById("runtime-create-schedule"), pauseSchedule: document.getElementById("runtime-pause-schedule"),
         resumeSchedule: document.getElementById("runtime-resume-schedule")
       };
 
-      function setRuntimeMessage(message) {
-        if (runtimeEls.message) runtimeEls.message.textContent = message;
+      function setRuntimeMessage(message, isError) {
+        [runtimeEls.message, runtimeEls.feedback].forEach(function (element) {
+          if (!element) return;
+          element.textContent = message;
+          element.classList.toggle("is-error", Boolean(isError));
+        });
       }
+
+      function isPending(id) { return runtimeState.pendingActions.has(id); }
 
       async function runtimeApi(path, options) {
         var requestOptions = Object.assign({ credentials: "same-origin", headers: {} }, options || {});
@@ -2172,51 +2267,93 @@
           requestOptions.body = JSON.stringify(requestOptions.body);
         }
         var response = await fetch(path, requestOptions);
-        var text = await response.text();
-        var data = text ? JSON.parse(text) : {};
+        var responseText = await response.text();
+        var data = responseText ? JSON.parse(responseText) : {};
         if (!response.ok) {
-          var message = data && data.error ? data.error.message : response.statusText;
-          throw new Error(message);
+          throw new Error(data && data.error ? data.error.message : response.statusText);
         }
         return data;
       }
 
+      function humanStatus(value) {
+        return String(value || "waiting").split("_").map(function (part) {
+          return part.charAt(0).toUpperCase() + part.slice(1);
+        }).join(" ");
+      }
+
+      function formatRuntimeTime(value) {
+        if (!value) return "Not recorded";
+        var date = new Date(value);
+        return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+      }
+
       function runtimeTask() {
         if (runtimeState.creatingTask) return null;
-        if (!runtimeState.selectedTaskId && runtimeState.tasks.length) {
-          runtimeState.selectedTaskId = runtimeState.tasks[runtimeState.tasks.length - 1].id;
-        }
-        return runtimeState.tasks.find(function (task) {
-          return task.id === runtimeState.selectedTaskId;
-        });
+        if (!runtimeState.selectedTaskId && runtimeState.tasks.length) runtimeState.selectedTaskId = runtimeState.tasks[0].id;
+        return runtimeState.tasks.find(function (task) { return task.id === runtimeState.selectedTaskId; });
       }
 
       function runtimeTaskRuns() {
         var task = runtimeTask();
-        if (!task) return [];
-        return runtimeState.runs.filter(function (run) { return run.task_id === task.id; });
+        return task ? runtimeState.runs.filter(function (run) { return run.task_id === task.id; }) : [];
       }
 
       function runtimeTaskSchedules() {
         var task = runtimeTask();
-        if (!task) return [];
-        return runtimeState.schedules.filter(function (schedule) { return schedule.task_id === task.id; });
+        return task ? runtimeState.schedules.filter(function (schedule) { return schedule.task_id === task.id; }) : [];
       }
 
       function runtimeSchedule() {
         var schedules = runtimeTaskSchedules();
-        if (!schedules.some(function (schedule) { return schedule.id === runtimeState.selectedScheduleId; })) {
+        if (!schedules.some(function (item) { return item.id === runtimeState.selectedScheduleId; })) {
           runtimeState.selectedScheduleId = schedules.length ? schedules[schedules.length - 1].id : null;
         }
-        return schedules.find(function (schedule) {
-          return schedule.id === runtimeState.selectedScheduleId;
+        return schedules.find(function (item) { return item.id === runtimeState.selectedScheduleId; });
+      }
+
+      function currentPack() { return runtimeState.packs.length ? runtimeState.packs[0] : null; }
+      function currentCodexRun() { return runtimeState.codexRuns.length ? runtimeState.codexRuns[0] : null; }
+
+      function renderRuntimeAuth() {
+        var mode = runtimeState.authMode;
+        runtimeEls.authFields.hidden = mode === "authenticated";
+        runtimeEls.authPrimary.hidden = mode === "authenticated";
+        runtimeEls.logout.hidden = mode !== "authenticated";
+        runtimeEls.authTitle.textContent = mode === "setup" ? "Create Owner Account" : mode === "login" ? "Owner Login" : "Owner session active";
+        runtimeEls.authPrimary.textContent = mode === "setup" ? "Create Owner Account" : "Log in";
+        runtimeEls.authPrimary.disabled = isPending("runtime-auth-primary");
+        runtimeEls.logout.disabled = isPending("runtime-logout");
+        runtimeEls.owner.textContent = mode === "authenticated"
+          ? "Logged in as " + runtimeState.authOwner.username
+          : mode === "login" ? "Owner account ready / logged out" : "Owner setup required";
+      }
+
+      function renderRuntimeRegistry(list, target) {
+        target.innerHTML = "";
+        if (!list.length) {
+          var empty = document.createElement("li");
+          empty.textContent = runtimeState.authenticated ? "No registry rows loaded." : "Authenticate to load registry.";
+          target.appendChild(empty);
+          return;
+        }
+        list.forEach(function (item) {
+          var li = document.createElement("li");
+          li.textContent = item.name + " / " + item.kind + ": " + item.status + " - " + item.details;
+          target.appendChild(li);
         });
       }
 
-      function formatRuntimeTime(value) {
-        if (!value) return "Not scheduled";
-        var date = new Date(value);
-        return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+      function renderRuntimeAudit() {
+        runtimeEls.auditList.innerHTML = "";
+        if (!runtimeState.audit.length) {
+          runtimeEls.auditList.innerHTML = "<li>No audit events yet.</li>";
+          return;
+        }
+        runtimeState.audit.forEach(function (event) {
+          var li = document.createElement("li");
+          li.textContent = formatRuntimeTime(event.created_at) + " / " + event.action + " / " + event.details;
+          runtimeEls.auditList.appendChild(li);
+        });
       }
 
       function runtimeScheduledRuns(schedule) {
@@ -2230,69 +2367,28 @@
         return runtimeState.runs.filter(function (run) { return runIds.indexOf(run.id) !== -1; }).reverse();
       }
 
-      function renderRuntimeRegistry(list, target) {
-        if (!target) return;
-        target.innerHTML = "";
-        if (!list.length) {
-          var empty = document.createElement("li");
-          empty.textContent = runtimeState.authenticated ? "No registry rows loaded." : "Authenticate to load registry.";
-          target.appendChild(empty);
-          return;
-        }
-        list.forEach(function (item) {
-          var li = document.createElement("li");
-          li.textContent = item.name + " / " + item.kind + ": " + item.status + " — " + item.details;
-          target.appendChild(li);
-        });
-      }
-
-      function renderRuntimeAudit() {
-        if (!runtimeEls.auditList) return;
-        runtimeEls.auditList.innerHTML = "";
-        if (!runtimeState.audit.length) {
-          var empty = document.createElement("li");
-          empty.textContent = runtimeState.authenticated ? "No audit events yet." : "Authenticate to load audit events.";
-          runtimeEls.auditList.appendChild(empty);
-          return;
-        }
-        runtimeState.audit.forEach(function (event) {
-          var li = document.createElement("li");
-          li.textContent = formatRuntimeTime(event.created_at) + " / " + event.action + " / " + event.details;
-          runtimeEls.auditList.appendChild(li);
-        });
-      }
-
       function renderRuntimeSchedules() {
         var selected = runtimeSchedule();
         var scheduledRuns = runtimeScheduledRuns(selected);
-        if (runtimeEls.scheduleState) {
-          runtimeEls.scheduleState.textContent = selected ? (selected.paused ? "Paused" : "Active") : "No schedule";
-        }
-        if (runtimeEls.scheduleStatus) runtimeEls.scheduleStatus.textContent = selected ? (selected.paused ? "Paused" : "Active") : "Not created";
-        if (runtimeEls.scheduleLast) runtimeEls.scheduleLast.textContent = selected && selected.last_run_at ? formatRuntimeTime(selected.last_run_at) : "Never";
-        if (runtimeEls.scheduleNext) runtimeEls.scheduleNext.textContent = selected && selected.next_run_at ? formatRuntimeTime(selected.next_run_at) : (selected && selected.paused ? "Paused" : "Not scheduled");
-        if (runtimeEls.scheduleCount) runtimeEls.scheduleCount.textContent = selected ? String(selected.run_count || 0) : "0";
-        if (runtimeEls.scheduleRuns) {
-          runtimeEls.scheduleRuns.innerHTML = "";
-          if (!scheduledRuns.length) {
-            var empty = document.createElement("li");
-            empty.textContent = selected ? "Waiting for the first recurring execution." : "No recurring executions yet.";
-            runtimeEls.scheduleRuns.appendChild(empty);
-          } else {
-            scheduledRuns.forEach(function (run, index) {
-              var li = document.createElement("li");
-              li.textContent = "Run " + (index + 1) + " / " + (run.status === "accepted" ? "Completed and accepted" : run.status.replace("_", " ")) + " / " + formatRuntimeTime(run.finished_at);
-              runtimeEls.scheduleRuns.appendChild(li);
-            });
-          }
-        }
-        if (runtimeEls.createSchedule) runtimeEls.createSchedule.disabled = !runtimeState.authenticated || !runtimeTask() || runtimeTask().action !== "Compact Sync";
-        if (runtimeEls.pauseSchedule) runtimeEls.pauseSchedule.disabled = !selected || selected.paused;
-        if (runtimeEls.resumeSchedule) runtimeEls.resumeSchedule.disabled = !selected || !selected.paused;
+        runtimeEls.scheduleState.textContent = selected ? (selected.paused ? "Paused" : "Active") : "No schedule";
+        runtimeEls.scheduleStatus.textContent = selected ? (selected.paused ? "Paused" : "Active") : "Not created";
+        runtimeEls.scheduleLast.textContent = selected && selected.last_run_at ? formatRuntimeTime(selected.last_run_at) : "Never";
+        runtimeEls.scheduleNext.textContent = selected && selected.next_run_at ? formatRuntimeTime(selected.next_run_at) : selected && selected.paused ? "Paused" : "Not scheduled";
+        runtimeEls.scheduleCount.textContent = selected ? String(selected.run_count || 0) : "0";
+        runtimeEls.scheduleRuns.innerHTML = "";
+        if (!scheduledRuns.length) runtimeEls.scheduleRuns.innerHTML = "<li>No recurring executions yet.</li>";
+        scheduledRuns.forEach(function (run, index) {
+          var li = document.createElement("li");
+          li.textContent = "Run " + (index + 1) + " / " + humanStatus(run.status) + " / " + formatRuntimeTime(run.finished_at);
+          runtimeEls.scheduleRuns.appendChild(li);
+        });
+        var task = runtimeTask();
+        runtimeEls.createSchedule.disabled = !runtimeState.authenticated || !task || task.action !== "Compact Sync" || isPending("runtime-create-schedule");
+        runtimeEls.pauseSchedule.disabled = !selected || selected.paused || isPending("runtime-pause-schedule");
+        runtimeEls.resumeSchedule.disabled = !selected || !selected.paused || isPending("runtime-resume-schedule");
       }
 
       function renderRuntimeProjects() {
-        if (!runtimeEls.project) return;
         var current = runtimeEls.project.value;
         runtimeEls.project.innerHTML = "";
         runtimeState.projects.forEach(function (project) {
@@ -2304,35 +2400,23 @@
         if (current) runtimeEls.project.value = current;
       }
 
-      function capabilityLabel(name) {
-        return String(name || "").split("_").map(function (part) {
-          return part.charAt(0).toUpperCase() + part.slice(1);
-        }).join(" ");
-      }
+      function capabilityLabel(name) { return humanStatus(name); }
 
       function renderRuntimeCapabilities() {
-        if (!runtimeEls.capabilityFocus) return;
         var current = runtimeEls.capabilityFocus.value;
-        runtimeEls.capabilityFocus.innerHTML = "";
-        var automatic = document.createElement("option");
-        automatic.value = "";
-        automatic.textContent = "Auto-select from task";
-        runtimeEls.capabilityFocus.appendChild(automatic);
-        runtimeState.aiCapabilities.filter(function (capability) {
-          return capability.enabled;
-        }).forEach(function (capability) {
+        runtimeEls.capabilityFocus.innerHTML = '<option value="">Auto-select from task</option>';
+        runtimeState.aiCapabilities.filter(function (item) { return item.enabled; }).forEach(function (item) {
           var option = document.createElement("option");
-          option.value = capability.name;
-          option.textContent = capabilityLabel(capability.name);
+          option.value = item.name;
+          option.textContent = capabilityLabel(item.name);
           runtimeEls.capabilityFocus.appendChild(option);
         });
         runtimeEls.capabilityFocus.value = current;
       }
 
       function setRuntimeOrchestrationState(element, label, complete) {
-        if (!element) return;
         element.classList.toggle("is-complete", complete);
-        element.textContent = (complete ? "✓ " : "") + label + (complete ? "" : ": waiting");
+        element.textContent = (complete ? "Complete: " : "Waiting: ") + label;
       }
 
       function renderRuntimeAIPlan() {
@@ -2354,98 +2438,65 @@
           runtimeEls.aiModel.textContent = "Waiting";
           runtimeEls.aiFallback.textContent = "Waiting";
           runtimeEls.aiRouteReason.textContent = "Save a task to evaluate routing.";
-          runtimeEls.aiNextAction.textContent = task ? "Recompose the AI Team to evaluate routing." : "Save a task first.";
+          runtimeEls.aiNextAction.textContent = task ? "Recompose the AI Team." : "Save a task first.";
           runtimeEls.aiRouteCost.textContent = "Unknown";
           runtimeEls.aiRouteLatency.textContent = "Unknown";
           runtimeEls.aiRouteRecords.textContent = "None";
           runtimeEls.aiRouteCount.textContent = "0";
-          runtimeEls.aiRouteDetails.innerHTML = "<li>Save a task to generate capability and routing evidence.</li>";
+          runtimeEls.aiRouteDetails.innerHTML = "<li>No routing evidence yet.</li>";
           setRuntimeOrchestrationState(runtimeEls.taskSavedState, "Task saved", Boolean(task));
           setRuntimeOrchestrationState(runtimeEls.teamComposedState, "AI Team composed", false);
           setRuntimeOrchestrationState(runtimeEls.routingEvaluatedState, "Routing evaluated", false);
           return;
         }
-
         var capabilities = plan.required_capabilities || [];
-        var team = plan.team || [];
         var primary = routes.length ? routes[0] : null;
         var selected = primary && primary.selected ? primary.selected : null;
         var fallback = primary && primary.fallback ? primary.fallback : null;
-        var evaluationCompleted = Boolean(routing && routing.evaluation_completed);
+        var evaluated = Boolean(routing && routing.evaluation_completed);
         runtimeEls.aiTeamCount.textContent = capabilities.length + " AI capabilities selected";
         runtimeEls.aiExecutionPlan.textContent = capabilities.map(capabilityLabel).join(" + ");
         runtimeEls.aiMinimumCount.textContent = String(plan.minimum_role_count) + " capabilities";
         runtimeEls.aiPlanStatus.textContent = "Composed";
         runtimeEls.aiWhy.textContent = plan.explanation;
         runtimeEls.aiCapabilityReasons.innerHTML = "";
-        team.forEach(function (item) {
+        (plan.team || []).forEach(function (item) {
           var li = document.createElement("li");
-          var metadata = runtimeState.aiCapabilities.find(function (capability) {
-            return capability.name === item.capability;
-          });
-          var reason = item.selection_reason || (metadata ? metadata.description : "Required by this saved plan.");
-          li.textContent = capabilityLabel(item.capability) + ": " + reason;
+          li.textContent = capabilityLabel(item.capability) + ": " + item.selection_reason;
           runtimeEls.aiCapabilityReasons.appendChild(li);
         });
-        runtimeEls.aiOmitted.textContent = plan.omission_explanation
-          || "Recompose this earlier plan to record task-specific omitted-capability evidence.";
-
-        var routingStatus = routing ? routing.status : "pending";
-        runtimeEls.aiStatus.textContent = routingStatus === "ready"
-          ? "Evaluated / ready"
-          : routingStatus === "unavailable"
-            ? "Evaluated / unavailable"
-            : routingStatus === "partial"
-              ? "Evaluated / partial"
-              : "Evaluation pending";
-        runtimeEls.aiProvider.textContent = routing && routing.selected_provider
-          ? routing.selected_provider
-          : evaluationCompleted ? "None" : "Waiting";
-        runtimeEls.aiModel.textContent = routing && routing.selected_model
-          ? routing.selected_model
-          : evaluationCompleted ? "None" : "Waiting";
+        runtimeEls.aiOmitted.textContent = plan.omission_explanation;
+        runtimeEls.aiStatus.textContent = evaluated ? "Evaluated / " + humanStatus(routing.status) : "Evaluation pending";
+        runtimeEls.aiProvider.textContent = routing && routing.selected_provider ? routing.selected_provider : evaluated ? "None" : "Waiting";
+        runtimeEls.aiModel.textContent = routing && routing.selected_model ? routing.selected_model : evaluated ? "None" : "Waiting";
         runtimeEls.aiFallback.textContent = routing && routing.fallback_status === "available" && fallback
           ? fallback.provider + " / " + fallback.model_name
-          : routing && routing.fallback_status === "unavailable"
-            ? "Unavailable. " + routing.fallback_reason
-            : "Waiting";
-        runtimeEls.aiRouteReason.textContent = routing ? routing.reason : "Routing evaluation is pending for this plan.";
-        runtimeEls.aiNextAction.textContent = routing ? routing.next_action : "Recompose the AI Team to evaluate routing.";
+          : routing && routing.fallback_status === "unavailable" ? "Unavailable. " + routing.fallback_reason : "Waiting";
+        runtimeEls.aiRouteReason.textContent = routing ? routing.reason : "Routing evaluation pending.";
+        runtimeEls.aiNextAction.textContent = routing ? routing.next_action : "Recompose the AI Team.";
         runtimeEls.aiRouteCost.textContent = selected ? selected.cost_metadata : "Unknown";
         runtimeEls.aiRouteLatency.textContent = selected ? selected.latency_metadata : "Unknown";
         runtimeEls.aiRouteRecords.textContent = routes.length ? routes.map(function (route) { return "#" + route.id; }).join(", ") : "None";
         runtimeEls.aiRouteCount.textContent = String(routes.length);
         runtimeEls.aiRouteDetails.innerHTML = "";
-        if (!routes.length) {
-          var empty = document.createElement("li");
-          empty.textContent = "Recompose the AI Team to complete and persist routing evaluation.";
-          runtimeEls.aiRouteDetails.appendChild(empty);
-        } else {
-          routes.forEach(function (route) {
-            var li = document.createElement("li");
-            var target = route.selected ? route.selected.provider + " / " + route.selected.model_name : "No provider or model selected";
-            li.textContent = capabilityLabel(route.capability) + " / " + route.status + " / " + target + ". "
-              + route.reason + " " + route.fallback_reason + " Next: " + route.next_action;
-            runtimeEls.aiRouteDetails.appendChild(li);
-          });
-        }
+        routes.forEach(function (route) {
+          var li = document.createElement("li");
+          var target = route.selected ? route.selected.provider + " / " + route.selected.model_name : "No provider or model selected";
+          li.textContent = capabilityLabel(route.capability) + " / " + route.status + " / " + target + ". " + route.reason;
+          runtimeEls.aiRouteDetails.appendChild(li);
+        });
         setRuntimeOrchestrationState(runtimeEls.taskSavedState, "Task saved", Boolean(task));
         setRuntimeOrchestrationState(runtimeEls.teamComposedState, "AI Team composed", true);
-        setRuntimeOrchestrationState(runtimeEls.routingEvaluatedState, "Routing evaluated", evaluationCompleted);
+        setRuntimeOrchestrationState(runtimeEls.routingEvaluatedState, "Routing evaluated", evaluated);
         if (runtimeState.renderedPlanId !== plan.id) {
-          if (runtimeEls.riskLevel) runtimeEls.riskLevel.value = plan.risk_level;
-          if (runtimeEls.aiUrgency) runtimeEls.aiUrgency.value = plan.urgency;
+          runtimeEls.riskLevel.value = plan.risk_level;
+          runtimeEls.aiUrgency.value = plan.urgency;
           runtimeState.renderedPlanId = plan.id;
         }
       }
 
       function renderRuntimeTaskSelect() {
-        if (!runtimeEls.taskSelect) return;
-        runtimeEls.taskSelect.innerHTML = "";
-        var draft = document.createElement("option");
-        draft.value = "";
-        draft.textContent = runtimeState.tasks.length ? "Choose a saved task" : "No saved tasks yet";
-        runtimeEls.taskSelect.appendChild(draft);
+        runtimeEls.taskSelect.innerHTML = '<option value="">' + (runtimeState.tasks.length ? "Choose a saved task" : "No saved tasks yet") + "</option>";
         runtimeState.tasks.forEach(function (task) {
           var option = document.createElement("option");
           option.value = String(task.id);
@@ -2458,104 +2509,237 @@
       function populateRuntimeTaskForm(task) {
         if (!task || runtimeState.renderedTaskId === task.id) return;
         runtimeEls.project.value = String(task.project_id);
+        runtimeEls.workflowType.value = task.workflow_type || "general";
         runtimeEls.title.value = task.title;
+        runtimeEls.objective.value = task.objective || task.title;
         runtimeEls.source.value = task.source_sync_summary || "";
         runtimeEls.action.value = task.action || "Analyze";
         runtimeEls.output.value = task.required_output || "";
-        runtimeEls.boundary.value = task.boundary_risk || "";
+        runtimeEls.acceptanceTarget.value = task.acceptance_target || "";
+        runtimeEls.implementationScope.value = task.implementation_scope || "";
+        runtimeEls.forbiddenScope.value = task.forbidden_scope || task.boundary_risk || "";
+        runtimeEls.boundary.value = task.boundary_risk || task.forbidden_scope || "";
+        runtimeEls.repositoryIdentity.textContent = task.repository_identity || "Not assigned";
+        runtimeEls.sourceBaseline.textContent = task.source_baseline_commit || "Not assigned";
         runtimeState.renderedTaskId = task.id;
       }
 
-      function renderRuntimeFlow(task, run) {
+      function renderRuntimePack() {
+        var pack = currentPack();
+        runtimeEls.packStatus.textContent = pack ? humanStatus(pack.status) : "Not generated";
+        runtimeEls.packVersion.textContent = pack ? "v" + pack.version : "None";
+        runtimeEls.packApproval.textContent = !pack ? "Required before execution" : pack.approved ? "Approved" : pack.status === "invalidated" ? "Invalidated" : "Owner approval required";
+        runtimeEls.packStageSummary.textContent = pack ? pack.stage_summary : "Generate a pack after saving the task.";
+        runtimeEls.packAcceptanceTarget.textContent = pack ? pack.acceptance_target : runtimeEls.acceptanceTarget.value || "Waiting for task";
+        runtimeEls.packBoundaries.textContent = pack ? pack.key_boundaries : "No merge, push, live trading, or live betting.";
+        runtimeEls.packHistory.innerHTML = '<option value="">No persisted versions</option>';
+        runtimeState.packs.forEach(function (item) {
+          var option = document.createElement("option");
+          option.value = String(item.id);
+          option.textContent = "v" + item.version + " / " + humanStatus(item.status);
+          runtimeEls.packHistory.appendChild(option);
+        });
+        var selected = runtimeState.packs.find(function (item) { return item.id === runtimeState.selectedPackId; }) || pack;
+        runtimeState.selectedPackId = selected ? selected.id : null;
+        if (selected) runtimeEls.packHistory.value = String(selected.id);
+        runtimeEls.packRaw.textContent = selected ? selected.content : "No instruction pack generated.";
+        runtimeEls.packId.textContent = selected ? "#" + selected.id : "None";
+        runtimeEls.packBaseline.textContent = selected ? selected.source_baseline_commit : "None";
+        var task = runtimeTask();
+        runtimeEls.generatePack.textContent = pack ? "Regenerate Codex Pack" : "Generate Codex Pack";
+        runtimeEls.generatePack.disabled = !runtimeState.authenticated || !task || task.workflow_type !== "product_development" || !runtimeState.aiPlan || isPending("runtime-generate-pack");
+        runtimeEls.approvePack.disabled = !pack || pack.status !== "approval_required" || isPending("runtime-approve-pack");
+      }
+
+      function renderCodexExecution() {
+        var detection = runtimeState.codexStatus;
+        var run = currentCodexRun();
+        var pack = currentPack();
+        runtimeEls.codexStatus.textContent = detection ? humanStatus(detection.status) : "Checking local Codex";
+        runtimeEls.codexVersion.textContent = detection ? (detection.version || humanStatus(detection.status)) : "Checking";
+        runtimeEls.codexReason.textContent = detection ? detection.reason : "Detecting the supported local non-interactive command.";
+        runtimeEls.codexRunStatus.textContent = run ? humanStatus(run.status) : "Not started";
+        runtimeEls.codexNextAction.textContent = run && ["queued", "running"].indexOf(run.status) !== -1
+          ? "Wait for completion or choose Cancel Run."
+          : detection ? detection.next_action : "Save the task and generate a pack.";
+        runtimeEls.codexRunId.textContent = run ? "#" + run.id : "None";
+        runtimeEls.codexWorktreeBranch.textContent = run && run.worktree_branch ? run.worktree_branch : "None";
+        runtimeEls.codexWorktreePath.textContent = run && run.worktree_path ? run.worktree_path : "Hidden until a run exists";
+        runtimeEls.codexExitCode.textContent = run && run.exit_code !== null ? String(run.exit_code) : "None";
+        var active = run && ["queued", "running"].indexOf(run.status) !== -1;
+        runtimeEls.runCodex.disabled = !runtimeState.authenticated || !pack || !pack.approved || !detection || detection.status !== "configured" || active || isPending("runtime-run-codex");
+        runtimeEls.cancelCodex.disabled = !active || isPending("runtime-cancel-codex");
+      }
+
+      function renderRuntimeFlow(task, codexRun, legacyRun) {
+        var run = codexRun || legacyRun;
+        var status = run ? run.status : "";
         var complete = {
           created: Boolean(task),
-          running: Boolean(run && run.started_at),
-          completed: Boolean(run && run.finished_at && run.status !== "failed"),
-          acceptance: Boolean(runtimeState.acceptance && runtimeState.acceptance.decision !== "pending")
+          running: Boolean(run && (run.started_at || ["running", "completed", "needs_review"].indexOf(status) !== -1)),
+          completed: Boolean(run && run.finished_at && ["failed", "cancelled", "timed_out"].indexOf(status) === -1),
+          acceptance: Boolean(runtimeState.ownerAcceptance && ["accepted", "rejected"].indexOf(runtimeState.ownerAcceptance.status) !== -1)
+            || Boolean(runtimeState.acceptance && runtimeState.acceptance.decision !== "pending")
         };
         document.querySelectorAll("[data-runtime-flow]").forEach(function (item) {
           var key = item.getAttribute("data-runtime-flow");
           item.classList.toggle("is-complete", complete[key]);
-          item.classList.toggle("is-failed", key === "completed" && Boolean(run && run.status === "failed"));
+          item.classList.toggle("is-failed", key === "completed" && ["failed", "timed_out"].indexOf(status) !== -1);
         });
       }
 
-      function renderRuntimeResult(task, run) {
-        var completed = Boolean(run && run.finished_at && run.status !== "failed");
-        var saved = Boolean(task && run && run.result && task.compact_sync_result === run.result);
-        if (runtimeEls.resultStatus) runtimeEls.resultStatus.textContent = run ? (run.status === "failed" ? "Failed" : "Completed") : "Not run";
-        if (runtimeEls.resultTask) runtimeEls.resultTask.textContent = task ? task.title : "None";
-        if (runtimeEls.lifecycle) runtimeEls.lifecycle.textContent = run ? (run.status === "failed" ? "Failed" : completed ? "Completed" : run.status.replace("_", " ")) : task ? "Created" : "Waiting";
-        if (runtimeEls.resultSummary) runtimeEls.resultSummary.textContent = run && run.result ? "Generated compact sync" : run && run.error ? "Execution failed" : "No result yet";
-        if (runtimeEls.resultSaved) runtimeEls.resultSaved.textContent = saved ? "Yes" : "No";
-        if (runtimeEls.runId) runtimeEls.runId.textContent = run ? "#" + run.id : "None";
-        if (runtimeEls.runAction) runtimeEls.runAction.textContent = run ? run.action : "Hidden until a run exists";
-        if (runtimeEls.runStarted) runtimeEls.runStarted.textContent = run ? formatRuntimeTime(run.started_at) : "Not started";
-        if (runtimeEls.runFinished) runtimeEls.runFinished.textContent = run ? formatRuntimeTime(run.finished_at) : "Not finished";
-        if (runtimeEls.runError) runtimeEls.runError.textContent = run && run.error ? run.error : "None";
-        renderRuntimeFlow(task, run);
+      function renderRuntimeResult(task, legacyRun) {
+        var run = currentCodexRun();
+        var result = run && run.result ? run.result : null;
+        runtimeEls.resultTask.textContent = task ? task.title : "None";
+        if (run) {
+          var changed = result && result.changed_files ? result.changed_files : [];
+          var tests = result && result.tests_reported ? result.tests_reported : [];
+          var commits = result && result.commits ? result.commits : [];
+          runtimeEls.resultStatus.textContent = humanStatus(run.status);
+          runtimeEls.lifecycle.textContent = humanStatus(run.status);
+          runtimeEls.resultChangedFiles.textContent = changed.length ? changed.join(", ") : "None";
+          runtimeEls.resultSummary.textContent = run.owner_summary || "Execution result persisted.";
+          runtimeEls.resultTests.textContent = tests.length ? tests.join(" | ") : result && result.validation && result.validation.diff_check ? "Git diff check passed; no test output reported." : "Needs review";
+          runtimeEls.resultCommit.textContent = commits.length ? commits.join(" | ") : result && result.post_run_commit ? "No new commit; worktree at " + result.post_run_commit.slice(0, 12) : "No commit evidence";
+          runtimeEls.resultBoundary.textContent = result && result.boundary_confirmation
+            ? "Isolated worktree: yes; automatic merge: no; automatic push: no."
+            : "No merge or push performed.";
+          runtimeEls.resultOwnerReview.textContent = runtimeState.ownerAcceptance ? "Complete the visible Owner Acceptance checklist." : "Inspect result evidence and execution status.";
+          runtimeEls.runId.textContent = "#" + run.id;
+          runtimeEls.runAction.textContent = "Approved Codex Instruction Pack v" + (run.pack_version || "?");
+          runtimeEls.runStarted.textContent = formatRuntimeTime(run.started_at);
+          runtimeEls.runFinished.textContent = formatRuntimeTime(run.finished_at);
+          runtimeEls.runError.textContent = run.status === "failed" ? run.owner_summary : "None";
+          runtimeEls.codexStdout.textContent = run.stdout || "No standard output.";
+          runtimeEls.codexStderr.textContent = run.stderr || "No standard error.";
+        } else if (legacyRun) {
+          runtimeEls.resultStatus.textContent = humanStatus(legacyRun.status);
+          runtimeEls.lifecycle.textContent = humanStatus(legacyRun.status);
+          runtimeEls.resultChangedFiles.textContent = "Internal worker only";
+          runtimeEls.resultSummary.textContent = legacyRun.result ? "Generated compact sync" : legacyRun.error || "No result yet";
+          runtimeEls.resultTests.textContent = "Deterministic worker checks";
+          runtimeEls.resultCommit.textContent = "No Git commit";
+          runtimeEls.resultBoundary.textContent = "Internal worker only; no external call, merge, or push.";
+          runtimeEls.resultOwnerReview.textContent = "Deterministic acceptance evidence is available below.";
+          runtimeEls.runId.textContent = "#" + legacyRun.id;
+          runtimeEls.runAction.textContent = legacyRun.action;
+          runtimeEls.runStarted.textContent = formatRuntimeTime(legacyRun.started_at);
+          runtimeEls.runFinished.textContent = formatRuntimeTime(legacyRun.finished_at);
+          runtimeEls.runError.textContent = legacyRun.error || "None";
+        } else {
+          runtimeEls.resultStatus.textContent = "Not run";
+          runtimeEls.lifecycle.textContent = task ? humanStatus(task.status) : "Waiting";
+          runtimeEls.resultChangedFiles.textContent = "None";
+          runtimeEls.resultSummary.textContent = "No result yet";
+          runtimeEls.resultTests.textContent = "Not run";
+          runtimeEls.resultCommit.textContent = "No commit";
+          runtimeEls.resultBoundary.textContent = "No merge or push performed.";
+          runtimeEls.resultOwnerReview.textContent = "Run Codex to create review evidence.";
+          runtimeEls.runId.textContent = "None";
+          runtimeEls.runAction.textContent = "Hidden until a run exists";
+          runtimeEls.runStarted.textContent = "Not started";
+          runtimeEls.runFinished.textContent = "Not finished";
+          runtimeEls.runError.textContent = "None";
+          runtimeEls.codexStdout.textContent = "No output.";
+          runtimeEls.codexStderr.textContent = "No errors.";
+        }
+        renderRuntimeFlow(task, run, legacyRun);
+      }
+
+      function renderOwnerAcceptance() {
+        var acceptance = runtimeState.ownerAcceptance;
+        runtimeEls.ownerAcceptanceStatus.textContent = acceptance ? humanStatus(acceptance.status) : "Waiting for result";
+        runtimeEls.ownerAcceptanceItems.innerHTML = "";
+        if (!acceptance) {
+          runtimeEls.ownerAcceptanceItems.innerHTML = "<p>No Codex result is ready for Owner review.</p>";
+        } else {
+          acceptance.items.forEach(function (item) {
+            var row = document.createElement("section");
+            row.className = "runtime-owner-item status-" + item.status;
+            var title = document.createElement("strong");
+            title.textContent = item.label + (item.required ? " / Required" : "");
+            var path = document.createElement("p");
+            path.textContent = "Inspect: " + item.inspect_target + " | UI path: " + item.ui_path;
+            var standard = document.createElement("p");
+            standard.textContent = "Pass standard: " + item.pass_standard;
+            var note = document.createElement("input");
+            note.type = "text";
+            note.value = item.note || "";
+            note.placeholder = "Short evidence note";
+            note.setAttribute("aria-label", "Note for " + item.label);
+            var actions = document.createElement("div");
+            actions.className = "gate-actions runtime-item-actions";
+            ["pass", "needs_review", "fail"].forEach(function (status) {
+              var button = document.createElement("button");
+              button.type = "button";
+              button.textContent = humanStatus(status);
+              button.disabled = acceptance.status !== "owner_review";
+              button.addEventListener("click", function () { updateOwnerAcceptanceItem(item.id, status, note.value); });
+              actions.appendChild(button);
+            });
+            row.appendChild(title); row.appendChild(path); row.appendChild(standard); row.appendChild(note); row.appendChild(actions);
+            runtimeEls.ownerAcceptanceItems.appendChild(row);
+          });
+        }
+        if (acceptance && runtimeState.renderedAcceptanceId !== acceptance.id) {
+          runtimeEls.ownerAcceptanceNote.value = acceptance.owner_note || "";
+          runtimeState.renderedAcceptanceId = acceptance.id;
+        }
+        runtimeEls.acceptResult.disabled = !acceptance || !acceptance.can_accept || acceptance.status !== "owner_review" || isPending("runtime-accept-result");
+        runtimeEls.rejectResult.disabled = !acceptance || acceptance.status !== "owner_review" || isPending("runtime-reject-result");
       }
 
       function renderRuntimeAcceptance() {
         var acceptance = runtimeState.acceptance;
         var checks = acceptance && acceptance.checks ? acceptance.checks : [];
-        if (runtimeEls.acceptanceDecision) runtimeEls.acceptanceDecision.textContent = acceptance ? acceptance.display_decision : "Waiting for execution";
-        if (runtimeEls.acceptanceReason) runtimeEls.acceptanceReason.textContent = acceptance ? acceptance.reason : "Run Compact Sync to create acceptance evidence.";
-        if (runtimeEls.acceptanceAudit) runtimeEls.acceptanceAudit.textContent = acceptance && acceptance.audit_created ? "Created" : "Waiting";
-        if (runtimeEls.acceptanceEngine) runtimeEls.acceptanceEngine.textContent = acceptance && acceptance.engine ? acceptance.engine : "None";
-        if (runtimeEls.acceptanceId) runtimeEls.acceptanceId.textContent = acceptance && acceptance.id ? "#" + acceptance.id : "None";
-        if (runtimeEls.acceptanceCount) runtimeEls.acceptanceCount.textContent = acceptance ? String(acceptance.record_count || 0) : "0";
-        if (runtimeEls.acceptanceCheckIds) runtimeEls.acceptanceCheckIds.textContent = checks.length ? checks.map(function (check) { return check.id; }).join(", ") : "None";
-        if (runtimeEls.acceptanceChecks) {
-          runtimeEls.acceptanceChecks.innerHTML = "";
-          var visibleChecks = checks.length ? checks : [
-            { label: "Required output generated", passed: null },
-            { label: "Boundary check passed", passed: null },
-            { label: "Result persisted", passed: null }
-          ];
-          visibleChecks.forEach(function (check) {
-            var li = document.createElement("li");
-            li.className = check.passed === true ? "is-pass" : check.passed === false ? "is-fail" : "is-pending";
-            li.textContent = (check.passed === true ? "✓ " : check.passed === false ? "Needs review: " : "") + check.label;
-            runtimeEls.acceptanceChecks.appendChild(li);
-          });
-        }
-        if (runtimeEls.acceptanceAuditEvents) {
-          runtimeEls.acceptanceAuditEvents.innerHTML = "";
-          var events = acceptance && acceptance.audit_events ? acceptance.audit_events : [];
-          if (!events.length) {
-            var empty = document.createElement("li");
-            empty.textContent = "No acceptance audit event yet.";
-            runtimeEls.acceptanceAuditEvents.appendChild(empty);
-          } else {
-            events.forEach(function (event) {
-              var li = document.createElement("li");
-              li.textContent = formatRuntimeTime(event.created_at) + " / " + event.action + " / " + event.details;
-              runtimeEls.acceptanceAuditEvents.appendChild(li);
-            });
-          }
-        }
+        runtimeEls.acceptanceDecision.textContent = acceptance ? acceptance.display_decision : "Waiting for execution";
+        runtimeEls.acceptanceReason.textContent = acceptance ? acceptance.reason : "Run Compact Sync to create deterministic acceptance evidence.";
+        runtimeEls.acceptanceAudit.textContent = acceptance && acceptance.audit_created ? "Created" : "Waiting";
+        runtimeEls.acceptanceEngine.textContent = acceptance && acceptance.engine ? acceptance.engine : "None";
+        runtimeEls.acceptanceId.textContent = acceptance && acceptance.id ? "#" + acceptance.id : "None";
+        runtimeEls.acceptanceCount.textContent = acceptance ? String(acceptance.record_count || 0) : "0";
+        runtimeEls.acceptanceCheckIds.textContent = checks.length ? checks.map(function (check) { return check.id; }).join(", ") : "None";
+        runtimeEls.acceptanceChecks.innerHTML = "";
+        (checks.length ? checks : [{ label: "Required output generated", passed: null }, { label: "Boundary check passed", passed: null }, { label: "Result persisted", passed: null }]).forEach(function (check) {
+          var li = document.createElement("li");
+          li.className = check.passed === true ? "is-pass" : check.passed === false ? "is-fail" : "is-pending";
+          li.textContent = check.label;
+          runtimeEls.acceptanceChecks.appendChild(li);
+        });
+        runtimeEls.acceptanceAuditEvents.innerHTML = "";
+        var events = acceptance && acceptance.audit_events ? acceptance.audit_events : [];
+        if (!events.length) runtimeEls.acceptanceAuditEvents.innerHTML = "<li>No acceptance audit event yet.</li>";
+        events.forEach(function (event) {
+          var li = document.createElement("li");
+          li.textContent = formatRuntimeTime(event.created_at) + " / " + event.action + " / " + event.details;
+          runtimeEls.acceptanceAuditEvents.appendChild(li);
+        });
       }
 
       function renderRuntime() {
+        renderRuntimeAuth();
         renderRuntimeProjects();
         renderRuntimeCapabilities();
-        var task = runtimeTask();
-        var runs = runtimeTaskRuns();
-        var latestRun = runs.length ? runs[0] : null;
         renderRuntimeTaskSelect();
+        var task = runtimeTask();
+        var legacyRuns = runtimeTaskRuns();
+        var legacyRun = legacyRuns.length ? legacyRuns[0] : null;
         populateRuntimeTaskForm(task);
-        if (runtimeEls.taskState) runtimeEls.taskState.textContent = task ? (task.status === "accepted" ? "Saved / accepted" : "Saved / " + task.status.replace("_", " ")) : runtimeState.creatingTask ? "New task" : "No task selected";
-        if (runtimeEls.compactSync) runtimeEls.compactSync.textContent = task && task.compact_sync_result ? task.compact_sync_result : "Persisted compact sync will appear after a real worker run.";
-        if (runtimeEls.outputState) runtimeEls.outputState.textContent = task && task.compact_sync_result ? "Saved" : "Not generated";
-        if (runtimeEls.saveTask) runtimeEls.saveTask.disabled = !runtimeState.authenticated;
-        if (runtimeEls.composeTeam) runtimeEls.composeTeam.disabled = !runtimeState.authenticated || !task;
-        if (runtimeEls.runTask) {
-          runtimeEls.runTask.disabled = !runtimeState.authenticated || !task || task.action !== "Compact Sync";
-          runtimeEls.runTask.title = task && task.action !== "Compact Sync" ? "Save a Compact Sync task to use the internal worker." : "Run the selected Compact Sync task.";
-        }
-        renderRuntimeResult(task, latestRun);
+        runtimeEls.taskState.textContent = task ? "Saved / " + humanStatus(task.status) : runtimeState.creatingTask ? "New task" : "No task selected";
+        var acceptedSync = runtimeState.ownerAcceptance && runtimeState.ownerAcceptance.compact_sync_result;
+        var compactSync = acceptedSync || (task && task.compact_sync_result);
+        runtimeEls.compactSync.textContent = compactSync || "Persisted compact sync will appear after Owner Acceptance or a safe internal worker run.";
+        runtimeEls.outputState.textContent = compactSync ? "Saved" : "Not generated";
+        runtimeEls.saveTask.disabled = !runtimeState.authenticated || isPending("runtime-save-task");
+        runtimeEls.composeTeam.disabled = !runtimeState.authenticated || !task || isPending("runtime-compose-team");
+        runtimeEls.runTask.disabled = !runtimeState.authenticated || !task || task.action !== "Compact Sync" || isPending("runtime-run-task");
+        runtimeEls.runTask.title = task && task.action === "Compact Sync" ? "Run the safe internal Compact Sync worker." : "Choose Compact Sync under Advanced task metadata and save the task first.";
         renderRuntimeAIPlan();
+        renderRuntimePack();
+        renderCodexExecution();
+        renderRuntimeResult(task, legacyRun);
+        renderOwnerAcceptance();
         renderRuntimeAcceptance();
         renderRuntimeSchedules();
         renderRuntimeRegistry(runtimeState.providers, runtimeEls.providers);
@@ -2563,101 +2747,80 @@
         renderRuntimeAudit();
       }
 
+      function clearProtectedRuntimeState() {
+        runtimeState.projects = []; runtimeState.tasks = []; runtimeState.runs = []; runtimeState.schedules = [];
+        runtimeState.providers = []; runtimeState.tools = []; runtimeState.audit = []; runtimeState.aiCapabilities = [];
+        runtimeState.aiPlan = null; runtimeState.acceptance = null; runtimeState.packs = []; runtimeState.codexRuns = [];
+        runtimeState.ownerAcceptance = null; runtimeState.registryLoaded = false; runtimeState.codexStatusLoaded = false;
+      }
+
       async function refreshRuntime() {
-        if (!runtimeEls.health) return;
         if (runtimeState.refreshing) return;
         runtimeState.refreshing = true;
         try {
-          var health = await runtimeApi("/api/health");
-          runtimeEls.health.textContent = health.status === "healthy" && health.database === "ok" ? "Healthy" : health.status;
-        } catch (error) {
-          runtimeEls.health.textContent = "API unavailable";
-          setRuntimeMessage(error.message);
-          runtimeState.refreshing = false;
-          return;
-        }
-        try {
-          var me = await runtimeApi("/api/auth/me");
-          runtimeState.authenticated = true;
-          runtimeEls.owner.textContent = "Owner: " + me.owner.username;
-          if (runtimeEls.message.textContent.indexOf("Log in under Runtime Status") === 0) {
-            setRuntimeMessage("Authenticated. Select a saved task or create a new one.");
+          var publicData = await Promise.all([runtimeApi("/api/health"), runtimeApi("/api/auth/status")]);
+          var health = publicData[0];
+          var auth = publicData[1];
+          runtimeEls.health.textContent = health.status === "healthy" && health.database === "ok" ? "Healthy" : humanStatus(health.status);
+          runtimeState.authMode = auth.mode;
+          runtimeState.authenticated = auth.authenticated;
+          runtimeState.authOwner = auth.owner;
+          renderRuntimeAuth();
+          if (!runtimeState.authenticated) {
+            clearProtectedRuntimeState();
+            renderRuntime();
+            return;
           }
-        } catch (error) {
-          runtimeState.authenticated = false;
-          runtimeEls.owner.textContent = "Owner: not authenticated.";
-          runtimeState.projects = [];
-          runtimeState.tasks = [];
-          runtimeState.runs = [];
-          runtimeState.schedules = [];
-          runtimeState.providers = [];
-          runtimeState.tools = [];
-          runtimeState.aiCapabilities = [];
-          runtimeState.aiPlan = null;
-          runtimeState.audit = [];
-          runtimeState.acceptance = null;
-          runtimeState.registryLoaded = false;
-          renderRuntime();
-          runtimeState.refreshing = false;
-          return;
-        }
-        try {
           var runtimeData = await Promise.all([
-            runtimeApi("/api/projects"),
-            runtimeApi("/api/tasks"),
-            runtimeApi("/api/runs"),
-            runtimeApi("/api/schedules"),
-            runtimeApi("/api/audit")
+            runtimeApi("/api/projects"), runtimeApi("/api/tasks"), runtimeApi("/api/runs"),
+            runtimeApi("/api/schedules"), runtimeApi("/api/audit")
           ]);
-          runtimeState.projects = runtimeData[0];
-          runtimeState.tasks = runtimeData[1];
-          runtimeState.runs = runtimeData[2];
-          runtimeState.schedules = runtimeData[3];
-          runtimeState.audit = runtimeData[4];
+          runtimeState.projects = runtimeData[0]; runtimeState.tasks = runtimeData[1]; runtimeState.runs = runtimeData[2];
+          runtimeState.schedules = runtimeData[3]; runtimeState.audit = runtimeData[4];
           if (!runtimeState.registryLoaded) {
-            var registryData = await Promise.all([
-              runtimeApi("/api/providers"),
-              runtimeApi("/api/tools"),
-              runtimeApi("/api/ai/capabilities")
-            ]);
-            runtimeState.providers = registryData[0];
-            runtimeState.tools = registryData[1];
-            runtimeState.aiCapabilities = registryData[2];
+            var registry = await Promise.all([runtimeApi("/api/providers"), runtimeApi("/api/tools"), runtimeApi("/api/ai/capabilities")]);
+            runtimeState.providers = registry[0]; runtimeState.tools = registry[1]; runtimeState.aiCapabilities = registry[2];
             runtimeState.registryLoaded = true;
+          }
+          if (!runtimeState.codexStatusLoaded) {
+            runtimeState.codexStatus = await runtimeApi("/api/codex/status");
+            runtimeState.codexStatusLoaded = true;
           }
           var task = runtimeTask();
           if (task) {
-            var taskDetails = await Promise.all([
+            var details = await Promise.all([
               runtimeApi("/api/tasks/" + task.id + "/acceptance"),
-              runtimeApi("/api/tasks/" + task.id + "/ai-plan")
+              runtimeApi("/api/tasks/" + task.id + "/ai-plan"),
+              runtimeApi("/api/tasks/" + task.id + "/codex-packs"),
+              runtimeApi("/api/tasks/" + task.id + "/codex-runs"),
+              runtimeApi("/api/tasks/" + task.id + "/owner-acceptance")
             ]);
-            runtimeState.acceptance = taskDetails[0];
-            runtimeState.aiPlan = taskDetails[1];
+            runtimeState.acceptance = details[0]; runtimeState.aiPlan = details[1]; runtimeState.packs = details[2];
+            runtimeState.codexRuns = details[3]; runtimeState.ownerAcceptance = details[4].acceptance;
           } else {
-            runtimeState.acceptance = null;
-            runtimeState.aiPlan = null;
+            runtimeState.acceptance = null; runtimeState.aiPlan = null; runtimeState.packs = [];
+            runtimeState.codexRuns = []; runtimeState.ownerAcceptance = null;
           }
           renderRuntime();
+        } catch (error) {
+          if (runtimeEls.health.textContent === "Checking...") runtimeEls.health.textContent = "API unavailable";
+          setRuntimeMessage(error.message, true);
         } finally {
           runtimeState.refreshing = false;
         }
       }
 
       async function initializeOwner() {
-        await runtimeApi("/api/auth/init", {
-          method: "POST",
-          body: { username: runtimeEls.username.value, password: runtimeEls.password.value }
-        });
-        setRuntimeMessage("Owner initialized. Log in to begin verification.");
+        await runtimeApi("/api/auth/init", { method: "POST", body: { username: runtimeEls.username.value, password: runtimeEls.password.value } });
+        setRuntimeMessage("Owner account created. Log in to continue.");
+        runtimeEls.password.value = "";
+        await refreshRuntime();
       }
 
       async function loginRuntime() {
-        await runtimeApi("/api/auth/login", {
-          method: "POST",
-          body: { username: runtimeEls.username.value, password: runtimeEls.password.value }
-        });
-        setRuntimeMessage("Logged in. Runtime verification is ready.");
+        await runtimeApi("/api/auth/login", { method: "POST", body: { username: runtimeEls.username.value, password: runtimeEls.password.value } });
         runtimeEls.password.value = "";
+        setRuntimeMessage("Logged in as " + runtimeEls.username.value + ".");
         await refreshRuntime();
       }
 
@@ -2667,44 +2830,42 @@
         await refreshRuntime();
       }
 
+      async function authPrimaryAction() {
+        return runtimeState.authMode === "setup" ? initializeOwner() : loginRuntime();
+      }
+
       async function composeRuntimeAITeam(task) {
-        var capabilityOverride = runtimeEls.capabilityFocus.value ? [runtimeEls.capabilityFocus.value] : [];
-        await runtimeApi("/api/ai/team-compose", {
-          method: "POST",
-          body: {
-            task_id: task.id,
-            risk_level: runtimeEls.riskLevel.value,
-            urgency: runtimeEls.aiUrgency.value,
-            capability_override: capabilityOverride
-          }
-        });
-        runtimeState.aiPlan = await runtimeApi("/api/tasks/" + task.id + "/ai-plan");
+        var override = runtimeEls.capabilityFocus.value ? [runtimeEls.capabilityFocus.value] : [];
+        await runtimeApi("/api/ai/team-compose", { method: "POST", body: {
+          task_id: task.id, risk_level: runtimeEls.riskLevel.value, urgency: runtimeEls.aiUrgency.value, capability_override: override
+        } });
         runtimeState.renderedPlanId = null;
-        return runtimeState.aiPlan;
       }
 
       function runtimeTaskPayload() {
         return {
-          project_id: Number(runtimeEls.project.value),
-          title: runtimeEls.title.value,
-          action: runtimeEls.action.value,
-          source_sync_summary: runtimeEls.source.value,
-          required_output: runtimeEls.output.value,
-          boundary_risk: runtimeEls.boundary.value
+          project_id: Number(runtimeEls.project.value), title: runtimeEls.title.value, action: runtimeEls.action.value,
+          workflow_type: runtimeEls.workflowType.value, objective: runtimeEls.objective.value,
+          source_sync_summary: runtimeEls.source.value, required_output: runtimeEls.output.value,
+          implementation_scope: runtimeEls.implementationScope.value, forbidden_scope: runtimeEls.forbiddenScope.value,
+          acceptance_target: runtimeEls.acceptanceTarget.value,
+          boundary_risk: runtimeEls.forbiddenScope.value || runtimeEls.boundary.value
         };
       }
 
       async function persistRuntimeTask(task) {
-        if (task) {
-          return runtimeApi("/api/tasks/" + task.id, {
-            method: "PATCH",
-            body: runtimeTaskPayload()
-          });
-        }
-        return runtimeApi("/api/tasks", {
-          method: "POST",
-          body: runtimeTaskPayload()
-        });
+        return task
+          ? runtimeApi("/api/tasks/" + task.id, { method: "PATCH", body: runtimeTaskPayload() })
+          : runtimeApi("/api/tasks", { method: "POST", body: runtimeTaskPayload() });
+      }
+
+      async function saveRuntimeTask() {
+        if (!runtimeEls.project.value) throw new Error("No project loaded. Log in first.");
+        var task = await persistRuntimeTask(runtimeTask());
+        runtimeState.creatingTask = false; runtimeState.selectedTaskId = task.id; runtimeState.renderedTaskId = null;
+        await composeRuntimeAITeam(task);
+        setRuntimeMessage("Task saved. AI Team composed. Routing evaluated.");
+        await refreshRuntime();
       }
 
       async function recomposeRuntimeAITeam() {
@@ -2712,63 +2873,97 @@
         if (!task) throw new Error("Save or select a task before recomposing the AI Team.");
         task = await persistRuntimeTask(task);
         await composeRuntimeAITeam(task);
-        setRuntimeMessage("Task saved. AI Team recomposed. Routing evaluated.");
+        setRuntimeMessage("Task saved. AI Team recomposed. Routing evaluated. Any prior pack approval was invalidated.");
         await refreshRuntime();
       }
 
-      async function saveRuntimeTask() {
-        if (!runtimeEls.project.value) throw new Error("No project loaded. Log in first.");
-        var task = await persistRuntimeTask(runtimeTask());
-        runtimeState.creatingTask = false;
-        runtimeState.selectedTaskId = task.id;
-        runtimeState.renderedTaskId = null;
-        await composeRuntimeAITeam(task);
-        setRuntimeMessage("Task saved. AI Team composed. Routing evaluated.");
+      async function generateCodexPack() {
+        var task = runtimeTask();
+        if (!task) throw new Error("Save the development task before generating a Codex Pack.");
+        var pack = await runtimeApi("/api/tasks/" + task.id + "/codex-packs", { method: "POST" });
+        runtimeState.selectedPackId = pack.id;
+        setRuntimeMessage("Codex Instruction Pack v" + pack.version + " generated. Owner approval is required.");
+        await refreshRuntime();
+      }
+
+      async function approveCodexPack() {
+        var task = runtimeTask(); var pack = currentPack();
+        if (!task || !pack) throw new Error("Generate a Codex Pack before approval.");
+        await runtimeApi("/api/tasks/" + task.id + "/codex-packs/" + pack.id + "/approve", { method: "POST" });
+        setRuntimeMessage("Codex Instruction Pack v" + pack.version + " approved for this exact task baseline.");
+        await refreshRuntime();
+      }
+
+      async function runCodex() {
+        var task = runtimeTask();
+        if (!task) throw new Error("Select a saved development task first.");
+        await runtimeApi("/api/tasks/" + task.id + "/codex-runs", { method: "POST" });
+        setRuntimeMessage("Codex run started in an isolated Git worktree.");
+        await refreshRuntime();
+      }
+
+      async function cancelCodex() {
+        var run = currentCodexRun();
+        if (!run) throw new Error("No active Codex run to cancel.");
+        await runtimeApi("/api/codex-runs/" + run.id + "/cancel", { method: "POST" });
+        setRuntimeMessage("Codex cancellation requested.");
+        await refreshRuntime();
+      }
+
+      async function updateOwnerAcceptanceItem(itemId, status, note) {
+        var acceptance = runtimeState.ownerAcceptance;
+        if (!acceptance) return;
+        try {
+          await runtimeApi("/api/owner-acceptance/" + acceptance.id + "/items/" + itemId, { method: "PATCH", body: { status: status, note: note } });
+          setRuntimeMessage("Owner Acceptance item saved as " + humanStatus(status) + ".");
+          await refreshRuntime();
+        } catch (error) { setRuntimeMessage(error.message, true); }
+      }
+
+      async function decideOwnerAcceptance(decision) {
+        var acceptance = runtimeState.ownerAcceptance;
+        if (!acceptance) throw new Error("No Owner Acceptance session is ready.");
+        var result = await runtimeApi("/api/owner-acceptance/" + acceptance.id + "/" + decision, {
+          method: "POST", body: { note: runtimeEls.ownerAcceptanceNote.value }
+        });
+        setRuntimeMessage(decision === "accept"
+          ? "Result accepted. Compact Sync created. No merge or push was performed."
+          : "Result rejected. The decision and note are persisted.");
+        runtimeState.ownerAcceptance = result;
         await refreshRuntime();
       }
 
       async function runRuntimeTask() {
         var task = runtimeTask();
-        if (!task) throw new Error("Save or select a task first.");
-        if (task.action !== "Compact Sync") throw new Error("Choose and save the Compact Sync action before running the internal worker.");
+        if (!task || task.action !== "Compact Sync") throw new Error("Choose Compact Sync under Advanced task metadata and save the task first.");
         await runtimeApi("/api/tasks/" + task.id + "/run", { method: "POST", body: { action: "compact_sync" } });
-        setRuntimeMessage("Compact Sync completed. Result, acceptance evidence, and audit are saved.");
+        setRuntimeMessage("Compact Sync completed. Result, deterministic acceptance, and audit are saved.");
         await refreshRuntime();
       }
 
       function newRuntimeTask() {
-        runtimeState.creatingTask = true;
-        runtimeState.selectedTaskId = null;
-        runtimeState.selectedScheduleId = null;
-        runtimeState.renderedTaskId = null;
-        runtimeState.renderedPlanId = null;
-        runtimeState.acceptance = null;
-        runtimeState.aiPlan = null;
-        runtimeEls.title.value = "";
-        runtimeEls.source.value = "";
-        runtimeEls.action.value = "Analyze";
-        runtimeEls.output.value = "";
-        runtimeEls.boundary.value = "";
-        runtimeEls.capabilityFocus.value = "";
-        runtimeEls.riskLevel.value = "medium";
-        runtimeEls.aiUrgency.value = "normal";
-        setRuntimeMessage("New blank task. Save task to compose the AI Team and evaluate routing.");
-        renderRuntime();
-        runtimeEls.title.focus();
+        runtimeState.creatingTask = true; runtimeState.selectedTaskId = null; runtimeState.selectedScheduleId = null;
+        runtimeState.selectedPackId = null; runtimeState.renderedTaskId = null; runtimeState.renderedPlanId = null;
+        runtimeState.aiPlan = null; runtimeState.acceptance = null; runtimeState.packs = []; runtimeState.codexRuns = [];
+        runtimeState.ownerAcceptance = null; runtimeState.renderedAcceptanceId = null;
+        runtimeEls.workflowType.value = "product_development"; runtimeEls.title.value = ""; runtimeEls.objective.value = "";
+        runtimeEls.source.value = ""; runtimeEls.action.value = "Analyze"; runtimeEls.output.value = "";
+        runtimeEls.acceptanceTarget.value = ""; runtimeEls.implementationScope.value = "";
+        runtimeEls.forbiddenScope.value = "No automatic merge, push, live trading, live betting, or unrestricted command execution.";
+        runtimeEls.boundary.value = runtimeEls.forbiddenScope.value; runtimeEls.repositoryIdentity.textContent = "Assigned on save";
+        runtimeEls.sourceBaseline.textContent = "Assigned on save"; runtimeEls.capabilityFocus.value = "";
+        runtimeEls.riskLevel.value = "medium"; runtimeEls.aiUrgency.value = "normal";
+        setRuntimeMessage("New blank development task. Complete the fields, then choose Save Task.");
+        renderRuntime(); runtimeEls.title.focus();
       }
 
       async function createRuntimeSchedule() {
         var task = runtimeTask();
-        if (!task) throw new Error("Save or select a task before creating a schedule.");
-        if (task.action !== "Compact Sync") throw new Error("Recurring execution is available only for a saved Compact Sync task.");
-        var schedule = await runtimeApi("/api/schedules", {
-          method: "POST",
-          body: {
-            task_id: task.id,
-            name: "Compact Sync every " + Number(runtimeEls.scheduleInterval.value || 6) + " seconds",
-            interval_seconds: Number(runtimeEls.scheduleInterval.value || 6)
-          }
-        });
+        if (!task || task.action !== "Compact Sync") throw new Error("Save a Compact Sync task before creating a recurring schedule.");
+        var schedule = await runtimeApi("/api/schedules", { method: "POST", body: {
+          task_id: task.id, name: "Compact Sync every " + Number(runtimeEls.scheduleInterval.value || 6) + " seconds",
+          interval_seconds: Number(runtimeEls.scheduleInterval.value || 6)
+        } });
         runtimeState.selectedScheduleId = schedule.id;
         setRuntimeMessage("Recurring Compact Sync is active and persisted.");
         await refreshRuntime();
@@ -2778,7 +2973,7 @@
         var schedule = runtimeSchedule();
         if (!schedule) throw new Error("Create a schedule first.");
         await runtimeApi("/api/schedules/" + schedule.id, { method: "PATCH", body: payload });
-        setRuntimeMessage(payload.paused ? "Schedule paused. No recurring run will start while paused." : "Schedule resumed. The next run has been recalculated.");
+        setRuntimeMessage(payload.paused ? "Schedule paused." : "Schedule resumed.");
         await refreshRuntime();
       }
 
@@ -2786,10 +2981,12 @@
         var button = document.getElementById(id);
         if (!button) return;
         button.addEventListener("click", async function () {
-          try {
-            await handler();
-          } catch (error) {
-            setRuntimeMessage(error.message);
+          if (runtimeState.pendingActions.has(id)) return;
+          runtimeState.pendingActions.add(id); button.disabled = true; button.setAttribute("aria-busy", "true");
+          try { await handler(); }
+          catch (error) { setRuntimeMessage(error.message, true); }
+          finally {
+            runtimeState.pendingActions.delete(id); button.removeAttribute("aria-busy"); renderRuntime();
           }
         });
       }
@@ -2943,13 +3140,17 @@
         });
       });
 
-      bindRuntimeAction("runtime-init-owner", initializeOwner);
-      bindRuntimeAction("runtime-login", loginRuntime);
+      bindRuntimeAction("runtime-auth-primary", authPrimaryAction);
       bindRuntimeAction("runtime-logout", logoutRuntime);
-      bindRuntimeAction("runtime-refresh", refreshRuntime);
       bindRuntimeAction("runtime-new-task", newRuntimeTask);
       bindRuntimeAction("runtime-save-task", saveRuntimeTask);
       bindRuntimeAction("runtime-compose-team", recomposeRuntimeAITeam);
+      bindRuntimeAction("runtime-generate-pack", generateCodexPack);
+      bindRuntimeAction("runtime-approve-pack", approveCodexPack);
+      bindRuntimeAction("runtime-run-codex", runCodex);
+      bindRuntimeAction("runtime-cancel-codex", cancelCodex);
+      bindRuntimeAction("runtime-accept-result", function () { return decideOwnerAcceptance("accept"); });
+      bindRuntimeAction("runtime-reject-result", function () { return decideOwnerAcceptance("reject"); });
       bindRuntimeAction("runtime-run-task", runRuntimeTask);
       bindRuntimeAction("runtime-create-schedule", createRuntimeSchedule);
       bindRuntimeAction("runtime-pause-schedule", function () { return patchRuntimeSchedule({ paused: true }); });
@@ -2961,9 +3162,19 @@
         runtimeState.selectedScheduleId = null;
         runtimeState.renderedTaskId = null;
         runtimeState.renderedPlanId = null;
+        runtimeState.selectedPackId = null;
+        runtimeState.renderedAcceptanceId = null;
         runtimeState.acceptance = null;
         runtimeState.aiPlan = null;
+        runtimeState.packs = [];
+        runtimeState.codexRuns = [];
+        runtimeState.ownerAcceptance = null;
         refreshRuntime();
+      });
+
+      runtimeEls.packHistory.addEventListener("change", function () {
+        runtimeState.selectedPackId = runtimeEls.packHistory.value ? Number(runtimeEls.packHistory.value) : null;
+        renderRuntimePack();
       });
 
       urgencyInput.value = "Normal";

@@ -59,7 +59,16 @@ DEFAULT_TOOLS = [
     ("Betting execution", "live_bet", "blocked", "Hard policy denial."),
 ]
 
-MVP15_REPAIR_COLUMNS = {
+COLUMN_MIGRATIONS = {
+    "tasks": [
+        ("workflow_type", "VARCHAR(80) NOT NULL DEFAULT 'general'"),
+        ("objective", "TEXT NOT NULL DEFAULT ''"),
+        ("implementation_scope", "TEXT NOT NULL DEFAULT ''"),
+        ("forbidden_scope", "TEXT NOT NULL DEFAULT ''"),
+        ("acceptance_target", "TEXT NOT NULL DEFAULT ''"),
+        ("repository_identity", "VARCHAR(240) NOT NULL DEFAULT ''"),
+        ("source_baseline_commit", "VARCHAR(80) NOT NULL DEFAULT ''"),
+    ],
     "ai_team_plans": [
         ("omitted_capabilities", "TEXT NOT NULL DEFAULT '[]'"),
         ("omission_explanation", "TEXT NOT NULL DEFAULT ''"),
@@ -87,7 +96,7 @@ def make_session_factory(engine: Engine) -> sessionmaker[Session]:
 
 def initialize_database(engine: Engine) -> None:
     Base.metadata.create_all(engine)
-    ensure_mvp15_repair_columns(engine)
+    ensure_runtime_columns(engine)
     factory = make_session_factory(engine)
     with factory() as session:
         if not session.scalar(select(SchemaVersion).where(SchemaVersion.version == "mvp14.001")):
@@ -96,6 +105,8 @@ def initialize_database(engine: Engine) -> None:
             session.add(SchemaVersion(version="mvp15.001"))
         if not session.scalar(select(SchemaVersion).where(SchemaVersion.version == "mvp15.002")):
             session.add(SchemaVersion(version="mvp15.002"))
+        if not session.scalar(select(SchemaVersion).where(SchemaVersion.version == "vol16.001")):
+            session.add(SchemaVersion(version="vol16.001"))
         seed_projects(session)
         seed_registry(session)
         session.flush()
@@ -103,11 +114,11 @@ def initialize_database(engine: Engine) -> None:
         session.commit()
 
 
-def ensure_mvp15_repair_columns(engine: Engine) -> None:
+def ensure_runtime_columns(engine: Engine) -> None:
     inspector = inspect(engine)
     tables = set(inspector.get_table_names())
     with engine.begin() as connection:
-        for table_name, definitions in MVP15_REPAIR_COLUMNS.items():
+        for table_name, definitions in COLUMN_MIGRATIONS.items():
             if table_name not in tables:
                 continue
             existing = {column["name"] for column in inspector.get_columns(table_name)}

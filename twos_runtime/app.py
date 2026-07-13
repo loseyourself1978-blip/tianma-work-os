@@ -8,7 +8,7 @@ from typing import Any, Callable, Iterator, Literal, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select, text
@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from . import __version__
 from .ai_orchestration import compose_team, decode_capability_tags, route_capability
+from .codex_adapter import CodexExecutionManager
 from .config import Settings, get_settings
 from .db import initialize_database, make_engine, make_session_factory, seed_ai_registry, seed_registry
 from .models import (
@@ -25,6 +26,10 @@ from .models import (
     AITeamPlanItem,
     AcceptanceCheck,
     AuditEvent,
+    CodexInstructionPack,
+    CodexRun,
+    OwnerAcceptanceItem,
+    OwnerAcceptanceSession,
     Project,
     Provider,
     RoutingDecision,
@@ -39,6 +44,12 @@ from .policy import ACTION_POLICIES, CONNECTOR_STATUSES, LIFECYCLE_STATES, evalu
 from .provider_gateway import ProviderGateway
 from .scheduler import RuntimeScheduler, compute_next_run
 from .security import authenticate, create_owner, revoke_token, user_for_token
+from .self_hosting import (
+    accepted_compact_sync,
+    build_instruction_pack,
+    git_source_state,
+    invalidate_approved_packs,
+)
 from .workers import parse_acceptance, run_task
 
 
@@ -70,6 +81,11 @@ class TaskIn(BaseModel):
     source_sync_summary: str = ""
     required_output: str = ""
     boundary_risk: str = ""
+    workflow_type: Literal["general", "product_development"] = "general"
+    objective: str = ""
+    implementation_scope: str = ""
+    forbidden_scope: str = ""
+    acceptance_target: str = ""
 
 
 class TaskPatchIn(BaseModel):
@@ -80,6 +96,11 @@ class TaskPatchIn(BaseModel):
     source_sync_summary: Optional[str] = None
     required_output: Optional[str] = None
     boundary_risk: Optional[str] = None
+    workflow_type: Optional[Literal["general", "product_development"]] = None
+    objective: Optional[str] = None
+    implementation_scope: Optional[str] = None
+    forbidden_scope: Optional[str] = None
+    acceptance_target: Optional[str] = None
     status: Optional[str] = None
 
 
@@ -113,6 +134,15 @@ class RouteIn(BaseModel):
     urgency: Literal["normal", "high"] = "normal"
     cost_sensitivity: Literal["low", "balanced", "high"] = "balanced"
     latency_sensitivity: Literal["low", "balanced", "high"] = "balanced"
+
+
+class AcceptanceItemPatchIn(BaseModel):
+    status: Literal["pass", "fail", "needs_review"]
+    note: str = Field(default="", max_length=1000)
+
+
+class AcceptanceDecisionIn(BaseModel):
+    note: str = Field(default="", max_length=2000)
 
 
 def iso(value) -> str | None:
@@ -150,6 +180,13 @@ def task_out(task: Task) -> dict[str, Any]:
         "source_sync_summary": task.source_sync_summary,
         "required_output": task.required_output,
         "boundary_risk": task.boundary_risk,
+        "workflow_type": task.workflow_type,
+        "objective": task.objective,
+        "implementation_scope": task.implementation_scope,
+        "forbidden_scope": task.forbidden_scope,
+        "acceptance_target": task.acceptance_target,
+        "repository_identity": task.repository_identity,
+        "source_baseline_commit": task.source_baseline_commit,
         "status": task.status,
         "acceptance_state": task.acceptance_state,
         "compact_sync_result": task.compact_sync_result,
@@ -256,6 +293,14 @@ def decoded_list(value: str) -> list[Any]:
     return decoded if isinstance(decoded, list) else []
 
 
+def decoded_object(value: str) -> dict[str, Any]:
+    try:
+        decoded = json.loads(value)
+    except (TypeError, json.JSONDecodeError):
+        return {}
+    return decoded if isinstance(decoded, dict) else {}
+
+
 def team_plan_out(session: Session, plan: AITeamPlan) -> dict[str, Any]:
     items = session.scalars(
         select(AITeamPlanItem).where(AITeamPlanItem.plan_id == plan.id).order_by(AITeamPlanItem.ordinal)
@@ -358,6 +403,103 @@ def routing_summary_out(plan: AITeamPlan, routes: list[RoutingDecision]) -> dict
     }
 
 
+def codex_pack_out(pack: CodexInstructionPack, include_raw: bool = False) -> dict[str, Any]:
+    output = {
+        "id": pack.id,
+        "task_id": pack.task_id,
+        "version": pack.version,
+        "status": pack.status,
+        "stage_summary": pack.stage_summary,
+        "key_boundaries": pack.key_boundaries,
+        "acceptance_target": pack.acceptance_target,
+        "source_baseline_commit": pack.source_baseline_commit,
+        "approved": pack.status == "approved" and pack.invalidated_at is None,
+        "approved_at": iso(pack.approved_at),
+        "invalidated_at": iso(pack.invalidated_at),
+        "created_at": iso(pack.created_at),
+    }
+    if include_raw:
+        output.update(
+            {
+                "content": pack.content,
+                "ai_team_plan_id": pack.ai_team_plan_id,
+                "routing_decision_ids": decoded_list(pack.routing_decision_ids),
+                "generation_metadata": decoded_object(pack.generation_metadata),
+            }
+        )
+    return output
+
+
+def codex_run_out(run: CodexRun, include_raw: bool = False) -> dict[str, Any]:
+    result = decoded_object(run.structured_result)
+    output = {
+        "id": run.id,
+        "task_id": run.task_id,
+        "pack_id": run.pack_id,
+        "pack_version": run.pack.version if run.pack else None,
+        "status": run.status,
+        "executable_status": run.executable_status,
+        "owner_summary": run.owner_summary,
+        "source_branch": run.source_branch,
+        "source_commit": run.source_commit,
+        "worktree_branch": run.worktree_branch,
+        "exit_code": run.exit_code,
+        "duration_ms": run.duration_ms,
+        "timed_out": run.timed_out,
+        "cancelled": run.cancelled,
+        "result": result,
+        "created_at": iso(run.created_at),
+        "started_at": iso(run.started_at),
+        "finished_at": iso(run.finished_at),
+    }
+    if include_raw:
+        output.update(
+            {
+                "source_repo": run.source_repo,
+                "worktree_path": run.worktree_path,
+                "stdout": run.stdout,
+                "stderr": run.stderr,
+                "output_truncated": run.output_truncated,
+            }
+        )
+    return output
+
+
+def owner_acceptance_out(session: Session, acceptance: OwnerAcceptanceSession) -> dict[str, Any]:
+    items = session.scalars(
+        select(OwnerAcceptanceItem)
+        .where(OwnerAcceptanceItem.session_id == acceptance.id)
+        .order_by(OwnerAcceptanceItem.ordinal)
+    ).all()
+    required_complete = all(item.status == "pass" for item in items if item.required)
+    return {
+        "id": acceptance.id,
+        "task_id": acceptance.task_id,
+        "codex_run_id": acceptance.codex_run_id,
+        "status": acceptance.status,
+        "owner_note": acceptance.owner_note,
+        "compact_sync_result": acceptance.compact_sync_result,
+        "can_accept": bool(items) and required_complete,
+        "items": [
+            {
+                "id": item.id,
+                "key": item.key,
+                "label": item.label,
+                "inspect_target": item.inspect_target,
+                "ui_path": item.ui_path,
+                "pass_standard": item.pass_standard,
+                "required": item.required,
+                "status": item.status,
+                "note": item.note,
+            }
+            for item in items
+        ],
+        "created_at": iso(acceptance.created_at),
+        "updated_at": iso(acceptance.updated_at),
+        "decided_at": iso(acceptance.decided_at),
+    }
+
+
 def audit_out(event: AuditEvent) -> dict[str, Any]:
     return {
         "id": event.id,
@@ -427,6 +569,8 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     engine = make_engine(settings.database_url)
     initialize_database(engine)
     factory = make_session_factory(engine)
+    codex_manager = CodexExecutionManager(factory, settings)
+    codex_manager.recover_interrupted_runs()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -442,6 +586,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     app.state.engine = engine
     app.state.session_factory = factory
     app.state.runtime_scheduler = RuntimeScheduler(factory, settings.scheduler_poll_seconds)
+    app.state.codex_manager = codex_manager
 
     if settings.static_cockpit_dir.exists():
         app.mount("/static_cockpit", StaticFiles(directory=settings.static_cockpit_dir), name="static_cockpit")
@@ -519,10 +664,10 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         return RedirectResponse("/static_cockpit/vol12_static_mvp/twos_command_center.html")
 
     @app.get("/twos")
-    def twos_ui() -> FileResponse:
+    def twos_ui() -> RedirectResponse:
         if not settings.ui_path.exists():
             raise HTTPException(status_code=404, detail="TWOS UI entry not found.")
-        return FileResponse(settings.ui_path)
+        return RedirectResponse("/static_cockpit/vol12_static_mvp/twos_command_center.html")
 
     @app.get("/api/health")
     def health(session: Session = Depends(get_db)) -> dict[str, Any]:
@@ -541,6 +686,22 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             "connector_statuses": CONNECTOR_STATUSES,
             "safe_worker_actions": ["compact_sync"],
             "hard_denials": ["live_trade", "live_bet", "broker_order", "betting_order"],
+        }
+
+    @app.get("/api/auth/status")
+    def auth_status(request: Request, session: Session = Depends(get_db)) -> dict[str, Any]:
+        owner = session.scalar(select(User).order_by(User.id))
+        raw_token = request.cookies.get(SESSION_COOKIE)
+        authenticated = user_for_token(session, raw_token) if raw_token else None
+        return {
+            "owner_initialized": owner is not None,
+            "authenticated": authenticated is not None,
+            "mode": "setup" if owner is None else "authenticated" if authenticated else "login",
+            "owner": (
+                {"id": authenticated.id, "username": authenticated.username}
+                if authenticated
+                else {"username": owner.username} if owner else None
+            ),
         }
 
     @app.post("/api/auth/init")
@@ -603,6 +764,24 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             action = persisted_action(payload.action, payload.task_type)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+        source_state: dict[str, object] = {}
+        if payload.workflow_type == "product_development":
+            required = {
+                "objective": payload.objective,
+                "implementation_scope": payload.implementation_scope,
+                "forbidden_scope": payload.forbidden_scope,
+                "acceptance_target": payload.acceptance_target,
+            }
+            missing = [name for name, value in required.items() if not value.strip()]
+            if missing:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Product-development task requires: {', '.join(missing)}.",
+                )
+            try:
+                source_state = git_source_state(settings.source_repo)
+            except RuntimeError as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
         task = Task(
             project_id=payload.project_id,
             title=payload.title,
@@ -610,6 +789,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             source_sync_summary=payload.source_sync_summary,
             required_output=payload.required_output,
             boundary_risk=payload.boundary_risk,
+            workflow_type=payload.workflow_type,
+            objective=payload.objective or payload.title,
+            implementation_scope=payload.implementation_scope,
+            forbidden_scope=payload.forbidden_scope,
+            acceptance_target=payload.acceptance_target,
+            repository_identity=str(source_state.get("identity", "")),
+            source_baseline_commit=str(source_state.get("commit", "")),
+            status="draft" if payload.workflow_type == "product_development" else "queued",
         )
         session.add(task)
         session.flush()
@@ -623,6 +810,19 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             raise HTTPException(status_code=404, detail="Task not found.")
         data = payload.model_dump(exclude_unset=True)
         updated_fields = list(data.keys())
+        pack_sensitive_fields = {
+            "project_id",
+            "title",
+            "action",
+            "source_sync_summary",
+            "required_output",
+            "boundary_risk",
+            "workflow_type",
+            "objective",
+            "implementation_scope",
+            "forbidden_scope",
+            "acceptance_target",
+        }
         if "action" in data:
             try:
                 data["task_type"] = persisted_action(data.pop("action"), None)
@@ -637,6 +837,36 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             task.project = project
         for key, value in data.items():
             setattr(task, key, value)
+        if task.workflow_type == "product_development":
+            required_values = {
+                "objective": task.objective,
+                "implementation_scope": task.implementation_scope,
+                "forbidden_scope": task.forbidden_scope,
+                "acceptance_target": task.acceptance_target,
+            }
+            missing = [name for name, value in required_values.items() if not value.strip()]
+            if missing:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Product-development task requires: {', '.join(missing)}.",
+                )
+            if not task.source_baseline_commit:
+                source_state = git_source_state(settings.source_repo)
+                task.repository_identity = str(source_state["identity"])
+                task.source_baseline_commit = str(source_state["commit"])
+        if task.workflow_type == "product_development" and pack_sensitive_fields.intersection(updated_fields):
+            invalidated = invalidate_approved_packs(session, task.id)
+            if invalidated:
+                task.status = "planned"
+                audit(
+                    session,
+                    request,
+                    "codex_pack_approval_invalidated",
+                    "task",
+                    task.id,
+                    f"invalidated_packs={invalidated}; task context changed",
+                    user,
+                )
         audit(session, request, "task_updated", "task", task.id, ",".join(updated_fields), user)
         return task_out(task)
 
@@ -670,6 +900,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         task = session.get(Task, payload.task_id)
         if not task:
             raise HTTPException(status_code=404, detail="Task not found.")
+        invalidated = invalidate_approved_packs(session, task.id) if task.workflow_type == "product_development" else 0
         try:
             plan = compose_team(
                 session,
@@ -719,6 +950,18 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             )
         plan_output["routes"] = [routing_out(item) for item in routes]
         plan_output["routing_summary"] = routing_summary_out(plan, routes)
+        if task.workflow_type == "product_development":
+            task.status = "planned"
+            if invalidated:
+                audit(
+                    session,
+                    request,
+                    "codex_pack_approval_invalidated",
+                    "task",
+                    task.id,
+                    f"invalidated_packs={invalidated}; AI Team changed",
+                    user,
+                )
         return plan_output
 
     @app.post("/api/ai/route")
@@ -787,6 +1030,323 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             "routes": [routing_out(item) for item in routes],
             "routing_summary": routing_summary_out(plan, routes),
         }
+
+    @app.get("/api/codex/status")
+    def codex_status(user: User = Depends(current_user)) -> dict[str, Any]:
+        detection = codex_manager.adapter.detect()
+        output = detection.as_dict(include_path=False)
+        try:
+            source = codex_manager.adapter.source_state()
+            output["source"] = {
+                "identity": source["identity"],
+                "branch": source["branch"],
+                "commit": source["commit"],
+                "clean": source["clean"],
+            }
+        except RuntimeError as exc:
+            output["source"] = {"clean": False, "reason": str(exc)}
+        return output
+
+    @app.get("/api/tasks/{task_id}/codex-packs")
+    def list_codex_packs(
+        task_id: int,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> list[dict[str, Any]]:
+        if not session.get(Task, task_id):
+            raise HTTPException(status_code=404, detail="Task not found.")
+        packs = session.scalars(
+            select(CodexInstructionPack)
+            .where(CodexInstructionPack.task_id == task_id)
+            .order_by(CodexInstructionPack.version.desc())
+        ).all()
+        return [codex_pack_out(pack, include_raw=True) for pack in packs]
+
+    @app.get("/api/tasks/{task_id}/codex-packs/current")
+    def current_codex_pack(
+        task_id: int,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        if not session.get(Task, task_id):
+            raise HTTPException(status_code=404, detail="Task not found.")
+        pack = session.scalar(
+            select(CodexInstructionPack)
+            .where(CodexInstructionPack.task_id == task_id)
+            .order_by(CodexInstructionPack.version.desc())
+        )
+        return {"task_id": task_id, "pack": codex_pack_out(pack, include_raw=True) if pack else None}
+
+    @app.post("/api/tasks/{task_id}/codex-packs")
+    def generate_codex_pack(
+        task_id: int,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        task = session.get(Task, task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found.")
+        try:
+            pack = build_instruction_pack(session, task, settings.source_repo)
+        except (ValueError, RuntimeError) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        audit(
+            session,
+            request,
+            "codex_pack_generated",
+            "codex_instruction_pack",
+            pack.id,
+            f"task={task.id}; version={pack.version}; approval_required=true",
+            user,
+        )
+        return codex_pack_out(pack, include_raw=True)
+
+    @app.post("/api/tasks/{task_id}/codex-packs/{pack_id}/approve")
+    def approve_codex_pack(
+        task_id: int,
+        pack_id: int,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        task = session.get(Task, task_id)
+        pack = session.get(CodexInstructionPack, pack_id)
+        if not task or not pack or pack.task_id != task.id:
+            raise HTTPException(status_code=404, detail="Codex Instruction Pack not found for this task.")
+        current = session.scalar(
+            select(CodexInstructionPack)
+            .where(CodexInstructionPack.task_id == task.id)
+            .order_by(CodexInstructionPack.version.desc())
+        )
+        if not current or current.id != pack.id or pack.status != "approval_required":
+            raise HTTPException(status_code=409, detail="Only the current approval-required pack can be approved.")
+        pack.status = "approved"
+        pack.approved_by_user_id = user.id
+        pack.approved_at = utc_now()
+        pack.invalidated_at = None
+        task.status = "pack_ready"
+        audit(
+            session,
+            request,
+            "codex_pack_approved",
+            "codex_instruction_pack",
+            pack.id,
+            f"task={task.id}; version={pack.version}",
+            user,
+        )
+        return codex_pack_out(pack, include_raw=True)
+
+    @app.get("/api/tasks/{task_id}/codex-runs")
+    def list_codex_runs(
+        task_id: int,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> list[dict[str, Any]]:
+        if not session.get(Task, task_id):
+            raise HTTPException(status_code=404, detail="Task not found.")
+        runs = session.scalars(
+            select(CodexRun).where(CodexRun.task_id == task_id).order_by(CodexRun.id.desc())
+        ).all()
+        return [codex_run_out(run, include_raw=True) for run in runs]
+
+    @app.post("/api/tasks/{task_id}/codex-runs")
+    def start_codex_run(
+        task_id: int,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        task = session.get(Task, task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found.")
+        pack = session.scalar(
+            select(CodexInstructionPack)
+            .where(CodexInstructionPack.task_id == task.id)
+            .order_by(CodexInstructionPack.version.desc())
+        )
+        if not pack or pack.status != "approved" or pack.invalidated_at is not None:
+            raise HTTPException(status_code=409, detail="Approve the current Codex Instruction Pack before execution.")
+        detection = codex_manager.adapter.detect()
+        if detection.status != "configured":
+            raise HTTPException(status_code=409, detail=f"Codex status is {detection.status}: {detection.reason}")
+        try:
+            source = codex_manager.adapter.source_state()
+        except RuntimeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        if not source["clean"]:
+            raise HTTPException(status_code=409, detail="Source repository must be clean before Codex execution.")
+        if source["commit"] != pack.source_baseline_commit:
+            raise HTTPException(status_code=409, detail="Source HEAD differs from the approved pack baseline.")
+        run = CodexRun(
+            task_id=task.id,
+            pack_id=pack.id,
+            status="queued",
+            executable_status=detection.status,
+            source_repo=str(source["repo"]),
+            source_branch=str(source["branch"]),
+            source_commit=str(source["commit"]),
+            owner_summary="Approved Codex run is queued for isolated execution.",
+        )
+        session.add(run)
+        session.flush()
+        task.status = "queued"
+        audit(
+            session,
+            request,
+            "codex_run_queued",
+            "codex_run",
+            run.id,
+            f"task={task.id}; pack_version={pack.version}",
+            user,
+        )
+        session.commit()
+        codex_manager.start(run.id)
+        return codex_run_out(run, include_raw=True)
+
+    @app.get("/api/codex-runs/{run_id}")
+    def get_codex_run(
+        run_id: int,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        run = session.get(CodexRun, run_id)
+        if not run:
+            raise HTTPException(status_code=404, detail="Codex run not found.")
+        return codex_run_out(run, include_raw=True)
+
+    @app.post("/api/codex-runs/{run_id}/cancel")
+    def cancel_codex_run(
+        run_id: int,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        run = session.get(CodexRun, run_id)
+        if not run:
+            raise HTTPException(status_code=404, detail="Codex run not found.")
+        if run.status not in {"queued", "running"}:
+            raise HTTPException(status_code=409, detail="Only a queued or running Codex run can be cancelled.")
+        audit(session, request, "codex_cancel_requested", "codex_run", run.id, "Owner requested cancellation.", user)
+        session.commit()
+        if not codex_manager.cancel(run.id):
+            raise HTTPException(status_code=409, detail="Codex run was no longer cancellable.")
+        refreshed = session.get(CodexRun, run.id)
+        session.refresh(refreshed)
+        return codex_run_out(refreshed, include_raw=True)
+
+    @app.get("/api/tasks/{task_id}/owner-acceptance")
+    def current_owner_acceptance(
+        task_id: int,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        if not session.get(Task, task_id):
+            raise HTTPException(status_code=404, detail="Task not found.")
+        acceptance = session.scalar(
+            select(OwnerAcceptanceSession)
+            .where(OwnerAcceptanceSession.task_id == task_id)
+            .order_by(OwnerAcceptanceSession.id.desc())
+        )
+        return {
+            "task_id": task_id,
+            "acceptance": owner_acceptance_out(session, acceptance) if acceptance else None,
+        }
+
+    @app.patch("/api/owner-acceptance/{acceptance_id}/items/{item_id}")
+    def patch_owner_acceptance_item(
+        acceptance_id: int,
+        item_id: int,
+        payload: AcceptanceItemPatchIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        acceptance = session.get(OwnerAcceptanceSession, acceptance_id)
+        item = session.get(OwnerAcceptanceItem, item_id)
+        if not acceptance or not item or item.session_id != acceptance.id:
+            raise HTTPException(status_code=404, detail="Owner Acceptance item not found.")
+        if acceptance.status in {"accepted", "rejected"}:
+            raise HTTPException(status_code=409, detail="Decided Owner Acceptance cannot be edited.")
+        item.status = payload.status
+        item.note = payload.note
+        audit(
+            session,
+            request,
+            "owner_acceptance_item_updated",
+            "owner_acceptance_item",
+            item.id,
+            f"status={item.status}",
+            user,
+        )
+        session.flush()
+        return owner_acceptance_out(session, acceptance)
+
+    @app.post("/api/owner-acceptance/{acceptance_id}/accept")
+    def accept_owner_result(
+        acceptance_id: int,
+        payload: AcceptanceDecisionIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        acceptance = session.get(OwnerAcceptanceSession, acceptance_id)
+        if not acceptance:
+            raise HTTPException(status_code=404, detail="Owner Acceptance not found.")
+        items = session.scalars(
+            select(OwnerAcceptanceItem).where(OwnerAcceptanceItem.session_id == acceptance.id)
+        ).all()
+        if not items or any(item.required and item.status != "pass" for item in items):
+            raise HTTPException(status_code=409, detail="All required Owner Acceptance items must pass.")
+        acceptance.status = "accepted"
+        acceptance.owner_note = payload.note
+        acceptance.decided_by_user_id = user.id
+        acceptance.decided_at = utc_now()
+        acceptance.task.status = "accepted"
+        acceptance.task.acceptance_state = "accepted"
+        sync = accepted_compact_sync(acceptance.task, acceptance.codex_run, acceptance.codex_run.pack)
+        acceptance.compact_sync_result = sync
+        acceptance.task.compact_sync_result = sync
+        audit(
+            session,
+            request,
+            "owner_result_accepted",
+            "owner_acceptance",
+            acceptance.id,
+            "All required items passed; Compact Sync generated; no merge or push performed.",
+            user,
+        )
+        session.flush()
+        return owner_acceptance_out(session, acceptance)
+
+    @app.post("/api/owner-acceptance/{acceptance_id}/reject")
+    def reject_owner_result(
+        acceptance_id: int,
+        payload: AcceptanceDecisionIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        acceptance = session.get(OwnerAcceptanceSession, acceptance_id)
+        if not acceptance:
+            raise HTTPException(status_code=404, detail="Owner Acceptance not found.")
+        acceptance.status = "rejected"
+        acceptance.owner_note = payload.note
+        acceptance.decided_by_user_id = user.id
+        acceptance.decided_at = utc_now()
+        acceptance.task.status = "rejected"
+        acceptance.task.acceptance_state = "rejected"
+        audit(
+            session,
+            request,
+            "owner_result_rejected",
+            "owner_acceptance",
+            acceptance.id,
+            payload.note or "Owner rejected the result.",
+            user,
+        )
+        session.flush()
+        return owner_acceptance_out(session, acceptance)
 
     @app.get("/api/runs")
     def list_runs(session: Session = Depends(get_db), user: User = Depends(current_user)) -> list[dict[str, Any]]:
