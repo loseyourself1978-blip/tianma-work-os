@@ -4,7 +4,7 @@
     "volume": "Vol.12.13",
     "slice": "Ultra-Minimal Multi-Model New Chat Landing",
     "mode": "static_local_fixture_only",
-    "canonicalVisibleUrl": "file:///Users/hj/Downloads/tianma-work-os/static_cockpit/vol12_static_mvp/index.html"
+    "canonicalVisibleUrl": "./index.html"
   },
   "landing": {
     "brand": "TWOS",
