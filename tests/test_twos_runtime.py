@@ -28,12 +28,15 @@ def make_client(tmp_path: Path, start_scheduler: bool = False) -> TestClient:
 
 
 def init_and_login(client: TestClient) -> dict[str, str]:
-    init = client.post("/api/auth/init", json={"username": "owner", "password": OWNER_PASSWORD})
-    assert init.status_code in (200, 409)
-    login = client.post("/api/auth/login", json={"username": "owner", "password": OWNER_PASSWORD})
-    assert login.status_code == 200
-    token = login.json()["token"]
-    return {"Authorization": f"Bearer {token}"}
+    signup = client.post("/api/auth/signup", json={"username": "owner", "password": OWNER_PASSWORD})
+    assert signup.status_code in (201, 409)
+    if signup.status_code == 409:
+        login = client.post("/api/auth/login", json={"username": "owner", "password": OWNER_PASSWORD})
+        assert login.status_code == 200
+        assert "token" not in login.json()
+    else:
+        assert signup.json() == {"authenticated": True, "user": {"username": "owner"}}
+    return {}
 
 
 def create_runtime_task(client: TestClient, headers: dict[str, str]) -> int:
@@ -89,9 +92,9 @@ def test_auth_health_and_protected_routes(tmp_path: Path) -> None:
         protected = client.get("/api/projects")
         assert protected.status_code == 401
         headers = init_and_login(client)
-        me = client.get("/api/auth/me", headers=headers)
-        assert me.status_code == 200
-        assert me.json()["owner"]["username"] == "owner"
+        session = client.get("/api/auth/session", headers=headers)
+        assert session.status_code == 200
+        assert session.json() == {"authenticated": True, "user": {"username": "owner"}}
 
 
 def test_task_persists_run_now_compact_sync_and_auto_accept(tmp_path: Path) -> None:

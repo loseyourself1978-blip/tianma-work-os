@@ -185,12 +185,14 @@ Self-check: every claim is supported by Git or test evidence.
 {boundaries}
 
 ## Validation Commands
-- `.venv/bin/python -m pytest -q`
-- `.venv/bin/python -m compileall -q twos_runtime tests`
-- `git diff --check`
+- Use only validation proportionate to the approved task and available without installing dependencies.
+- For application-code changes, run `.venv/bin/python -m pytest -q` and `.venv/bin/python -m compileall -q twos_runtime tests` when the existing environment provides them.
+- For documentation-only work, verify the exact required artifact and run `git diff --check`.
+- Never install or update dependencies as part of this run.
 
 ## Commit Policy
-- Commit only when validation passes.
+- Do not commit.
+- Leave all changes uncommitted in the isolated worktree for Owner review.
 - Do not merge to main.
 - Do not push any branch.
 
@@ -204,7 +206,7 @@ Self-check: every claim is supported by Git or test evidence.
 - Owner review needed
 
 ## Stop Conditions
-- Stop if the source baseline differs or the source repository is dirty before worktree creation.
+- Stop if the source baseline differs or the configured execution source is dirty before worktree creation.
 - Stop if implementation requires forbidden scope, unsafe shell execution, automatic merge, or push.
 - Stop if validation cannot be completed safely.
 

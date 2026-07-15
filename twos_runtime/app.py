@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import uuid
 from contextlib import asynccontextmanager
 from datetime import timedelta
@@ -10,8 +11,9 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, select, text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
 from . import __version__
@@ -43,7 +45,17 @@ from .models import (
 from .policy import ACTION_POLICIES, CONNECTOR_STATUSES, LIFECYCLE_STATES, evaluate_action
 from .provider_gateway import ProviderGateway
 from .scheduler import RuntimeScheduler, compute_next_run
-from .security import authenticate, create_owner, revoke_token, user_for_token
+from .security import (
+    GENERIC_AUTH_MESSAGE,
+    AuthFailureReason,
+    AuthenticationError,
+    authenticate,
+    create_owner,
+    normalize_username,
+    owner_record_issue,
+    revoke_token,
+    user_for_token,
+)
 from .self_hosting import (
     accepted_compact_sync,
     build_instruction_pack,
@@ -55,16 +67,75 @@ from .workers import parse_acceptance, run_task
 
 SESSION_COOKIE = "twos_session"
 OWNER_ACTIONS = ("Analyze", "Compact Sync", "Acceptance Review")
+logger = logging.getLogger(__name__)
+
+AUTH_VALIDATION_MESSAGE = "Check the highlighted fields."
+AUTH_CREDENTIAL_MESSAGE = GENERIC_AUTH_MESSAGE
+AUTH_SERVICE_MESSAGE = "Something went wrong. Try again."
+AUTH_ACCOUNT_EXISTS_MESSAGE = "An account already exists. Log in instead."
+AUTH_REQUEST_PATHS = frozenset(
+    {
+        "/api/auth/signup",
+        "/api/auth/login",
+        "/api/auth/logout",
+        # Temporary compatibility endpoints use the same product-safe handling.
+        "/api/auth/init",
+    }
+)
+
+
+class AuthAPIError(Exception):
+    def __init__(
+        self,
+        status_code: int,
+        code: str,
+        message: str,
+        *,
+        fields: dict[str, str] | None = None,
+    ) -> None:
+        self.status_code = status_code
+        self.code = code
+        self.message = message
+        self.fields = fields
+        super().__init__(message)
 
 
 class OwnerInitIn(BaseModel):
     username: str = Field(min_length=1, max_length=80)
-    password: str = Field(min_length=10, max_length=200)
+    password: str = Field(min_length=8, max_length=200)
+
+    @field_validator("username")
+    @classmethod
+    def username_must_have_content(cls, value: str) -> str:
+        if not normalize_username(value):
+            raise ValueError("Username is required.")
+        return value
+
+
+class SignupIn(BaseModel):
+    username: str = Field(min_length=1, max_length=80)
+    password: str = Field(min_length=8, max_length=200)
+
+    @field_validator("username")
+    @classmethod
+    def username_must_have_content(cls, value: str) -> str:
+        if not normalize_username(value):
+            raise ValueError("Username is required.")
+        return value
 
 
 class LoginIn(BaseModel):
-    username: str
-    password: str
+    # The local CLI historically allowed longer credentials; keep a bounded
+    # compatibility window while all new Owner creation stays at 80/200.
+    username: str = Field(min_length=1, max_length=1024)
+    password: str = Field(min_length=1, max_length=4096)
+
+    @field_validator("username")
+    @classmethod
+    def username_must_have_content(cls, value: str) -> str:
+        if not normalize_username(value):
+            raise ValueError("Username is required.")
+        return value
 
 
 class ProjectIn(BaseModel):
@@ -564,6 +635,70 @@ def error_response(status_code: int, code: str, message: str, request_id: str | 
     )
 
 
+def auth_error_response(
+    status_code: int,
+    code: str,
+    message: str,
+    *,
+    fields: dict[str, str] | None = None,
+) -> JSONResponse:
+    content: dict[str, Any] = {"code": code, "message": message}
+    if fields is not None:
+        content["fields"] = fields
+    return JSONResponse(status_code=status_code, content=content)
+
+
+def auth_validation_fields(exc: RequestValidationError) -> dict[str, str]:
+    """Convert framework validation into stable product fields without echoing input."""
+    fields: dict[str, str] = {}
+    for item in exc.errors():
+        location = item.get("loc", ())
+        field = location[-1] if location else None
+        error_type = item.get("type", "")
+        context = item.get("ctx") or {}
+        submitted = item.get("input")
+        if field == "username":
+            fields.setdefault(
+                "username",
+                "Use 80 characters or fewer."
+                if error_type == "string_too_long"
+                else "Enter a username.",
+            )
+        elif field == "password":
+            if error_type == "string_too_long":
+                message = "Use 200 characters or fewer."
+            elif (
+                error_type == "string_too_short"
+                and context.get("min_length", 1) >= 8
+                and submitted not in ("", None)
+            ):
+                message = "Use at least 8 characters."
+            elif (
+                error_type == "string_too_short"
+                or error_type in {"missing", "string_type"}
+                or submitted in ("", None)
+            ):
+                message = "Enter a password."
+            else:
+                message = "Enter a valid password."
+            fields.setdefault("password", message)
+        else:
+            fields.setdefault("request", "Enter a valid request.")
+    return fields or {"request": "Enter a valid request."}
+
+
+def validation_error_details(exc: RequestValidationError) -> list[dict[str, Any]]:
+    """Keep validation evidence useful without echoing request values such as passwords."""
+    return [
+        {
+            "type": item.get("type"),
+            "loc": list(item.get("loc", ())),
+            "msg": item.get("msg"),
+        }
+        for item in exc.errors()
+    ]
+
+
 def create_app(settings: Settings | None = None, start_scheduler: bool = True) -> FastAPI:
     settings = settings or get_settings()
     engine = make_engine(settings.database_url)
@@ -579,6 +714,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         try:
             yield
         finally:
+            codex_manager.shutdown()
             await app.state.runtime_scheduler.stop()
 
     app = FastAPI(title="TWOS 1.0 Runtime", version=__version__, lifespan=lifespan)
@@ -593,14 +729,32 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
 
     @app.middleware("http")
     async def request_id_middleware(request: Request, call_next: Callable):
-        request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+        # Authentication audits and diagnostics must never persist caller-controlled
+        # header material. Generate the correlation ID inside TWOS for every request.
+        request_id = str(uuid.uuid4())
         request.state.request_id = request_id
         try:
             response = await call_next(request)
         except Exception as exc:
-            return error_response(500, "internal_error", str(exc), request_id)
+            logger.error(
+                "Unhandled request failure type=%s request_id=%s",
+                type(exc).__name__,
+                request_id,
+            )
+            if request.url.path.startswith("/api/auth/"):
+                return auth_error_response(500, "AUTH_SERVICE_ERROR", AUTH_SERVICE_MESSAGE)
+            return error_response(500, "internal_error", "Request could not be completed.", request_id)
         response.headers["X-Request-ID"] = request_id
         return response
+
+    @app.exception_handler(AuthAPIError)
+    async def auth_api_exception_handler(request: Request, exc: AuthAPIError):
+        return auth_error_response(
+            exc.status_code,
+            exc.code,
+            exc.message,
+            fields=exc.fields,
+        )
 
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request: Request, exc: HTTPException):
@@ -609,7 +763,20 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
-        return error_response(422, "validation_error", "Request validation failed.", getattr(request.state, "request_id", None), exc.errors())
+        if request.url.path in AUTH_REQUEST_PATHS:
+            return auth_error_response(
+                400,
+                "VALIDATION_ERROR",
+                AUTH_VALIDATION_MESSAGE,
+                fields=auth_validation_fields(exc),
+            )
+        return error_response(
+            422,
+            "validation_error",
+            "Check the submitted fields.",
+            getattr(request.state, "request_id", None),
+            validation_error_details(exc),
+        )
 
     def get_db() -> Iterator[Session]:
         session = factory()
@@ -646,6 +813,171 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 details=details,
             )
         )
+
+    def record_auth_failure(session: Session, request: Request, reason: AuthFailureReason) -> None:
+        logger.warning(
+            "Owner authentication failed reason=%s request_id=%s",
+            reason.value,
+            getattr(request.state, "request_id", None),
+        )
+        session.rollback()
+        audit(
+            session,
+            request,
+            "login_failed",
+            "authentication",
+            None,
+            f"reason={reason.value}",
+        )
+        try:
+            session.commit()
+        except SQLAlchemyError:
+            session.rollback()
+            logger.error(
+                "Owner authentication audit failed reason=database_read_failed request_id=%s",
+                getattr(request.state, "request_id", None),
+            )
+
+    def commit_auth_transaction(
+        session: Session,
+        request: Request,
+        operation: str,
+    ) -> None:
+        try:
+            session.commit()
+        except SQLAlchemyError as exc:
+            session.rollback()
+            logger.error(
+                "Owner authentication transaction failed operation=%s reason=database_read_failed request_id=%s",
+                operation,
+                getattr(request.state, "request_id", None),
+            )
+            raise AuthAPIError(500, "AUTH_SERVICE_ERROR", AUTH_SERVICE_MESSAGE) from exc
+
+    def session_user(request: Request, session: Session) -> User | None:
+        raw_token = request.cookies.get(SESSION_COOKIE)
+        if not raw_token:
+            return None
+        return user_for_token(session, raw_token)
+
+    def set_session_cookie(response: Response, request: Request, raw_token: str) -> None:
+        response.set_cookie(
+            SESSION_COOKIE,
+            raw_token,
+            httponly=True,
+            secure=request.url.scheme == "https",
+            samesite="strict",
+            max_age=settings.session_ttl_seconds,
+            path="/",
+        )
+
+    def clear_session_cookie(response: Response, request: Request) -> None:
+        response.delete_cookie(
+            SESSION_COOKIE,
+            httponly=True,
+            secure=request.url.scheme == "https",
+            samesite="strict",
+            path="/",
+        )
+
+    def perform_signup(
+        payload: SignupIn | OwnerInitIn,
+        request: Request,
+        session: Session,
+        *,
+        audit_action: str = "signup",
+        audit_details: str = "Account created.",
+    ) -> tuple[User, str]:
+        try:
+            # Vol.16 is a single-account SQLite product. Acquire the write lock
+            # before checking existence so concurrent Sign up requests serialize
+            # and the losing request observes the committed account as a 409.
+            if session.get_bind().dialect.name == "sqlite":
+                session.execute(text("BEGIN IMMEDIATE"))
+            if session.scalar(select(User).order_by(User.id)) is not None:
+                raise AuthAPIError(409, "ACCOUNT_EXISTS", AUTH_ACCOUNT_EXISTS_MESSAGE)
+            user = create_owner(session, payload.username, payload.password)
+            authenticated_user, raw_token, token = authenticate(
+                session,
+                payload.username,
+                payload.password,
+                settings.session_ttl_seconds,
+            )
+            audit(
+                session,
+                request,
+                audit_action,
+                "user",
+                user.id,
+                audit_details,
+                authenticated_user,
+            )
+            audit(
+                session,
+                request,
+                "login",
+                "session",
+                token.id,
+                "Account session created.",
+                authenticated_user,
+            )
+            commit_auth_transaction(session, request, "signup")
+        except AuthAPIError:
+            raise
+        except ValueError as exc:
+            session.rollback()
+            try:
+                if session.scalar(select(User).order_by(User.id)) is not None:
+                    raise AuthAPIError(409, "ACCOUNT_EXISTS", AUTH_ACCOUNT_EXISTS_MESSAGE) from exc
+            except SQLAlchemyError as lookup_exc:
+                session.rollback()
+                logger.error(
+                    "Account signup conflict check failed reason=database_read_failed request_id=%s",
+                    getattr(request.state, "request_id", None),
+                )
+                raise AuthAPIError(500, "AUTH_SERVICE_ERROR", AUTH_SERVICE_MESSAGE) from lookup_exc
+            logger.error(
+                "Account signup failed reason=credential_state_invalid request_id=%s",
+                getattr(request.state, "request_id", None),
+            )
+            raise AuthAPIError(500, "AUTH_SERVICE_ERROR", AUTH_SERVICE_MESSAGE) from exc
+        except AuthenticationError as exc:
+            session.rollback()
+            logger.error(
+                "Account signup failed reason=credential_state_invalid request_id=%s",
+                getattr(request.state, "request_id", None),
+            )
+            raise AuthAPIError(500, "AUTH_SERVICE_ERROR", AUTH_SERVICE_MESSAGE) from exc
+        except SQLAlchemyError as exc:
+            session.rollback()
+            logger.error(
+                "Account signup failed reason=database_read_failed request_id=%s",
+                getattr(request.state, "request_id", None),
+            )
+            raise AuthAPIError(500, "AUTH_SERVICE_ERROR", AUTH_SERVICE_MESSAGE) from exc
+        return authenticated_user, raw_token
+
+    def perform_login(payload: LoginIn, request: Request, session: Session) -> tuple[User, str]:
+        try:
+            user, raw_token, token = authenticate(
+                session,
+                payload.username,
+                payload.password,
+                settings.session_ttl_seconds,
+            )
+        except AuthenticationError as exc:
+            record_auth_failure(session, request, exc.reason)
+            raise AuthAPIError(401, "INVALID_CREDENTIALS", AUTH_CREDENTIAL_MESSAGE) from exc
+        except SQLAlchemyError as exc:
+            session.rollback()
+            logger.error(
+                "Account authentication failed reason=database_read_failed request_id=%s",
+                getattr(request.state, "request_id", None),
+            )
+            raise AuthAPIError(500, "AUTH_SERVICE_ERROR", AUTH_SERVICE_MESSAGE) from exc
+        audit(session, request, "login", "session", token.id, "Account logged in.", user)
+        commit_auth_transaction(session, request, "login")
+        return user, raw_token
 
     def schedule_run_count(session: Session, schedule_id: int) -> int:
         return int(
@@ -688,51 +1020,122 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             "hard_denials": ["live_trade", "live_bet", "broker_order", "betting_order"],
         }
 
+    @app.get("/api/auth/session")
+    def auth_session(request: Request, session: Session = Depends(get_db)) -> dict[str, Any]:
+        try:
+            user = session_user(request, session)
+        except SQLAlchemyError as exc:
+            session.rollback()
+            logger.error(
+                "Account session lookup failed reason=database_read_failed request_id=%s",
+                getattr(request.state, "request_id", None),
+            )
+            raise AuthAPIError(500, "AUTH_SERVICE_ERROR", AUTH_SERVICE_MESSAGE) from exc
+        return {
+            "authenticated": user is not None,
+            "user": {"username": normalize_username(user.username)} if user else None,
+        }
+
+    @app.post("/api/auth/signup", status_code=201)
+    def signup(
+        payload: SignupIn,
+        response: Response,
+        request: Request,
+        session: Session = Depends(get_db),
+    ) -> dict[str, Any]:
+        user, raw_token = perform_signup(payload, request, session)
+        set_session_cookie(response, request, raw_token)
+        return {"authenticated": True, "user": {"username": user.username}}
+
     @app.get("/api/auth/status")
     def auth_status(request: Request, session: Session = Depends(get_db)) -> dict[str, Any]:
-        owner = session.scalar(select(User).order_by(User.id))
-        raw_token = request.cookies.get(SESSION_COOKIE)
-        authenticated = user_for_token(session, raw_token) if raw_token else None
+        try:
+            owner = session.scalar(select(User).order_by(User.id))
+            issue = owner_record_issue(owner)
+            valid_owner = owner if owner is not None and issue is None else None
+            raw_token = request.cookies.get(SESSION_COOKIE)
+            authenticated = user_for_token(session, raw_token) if raw_token and valid_owner else None
+        except SQLAlchemyError as exc:
+            logger.error(
+                "Owner authentication status failed reason=database_read_failed request_id=%s",
+                getattr(request.state, "request_id", None),
+            )
+            raise HTTPException(status_code=503, detail="Authentication status is temporarily unavailable.") from exc
+        recovery_required = owner is not None and valid_owner is None
         return {
-            "owner_initialized": owner is not None,
+            "owner_initialized": valid_owner is not None,
+            "recovery_required": recovery_required,
             "authenticated": authenticated is not None,
-            "mode": "setup" if owner is None else "authenticated" if authenticated else "login",
+            "mode": (
+                "setup"
+                if owner is None
+                else "recovery_required"
+                if recovery_required
+                else "authenticated"
+                if authenticated
+                else "login"
+            ),
             "owner": (
                 {"id": authenticated.id, "username": authenticated.username}
                 if authenticated
-                else {"username": owner.username} if owner else None
+                else {"username": normalize_username(valid_owner.username)} if valid_owner else None
             ),
         }
 
     @app.post("/api/auth/init")
-    def init_owner(payload: OwnerInitIn, request: Request, session: Session = Depends(get_db)) -> dict[str, Any]:
-        if session.scalar(select(User)):
-            raise HTTPException(status_code=409, detail="Owner account already initialized.")
-        try:
-            user = create_owner(session, payload.username, payload.password)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-        audit(session, request, "owner_initialized", "user", user.id, "Owner account initialized.", user)
+    def init_owner(
+        payload: OwnerInitIn,
+        response: Response,
+        request: Request,
+        session: Session = Depends(get_db),
+    ) -> dict[str, Any]:
+        """Temporary compatibility route; canonical clients use /api/auth/signup."""
+        user, raw_token = perform_signup(
+            payload,
+            request,
+            session,
+            audit_action="owner_initialized",
+            audit_details="Account initialized through compatibility API.",
+        )
+        set_session_cookie(response, request, raw_token)
         return {"owner": {"id": user.id, "username": user.username}}
 
     @app.post("/api/auth/login")
-    def login(payload: LoginIn, response: Response, request: Request, session: Session = Depends(get_db)) -> dict[str, Any]:
-        try:
-            user, raw_token, token = authenticate(session, payload.username, payload.password, settings.session_ttl_seconds)
-        except ValueError as exc:
-            raise HTTPException(status_code=401, detail=str(exc)) from exc
-        response.set_cookie(SESSION_COOKIE, raw_token, httponly=True, samesite="strict", max_age=settings.session_ttl_seconds)
-        audit(session, request, "login", "session", token.id, "Owner logged in.", user)
-        return {"token": raw_token, "owner": {"id": user.id, "username": user.username}, "expires_at": iso(token.expires_at)}
+    def login(
+        payload: LoginIn,
+        response: Response,
+        request: Request,
+        session: Session = Depends(get_db),
+    ) -> dict[str, Any]:
+        user, raw_token = perform_login(payload, request, session)
+        set_session_cookie(response, request, raw_token)
+        return {"authenticated": True, "user": {"username": user.username}}
 
     @app.post("/api/auth/logout")
-    def logout(request: Request, response: Response, session: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
-        raw_token = request.cookies.get(SESSION_COOKIE) or request.headers.get("authorization", "").removeprefix("Bearer ").strip()
-        if raw_token:
-            revoke_token(session, raw_token)
-        response.delete_cookie(SESSION_COOKIE)
-        audit(session, request, "logout", "user", user.id, "Owner logged out.", user)
-        return {"status": "logged_out"}
+    def logout(request: Request, response: Response, session: Session = Depends(get_db)) -> dict[str, Any]:
+        authorization = request.headers.get("authorization", "")
+        bearer_token = (
+            authorization.split(" ", 1)[1].strip()
+            if authorization.lower().startswith("bearer ")
+            else None
+        )
+        raw_token = request.cookies.get(SESSION_COOKIE) or bearer_token
+        try:
+            user = user_for_token(session, raw_token) if raw_token else None
+            if raw_token:
+                revoke_token(session, raw_token)
+                if user is not None:
+                    audit(session, request, "logout", "user", user.id, "Account logged out.", user)
+                commit_auth_transaction(session, request, "logout")
+        except SQLAlchemyError as exc:
+            session.rollback()
+            logger.error(
+                "Account logout failed reason=database_read_failed request_id=%s",
+                getattr(request.state, "request_id", None),
+            )
+            raise AuthAPIError(500, "AUTH_SERVICE_ERROR", AUTH_SERVICE_MESSAGE) from exc
+        clear_session_cookie(response, request)
+        return {"success": True}
 
     @app.get("/api/auth/me")
     def me(user: User = Depends(current_user)) -> dict[str, Any]:
@@ -1157,6 +1560,11 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        if session.get_bind().dialect.name == "sqlite":
+            # Authentication lookup has already opened a read transaction on
+            # this request-scoped session. End it before taking the write lock.
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
         task = session.get(Task, task_id)
         if not task:
             raise HTTPException(status_code=404, detail="Task not found.")
@@ -1167,6 +1575,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         )
         if not pack or pack.status != "approved" or pack.invalidated_at is not None:
             raise HTTPException(status_code=409, detail="Approve the current Codex Instruction Pack before execution.")
+        active_run = session.scalar(
+            select(CodexRun).where(
+                CodexRun.task_id == task.id,
+                CodexRun.status.in_(["queued", "running"]),
+            )
+        )
+        if active_run:
+            raise HTTPException(status_code=409, detail="A Codex run is already queued or running for this task.")
         detection = codex_manager.adapter.detect()
         if detection.status != "configured":
             raise HTTPException(status_code=409, detail=f"Codex status is {detection.status}: {detection.reason}")
@@ -1201,7 +1617,22 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             user,
         )
         session.commit()
-        codex_manager.start(run.id)
+        if not codex_manager.start(run.id):
+            run.status = "needs_review"
+            run.finished_at = utc_now()
+            run.owner_summary = "Runtime shutdown began before the Codex worker could start. Nothing ran."
+            task.status = "needs_review"
+            audit(
+                session,
+                request,
+                "codex_run_blocked",
+                "codex_run",
+                run.id,
+                "Runtime shutdown prevented process start.",
+                user,
+            )
+            session.commit()
+            raise HTTPException(status_code=503, detail="Runtime shutdown began before Codex could start.")
         return codex_run_out(run, include_raw=True)
 
     @app.get("/api/codex-runs/{run_id}")
@@ -1290,9 +1721,13 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        if session.get_bind().dialect.name == "sqlite":
+            session.execute(text("BEGIN IMMEDIATE"))
         acceptance = session.get(OwnerAcceptanceSession, acceptance_id)
         if not acceptance:
             raise HTTPException(status_code=404, detail="Owner Acceptance not found.")
+        if acceptance.status != "owner_review":
+            raise HTTPException(status_code=409, detail="Owner Acceptance decision is already final.")
         items = session.scalars(
             select(OwnerAcceptanceItem).where(OwnerAcceptanceItem.session_id == acceptance.id)
         ).all()
@@ -1327,9 +1762,13 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        if session.get_bind().dialect.name == "sqlite":
+            session.execute(text("BEGIN IMMEDIATE"))
         acceptance = session.get(OwnerAcceptanceSession, acceptance_id)
         if not acceptance:
             raise HTTPException(status_code=404, detail="Owner Acceptance not found.")
+        if acceptance.status != "owner_review":
+            raise HTTPException(status_code=409, detail="Owner Acceptance decision is already final.")
         acceptance.status = "rejected"
         acceptance.owner_note = payload.note
         acceptance.decided_by_user_id = user.id
