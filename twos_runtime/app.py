@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import hashlib
 import uuid
 from contextlib import asynccontextmanager
 from datetime import timedelta
@@ -9,7 +10,7 @@ from typing import Any, Callable, Iterator, Literal, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, select, text
@@ -17,13 +18,25 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
 from . import __version__
-from .ai_orchestration import compose_team, decode_capability_tags, route_capability
+from .ai_orchestration import (
+    compose_team,
+    decode_capability_tags,
+    has_complete_verified_codex_run_evidence,
+    is_verified_real_invocation,
+    latest_model_assignments,
+    model_registry_snapshot,
+    recompose_model_assignments,
+    route_capability,
+)
 from .codex_adapter import CodexExecutionManager
 from .config import Settings, get_settings
 from .db import initialize_database, make_engine, make_session_factory, seed_ai_registry, seed_registry
 from .models import (
     AICapability,
     AIModel,
+    AIModelAvailabilityEvidence,
+    AIModelAssignment,
+    AIModelInvocationEvidence,
     AITeamPlan,
     AITeamPlanItem,
     AcceptanceCheck,
@@ -58,9 +71,16 @@ from .security import (
 )
 from .self_hosting import (
     accepted_compact_sync,
+    assignment_snapshot_out,
     build_instruction_pack,
+    codex_execution_target,
+    development_task_digest,
     git_source_state,
     invalidate_approved_packs,
+    model_routing_snapshot,
+    pack_routing_binding_error,
+    run_eligibility,
+    verification_execution_target,
 )
 from .workers import parse_acceptance, run_task
 
@@ -68,6 +88,15 @@ from .workers import parse_acceptance, run_task
 SESSION_COOKIE = "twos_session"
 OWNER_ACTIONS = ("Analyze", "Compact Sync", "Acceptance Review")
 logger = logging.getLogger(__name__)
+
+DERIVED_OBJECTIVE = "Complete the Development task exactly as specified."
+DERIVED_SOURCE_CONTEXT = "None provided."
+DERIVED_REQUIRED_OUTPUT = "The outputs explicitly requested by the Development task."
+DERIVED_ACCEPTANCE_TARGET = "The Development task requirements and explicit boundaries are satisfied."
+DERIVED_IMPLEMENTATION_SCOPE = "Only changes required by the Development task are permitted."
+DERIVED_FORBIDDEN_SCOPE = (
+    "No automatic commit, merge, push, force push, tag, Provider execution, or Codex execution."
+)
 
 AUTH_VALIDATION_MESSAGE = "Check the highlighted fields."
 AUTH_CREDENTIAL_MESSAGE = GENERIC_AUTH_MESSAGE
@@ -146,7 +175,8 @@ class ProjectIn(BaseModel):
 
 class TaskIn(BaseModel):
     project_id: int
-    title: str = Field(min_length=1, max_length=240)
+    development_task: Optional[str] = None
+    title: Optional[str] = Field(default=None, max_length=240)
     action: Optional[str] = None
     task_type: Optional[str] = None
     source_sync_summary: str = ""
@@ -161,6 +191,7 @@ class TaskIn(BaseModel):
 
 class TaskPatchIn(BaseModel):
     project_id: Optional[int] = None
+    development_task: Optional[str] = None
     title: Optional[str] = None
     action: Optional[str] = None
     task_type: Optional[str] = None
@@ -207,6 +238,16 @@ class RouteIn(BaseModel):
     latency_sensitivity: Literal["low", "balanced", "high"] = "balanced"
 
 
+class CodexSetupIn(BaseModel):
+    model_identifier: str = Field(min_length=1, max_length=240, pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,239}$")
+    capability: Literal["coding", "verification"] = "coding"
+
+
+class CodexAssignIn(BaseModel):
+    model_id: int
+    capability: Literal["coding", "verification"] = "coding"
+
+
 class AcceptanceItemPatchIn(BaseModel):
     status: Literal["pass", "fail", "needs_review"]
     note: str = Field(default="", max_length=1000)
@@ -246,6 +287,7 @@ def task_out(task: Task) -> dict[str, Any]:
         "project_id": task.project_id,
         "project": project_out(task.project) if task.project else None,
         "title": task.title,
+        "development_task": task.development_task or task.title,
         "task_type": task.task_type,
         "action": action,
         "source_sync_summary": task.source_sync_summary,
@@ -256,8 +298,24 @@ def task_out(task: Task) -> dict[str, Any]:
         "implementation_scope": task.implementation_scope,
         "forbidden_scope": task.forbidden_scope,
         "acceptance_target": task.acceptance_target,
+        "objective_provenance": task.objective_provenance,
+        "source_context_provenance": task.source_context_provenance,
+        "required_output_provenance": task.required_output_provenance,
+        "acceptance_target_provenance": task.acceptance_target_provenance,
+        "implementation_scope_provenance": task.implementation_scope_provenance,
+        "forbidden_scope_provenance": (
+            "derived" if task.forbidden_scope == DERIVED_FORBIDDEN_SCOPE else "owner-edited"
+        ),
+        "provenance": {
+            "objective": task.objective_provenance,
+            "source_feedback_context": task.source_context_provenance,
+            "required_output": task.required_output_provenance,
+            "acceptance_target": task.acceptance_target_provenance,
+            "implementation_scope": task.implementation_scope_provenance,
+        },
         "repository_identity": task.repository_identity,
         "source_baseline_commit": task.source_baseline_commit,
+        "task_version": task.task_version,
         "status": task.status,
         "acceptance_state": task.acceptance_state,
         "compact_sync_result": task.compact_sync_result,
@@ -335,16 +393,25 @@ def capability_out(capability: AICapability) -> dict[str, Any]:
 def model_out(model: AIModel | None) -> dict[str, Any] | None:
     if not model:
         return None
+    registry = model_registry_snapshot(model)
     provider = model.provider
-    available = bool(
-        provider.enabled
-        and provider.status in {"healthy", "degraded"}
-        and model.status in {"healthy", "degraded"}
+    available = registry["availability_status"] == "available"
+    activity_state = (
+        "simulated"
+        if registry["invocation_mode"] == "simulated"
+        else "failed"
+        if registry["last_invocation_outcome"] in {"failed", "cancelled", "timed_out", "blocked"}
+        else "not_used"
     )
     return {
         "id": model.id,
+        "stable_id": registry["stable_id"],
+        "display_name": registry["display_name"],
         "provider": provider.name,
         "provider_status": provider.status,
+        "provider_enabled": provider.enabled,
+        "provider_model_id": registry["provider_model_id"],
+        "execution_adapter": registry["execution_adapter"],
         "model_name": model.model_name,
         "capability_tags": decode_capability_tags(model),
         "context_limit": model.context_limit,
@@ -353,7 +420,25 @@ def model_out(model: AIModel | None) -> dict[str, Any] | None:
         "status": model.status,
         "routing_priority": model.routing_priority,
         "available": available,
+        "configuration_status": registry["configuration_status"],
+        "availability_status": registry["availability_status"],
+        "invocation_mode": registry["invocation_mode"],
+        "last_invocation_outcome": registry["last_invocation_outcome"],
+        "evidence_status": registry["evidence_status"],
+        "evidence_source": registry["evidence_source"],
+        "last_verified_at": registry["last_verified_at"],
+        "safe_diagnostic": registry["safe_diagnostic"],
+        "activity_state": activity_state,
     }
+
+
+def configured_model_record(model: AIModel) -> bool:
+    """Exclude preserved vendor placeholders until explicit configuration exists."""
+    return bool(
+        model.configuration_status in {"configured", "disabled"}
+        or str(model.provider_model_id or "").strip()
+        or str(model.execution_adapter or "").strip()
+    )
 
 
 def decoded_list(value: str) -> list[Any]:
@@ -385,6 +470,9 @@ def team_plan_out(session: Session, plan: AITeamPlan) -> dict[str, Any]:
         "urgency": plan.urgency,
         "minimum_role_count": plan.minimum_role_count,
         "status": plan.status,
+        "assignment_version": plan.assignment_version,
+        "task_version": plan.task_version,
+        "routing_snapshot_hash": plan.routing_snapshot_hash,
         "explanation": plan.explanation,
         "omission_explanation": plan.omission_explanation,
         "required_capabilities": required_capabilities,
@@ -401,6 +489,92 @@ def team_plan_out(session: Session, plan: AITeamPlan) -> dict[str, Any]:
             for item in items
         ],
         "created_at": iso(plan.created_at),
+    }
+
+
+def model_assignment_out(assignment: AIModelAssignment) -> dict[str, Any]:
+    return assignment_snapshot_out(assignment)
+
+
+def model_invocation_out(evidence: AIModelInvocationEvidence) -> dict[str, Any]:
+    verified_real_invocation = is_verified_real_invocation(evidence)
+    configured_model = model_out(evidence.configured_model)
+    process_evidence = decoded_object(evidence.process_evidence)
+    provider_evidence = decoded_object(evidence.provider_evidence)
+    requested_model_identifier = str(evidence.configured_model.provider_model_id or "")
+    if evidence.codex_run is not None:
+        if evidence.capability == "coding":
+            requested_model_identifier = evidence.codex_run.requested_model_identifier
+        elif evidence.capability == "verification":
+            requested_model_identifier = evidence.codex_run.verification_model_identifier
+    actual_model_identity_verified = bool(
+        process_evidence.get("actual_model_identity_verified") is True
+        and process_evidence.get("model_identity_observed") is True
+        and evidence.actual_invoked_model_identifier
+    )
+    actual_resolved_model_identifier = (
+        evidence.actual_invoked_model_identifier if actual_model_identity_verified else None
+    )
+    process_execution_verified = process_evidence.get("process_execution_verified") is True
+    codex_turn_verified = process_evidence.get("codex_turn_verified") is True
+    execution_state = (
+        "invoked"
+        if verified_real_invocation
+        else "simulated"
+        if evidence.invocation_mode == "simulated"
+        else "failed"
+        if evidence.outcome in {"failed", "cancelled", "timed_out", "blocked"}
+        else "not_used"
+    )
+    return {
+        "id": evidence.id,
+        "task_id": evidence.task_id,
+        "codex_run_id": evidence.codex_run_id,
+        "capability": evidence.capability,
+        "assignment_version": evidence.assignment_version,
+        "configured_model": configured_model,
+        "provider": evidence.configured_provider.name,
+        "requested_model_identifier": requested_model_identifier,
+        "actual_invoked_model_identifier": actual_resolved_model_identifier,
+        "actual_resolved_model_identifier": actual_resolved_model_identifier,
+        "actual_resolved_model_display": (
+            actual_resolved_model_identifier
+            if actual_resolved_model_identifier
+            else "Not independently exposed by available CLI evidence"
+            if verified_real_invocation
+            else "Not verified"
+        ),
+        "actual_model_identity_verified": actual_model_identity_verified,
+        "process_execution_verified": process_execution_verified,
+        "codex_turn_verified": codex_turn_verified,
+        "display_claim": (
+            f"Ran with {actual_resolved_model_identifier}"
+            if verified_real_invocation and actual_resolved_model_identifier
+            else (
+                "Real Codex CLI invocation verified; "
+                f"requested model {requested_model_identifier}; "
+                "actual resolved model not independently exposed by available CLI evidence"
+            )
+            if verified_real_invocation
+            else f"Assigned to {configured_model['display_name']}"
+        ),
+        "verified_real_invocation": verified_real_invocation,
+        "execution_state": execution_state,
+        "invocation_mode": evidence.invocation_mode,
+        "outcome": evidence.outcome,
+        "process_evidence": process_evidence,
+        "provider_evidence": provider_evidence,
+        "timed_out": evidence.timed_out,
+        "cancelled": evidence.cancelled,
+        "output_truncated": evidence.output_truncated,
+        "usage_metadata": decoded_object(evidence.usage_metadata),
+        "error_category": evidence.error_category,
+        "diagnostic_code": evidence.diagnostic_code,
+        "safe_summary": evidence.safe_summary,
+        "request_fingerprint": evidence.request_fingerprint,
+        "response_fingerprint": evidence.response_fingerprint,
+        "started_at": iso(evidence.started_at),
+        "completed_at": iso(evidence.completed_at),
     }
 
 
@@ -475,6 +649,7 @@ def routing_summary_out(plan: AITeamPlan, routes: list[RoutingDecision]) -> dict
 
 
 def codex_pack_out(pack: CodexInstructionPack, include_raw: bool = False) -> dict[str, Any]:
+    metadata = decoded_object(pack.generation_metadata)
     output = {
         "id": pack.id,
         "task_id": pack.task_id,
@@ -484,6 +659,14 @@ def codex_pack_out(pack: CodexInstructionPack, include_raw: bool = False) -> dic
         "key_boundaries": pack.key_boundaries,
         "acceptance_target": pack.acceptance_target,
         "source_baseline_commit": pack.source_baseline_commit,
+        "development_task": pack.development_task,
+        "development_task_digest": pack.development_task_digest,
+        "task_version": pack.task_version,
+        "assignment_version": pack.assignment_version,
+        "routing_snapshot_hash": pack.routing_snapshot_hash,
+        "source_snapshot_digest": pack.source_snapshot_digest,
+        "source_snapshot": metadata.get("source_snapshot"),
+        "model_routing_snapshot": metadata.get("model_routing_snapshot"),
         "approved": pack.status == "approved" and pack.invalidated_at is None,
         "approved_at": iso(pack.approved_at),
         "invalidated_at": iso(pack.invalidated_at),
@@ -495,14 +678,76 @@ def codex_pack_out(pack: CodexInstructionPack, include_raw: bool = False) -> dic
                 "content": pack.content,
                 "ai_team_plan_id": pack.ai_team_plan_id,
                 "routing_decision_ids": decoded_list(pack.routing_decision_ids),
-                "generation_metadata": decoded_object(pack.generation_metadata),
+                "generation_metadata": metadata,
             }
         )
     return output
 
 
-def codex_run_out(run: CodexRun, include_raw: bool = False) -> dict[str, Any]:
+def codex_run_out(
+    run: CodexRun,
+    include_raw: bool = False,
+    session: Session | None = None,
+) -> dict[str, Any]:
     result = decoded_object(run.structured_result)
+    result["task_id"] = run.task_id
+    result["task_version"] = run.task_version
+    result["pack_version"] = run.pack.version if run.pack else None
+    result["development_task"] = run.development_task
+    result["frozen_development_task"] = run.development_task
+    result["development_task_digest"] = run.development_task_digest
+
+    def normalized_invocation_result(
+        value: object,
+        requested_model_identifier: str,
+    ) -> dict[str, Any]:
+        proof = dict(value) if isinstance(value, dict) else {}
+        requested = str(
+            proof.get("requested_model_identifier")
+            or proof.get("requested_model")
+            or requested_model_identifier
+            or ""
+        )
+        actual_model_identity_verified = proof.get("actual_model_identity_verified") is True
+        candidate = proof.get("actual_resolved_model_identifier") or proof.get(
+            "actual_resolved_model"
+        )
+        actual = str(candidate) if actual_model_identity_verified and candidate else None
+        turn_verified = proof.get("codex_turn_verified") is True
+        process_verified = proof.get("process_execution_verified") is True
+        proof["requested_model"] = requested
+        proof["requested_model_identifier"] = requested
+        proof["actual_resolved_model"] = actual
+        proof["actual_resolved_model_identifier"] = actual
+        proof["actual_resolved_model_display"] = (
+            actual
+            if actual
+            else "Not independently exposed by available CLI evidence"
+            if turn_verified
+            else "Not verified"
+        )
+        proof["actual_model_identity_verified"] = bool(actual)
+        proof["process_execution_verified"] = process_verified
+        proof["codex_turn_verified"] = turn_verified
+        return proof
+
+    result["coding_invocation"] = normalized_invocation_result(
+        result.get("coding_invocation"),
+        run.requested_model_identifier,
+    )
+    result["verification_invocation"] = normalized_invocation_result(
+        result.get("verification_invocation"),
+        run.verification_model_identifier,
+    )
+    invocation_rows = (
+        session.scalars(
+            select(AIModelInvocationEvidence)
+            .where(AIModelInvocationEvidence.codex_run_id == run.id)
+            .order_by(AIModelInvocationEvidence.id)
+        ).all()
+        if session is not None
+        else []
+    )
     output = {
         "id": run.id,
         "task_id": run.task_id,
@@ -513,6 +758,44 @@ def codex_run_out(run: CodexRun, include_raw: bool = False) -> dict[str, Any]:
         "owner_summary": run.owner_summary,
         "source_branch": run.source_branch,
         "source_commit": run.source_commit,
+        "development_task": run.development_task,
+        "development_task_digest": run.development_task_digest,
+        "task_version": run.task_version,
+        "assignment_version": run.assignment_version,
+        "routing_snapshot_hash": run.routing_snapshot_hash,
+        "source_snapshot_digest": run.source_snapshot_digest,
+        "launch_intent_recorded": run.launch_intent_at is not None,
+        "launch_intent_at": iso(run.launch_intent_at),
+        "process_spawned": run.process_spawned,
+        "execution_target": (
+            {
+                "assignment_id": run.execution_assignment_id,
+                "model": model_out(run.execution_model),
+                "requested_model_identifier": run.requested_model_identifier,
+                "fallback_selected": run.fallback_selected,
+            }
+            if run.execution_assignment_id is not None
+            else None
+        ),
+        "verification_target": (
+            {
+                "assignment_id": run.verification_assignment_id,
+                "model": model_out(run.verification_model),
+                "model_identifier": run.verification_model_identifier,
+                "requested_model_identifier": run.verification_model_identifier,
+                "status": run.verification_status,
+                "summary": run.verification_summary,
+                "process_spawned": run.verification_process_spawned,
+                "exit_code": run.verification_exit_code,
+                "duration_ms": run.verification_duration_ms,
+                "timed_out": run.verification_timed_out,
+                "cancelled": run.verification_cancelled,
+                "output_truncated": run.verification_output_truncated,
+            }
+            if run.verification_assignment_id is not None
+            else None
+        ),
+        "model_invocations": [model_invocation_out(item) for item in invocation_rows],
         "worktree_branch": run.worktree_branch,
         "exit_code": run.exit_code,
         "duration_ms": run.duration_ms,
@@ -530,7 +813,14 @@ def codex_run_out(run: CodexRun, include_raw: bool = False) -> dict[str, Any]:
                 "worktree_path": run.worktree_path,
                 "stdout": run.stdout,
                 "stderr": run.stderr,
+                # Sanitized, bounded Codex JSONL is intentionally exposed only
+                # on the authenticated raw/Advanced representation. It never
+                # enters the default structured Result or Tests collection.
+                "coding_jsonl_diagnostics": run.stdout,
                 "output_truncated": run.output_truncated,
+                "verification_stdout": run.verification_stdout,
+                "verification_stderr": run.verification_stderr,
+                "verification_jsonl_diagnostics": run.verification_stdout,
             }
         )
     return output
@@ -705,6 +995,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     initialize_database(engine)
     factory = make_session_factory(engine)
     codex_manager = CodexExecutionManager(factory, settings)
+    codex_manager.sync_local_model_registry()
     codex_manager.recover_interrupted_runs()
 
     @asynccontextmanager
@@ -733,6 +1024,11 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         # header material. Generate the correlation ID inside TWOS for every request.
         request_id = str(uuid.uuid4())
         request.state.request_id = request_id
+        if request.url.path == "/static_cockpit/vol12_static_mvp/twos_command_center.html":
+            response = RedirectResponse("/twos", status_code=307)
+            response.headers["X-Request-ID"] = request_id
+            response.headers["Cache-Control"] = "no-store"
+            return response
         try:
             response = await call_next(request)
         except Exception as exc:
@@ -758,8 +1054,24 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
 
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request: Request, exc: HTTPException):
-        detail = exc.detail if isinstance(exc.detail, str) else "Request failed."
-        return error_response(exc.status_code, "http_error", detail, getattr(request.state, "request_id", None), exc.detail)
+        if isinstance(exc.detail, str):
+            message = exc.detail
+        elif isinstance(exc.detail, dict):
+            primary = exc.detail.get("primary_blocker")
+            message = str(
+                exc.detail.get("message")
+                or (primary.get("message") if isinstance(primary, dict) else "")
+                or "Request failed."
+            )
+        else:
+            message = "Request failed."
+        return error_response(
+            exc.status_code,
+            "http_error",
+            message,
+            getattr(request.state, "request_id", None),
+            exc.detail,
+        )
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -889,7 +1201,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         audit_details: str = "Account created.",
     ) -> tuple[User, str]:
         try:
-            # Vol.16 is a single-account SQLite product. Acquire the write lock
+            # TWOS is a single-account SQLite product. Acquire the write lock
             # before checking existence so concurrent Sign up requests serialize
             # and the losing request observes the committed account as a 409.
             if session.get_bind().dialect.name == "sqlite":
@@ -993,13 +1305,17 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
 
     @app.get("/")
     def root() -> RedirectResponse:
-        return RedirectResponse("/static_cockpit/vol12_static_mvp/twos_command_center.html")
+        return RedirectResponse("/twos", status_code=307)
 
     @app.get("/twos")
-    def twos_ui() -> RedirectResponse:
+    def twos_ui() -> FileResponse:
         if not settings.ui_path.exists():
             raise HTTPException(status_code=404, detail="TWOS UI entry not found.")
-        return RedirectResponse("/static_cockpit/vol12_static_mvp/twos_command_center.html")
+        return FileResponse(
+            settings.ui_path,
+            media_type="text/html",
+            headers={"Cache-Control": "no-store"},
+        )
 
     @app.get("/api/health")
     def health(session: Session = Depends(get_db)) -> dict[str, Any]:
@@ -1163,43 +1479,64 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     def create_task(payload: TaskIn, request: Request, session: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
         if not session.get(Project, payload.project_id):
             raise HTTPException(status_code=404, detail="Project not found.")
+        development_task = payload.development_task if payload.development_task is not None else payload.title
+        if development_task is None or not development_task.strip():
+            raise HTTPException(status_code=400, detail="Development task is required.")
+        effective_workflow = payload.workflow_type
+        if "development_task" in payload.model_fields_set and "workflow_type" not in payload.model_fields_set:
+            effective_workflow = "product_development"
         try:
             action = persisted_action(payload.action, payload.task_type)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         source_state: dict[str, object] = {}
-        if payload.workflow_type == "product_development":
-            required = {
-                "objective": payload.objective,
-                "implementation_scope": payload.implementation_scope,
-                "forbidden_scope": payload.forbidden_scope,
-                "acceptance_target": payload.acceptance_target,
-            }
-            missing = [name for name, value in required.items() if not value.strip()]
-            if missing:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Product-development task requires: {', '.join(missing)}.",
-                )
+        if effective_workflow == "product_development":
             try:
                 source_state = git_source_state(settings.source_repo)
             except RuntimeError as exc:
                 raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+        def owner_value(value: str, default: str) -> tuple[str, str]:
+            return (value, "owner-edited") if value.strip() else (default, "derived")
+
+        objective, objective_provenance = owner_value(payload.objective, DERIVED_OBJECTIVE)
+        source_context, source_context_provenance = owner_value(
+            payload.source_sync_summary, DERIVED_SOURCE_CONTEXT
+        )
+        required_output, required_output_provenance = owner_value(
+            payload.required_output, DERIVED_REQUIRED_OUTPUT
+        )
+        acceptance_target, acceptance_target_provenance = owner_value(
+            payload.acceptance_target, DERIVED_ACCEPTANCE_TARGET
+        )
+        implementation_scope, implementation_scope_provenance = owner_value(
+            payload.implementation_scope, DERIVED_IMPLEMENTATION_SCOPE
+        )
+        display_title = payload.title.strip() if payload.title and payload.title.strip() else next(
+            (line.strip() for line in development_task.splitlines() if line.strip()),
+            "Development task",
+        )[:240]
         task = Task(
             project_id=payload.project_id,
-            title=payload.title,
+            title=display_title,
+            development_task=development_task,
             task_type=action,
-            source_sync_summary=payload.source_sync_summary,
-            required_output=payload.required_output,
+            source_sync_summary=source_context,
+            required_output=required_output,
             boundary_risk=payload.boundary_risk,
-            workflow_type=payload.workflow_type,
-            objective=payload.objective or payload.title,
-            implementation_scope=payload.implementation_scope,
-            forbidden_scope=payload.forbidden_scope,
-            acceptance_target=payload.acceptance_target,
+            workflow_type=effective_workflow,
+            objective=objective,
+            implementation_scope=implementation_scope,
+            forbidden_scope=payload.forbidden_scope or DERIVED_FORBIDDEN_SCOPE,
+            acceptance_target=acceptance_target,
+            objective_provenance=objective_provenance,
+            source_context_provenance=source_context_provenance,
+            required_output_provenance=required_output_provenance,
+            acceptance_target_provenance=acceptance_target_provenance,
+            implementation_scope_provenance=implementation_scope_provenance,
             repository_identity=str(source_state.get("identity", "")),
             source_baseline_commit=str(source_state.get("commit", "")),
-            status="draft" if payload.workflow_type == "product_development" else "queued",
+            status="draft" if effective_workflow == "product_development" else "queued",
         )
         session.add(task)
         session.flush()
@@ -1211,12 +1548,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         task = session.get(Task, task_id)
         if not task:
             raise HTTPException(status_code=404, detail="Task not found.")
+        was_product_development = task.workflow_type == "product_development"
         data = payload.model_dump(exclude_unset=True)
         updated_fields = list(data.keys())
         pack_sensitive_fields = {
             "project_id",
+            "development_task",
             "title",
-            "action",
+            "task_type",
             "source_sync_summary",
             "required_output",
             "boundary_risk",
@@ -1233,31 +1572,44 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
         if "status" in data and data["status"] not in LIFECYCLE_STATES:
             raise HTTPException(status_code=400, detail="Unsupported task status.")
+        material_changed = False
         if "project_id" in data:
-            project = session.get(Project, data.pop("project_id"))
+            project_id = data.pop("project_id")
+            project = session.get(Project, project_id)
             if not project:
                 raise HTTPException(status_code=404, detail="Project not found.")
+            material_changed = material_changed or task.project_id != project_id
             task.project = project
+        derived_fields = {
+            "objective": ("objective_provenance", DERIVED_OBJECTIVE),
+            "source_sync_summary": ("source_context_provenance", DERIVED_SOURCE_CONTEXT),
+            "required_output": ("required_output_provenance", DERIVED_REQUIRED_OUTPUT),
+            "acceptance_target": ("acceptance_target_provenance", DERIVED_ACCEPTANCE_TARGET),
+            "implementation_scope": ("implementation_scope_provenance", DERIVED_IMPLEMENTATION_SCOPE),
+        }
+        if "development_task" in data:
+            submitted_task = data["development_task"]
+            if submitted_task is None or not submitted_task.strip():
+                raise HTTPException(status_code=400, detail="Development task is required.")
         for key, value in data.items():
+            if key in pack_sensitive_fields and getattr(task, key) != value:
+                material_changed = True
+            if key in derived_fields:
+                provenance_field, default = derived_fields[key]
+                if value is None or not str(value).strip():
+                    value = default
+                    setattr(task, provenance_field, "derived")
+                elif getattr(task, key) != value:
+                    setattr(task, provenance_field, "owner-edited")
             setattr(task, key, value)
         if task.workflow_type == "product_development":
-            required_values = {
-                "objective": task.objective,
-                "implementation_scope": task.implementation_scope,
-                "forbidden_scope": task.forbidden_scope,
-                "acceptance_target": task.acceptance_target,
-            }
-            missing = [name for name, value in required_values.items() if not value.strip()]
-            if missing:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Product-development task requires: {', '.join(missing)}.",
-                )
             if not task.source_baseline_commit:
                 source_state = git_source_state(settings.source_repo)
                 task.repository_identity = str(source_state["identity"])
                 task.source_baseline_commit = str(source_state["commit"])
-        if task.workflow_type == "product_development" and pack_sensitive_fields.intersection(updated_fields):
+        if material_changed:
+            task.task_version += 1
+        if material_changed and (was_product_development or task.workflow_type == "product_development"):
             invalidated = invalidate_approved_packs(session, task.id)
             if invalidated:
                 task.status = "planned"
@@ -1290,7 +1642,13 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     ) -> list[dict[str, Any]]:
         seed_ai_registry(session)
         session.flush()
-        model_rows = session.scalars(select(AIModel).order_by(AIModel.provider_id, AIModel.id)).all()
+        model_rows = [
+            item
+            for item in session.scalars(
+                select(AIModel).order_by(AIModel.provider_id, AIModel.id)
+            ).all()
+            if configured_model_record(item)
+        ]
         return [model_out(item) for item in model_rows]
 
     @app.post("/api/ai/team-compose")
@@ -1303,7 +1661,8 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         task = session.get(Task, payload.task_id)
         if not task:
             raise HTTPException(status_code=404, detail="Task not found.")
-        invalidated = invalidate_approved_packs(session, task.id) if task.workflow_type == "product_development" else 0
+        prior_assignments = latest_model_assignments(session, task.id)
+        prior_snapshot_hash = prior_assignments[0].routing_snapshot_hash if prior_assignments else None
         try:
             plan = compose_team(
                 session,
@@ -1351,8 +1710,25 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 f"capability={capability.name}; status={decision.status}; automatic=true",
                 user,
             )
+        assignments = recompose_model_assignments(
+            session,
+            task,
+            routes,
+            team_plan=plan,
+            task_version=task.task_version,
+            routing_source="routing_decision",
+        )
+        current_snapshot_hash = assignments[0].routing_snapshot_hash if assignments else None
+        routing_changed = prior_snapshot_hash != current_snapshot_hash
+        invalidated = (
+            invalidate_approved_packs(session, task.id)
+            if task.workflow_type == "product_development" and routing_changed
+            else 0
+        )
+        plan_output = team_plan_out(session, plan)
         plan_output["routes"] = [routing_out(item) for item in routes]
         plan_output["routing_summary"] = routing_summary_out(plan, routes)
+        plan_output["assignments"] = [model_assignment_out(item) for item in assignments]
         if task.workflow_type == "product_development":
             task.status = "planned"
             if invalidated:
@@ -1362,7 +1738,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                     "codex_pack_approval_invalidated",
                     "task",
                     task.id,
-                    f"invalidated_packs={invalidated}; AI Team changed",
+                    f"invalidated_packs={invalidated}; model-routing snapshot changed",
                     user,
                 )
         return plan_output
@@ -1421,23 +1797,494 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             select(AITeamPlan).where(AITeamPlan.task_id == task_id).order_by(AITeamPlan.id.desc())
         )
         if not plan:
-            return {"task_id": task_id, "plan": None, "routes": [], "routing_summary": None}
+            return {
+                "task_id": task_id,
+                "plan": None,
+                "routes": [],
+                "assignments": [],
+                "routing_summary": None,
+            }
         routes = session.scalars(
             select(RoutingDecision)
             .where(RoutingDecision.team_plan_id == plan.id)
             .order_by(RoutingDecision.id)
         ).all()
+        assignments = latest_model_assignments(session, task_id)
         return {
             "task_id": task_id,
             "plan": team_plan_out(session, plan),
             "routes": [routing_out(item) for item in routes],
+            "assignments": [model_assignment_out(item) for item in assignments],
             "routing_summary": routing_summary_out(plan, routes),
         }
 
-    @app.get("/api/codex/status")
-    def codex_status(user: User = Depends(current_user)) -> dict[str, Any]:
+    def local_codex_model(session: Session) -> AIModel | None:
+        return session.scalar(
+            select(AIModel)
+            .where(
+                AIModel.execution_adapter == "codex_cli",
+                AIModel.configuration_status != "disabled",
+            )
+            .order_by(AIModel.updated_at.desc(), AIModel.id.desc())
+        )
+
+    def local_codex_models(session: Session) -> list[AIModel]:
+        return list(
+            session.scalars(
+                select(AIModel)
+                .where(
+                    AIModel.execution_adapter == "codex_cli",
+                    AIModel.configuration_status != "disabled",
+                )
+                .order_by(AIModel.updated_at.desc(), AIModel.id.desc())
+            ).all()
+        )
+
+    def ensure_local_codex_configuration(
+        session: Session,
+        model_identifier: str,
+        display_name: str | None = None,
+    ) -> tuple[AIModel, bool]:
+        provider = session.scalar(
+            select(Provider).where(Provider.name == "Local Codex CLI", Provider.kind == "model")
+        )
+        if provider is None:
+            provider = Provider(
+                name="Local Codex CLI",
+                kind="model",
+                status="unconfigured",
+                enabled=False,
+                details="Local Codex CLI runtime; credentials remain in the CLI environment.",
+            )
+            session.add(provider)
+            session.flush()
+        model = session.scalar(
+            select(AIModel).where(
+                AIModel.provider_id == provider.id,
+                AIModel.execution_adapter == "codex_cli",
+                AIModel.provider_model_id == model_identifier,
+            )
+        )
+        created = model is None
+        if model is None:
+            model = AIModel(
+                provider_id=provider.id,
+                model_name=model_identifier,
+                stable_id=f"codex-cli.{hashlib.sha256(model_identifier.encode()).hexdigest()[:16]}",
+                display_name=display_name or model_identifier,
+                provider_model_id=model_identifier,
+                execution_adapter="codex_cli",
+                capability_tags='["coding","verification"]',
+                status="unconfigured",
+                configuration_status="configured",
+                availability_status="unavailable",
+                invocation_mode="real",
+                evidence_status="unverified",
+                evidence_source="none",
+                safe_diagnostic="Check availability before assigning this target.",
+                routing_priority=5,
+            )
+            session.add(model)
+            session.flush()
+        elif display_name:
+            model.display_name = display_name
+        model.configuration_status = "configured"
+        model.invocation_mode = "real"
+        return model, created
+
+    def selected_catalog_model(model_identifier: str):
+        catalog_model = codex_manager.adapter.catalog_model(model_identifier)
+        if catalog_model is None:
+            raise HTTPException(status_code=422, detail="No matching supported model.")
+        return catalog_model
+
+    @app.get("/api/model-catalog")
+    def model_catalog(
+        adapter: Literal["codex_cli"],
+        capability: Literal["coding", "verification"] | None = None,
+        task_id: int | None = None,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        current_assignment = None
+        if task_id is not None:
+            if session.get(Task, task_id) is None:
+                raise HTTPException(status_code=404, detail="Task not found.")
+            if capability is not None:
+                current_assignment = next(
+                    (
+                        item
+                        for item in latest_model_assignments(session, task_id)
+                        if item.capability == capability
+                    ),
+                    None,
+                )
+        catalog = codex_manager.adapter.model_catalog()
+        models = [
+            model
+            for model in catalog.models
+            if capability is None or capability in model.supported_capabilities
+        ]
+        assigned_model = current_assignment.assigned_model if current_assignment is not None else None
+        catalog_ids = {model.canonical_model_id for model in models}
+        assigned_identifier = assigned_model.provider_model_id if assigned_model is not None else None
+        currently_assigned_model = (
+            {
+                "canonical_model_id": assigned_identifier,
+                "display_name": assigned_model.display_name or assigned_identifier,
+                "catalog_listed": assigned_identifier in catalog_ids,
+                "lifecycle_status": (
+                    "current" if assigned_identifier in catalog_ids else "legacy"
+                ),
+                "assignment_version": current_assignment.assignment_version,
+                "routing_snapshot_hash": current_assignment.routing_snapshot_hash,
+            }
+            if assigned_identifier
+            else None
+        )
+        return {
+            "adapter": {
+                "id": "codex_cli",
+                "display_name": "Local Codex CLI",
+                "invocation_mode": "real",
+            },
+            "provider": {
+                "id": "local_codex_cli",
+                "display_name": "Local Codex CLI",
+            },
+            **catalog.as_dict(),
+            "models": [model.as_dict() for model in models],
+            "currently_assigned_model": currently_assigned_model,
+        }
+
+    @app.get("/api/codex/setup")
+    def codex_setup(
+        capability: Literal["coding", "verification"] = "coding",
+        task_id: int | None = None,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        model = None
+        if task_id is not None:
+            task = session.get(Task, task_id)
+            if task is None:
+                raise HTTPException(status_code=404, detail="Task not found.")
+            assignment = next(
+                (
+                    item
+                    for item in latest_model_assignments(session, task_id)
+                    if item.capability == capability
+                ),
+                None,
+            )
+            if assignment is not None:
+                model = assignment.assigned_model
+        else:
+            model = local_codex_model(session)
+        evidence = None
+        if model is not None:
+            evidence = session.scalar(
+                select(AIModelAvailabilityEvidence)
+                .where(AIModelAvailabilityEvidence.model_id == model.id)
+                .order_by(AIModelAvailabilityEvidence.id.desc())
+            )
+        return {
+            "target": {
+                "adapter": "codex_cli",
+                "display_name": "Local Codex CLI",
+                "invocation_mode": "real",
+                "credential_source": "Codex CLI local authentication",
+                "credential_status": "managed outside TWOS",
+            },
+            "configuration": model_out(model),
+            "configurations": [model_out(item) for item in local_codex_models(session)],
+            "capability": capability,
+            "availability_evidence": ({
+                "configuration_identity": evidence.configuration_identity,
+                "adapter": evidence.adapter,
+                "invocation_mode": evidence.invocation_mode,
+                "checked_at": iso(evidence.checked_at),
+                "result": evidence.result,
+                "evidence_type": evidence.evidence_type,
+                "failure_classification": evidence.failure_classification,
+                "runtime_identity": evidence.runtime_identity,
+            } if evidence else None),
+        }
+
+    @app.post("/api/codex/setup/check")
+    def check_codex_setup(
+        payload: CodexSetupIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        catalog_model = selected_catalog_model(payload.model_identifier)
+        model, _ = ensure_local_codex_configuration(
+            session,
+            catalog_model.canonical_model_id,
+            catalog_model.display_name,
+        )
+        provider = model.provider
+        material_before = (
+            provider.enabled,
+            provider.status,
+            model.status,
+            model.configuration_status,
+            model.availability_status,
+            model.invocation_mode,
+        )
         detection = codex_manager.adapter.detect()
-        output = detection.as_dict(include_path=False)
+        authenticated, authentication_reason = codex_manager.adapter.authentication_ready(detection)
+        available = detection.status == "configured" and authenticated
+        provider.enabled = available
+        provider.status = "healthy" if available else "unconfigured"
+        provider.last_checked_at = utc_now()
+        model.status = "healthy" if available else "unconfigured"
+        model.availability_status = "available" if available else "unavailable"
+        model.evidence_status = "runtime_check" if available else "unverified"
+        model.evidence_source = "local_cli_readiness"
+        model.last_verified_at = utc_now()
+        if detection.status != "configured":
+            failure = "runtime_unavailable"
+            diagnostic = detection.reason
+        elif not authenticated:
+            failure = "authentication_unavailable"
+            diagnostic = authentication_reason
+        else:
+            failure = ""
+            diagnostic = "Local Codex CLI executable, command surface, and authentication are available."
+        model.safe_diagnostic = diagnostic
+        evidence = AIModelAvailabilityEvidence(
+            configuration_identity=model.stable_id or f"model-{model.id}",
+            model_id=model.id,
+            checked_by_user_id=user.id,
+            adapter="codex_cli",
+            invocation_mode="real",
+            result="available" if available else "unavailable",
+            evidence_type="non_inference_cli_health",
+            failure_classification=failure,
+            runtime_identity=(detection.version or "")[:240],
+        )
+        session.add(evidence)
+        invalidated = 0
+        material_after = (
+            provider.enabled,
+            provider.status,
+            model.status,
+            model.configuration_status,
+            model.availability_status,
+            model.invocation_mode,
+        )
+        if material_before != material_after:
+            provider_state_changed = material_before[:2] != material_after[:2]
+            affected_model_ids = (
+                [item.id for item in model.provider.models]
+                if provider_state_changed
+                else [model.id]
+            )
+            assigned_task_ids = {
+                assignment.task_id
+                for assignment in session.scalars(
+                    select(AIModelAssignment).where(
+                        AIModelAssignment.assigned_model_id.in_(affected_model_ids)
+                    )
+                ).all()
+            }
+            for assigned_task_id in assigned_task_ids:
+                invalidated_for_task = invalidate_approved_packs(session, assigned_task_id)
+                invalidated += invalidated_for_task
+                if invalidated_for_task:
+                    assigned_task = session.get(Task, assigned_task_id)
+                    if assigned_task is not None:
+                        assigned_task.status = "planned"
+        audit(
+            session, request, "codex_availability_checked", "ai_model", model.id,
+            f"adapter=codex_cli; capability={payload.capability}; result={evidence.result}; evidence_type=non_inference_cli_health", user,
+        )
+        session.flush()
+        return {
+            "configuration": model_out(model),
+            "availability_evidence": {
+                "configuration_identity": evidence.configuration_identity,
+                "adapter": evidence.adapter,
+                "invocation_mode": evidence.invocation_mode,
+                "checked_at": iso(evidence.checked_at),
+                "result": evidence.result,
+                "evidence_type": evidence.evidence_type,
+                "failure_classification": evidence.failure_classification,
+                "runtime_identity": evidence.runtime_identity,
+            },
+            "available": available,
+            "invalidated_packs": invalidated,
+        }
+
+    @app.post("/api/tasks/{task_id}/codex/setup/assign")
+    def assign_codex_setup(
+        task_id: int,
+        payload: CodexAssignIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        task = session.get(Task, task_id)
+        model = session.get(AIModel, payload.model_id)
+        if not task or not model or model.execution_adapter != "codex_cli":
+            raise HTTPException(status_code=404, detail="Local Codex configuration not found.")
+        selected_catalog_model(model.provider_model_id or "")
+        evidence = session.scalar(
+            select(AIModelAvailabilityEvidence)
+            .where(
+                AIModelAvailabilityEvidence.model_id == model.id,
+                AIModelAvailabilityEvidence.result == "available",
+            )
+            .order_by(AIModelAvailabilityEvidence.id.desc())
+        )
+        if evidence is None or model.availability_status != "available":
+            raise HTTPException(status_code=409, detail="Check availability successfully before Save and assign.")
+        plan = session.scalar(
+            select(AITeamPlan).where(AITeamPlan.task_id == task.id).order_by(AITeamPlan.id.desc())
+        )
+        if plan is None:
+            raise HTTPException(status_code=409, detail="Save the task and compose the AI Team first.")
+        capability = session.scalar(
+            select(AICapability).where(AICapability.name == payload.capability)
+        )
+        if capability is None:
+            raise HTTPException(status_code=409, detail="Requested executable capability is unavailable.")
+        current_assignments = latest_model_assignments(session, task.id)
+        current_binding = next(
+            (item for item in current_assignments if item.capability == payload.capability),
+            None,
+        )
+        if current_binding is not None and current_binding.assigned_model_id == model.id:
+            audit(
+                session,
+                request,
+                f"{payload.capability}_model_assignment_unchanged",
+                "task",
+                task.id,
+                (
+                    f"capability={payload.capability}; model={model.stable_id}; "
+                    f"assignment_version={current_binding.assignment_version}; invalidated_packs=0"
+                ),
+                user,
+            )
+            return {
+                "capability": payload.capability,
+                "assignments": [model_assignment_out(item) for item in current_assignments],
+                "changed": False,
+                "invalidated_packs": 0,
+            }
+        decision = RoutingDecision(
+            task_id=task.id, team_plan_id=plan.id, capability_id=capability.id,
+            requested_capabilities=plan.required_capabilities, selected_model_id=model.id,
+            status="selected", reason=f"Owner selected the verified Local Codex CLI target for {payload.capability.title()}.",
+            fallback_status="unavailable", fallback_reason="No fallback was configured.",
+            next_action="Regenerate and approve the Codex Pack.",
+        )
+        session.add(decision)
+        session.flush()
+        latest_by_capability: dict[int, RoutingDecision] = {}
+        for route in session.scalars(
+            select(RoutingDecision).where(RoutingDecision.team_plan_id == plan.id).order_by(RoutingDecision.id)
+        ).all():
+            latest_by_capability[route.capability_id] = route
+        assignments = recompose_model_assignments(
+            session, task, latest_by_capability.values(), team_plan=plan,
+            task_version=task.task_version, routing_source="owner_setup",
+        )
+        invalidated = invalidate_approved_packs(session, task.id)
+        task.status = "planned"
+        audit(
+            session, request, f"{payload.capability}_model_assigned", "task", task.id,
+            f"capability={payload.capability}; model={model.stable_id}; assignment_version={assignments[0].assignment_version}; invalidated_packs={invalidated}", user,
+        )
+        return {
+            "capability": payload.capability,
+            "assignments": [model_assignment_out(item) for item in assignments],
+            "changed": True,
+            "invalidated_packs": invalidated,
+        }
+
+    @app.get("/api/codex/status")
+    def codex_status(
+        task_id: int | None = None,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        configured = local_codex_model(session)
+        evidence = (
+            session.scalar(
+                select(AIModelAvailabilityEvidence)
+                .where(AIModelAvailabilityEvidence.model_id == configured.id)
+                .order_by(AIModelAvailabilityEvidence.id.desc())
+            )
+            if configured is not None
+            else None
+        )
+        model_identifier = configured.provider_model_id if configured is not None else ""
+        registry = model_registry_snapshot(configured) if configured is not None else None
+        model_binding_ready = bool(
+            registry
+            and registry["configuration_status"] == "configured"
+            and registry["availability_status"] == "available"
+            and registry["invocation_mode"] == "real"
+            and registry["provider"]["enabled"] is True
+            and registry["provider"]["status"] in {"healthy", "degraded"}
+            and evidence is not None
+            and evidence.result == "available"
+        )
+        output: dict[str, Any] = {
+            "status": (
+                "configured"
+                if model_binding_ready
+                else "check_required"
+                if configured is not None
+                else "unconfigured"
+            ),
+            "found": evidence is not None,
+            "version": evidence.runtime_identity if evidence is not None else None,
+            "supported_command": "codex exec --model MODEL --json" if evidence is not None else None,
+            "reason": (
+                configured.safe_diagnostic
+                if configured is not None
+                else "No Local Codex CLI configuration has been saved."
+            ),
+            "next_action": "Run Codex" if model_binding_ready else "Check availability",
+        }
+        output["authentication_ready"] = bool(model_binding_ready)
+        output["model_binding_ready"] = model_binding_ready
+        output["execution_ready"] = model_binding_ready
+        output["configuration_status"] = (
+            configured.configuration_status if configured is not None else "needs_setup"
+        )
+        output["availability_status"] = (
+            configured.availability_status if configured is not None else "unavailable"
+        )
+        if not model_identifier:
+            output["readiness_reason"] = (
+                "Select a supported Local Codex CLI model before Owner-approved execution."
+            )
+        elif not model_binding_ready:
+            output["readiness_reason"] = (
+                "The selected Local Codex model binding is not currently available for execution."
+            )
+        else:
+            output["readiness_reason"] = (
+                "Local Codex CLI, authentication, and the selected model binding are ready. "
+                "Exact model access is verified only by an Owner-approved run."
+            )
+        output["readiness_evidence"] = (
+            {
+                "checked_at": iso(evidence.checked_at),
+                "result": evidence.result,
+                "evidence_type": evidence.evidence_type,
+                "failure_classification": evidence.failure_classification,
+                "runtime_identity": evidence.runtime_identity,
+            }
+            if evidence is not None
+            else None
+        )
         try:
             source = codex_manager.adapter.source_state()
             output["source"] = {
@@ -1448,7 +2295,24 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             }
         except RuntimeError as exc:
             output["source"] = {"clean": False, "reason": str(exc)}
+        if task_id is not None:
+            output["run_eligibility"] = run_eligibility(
+                session,
+                session.get(Task, task_id),
+                settings.source_repo,
+            )
         return output
+
+    @app.get("/api/tasks/{task_id}/run-eligibility")
+    def task_run_eligibility(
+        task_id: int,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        task = session.get(Task, task_id)
+        if task is None:
+            raise HTTPException(status_code=404, detail="Task not found.")
+        return run_eligibility(session, task, settings.source_repo)
 
     @app.get("/api/tasks/{task_id}/codex-packs")
     def list_codex_packs(
@@ -1524,6 +2388,22 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         )
         if not current or current.id != pack.id or pack.status != "approval_required":
             raise HTTPException(status_code=409, detail="Only the current approval-required pack can be approved.")
+        binding_error = pack_routing_binding_error(session, task, pack, settings.source_repo)
+        if binding_error:
+            pack.status = "invalidated"
+            pack.invalidated_at = utc_now()
+            task.status = "planned"
+            audit(
+                session,
+                request,
+                "codex_pack_approval_invalidated",
+                "codex_instruction_pack",
+                pack.id,
+                binding_error,
+                user,
+            )
+            session.commit()
+            raise HTTPException(status_code=409, detail=binding_error)
         pack.status = "approved"
         pack.approved_by_user_id = user.id
         pack.approved_at = utc_now()
@@ -1551,7 +2431,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         runs = session.scalars(
             select(CodexRun).where(CodexRun.task_id == task_id).order_by(CodexRun.id.desc())
         ).all()
-        return [codex_run_out(run, include_raw=True) for run in runs]
+        return [codex_run_out(run, include_raw=True, session=session) for run in runs]
 
     @app.post("/api/tasks/{task_id}/codex-runs")
     def start_codex_run(
@@ -1568,32 +2448,95 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         task = session.get(Task, task_id)
         if not task:
             raise HTTPException(status_code=404, detail="Task not found.")
-        pack = session.scalar(
-            select(CodexInstructionPack)
-            .where(CodexInstructionPack.task_id == task.id)
-            .order_by(CodexInstructionPack.version.desc())
-        )
-        if not pack or pack.status != "approved" or pack.invalidated_at is not None:
-            raise HTTPException(status_code=409, detail="Approve the current Codex Instruction Pack before execution.")
-        active_run = session.scalar(
-            select(CodexRun).where(
-                CodexRun.task_id == task.id,
-                CodexRun.status.in_(["queued", "running"]),
-            )
-        )
-        if active_run:
-            raise HTTPException(status_code=409, detail="A Codex run is already queued or running for this task.")
         detection = codex_manager.adapter.detect()
-        if detection.status != "configured":
-            raise HTTPException(status_code=409, detail=f"Codex status is {detection.status}: {detection.reason}")
+        authenticated, authentication_reason = codex_manager.adapter.authentication_ready(detection)
+        readiness_changed = codex_manager.reconcile_observed_local_readiness(
+            session,
+            detection,
+            authenticated=authenticated,
+            authentication_reason=authentication_reason,
+        )
+        eligibility = run_eligibility(session, task, settings.source_repo)
+        if not eligibility["eligible"]:
+            material_blocker_codes = {
+                item["code"]
+                for item in eligibility["blockers"]
+                if item["code"] in {"PACK_STALE", "SOURCE_CHANGED_SINCE_APPROVAL"}
+            }
+            invalidated = (
+                invalidate_approved_packs(session, task.id)
+                if material_blocker_codes
+                else 0
+            )
+            if invalidated:
+                task.status = "planned"
+                audit(
+                    session,
+                    request,
+                    "codex_pack_approval_invalidated",
+                    "task",
+                    task.id,
+                    (
+                        "Run admission detected a material approval binding change; "
+                        f"blocker_codes={','.join(sorted(material_blocker_codes))}; "
+                        f"invalidated_packs={invalidated}."
+                    ),
+                    user,
+                )
+                eligibility = run_eligibility(session, task, settings.source_repo)
+            if readiness_changed or invalidated:
+                session.commit()
+            raise HTTPException(
+                status_code=409,
+                detail={"type": "RUN_INELIGIBLE", **eligibility},
+            )
+        pack = session.get(CodexInstructionPack, eligibility["pack_id"])
+        if pack is None:
+            raise HTTPException(status_code=409, detail={"type": "RUN_INELIGIBLE", **eligibility})
+        current_task_digest = development_task_digest(task.development_task)
+        pack_task_digest = development_task_digest(pack.development_task)
+        if (
+            pack.task_id != task.id
+            or pack.task_version != task.task_version
+            or not pack.development_task_digest
+            or pack.development_task_digest != pack_task_digest
+            or pack.development_task_digest != current_task_digest
+            or pack.development_task != task.development_task
+        ):
+            refreshed = run_eligibility(session, task, settings.source_repo)
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "type": "RUN_INELIGIBLE",
+                    "message": (
+                        "The approved Pack does not match the exact current Development task. "
+                        "Regenerate Codex Pack."
+                    ),
+                    **refreshed,
+                },
+            )
+        try:
+            execution_target = codex_execution_target(session, task, pack)
+            verification_target = verification_execution_target(session, task, pack)
+        except ValueError as exc:
+            refreshed = run_eligibility(session, task, settings.source_repo)
+            raise HTTPException(
+                status_code=409,
+                detail={"type": "RUN_INELIGIBLE", "message": str(exc), **refreshed},
+            ) from exc
         try:
             source = codex_manager.adapter.source_state()
         except RuntimeError as exc:
-            raise HTTPException(status_code=409, detail=str(exc)) from exc
-        if not source["clean"]:
-            raise HTTPException(status_code=409, detail="Source repository must be clean before Codex execution.")
+            raise HTTPException(
+                status_code=409,
+                detail="Source repository state could not be verified. Inspect Advanced runtime status.",
+            ) from exc
         if source["commit"] != pack.source_baseline_commit:
-            raise HTTPException(status_code=409, detail="Source HEAD differs from the approved pack baseline.")
+            refreshed = run_eligibility(session, task, settings.source_repo)
+            raise HTTPException(
+                status_code=409,
+                detail={"type": "RUN_INELIGIBLE", **refreshed},
+            )
         run = CodexRun(
             task_id=task.id,
             pack_id=pack.id,
@@ -1602,6 +2545,22 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             source_repo=str(source["repo"]),
             source_branch=str(source["branch"]),
             source_commit=str(source["commit"]),
+            development_task=pack.development_task,
+            development_task_digest=pack.development_task_digest,
+            task_version=pack.task_version,
+            assignment_version=pack.assignment_version,
+            routing_snapshot_hash=pack.routing_snapshot_hash,
+            source_snapshot_digest=pack.source_snapshot_digest,
+            execution_assignment_id=execution_target.assignment.id,
+            execution_model_id=execution_target.model.id,
+            execution_provider_id=execution_target.model.provider_id,
+            requested_model_identifier=execution_target.requested_model_identifier,
+            fallback_selected=execution_target.fallback_selected,
+            verification_assignment_id=verification_target.assignment.id,
+            verification_model_id=verification_target.model.id,
+            verification_provider_id=verification_target.model.provider_id,
+            verification_model_identifier=verification_target.requested_model_identifier,
+            verification_status="not_started",
             owner_summary="Approved Codex run is queued for isolated execution.",
         )
         session.add(run)
@@ -1618,10 +2577,12 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         )
         session.commit()
         if not codex_manager.start(run.id):
-            run.status = "needs_review"
+            run.status = "blocked"
             run.finished_at = utc_now()
-            run.owner_summary = "Runtime shutdown began before the Codex worker could start. Nothing ran."
-            task.status = "needs_review"
+            run.owner_summary = "Blocked: runtime shutdown began before the Codex worker could start. Nothing ran."
+            run.verification_status = "not_started"
+            run.verification_summary = "Verification was not started because Coding did not start."
+            task.status = "blocked"
             audit(
                 session,
                 request,
@@ -1632,8 +2593,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 user,
             )
             session.commit()
-            raise HTTPException(status_code=503, detail="Runtime shutdown began before Codex could start.")
-        return codex_run_out(run, include_raw=True)
+        return codex_run_out(run, include_raw=True, session=session)
 
     @app.get("/api/codex-runs/{run_id}")
     def get_codex_run(
@@ -1644,7 +2604,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         run = session.get(CodexRun, run_id)
         if not run:
             raise HTTPException(status_code=404, detail="Codex run not found.")
-        return codex_run_out(run, include_raw=True)
+        return codex_run_out(run, include_raw=True, session=session)
 
     @app.post("/api/codex-runs/{run_id}/cancel")
     def cancel_codex_run(
@@ -1656,15 +2616,15 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         run = session.get(CodexRun, run_id)
         if not run:
             raise HTTPException(status_code=404, detail="Codex run not found.")
-        if run.status not in {"queued", "running"}:
-            raise HTTPException(status_code=409, detail="Only a queued or running Codex run can be cancelled.")
+        if run.status not in {"queued", "starting", "running", "verifying"}:
+            raise HTTPException(status_code=409, detail="Only an active Codex Run can be cancelled.")
         audit(session, request, "codex_cancel_requested", "codex_run", run.id, "Owner requested cancellation.", user)
         session.commit()
         if not codex_manager.cancel(run.id):
             raise HTTPException(status_code=409, detail="Codex run was no longer cancellable.")
         refreshed = session.get(CodexRun, run.id)
         session.refresh(refreshed)
-        return codex_run_out(refreshed, include_raw=True)
+        return codex_run_out(refreshed, include_raw=True, session=session)
 
     @app.get("/api/tasks/{task_id}/owner-acceptance")
     def current_owner_acceptance(
@@ -1733,6 +2693,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         ).all()
         if not items or any(item.required and item.status != "pass" for item in items):
             raise HTTPException(status_code=409, detail="All required Owner Acceptance items must pass.")
+        if not has_complete_verified_codex_run_evidence(session, acceptance.codex_run):
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Separately verified Coding and Verification invocation evidence is required "
+                    "before acceptance."
+                ),
+            )
         acceptance.status = "accepted"
         acceptance.owner_note = payload.note
         acceptance.decided_by_user_id = user.id
@@ -1878,13 +2846,34 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session.flush()
         gateway = ProviderGateway.from_session(session)
         health = gateway.health_snapshot()
-        provider_rows = session.scalars(select(Provider).where(Provider.kind == "model").order_by(Provider.id)).all()
+        configured_provider_ids = {
+            item.provider_id
+            for item in session.scalars(select(AIModel).order_by(AIModel.id)).all()
+            if configured_model_record(item)
+        }
+        provider_rows = [
+            item
+            for item in session.scalars(
+                select(Provider).where(Provider.kind == "model").order_by(Provider.id)
+            ).all()
+            if item.id in configured_provider_ids or item.enabled or item.status != "unconfigured"
+        ]
         return [provider_out(item, health[item.name]) for item in provider_rows]
 
     @app.get("/api/tools")
     def tools(session: Session = Depends(get_db), user: User = Depends(current_user)) -> list[dict[str, Any]]:
         seed_registry(session)
-        return [registry_out(item) for item in session.scalars(select(Tool).order_by(Tool.id)).all()]
+        tool_rows = [
+            item
+            for item in session.scalars(select(Tool).order_by(Tool.id)).all()
+            if not (
+                item.name == "Codex"
+                and item.kind == "developer_tool"
+                and item.status == "unconfigured"
+                and not item.enabled
+            )
+        ]
+        return [registry_out(item) for item in tool_rows]
 
     @app.get("/api/audit")
     def audit_events(session: Session = Depends(get_db), user: User = Depends(current_user)) -> list[dict[str, Any]]:

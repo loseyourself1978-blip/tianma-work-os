@@ -907,3 +907,52 @@ def test_frontend_uses_canonical_local_assets_and_product_auth_contract() -> Non
     assert "alert(" not in javascript
     assert "localStorage" not in javascript
     assert "sessionStorage" not in javascript
+    assert "probeAmbiguousSignupSession" in javascript
+    assert "authenticatedUserFromPayload" in javascript
+    assert "completeSignedInTransition" in javascript
+    assert '[400, 409].indexOf(error.status)' in javascript
+    assert '["network", "payload"].indexOf(error.category)' in javascript
+    assert 'mode === "login" && error.code === "INVALID_CREDENTIALS"' in javascript
+    assert "Multi-Model Orchestration Workbench" in visible_text
+    assert "Model assignments" in visible_text
+    assert "Model execution evidence" in visible_text
+    for column in ("Capability", "Assigned model", "Responsibility", "Readiness", "Real / Simulated"):
+        assert column in javascript
+    assert "actual_invoked_model_identifier" in javascript
+    verified_body = javascript.split("function verifiedRealInvocation(evidence)", 1)[1].split(
+        "function actualInvocationDisplayName", 1
+    )[0]
+    assert "actualIdentifier" in verified_body
+    assert "record.verified_real_invocation === true" in verified_body
+    assert 'row.verifiedReal ? "Ran with " : "Assigned to "' not in javascript
+    assert javascript.count("detection.execution_ready === true") >= 2
+    assert 'api("/api/tasks/" + task.id + "/run-eligibility")' in javascript
+    assert "const eligibility = effectiveRunEligibility();" in javascript
+    assert "elements.runCodex.disabled = !authenticated" in javascript
+    assert "eligibility.eligible !== true" in javascript
+
+    recompose_body = javascript.split("async function recomposeTeam()", 1)[1].split(
+        "async function generatePack()", 1
+    )[0]
+    run_body = javascript.split("async function runCodex()", 1)[1].split(
+        "async function cancelCodex()", 1
+    )[0]
+    assert (
+        'return "AI Team recomposed. Approval is preserved only when the routing snapshot is unchanged.";'
+        in recompose_body
+    )
+    assert 'return "Codex run queued. TWOS will verify the isolated worktree before process launch.";' in run_body
+    assert '"Checking eligibility…"' in run_body
+    assert '"Starting…"' not in run_body
+    assert "invoked" not in recompose_body.lower()
+    assert "ran with" not in recompose_body.lower()
+    assert "codex run started" not in run_body.lower()
+    assert "codex is running" not in run_body.lower()
+    assert 'manageCodex: byId("manage-codex")' in javascript
+    assert "const hasPersistedRun = Boolean(run);" in javascript
+    assert 'resultUnexpectedFiles: byId("result-unexpected-files")' in javascript
+    assert 'resultDiffEvidence: byId("result-diff-evidence")' in javascript
+    assert "content withheld" in javascript
+    assert "Same model, separate verification invocation" in javascript
+    assert "innerHTML" not in javascript
+    assert "insertAdjacentHTML" not in javascript

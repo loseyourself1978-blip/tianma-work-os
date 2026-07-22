@@ -4,10 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f6f7f4">
-  <title>Tianma Work OS</title>
+  <meta name="twos-version" content="0.17.0">
+  <title>Tianma Work OS Vol.17 — Multi-Model Orchestration Workbench</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="./styles.css?v=vol16-oa-002">
-  <script src="./twos_command_center.js?v=vol16-oa-002" defer></script>
+  <link rel="stylesheet" href="/static_cockpit/vol12_static_mvp/styles.css?v=0.17.0">
+  <script src="/static_cockpit/vol12_static_mvp/twos_command_center.js?v=0.17.0" defer></script>
 </head>
 <body data-auth-state="loading">
   <div id="loading-view" class="loading-view" role="status" aria-live="polite">
@@ -36,9 +37,9 @@
     <main class="public-main">
       <section id="landing-view" class="landing-view" aria-labelledby="landing-title">
         <div class="landing-copy">
-          <span class="eyebrow">TWOS Self-Hosting Workbench</span>
-          <h1 id="landing-title">Develop, run, and review TWOS work with explicit Owner control.</h1>
-          <p>Move from a development task to a reviewable result in one local workspace, with clear approval gates at every consequential step.</p>
+          <span class="eyebrow">TWOS Vol.17 Multi-Model Orchestration Workbench</span>
+          <h1 id="landing-title">Assign, approve, run, and review TWOS work with explicit Owner control.</h1>
+          <p>Move from a development task through visible model assignments to a reviewable result, with clear approval gates at every consequential step.</p>
           <div class="landing-actions">
             <button id="landing-signup" class="button button-primary button-large" type="button">Sign up</button>
             <button id="landing-login" class="button button-secondary button-large" type="button">Log in</button>
@@ -147,10 +148,10 @@
       <main id="workbench-main" class="workbench-main" tabindex="-1">
         <div class="workspace-heading">
           <div>
-            <span class="eyebrow">Tianma Work OS Vol.16</span>
-            <h1>Self-Hosting Workbench</h1>
+            <span class="eyebrow">Tianma Work OS Vol.17</span>
+            <h1>Multi-Model Orchestration Workbench</h1>
           </div>
-          <p>Prepare, approve, run, inspect, and accept one development task with explicit control.</p>
+          <p>Inspect model responsibility and readiness, approve the exact routing snapshot, then verify execution evidence.</p>
         </div>
 
         <div id="workbench-feedback" class="workbench-feedback" role="status" aria-live="polite">Loading your workbench…</div>
@@ -162,47 +163,69 @@
               <strong id="task-status" class="status-label">No task selected</strong>
             </div>
             <form id="task-form" class="task-form">
-              <div class="field-grid">
-                <div class="field-group">
-                  <label for="task-project">Project</label>
-                  <select id="task-project" required></select>
-                </div>
-                <div class="field-group">
-                  <label for="task-workflow">Workflow</label>
-                  <select id="task-workflow">
-                    <option value="product_development">TWOS product development</option>
-                    <option value="general">General task</option>
-                  </select>
-                </div>
-                <div class="field-group field-span">
-                  <label for="task-title">Development task</label>
-                  <input id="task-title" type="text" maxlength="240" required>
-                </div>
-                <div class="field-group field-span">
-                  <label for="task-objective">Objective</label>
-                  <textarea id="task-objective" rows="3" required></textarea>
-                </div>
-                <div class="field-group field-span">
-                  <label for="task-source">Source feedback or context</label>
-                  <textarea id="task-source" rows="3"></textarea>
-                </div>
-                <div class="field-group">
-                  <label for="task-output">Required output</label>
-                  <textarea id="task-output" rows="3"></textarea>
-                </div>
-                <div class="field-group">
-                  <label for="task-acceptance-target">Acceptance target</label>
-                  <textarea id="task-acceptance-target" rows="3" required></textarea>
-                </div>
-                <div class="field-group">
-                  <label for="task-implementation-scope">Implementation scope</label>
-                  <textarea id="task-implementation-scope" rows="3" required></textarea>
-                </div>
-                <div class="field-group">
-                  <label for="task-forbidden-scope">Forbidden scope</label>
-                  <textarea id="task-forbidden-scope" rows="3" required></textarea>
-                </div>
+              <div class="field-group development-task-field">
+                <label for="task-title">Development task</label>
+                <textarea id="task-title" rows="5" required aria-describedby="development-task-help"></textarea>
+                <p id="development-task-help" class="field-help">Describe the complete development task. TWOS preserves this text and derives the execution details deterministically.</p>
               </div>
+              <details id="task-details" class="task-details">
+                <summary><span>Task details</span><small>Derived defaults you can review or edit</small></summary>
+                <div class="field-grid task-details-grid">
+                  <div class="field-group">
+                    <label for="task-project">Project</label>
+                    <select id="task-project"></select>
+                  </div>
+                  <div class="field-group">
+                    <label for="task-workflow">Workflow</label>
+                    <select id="task-workflow">
+                      <option value="product_development">TWOS product development</option>
+                      <option value="general">General task</option>
+                    </select>
+                  </div>
+                  <div class="field-group field-span">
+                    <div class="field-label-row">
+                      <label for="task-objective">Objective</label>
+                      <span id="task-objective-provenance" class="provenance-badge" data-provenance="derived">derived</span>
+                    </div>
+                    <textarea id="task-objective" rows="3"></textarea>
+                  </div>
+                  <div class="field-group field-span">
+                    <div class="field-label-row">
+                      <label for="task-source">Source feedback context</label>
+                      <span id="task-source-provenance" class="provenance-badge" data-provenance="derived">derived</span>
+                    </div>
+                    <textarea id="task-source" rows="3"></textarea>
+                  </div>
+                  <div class="field-group">
+                    <div class="field-label-row">
+                      <label for="task-output">Required output</label>
+                      <span id="task-output-provenance" class="provenance-badge" data-provenance="derived">derived</span>
+                    </div>
+                    <textarea id="task-output" rows="3"></textarea>
+                  </div>
+                  <div class="field-group">
+                    <div class="field-label-row">
+                      <label for="task-acceptance-target">Acceptance target</label>
+                      <span id="task-acceptance-provenance" class="provenance-badge" data-provenance="derived">derived</span>
+                    </div>
+                    <textarea id="task-acceptance-target" rows="3"></textarea>
+                  </div>
+                  <div class="field-group">
+                    <div class="field-label-row">
+                      <label for="task-implementation-scope">Implementation scope</label>
+                      <span id="task-implementation-provenance" class="provenance-badge" data-provenance="derived">derived</span>
+                    </div>
+                    <textarea id="task-implementation-scope" rows="3"></textarea>
+                  </div>
+                  <div class="field-group">
+                    <div class="field-label-row">
+                      <label for="task-forbidden-scope">Safety boundaries</label>
+                      <span id="task-forbidden-scope-provenance" class="provenance-badge" data-provenance="derived">derived</span>
+                    </div>
+                    <textarea id="task-forbidden-scope" rows="3"></textarea>
+                  </div>
+                </div>
+              </details>
               <div class="button-row">
                 <button id="save-task" class="button button-primary" type="submit">Save Task</button>
                 <button id="recompose-team" class="button button-secondary" type="button">Recompose AI Team</button>
@@ -210,7 +233,7 @@
             </form>
           </section>
 
-          <section id="ai-team-card" class="workbench-card" aria-labelledby="ai-team-title">
+          <section id="ai-team-card" class="workbench-card card-wide" aria-labelledby="ai-team-title">
             <div class="card-heading">
               <div><span class="step-label">02</span><h2 id="ai-team-title">AI Team</h2></div>
               <strong id="ai-team-status" class="status-label">Waiting</strong>
@@ -228,6 +251,20 @@
               <h3>Next action</h3>
               <p id="routing-next-action">Save a task first.</p>
             </div>
+            <div class="model-assignment-section" aria-labelledby="model-assignment-title">
+              <div class="section-heading">
+                <h3 id="model-assignment-title">Model assignments</h3>
+                <p>Assignment is not proof of invocation. Result evidence confirms what actually ran.</p>
+              </div>
+              <div id="ai-model-assignments" class="model-assignment-table-wrap">
+                <p class="empty-state">Save a task to compose model assignments.</p>
+              </div>
+              <div class="setup-action-row">
+                <p id="coding-setup-reason">Coding and Verification readiness will show the next Owner action.</p>
+                <button id="setup-codex" class="button button-primary" type="button">Set up Codex</button>
+                <button id="manage-codex" class="button button-secondary" type="button" hidden>Manage Codex</button>
+              </div>
+            </div>
             <div class="settings-row" aria-label="AI Team composition settings">
               <label>Capability focus<select id="capability-focus"><option value="">Auto-select from task</option></select></label>
               <label>Risk<select id="risk-level"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></label>
@@ -240,16 +277,29 @@
               <div><span class="step-label">03</span><h2 id="pack-title">Codex Pack</h2></div>
               <strong id="pack-status" class="status-label">Not generated</strong>
             </div>
+            <section id="pack-frozen-task" class="frozen-task-block" aria-labelledby="pack-frozen-task-title" hidden>
+              <h3 id="pack-frozen-task-title">Development task approved for execution</h3>
+              <pre id="pack-development-task" class="verbatim-task">No frozen Development task.</pre>
+              <dl class="binding-facts">
+                <div><dt>Task</dt><dd id="pack-task-identity">None</dd></div>
+                <div><dt>Task version</dt><dd id="pack-task-version">None</dd></div>
+                <div><dt>Task digest</dt><dd id="pack-task-digest">None</dd></div>
+              </dl>
+            </section>
             <dl class="fact-list">
               <div><dt>Current version</dt><dd id="pack-version">None</dd></div>
               <div><dt>Approval</dt><dd id="pack-approval">Required before execution</dd></div>
               <div><dt>Ordered stages</dt><dd id="pack-stages">Generate a pack after saving the task.</dd></div>
               <div><dt>Acceptance target</dt><dd id="pack-acceptance-target">Waiting for task</dd></div>
               <div><dt>Key boundaries</dt><dd id="pack-boundaries">No merge, push, live trading, or live betting.</dd></div>
+              <div><dt>Model routing</dt><dd id="pack-routing-status">Waiting for assignments</dd></div>
+              <div><dt>Source snapshot</dt><dd id="pack-source-snapshot">Generated with the Pack.</dd></div>
+              <div><dt>Approval evidence</dt><dd id="pack-approval-evidence">Generate a pack to freeze the routing snapshot.</dd></div>
             </dl>
             <div class="button-row">
               <button id="generate-pack" class="button button-primary" type="button">Generate Codex Pack</button>
               <button id="approve-pack" class="button button-secondary" type="button">Approve Codex Pack</button>
+              <a id="review-pack" class="button button-quiet" href="#pack-frozen-task" hidden>Review Pack</a>
             </div>
           </section>
 
@@ -267,24 +317,113 @@
             <div class="button-row">
               <button id="run-codex" class="button button-primary" type="button">Run Codex</button>
               <button id="cancel-codex" class="button button-secondary" type="button">Cancel Run</button>
-              <a id="view-result" class="button button-quiet" href="#result-card">View Result</a>
+              <a id="view-result" class="button button-quiet" href="#result-card" hidden>View Result</a>
             </div>
           </section>
 
-          <section id="result-card" class="workbench-card" aria-labelledby="result-title">
+          <section id="result-card" class="workbench-card card-wide" aria-labelledby="result-title" hidden>
             <div class="card-heading">
               <div><span class="step-label">05</span><h2 id="result-title">Result</h2></div>
               <strong id="result-status" class="status-label">Not run</strong>
             </div>
-            <dl class="fact-list">
-              <div><dt>Task</dt><dd id="result-task">None</dd></div>
-              <div><dt>Overall result</dt><dd id="result-lifecycle">Waiting</dd></div>
-              <div><dt>Changed files</dt><dd id="result-changed-files">None</dd></div>
-              <div><dt>What completed</dt><dd id="result-summary">No result yet.</dd></div>
-              <div><dt>Tests</dt><dd id="result-tests">Not run</dd></div>
-              <div><dt>Boundary confirmation</dt><dd id="result-boundary">No merge or push performed.</dd></div>
-              <div><dt>Review</dt><dd id="result-review">Run Codex to create review evidence.</dd></div>
-            </dl>
+            <section class="result-section" aria-labelledby="result-run-status-title">
+              <h3 id="result-run-status-title">Run status</h3>
+              <dl class="fact-list result-facts">
+                <div><dt>Status</dt><dd id="result-lifecycle">Waiting</dd></div>
+                <div><dt>What completed</dt><dd id="result-summary">No result yet.</dd></div>
+                <div><dt>Review</dt><dd id="result-review">Run Codex to create review evidence.</dd></div>
+              </dl>
+            </section>
+
+            <section class="result-section frozen-task-block" aria-labelledby="result-task-title">
+              <h3 id="result-task-title">Frozen Development task</h3>
+              <pre id="result-task" class="verbatim-task">None</pre>
+              <dl class="binding-facts">
+                <div><dt>Task</dt><dd id="result-task-identity">None</dd></div>
+                <div><dt>Task version</dt><dd id="result-task-version">None</dd></div>
+                <div><dt>Task digest</dt><dd id="result-task-digest">None</dd></div>
+                <div><dt>Pack version</dt><dd id="result-pack-version">None</dd></div>
+              </dl>
+            </section>
+
+            <section class="result-section" aria-labelledby="result-coding-process-title">
+              <h3 id="result-coding-process-title">Coding process</h3>
+              <dl class="fact-list result-facts">
+                <div><dt>Status</dt><dd id="result-coding-process">Not started</dd></div>
+                <div><dt>Exit code</dt><dd id="result-coding-exit-code">None</dd></div>
+                <div><dt>Failure</dt><dd id="result-coding-failure">None</dd></div>
+              </dl>
+            </section>
+
+            <section class="result-section" aria-labelledby="result-coding-invocation-title">
+              <h3 id="result-coding-invocation-title">Coding invocation evidence</h3>
+              <dl class="fact-list result-facts">
+                <div><dt>Process execution</dt><dd id="result-coding-process-proof">Not verified</dd></div>
+                <div><dt>Codex turn</dt><dd id="result-coding-turn-proof">Not verified</dd></div>
+                <div><dt>Requested model</dt><dd id="result-coding-requested-model">None</dd></div>
+                <div><dt>Actual resolved model</dt><dd id="result-coding-actual-model">Not independently exposed by available CLI evidence</dd></div>
+                <div><dt>Invocation failure</dt><dd id="result-coding-invocation-failure">None</dd></div>
+              </dl>
+            </section>
+
+            <section class="result-section" aria-labelledby="result-changes-title">
+              <h3 id="result-changes-title">Run-produced changes</h3>
+              <dl class="fact-list result-facts">
+                <div><dt>Changed files</dt><dd id="result-changed-files">None</dd></div>
+                <div><dt>Unexpected files</dt><dd id="result-unexpected-files">None</dd></div>
+                <div><dt>Sanitized diff evidence</dt><dd id="result-diff-evidence">No Run diff evidence.</dd></div>
+              </dl>
+            </section>
+
+            <section class="result-section" aria-labelledby="result-git-title">
+              <h3 id="result-git-title">Git evidence</h3>
+              <p id="result-git-evidence" class="result-section-copy">Not available</p>
+            </section>
+
+            <section class="result-section" aria-labelledby="result-task-acceptance-title">
+              <h3 id="result-task-acceptance-title">Task acceptance</h3>
+              <p id="result-task-acceptance" class="result-section-copy">Needs Owner review</p>
+              <ul id="result-task-acceptance-checks" class="result-check-list"><li>No acceptance checks reported.</li></ul>
+            </section>
+
+            <section class="result-section" aria-labelledby="result-verification-process-title">
+              <h3 id="result-verification-process-title">Verification process</h3>
+              <dl class="fact-list result-facts">
+                <div><dt>Assigned model</dt><dd id="result-verification-assigned-model">None</dd></div>
+                <div><dt>Status</dt><dd id="result-verification-status">Not started</dd></div>
+                <div><dt>Process started</dt><dd id="result-verification-process-started">No</dd></div>
+                <div><dt>Turn terminal state</dt><dd id="result-verification-turn-terminal">Not reached</dd></div>
+                <div><dt>Exit code</dt><dd id="result-verification-process-exit-code">None</dd></div>
+                <div><dt>Failure</dt><dd id="result-verification-summary">None</dd></div>
+              </dl>
+            </section>
+
+            <section class="result-section" aria-labelledby="result-verification-invocation-title">
+              <h3 id="result-verification-invocation-title">Verification invocation evidence</h3>
+              <dl class="fact-list result-facts">
+                <div><dt>Process execution</dt><dd id="result-verification-process-proof">Not verified</dd></div>
+                <div><dt>Codex turn</dt><dd id="result-verification-turn-proof">Not verified</dd></div>
+                <div><dt>Requested model</dt><dd id="result-verification-requested-model">None</dd></div>
+                <div><dt>Actual resolved model</dt><dd id="result-verification-actual-model">Not independently exposed by available CLI evidence</dd></div>
+                <div><dt>Invocation failure</dt><dd id="result-verification-invocation-failure">None</dd></div>
+              </dl>
+            </section>
+
+            <section class="result-section" aria-labelledby="result-verification-verdict-title">
+              <h3 id="result-verification-verdict-title">Verification verdict</h3>
+              <p id="result-verification-verdict" class="result-section-copy">Not reached</p>
+              <ul id="result-verification-checks" class="result-check-list"><li>No verification checks reported.</li></ul>
+            </section>
+
+            <section class="result-section" aria-labelledby="result-tests-title">
+              <h3 id="result-tests-title">Tests</h3>
+              <div id="result-tests" class="result-test-list"><p class="empty-state">No actual test executions reported.</p></div>
+            </section>
+
+            <section class="result-section" aria-labelledby="result-boundary-title">
+              <h3 id="result-boundary-title">Boundary confirmation</h3>
+              <p id="result-boundary" class="result-section-copy">No boundary evidence recorded.</p>
+            </section>
           </section>
 
           <section id="acceptance-card" class="workbench-card card-wide" aria-labelledby="acceptance-title">
@@ -348,6 +487,17 @@
               <ul id="routing-details" class="technical-list"><li>No routing records loaded.</li></ul>
             </section>
 
+            <section class="advanced-card" aria-labelledby="advanced-model-evidence-title">
+              <h2 id="advanced-model-evidence-title">Model routing and invocation evidence</h2>
+              <p>Model execution evidence is separated by capability and proof level.</p>
+              <h3>Current assignment details</h3>
+              <ul id="assignment-technical-details" class="technical-list"><li>No model assignments loaded.</li></ul>
+              <h3>Pack routing snapshot</h3>
+              <ul id="pack-routing-details" class="technical-list"><li>No persisted routing snapshot selected.</li></ul>
+              <h3>Run invocation evidence</h3>
+              <ul id="model-invocation-details" class="technical-list"><li>No invocation evidence recorded.</li></ul>
+            </section>
+
             <section class="advanced-card" aria-labelledby="advanced-pack-title">
               <h2 id="advanced-pack-title">Pack details</h2>
               <div class="field-group">
@@ -373,12 +523,24 @@
                 <div><dt>Started</dt><dd id="run-started">Not started</dd></div>
                 <div><dt>Finished</dt><dd id="run-finished">Not finished</dd></div>
                 <div><dt>Error</dt><dd id="run-error">None</dd></div>
+                <div><dt>Verification status</dt><dd id="verification-status">Not started</dd></div>
+                <div><dt>Verification exit code</dt><dd id="verification-exit-code">None</dd></div>
                 <div><dt>Commit state</dt><dd id="result-commit">No commit</dd></div>
+                <div><dt>Source snapshot</dt><dd id="result-source-snapshot">None</dd></div>
+                <div><dt>Routing snapshot</dt><dd id="result-routing-snapshot">None</dd></div>
               </dl>
+              <h3>Coding raw JSONL</h3>
+              <pre id="coding-jsonl" class="output-preview technical-output">No coding JSONL diagnostics.</pre>
               <h3>Standard output</h3>
               <pre id="codex-stdout" class="output-preview technical-output">No output.</pre>
               <h3>Standard error</h3>
               <pre id="codex-stderr" class="output-preview technical-output">No errors.</pre>
+              <h3>Verification raw JSONL</h3>
+              <pre id="verification-jsonl" class="output-preview technical-output">No verification JSONL diagnostics.</pre>
+              <h3>Verification standard output</h3>
+              <pre id="verification-stdout" class="output-preview technical-output">No verification output.</pre>
+              <h3>Verification standard error</h3>
+              <pre id="verification-stderr" class="output-preview technical-output">No verification errors.</pre>
               <h3>Raw Compact Sync</h3>
               <pre id="compact-sync-output" class="output-preview technical-output">No persisted Compact Sync payload.</pre>
             </section>
@@ -434,6 +596,63 @@
           </div>
         </details>
       </main>
+      <dialog id="codex-setup-dialog" aria-labelledby="codex-setup-title">
+        <form id="codex-setup-form" method="dialog" class="setup-dialog-card">
+          <div class="card-heading">
+            <div><span id="codex-setup-capability-label" class="step-label">CODING</span><h2 id="codex-setup-title">Set up Codex</h2></div>
+          </div>
+          <p>Configure the only execution target currently supported by TWOS for each executable capability. Checking availability does not send task or Pack content and does not create a run.</p>
+          <div class="field-group">
+            <label for="setup-capability">Capability</label>
+            <select id="setup-capability" name="capability">
+              <option value="coding">Coding</option>
+              <option value="verification">Verification</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="setup-execution-target">Execution target</label>
+            <select id="setup-execution-target" name="execution_target">
+              <option value="codex_cli">Local Codex CLI</option>
+            </select>
+          </div>
+          <dl class="fact-list">
+            <div><dt>Invocation mode</dt><dd>Real, Owner-approved execution only</dd></div>
+            <div><dt>Runtime</dt><dd>Local CLI executable and authentication</dd></div>
+            <div><dt>Credentials</dt><dd id="setup-credential-status">Managed outside TWOS; values are never displayed</dd></div>
+          </dl>
+          <div class="field-group">
+            <label for="setup-model-search">Model</label>
+            <div id="setup-model-picker" class="model-picker">
+              <input id="setup-model-search" type="search" role="combobox" autocomplete="off" autocapitalize="none" spellcheck="false" aria-autocomplete="list" aria-haspopup="listbox" aria-controls="setup-model-options" aria-expanded="false" aria-describedby="setup-model-search-hint setup-model-truth-hint setup-model-search-status setup-model-error" placeholder="Search supported models" disabled>
+              <ul id="setup-model-options" class="model-option-list" role="listbox" aria-label="Supported Local Codex CLI models" hidden></ul>
+            </div>
+            <p id="setup-model-search-hint" class="field-hint">Search the supported Local Codex CLI catalog. Selecting an option preserves its exact canonical model ID.</p>
+            <p id="setup-model-truth-hint" class="field-hint">Catalog listing does not independently prove account entitlement or invocation.</p>
+            <p id="setup-model-search-status" class="field-hint" role="status" aria-live="polite">Loading supported models…</p>
+            <p id="setup-model-error" class="field-error" role="alert" aria-live="polite" hidden></p>
+            <p id="setup-selected-model" class="selected-model-summary" hidden></p>
+            <p id="setup-model-independence-note" class="model-independence-note" hidden>Same model, separate verification invocation</p>
+          </div>
+          <details id="setup-catalog-details" class="setup-catalog-details">
+            <summary>Advanced</summary>
+            <dl class="fact-list">
+              <div><dt>Provider</dt><dd id="setup-catalog-provider">Local Codex CLI</dd></div>
+              <div><dt>Catalog status</dt><dd id="setup-catalog-status">Not loaded</dd></div>
+              <div><dt>Catalog source</dt><dd id="setup-catalog-source">Not loaded</dd></div>
+              <div><dt>Catalog version</dt><dd id="setup-catalog-version">Not loaded</dd></div>
+              <div><dt>Installed CLI</dt><dd id="setup-catalog-cli-version">Not reported</dd></div>
+            </dl>
+            <ul id="setup-catalog-warnings" class="technical-list"><li>No catalog warnings.</li></ul>
+            <p class="catalog-truth-note">Catalog metadata is compatibility evidence only. It is not availability, account entitlement, invocation, or actual resolved model evidence.</p>
+          </details>
+          <p id="setup-availability-status" class="boundary-note" role="status">Check required. No availability claim has been made.</p>
+          <div class="button-row">
+            <button id="check-codex-availability" class="button button-primary" type="button" disabled>Check availability</button>
+            <button id="save-assign-codex" class="button button-secondary" type="button" disabled>Save and assign</button>
+            <button id="cancel-codex-setup" class="button button-quiet" type="button">Cancel</button>
+          </div>
+        </form>
+      </dialog>
     </div>
   </div>
 </body>

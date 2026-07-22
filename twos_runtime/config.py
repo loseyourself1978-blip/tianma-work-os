@@ -21,6 +21,8 @@ class Settings:
     source_repo: Path = ROOT_DIR
     worktree_root: Path = Path(tempfile.gettempdir()) / "twos-worktrees"
     codex_executable: str | None = None
+    codex_model_identifier: str | None = None
+    codex_model_capabilities: tuple[str, ...] = ("coding",)
     codex_timeout_seconds: int = 900
     codex_output_limit: int = 200_000
 
@@ -37,6 +39,12 @@ def get_settings() -> Settings:
             os.environ.get("TWOS_WORKTREE_ROOT", str(Path(tempfile.gettempdir()) / "twos-worktrees"))
         ).expanduser(),
         codex_executable=os.environ.get("TWOS_CODEX_EXECUTABLE"),
+        codex_model_identifier=os.environ.get("TWOS_CODEX_MODEL_ID"),
+        codex_model_capabilities=tuple(
+            item.strip()
+            for item in os.environ.get("TWOS_CODEX_MODEL_CAPABILITIES", "coding").split(",")
+            if item.strip()
+        ),
         codex_timeout_seconds=int(os.environ.get("TWOS_CODEX_TIMEOUT_SECONDS", "900")),
         codex_output_limit=int(os.environ.get("TWOS_CODEX_OUTPUT_LIMIT", "200000")),
     )

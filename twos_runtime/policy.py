@@ -21,7 +21,9 @@ LIFECYCLE_STATES = [
     "pack_ready",
     "approval_required",
     "queued",
+    "starting",
     "running",
+    "verifying",
     "result_ready",
     "owner_review",
     "review",
@@ -29,7 +31,9 @@ LIFECYCLE_STATES = [
     "rejected",
     "needs_review",
     "failed",
+    "blocked",
     "cancelled",
+    "timed_out",
 ]
 
 

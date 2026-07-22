@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import time
 from pathlib import Path
 
@@ -82,6 +83,80 @@ def create_project_task(
     )
     assert response.status_code == 200
     return response.json()["id"]
+
+
+def add_test_model(
+    session,
+    *,
+    provider_name: str,
+    model_name: str,
+    capabilities: tuple[str, ...],
+    priority: int,
+    provider_status: str = "healthy",
+    provider_enabled: bool = True,
+    model_status: str = "healthy",
+    configuration_status: str = "configured",
+    availability_status: str = "available",
+    invocation_mode: str = "real",
+) -> AIModel:
+    """Create explicit, metadata-only registry state for a local test."""
+    provider = session.scalar(
+        select(Provider).where(Provider.name == provider_name, Provider.kind == "model")
+    )
+    if provider is None:
+        provider = Provider(
+            name=provider_name,
+            kind="model",
+            status=provider_status,
+            enabled=provider_enabled,
+            details="Explicit test fixture; no external execution adapter is configured.",
+        )
+        session.add(provider)
+        session.flush()
+    else:
+        provider.status = provider_status
+        provider.enabled = provider_enabled
+
+    model = AIModel(
+        provider_id=provider.id,
+        model_name=model_name,
+        display_name=model_name,
+        provider_model_id=f"fixture/{model_name}",
+        execution_adapter="metadata_only_test_fixture",
+        capability_tags=json.dumps(list(capabilities), separators=(",", ":")),
+        context_limit=8192,
+        cost_metadata="medium",
+        latency_metadata="medium",
+        status=model_status,
+        configuration_status=configuration_status,
+        availability_status=availability_status,
+        invocation_mode=invocation_mode,
+        last_invocation_outcome="not_invoked",
+        evidence_status="unverified",
+        evidence_source="manual_record",
+        safe_diagnostic="Explicit test fixture; no provider request was sent.",
+        routing_priority=priority,
+    )
+    session.add(model)
+    session.flush()
+    return model
+
+
+def add_reasoning_routing_fixtures(session) -> dict[str, AIModel]:
+    return {
+        provider_name: add_test_model(
+            session,
+            provider_name=provider_name,
+            model_name=f"fixture-{provider_name.casefold()}-reasoning",
+            capabilities=("reasoning", "verification"),
+            priority=priority,
+            provider_status="blocked" if provider_name == "DeepSeek" else "healthy",
+        )
+        for priority, provider_name in enumerate(
+            ("OpenAI", "Claude", "Gemini", "DeepSeek"),
+            start=10,
+        )
+    }
 
 
 def test_auth_health_and_protected_routes(tmp_path: Path) -> None:
@@ -218,9 +293,8 @@ def test_provider_and_tool_statuses_are_honest(tmp_path: Path) -> None:
         tools = client.get("/api/tools", headers=headers)
         assert providers.status_code == 200
         assert tools.status_code == 200
-        provider_statuses = {item["status"] for item in providers.json()}
+        assert providers.json() == []
         tool_statuses = {item["status"] for item in tools.json()}
-        assert "unconfigured" in provider_statuses
         assert "unconfigured" in tool_statuses
         assert any(item["kind"] == "live_trade" and item["status"] == "blocked" for item in tools.json())
         assert any(item["kind"] == "live_bet" and item["status"] == "blocked" for item in tools.json())
@@ -245,33 +319,52 @@ def test_ai_capability_provider_and_model_registries_are_honest(tmp_path: Path) 
             "data_analysis",
         }
         assert providers.status_code == 200
-        assert {item["name"] for item in providers.json()} == {
-            "OpenAI",
-            "Gemini",
-            "Claude",
-            "DeepSeek",
-            "GLM",
-        }
-        assert all(item["status"] == "unconfigured" and item["available"] is False for item in providers.json())
+        assert providers.json() == []
 
         assert models.status_code == 200
-        assert len(models.json()) == 10
-        assert all(item["status"] == "unconfigured" and item["available"] is False for item in models.json())
-        models_per_provider = {
-            provider: len([item for item in models.json() if item["provider"] == provider])
-            for provider in {item["provider"] for item in models.json()}
-        }
-        assert all(count >= 2 for count in models_per_provider.values())
+        assert models.json() == []
 
         factory = client.app.state.session_factory
         with factory() as session:
+            assert session.scalars(select(Provider).where(Provider.kind == "model")).all() == []
+            assert session.scalars(select(AIModel)).all() == []
+            assert ProviderGateway.from_session(session).adapters() == []
+
+            explicit_model = add_test_model(
+                session,
+                provider_name="OpenAI",
+                model_name="fixture-openai-metadata-only",
+                capabilities=("reasoning", "planning"),
+                priority=10,
+            )
+            session.commit()
             gateway = ProviderGateway.from_session(session)
             adapter = gateway.get("OpenAI")
             assert adapter is not None
-            assert len(adapter.list_models()) == 2
-            assert adapter.health_check().available is False
+            assert adapter.list_models() == [
+                {
+                    "model_name": explicit_model.model_name,
+                    "capability_tags": ["reasoning", "planning"],
+                    "status": "healthy",
+                }
+            ]
+            assert adapter.health_check().available is True
             with pytest.raises(ProviderExecutionUnavailable):
                 adapter.execute({"prompt": "must not leave the local runtime"})
+
+
+def test_frontend_model_readiness_requires_verified_invocation_evidence() -> None:
+    javascript = (TWOS_UI_PATH.parent / "twos_command_center.js").read_text(encoding="utf-8")
+    configured_branch_start = javascript.index(
+        'if (modelRecord.configuration_status === "configured" '
+        '&& modelRecord.availability_status === "available")'
+    )
+    configured_branch_end = javascript.index("\n    if (route && route.status)", configured_branch_start)
+    configured_branch = javascript[configured_branch_start:configured_branch_end]
+
+    assert 'modelRecord.evidence_status === "verified" && modelRecord.last_verified_at' in configured_branch
+    assert '? "ready"\n        : "runtime_available_model_configured_not_invoked";' in configured_branch
+    assert 'return "Runtime available / Model configured / Not yet invoked";' in javascript
 
 
 def test_ai_team_composition_and_unavailable_routing_persist(tmp_path: Path) -> None:
@@ -315,14 +408,14 @@ def test_ai_team_composition_and_unavailable_routing_persist(tmp_path: Path) -> 
             assert decision["fallback"] is None
             assert decision["requested_capabilities"] == ["planning", "coding", "verification"]
             assert decision["reason"] == (
-                "No configured and healthy provider is available for the requested capabilities."
+                f"No registered model declares support for the requested {decision['capability']} capability."
             )
             assert decision["fallback_status"] == "unavailable"
             assert decision["fallback_reason"] == (
-                "No fallback is available because all compatible providers are unconfigured."
+                "No fallback is available because the model registry has no compatible candidate."
             )
             assert decision["next_action"] == (
-                "Configure and verify at least one compatible provider, then recompose the AI Team."
+                "Register a compatible model profile, then recompose the AI Team."
             )
         assert product_plan["routing_summary"]["status"] == "unavailable"
         assert product_plan["routing_summary"]["evaluation_completed"] is True
@@ -441,26 +534,8 @@ def test_routing_selects_healthy_models_and_falls_back_from_failed_provider(tmp_
         )
         factory = client.app.state.session_factory
         with factory() as session:
-            providers = {
-                item.name: item
-                for item in session.scalars(select(Provider).where(Provider.kind == "model")).all()
-            }
-            for provider_name in ("OpenAI", "Claude", "Gemini"):
-                providers[provider_name].status = "healthy"
-                providers[provider_name].enabled = True
-            providers["DeepSeek"].status = "blocked"
-            providers["DeepSeek"].enabled = True
-
-            for model in session.scalars(select(AIModel)).all():
-                if "reasoning" in model.capability_tags and model.provider.name in {
-                    "OpenAI",
-                    "Claude",
-                    "Gemini",
-                    "DeepSeek",
-                }:
-                    model.status = "healthy"
-                    model.cost_metadata = "medium"
-                    model.latency_metadata = "medium"
+            fixtures = add_reasoning_routing_fixtures(session)
+            assert set(fixtures) == {"OpenAI", "Claude", "Gemini", "DeepSeek"}
             session.commit()
 
         first = client.post(
@@ -494,3 +569,40 @@ def test_routing_selects_healthy_models_and_falls_back_from_failed_provider(tmp_
             ).all()
             assert len(decisions) == 2
             assert decisions[0].fallback_model_id is not None
+
+
+def test_routing_rejects_registry_unavailable_model_despite_healthy_legacy_status(
+    tmp_path: Path,
+) -> None:
+    with make_client(tmp_path) as client:
+        headers = init_and_login(client)
+        task_id = create_project_task(
+            client,
+            headers,
+            "ldd",
+            "Reject unavailable reasoning model",
+            "No unavailable registry model may be selected.",
+        )
+        factory = client.app.state.session_factory
+        with factory() as session:
+            openai_reasoning = add_test_model(
+                session,
+                provider_name="OpenAI",
+                model_name="fixture-openai-unavailable-reasoning",
+                capabilities=("reasoning",),
+                priority=10,
+                availability_status="unavailable",
+            )
+            assert openai_reasoning.provider.status == "healthy"
+            session.commit()
+
+        response = client.post(
+            "/api/ai/route",
+            headers=headers,
+            json={"task_id": task_id, "capability": "reasoning"},
+        )
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["status"] == "unavailable"
+        assert payload["selected"] is None
+        assert payload["fallback"] is None
