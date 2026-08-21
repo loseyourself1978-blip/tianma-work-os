@@ -1,5 +1,13 @@
 # Vol.19 Release Contract v0.1
 
+> **Status: SUPERSEDED**
+>
+> **Superseded by:** `VOL19_RELEASE_CONTRACT_v0.2.md`
+>
+> **Reason:** v0.1 incorrectly treated every Changed state as an Apply blocker.
+>
+> This version is retained for audit history and is not the active Vol.19 Release Contract.
+
 ## Purpose
 
 Vol.19 preserves the Owner-controlled TWOS 1.0 delivery chain already established by Vol.17 and Vol.18 and exposes Apply/Revert truth more directly. An approval or review step never implies that a later mutation occurred.

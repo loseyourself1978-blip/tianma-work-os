@@ -10,7 +10,7 @@ Statuses are based on executable repository evidence at baseline `5e4d79af20988a
 | Codex execution and visible progress | IMPLEMENTED | Direct process bridge, lifecycle persistence/reconciliation, activity API/UI, and Vol.18 execution tests. No additional launcher is added here. |
 | Automatic Codex result intake | IMPLEMENTED | Canonical settlement and result intake in `result_intake.py` and lifecycle tests. No new retrieval path is added here. |
 | Independent validation | IMPLEMENTED | Separate Verification evidence and post-Apply verification records; coding completion is not validation. |
-| Review Candidate and drift classification | IMPLEMENTED | Immutable Candidate and semantic drift gate in `delivery_candidates.py`; Changed and Conflict are blocking states. |
+| Review Candidate and drift classification | IMPLEMENTED | Immutable Candidate and semantic drift gate in `delivery_candidates.py`; unrelated source drift is disclosed, excluded, and may remain Apply-eligible, while plan-impacting drift and Conflict are blocking. The active contract is `VOL19_RELEASE_CONTRACT_v0.2.md`. |
 | Immutable/versioned Apply Plan | IMPLEMENTED | Exact INCLUDED/EXCLUDED/BLOCKED classifications, bindings, freshness checks, and immutable DB guards in `apply_plans.py`/`db.py`. |
 | Owner-controlled Apply | IMPLEMENTED | Literal final confirmation, fresh preflight, repository lock, exact-path journal, compensation, persistence, and idempotency in `apply_sessions.py` and APIs. Vol.19 adds the concise Owner projection. |
 | Owner-controlled Revert | IMPLEMENTED | Separate confirmation, exact snapshot restore, unsafe-later-change blocking, phase audit, compensation, and idempotency in `apply_sessions.py`. |
