@@ -4178,6 +4178,42 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             readiness_label = (
                 "READY TO APPLY" if can_apply else "PREFLIGHT BLOCKED"
             )
+        state = str(row.state if row is not None else "")
+        execution_state = {
+            "": "Pending",
+            "APPLYING": "Running",
+            "APPLIED": "Applied",
+            "REVERTING": "Running",
+            "REVERTED": "Reverted",
+            "PREFLIGHT_BLOCKED": "Blocked",
+            "REVERT_BLOCKED": "Blocked",
+            "APPLY_FAILED_RECOVERED": "Failed",
+            "APPLY_FAILED_PARTIAL": "Failed",
+            "REVERT_FAILED_PARTIAL": "Failed",
+        }.get(state, "Failed")
+        changed_file_count = (
+            sum(
+                1
+                for item in list(public_session.get("files") or [])
+                if isinstance(item, dict)
+                and str(item.get("apply_result") or "") == "APPLIED"
+            )
+            if public_session is not None
+            else 0
+        )
+        validation_result = (
+            str(public_session.get("integrity_check_result") or "NOT RUN")
+            if public_session is not None
+            else "NOT RUN"
+        )
+        result_summary = {
+            "Pending": "Awaiting explicit Owner confirmation.",
+            "Running": "The confirmed path-scoped operation is still running.",
+            "Applied": f"Applied {changed_file_count} approved file(s).",
+            "Reverted": f"Restored {changed_file_count} execution-owned file(s).",
+            "Blocked": "No unsafe file overwrite was performed.",
+            "Failed": "The operation failed; review recovery and blocker details.",
+        }[execution_state]
         return {
             "plan_id": plan.plan_id,
             "session": public_session,
@@ -4188,6 +4224,20 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             "readiness_label": readiness_label,
             "blockers": blockers,
             "next_action": next_action,
+            "approval_state": (
+                "OWNER CONFIRMED" if row is not None else "AWAITING OWNER CONFIRMATION"
+            ),
+            "execution_state": execution_state,
+            "result_summary": result_summary,
+            "changed_file_count": changed_file_count,
+            "validation_result": validation_result,
+            "recovery_available": bool(
+                public_session is not None
+                and (
+                    public_session.get("revert_available") is True
+                    or state in {"APPLY_FAILED_RECOVERED", "REVERTED"}
+                )
+            ),
             "apply_confirmation": apply_confirmation,
             "revert_confirmation": revert_confirmation,
         }

@@ -505,8 +505,13 @@
     applySessionSection: byId("apply-session-section"),
     applyAcceptedChanges: byId("apply-accepted-changes"),
     revertAppliedChanges: byId("revert-applied-changes"),
+    applySessionApproval: byId("apply-session-approval"),
     applySessionReadiness: byId("apply-session-readiness"),
     applySessionState: byId("apply-session-state"),
+    applySessionResultSummary: byId("apply-session-result-summary"),
+    applySessionChangedCount: byId("apply-session-changed-count"),
+    applySessionValidation: byId("apply-session-validation"),
+    applySessionRecovery: byId("apply-session-recovery"),
     applySessionDrift: byId("apply-session-drift"),
     applySessionOperationCounts: byId("apply-session-operation-counts"),
     applySessionUnrelated: byId("apply-session-unrelated"),
@@ -6169,8 +6174,33 @@
       ? applySessionStateLabel(stateValue)
       : "Not started";
 
+    elements.applySessionApproval.textContent = sanitizedApplyPlanText(
+      parts.review.approval_state,
+      parts.session.id ? "OWNER CONFIRMED" : "AWAITING OWNER CONFIRMATION",
+      100
+    );
     elements.applySessionReadiness.textContent = readinessLabel;
-    elements.applySessionState.textContent = displayState;
+    elements.applySessionState.textContent = sanitizedApplyPlanText(
+      parts.review.execution_state,
+      displayState,
+      100
+    );
+    elements.applySessionResultSummary.textContent = sanitizedApplyPlanText(
+      parts.review.result_summary,
+      "Awaiting explicit Owner confirmation.",
+      300
+    );
+    elements.applySessionChangedCount.textContent = String(
+      Number(parts.review.changed_file_count || 0)
+    );
+    elements.applySessionValidation.textContent = sanitizedApplyPlanText(
+      parts.review.validation_result,
+      "NOT RUN",
+      100
+    );
+    elements.applySessionRecovery.textContent = parts.review.recovery_available === true
+      ? "Available"
+      : "Not available";
     setApplyPlanStatusLabel(elements.applySessionReadiness, parts.plan.effective_state);
     setApplySessionStatusLabel(elements.applySessionState, stateValue);
     elements.applySessionDrift.textContent = sanitizedApplyPlanText(
