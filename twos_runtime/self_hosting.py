@@ -18,6 +18,7 @@ from .models import (
     AIModelAssignment,
     AIModelAvailabilityEvidence,
     AITeamPlan,
+    CodexConnectivityEvidence,
     CodexInstructionPack,
     CodexRun,
     OwnerAcceptanceItem,
@@ -25,6 +26,11 @@ from .models import (
     RoutingDecision,
     Task,
     utc_now,
+)
+from .codex_connectivity import (
+    codex_child_environment,
+    connectivity_evidence_is_current,
+    latest_matching_connectivity,
 )
 from .ai_orchestration import (
     assignment_binding,
@@ -53,9 +59,62 @@ class CodexExecutionTarget:
     model: AIModel
     requested_model_identifier: str
     fallback_selected: bool
+    connectivity_evidence_id: int
+    connectivity_evidence_digest: str
+    connection_verified_model_identifier: str
 
 
-def _eligible_codex_model(session: Session, model: AIModel | None) -> tuple[bool, str]:
+def _current_connectivity_evidence(
+    session: Session,
+    model: AIModel,
+    *,
+    owner_id: int | None,
+    codex_executable: str | None,
+    child_environment: dict[str, str] | None,
+) -> CodexConnectivityEvidence | None:
+    if owner_id is None:
+        return None
+    if codex_executable:
+        evidence = latest_matching_connectivity(
+            session,
+            owner_id=owner_id,
+            model=model,
+            executable=codex_executable,
+            environment=child_environment or codex_child_environment(),
+        )
+    else:
+        evidence = session.scalar(
+            select(CodexConnectivityEvidence)
+            .where(
+                CodexConnectivityEvidence.owner_id == owner_id,
+                CodexConnectivityEvidence.model_id == model.id,
+                CodexConnectivityEvidence.configuration_identity
+                == (model.stable_id or f"model-{model.id}"),
+                CodexConnectivityEvidence.requested_model_identifier
+                == model.provider_model_id,
+            )
+            .order_by(CodexConnectivityEvidence.id.desc())
+        )
+    return (
+        evidence
+        if connectivity_evidence_is_current(
+            session,
+            owner_id=owner_id,
+            model=model,
+            evidence=evidence,
+        )
+        else None
+    )
+
+
+def _eligible_codex_model(
+    session: Session,
+    model: AIModel | None,
+    *,
+    owner_id: int | None = None,
+    codex_executable: str | None = None,
+    child_environment: dict[str, str] | None = None,
+) -> tuple[bool, str]:
     if model is None:
         return False, "No model is assigned."
     registry = model_registry_snapshot(model)
@@ -72,13 +131,21 @@ def _eligible_codex_model(session: Session, model: AIModel | None) -> tuple[bool
     if registry["invocation_mode"] != "real":
         return False, "The assigned model is not configured for real invocation."
     if not provider["enabled"] or provider["status"] not in {"healthy", "degraded"}:
-        return False, "The assigned model provider is not ready."
+        return False, "Provider readiness evidence failed: the assigned model provider is not ready."
     if model.status not in {"healthy", "degraded"}:
         return False, "The assigned model is not ready."
+    availability_predicates = [AIModelAvailabilityEvidence.model_id == model.id]
+    if owner_id is not None:
+        availability_predicates.append(
+            AIModelAvailabilityEvidence.checked_by_user_id == owner_id
+        )
     evidence = session.scalar(
         select(AIModelAvailabilityEvidence)
-        .where(AIModelAvailabilityEvidence.model_id == model.id)
-        .order_by(AIModelAvailabilityEvidence.id.desc())
+        .where(*availability_predicates)
+        .order_by(
+            AIModelAvailabilityEvidence.checked_at.desc(),
+            AIModelAvailabilityEvidence.id.desc(),
+        )
     )
     if (
         evidence is None
@@ -88,6 +155,22 @@ def _eligible_codex_model(session: Session, model: AIModel | None) -> tuple[bool
         or evidence.configuration_identity != model.stable_id
     ):
         return False, "The assigned model has no current successful runtime availability evidence."
+    if owner_id is None:
+        return False, "Verify Codex Connection as the authenticated Owner before running Codex."
+    connectivity = _current_connectivity_evidence(
+        session,
+        model,
+        owner_id=owner_id,
+        codex_executable=codex_executable,
+        child_environment=child_environment,
+    )
+    if connectivity is None:
+        reason = (
+            connectivity.safe_summary
+            if connectivity is not None and connectivity.safe_summary
+            else "Verify Codex Connection before running Codex."
+        )
+        return False, reason
     return True, model_identifier
 
 
@@ -96,6 +179,10 @@ def codex_capability_target(
     task: Task,
     pack: CodexInstructionPack,
     capability: str,
+    *,
+    owner_id: int | None = None,
+    codex_executable: str | None = None,
+    child_environment: dict[str, str] | None = None,
 ) -> CodexExecutionTarget:
     """Resolve one exact approved executable capability target."""
     rows = list(
@@ -112,21 +199,62 @@ def codex_capability_target(
     if len(rows) != 1:
         raise ValueError(f"The approved Pack does not bind exactly one {capability} model assignment.")
     assignment = rows[0]
-    primary_ok, primary_reason = _eligible_codex_model(session, assignment.assigned_model)
+    bound_owner_id = owner_id or pack.approved_by_user_id
+    primary_ok, primary_reason = _eligible_codex_model(
+        session,
+        assignment.assigned_model,
+        owner_id=bound_owner_id,
+        codex_executable=codex_executable,
+        child_environment=child_environment,
+    )
     if primary_ok and assignment.assigned_model is not None:
+        connectivity = _current_connectivity_evidence(
+            session,
+            assignment.assigned_model,
+            owner_id=bound_owner_id,
+            codex_executable=codex_executable,
+            child_environment=child_environment,
+        )
+        if connectivity is None:
+            raise ValueError(
+                f"{capability.title()} connectivity evidence changed during target resolution."
+            )
         return CodexExecutionTarget(
             assignment=assignment,
             model=assignment.assigned_model,
             requested_model_identifier=primary_reason,
             fallback_selected=False,
+            connectivity_evidence_id=connectivity.id,
+            connectivity_evidence_digest=connectivity.evidence_digest,
+            connection_verified_model_identifier=connectivity.actual_model_identifier,
         )
-    fallback_ok, fallback_reason = _eligible_codex_model(session, assignment.fallback_model)
+    fallback_ok, fallback_reason = _eligible_codex_model(
+        session,
+        assignment.fallback_model,
+        owner_id=bound_owner_id,
+        codex_executable=codex_executable,
+        child_environment=child_environment,
+    )
     if assignment.fallback_allowed and fallback_ok and assignment.fallback_model is not None:
+        connectivity = _current_connectivity_evidence(
+            session,
+            assignment.fallback_model,
+            owner_id=bound_owner_id,
+            codex_executable=codex_executable,
+            child_environment=child_environment,
+        )
+        if connectivity is None:
+            raise ValueError(
+                f"{capability.title()} fallback connectivity evidence changed during target resolution."
+            )
         return CodexExecutionTarget(
             assignment=assignment,
             model=assignment.fallback_model,
             requested_model_identifier=fallback_reason,
             fallback_selected=True,
+            connectivity_evidence_id=connectivity.id,
+            connectivity_evidence_digest=connectivity.evidence_digest,
+            connection_verified_model_identifier=connectivity.actual_model_identifier,
         )
     reason = primary_reason
     if assignment.fallback_allowed:
@@ -138,44 +266,172 @@ def codex_execution_target(
     session: Session,
     task: Task,
     pack: CodexInstructionPack,
+    *,
+    owner_id: int | None = None,
+    codex_executable: str | None = None,
+    child_environment: dict[str, str] | None = None,
 ) -> CodexExecutionTarget:
-    return codex_capability_target(session, task, pack, "coding")
+    return codex_capability_target(
+        session,
+        task,
+        pack,
+        "coding",
+        owner_id=owner_id,
+        codex_executable=codex_executable,
+        child_environment=child_environment,
+    )
 
 
 def verification_execution_target(
     session: Session,
     task: Task,
     pack: CodexInstructionPack,
+    *,
+    owner_id: int | None = None,
+    codex_executable: str | None = None,
+    child_environment: dict[str, str] | None = None,
 ) -> CodexExecutionTarget:
-    return codex_capability_target(session, task, pack, "verification")
+    return codex_capability_target(
+        session,
+        task,
+        pack,
+        "verification",
+        owner_id=owner_id,
+        codex_executable=codex_executable,
+        child_environment=child_environment,
+    )
+
+
+def _run_bound_connectivity_remains_current(
+    session: Session,
+    *,
+    evidence_id: int | None,
+    target: CodexExecutionTarget,
+    owner_id: int,
+    allow_equivalent_supersession: bool,
+) -> bool:
+    """Accept a newer equivalent probe without changing the frozen Run target.
+
+    A connection probe can finish while an already-authorized Coding process is
+    running.  Target revalidation must still fail closed for a changed Owner,
+    model, executable, or detached execution context, but the database identity
+    of a later successful probe is not itself a routing change.  Verification
+    therefore validates the exact evidence frozen into the Run and its stable
+    execution identity instead of requiring that row to remain the newest row.
+    """
+
+    if evidence_id is None:
+        return False
+    if evidence_id == target.connectivity_evidence_id:
+        return True
+    if not allow_equivalent_supersession:
+        return False
+    bound = session.get(CodexConnectivityEvidence, evidence_id)
+    current = session.get(
+        CodexConnectivityEvidence,
+        target.connectivity_evidence_id,
+    )
+    if bound is None or current is None:
+        return False
+    stable_identity_fields = (
+        "owner_id",
+        "model_id",
+        "configuration_identity",
+        "requested_model_identifier",
+        "executable_identity",
+        "execution_context_identity",
+    )
+    if any(
+        getattr(bound, field) != getattr(current, field)
+        for field in stable_identity_fields
+    ):
+        return False
+    if (
+        bound.owner_id != owner_id
+        or bound.model_id != target.model.id
+        or current.evidence_digest != target.connectivity_evidence_digest
+    ):
+        return False
+    return connectivity_evidence_is_current(
+        session,
+        owner_id=owner_id,
+        model=target.model,
+        evidence=bound,
+    ) and connectivity_evidence_is_current(
+        session,
+        owner_id=owner_id,
+        model=target.model,
+        evidence=current,
+    )
 
 
 def codex_run_execution_target(
     session: Session,
     run: CodexRun,
     source_repo: Path | None = None,
+    *,
+    codex_executable: str | None = None,
+    child_environment: dict[str, str] | None = None,
+    allow_equivalent_connectivity_supersession: bool = False,
 ) -> CodexExecutionTarget:
     """Revalidate the queued immutable target and current approved snapshot before process spawn."""
     if run.pack is None or run.task is None:
         raise ValueError("Codex run is missing its Pack or task binding.")
-    binding_error = pack_routing_binding_error(session, run.task, run.pack, source_repo)
+    binding_error = pack_routing_binding_error(
+        session,
+        run.task,
+        run.pack,
+        source_repo,
+        require_approval_bound_source_identity=False,
+    )
     if binding_error:
         raise ValueError(binding_error)
-    target = codex_execution_target(session, run.task, run.pack)
+    target = codex_execution_target(
+        session,
+        run.task,
+        run.pack,
+        codex_executable=codex_executable,
+        child_environment=child_environment,
+    )
+    owner_id = int(run.pack.approved_by_user_id)
     if (
         run.execution_assignment_id != target.assignment.id
         or run.execution_model_id != target.model.id
         or run.execution_provider_id != target.model.provider_id
         or run.requested_model_identifier != target.requested_model_identifier
         or run.fallback_selected != target.fallback_selected
+        or not _run_bound_connectivity_remains_current(
+            session,
+            evidence_id=run.execution_connectivity_evidence_id,
+            target=target,
+            owner_id=owner_id,
+            allow_equivalent_supersession=(
+                allow_equivalent_connectivity_supersession
+            ),
+        )
     ):
         raise ValueError("The queued Codex execution target no longer matches the approved routing snapshot.")
-    verification = verification_execution_target(session, run.task, run.pack)
+    verification = verification_execution_target(
+        session,
+        run.task,
+        run.pack,
+        codex_executable=codex_executable,
+        child_environment=child_environment,
+    )
     if (
         run.verification_assignment_id != verification.assignment.id
         or run.verification_model_id != verification.model.id
         or run.verification_provider_id != verification.model.provider_id
         or run.verification_model_identifier != verification.requested_model_identifier
+        or not _run_bound_connectivity_remains_current(
+            session,
+            evidence_id=run.verification_connectivity_evidence_id,
+            target=verification,
+            owner_id=owner_id,
+            allow_equivalent_supersession=(
+                allow_equivalent_connectivity_supersession
+            ),
+        )
     ):
         raise ValueError("The queued Verification target no longer matches the approved routing snapshot.")
     return target
@@ -188,9 +444,17 @@ RUN_BLOCKER_MESSAGES = {
     "APPROVAL_REQUIRED": ("Approve the current Codex Pack before running.", "Approve Codex Pack", "Approve Codex Pack"),
     "APPROVAL_STALE": ("Approval no longer matches the current task or routing.", "Regenerate Codex Pack", "Regenerate Codex Pack"),
     "CODING_SETUP_REQUIRED": ("Coding needs setup.", "Set up Codex", "Set up Codex"),
-    "CODING_RUNTIME_UNAVAILABLE": ("Coding runtime is unavailable.", "Check availability", "Manage Codex"),
+    "CODING_RUNTIME_UNAVAILABLE": (
+        "Coding lacks current Owner-verified Provider connectivity and actual-model evidence.",
+        "Verify Codex Connection",
+        "Verify Codex Connection",
+    ),
     "VERIFICATION_SETUP_REQUIRED": ("Verification needs setup.", "Set up Verification", "Set up Verification"),
-    "VERIFICATION_RUNTIME_UNAVAILABLE": ("Verification runtime is unavailable.", "Check availability", "Manage Codex"),
+    "VERIFICATION_RUNTIME_UNAVAILABLE": (
+        "Verification lacks current Owner-verified Provider connectivity and actual-model evidence.",
+        "Verify Codex Connection",
+        "Verify Codex Connection",
+    ),
     "SOURCE_SNAPSHOT_MISSING": ("The Pack has no approved source snapshot.", "Regenerate Codex Pack", "Regenerate Codex Pack"),
     "SOURCE_CHANGED_SINCE_APPROVAL": ("Source changed since approval. Regenerate Codex Pack.", "Regenerate Codex Pack", "Regenerate Codex Pack"),
     "ACTIVE_RUN_EXISTS": ("A Codex Run is already active for this task.", "Wait or Cancel Run", "Cancel Run"),
@@ -202,10 +466,23 @@ def _run_blocker(code: str) -> dict[str, str]:
     return {"code": code, "message": message, "next_action": next_action, "control": control}
 
 
+def _runtime_blocker(code: str, reason: object) -> dict[str, str]:
+    """Keep the server-derived readiness reason without exposing raw control data."""
+    blocker = _run_blocker(code)
+    safe_reason = " ".join(str(reason or "").replace("\x00", " ").split())[:500]
+    if safe_reason:
+        blocker["message"] = safe_reason
+    return blocker
+
+
 def run_eligibility(
     session: Session,
     task: Task | None,
     source_repo: Path,
+    *,
+    owner_id: int | None = None,
+    codex_executable: str | None = None,
+    child_environment: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Single server-side truth for status rendering and atomic Run admission."""
     blockers: list[dict[str, str]] = []
@@ -230,14 +507,40 @@ def run_eligibility(
                 continue
             if pack is not None:
                 try:
-                    codex_capability_target(session, task, pack, capability)
-                except ValueError:
-                    blockers.append(_run_blocker(runtime_code))
+                    codex_capability_target(
+                        session,
+                        task,
+                        pack,
+                        capability,
+                        owner_id=owner_id,
+                        codex_executable=codex_executable,
+                        child_environment=child_environment,
+                    )
+                except ValueError as exc:
+                    blockers.append(_runtime_blocker(runtime_code, exc))
             else:
-                primary_ok, _ = _eligible_codex_model(session, assignment.assigned_model)
-                fallback_ok, _ = _eligible_codex_model(session, assignment.fallback_model)
+                primary_ok, primary_reason = _eligible_codex_model(
+                    session,
+                    assignment.assigned_model,
+                    owner_id=owner_id,
+                    codex_executable=codex_executable,
+                    child_environment=child_environment,
+                )
+                fallback_ok, fallback_reason = _eligible_codex_model(
+                    session,
+                    assignment.fallback_model,
+                    owner_id=owner_id,
+                    codex_executable=codex_executable,
+                    child_environment=child_environment,
+                )
                 if not primary_ok and not (assignment.fallback_allowed and fallback_ok):
-                    blockers.append(_run_blocker(runtime_code))
+                    reason = primary_reason
+                    if assignment.fallback_allowed:
+                        reason = (
+                            f"{primary_reason} Approved fallback is not executable: "
+                            f"{fallback_reason}"
+                        )
+                    blockers.append(_runtime_blocker(runtime_code, reason))
         if pack is None:
             blockers.append(_run_blocker("PACK_MISSING"))
         else:
@@ -281,13 +584,49 @@ def run_eligibility(
     }
 
 
-def run_git(repo: Path, *args: str, check: bool = True, timeout: int = 30) -> subprocess.CompletedProcess[str]:
+def _read_only_git_environment() -> dict[str, str]:
+    environment = os.environ.copy()
+    environment.update(
+        {
+            "GIT_OPTIONAL_LOCKS": "0",
+            "GIT_TERMINAL_PROMPT": "0",
+            "GIT_PAGER": "cat",
+            "PAGER": "cat",
+        }
+    )
+    environment.pop("GIT_EXTERNAL_DIFF", None)
+    return environment
+
+
+def _git_command(
+    args: tuple[str, ...],
+    *,
+    hardened_read_only: bool,
+) -> list[str]:
+    command = ["git"]
+    if hardened_read_only:
+        command.extend(["-c", "core.fsmonitor=false"])
+    command.extend(args)
+    if hardened_read_only and args and args[0] == "diff":
+        diff_index = command.index("diff") + 1
+        command[diff_index:diff_index] = ["--no-ext-diff", "--no-textconv"]
+    return command
+
+
+def run_git(
+    repo: Path,
+    *args: str,
+    check: bool = True,
+    timeout: int = 30,
+    hardened_read_only: bool = False,
+) -> subprocess.CompletedProcess[str]:
     result = subprocess.run(
-        ["git", *args],
+        _git_command(args, hardened_read_only=hardened_read_only),
         cwd=repo,
         capture_output=True,
         text=True,
         timeout=timeout,
+        env=_read_only_git_environment() if hardened_read_only else None,
     )
     if check and result.returncode != 0:
         message = result.stderr.strip() or result.stdout.strip() or "Git command failed."
@@ -295,11 +634,43 @@ def run_git(repo: Path, *args: str, check: bool = True, timeout: int = 30) -> su
     return result
 
 
-def git_source_state(repo: Path) -> dict[str, object]:
-    root = Path(run_git(repo, "rev-parse", "--show-toplevel").stdout.strip()).resolve()
-    branch = run_git(root, "branch", "--show-current").stdout.strip()
-    commit = run_git(root, "rev-parse", "HEAD").stdout.strip()
-    status = run_git(root, "status", "--porcelain", "--untracked-files=all").stdout.strip()
+def git_source_state(
+    repo: Path,
+    *,
+    hardened_read_only: bool = False,
+    verified_root: Path | None = None,
+) -> dict[str, object]:
+    root = (
+        verified_root.resolve()
+        if verified_root is not None
+        else Path(
+            run_git(
+                repo,
+                "rev-parse",
+                "--show-toplevel",
+                hardened_read_only=hardened_read_only,
+            ).stdout.strip()
+        ).resolve()
+    )
+    branch = run_git(
+        root,
+        "branch",
+        "--show-current",
+        hardened_read_only=hardened_read_only,
+    ).stdout.strip()
+    commit = run_git(
+        root,
+        "rev-parse",
+        "HEAD",
+        hardened_read_only=hardened_read_only,
+    ).stdout.strip()
+    status = run_git(
+        root,
+        "status",
+        "--porcelain",
+        "--untracked-files=all",
+        hardened_read_only=hardened_read_only,
+    ).stdout.strip()
     return {
         "repo": root,
         "identity": root.name,
@@ -311,6 +682,7 @@ def git_source_state(repo: Path) -> dict[str, object]:
 
 
 SOURCE_SNAPSHOT_SCHEMA = "twos.source_snapshot.v2"
+SOURCE_REPOSITORY_IDENTITY_METHOD = "git-common-dir-sha256-v1"
 SOURCE_SNAPSHOT_MAX_FILE_BYTES = 4_000_000
 SOURCE_SNAPSHOT_MAX_TOTAL_BYTES = 24_000_000
 _SECRET_PATH = re.compile(
@@ -352,7 +724,11 @@ def _nul_paths(value: str) -> list[str]:
     return [item for item in value.split("\0") if item]
 
 
-def _tracked_change_records(repo: Path) -> list[dict[str, Any]]:
+def _tracked_change_records(
+    repo: Path,
+    *,
+    hardened_read_only: bool = False,
+) -> list[dict[str, Any]]:
     """Return content-safe Git change metadata, including detected renames."""
     tokens = _nul_paths(
         run_git(
@@ -363,6 +739,7 @@ def _tracked_change_records(repo: Path) -> list[dict[str, Any]]:
             "--find-renames",
             "--find-copies",
             "HEAD",
+            hardened_read_only=hardened_read_only,
         ).stdout
     )
     records: list[dict[str, Any]] = []
@@ -414,7 +791,13 @@ def _tracked_change_records(repo: Path) -> list[dict[str, Any]]:
 def _source_snapshot_digest(snapshot: dict[str, Any]) -> str:
     digest_payload = json.loads(json.dumps(snapshot))
     digest_payload.pop("digest", None)
-    digest_payload.pop("source_branch", None)
+    # Historical v2 snapshots predate approval-bound repository identity and
+    # intentionally excluded the branch from their digest.  Preserve their
+    # verifiability, but make both fields integrity-bearing for every fresh
+    # snapshot that carries the repository identity marker.
+    if not digest_payload.get("source_repository_identity"):
+        digest_payload.pop("source_branch", None)
+        digest_payload.pop("source_repository_identity_method", None)
     # Excluded paths are review evidence, not executable source. They are
     # intentionally absent from the hydrated workspace, so they cannot form
     # part of its reproducible execution digest.
@@ -424,17 +807,121 @@ def _source_snapshot_digest(snapshot: dict[str, Any]) -> str:
     ).hexdigest()
 
 
-def capture_source_snapshot(repo: Path) -> dict[str, Any]:
-    """Capture the approval-bound dirty source state without secret material."""
-    source = git_source_state(repo)
-    root = Path(source["repo"])
-    tracked = _nul_paths(run_git(root, "ls-files", "-z").stdout)
-    untracked = _nul_paths(
-        run_git(root, "ls-files", "--others", "--exclude-standard", "-z").stdout
+def _source_repository_identity(
+    repo: Path,
+    *,
+    hardened_read_only: bool = False,
+) -> str:
+    """Return a safe identity shared by worktrees of one exact Git repository."""
+
+    root = repo.resolve()
+    raw_common_dir = run_git(
+        root,
+        "rev-parse",
+        "--git-common-dir",
+        hardened_read_only=hardened_read_only,
+    ).stdout.strip()
+    if not raw_common_dir:
+        raise RuntimeError("Git repository identity could not be verified.")
+    common_dir = Path(raw_common_dir)
+    if not common_dir.is_absolute():
+        common_dir = root / common_dir
+    canonical_common_dir = common_dir.resolve(strict=True)
+    if not canonical_common_dir.is_dir():
+        raise RuntimeError("Git repository identity could not be verified.")
+    return hashlib.sha256(
+        (
+            f"{SOURCE_REPOSITORY_IDENTITY_METHOD}\0"
+            f"{canonical_common_dir}"
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _snapshot_has_approval_bound_source_identity(snapshot: dict[str, Any]) -> bool:
+    return bool(
+        snapshot.get("schema") == SOURCE_SNAPSHOT_SCHEMA
+        and snapshot.get("source_repository_identity_method")
+        == SOURCE_REPOSITORY_IDENTITY_METHOD
+        and isinstance(snapshot.get("source_repository_identity"), str)
+        and re.fullmatch(
+            r"[0-9a-f]{64}",
+            str(snapshot.get("source_repository_identity")),
+        )
+        and isinstance(snapshot.get("source_branch"), str)
+        and bool(str(snapshot.get("source_branch")))
     )
-    change_records = _tracked_change_records(root)
-    staged = set(_nul_paths(run_git(root, "diff", "--cached", "--name-only", "-z").stdout))
-    unstaged = set(_nul_paths(run_git(root, "diff", "--name-only", "-z").stdout))
+
+
+def _snapshot_has_source_identity_fields(snapshot: dict[str, Any]) -> bool:
+    return bool(
+        "source_repository_identity" in snapshot
+        or "source_repository_identity_method" in snapshot
+    )
+
+
+def capture_source_snapshot(
+    repo: Path,
+    *,
+    hardened_read_only: bool = False,
+    verified_source_state: dict[str, object] | None = None,
+    approved_source_branch: str | None = None,
+) -> dict[str, Any]:
+    """Capture the approval-bound dirty source state without secret material."""
+    source = verified_source_state or git_source_state(
+        repo,
+        hardened_read_only=hardened_read_only,
+    )
+    snapshot_branch = (
+        approved_source_branch
+        if approved_source_branch is not None
+        else str(source["branch"])
+    )
+    root = Path(source["repo"])
+    tracked = _nul_paths(
+        run_git(
+            root,
+            "ls-files",
+            "-z",
+            hardened_read_only=hardened_read_only,
+        ).stdout
+    )
+    untracked = _nul_paths(
+        run_git(
+            root,
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z",
+            hardened_read_only=hardened_read_only,
+        ).stdout
+    )
+    change_records = _tracked_change_records(
+        root,
+        hardened_read_only=hardened_read_only,
+    )
+    staged = set(
+        _nul_paths(
+            run_git(
+                root,
+                "diff",
+                "--cached",
+                "--name-only",
+                "-z",
+                hardened_read_only=hardened_read_only,
+            ).stdout
+        )
+    )
+    unstaged = set(
+        _nul_paths(
+            run_git(
+                root,
+                "diff",
+                "--name-only",
+                "-z",
+                hardened_read_only=hardened_read_only,
+            ).stdout
+        )
+    )
     excluded: list[dict[str, str]] = []
     included_records: dict[str, dict[str, Any]] = {}
     included_patch_paths: set[str] = set()
@@ -460,36 +947,42 @@ def capture_source_snapshot(repo: Path) -> dict[str, Any]:
     unstaged_patch_bytes = b""
     if included_patch_paths:
         staged_patch_result = subprocess.run(
-            [
-                "git",
-                "diff",
-                "--cached",
-                "--binary",
-                "--full-index",
-                "--find-renames",
-                "--find-copies",
-                "HEAD",
-                "--",
-                *sorted(included_patch_paths),
-            ],
+            _git_command(
+                (
+                    "diff",
+                    "--cached",
+                    "--binary",
+                    "--full-index",
+                    "--find-renames",
+                    "--find-copies",
+                    "HEAD",
+                    "--",
+                    *sorted(included_patch_paths),
+                ),
+                hardened_read_only=hardened_read_only,
+            ),
             cwd=root,
             capture_output=True,
             timeout=60,
+            env=_read_only_git_environment() if hardened_read_only else None,
         )
         unstaged_patch_result = subprocess.run(
-            [
-                "git",
-                "diff",
-                "--binary",
-                "--full-index",
-                "--find-renames",
-                "--find-copies",
-                "--",
-                *sorted(included_patch_paths),
-            ],
+            _git_command(
+                (
+                    "diff",
+                    "--binary",
+                    "--full-index",
+                    "--find-renames",
+                    "--find-copies",
+                    "--",
+                    *sorted(included_patch_paths),
+                ),
+                hardened_read_only=hardened_read_only,
+            ),
             cwd=root,
             capture_output=True,
             timeout=60,
+            env=_read_only_git_environment() if hardened_read_only else None,
         )
         if staged_patch_result.returncode != 0 or unstaged_patch_result.returncode != 0:
             raise RuntimeError("Approved source snapshot patch could not be captured.")
@@ -505,8 +998,12 @@ def capture_source_snapshot(repo: Path) -> dict[str, Any]:
         if reason:
             excluded.append({"path": relative_path, "reason": reason})
             continue
-        candidate = (root / relative_path).resolve()
-        if not candidate.is_relative_to(root) or not candidate.is_file() or candidate.is_symlink():
+        unresolved_candidate = root / relative_path
+        if unresolved_candidate.is_symlink():
+            excluded.append({"path": relative_path, "reason": "unsupported_file_type"})
+            continue
+        candidate = unresolved_candidate.resolve()
+        if not candidate.is_relative_to(root) or not candidate.is_file():
             excluded.append({"path": relative_path, "reason": "unsupported_file_type"})
             continue
         payload = candidate.read_bytes()
@@ -531,7 +1028,8 @@ def capture_source_snapshot(repo: Path) -> dict[str, Any]:
         reason = _snapshot_exclusion_reason(path)
         if reason:
             continue
-        candidate = (root / path).resolve()
+        unresolved_candidate = root / path
+        candidate = unresolved_candidate.resolve()
         change = included_records.get(path, {})
         row: dict[str, Any] = {
             "path": path,
@@ -546,7 +1044,7 @@ def capture_source_snapshot(repo: Path) -> dict[str, Any]:
                 row["previous_path"] = change["previous_path"]
             if change.get("similarity"):
                 row["similarity"] = change["similarity"]
-        if candidate.is_symlink():
+        if unresolved_candidate.is_symlink() or not candidate.is_relative_to(root):
             excluded.append({"path": path, "reason": "unsupported_file_type"})
             continue
         if candidate.exists() and candidate.is_file():
@@ -573,7 +1071,12 @@ def capture_source_snapshot(repo: Path) -> dict[str, Any]:
     snapshot: dict[str, Any] = {
         "schema": SOURCE_SNAPSHOT_SCHEMA,
         "head_sha": source["commit"],
-        "source_branch": source["branch"],
+        "source_branch": snapshot_branch,
+        "source_repository_identity_method": SOURCE_REPOSITORY_IDENTITY_METHOD,
+        "source_repository_identity": _source_repository_identity(
+            root,
+            hardened_read_only=hardened_read_only,
+        ),
         "staged_patch_b64": base64.b64encode(staged_patch_bytes).decode("ascii"),
         "unstaged_patch_b64": base64.b64encode(unstaged_patch_bytes).decode("ascii"),
         "untracked_files": untracked_rows,
@@ -616,16 +1119,65 @@ def public_source_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def hydrate_source_snapshot(worktree: Path, snapshot: dict[str, Any]) -> None:
+def hydrate_source_snapshot(
+    worktree: Path,
+    snapshot: dict[str, Any],
+    *,
+    approved_digest: str | None = None,
+    approved_source_branch: str | None = None,
+) -> None:
     if snapshot.get("schema") != SOURCE_SNAPSHOT_SCHEMA or not snapshot.get("digest"):
         raise RuntimeError("Approved source snapshot is missing or invalid.")
+    snapshot_digest = snapshot.get("digest")
+    if (
+        not isinstance(snapshot_digest, str)
+        or not re.fullmatch(r"[0-9a-f]{64}", snapshot_digest)
+        or _source_snapshot_digest(snapshot) != snapshot_digest
+    ):
+        raise RuntimeError("Approved source snapshot digest failed integrity validation.")
+    if approved_digest is not None and (
+        not re.fullmatch(r"[0-9a-f]{64}", approved_digest)
+        or snapshot_digest != approved_digest
+    ):
+        raise RuntimeError("Source snapshot does not match the approved Pack and Run binding.")
+    identity_bound = _snapshot_has_approval_bound_source_identity(snapshot)
+    if _snapshot_has_source_identity_fields(snapshot) and not identity_bound:
+        raise RuntimeError("Approved source repository identity is missing or invalid.")
+    if approved_source_branch is not None and (
+        not isinstance(approved_source_branch, str)
+        or not approved_source_branch
+        or snapshot.get("source_branch") != approved_source_branch
+    ):
+        raise RuntimeError("Source branch does not match the approved source snapshot.")
+    if identity_bound and _source_repository_identity(worktree) != snapshot.get(
+        "source_repository_identity"
+    ):
+        raise RuntimeError(
+            "Isolated workspace repository does not match the approved source snapshot."
+        )
     if run_git(worktree, "rev-parse", "HEAD").stdout.strip() != snapshot.get("head_sha"):
         raise RuntimeError("Isolated workspace HEAD does not match the approved source snapshot.")
+    worktree_root = worktree.resolve()
     for item in snapshot.get("excluded_manifest", []):
         relative_path = str(item.get("path", ""))
-        candidate = (worktree / relative_path).resolve()
-        if candidate.is_relative_to(worktree.resolve()) and candidate.exists() and candidate.is_file():
-            candidate.unlink()
+        lexical_path = Path(relative_path.replace("\\", "/"))
+        if (
+            not relative_path
+            or lexical_path.is_absolute()
+            or ".." in lexical_path.parts
+        ):
+            raise RuntimeError("Approved excluded source path is unsafe.")
+        unresolved_candidate = worktree_root / lexical_path
+        if unresolved_candidate.is_symlink():
+            # Remove the directory entry itself. Resolving first would either
+            # delete an in-worktree target or retain an out-of-worktree escape.
+            unresolved_candidate.unlink()
+            continue
+        if unresolved_candidate.exists():
+            candidate = unresolved_candidate.resolve()
+            if not candidate.is_relative_to(worktree_root) or not candidate.is_file():
+                raise RuntimeError("Approved excluded source path is not a safe file.")
+            unresolved_candidate.unlink()
     staged_patch_bytes = base64.b64decode(
         str(snapshot.get("staged_patch_b64", "")), validate=True
     )
@@ -669,7 +1221,44 @@ def hydrate_source_snapshot(worktree: Path, snapshot: dict[str, Any]) -> None:
         candidate.parent.mkdir(parents=True, exist_ok=True)
         candidate.write_bytes(payload)
         os.chmod(candidate, int(row.get("mode", 0o644)) & 0o777)
-    hydrated = capture_source_snapshot(worktree)
+    # Git persists only the executable bit for ordinary tracked files, while
+    # the approved source snapshot binds the complete safe filesystem mode.
+    # A fresh worktree therefore inherits its creator's umask (for example,
+    # 0644) even when the Owner approved a more restrictive mode (for example,
+    # 0600). Restore that approval-bound mode before the final digest check.
+    for row in snapshot.get("included_manifest", []):
+        if not isinstance(row, dict) or row.get("kind") not in {
+            "tracked",
+            "tracked_change",
+        }:
+            continue
+        relative_path = str(row.get("path", ""))
+        if _snapshot_exclusion_reason(relative_path):
+            raise RuntimeError("Approved tracked source manifest contains an unsafe path.")
+        unresolved_candidate = worktree / relative_path
+        if unresolved_candidate.is_symlink():
+            raise RuntimeError("Approved tracked source path is not a regular file.")
+        candidate = unresolved_candidate.resolve()
+        if not candidate.is_relative_to(worktree_root):
+            raise RuntimeError("Approved tracked source path escapes the isolated workspace.")
+        if bool(row.get("deleted")):
+            continue
+        mode = row.get("mode")
+        if type(mode) is not int or not 0 <= mode <= 0o777:
+            raise RuntimeError("Approved tracked source mode is missing or invalid.")
+        if not candidate.exists() or not candidate.is_file():
+            raise RuntimeError("Approved tracked source file is unavailable during hydration.")
+        os.chmod(candidate, mode)
+    hydrated = capture_source_snapshot(
+        worktree,
+        approved_source_branch=str(snapshot.get("source_branch") or ""),
+    )
+    if not identity_bound:
+        # Preserve deterministic hydration of already-created historical v2
+        # Runs.  Such legacy Packs are no longer eligible for a new Run.
+        hydrated.pop("source_repository_identity_method", None)
+        hydrated.pop("source_repository_identity", None)
+    hydrated["digest"] = _source_snapshot_digest(hydrated)
     if hydrated.get("digest") != snapshot.get("digest"):
         raise RuntimeError("Hydrated source snapshot digest does not match Owner approval.")
 
@@ -827,6 +1416,8 @@ def pack_routing_binding_error(
     task: Task,
     pack: CodexInstructionPack,
     source_repo: Path | None = None,
+    *,
+    require_approval_bound_source_identity: bool = True,
 ) -> str | None:
     if pack.task_id != task.id:
         return "The pack is bound to a different Task. Regenerate the pack."
@@ -855,9 +1446,52 @@ def pack_routing_binding_error(
         return "Provider readiness affecting execution changed. Recompose the AI Team and regenerate the pack."
     if source_repo is not None:
         try:
-            current_source = capture_source_snapshot(source_repo)
+            approved_snapshot = json.loads(pack.source_snapshot_json or "{}")
+        except (TypeError, json.JSONDecodeError):
+            return "The approved source snapshot is invalid. Regenerate Codex Pack."
+        if not isinstance(approved_snapshot, dict):
+            return "The approved source snapshot is invalid. Regenerate Codex Pack."
+        approved_snapshot_digest = approved_snapshot.get("digest")
+        try:
+            calculated_snapshot_digest = _source_snapshot_digest(approved_snapshot)
+        except (TypeError, ValueError):
+            return "The approved source snapshot is invalid. Regenerate Codex Pack."
+        if (
+            not isinstance(approved_snapshot_digest, str)
+            or not re.fullmatch(r"[0-9a-f]{64}", approved_snapshot_digest)
+            or calculated_snapshot_digest != approved_snapshot_digest
+            or approved_snapshot_digest != pack.source_snapshot_digest
+        ):
+            return "The approved source snapshot failed integrity validation. Regenerate Codex Pack."
+        identity_bound = _snapshot_has_approval_bound_source_identity(
+            approved_snapshot
+        )
+        if (
+            _snapshot_has_source_identity_fields(approved_snapshot)
+            and not identity_bound
+        ):
+            return (
+                "The approved source repository identity is invalid. "
+                "Regenerate Codex Pack."
+            )
+        if require_approval_bound_source_identity and not identity_bound:
+            return (
+                "The approved Pack predates repository identity binding. "
+                "Regenerate Codex Pack."
+            )
+        try:
+            current_source = capture_source_snapshot(
+                source_repo,
+                hardened_read_only=True,
+            )
         except RuntimeError:
             return "Source snapshot could not be verified. Regenerate Codex Pack."
+        if not identity_bound:
+            # Historical Runs retain evidence/recovery compatibility.  New Run
+            # admission never enters this branch because it requires identity.
+            current_source.pop("source_repository_identity_method", None)
+            current_source.pop("source_repository_identity", None)
+            current_source["digest"] = _source_snapshot_digest(current_source)
         if not pack.source_snapshot_digest or current_source["digest"] != pack.source_snapshot_digest:
             return "Source changed since approval. Regenerate Codex Pack."
     return None
@@ -900,8 +1534,16 @@ def build_instruction_pack(session: Session, task: Task, source_repo: Path) -> C
     if not routing_snapshot["assignments"]:
         raise ValueError("Recompose the AI Team to persist model assignments before generating a pack.")
 
-    source = git_source_state(source_repo)
-    source_snapshot = capture_source_snapshot(source_repo)
+    source = git_source_state(source_repo, hardened_read_only=True)
+    if not str(source.get("branch") or ""):
+        raise ValueError(
+            "Source repository must be on a named branch before generating a Codex Pack."
+        )
+    source_snapshot = capture_source_snapshot(
+        source_repo,
+        hardened_read_only=True,
+        verified_source_state=source,
+    )
     baseline = str(source_snapshot["head_sha"])
     version = int(
         session.scalar(
@@ -970,6 +1612,13 @@ def build_instruction_pack(session: Session, task: Task, source_repo: Path) -> C
 ## Implementation Scope
 {task.implementation_scope or task.required_output}
 
+## Execution Phase Contract
+- This exact Pack is first delivered to the separately assigned Coding process.
+- The Coding process must implement and validate only the approved Coding work.
+- Do not launch, delegate, spawn, or wait for the independent Verification process.
+- TWOS alone starts the separately bound, read-only Verification process after Coding evidence is durably settled.
+- Product Verification below describes what Coding must make verifiable; it does not authorize Coding to orchestrate another model or process.
+
 ## Ordered Stages
 ### Stage A | Inspect
 - Confirm the source commit and existing product behavior.
@@ -1018,13 +1667,9 @@ Self-check: every claim is supported by Git or test evidence.
 - Do not push any branch.
 
 ## Final Response Format
-- Overall status
-- Changed files
-- Stage results
-- Tests
-- Boundary confirmation
-- Commit hash or uncommitted state
-- Owner review needed
+- Return exactly one JSON object and no surrounding prose.
+- Required contract: `{{"schema":"twos.coding_handoff.v1","status":"completed","summary":"concise public Coding handoff"}}`.
+- The summary may mention changed files, tests, boundaries, and Owner review, but must remain concise.
 
 ## Stop Conditions
 - Stop if the approved source snapshot cannot be hydrated and verified in the isolated workspace.

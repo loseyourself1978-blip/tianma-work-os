@@ -154,6 +154,12 @@
           <p>Inspect model responsibility and readiness, approve the exact routing snapshot, then verify execution evidence.</p>
         </div>
 
+        <section id="selected-task-context" class="selected-task-context" aria-labelledby="selected-task-label" aria-live="polite" data-state="loading">
+          <span id="selected-task-label">Selected Task</span>
+          <strong id="selected-task-name">Loading task…</strong>
+          <p id="selected-task-load-state">Loading your saved task selection.</p>
+        </section>
+
         <div id="workbench-feedback" class="workbench-feedback" role="status" aria-live="polite">Loading your workbench…</div>
 
         <div class="workflow-grid">
@@ -309,23 +315,134 @@
               <strong id="run-status" class="status-label">Not started</strong>
             </div>
             <dl class="fact-list">
-              <div><dt>Codex readiness</dt><dd id="codex-readiness">Checking</dd></div>
-              <div><dt>Readiness reason</dt><dd id="codex-reason">Checking the supported local command.</dd></div>
-              <div><dt>Next action</dt><dd id="codex-next-action">Save a task and generate a pack.</dd></div>
+              <div><dt>Readiness for a new Run</dt><dd id="codex-readiness">Checking</dd></div>
+              <div><dt>New Run readiness reason</dt><dd id="codex-reason">Checking the supported local command.</dd></div>
+              <div><dt>Exact next Owner action</dt><dd id="codex-next-action">Save a task and generate a pack.</dd></div>
             </dl>
             <p class="boundary-note">A run requires an approved pack and a configured local Codex. TWOS never merges or pushes automatically.</p>
             <div class="button-row">
               <button id="run-codex" class="button button-primary" type="button">Run Codex</button>
-              <button id="cancel-codex" class="button button-secondary" type="button">Cancel Run</button>
+              <button id="cancel-codex" class="button button-secondary" type="button" hidden>Cancel Run</button>
               <a id="view-result" class="button button-quiet" href="#result-card" hidden>View Result</a>
             </div>
           </section>
 
+          <section id="run-activity-card" class="workbench-card card-wide run-activity-card" aria-labelledby="run-activity-title">
+            <div class="card-heading">
+              <div><span class="step-label">05</span><h2 id="run-activity-title">Live Codex Activity</h2></div>
+              <strong id="run-activity-status" class="status-label">Loading</strong>
+            </div>
+            <p class="card-intro">TWOS derives this view from authoritative Run Activity records, monitors Codex independently of this browser, and automatically saves a trustworthy terminal result when one is available.</p>
+            <div id="run-activity-notification" class="run-activity-notification" role="status" aria-live="polite">
+              No Run result needs Owner review.
+            </div>
+            <div id="run-activity-list" class="run-activity-list">
+              <p class="empty-state">Loading Run activity…</p>
+            </div>
+            <div class="button-row run-fallback-controls" aria-label="Run recovery controls">
+              <button id="refresh-run-status" class="button button-secondary" type="button" disabled>Refresh Run Status</button>
+              <button id="reconnect-codex-run" class="button button-secondary" type="button" disabled>Reconnect to Codex Run</button>
+              <button id="import-codex-result" class="button button-secondary" type="button" disabled>Import Codex Result</button>
+              <input id="import-codex-result-file" type="file" accept="application/json,.json" hidden>
+            </div>
+            <p id="run-fallback-note" class="field-help">Recovery controls apply only to the selected Run. Structured import is a fallback, not the normal workflow.</p>
+          </section>
+
           <section id="result-card" class="workbench-card card-wide" aria-labelledby="result-title" hidden>
             <div class="card-heading">
-              <div><span class="step-label">05</span><h2 id="result-title">Result</h2></div>
+              <div><span class="step-label">06</span><h2 id="result-title">Run Result</h2></div>
               <strong id="result-status" class="status-label">Not run</strong>
             </div>
+            <p class="card-intro">See what Codex did, whether independent Verification passed, which files changed, what tests ran, and the exact Owner action required next.</p>
+
+            <section id="push-delivery-section" class="result-section push-delivery-section" aria-labelledby="push-delivery-title" hidden>
+              <div class="push-delivery-heading">
+                <div>
+                  <h3 id="push-delivery-title">Push + Delivery Result</h3>
+                  <p>Push the one approved local commit to origin/main through one live preflight and one separate Owner confirmation.</p>
+                </div>
+                <div class="button-row push-delivery-controls">
+                  <button id="push-to-origin-main" class="button button-danger" type="button" hidden disabled>Push to origin/main</button>
+                  <button id="view-delivery-result" class="button button-secondary" type="button" hidden disabled>View Delivery Result</button>
+                </div>
+              </div>
+              <p class="push-delivery-boundary-note">No Push occurs on page load, refresh, preflight review, or Delivery Result review. Confirm Push to origin/main authorizes one standard fast-forward attempt only.</p>
+              <dl class="fact-list result-facts push-delivery-facts">
+                <div><dt>Local commit</dt><dd id="push-local-commit">Not ready</dd></div>
+                <div><dt>Commit subject</dt><dd id="push-commit-subject">Not available</dd></div>
+                <div><dt>Push readiness</dt><dd id="push-gate-status" class="candidate-inline-status">Not evaluated</dd></div>
+                <div><dt>Destination</dt><dd id="push-destination">origin/main</dd></div>
+                <div><dt>Expected remote base</dt><dd id="push-remote-base">Not evaluated</dd></div>
+                <div><dt>Ahead / behind</dt><dd id="push-ahead-behind">Not evaluated</dd></div>
+                <div><dt>Worktree and index</dt><dd id="push-cleanliness">Not evaluated</dd></div>
+                <div><dt>Exact next action</dt><dd id="push-next-action">Review the local Commit result.</dd></div>
+              </dl>
+              <h4>Push blockers</h4>
+              <ul id="push-blockers" class="result-check-list push-delivery-blocker-list">
+                <li>Push readiness has not been evaluated.</li>
+              </ul>
+
+              <section id="delivery-result" class="delivery-result" aria-labelledby="delivery-result-title" hidden>
+                <div class="delivery-result-heading">
+                  <div>
+                    <h4 id="delivery-result-title">Delivery Result</h4>
+                    <p id="delivery-result-status" class="candidate-inline-status">Not delivered</p>
+                  </div>
+                </div>
+                <dl class="fact-list result-facts delivery-result-facts">
+                  <div><dt>Run result</dt><dd id="delivery-run-result">Not available</dd></div>
+                  <div><dt>Independent Verification</dt><dd id="delivery-independent-verification">Not available</dd></div>
+                  <div><dt>Delivery Candidate</dt><dd id="delivery-candidate">Not available</dd></div>
+                  <div><dt>Source Drift decision</dt><dd id="delivery-source-drift">Not available</dd></div>
+                  <div><dt>Apply result</dt><dd id="delivery-apply-result">Not available</dd></div>
+                  <div><dt>Post-Apply Verification</dt><dd id="delivery-post-apply-verification">Not available</dd></div>
+                  <div><dt>Staged paths</dt><dd id="delivery-staged-paths">Not available</dd></div>
+                  <div><dt>Local commit</dt><dd id="delivery-local-commit">Not available</dd></div>
+                  <div><dt>Commit subject</dt><dd id="delivery-commit-subject">Not available</dd></div>
+                  <div><dt>Push status</dt><dd id="delivery-push-status">Not attempted</dd></div>
+                  <div><dt>Reconciliation</dt><dd id="delivery-reconciliation">Not evaluated</dd></div>
+                  <div><dt>Final local HEAD</dt><dd id="delivery-local-head">Not evaluated</dd></div>
+                  <div><dt>Final origin/main</dt><dd id="delivery-origin-main">Not evaluated</dd></div>
+                  <div><dt>Ahead / behind</dt><dd id="delivery-ahead-behind">Not evaluated</dd></div>
+                  <div><dt>Worktree and index</dt><dd id="delivery-worktree-index">Not evaluated</dd></div>
+                  <div><dt>Exact next action</dt><dd id="delivery-next-action">Complete one explicit Push first.</dd></div>
+                </dl>
+                <div class="delivery-result-evidence-grid">
+                  <section aria-labelledby="delivery-boundaries-title">
+                    <h4 id="delivery-boundaries-title">Boundaries</h4>
+                    <ul id="delivery-boundaries" class="result-check-list">
+                      <li>No delivery boundary evidence is available.</li>
+                    </ul>
+                  </section>
+                  <section aria-labelledby="delivery-warnings-title">
+                    <h4 id="delivery-warnings-title">Warnings</h4>
+                    <ul id="delivery-warnings" class="result-check-list">
+                      <li>No delivery warning is reported.</li>
+                    </ul>
+                  </section>
+                </div>
+                <h4>Delivery blockers</h4>
+                <ul id="delivery-blockers" class="result-check-list push-delivery-blocker-list">
+                  <li>No Delivery Result blocker is reported.</li>
+                </ul>
+              </section>
+            </section>
+
+            <section id="result-intake-summary" class="result-section result-intake-summary" aria-labelledby="result-intake-summary-title">
+              <h3 id="result-intake-summary-title">Result intake</h3>
+              <dl class="fact-list result-facts">
+                <div><dt>Result availability</dt><dd id="result-envelope-status">Waiting for a terminal result</dd></div>
+                <div><dt>Requested model</dt><dd id="result-envelope-requested-model">None</dd></div>
+                <div><dt>Requested model accepted</dt><dd id="result-envelope-requested-model-accepted">Pending Run evidence</dd></div>
+                <div><dt>Run-local effective model</dt><dd id="result-envelope-actual-model">Not exposed by the current Codex CLI protocol.</dd></div>
+                <div><dt>Duration</dt><dd id="result-envelope-duration">Not available</dd></div>
+                <div><dt>Coding result</dt><dd id="result-envelope-coding">Not started</dd></div>
+                <div><dt>Independent Verification</dt><dd id="result-envelope-verification">Not started</dd></div>
+                <div><dt>Tests</dt><dd id="result-envelope-tests">No test result available.</dd></div>
+                <div><dt>Result integrity</dt><dd id="result-envelope-integrity" class="candidate-inline-status">Pending</dd></div>
+                <div><dt>Exact Owner action</dt><dd id="result-envelope-next-action">Run Codex when the approved Pack is ready.</dd></div>
+              </dl>
+            </section>
             <section class="result-section" aria-labelledby="result-run-status-title">
               <h3 id="result-run-status-title">Run status</h3>
               <dl class="fact-list result-facts">
@@ -338,31 +455,13 @@
             <section class="result-section frozen-task-block" aria-labelledby="result-task-title">
               <h3 id="result-task-title">Frozen Development task</h3>
               <pre id="result-task" class="verbatim-task">None</pre>
-              <dl class="binding-facts">
-                <div><dt>Task</dt><dd id="result-task-identity">None</dd></div>
-                <div><dt>Task version</dt><dd id="result-task-version">None</dd></div>
-                <div><dt>Task digest</dt><dd id="result-task-digest">None</dd></div>
-                <div><dt>Pack version</dt><dd id="result-pack-version">None</dd></div>
-              </dl>
             </section>
 
             <section class="result-section" aria-labelledby="result-coding-process-title">
               <h3 id="result-coding-process-title">Coding process</h3>
               <dl class="fact-list result-facts">
                 <div><dt>Status</dt><dd id="result-coding-process">Not started</dd></div>
-                <div><dt>Exit code</dt><dd id="result-coding-exit-code">None</dd></div>
                 <div><dt>Failure</dt><dd id="result-coding-failure">None</dd></div>
-              </dl>
-            </section>
-
-            <section class="result-section" aria-labelledby="result-coding-invocation-title">
-              <h3 id="result-coding-invocation-title">Coding invocation evidence</h3>
-              <dl class="fact-list result-facts">
-                <div><dt>Process execution</dt><dd id="result-coding-process-proof">Not verified</dd></div>
-                <div><dt>Codex turn</dt><dd id="result-coding-turn-proof">Not verified</dd></div>
-                <div><dt>Requested model</dt><dd id="result-coding-requested-model">None</dd></div>
-                <div><dt>Actual resolved model</dt><dd id="result-coding-actual-model">Not independently exposed by available CLI evidence</dd></div>
-                <div><dt>Invocation failure</dt><dd id="result-coding-invocation-failure">None</dd></div>
               </dl>
             </section>
 
@@ -375,38 +474,10 @@
               </dl>
             </section>
 
-            <section class="result-section" aria-labelledby="result-git-title">
-              <h3 id="result-git-title">Git evidence</h3>
-              <p id="result-git-evidence" class="result-section-copy">Not available</p>
-            </section>
-
             <section class="result-section" aria-labelledby="result-task-acceptance-title">
               <h3 id="result-task-acceptance-title">Task acceptance</h3>
               <p id="result-task-acceptance" class="result-section-copy">Needs Owner review</p>
               <ul id="result-task-acceptance-checks" class="result-check-list"><li>No acceptance checks reported.</li></ul>
-            </section>
-
-            <section class="result-section" aria-labelledby="result-verification-process-title">
-              <h3 id="result-verification-process-title">Verification process</h3>
-              <dl class="fact-list result-facts">
-                <div><dt>Assigned model</dt><dd id="result-verification-assigned-model">None</dd></div>
-                <div><dt>Status</dt><dd id="result-verification-status">Not started</dd></div>
-                <div><dt>Process started</dt><dd id="result-verification-process-started">No</dd></div>
-                <div><dt>Turn terminal state</dt><dd id="result-verification-turn-terminal">Not reached</dd></div>
-                <div><dt>Exit code</dt><dd id="result-verification-process-exit-code">None</dd></div>
-                <div><dt>Failure</dt><dd id="result-verification-summary">None</dd></div>
-              </dl>
-            </section>
-
-            <section class="result-section" aria-labelledby="result-verification-invocation-title">
-              <h3 id="result-verification-invocation-title">Verification invocation evidence</h3>
-              <dl class="fact-list result-facts">
-                <div><dt>Process execution</dt><dd id="result-verification-process-proof">Not verified</dd></div>
-                <div><dt>Codex turn</dt><dd id="result-verification-turn-proof">Not verified</dd></div>
-                <div><dt>Requested model</dt><dd id="result-verification-requested-model">None</dd></div>
-                <div><dt>Actual resolved model</dt><dd id="result-verification-actual-model">Not independently exposed by available CLI evidence</dd></div>
-                <div><dt>Invocation failure</dt><dd id="result-verification-invocation-failure">None</dd></div>
-              </dl>
             </section>
 
             <section class="result-section" aria-labelledby="result-verification-verdict-title">
@@ -424,11 +495,332 @@
               <h3 id="result-boundary-title">Boundary confirmation</h3>
               <p id="result-boundary" class="result-section-copy">No boundary evidence recorded.</p>
             </section>
+
+            <section id="handoff-review-section" class="result-section handoff-review-section" aria-labelledby="handoff-review-title" hidden>
+              <div class="handoff-review-heading">
+                <div>
+                  <h3 id="handoff-review-title">Review Handoff</h3>
+                  <p>Reconcile the persisted Run Result before approving any future action. Review Handoff never accepts a result or starts another Run.</p>
+                </div>
+                <div class="button-row">
+                  <button id="review-handoff" class="button button-primary" type="button" disabled>Review Handoff</button>
+                </div>
+              </div>
+              <div id="handoff-review-content" hidden>
+                <dl class="fact-list result-facts handoff-review-facts">
+                  <div><dt>Run outcome</dt><dd id="handoff-run-outcome">Not reviewed</dd></div>
+                  <div><dt>Task and Pack</dt><dd id="handoff-task-pack">Not reviewed</dd></div>
+                  <div><dt>Coding result</dt><dd id="handoff-coding-result">Not reviewed</dd></div>
+                  <div><dt>Verification verdict</dt><dd id="handoff-verification-verdict">Not reviewed</dd></div>
+                  <div><dt>Tests</dt><dd id="handoff-tests">Not reviewed</dd></div>
+                  <div><dt>Boundary confirmation</dt><dd id="handoff-boundary">Not reviewed</dd></div>
+                  <div><dt>Current phase gate</dt><dd id="handoff-phase-gate">Not reviewed</dd></div>
+                  <div><dt>Recommended reconciliation</dt><dd id="handoff-reconciliation" class="candidate-inline-status">Not reviewed</dd></div>
+                </dl>
+                <h4>Changed files</h4>
+                <ul id="handoff-changed-files" class="result-check-list">
+                  <li>No changed-file summary is available.</li>
+                </ul>
+                <h4>Warnings</h4>
+                <ul id="handoff-warnings" class="result-check-list">
+                  <li>No warnings reported.</li>
+                </ul>
+                <h4>Limitations</h4>
+                <ul id="handoff-limitations" class="result-check-list">
+                  <li>No limitations reported.</li>
+                </ul>
+                <h4>Unresolved blockers</h4>
+                <ul id="handoff-blockers" class="result-check-list">
+                  <li>No unresolved blockers reported.</li>
+                </ul>
+              </div>
+
+              <section id="instruction-draft-section" class="instruction-draft-section" aria-labelledby="instruction-draft-title" hidden>
+                <div class="instruction-draft-heading">
+                  <div>
+                    <h4 id="instruction-draft-title">Next Codex instruction</h4>
+                    <strong id="instruction-draft-status" class="draft-owner-label">Draft — Owner approval required</strong>
+                  </div>
+                  <div class="button-row">
+                    <button id="review-instruction-draft" class="button button-secondary" type="button">Review Instruction Draft</button>
+                    <button id="approve-instruction-draft" class="button button-primary" type="button" hidden disabled>Approve Instruction</button>
+                  </div>
+                </div>
+                <p id="instruction-draft-boundary" class="result-section-copy">A draft cannot execute itself. Approval and any future Run remain separate explicit Owner actions.</p>
+                <pre id="instruction-draft-content" class="instruction-draft-content">Review the handoff before preparing one proposed instruction.</pre>
+              </section>
+            </section>
+
+            <section id="candidate-review-section" class="result-section candidate-review-section" aria-labelledby="candidate-review-title" hidden>
+              <div class="candidate-review-heading">
+                <div>
+                  <h3 id="candidate-review-title">Change Candidate</h3>
+                  <p>The locked set of file changes produced by this accepted and independently verified Run. Reviewing it does not change your source repository.</p>
+                </div>
+                <div class="button-row">
+                  <button id="review-change-candidate" class="button button-primary" type="button" hidden disabled>Review Change Candidate</button>
+                </div>
+              </div>
+              <dl class="fact-list result-facts candidate-review-facts">
+                <div><dt>Candidate status</dt><dd id="candidate-status" class="candidate-inline-status">Not reviewed</dd></div>
+                <div><dt>Unexpected files</dt><dd id="candidate-unexpected-files">Not reviewed</dd></div>
+                <div><dt>Task acceptance</dt><dd id="candidate-acceptance-status">Not reviewed</dd></div>
+                <div><dt>Independent Verification</dt><dd id="candidate-verification-status">Not reviewed</dd></div>
+                <div><dt>Source Drift</dt><dd id="candidate-drift-status" class="candidate-inline-status">Not evaluated</dd></div>
+                <div><dt>Exact next action</dt><dd id="candidate-next-action">Review Change Candidate</dd></div>
+              </dl>
+              <h4>Changed files</h4>
+              <div id="candidate-files" class="candidate-file-list">
+                <p class="empty-state">Review Change Candidate to inspect the Run-produced file manifest.</p>
+              </div>
+              <h4>Blockers</h4>
+              <ul id="candidate-blockers" class="result-check-list candidate-blocker-list">
+                <li>No blocker has been evaluated.</li>
+              </ul>
+            </section>
+
+            <section id="apply-plan-review-section" class="result-section apply-plan-review-section" aria-labelledby="apply-plan-review-title" hidden>
+              <div class="apply-plan-review-heading">
+                <div>
+                  <h3 id="apply-plan-review-title">Apply Plan</h3>
+                  <p>Read-only instructions for how TWOS would apply the locked Candidate to the current repository. Reviewing it does not apply anything.</p>
+                </div>
+                <div class="button-row">
+                  <button id="review-apply-plan" class="button button-primary" type="button" hidden disabled>Review Apply Plan</button>
+                </div>
+              </div>
+              <p class="apply-plan-boundary-note">Review Apply Plan remains read-only. Applying changes always requires the separate Apply Accepted Changes action and a final confirmation.</p>
+              <dl class="fact-list result-facts apply-plan-facts">
+                <div><dt>Apply Plan status</dt><dd id="apply-plan-status" class="candidate-inline-status">Not reviewed</dd></div>
+                <div><dt>Candidate status</dt><dd id="apply-plan-candidate-status">Not reviewed</dd></div>
+                <div><dt>Current Source Drift</dt><dd id="apply-plan-drift-status" class="candidate-inline-status">Not evaluated</dd></div>
+                <div><dt>Manifest coverage</dt><dd id="apply-plan-manifest-coverage">Not reviewed</dd></div>
+                <div><dt>Conflicts</dt><dd id="apply-plan-conflicts">Not reviewed</dd></div>
+                <div><dt>Unexpected files</dt><dd id="apply-plan-unexpected-files">Not reviewed</dd></div>
+                <div><dt>Exact next action</dt><dd id="apply-plan-next-action">Review Apply Plan</dd></div>
+              </dl>
+
+              <div class="apply-plan-disposition-grid" aria-label="Apply Plan path dispositions">
+                <section class="apply-plan-disposition" data-disposition="included" aria-labelledby="apply-plan-included-title">
+                  <div class="apply-plan-disposition-heading">
+                    <h4 id="apply-plan-included-title">INCLUDED</h4>
+                    <span id="apply-plan-included-count" class="apply-plan-count">0</span>
+                  </div>
+                  <div id="apply-plan-included-paths" class="apply-plan-path-list">
+                    <p class="empty-state">No paths reviewed.</p>
+                  </div>
+                </section>
+                <section class="apply-plan-disposition" data-disposition="excluded" aria-labelledby="apply-plan-excluded-title">
+                  <div class="apply-plan-disposition-heading">
+                    <h4 id="apply-plan-excluded-title">EXCLUDED</h4>
+                    <span id="apply-plan-excluded-count" class="apply-plan-count">0</span>
+                  </div>
+                  <div id="apply-plan-excluded-paths" class="apply-plan-path-list">
+                    <p class="empty-state">No paths reviewed.</p>
+                  </div>
+                </section>
+                <section class="apply-plan-disposition" data-disposition="blocked" aria-labelledby="apply-plan-blocked-title">
+                  <div class="apply-plan-disposition-heading">
+                    <h4 id="apply-plan-blocked-title">BLOCKED</h4>
+                    <span id="apply-plan-blocked-count" class="apply-plan-count">0</span>
+                  </div>
+                  <div id="apply-plan-blocked-paths" class="apply-plan-path-list">
+                    <p class="empty-state">No paths reviewed.</p>
+                  </div>
+                </section>
+              </div>
+
+              <div class="apply-plan-requirements-grid">
+                <section class="apply-plan-requirement" aria-labelledby="apply-plan-preconditions-title">
+                  <h4 id="apply-plan-preconditions-title">Future preconditions</h4>
+                  <ul id="apply-plan-preconditions" class="result-check-list">
+                    <li>Review Apply Plan to inspect future preconditions.</li>
+                  </ul>
+                </section>
+                <section class="apply-plan-requirement" aria-labelledby="apply-plan-reversibility-title">
+                  <h4 id="apply-plan-reversibility-title">Reversibility requirements</h4>
+                  <ul id="apply-plan-reversibility" class="result-check-list">
+                    <li>No future reversibility requirements have been reviewed.</li>
+                  </ul>
+                </section>
+                <section class="apply-plan-requirement" aria-labelledby="apply-plan-validation-title">
+                  <h4 id="apply-plan-validation-title">Planned validation</h4>
+                  <h5>Pre-apply</h5>
+                  <ul id="apply-plan-pre-validation" class="result-check-list apply-plan-check-list">
+                    <li><span class="planned-check-label">PLANNED CHECK</span> Review Apply Plan to inspect pre-apply checks.</li>
+                  </ul>
+                  <h5>Post-apply</h5>
+                  <ul id="apply-plan-post-validation" class="result-check-list apply-plan-check-list">
+                    <li><span class="planned-check-label">PLANNED CHECK</span> No post-apply checks have been planned.</li>
+                  </ul>
+                </section>
+              </div>
+
+              <section class="apply-plan-boundaries" aria-labelledby="apply-plan-boundaries-title">
+                <h4 id="apply-plan-boundaries-title">Explicit boundaries</h4>
+                <ul id="apply-plan-boundaries" class="result-check-list">
+                  <li>Review Apply Plan never changes source.</li>
+                  <li>Apply and Revert each require a separate explicit Owner confirmation.</li>
+                </ul>
+              </section>
+              <section class="apply-plan-blockers" aria-labelledby="apply-plan-blockers-title">
+                <h4 id="apply-plan-blockers-title">Plan blockers</h4>
+                <ul id="apply-plan-blockers" class="result-check-list">
+                  <li>No blocker has been evaluated.</li>
+                </ul>
+              </section>
+            </section>
+
+            <section id="apply-session-section" class="result-section apply-session-section" aria-labelledby="apply-session-title" hidden>
+              <div class="apply-session-heading">
+                <div>
+                  <h3 id="apply-session-title">Apply and Revert</h3>
+                  <p>Apply Accepted Changes is the first action in this workflow that modifies the real source repository.</p>
+                </div>
+                <div class="button-row apply-session-controls">
+                  <button id="apply-accepted-changes" class="button button-danger" type="button" hidden disabled>Apply Accepted Changes</button>
+                  <button id="revert-applied-changes" class="button button-secondary" type="button" hidden disabled>Revert Applied Changes</button>
+                </div>
+              </div>
+              <p class="apply-session-boundary-note">Only INCLUDED Apply Plan paths are eligible. Apply and Revert do not stage, commit, or push.</p>
+              <dl class="fact-list result-facts apply-session-facts">
+                <div><dt>Apply readiness</dt><dd id="apply-session-readiness" class="candidate-inline-status">Review an Apply Plan</dd></div>
+                <div><dt>Apply session</dt><dd id="apply-session-state" class="candidate-inline-status">Not started</dd></div>
+                <div><dt>Current Source Drift</dt><dd id="apply-session-drift">Not evaluated</dd></div>
+                <div><dt>Operations</dt><dd id="apply-session-operation-counts">Not available</dd></div>
+                <div><dt>Unrelated source changes</dt><dd id="apply-session-unrelated">Not evaluated</dd></div>
+                <div><dt>Index and staged paths</dt><dd id="apply-session-index-boundary">Not evaluated</dd></div>
+                <div><dt>Revert availability</dt><dd id="apply-session-revert-availability">Not available</dd></div>
+                <div><dt>Exact next action</dt><dd id="apply-session-next-action">Review Apply Plan</dd></div>
+              </dl>
+              <h4>Exact path scope</h4>
+              <div id="apply-session-paths" class="apply-session-path-list">
+                <p class="empty-state">Review Apply Plan to inspect the exact INCLUDED and EXCLUDED paths.</p>
+              </div>
+              <h4>Blockers</h4>
+              <ul id="apply-session-blockers" class="result-check-list apply-session-blocker-list">
+                <li>No Apply preflight has been evaluated.</li>
+              </ul>
+            </section>
+
+            <section id="post-apply-verification-section" class="result-section post-apply-verification-section" aria-labelledby="post-apply-verification-title" hidden>
+              <div class="post-apply-verification-heading">
+                <div>
+                  <h3 id="post-apply-verification-title">Post-Apply Verification</h3>
+                  <p>Prove that the repository still matches the approved Apply result before any future Commit workflow is considered.</p>
+                </div>
+                <div class="button-row post-apply-verification-controls">
+                  <button id="verify-applied-changes" class="button button-primary" type="button" hidden disabled>Verify Applied Changes</button>
+                </div>
+              </div>
+              <p class="post-apply-verification-boundary-note">Verification is read-only. It does not stage, commit, push, or start a later phase.</p>
+              <dl class="fact-list result-facts post-apply-verification-facts">
+                <div><dt>Verification status</dt><dd id="post-apply-verification-status" class="candidate-inline-status">Not ready</dd></div>
+                <div><dt>Changed files</dt><dd id="post-apply-verification-changed-summary">Not verified</dd></div>
+                <div><dt>Unexpected files</dt><dd id="post-apply-verification-unexpected-summary">Not verified</dd></div>
+                <div><dt>Tests</dt><dd id="post-apply-verification-tests-summary">Not run</dd></div>
+                <div><dt>Repository boundaries</dt><dd id="post-apply-verification-boundaries-summary">Not verified</dd></div>
+                <div><dt>Exact next action</dt><dd id="post-apply-verification-next-action">Apply accepted changes first.</dd></div>
+              </dl>
+              <h4>Changed files</h4>
+              <div id="post-apply-verification-changed-files" class="post-apply-verification-file-list">
+                <p class="empty-state">No applied paths have been verified.</p>
+              </div>
+              <h4>Unexpected files</h4>
+              <div id="post-apply-verification-unexpected-files" class="post-apply-verification-file-list post-apply-verification-unexpected-list">
+                <p class="empty-state">No unexpected-path check has been recorded.</p>
+              </div>
+              <div class="post-apply-verification-evidence-grid">
+                <section aria-labelledby="post-apply-verification-tests-title">
+                  <h4 id="post-apply-verification-tests-title">Tests</h4>
+                  <ul id="post-apply-verification-tests" class="result-check-list">
+                    <li>No post-Apply test evidence is available.</li>
+                  </ul>
+                </section>
+                <section aria-labelledby="post-apply-verification-boundaries-title">
+                  <h4 id="post-apply-verification-boundaries-title">Boundaries</h4>
+                  <ul id="post-apply-verification-boundaries" class="result-check-list">
+                    <li>No repository boundary evidence is available.</li>
+                  </ul>
+                </section>
+              </div>
+              <h4>Blockers</h4>
+              <ul id="post-apply-verification-blockers" class="result-check-list post-apply-verification-blocker-list">
+                <li>Apply accepted changes before verifying.</li>
+              </ul>
+            </section>
+
+            <section id="commit-builder-section" class="result-section commit-builder-section" aria-labelledby="commit-builder-title" hidden>
+              <div class="commit-builder-heading">
+                <div>
+                  <h3 id="commit-builder-title">Stage + Local Commit</h3>
+                  <p>Review one exact Commit Plan, stage only its approved files, then create one local commit through separate Owner actions.</p>
+                </div>
+                <div class="button-row commit-builder-controls">
+                  <button id="review-commit-plan" class="button button-primary" type="button" hidden disabled>Review Commit Plan</button>
+                  <button id="stage-approved-files" class="button button-secondary" type="button" hidden disabled>Stage Approved Files</button>
+                  <button id="create-local-commit" class="button button-danger" type="button" hidden disabled>Create Local Commit</button>
+                </div>
+              </div>
+              <p class="commit-builder-boundary-note">Each step requires an explicit Owner action. A local commit never pushes, merges, rebases, tags, or changes remotes.</p>
+              <ol class="commit-builder-steps" aria-label="Stage and local Commit sequence">
+                <li>Step 1 — Review Commit Plan</li>
+                <li>Step 2 — Stage Approved Files</li>
+                <li>Step 3 — Create Local Commit</li>
+              </ol>
+              <p class="commit-builder-commit-hint">Stage the approved files before creating the local commit.</p>
+              <div id="commit-message-fields" class="commit-message-fields">
+                <div class="field-group">
+                  <label for="commit-plan-subject">Commit subject</label>
+                  <input id="commit-plan-subject" type="text" maxlength="200" autocomplete="off" placeholder="Summarize the approved changes">
+                </div>
+                <div class="field-group">
+                  <label for="commit-plan-body">Commit body <span class="optional">optional</span></label>
+                  <textarea id="commit-plan-body" rows="3" maxlength="4000" placeholder="Record the verified scope and purpose"></textarea>
+                </div>
+              </div>
+              <dl class="fact-list result-facts commit-builder-facts">
+                <div><dt>Commit readiness</dt><dd id="commit-builder-status" class="candidate-inline-status">Not ready</dd></div>
+                <div><dt>Commit Plan</dt><dd id="commit-plan-summary">Not reviewed</dd></div>
+                <div><dt>Approved files</dt><dd id="commit-approved-summary">Not reviewed</dd></div>
+                <div><dt>Excluded files</dt><dd id="commit-excluded-summary">Not reviewed</dd></div>
+                <div><dt>Branch</dt><dd id="commit-builder-branch">Not reviewed</dd></div>
+                <div><dt>HEAD</dt><dd id="commit-builder-head">Not reviewed</dd></div>
+                <div><dt>Commit subject</dt><dd id="commit-builder-subject">Not reviewed</dd></div>
+                <div><dt>Validation</dt><dd id="commit-builder-validation">Not reviewed</dd></div>
+                <div><dt>Staging</dt><dd id="commit-stage-summary">Not started</dd></div>
+                <div><dt>Commit Result</dt><dd id="local-commit-summary">Not created</dd></div>
+                <div><dt>Exact next action</dt><dd id="commit-builder-next-action">Pass Post-Apply Verification first.</dd></div>
+              </dl>
+              <h4>Approved files</h4>
+              <div id="commit-approved-files" class="commit-builder-file-list">
+                <p class="empty-state">Review Commit Plan to inspect the exact staging scope.</p>
+              </div>
+              <h4>Excluded files</h4>
+              <div id="commit-excluded-files" class="commit-builder-file-list commit-builder-excluded-list">
+                <p class="empty-state">No excluded-file evidence is available.</p>
+              </div>
+              <div class="commit-builder-evidence-grid">
+                <section aria-labelledby="commit-builder-boundaries-title">
+                  <h4 id="commit-builder-boundaries-title">Boundaries</h4>
+                  <ul id="commit-builder-boundaries" class="result-check-list">
+                    <li>No Stage, Commit, or Push action runs during plan review.</li>
+                    <li>This Stage + Local Commit section never performs Push.</li>
+                  </ul>
+                </section>
+                <section aria-labelledby="commit-builder-blockers-title">
+                  <h4 id="commit-builder-blockers-title">Blockers</h4>
+                  <ul id="commit-builder-blockers" class="result-check-list commit-builder-blocker-list">
+                    <li>Post-Apply Verification must pass first.</li>
+                  </ul>
+                </section>
+              </div>
+            </section>
           </section>
 
           <section id="acceptance-card" class="workbench-card card-wide" aria-labelledby="acceptance-title">
             <div class="card-heading">
-              <div><span class="step-label">06</span><h2 id="acceptance-title">Owner Acceptance</h2></div>
+              <div><span class="step-label">07</span><h2 id="acceptance-title">Owner Acceptance</h2></div>
               <strong id="acceptance-status" class="status-label">Waiting for result</strong>
             </div>
             <p class="card-intro">Inspect each required path, record Pass, Needs Review, or Fail, then make the explicit decision.</p>
@@ -445,7 +837,7 @@
 
           <section id="compact-sync-card" class="workbench-card card-wide" aria-labelledby="compact-sync-title">
             <div class="card-heading">
-              <div><span class="step-label">07</span><h2 id="compact-sync-title">Compact Sync</h2></div>
+              <div><span class="step-label">08</span><h2 id="compact-sync-title">Compact Sync</h2></div>
               <strong id="compact-sync-status" class="status-label">Not generated</strong>
             </div>
             <p id="compact-sync-summary" class="card-intro">No Compact Sync has been saved for this task.</p>
@@ -545,6 +937,252 @@
               <pre id="compact-sync-output" class="output-preview technical-output">No persisted Compact Sync payload.</pre>
             </section>
 
+            <section id="result-intake-advanced-card" class="advanced-card" aria-labelledby="advanced-result-intake-title" hidden>
+              <h2 id="advanced-result-intake-title">Result intake evidence</h2>
+              <dl class="fact-list compact-facts">
+                <div><dt>Monitor state</dt><dd id="result-monitor-state">None</dd></div>
+                <div><dt>Recovery state</dt><dd id="result-recovery-state">None</dd></div>
+                <div><dt>Result source</dt><dd id="result-source-identity">None</dd></div>
+                <div><dt>Result record</dt><dd id="result-envelope-record">None</dd></div>
+                <div><dt>Result digest</dt><dd id="result-envelope-digest">None</dd></div>
+                <div><dt>Task binding</dt><dd id="result-envelope-task-binding">None</dd></div>
+                <div><dt>Pack binding</dt><dd id="result-envelope-pack-binding">None</dd></div>
+                <div><dt>Assignment bindings</dt><dd id="result-envelope-assignment-bindings">None</dd></div>
+                <div><dt>Routing binding</dt><dd id="result-envelope-routing-binding">None</dd></div>
+                <div><dt>Process identity</dt><dd id="result-process-identity">None</dd></div>
+                <div><dt>Session identity</dt><dd id="result-session-identity">None</dd></div>
+                <div><dt>Ingested</dt><dd id="result-ingested-at">Not recorded</dd></div>
+              </dl>
+              <h3>Frozen Task and Pack binding</h3>
+              <dl class="fact-list compact-facts">
+                <div><dt>Task</dt><dd id="result-task-identity">None</dd></div>
+                <div><dt>Task version</dt><dd id="result-task-version">None</dd></div>
+                <div><dt>Task digest</dt><dd id="result-task-digest">None</dd></div>
+                <div><dt>Pack version</dt><dd id="result-pack-version">None</dd></div>
+              </dl>
+              <h3>Coding process and invocation</h3>
+              <dl class="fact-list compact-facts">
+                <div><dt>Exit code</dt><dd id="result-coding-exit-code">None</dd></div>
+                <div><dt>Process execution</dt><dd id="result-coding-process-proof">Not verified</dd></div>
+                <div><dt>Codex turn</dt><dd id="result-coding-turn-proof">Not verified</dd></div>
+                <div><dt>Requested model</dt><dd id="result-coding-requested-model">None</dd></div>
+                <div><dt>Actual resolved model</dt><dd id="result-coding-actual-model">Not exposed by the current Codex CLI protocol.</dd></div>
+                <div><dt>Invocation failure</dt><dd id="result-coding-invocation-failure">None</dd></div>
+              </dl>
+              <h3>Verification process and invocation</h3>
+              <dl class="fact-list compact-facts">
+                <div><dt>Assigned model</dt><dd id="result-verification-assigned-model">None</dd></div>
+                <div><dt>Status</dt><dd id="result-verification-status">Not started</dd></div>
+                <div><dt>Process started</dt><dd id="result-verification-process-started">No</dd></div>
+                <div><dt>Turn terminal state</dt><dd id="result-verification-turn-terminal">Not reached</dd></div>
+                <div><dt>Exit code</dt><dd id="result-verification-process-exit-code">None</dd></div>
+                <div><dt>Failure</dt><dd id="result-verification-summary">None</dd></div>
+                <div><dt>Process execution</dt><dd id="result-verification-process-proof">Not verified</dd></div>
+                <div><dt>Codex turn</dt><dd id="result-verification-turn-proof">Not verified</dd></div>
+                <div><dt>Requested model</dt><dd id="result-verification-requested-model">None</dd></div>
+                <div><dt>Actual resolved model</dt><dd id="result-verification-actual-model">Not exposed by the current Codex CLI protocol.</dd></div>
+                <div><dt>Invocation failure</dt><dd id="result-verification-invocation-failure">None</dd></div>
+              </dl>
+              <h3>Git evidence</h3>
+              <p id="result-git-evidence" class="candidate-diagnostics">Not available</p>
+              <h3>Sanitized intake diagnostics</h3>
+              <p id="result-intake-diagnostics" class="candidate-diagnostics">No Result Envelope diagnostics are available.</p>
+            </section>
+
+            <section id="candidate-advanced-card" class="advanced-card" aria-labelledby="advanced-candidate-title" hidden>
+              <h2 id="advanced-candidate-title">Delivery Candidate evidence</h2>
+              <dl class="fact-list compact-facts">
+                <div><dt>Candidate record</dt><dd id="candidate-record-id">None</dd></div>
+                <div><dt>Candidate digest</dt><dd id="candidate-digest">None</dd></div>
+                <div><dt>Patch identity</dt><dd id="candidate-patch-identity">None</dd></div>
+                <div><dt>Source snapshot</dt><dd id="candidate-source-snapshot">None</dd></div>
+                <div><dt>Task binding</dt><dd id="candidate-task-binding">None</dd></div>
+                <div><dt>Pack binding</dt><dd id="candidate-pack-binding">None</dd></div>
+                <div><dt>Coding assignment</dt><dd id="candidate-coding-assignment">None</dd></div>
+                <div><dt>Verification assignment</dt><dd id="candidate-verification-assignment">None</dd></div>
+                <div><dt>Routing snapshot</dt><dd id="candidate-routing-snapshot">None</dd></div>
+                <div><dt>Run binding</dt><dd id="candidate-run-binding">None</dd></div>
+                <div><dt>Coding evidence</dt><dd id="candidate-coding-evidence">None</dd></div>
+                <div><dt>Verification evidence</dt><dd id="candidate-verification-evidence">None</dd></div>
+                <div><dt>Created</dt><dd id="candidate-created-at">Not recorded</dd></div>
+                <div><dt>Drift evaluation</dt><dd id="candidate-drift-evaluation">Not evaluated</dd></div>
+                <div><dt>Baseline source</dt><dd id="candidate-drift-baseline">None</dd></div>
+                <div><dt>Current source</dt><dd id="candidate-drift-current">None</dd></div>
+                <div><dt>Current HEAD</dt><dd id="candidate-drift-head">None</dd></div>
+                <div><dt>Conflict paths</dt><dd id="candidate-conflict-paths">None</dd></div>
+              </dl>
+              <h3>Manifest identities and hashes</h3>
+              <ul id="candidate-manifest-details" class="technical-list candidate-manifest-details">
+                <li>No immutable Candidate manifest is available.</li>
+              </ul>
+              <h3>Sanitized Git diagnostics</h3>
+              <p id="candidate-drift-diagnostics" class="candidate-diagnostics">No Source Drift diagnostics are available.</p>
+            </section>
+
+            <section id="apply-plan-advanced-card" class="advanced-card" aria-labelledby="advanced-apply-plan-title" hidden>
+              <h2 id="advanced-apply-plan-title">Apply Plan evidence</h2>
+              <div class="field-group">
+                <label for="apply-plan-history">Historical Plan</label>
+                <select id="apply-plan-history" disabled>
+                  <option value="">No persisted Apply Plan</option>
+                </select>
+                <p class="field-hint">Historical Plans remain immutable. A stale binding is shown as EXPIRED.</p>
+              </div>
+              <dl class="fact-list compact-facts">
+                <div><dt>Plan record</dt><dd id="apply-plan-record-id">None</dd></div>
+                <div><dt>Plan version</dt><dd id="apply-plan-version">None</dd></div>
+                <div><dt>Status at creation</dt><dd id="apply-plan-status-at-creation">None</dd></div>
+                <div><dt>Plan digest</dt><dd id="apply-plan-digest">None</dd></div>
+                <div><dt>Binding digest</dt><dd id="apply-plan-binding-digest">None</dd></div>
+                <div><dt>Candidate record</dt><dd id="apply-plan-candidate-record">None</dd></div>
+                <div><dt>Candidate digest</dt><dd id="apply-plan-candidate-digest">None</dd></div>
+                <div><dt>Drift Evaluation</dt><dd id="apply-plan-drift-evaluation">None</dd></div>
+                <div><dt>Drift fingerprint</dt><dd id="apply-plan-drift-fingerprint">None</dd></div>
+                <div><dt>Repository identity</dt><dd id="apply-plan-repository-identity">None</dd></div>
+                <div><dt>Repository locator fingerprint</dt><dd id="apply-plan-repository-locator">None</dd></div>
+                <div><dt>Repository fingerprint</dt><dd id="apply-plan-repository-fingerprint">None</dd></div>
+                <div><dt>Branch</dt><dd id="apply-plan-branch">None</dd></div>
+                <div><dt>Observed HEAD</dt><dd id="apply-plan-head">None</dd></div>
+                <div><dt>Current source digest</dt><dd id="apply-plan-current-source">None</dd></div>
+                <div><dt>Index fingerprint</dt><dd id="apply-plan-index-fingerprint">None</dd></div>
+                <div><dt>Worktree fingerprint</dt><dd id="apply-plan-worktree-fingerprint">None</dd></div>
+                <div><dt>Staged paths</dt><dd id="apply-plan-staged-count">None</dd></div>
+                <div><dt>Policy version</dt><dd id="apply-plan-policy-version">None</dd></div>
+                <div><dt>Task binding</dt><dd id="apply-plan-task-binding">None</dd></div>
+                <div><dt>Pack binding</dt><dd id="apply-plan-pack-binding">None</dd></div>
+                <div><dt>Run binding</dt><dd id="apply-plan-run-binding">None</dd></div>
+                <div><dt>Source snapshot</dt><dd id="apply-plan-source-snapshot">None</dd></div>
+                <div><dt>Created</dt><dd id="apply-plan-created-at">Not recorded</dd></div>
+                <div><dt>Supersedes Plan</dt><dd id="apply-plan-supersedes">None</dd></div>
+                <div><dt>Supersession reason</dt><dd id="apply-plan-supersession-reason">None</dd></div>
+              </dl>
+              <h3>Deterministic operation order</h3>
+              <ul id="apply-plan-operation-order" class="technical-list">
+                <li>No operation order is available.</li>
+              </ul>
+              <h3>Entry hashes, modes, and evidence</h3>
+              <ul id="apply-plan-entry-details" class="technical-list apply-plan-entry-details">
+                <li>No Apply Plan entry metadata is available.</li>
+              </ul>
+              <h3>Expiry evidence</h3>
+              <ul id="apply-plan-expiry-reasons" class="technical-list">
+                <li>No expiry reason is recorded.</li>
+              </ul>
+              <h3>Sanitized diagnostics</h3>
+              <p id="apply-plan-diagnostics" class="candidate-diagnostics">No Apply Plan diagnostics are available.</p>
+            </section>
+
+            <section id="apply-session-advanced-card" class="advanced-card" aria-labelledby="advanced-apply-session-title" hidden>
+              <h2 id="advanced-apply-session-title">Apply and Revert evidence</h2>
+              <dl class="fact-list compact-facts">
+                <div><dt>Apply session</dt><dd id="apply-session-record-id">None</dd></div>
+                <div><dt>Apply state</dt><dd id="apply-session-apply-state">None</dd></div>
+                <div><dt>Revert state</dt><dd id="apply-session-revert-state">None</dd></div>
+                <div><dt>Plan record</dt><dd id="apply-session-plan-record">None</dd></div>
+                <div><dt>Plan digest</dt><dd id="apply-session-plan-digest">None</dd></div>
+                <div><dt>Candidate record</dt><dd id="apply-session-candidate-record">None</dd></div>
+                <div><dt>Candidate digest</dt><dd id="apply-session-candidate-digest">None</dd></div>
+                <div><dt>Journal digest</dt><dd id="apply-session-journal-digest">None</dd></div>
+                <div><dt>Fresh Drift Evaluation</dt><dd id="apply-session-drift-evaluation">None</dd></div>
+                <div><dt>Repository fingerprint</dt><dd id="apply-session-repository-fingerprint">None</dd></div>
+                <div><dt>Branch</dt><dd id="apply-session-branch">None</dd></div>
+                <div><dt>Pre-Apply HEAD</dt><dd id="apply-session-head">None</dd></div>
+                <div><dt>Pre-Apply index</dt><dd id="apply-session-index-fingerprint">None</dd></div>
+                <div><dt>Created</dt><dd id="apply-session-created-at">Not recorded</dd></div>
+                <div><dt>Apply finished</dt><dd id="apply-session-apply-finished-at">Not recorded</dd></div>
+                <div><dt>Revert finished</dt><dd id="apply-session-revert-finished-at">Not recorded</dd></div>
+              </dl>
+              <h3>Entry hashes, modes, types, and reverse operations</h3>
+              <ul id="apply-session-entry-details" class="technical-list">
+                <li>No durable Apply journal is available.</li>
+              </ul>
+              <h3>Narrow integrity evidence</h3>
+              <p id="apply-session-integrity" class="candidate-diagnostics">No Apply or Revert integrity evidence is available.</p>
+              <h3>Failure and compensation evidence</h3>
+              <p id="apply-session-compensation" class="candidate-diagnostics">No failure or compensation evidence is recorded.</p>
+              <h3>Sanitized diagnostics</h3>
+              <p id="apply-session-diagnostics" class="candidate-diagnostics">No Apply session diagnostics are available.</p>
+            </section>
+
+            <section id="post-apply-verification-advanced-card" class="advanced-card" aria-labelledby="advanced-post-apply-verification-title" hidden>
+              <h2 id="advanced-post-apply-verification-title">Post-Apply Verification evidence</h2>
+              <dl class="fact-list compact-facts">
+                <div><dt>Verification record</dt><dd id="post-apply-verification-record-id">None</dd></div>
+                <div><dt>Policy version</dt><dd id="post-apply-verification-policy-version">None</dd></div>
+                <div><dt>Verification digest</dt><dd id="post-apply-verification-digest">None</dd></div>
+                <div><dt>Observation digest</dt><dd id="post-apply-observation-digest">None</dd></div>
+                <div><dt>Apply session</dt><dd id="post-apply-verification-session-binding">None</dd></div>
+                <div><dt>Apply Plan</dt><dd id="post-apply-verification-plan-binding">None</dd></div>
+                <div><dt>Candidate</dt><dd id="post-apply-verification-candidate-binding">None</dd></div>
+                <div><dt>Repository identity</dt><dd id="post-apply-verification-repository-identity">None</dd></div>
+                <div><dt>Repository fingerprints</dt><dd id="post-apply-verification-repository-fingerprints">None</dd></div>
+                <div><dt>Expected branch</dt><dd id="post-apply-verification-expected-branch">None</dd></div>
+                <div><dt>Observed branch</dt><dd id="post-apply-verification-observed-branch">None</dd></div>
+                <div><dt>Expected HEAD</dt><dd id="post-apply-verification-expected-head">None</dd></div>
+                <div><dt>Observed HEAD</dt><dd id="post-apply-verification-observed-head">None</dd></div>
+                <div><dt>Source snapshot</dt><dd id="post-apply-verification-source-snapshot">None</dd></div>
+                <div><dt>Created</dt><dd id="post-apply-verification-created-at">Not recorded</dd></div>
+              </dl>
+              <h3>Expected path evidence</h3>
+              <ul id="post-apply-verification-expected-paths" class="technical-list">
+                <li>No expected path evidence is available.</li>
+              </ul>
+              <h3>Observed path evidence</h3>
+              <ul id="post-apply-verification-observed-paths" class="technical-list">
+                <li>No observed path evidence is available.</li>
+              </ul>
+              <h3>Sanitized Git diagnostics</h3>
+              <p id="post-apply-verification-diagnostics" class="candidate-diagnostics">No Post-Apply Verification diagnostics are available.</p>
+            </section>
+
+            <section id="commit-builder-advanced-card" class="advanced-card" aria-labelledby="advanced-commit-builder-title" hidden>
+              <h2 id="advanced-commit-builder-title">Stage + Local Commit evidence</h2>
+              <dl class="fact-list compact-facts">
+                <div><dt>Commit Plan record</dt><dd id="commit-plan-record-id">None</dd></div>
+                <div><dt>Policy version</dt><dd id="commit-plan-policy-version">None</dd></div>
+                <div><dt>Commit Plan digest</dt><dd id="commit-plan-digest">None</dd></div>
+                <div><dt>Post-Apply Verification</dt><dd id="commit-plan-verification-binding">None</dd></div>
+                <div><dt>Apply session</dt><dd id="commit-plan-apply-session-binding">None</dd></div>
+                <div><dt>Repository identity</dt><dd id="commit-plan-repository-identity">None</dd></div>
+                <div><dt>Branch</dt><dd id="commit-plan-branch">None</dd></div>
+                <div><dt>Pre-Stage HEAD</dt><dd id="commit-plan-head">None</dd></div>
+                <div><dt>Pre-Stage index</dt><dd id="commit-plan-index">None</dd></div>
+                <div><dt>Stage record</dt><dd id="stage-session-record-id">None</dd></div>
+                <div><dt>Stage digest</dt><dd id="stage-session-digest">None</dd></div>
+                <div><dt>Staged path count</dt><dd id="stage-session-path-count">0</dd></div>
+                <div><dt>Commit record</dt><dd id="local-commit-record-id">None</dd></div>
+                <div><dt>Local commit SHA</dt><dd id="local-commit-sha">None</dd></div>
+                <div><dt>Parent SHA</dt><dd id="local-commit-parent-sha">None</dd></div>
+                <div><dt>Message digest</dt><dd id="local-commit-message-digest">None</dd></div>
+                <div><dt>Created</dt><dd id="commit-builder-created-at">Not recorded</dd></div>
+              </dl>
+              <h3>Approved and staged path identities</h3>
+              <ul id="commit-builder-path-evidence" class="technical-list">
+                <li>No Commit Plan path evidence is available.</li>
+              </ul>
+              <h3>Sanitized Git diagnostics</h3>
+              <p id="commit-builder-diagnostics" class="candidate-diagnostics">No Stage or local Commit diagnostics are available.</p>
+            </section>
+
+            <section id="push-delivery-advanced-card" class="advanced-card" aria-labelledby="advanced-push-delivery-title" hidden>
+              <h2 id="advanced-push-delivery-title">Push + Delivery evidence</h2>
+              <dl class="fact-list compact-facts">
+                <div><dt>Local Commit binding</dt><dd id="push-commit-binding">None</dd></div>
+                <div><dt>Delivery Candidate binding</dt><dd id="push-candidate-binding">None</dd></div>
+                <div><dt>Apply Plan binding</dt><dd id="push-apply-plan-binding">None</dd></div>
+                <div><dt>Verification binding</dt><dd id="push-verification-binding">None</dd></div>
+                <div><dt>Push preflight record</dt><dd id="push-preflight-record-id">None</dd></div>
+                <div><dt>Confirmation digest</dt><dd id="push-preflight-digest">None</dd></div>
+                <div><dt>Push attempt record</dt><dd id="push-attempt-record-id">None</dd></div>
+                <div><dt>Push receipt digest</dt><dd id="push-attempt-digest">None</dd></div>
+                <div><dt>Exact refspec</dt><dd id="push-exact-refspec">None</dd></div>
+                <div><dt>Remote fingerprint</dt><dd id="push-remote-fingerprint">None</dd></div>
+                <div><dt>Repository fingerprint</dt><dd id="push-repository-fingerprint">None</dd></div>
+              </dl>
+              <h3>Sanitized Push diagnostics</h3>
+              <p id="push-sanitized-diagnostics" class="candidate-diagnostics">No Push diagnostics are available.</p>
+            </section>
+
             <section class="advanced-card" aria-labelledby="advanced-worker-title">
               <h2 id="advanced-worker-title">Deterministic worker acceptance</h2>
               <dl class="fact-list compact-facts">
@@ -596,12 +1234,150 @@
           </div>
         </details>
       </main>
+
+      <dialog id="apply-confirmation-dialog" class="confirmation-dialog" aria-labelledby="apply-confirmation-title">
+        <form method="dialog" class="confirmation-surface">
+          <div class="confirmation-heading">
+            <span class="confirmation-eyebrow">Real source change</span>
+            <h2 id="apply-confirmation-title">Confirm Apply Accepted Changes</h2>
+            <p>Apply Accepted Changes is the first action in this workflow that modifies the real source repository.</p>
+          </div>
+          <dl class="fact-list compact-facts confirmation-facts">
+            <div><dt>Apply Plan</dt><dd id="apply-confirmation-plan">None</dd></div>
+            <div><dt>Change Candidate</dt><dd id="apply-confirmation-candidate">None</dd></div>
+            <div><dt>Current Source Drift</dt><dd id="apply-confirmation-drift">Not evaluated</dd></div>
+            <div><dt>CREATE / MODIFY / DELETE</dt><dd id="apply-confirmation-operations">0 / 0 / 0</dd></div>
+            <div><dt>INCLUDED paths</dt><dd id="apply-confirmation-included">None</dd></div>
+            <div><dt>EXCLUDED paths</dt><dd id="apply-confirmation-excluded">None</dd></div>
+            <div><dt>Unrelated source changes</dt><dd id="apply-confirmation-unrelated">None</dd></div>
+            <div><dt>Index and staged paths</dt><dd id="apply-confirmation-index">Not evaluated</dd></div>
+          </dl>
+          <ul class="result-check-list confirmation-boundaries">
+            <li>Only INCLUDED paths will be changed; EXCLUDED and unrelated paths remain untouched.</li>
+            <li>Before-state and rollback evidence must be durable before the first mutation.</li>
+            <li>Apply does not stage, commit, or push.</li>
+          </ul>
+          <div class="button-row confirmation-actions">
+            <button id="confirm-apply-accepted-changes" class="button button-danger" type="button">Confirm Apply Accepted Changes</button>
+            <button id="cancel-apply-accepted-changes" class="button button-secondary" type="button">Cancel</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog id="revert-confirmation-dialog" class="confirmation-dialog" aria-labelledby="revert-confirmation-title">
+        <form method="dialog" class="confirmation-surface">
+          <div class="confirmation-heading">
+            <span class="confirmation-eyebrow">Separate reverse action</span>
+            <h2 id="revert-confirmation-title">Confirm Revert Applied Changes</h2>
+            <p>Revert reverses only the exact paths changed by this successful Apply session.</p>
+          </div>
+          <dl class="fact-list compact-facts confirmation-facts">
+            <div><dt>Apply session</dt><dd id="revert-confirmation-session">None</dd></div>
+            <div><dt>Paths to reverse</dt><dd id="revert-confirmation-paths">None</dd></div>
+            <div><dt>Reverse operations</dt><dd id="revert-confirmation-operations">None</dd></div>
+            <div><dt>After-state preconditions</dt><dd id="revert-confirmation-preconditions">Not evaluated</dd></div>
+            <div><dt>Unrelated paths</dt><dd id="revert-confirmation-unrelated">Remain untouched</dd></div>
+            <div><dt>Index and staged paths</dt><dd id="revert-confirmation-index">Not evaluated</dd></div>
+          </dl>
+          <ul class="result-check-list confirmation-boundaries">
+            <li>Every session path must pass the complete Revert preflight before any reverse mutation.</li>
+            <li>Revert does not use reset, clean, broad checkout, or broad restore.</li>
+            <li>Revert does not stage, commit, or push.</li>
+          </ul>
+          <div class="button-row confirmation-actions">
+            <button id="confirm-revert-applied-changes" class="button button-danger" type="button">Confirm Revert Applied Changes</button>
+            <button id="cancel-revert-applied-changes" class="button button-secondary" type="button">Cancel</button>
+          </div>
+        </form>
+      </dialog>
+      <dialog id="stage-confirmation-dialog" class="confirmation-dialog" aria-labelledby="stage-confirmation-title">
+        <form method="dialog" class="confirmation-surface">
+          <div class="confirmation-heading">
+            <span class="confirmation-eyebrow">Exact index mutation</span>
+            <h2 id="stage-confirmation-title">Confirm Stage Approved Files</h2>
+            <p>Only the paths bound to this reviewed Commit Plan will be staged.</p>
+          </div>
+          <dl class="fact-list compact-facts confirmation-facts">
+            <div><dt>Commit Plan</dt><dd id="stage-confirmation-plan">None</dd></div>
+            <div><dt>Post-Apply Verification</dt><dd id="stage-confirmation-verification">None</dd></div>
+            <div><dt>Approved paths</dt><dd id="stage-confirmation-approved">None</dd></div>
+            <div><dt>Excluded paths</dt><dd id="stage-confirmation-excluded">None</dd></div>
+            <div><dt>Current HEAD</dt><dd id="stage-confirmation-head">Not evaluated</dd></div>
+            <div><dt>Current index</dt><dd id="stage-confirmation-index">Not evaluated</dd></div>
+          </dl>
+          <ul class="result-check-list confirmation-boundaries">
+            <li>Only approved paths may enter the Git index.</li>
+            <li>Staging does not create a commit and does not push.</li>
+            <li>Any repository-boundary mismatch blocks the entire action.</li>
+          </ul>
+          <div class="button-row confirmation-actions">
+            <button id="confirm-stage-approved-files" class="button button-danger" type="button">Confirm Stage Approved Files</button>
+            <button id="cancel-stage-approved-files" class="button button-secondary" type="button">Cancel</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog id="local-commit-confirmation-dialog" class="confirmation-dialog" aria-labelledby="local-commit-confirmation-title">
+        <form method="dialog" class="confirmation-surface">
+          <div class="confirmation-heading">
+            <span class="confirmation-eyebrow">Local Git history mutation</span>
+            <h2 id="local-commit-confirmation-title">Confirm Create Local Commit</h2>
+            <p>Create exactly one local commit from the verified staged set and reviewed message.</p>
+          </div>
+          <dl class="fact-list compact-facts confirmation-facts">
+            <div><dt>Stage record</dt><dd id="local-commit-confirmation-stage">None</dd></div>
+            <div><dt>Staged paths</dt><dd id="local-commit-confirmation-paths">None</dd></div>
+            <div><dt>Commit subject</dt><dd id="local-commit-confirmation-subject">None</dd></div>
+            <div><dt>Commit body</dt><dd id="local-commit-confirmation-body">None</dd></div>
+            <div><dt>Branch</dt><dd id="local-commit-confirmation-branch">Not evaluated</dd></div>
+            <div><dt>Expected parent</dt><dd id="local-commit-confirmation-parent">Not evaluated</dd></div>
+          </dl>
+          <ul class="result-check-list confirmation-boundaries">
+            <li>The staged set must still match the exact reviewed Commit Plan.</li>
+            <li>One local commit is created at most once for this Stage record.</li>
+            <li>No push, merge, rebase, tag, branch, remote, or configuration change occurs.</li>
+          </ul>
+          <div class="button-row confirmation-actions">
+            <button id="confirm-create-local-commit" class="button button-danger" type="button">Confirm Create Local Commit</button>
+            <button id="cancel-create-local-commit" class="button button-secondary" type="button">Cancel</button>
+          </div>
+        </form>
+      </dialog>
+      <dialog id="push-confirmation-dialog" class="confirmation-dialog" aria-labelledby="push-confirmation-title">
+        <form method="dialog" class="confirmation-surface">
+          <div class="confirmation-heading">
+            <span class="confirmation-eyebrow">Remote main mutation</span>
+            <h2 id="push-confirmation-title">Confirm Push to origin/main</h2>
+            <p>Review the live remote base and exact approved local commit before authorizing one Push attempt.</p>
+          </div>
+          <dl class="fact-list compact-facts confirmation-facts">
+            <div><dt>Repository</dt><dd id="push-confirmation-repository">Not evaluated</dd></div>
+            <div><dt>Branch</dt><dd id="push-confirmation-branch">main</dd></div>
+            <div><dt>Local commit SHA</dt><dd id="push-confirmation-commit">Not evaluated</dd></div>
+            <div><dt>Commit subject</dt><dd id="push-confirmation-subject">Not evaluated</dd></div>
+            <div><dt>Expected remote base</dt><dd id="push-confirmation-remote-base">Not evaluated</dd></div>
+            <div><dt>Destination</dt><dd id="push-confirmation-destination">origin/main</dd></div>
+            <div><dt>Ahead / behind</dt><dd id="push-confirmation-ahead-behind">Not evaluated</dd></div>
+            <div><dt>Worktree and index</dt><dd id="push-confirmation-cleanliness">Not evaluated</dd></div>
+            <div><dt>Fast-forward statement</dt><dd id="push-confirmation-fast-forward">Not evaluated</dd></div>
+          </dl>
+          <ul class="result-check-list confirmation-boundaries">
+            <li>Only one standard fast-forward Push of the exact approved commit to refs/heads/main is authorized.</li>
+            <li>No force, force-with-lease, tag, other branch, wildcard refspec, or remote mutation is authorized.</li>
+            <li>No automatic retry, Fetch, Pull, Merge, or Rebase will be performed.</li>
+          </ul>
+          <div class="button-row confirmation-actions">
+            <button id="confirm-push-to-origin-main" class="button button-danger" type="button">Confirm Push to origin/main</button>
+            <button id="cancel-push-to-origin-main" class="button button-secondary" type="button">Cancel</button>
+          </div>
+        </form>
+      </dialog>
       <dialog id="codex-setup-dialog" aria-labelledby="codex-setup-title">
         <form id="codex-setup-form" method="dialog" class="setup-dialog-card">
           <div class="card-heading">
             <div><span id="codex-setup-capability-label" class="step-label">CODING</span><h2 id="codex-setup-title">Set up Codex</h2></div>
           </div>
-          <p>Configure the only execution target currently supported by TWOS for each executable capability. Checking availability does not send task or Pack content and does not create a run.</p>
+          <p>Configure the only execution target currently supported by TWOS for each executable capability. Checking setup prerequisites does not contact the Provider. Verify Codex Connection is a separate, explicit Owner action that sends one bounded, non-mutating request and never creates a Run.</p>
           <div class="field-group">
             <label for="setup-capability">Capability</label>
             <select id="setup-capability" name="capability">
@@ -615,10 +1391,18 @@
               <option value="codex_cli">Local Codex CLI</option>
             </select>
           </div>
-          <dl class="fact-list">
+          <dl class="fact-list setup-connectivity-facts">
             <div><dt>Invocation mode</dt><dd>Real, Owner-approved execution only</dd></div>
-            <div><dt>Runtime</dt><dd>Local CLI executable and authentication</dd></div>
-            <div><dt>Credentials</dt><dd id="setup-credential-status">Managed outside TWOS; values are never displayed</dd></div>
+            <div><dt>CLI installed</dt><dd id="setup-cli-installed">Checking</dd></div>
+            <div><dt>CLI version</dt><dd id="setup-cli-version">Checking</dd></div>
+            <div><dt>Authentication method</dt><dd id="setup-auth-method">Checking</dd></div>
+            <div><dt>Authentication status</dt><dd id="setup-auth-status">Checking</dd></div>
+            <div><dt>Credential store</dt><dd id="setup-credential-status">Values are never displayed</dd></div>
+            <div><dt>Provider connectivity</dt><dd id="setup-provider-connectivity">Not verified</dd></div>
+            <div><dt>Requested model</dt><dd id="setup-requested-model">Select a model</dd></div>
+            <div><dt>Resolved / effective model</dt><dd id="setup-actual-model">Not verified</dd></div>
+            <div><dt>Last connectivity check</dt><dd id="setup-connectivity-checked-at">Never</dd></div>
+            <div><dt>Configured Run timeout</dt><dd id="setup-run-timeout">Not reported</dd></div>
           </dl>
           <div class="field-group">
             <label for="setup-model-search">Model</label>
@@ -641,13 +1425,20 @@
               <div><dt>Catalog source</dt><dd id="setup-catalog-source">Not loaded</dd></div>
               <div><dt>Catalog version</dt><dd id="setup-catalog-version">Not loaded</dd></div>
               <div><dt>Installed CLI</dt><dd id="setup-catalog-cli-version">Not reported</dd></div>
+              <div><dt>Probe command</dt><dd id="setup-connectivity-command">Not run</dd></div>
+              <div><dt>Probe exit code</dt><dd id="setup-connectivity-exit-code">Not run</dd></div>
+              <div><dt>Probe duration</dt><dd id="setup-connectivity-duration">Not run</dd></div>
             </dl>
             <ul id="setup-catalog-warnings" class="technical-list"><li>No catalog warnings.</li></ul>
-            <p class="catalog-truth-note">Catalog metadata is compatibility evidence only. It is not availability, account entitlement, invocation, or actual resolved model evidence.</p>
+            <p id="setup-connectivity-diagnostics" class="catalog-truth-note">No Provider probe has been run for this Owner and model.</p>
+            <p class="catalog-truth-note">Catalog metadata is compatibility evidence only. The connection probe reports Codex's same-turn effective model; a real Run's actual model still requires separate Run-local evidence.</p>
           </details>
-          <p id="setup-availability-status" class="boundary-note" role="status">Check required. No availability claim has been made.</p>
+          <p id="setup-connectivity-state" class="setup-connectivity-state" role="status">Authenticated — connectivity not verified</p>
+          <p id="setup-connectivity-blocker" class="boundary-note">Select a model, then explicitly verify its real Codex connection.</p>
+          <p id="setup-availability-status" class="boundary-note" role="status">Setup prerequisite check required. No Provider or model-connectivity claim has been made.</p>
           <div class="button-row">
-            <button id="check-codex-availability" class="button button-primary" type="button" disabled>Check availability</button>
+            <button id="check-codex-availability" class="button button-secondary" type="button" disabled>Check availability prerequisites</button>
+            <button id="verify-codex-connection" class="button button-primary" type="button" disabled>Verify Codex Connection</button>
             <button id="save-assign-codex" class="button button-secondary" type="button" disabled>Save and assign</button>
             <button id="cancel-codex-setup" class="button button-quiet" type="button">Cancel</button>
           </div>

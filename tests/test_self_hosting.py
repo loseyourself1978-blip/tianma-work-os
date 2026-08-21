@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sqlite3
 import subprocess
 import threading
@@ -11,14 +12,23 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 
 import twos_runtime.codex_adapter as codex_adapter_module
+import twos_runtime.ai_orchestration as ai_orchestration_module
+import twos_runtime.codex_exec_bridge as codex_exec_bridge_module
 from twos_runtime.app import codex_run_out, create_app
 from twos_runtime.codex_adapter import (
     CodexAdapter,
     CodexDetection,
     CodexModelCatalog,
     CodexModelCatalogEntry,
+)
+from twos_runtime.codex_connectivity import (
+    CONNECTIVITY_POLICY,
+    codex_child_environment,
+    executable_identity,
+    execution_context_identity,
 )
 from twos_runtime.config import STATIC_COCKPIT_DIR, TWOS_UI_PATH, Settings
 from twos_runtime.models import (
@@ -27,7 +37,13 @@ from twos_runtime.models import (
     AIModelAssignment,
     AuditEvent,
     CodexInstructionPack,
+    CodexConnectivityEvidence,
+    CodexActivityEvent,
+    CodexExecutionAttempt,
+    CodexLifecycleSnapshot,
     CodexRun,
+    CodexRunMonitor,
+    CodexResultEnvelope,
     Provider,
     Task,
     utc_now,
@@ -74,8 +90,12 @@ class FixtureFallbackEvidenceWriteError(RuntimeError):
     pass
 
 
-def codex_exec_args(model_identifier: str) -> list[str]:
-    return [
+def codex_exec_args(
+    model_identifier: str,
+    *,
+    output_last_message: Path | None = None,
+) -> list[str]:
+    args = [
         "exec",
         "--model",
         model_identifier,
@@ -88,6 +108,9 @@ def codex_exec_args(model_identifier: str) -> list[str]:
         "never",
         "-",
     ]
+    if output_last_message is not None:
+        args[-1:-1] = ["--output-last-message", str(output_last_message)]
+    return args
 
 
 def run_command(cwd: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -128,17 +151,132 @@ if sys.argv[1:] == ["--version"]:
         count_file.write_text(str(count))
         if count >= 2:
             time.sleep(0.75)
-    print("codex-cli 1.0-test")
+    print("codex-cli 0.144.4")
     raise SystemExit(0)
 if sys.argv[1:] == ["exec", "--help"]:
-    print("Usage: codex exec --model MODEL --json [PROMPT]")
+    print("Usage: codex exec --model MODEL --json --output-schema PATH --output-last-message PATH [PROMPT]")
+    raise SystemExit(0)
+if sys.argv[1:] == ["login", "--help"]:
+    print("Usage: codex login [status]")
     raise SystemExit(0)
 if sys.argv[1:] == ["login", "status"]:
-    print("Logged in")
+    print("Logged in using ChatGPT")
+    raise SystemExit(0)
+if sys.argv[1:] == [
+    "app-server", "-c", "mcp_servers={}", "--strict-config", "--listen", "stdio://"
+]:
+    thread_id = "fixture-connectivity-thread-001"
+    turn_id = "fixture-connectivity-turn-001"
+    thread_model = ""
+    for line in sys.stdin:
+        message = json.loads(line)
+        method = message.get("method")
+        if method == "initialize":
+            print(json.dumps({
+                "id": message["id"],
+                "result": {
+                    "userAgent": "fixture",
+                    "platformFamily": "unix",
+                    "platformOs": "test",
+                    "codexHome": os.environ.get("CODEX_HOME"),
+                },
+            }), flush=True)
+        elif method == "mcpServerStatus/list":
+            print(json.dumps({
+                "id": message["id"],
+                "result": {"data": [], "nextCursor": None},
+            }), flush=True)
+        elif method == "thread/start":
+            params = message.get("params", {})
+            thread_model = str(params.get("model") or "")
+            assert params.get("allowProviderModelFallback") is False
+            assert params.get("sandbox") == "read-only"
+            assert params.get("ephemeral") is True
+            assert params.get("modelProvider") == "openai"
+            assert params.get("config") == {
+                "mcp_servers": {}, "web_search": "disabled"
+            }
+            assert params.get("dynamicTools") == []
+            assert params.get("runtimeWorkspaceRoots") == [params.get("cwd")]
+            assert params.get("selectedCapabilityRoots") == []
+            print(json.dumps({
+                "id": message["id"],
+                "result": {
+                    "model": thread_model,
+                    "modelProvider": "openai",
+                    "cwd": params.get("cwd"),
+                    "approvalPolicy": "never",
+                    "approvalsReviewer": "user",
+                    "sandbox": {"type": "readOnly", "networkAccess": False},
+                    "instructionSources": [],
+                    "runtimeWorkspaceRoots": params.get("runtimeWorkspaceRoots"),
+                    "thread": {"id": thread_id, "ephemeral": True},
+                },
+            }), flush=True)
+        elif method == "turn/start":
+            params = message.get("params", {})
+            assert params.get("threadId") == thread_id
+            assert params.get("model") == thread_model
+            prompt = params.get("input", [{}])[0].get("text", "")
+            assert prompt == (
+                "TWOS connectivity verification only. Do not read or write files, invoke tools, "
+                "or modify source. Reply exactly: TWOS_CODEX_CONNECTION_OK"
+            )
+            pathlib.Path(__file__).with_name(
+                pathlib.Path(__file__).name + ".probe-executed"
+            ).write_text("probe\\n")
+            started_turn = {"id": turn_id, "items": [], "status": "inProgress"}
+            completed_item = {
+                "id": "fixture-connectivity-message-001",
+                "type": "agentMessage",
+                "text": "TWOS_CODEX_CONNECTION_OK",
+            }
+            print(json.dumps({
+                "id": message["id"], "result": {"turn": started_turn}
+            }), flush=True)
+            print(json.dumps({
+                "method": "turn/started",
+                "params": {"threadId": thread_id, "turn": started_turn},
+            }), flush=True)
+            print(json.dumps({
+                "method": "item/completed",
+                "params": {
+                    "threadId": thread_id,
+                    "turnId": turn_id,
+                    "completedAtMs": 1,
+                    "item": completed_item,
+                },
+            }), flush=True)
+            print(json.dumps({
+                "method": "turn/completed",
+                "params": {
+                    "threadId": thread_id,
+                    "turn": {
+                        "id": turn_id,
+                        "items": [completed_item],
+                        "status": "completed",
+                        "error": None,
+                    },
+                },
+            }), flush=True)
+        elif method == "thread/unsubscribe":
+            print(json.dumps({
+                "id": message["id"], "result": {"status": "unsubscribed"}
+            }), flush=True)
     raise SystemExit(0)
 
 args = sys.argv[1:]
 model_identifier = args[2] if len(args) > 2 and args[:2] == ["exec", "--model"] else ""
+normalized_args = list(args)
+sidecar_paths = {}
+for option in ("--output-schema", "--output-last-message"):
+    if option in normalized_args:
+        option_index = normalized_args.index(option)
+        if option_index + 1 >= len(normalized_args):
+            print("missing sidecar path", file=sys.stderr)
+            raise SystemExit(64)
+        sidecar_paths[option] = normalized_args[option_index + 1]
+        del normalized_args[option_index:option_index + 2]
 expected_args = [
     "exec",
     "--model",
@@ -153,9 +291,13 @@ expected_args = [
     "-",
 ]
 if (
-    args != expected_args
-    or args[5] not in {"workspace-write", "read-only"}
-    or not model_identifier.startswith("fixture-provider-model-")
+    normalized_args != expected_args
+    or normalized_args[5] not in {"workspace-write", "read-only"}
+    or not (
+        model_identifier.startswith("fixture-provider-model-")
+        or model_identifier.startswith("gpt-")
+        or model_identifier.startswith("fixture-")
+    )
 ):
     print("unexpected fixed argv", file=sys.stderr)
     raise SystemExit(64)
@@ -164,10 +306,48 @@ def emit(event):
     print(json.dumps(event, separators=(",", ":")), flush=True)
 
 prompt = sys.stdin.read()
+if prompt == (
+    "TWOS connectivity verification only. Do not read or write files, invoke tools, "
+    "or modify source. Reply with exactly this JSON object and no other fields: "
+    '{"status":"TWOS_CODEX_CONNECTION_OK"}'
+):
+    if set(sidecar_paths) != {"--output-schema", "--output-last-message"}:
+        print("connectivity sidecars missing", file=sys.stderr)
+        raise SystemExit(64)
+    response_document = '{"status":"TWOS_CODEX_CONNECTION_OK"}'
+    pathlib.Path(sidecar_paths["--output-last-message"]).write_text(
+        response_document,
+        encoding="utf-8",
+    )
+    pathlib.Path(__file__).with_name(pathlib.Path(__file__).name + ".probe-executed").write_text("probe\\n")
+    emit({
+        "type": "thread.started",
+        "thread_id": "fixture-connectivity-thread-001",
+        "actual_model_identifier": model_identifier,
+    })
+    emit({"type": "turn.started", "turn_id": "fixture-connectivity-turn-001"})
+    emit({
+        "type": "item.completed",
+        "item": {
+            "id": "fixture-connectivity-message-001",
+            "type": "agent_message",
+            "text": response_document,
+        },
+    })
+    emit({
+        "type": "turn.completed",
+        "turn_id": "fixture-connectivity-turn-001",
+        "model": model_identifier,
+        "usage": {"input_tokens": 1, "output_tokens": 1},
+    })
+    raise SystemExit(0)
 pathlib.Path(__file__).with_name(pathlib.Path(__file__).name + ".executed").write_text("executed\\n")
-emit({"type": "thread.started", "thread_id": "fixture-codex-thread-001"})
-emit({"type": "turn.started", "turn_id": "fixture-codex-turn-001"})
+thread_started = {"type": "thread.started", "thread_id": "fixture-codex-thread-001"}
 reroute_file = pathlib.Path(__file__).with_name(pathlib.Path(__file__).name + ".reroute-to")
+if "FAKE_OMIT_ACTUAL" not in prompt and not reroute_file.exists():
+    thread_started["actual_model_identifier"] = model_identifier
+emit(thread_started)
+emit({"type": "turn.started", "turn_id": "fixture-codex-turn-001"})
 if reroute_file.exists():
     reroute_target = reroute_file.read_text().strip()
     emit({
@@ -185,7 +365,7 @@ if "FAKE_UNKNOWN_REROUTE" in prompt:
 if "FAKE_TRANSPORT" in prompt:
     forbidden = [
         key
-        for key in ("TWOS_OA005_SENTINEL", "OPENAI_API_KEY", "SESSION_SECRET")
+        for key in ("TWOS_OA005_SENTINEL", "SESSION_SECRET")
         if key in os.environ
     ]
     if forbidden:
@@ -205,21 +385,18 @@ if "FAKE_TRANSPORT" in prompt:
             }, separators=(",", ":")),
         },
     })
-if "FAKE_PUSH_ATTEMPT" in prompt:
-    push = subprocess.run(
-        ["git", "push", "origin", "HEAD:refs/heads/forbidden-by-twos"],
-        capture_output=True,
-        text=True,
-    )
+if "FAKE_TRANSPORT_BOUNDARY" in prompt:
     emit({
         "type": "item.completed",
         "item": {
             "type": "agent_message",
-            "text": json.dumps({"push_returncode": push.returncode}, separators=(",", ":")),
+            "text": json.dumps({
+                "git_transport_protocols_allowed": (
+                    os.environ.get("GIT_ALLOW_PROTOCOL", "missing") != ""
+                )
+            }, separators=(",", ":")),
         },
     })
-    if push.returncode == 0:
-        raise SystemExit(79)
 if "FAKE_SECRET_OUTPUT" in prompt:
     emit({
         "type": "item.completed",
@@ -260,6 +437,8 @@ if "FAKE_TIMEOUT" in prompt or "FAKE_CANCEL" in prompt or "FAKE_RUNTIME_SHUTDOWN
         ]
     )
     time.sleep(10)
+if "FAKE_RUNTIME_HANDOFF" in prompt:
+    time.sleep(1.5)
 if "FAKE_FAIL" in prompt:
     emit({
         "type": "turn.failed",
@@ -282,13 +461,7 @@ if args[5] == "read-only":
         "git_boundary": "pass",
         "remote_boundary": "pass",
     }
-    emit({
-        "type": "item.completed",
-        "item": {
-            "type": "agent_message",
-            "text": json.dumps(verification_result, separators=(",", ":")),
-        },
-    })
+    final_agent_text = json.dumps(verification_result, separators=(",", ":"))
 
 if args[5] == "workspace-write":
     pathlib.Path("codex-result.txt").write_text(
@@ -298,10 +471,38 @@ if args[5] == "workspace-write":
         pathlib.Path(".env.codex-produced").write_text(
             "PASSWORD=fixture-result-secret-must-stay-redacted\\n"
         )
+    final_agent_text = json.dumps(
+        {
+            "schema": "twos.coding_handoff.v1",
+            "status": "completed",
+            "summary": "1 passed in fake validation",
+        },
+        separators=(",", ":"),
+    )
 if "FAKE_COMMIT" in prompt:
-    subprocess.run(["git", "add", "codex-result.txt"], check=True)
-    subprocess.run(["git", "commit", "-m", "fake codex result"], check=True)
-emit({"type": "item.completed", "item": {"type": "agent_message", "text": "1 passed in fake validation"}})
+    subprocess.run(
+        ["git", "add", "codex-result.txt"],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    subprocess.run(
+        ["git", "commit", "-m", "fake codex result"],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+if "--output-last-message" not in sidecar_paths:
+    print("final-message sidecar missing", file=sys.stderr)
+    raise SystemExit(64)
+pathlib.Path(sidecar_paths["--output-last-message"]).write_text(
+    final_agent_text,
+    encoding="utf-8",
+)
+emit({
+    "type": "item.completed",
+    "item": {"type": "agent_message", "text": final_agent_text},
+})
 emit({
     "type": "turn.completed",
     "turn_id": "fixture-codex-turn-001",
@@ -319,7 +520,10 @@ def make_detection_codex(
     *,
     version_exit: int,
     help_exit: int,
-    help_text: str = "Usage: codex exec --model MODEL --json [PROMPT]",
+    help_text: str = (
+        "Usage: codex exec --model MODEL --json --output-schema PATH "
+        "--output-last-message PATH [PROMPT]"
+    ),
 ) -> Path:
     executable = tmp_path / name
     executable.write_text(
@@ -346,16 +550,26 @@ def make_nonreading_codex(tmp_path: Path) -> Path:
         "    print('codex-cli nonreading-test')\n"
         "    raise SystemExit(0)\n"
         "if sys.argv[1:] == ['exec', '--help']:\n"
-        "    print('Usage: codex exec --model MODEL --json [PROMPT]')\n"
+        "    print('Usage: codex exec --model MODEL --json --output-schema PATH --output-last-message PATH [PROMPT]')\n"
+        "    raise SystemExit(0)\n"
+        "if sys.argv[1:] == ['login', '--help']:\n"
+        "    print('Usage: codex login [status]')\n"
         "    raise SystemExit(0)\n"
         "if sys.argv[1:] == ['login', 'status']:\n"
-        "    print('Logged in')\n"
+        "    print('Logged in using ChatGPT')\n"
         "    raise SystemExit(0)\n"
         "args = sys.argv[1:]\n"
         "model_identifier = args[2] if len(args) > 2 and args[:2] == ['exec', '--model'] else ''\n"
+        "normalized_args = list(args)\n"
+        "sidecar_paths = {}\n"
+        "for option in ('--output-schema', '--output-last-message'):\n"
+        "    if option in normalized_args:\n"
+        "        option_index = normalized_args.index(option)\n"
+        "        sidecar_paths[option] = normalized_args[option_index + 1]\n"
+        "        del normalized_args[option_index:option_index + 2]\n"
         "expected = ['exec', '--model', model_identifier, '--json', '--sandbox', 'workspace-write', "
         "'--ephemeral', '--ignore-user-config', '--color', 'never', '-']\n"
-        "if args != expected or not model_identifier.startswith('fixture-provider-model-'):\n"
+        "if normalized_args != expected or not model_identifier.startswith('fixture-provider-model-'):\n"
         "    raise SystemExit(64)\n"
         "time.sleep(10)\n"
     )
@@ -372,20 +586,34 @@ def make_partial_stdin_codex(tmp_path: Path) -> Path:
         "    print('codex-cli partial-stdin-test')\n"
         "    raise SystemExit(0)\n"
         "if sys.argv[1:] == ['exec', '--help']:\n"
-        "    print('Usage: codex exec --model MODEL --json [PROMPT]')\n"
+        "    print('Usage: codex exec --model MODEL --json --output-schema PATH --output-last-message PATH [PROMPT]')\n"
+        "    raise SystemExit(0)\n"
+        "if sys.argv[1:] == ['login', '--help']:\n"
+        "    print('Usage: codex login [status]')\n"
         "    raise SystemExit(0)\n"
         "if sys.argv[1:] == ['login', 'status']:\n"
-        "    print('Logged in')\n"
+        "    print('Logged in using ChatGPT')\n"
         "    raise SystemExit(0)\n"
         "args = sys.argv[1:]\n"
         "model_identifier = args[2] if len(args) > 2 and args[:2] == ['exec', '--model'] else ''\n"
+        "normalized_args = list(args)\n"
+        "sidecar_paths = {}\n"
+        "for option in ('--output-schema', '--output-last-message'):\n"
+        "    if option in normalized_args:\n"
+        "        option_index = normalized_args.index(option)\n"
+        "        sidecar_paths[option] = normalized_args[option_index + 1]\n"
+        "        del normalized_args[option_index:option_index + 2]\n"
         "expected = ['exec', '--model', model_identifier, '--json', '--sandbox', 'workspace-write', "
         "'--ephemeral', '--ignore-user-config', '--color', 'never', '-']\n"
-        "if args != expected or not model_identifier.startswith('fixture-provider-model-'):\n"
+        "if normalized_args != expected or not model_identifier.startswith('fixture-provider-model-'):\n"
         "    raise SystemExit(64)\n"
         "sys.stdin.buffer.read(1)\n"
         "pathlib.Path('codex-result.txt').write_text('partial stdin fixture result\\n')\n"
         "print(json.dumps({'type':'thread.started','thread_id':'fixture-partial-stdin-thread'}), flush=True)\n"
+        "print(json.dumps({'type':'turn.started'}), flush=True)\n"
+        "final_text = 'partial stdin fixture terminal response'\n"
+        "pathlib.Path(sidecar_paths['--output-last-message']).write_text(final_text)\n"
+        "print(json.dumps({'type':'item.completed','item':{'type':'agent_message','text':final_text}}), flush=True)\n"
         "print(json.dumps({'type':'turn.completed','usage':{'input_tokens':1,'output_tokens':1}}), flush=True)\n"
     )
     executable.chmod(0o755)
@@ -403,6 +631,8 @@ def make_client(
     codex_model_identifier: str | None = None,
     codex_model_capabilities: tuple[str, ...] = ("coding",),
 ) -> TestClient:
+    codex_spool_root = tmp_path / "codex-spool"
+    codex_spool_root.mkdir(mode=0o700, parents=True, exist_ok=True)
     settings = Settings(
         database_url=f"sqlite:///{database_path or (tmp_path / 'twos-self-hosting.sqlite3')}",
         scheduler_poll_seconds=0.05,
@@ -410,6 +640,7 @@ def make_client(
         ui_path=TWOS_UI_PATH,
         source_repo=source_repo,
         worktree_root=tmp_path / "worktrees",
+        codex_spool_root=codex_spool_root,
         codex_executable=str(codex_executable),
         codex_model_identifier=codex_model_identifier,
         codex_model_capabilities=codex_model_capabilities,
@@ -424,7 +655,7 @@ def make_client(
         status="available",
         source="controlled_test_fixture",
         version="controlled-test-catalog.v1",
-        installed_cli_version="codex-cli controlled-test",
+        installed_cli_version="codex-cli 0.144.4",
         warnings=(),
         models=tuple(
             CodexModelCatalogEntry(
@@ -491,7 +722,17 @@ def test_owner_can_check_and_assign_local_codex_without_execution_side_effects(t
             json={"model_identifier": "fixture-provider-model-owner-setup"},
         )
         assert checked.status_code == 200, checked.text
-        assert checked.json()["available"] is True
+        assert checked.json()["available"] is False
+        assert checked.json()["execution_prerequisites_available"] is True
+        assert checked.json()["ready_for_real_run"] is False
+        verified = client.post(
+            "/api/codex/setup/verify-connection",
+            json={"model_identifier": "fixture-provider-model-owner-setup"},
+        )
+        assert verified.status_code == 200, verified.text
+        assert verified.json()["readiness_state"] == "READY_FOR_REAL_RUN"
+        assert verified.json()["actual_model"] == "fixture-provider-model-owner-setup"
+        assert verified.json()["ready_for_real_run"] is True
         model_id = checked.json()["configuration"]["id"]
         assert client.get("/api/tasks/%s/codex-runs" % task_id).json() == []
 
@@ -561,7 +802,8 @@ def test_owner_can_check_and_assign_local_codex_without_execution_side_effects(t
             json={"model_identifier": "fixture-unassigned-draft-model"},
         )
         assert draft_check.status_code == 200, draft_check.text
-        assert draft_check.json()["available"] is True
+        assert draft_check.json()["available"] is False
+        assert draft_check.json()["ready_for_real_run"] is False
         assert draft_check.json()["invalidated_packs"] == 0
         current_pack = client.get(f"/api/tasks/{task_id}/codex-packs/current").json()["pack"]
         assert current_pack["status"] == "approved"
@@ -577,7 +819,7 @@ def test_owner_can_check_and_assign_local_codex_without_execution_side_effects(t
         assert client.get("/api/tasks/%s/codex-runs" % task_id).json() == []
 
         with factory() as session:
-            assert session.query(AIModelAvailabilityEvidence).count() == 3
+            assert session.query(AIModelAvailabilityEvidence).count() == 4
             assert session.query(CodexRun).count() == 0
 
         assert client.post("/api/auth/logout").status_code == 200
@@ -718,6 +960,140 @@ def configure_test_model_registry(client: TestClient, *, invocation_mode: str = 
         session.commit()
 
 
+def seed_test_connectivity_evidence(client: TestClient, *, owner_id: int = 1) -> None:
+    """Represent an explicit successful fake-CLI exec probe in legacy fixtures.
+
+    Focused connectivity tests exercise the real endpoint and process boundary. Older
+    execution tests seed the same direct-exec contract so their fake executables can
+    continue testing timeout, cancellation, output, and Git behavior independently.
+    """
+    detection = client.app.state.codex_manager.adapter.detect()
+    assert detection.status == "configured" and detection.executable
+    environment = codex_child_environment()
+    executable_hash = executable_identity(detection.executable)
+    context_hash = execution_context_identity(environment)
+    factory = client.app.state.session_factory
+    with factory() as session:
+        for model in session.scalars(
+            select(AIModel).where(
+                AIModel.execution_adapter == "codex_cli",
+                AIModel.configuration_status == "configured",
+                AIModel.invocation_mode == "real",
+            )
+        ).all():
+            configuration_identity = model.stable_id or f"model-{model.id}"
+            existing = session.scalar(
+                select(CodexConnectivityEvidence).where(
+                    CodexConnectivityEvidence.owner_id == owner_id,
+                    CodexConnectivityEvidence.model_id == model.id,
+                    CodexConnectivityEvidence.configuration_identity == configuration_identity,
+                    CodexConnectivityEvidence.requested_model_identifier
+                    == model.provider_model_id,
+                    CodexConnectivityEvidence.executable_identity == executable_hash,
+                    CodexConnectivityEvidence.execution_context_identity == context_hash,
+                )
+            )
+            if existing is not None:
+                continue
+            digest = hashlib.sha256(
+                (
+                    "controlled-test-connectivity:"
+                    f"{owner_id}:{model.id}:{configuration_identity}:"
+                    f"{model.provider_model_id}:{executable_hash}:{context_hash}"
+                ).encode("utf-8")
+            ).hexdigest()
+            session.add(
+                CodexConnectivityEvidence(
+                    evidence_id=f"controlled-test-{digest[:24]}",
+                    owner_id=owner_id,
+                    model_id=model.id,
+                    configuration_identity=configuration_identity,
+                    requested_model_identifier=model.provider_model_id,
+                    actual_model_identifier=model.provider_model_id,
+                    readiness_state="READY_FOR_REAL_RUN",
+                    cli_installed=True,
+                    cli_version=detection.version or "controlled-test-cli",
+                    executable_identity=executable_hash,
+                    execution_context_identity=context_hash,
+                    authentication_state="CHATGPT_LOGIN_AUTHENTICATED",
+                    authentication_method="ChatGPT login",
+                    credential_store="controlled-test",
+                    credential_store_accessible=True,
+                    provider_reachable=True,
+                    model_available=True,
+                    interactive_prompt_detected=False,
+                    timed_out=False,
+                    exit_code=0,
+                    duration_ms=1,
+                    blocker_code="",
+                    safe_summary="Controlled fake CLI connection was explicitly represented for this test.",
+                    sanitized_command=(
+                        "codex exec --model <requested-model> --json --sandbox read-only "
+                        "--ephemeral --ignore-user-config --output-schema <temporary-sidecar> "
+                        "--output-last-message <temporary-sidecar> -"
+                    ),
+                    diagnostic_json=json.dumps(
+                        {
+                            "policy": CONNECTIVITY_POLICY,
+                            "transport": "codex_exec_jsonl",
+                            "provider_probe_performed": True,
+                            "requested_model_argument_verified": True,
+                            "controlled_test_fixture": True,
+                            "structured_lifecycle": {
+                                "thread_started": True,
+                                "turn_started": True,
+                                "turn_completed": True,
+                                "terminal_success": True,
+                                "response_ok": True,
+                                "malformed_jsonl": False,
+                                "lifecycle_conflict": False,
+                                "unexpected_action": False,
+                                "actual_model_conflict": False,
+                                "actual_model_source": "actual_model_identifier",
+                                "same_thread_model_resolution": True,
+                                "model_rerouted": False,
+                                "message_count": 4,
+                                "pending_approval": False,
+                            },
+                            "structured_response": {
+                                "schema_enabled": True,
+                                "last_message_enabled": True,
+                                "sidecar_supported": True,
+                                "schema_unchanged": True,
+                                "last_message_present": True,
+                                "last_message_match": True,
+                            },
+                            "user_config_isolated": True,
+                            "temporary_workspace_mutated": False,
+                            "app_server_probe_performed": False,
+                        },
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ),
+                    evidence_digest=digest,
+                    checked_at=utc_now(),
+                )
+            )
+        session.commit()
+
+
+def verify_test_model_connection(
+    client: TestClient,
+    model_identifier: str,
+    capability: str = "coding",
+) -> dict:
+    response = client.post(
+        "/api/codex/setup/verify-connection",
+        json={"model_identifier": model_identifier, "capability": capability},
+    )
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["readiness_state"] == "READY_FOR_REAL_RUN", payload
+    assert payload["ready_for_real_run"] is True
+    assert payload["actual_model"] == model_identifier
+    return payload
+
+
 def test_twos_short_url_uses_canonical_static_asset_base(tmp_path: Path) -> None:
     source_repo = make_source_repo(tmp_path)
     fake_codex = make_fake_codex(tmp_path)
@@ -775,6 +1151,7 @@ def create_executable_task(client: TestClient, headers: dict[str, str], marker: 
 
 
 def generate_pack(client: TestClient, headers: dict[str, str], task_id: int) -> dict:
+    seed_test_connectivity_evidence(client)
     response = client.post(f"/api/tasks/{task_id}/codex-packs", headers=headers)
     assert response.status_code == 200, response.text
     return response.json()
@@ -1018,7 +1395,14 @@ def test_product_development_capability_focus_persists_required_triad_and_pack_c
             task = session.get(Task, task_id)
             pack_row = session.get(CodexInstructionPack, pack["id"])
             assert task is not None and pack_row is not None
-            target = codex_execution_target(session, task, pack_row)
+            target = codex_execution_target(
+                session,
+                task,
+                pack_row,
+                owner_id=1,
+                codex_executable=str(fake_codex),
+                child_environment=codex_child_environment(),
+            )
             assert target.assignment.capability == "coding"
             assert target.assignment.assignment_version == pack["assignment_version"]
             assert target.requested_model_identifier == target.model.provider_model_id
@@ -1130,14 +1514,14 @@ def test_codex_run_automatically_records_exact_approved_model_and_jsonl_evidence
         assert real["capability"] == "coding"
         assert real["verified_real_invocation"] is True
         assert real["requested_model_identifier"] == actual_model_identifier
-        assert real["actual_invoked_model_identifier"] is None
-        assert real["actual_resolved_model_identifier"] is None
-        assert real["actual_model_identity_verified"] is False
-        assert "Real Codex CLI invocation verified" in real["display_claim"]
-        assert "not independently exposed" in real["display_claim"]
-        assert "Ran with" not in real["display_claim"]
+        assert real["actual_invoked_model_identifier"] == actual_model_identifier
+        assert real["actual_resolved_model_identifier"] == actual_model_identifier
+        assert real["actual_model_identity_verified"] is True
+        assert real["display_claim"] == (
+            f"Ran with {actual_model_identifier}"
+        )
         assert real["provider_evidence"] == {
-            "model_identifier_match": False,
+            "model_identifier_match": True,
             "provider_response_observed": False,
             "requested_model_identifier_match": True,
         }
@@ -1151,8 +1535,10 @@ def test_codex_run_automatically_records_exact_approved_model_and_jsonl_evidence
         assert process_evidence["codex_turn_completed"] is True
         assert process_evidence["codex_turn_verified"] is True
         assert process_evidence["model_argument_observed"] is True
-        assert process_evidence["model_identity_observed"] is False
-        assert process_evidence["actual_model_identity_verified"] is False
+        assert process_evidence["model_identity_observed"] is True
+        assert process_evidence["actual_model_identity_verified"] is True
+        assert process_evidence["model_identity_source"] == "explicit_actual_model_metadata"
+        assert re.fullmatch(r"[0-9a-f]{64}", process_evidence["connectivity_evidence_identity"])
         assert process_evidence["model_reroute_observed"] is False
         assert process_evidence["thread_id_fingerprint"] == hashlib.sha256(
             FAKE_THREAD_ID.encode("utf-8")
@@ -1169,12 +1555,22 @@ def test_codex_run_automatically_records_exact_approved_model_and_jsonl_evidence
         verification = by_capability["verification"]
         assert verification["verified_real_invocation"] is True
         assert verification["requested_model_identifier"] == run["verification_target"]["model_identifier"]
-        assert verification["actual_invoked_model_identifier"] is None
-        assert verification["actual_resolved_model_identifier"] is None
-        assert verification["actual_model_identity_verified"] is False
-        assert "Ran with" not in verification["display_claim"]
+        verification_model_identifier = run["verification_target"]["model_identifier"]
+        assert verification["actual_invoked_model_identifier"] == verification_model_identifier
+        assert verification["actual_resolved_model_identifier"] == verification_model_identifier
+        assert verification["actual_model_identity_verified"] is True
+        assert verification["display_claim"] == (
+            f"Ran with {verification_model_identifier}"
+        )
         verification_process = verification["process_evidence"]
         assert verification_process["read_only_sandbox"] is True
+        assert verification_process["model_identity_source"] == (
+            "explicit_actual_model_metadata"
+        )
+        assert re.fullmatch(
+            r"[0-9a-f]{64}",
+            verification_process["connectivity_evidence_identity"],
+        )
         for check in (
             "verification_verdict_observed",
             "workspace_unchanged_after_verification",
@@ -1189,10 +1585,800 @@ def test_codex_run_automatically_records_exact_approved_model_and_jsonl_evidence
         assert run["verification_target"]["process_spawned"] is True
         assert run["verification_target"]["status"] == "completed"
         with factory() as session:
+            persisted_run = session.get(CodexRun, run["id"])
+            assert persisted_run is not None
+            assert persisted_run.execution_connectivity_evidence_id is not None
+            assert persisted_run.verification_connectivity_evidence_id is not None
+            assert (
+                persisted_run.execution_connectivity_evidence_id
+                != persisted_run.verification_connectivity_evidence_id
+            )
             invoked_model = session.get(AIModel, configured_model_id)
             assert invoked_model is not None
             assert invoked_model.evidence_status == "verified"
             assert invoked_model.last_verified_at is not None
+
+
+def test_approved_tracked_mode_0600_hydrates_before_coding_and_verification_launch(
+    tmp_path: Path,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    readme = source_repo / "README.md"
+    readme.chmod(0o600)
+    fake_codex = make_fake_codex(tmp_path)
+
+    with make_client(tmp_path, source_repo, fake_codex, timeout=10) as client:
+        headers = init_and_login(client)
+        task_id = create_executable_task(
+            client,
+            headers,
+            marker="SOURCE_SNAPSHOT_TRACKED_MODE_0600",
+        )
+        pack = generate_pack(client, headers, task_id)
+        approve_pack(client, headers, task_id, pack["id"])
+
+        with client.app.state.session_factory() as session:
+            pack_row = session.get(CodexInstructionPack, pack["id"])
+            assert pack_row is not None
+            snapshot = json.loads(pack_row.source_snapshot_json)
+            readme_entry = next(
+                item
+                for item in snapshot["included_manifest"]
+                if item["path"] == "README.md"
+            )
+            assert readme_entry["kind"] == "tracked"
+            assert readme_entry["mode"] == 0o600
+
+        started = client.post(f"/api/tasks/{task_id}/codex-runs", headers=headers)
+        assert started.status_code == 200, started.text
+        run = wait_for_run(
+            client,
+            headers,
+            started.json()["id"],
+            {"completed", "failed", "blocked"},
+            timeout=20,
+        )
+
+        assert run["status"] == "completed", run
+        assert run["process_spawned"] is True
+        assert run["verification_target"]["process_spawned"] is True
+        assert run["verification_target"]["status"] == "completed"
+        assert run["result"]["verification_verdict"]["status"] == "passed"
+        assert (Path(run["worktree_path"]) / "README.md").stat().st_mode & 0o777 == 0o600
+        assert fake_codex.with_name(fake_codex.name + ".executed").exists()
+
+        intake_deadline = time.monotonic() + 8
+        envelope_response = None
+        while time.monotonic() < intake_deadline:
+            envelope_response = client.get(
+                f"/api/codex-runs/{run['id']}/result-envelope",
+                headers=headers,
+            )
+            if envelope_response.status_code == 200:
+                break
+            time.sleep(0.05)
+        assert envelope_response is not None
+        assert envelope_response.status_code == 200, envelope_response.text
+
+        with client.app.state.session_factory() as session:
+            attempts = list(
+                session.scalars(
+                    select(CodexExecutionAttempt).where(
+                        CodexExecutionAttempt.run_id == run["id"]
+                    )
+                ).all()
+            )
+            assert [attempt.phase for attempt in attempts] == ["CODING", "VERIFICATION"]
+            envelope = session.scalar(
+                select(CodexResultEnvelope).where(
+                    CodexResultEnvelope.run_id == run["id"]
+                )
+            )
+            assert envelope is not None
+            assert envelope.integrity_state == "VERIFIED"
+            assert envelope.verification_verdict == "PASS"
+
+
+@pytest.mark.parametrize(
+    ("failure_kind", "expected_error"),
+    [
+        (
+            "missing_snapshot",
+            "Approved source snapshot is missing or invalid.",
+        ),
+        (
+            "permission_error",
+            "Controlled source snapshot hydration permission denied.",
+        ),
+    ],
+)
+def test_source_snapshot_hydration_failure_blocks_before_codex_launch(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    failure_kind: str,
+    expected_error: str,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    fake_codex = make_fake_codex(tmp_path)
+
+    with make_client(tmp_path, source_repo, fake_codex, timeout=10) as client:
+        headers = init_and_login(client)
+        task_id = create_executable_task(
+            client,
+            headers,
+            marker=f"SOURCE_SNAPSHOT_{failure_kind.upper()}",
+        )
+        pack = generate_pack(client, headers, task_id)
+        approve_pack(client, headers, task_id, pack["id"])
+
+        real_hydrate = codex_adapter_module.hydrate_source_snapshot
+        if failure_kind == "missing_snapshot":
+            monkeypatch.setattr(
+                codex_adapter_module,
+                "hydrate_source_snapshot",
+                lambda worktree, _snapshot, *, approved_digest=None,
+                approved_source_branch=None: real_hydrate(
+                    worktree,
+                    {},
+                    approved_digest=approved_digest,
+                    approved_source_branch=approved_source_branch,
+                ),
+            )
+        else:
+            def deny_hydration(
+                _worktree: Path,
+                _snapshot: dict,
+                *,
+                approved_digest: str | None = None,
+                approved_source_branch: str | None = None,
+            ) -> None:
+                assert approved_digest
+                assert approved_source_branch == "main"
+                raise PermissionError(expected_error)
+
+            monkeypatch.setattr(
+                codex_adapter_module,
+                "hydrate_source_snapshot",
+                deny_hydration,
+            )
+
+        started = client.post(f"/api/tasks/{task_id}/codex-runs", headers=headers)
+        assert started.status_code == 200, started.text
+        run = wait_for_run(
+            client,
+            headers,
+            started.json()["id"],
+            {"blocked"},
+            timeout=10,
+        )
+
+        assert run["status"] == "blocked"
+        assert run["process_spawned"] is False
+        assert run["owner_summary"] == (
+            "Source snapshot unavailable. Regenerate Codex Pack."
+        )
+        assert expected_error in run["stderr"]
+        assert run["verification_target"]["process_spawned"] is False
+        assert run["verification_target"]["status"] == "not_started"
+        assert run["worktree_path"] == ""
+        assert run["worktree_branch"] == ""
+        assert not fake_codex.with_name(fake_codex.name + ".executed").exists()
+
+        rerun = client.post(f"/api/tasks/{task_id}/codex-runs", headers=headers)
+        assert rerun.status_code == 409, rerun.text
+        rerun_blockers = rerun.json()["error"]["details"]["blockers"]
+        assert any(
+            blocker["code"] == "APPROVAL_STALE"
+            and blocker["next_action"] == "Regenerate Codex Pack"
+            for blocker in rerun_blockers
+        )
+        assert len(
+            client.get(
+                f"/api/tasks/{task_id}/codex-runs",
+                headers=headers,
+            ).json()
+        ) == 1
+
+        activity_response = client.get("/api/run-activity", headers=headers)
+        assert activity_response.status_code == 200, activity_response.text
+        activity = next(
+            item
+            for item in activity_response.json()["runs"]
+            if item["run_id"] == run["id"]
+        )
+        assert activity["monitor_state"] == "RESULT_UNAVAILABLE"
+        assert activity["result_available"] is False
+        assert activity["result_integrity"] == "UNAVAILABLE"
+        assert activity["owner_action"] == "Regenerate Codex Pack"
+        assert activity["next_action"] == "Regenerate Codex Pack"
+        assert activity["lifecycle"]["current_activity"] == (
+            "Source snapshot unavailable"
+        )
+        assert activity["lifecycle"]["next_action"] == "Regenerate Codex Pack"
+        assert activity["lifecycle"]["blocker_code"] == (
+            "SOURCE_SNAPSHOT_UNAVAILABLE"
+        )
+        assert activity["actions"]["can_reconnect"] is False
+        assert activity["actions"]["can_import"] is False
+        assert activity["actions"]["recovery_blocked"] is True
+        default_activity = json.dumps(activity_response.json(), sort_keys=True)
+        assert str(tmp_path) not in default_activity
+        assert str(source_repo) not in default_activity
+
+        reconnect = client.post(
+            f"/api/codex-runs/{run['id']}/reconnect",
+            headers=headers,
+        )
+        imported = client.post(
+            f"/api/codex-runs/{run['id']}/import-result",
+            headers=headers,
+            json={"result": {}},
+        )
+        assert reconnect.status_code == imported.status_code == 409
+        assert reconnect.json()["error"]["details"]["type"] == (
+            "SOURCE_SNAPSHOT_UNAVAILABLE"
+        )
+        assert imported.json()["error"]["details"]["type"] == (
+            "SOURCE_SNAPSHOT_UNAVAILABLE"
+        )
+
+        with client.app.state.session_factory() as session:
+            attempts = list(
+                session.scalars(
+                    select(CodexExecutionAttempt).where(
+                        CodexExecutionAttempt.run_id == run["id"]
+                    )
+                ).all()
+            )
+            envelopes = list(
+                session.scalars(
+                    select(CodexResultEnvelope).where(
+                        CodexResultEnvelope.run_id == run["id"]
+                    )
+                ).all()
+            )
+            lifecycle = session.scalar(
+                select(CodexLifecycleSnapshot).where(
+                    CodexLifecycleSnapshot.run_id == run["id"]
+                )
+            )
+            monitor = session.scalar(
+                select(CodexRunMonitor).where(
+                    CodexRunMonitor.run_id == run["id"]
+                )
+            )
+            assert attempts == []
+            assert envelopes == []
+            assert lifecycle is None
+            assert monitor is not None
+            assert monitor.monitor_state == "RESULT_UNAVAILABLE"
+            assert monitor.recovery_state == "RESULT_UNAVAILABLE"
+            assert monitor.failure_code == "SOURCE_SNAPSHOT_UNAVAILABLE"
+            assert monitor.process_id is None
+            persisted_run = session.get(CodexRun, run["id"])
+            assert persisted_run is not None
+            assert persisted_run.verification_status == "not_started"
+            assert persisted_run.verification_process_spawned is False
+            persisted_pack = session.get(CodexInstructionPack, pack["id"])
+            assert persisted_pack is not None
+            assert persisted_pack.status == "invalidated"
+            assert persisted_pack.invalidated_at is not None
+            invalidation_audit = session.scalar(
+                select(AuditEvent).where(
+                    AuditEvent.action == "codex_pack_approval_invalidated",
+                    AuditEvent.entity_type == "codex_instruction_pack",
+                    AuditEvent.entity_id == pack["id"],
+                )
+            )
+            assert invalidation_audit is not None
+
+        worktree_list = run_command(
+            source_repo,
+            "git",
+            "worktree",
+            "list",
+            "--porcelain",
+        ).stdout
+        assert worktree_list.count("worktree ") == 1
+
+
+def test_snapshot_blocker_recovery_stays_fail_closed_when_monitor_update_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    fake_codex = make_fake_codex(tmp_path)
+
+    with make_client(tmp_path, source_repo, fake_codex, timeout=10) as client:
+        headers = init_and_login(client)
+        task_id = create_executable_task(
+            client,
+            headers,
+            marker="SOURCE_SNAPSHOT_MONITOR_PERSISTENCE_FAILURE",
+        )
+        pack = generate_pack(client, headers, task_id)
+        approve_pack(client, headers, task_id, pack["id"])
+
+        monkeypatch.setattr(
+            codex_adapter_module,
+            "hydrate_source_snapshot",
+            lambda *_args, **_kwargs: (_ for _ in ()).throw(
+                RuntimeError("Controlled snapshot hydration failure.")
+            ),
+        )
+        real_observe_monitor = codex_adapter_module.observe_monitor
+
+        def fail_only_snapshot_monitor(*args: object, **kwargs: object) -> object:
+            if kwargs.get("failure_code") == "SOURCE_SNAPSHOT_UNAVAILABLE":
+                raise SQLAlchemyError("Controlled monitor persistence failure.")
+            return real_observe_monitor(*args, **kwargs)
+
+        monkeypatch.setattr(
+            codex_adapter_module,
+            "observe_monitor",
+            fail_only_snapshot_monitor,
+        )
+
+        started = client.post(f"/api/tasks/{task_id}/codex-runs", headers=headers)
+        assert started.status_code == 200, started.text
+        run = wait_for_run(
+            client,
+            headers,
+            started.json()["id"],
+            {"blocked"},
+            timeout=10,
+        )
+
+        with client.app.state.session_factory() as session:
+            monitor = session.scalar(
+                select(CodexRunMonitor).where(CodexRunMonitor.run_id == run["id"])
+            )
+            persisted_pack = session.get(CodexInstructionPack, pack["id"])
+            assert monitor is not None
+            assert monitor.failure_code != "SOURCE_SNAPSHOT_UNAVAILABLE"
+            assert persisted_pack is not None
+            assert persisted_pack.status == "invalidated"
+            monitor_failure_audit = session.scalar(
+                select(AuditEvent).where(
+                    AuditEvent.action == "codex_run_monitor_update_blocked",
+                    AuditEvent.entity_id == run["id"],
+                    AuditEvent.details.contains("SOURCE_SNAPSHOT_UNAVAILABLE"),
+                )
+            )
+            assert monitor_failure_audit is not None
+
+        reconnect = client.post(
+            f"/api/codex-runs/{run['id']}/reconnect",
+            headers=headers,
+        )
+        imported = client.post(
+            f"/api/codex-runs/{run['id']}/import-result",
+            headers=headers,
+            json={"result": {}},
+        )
+        assert reconnect.status_code == imported.status_code == 409
+        assert reconnect.json()["error"]["details"]["type"] == (
+            "SOURCE_SNAPSHOT_UNAVAILABLE"
+        )
+        assert imported.json()["error"]["details"]["type"] == (
+            "SOURCE_SNAPSHOT_UNAVAILABLE"
+        )
+
+        activity = client.get("/api/run-activity", headers=headers).json()["runs"]
+        item = next(record for record in activity if record["run_id"] == run["id"])
+        assert item["monitor_state"] == "RESULT_UNAVAILABLE"
+        assert item["actions"]["can_reconnect"] is False
+        assert item["actions"]["can_import"] is False
+        assert item["actions"]["recovery_blocked"] is True
+        assert item["owner_action"] == "Regenerate Codex Pack"
+
+        with client.app.state.session_factory() as session:
+            assert session.scalar(
+                select(CodexResultEnvelope).where(
+                    CodexResultEnvelope.run_id == run["id"]
+                )
+            ) is None
+            assert list(
+                session.scalars(
+                    select(CodexExecutionAttempt).where(
+                        CodexExecutionAttempt.run_id == run["id"]
+                    )
+                ).all()
+            ) == []
+
+
+def test_snapshot_blocker_records_unverified_unstarted_worktree_cleanup(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    fake_codex = make_fake_codex(tmp_path)
+    created: dict[str, object] = {}
+
+    with make_client(tmp_path, source_repo, fake_codex, timeout=10) as client:
+        headers = init_and_login(client)
+        task_id = create_executable_task(
+            client,
+            headers,
+            marker="SOURCE_SNAPSHOT_CLEANUP_FAILURE",
+        )
+        pack = generate_pack(client, headers, task_id)
+        approve_pack(client, headers, task_id, pack["id"])
+        manager = client.app.state.codex_manager
+        real_create = manager.adapter.create_worktree
+
+        def capture_created_worktree(run_id: int, commit: str) -> tuple[Path, str]:
+            worktree, branch = real_create(run_id, commit)
+            created.update(worktree=worktree, branch=branch)
+            return worktree, branch
+
+        monkeypatch.setattr(manager.adapter, "create_worktree", capture_created_worktree)
+        monkeypatch.setattr(
+            manager.adapter,
+            "discard_unstarted_worktree",
+            lambda _worktree, _branch: (
+                False,
+                "WORKTREE_REMOVE_FAILED,WORKTREE_PATH_STILL_PRESENT",
+            ),
+        )
+        monkeypatch.setattr(
+            codex_adapter_module,
+            "hydrate_source_snapshot",
+            lambda *_args, **_kwargs: (_ for _ in ()).throw(
+                RuntimeError("Controlled snapshot hydration failure.")
+            ),
+        )
+
+        started = client.post(f"/api/tasks/{task_id}/codex-runs", headers=headers)
+        assert started.status_code == 200, started.text
+        run = wait_for_run(
+            client,
+            headers,
+            started.json()["id"],
+            {"blocked"},
+            timeout=10,
+        )
+
+        assert run["process_spawned"] is False
+        assert run["worktree_path"] == ""
+        assert run["worktree_branch"] == ""
+        assert "cleanup could not be verified" in run["owner_summary"]
+        assert "WORKTREE_PATH_STILL_PRESENT" in run["stderr"]
+        assert isinstance(created.get("worktree"), Path)
+        assert Path(created["worktree"]).exists()
+        assert not fake_codex.with_name(fake_codex.name + ".executed").exists()
+
+        activity_response = client.get("/api/run-activity", headers=headers)
+        assert activity_response.status_code == 200
+        public_activity = json.dumps(activity_response.json(), sort_keys=True)
+        assert str(created["worktree"]) not in public_activity
+        assert str(source_repo) not in public_activity
+
+        with client.app.state.session_factory() as session:
+            cleanup_audit = session.scalar(
+                select(AuditEvent).where(
+                    AuditEvent.action
+                    == "codex_unstarted_worktree_cleanup_unverified",
+                    AuditEvent.entity_id == run["id"],
+                )
+            )
+            assert cleanup_audit is not None
+            assert cleanup_audit.details == (
+                "code=SOURCE_SNAPSHOT_UNAVAILABLE; "
+                "cleanup=WORKTREE_REMOVE_FAILED,WORKTREE_PATH_STILL_PRESENT"
+            )
+            assert str(tmp_path) not in cleanup_audit.details
+            assert session.scalar(
+                select(CodexResultEnvelope).where(
+                    CodexResultEnvelope.run_id == run["id"]
+                )
+            ) is None
+            assert list(
+                session.scalars(
+                    select(CodexExecutionAttempt).where(
+                        CodexExecutionAttempt.run_id == run["id"]
+                    )
+                ).all()
+            ) == []
+
+
+def test_equivalent_late_connection_probe_does_not_block_independent_verification(
+    tmp_path: Path,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    fake_codex = make_fake_codex(tmp_path)
+    database = tmp_path / "late-equivalent-connectivity.sqlite3"
+    run_id = 0
+
+    with make_client(
+        tmp_path,
+        source_repo,
+        fake_codex,
+        database_path=database,
+        timeout=10,
+    ) as client:
+        headers = init_and_login(client)
+        task_id = create_executable_task(
+            client,
+            headers,
+            marker="FAKE_RUNTIME_HANDOFF FAKE_OMIT_ACTUAL",
+        )
+        pack = generate_pack(client, headers, task_id)
+        approve_pack(client, headers, task_id, pack["id"])
+        started = client.post(f"/api/tasks/{task_id}/codex-runs", headers=headers)
+        assert started.status_code == 200, started.text
+        run_id = started.json()["id"]
+        wait_for_spawned_run(client, headers, run_id)
+
+        factory = client.app.state.session_factory
+        with factory() as session:
+            run = session.get(CodexRun, run_id)
+            assert run is not None
+            frozen_evidence_id = run.execution_connectivity_evidence_id
+            frozen = session.get(CodexConnectivityEvidence, frozen_evidence_id)
+            assert frozen is not None
+            later_digest = hashlib.sha256(
+                f"{frozen.evidence_digest}:equivalent-late-probe".encode("utf-8")
+            ).hexdigest()
+            later = CodexConnectivityEvidence(
+                evidence_id=f"controlled-late-{later_digest[:24]}",
+                owner_id=frozen.owner_id,
+                model_id=frozen.model_id,
+                configuration_identity=frozen.configuration_identity,
+                requested_model_identifier=frozen.requested_model_identifier,
+                actual_model_identifier=frozen.actual_model_identifier,
+                readiness_state=frozen.readiness_state,
+                cli_installed=frozen.cli_installed,
+                cli_version=frozen.cli_version,
+                executable_identity=frozen.executable_identity,
+                execution_context_identity=frozen.execution_context_identity,
+                authentication_state=frozen.authentication_state,
+                authentication_method=frozen.authentication_method,
+                credential_store=frozen.credential_store,
+                credential_store_accessible=frozen.credential_store_accessible,
+                provider_reachable=frozen.provider_reachable,
+                model_available=frozen.model_available,
+                interactive_prompt_detected=frozen.interactive_prompt_detected,
+                timed_out=frozen.timed_out,
+                exit_code=frozen.exit_code,
+                duration_ms=frozen.duration_ms,
+                blocker_code=frozen.blocker_code,
+                safe_summary=frozen.safe_summary,
+                sanitized_command=frozen.sanitized_command,
+                diagnostic_json=frozen.diagnostic_json,
+                evidence_digest=later_digest,
+                checked_at=utc_now(),
+            )
+            session.add(later)
+            session.flush()
+            assert later.id != frozen_evidence_id
+            session.commit()
+
+        terminal = wait_for_run(
+            client,
+            headers,
+            run_id,
+            {"completed", "failed", "blocked"},
+            timeout=20,
+        )
+        assert terminal["status"] == "completed", terminal
+        assert terminal["verification_target"]["process_spawned"] is True
+        assert terminal["verification_target"]["status"] == "completed"
+        assert terminal["result"]["verification_verdict"]["status"] == "passed"
+        coding_invocation = next(
+            item
+            for item in terminal["model_invocations"]
+            if item["capability"] == "coding"
+        )
+        assert coding_invocation["verified_real_invocation"] is True
+        assert (
+            coding_invocation["requested_model_identifier"]
+            == terminal["execution_target"]["model"]["provider_model_id"]
+        )
+        assert coding_invocation["actual_resolved_model_identifier"] is None
+
+        intake_deadline = time.monotonic() + 8
+        result_response = None
+        while time.monotonic() < intake_deadline:
+            result_response = client.get(
+                f"/api/codex-runs/{run_id}/result-envelope",
+                headers=headers,
+            )
+            if result_response.status_code == 200:
+                break
+            time.sleep(0.05)
+        assert result_response is not None
+        assert result_response.status_code == 200, result_response.text
+        public_result = result_response.json()["result"]
+        assert public_result["result_integrity"] == "VERIFIED"
+        assert public_result["verification_result"]["verdict"] == "PASS"
+
+        # Browser refresh and repeated reconciliation reads are observational;
+        # they must never enqueue a second Verification attempt.
+        for _ in range(3):
+            refreshed = client.get(f"/api/codex-runs/{run_id}", headers=headers)
+            assert refreshed.status_code == 200
+            assert refreshed.json()["status"] == "completed"
+        with factory() as session:
+            attempts = list(
+                session.scalars(
+                    select(CodexExecutionAttempt).where(
+                        CodexExecutionAttempt.run_id == run_id
+                    )
+                ).all()
+            )
+            assert [item.phase for item in attempts].count("CODING") == 1
+            assert [item.phase for item in attempts].count("VERIFICATION") == 1
+            snapshot = session.scalar(
+                select(CodexLifecycleSnapshot).where(
+                    CodexLifecycleSnapshot.run_id == run_id
+                )
+            )
+            assert snapshot is not None
+            assert snapshot.lifecycle_state == "RESULT_AVAILABLE"
+            assert snapshot.result_integrity_state == "VERIFIED"
+            assert snapshot.verification_started is True
+            verification_events = list(
+                session.scalars(
+                    select(CodexActivityEvent).where(
+                        CodexActivityEvent.run_id == run_id,
+                        CodexActivityEvent.phase == "VERIFICATION",
+                    )
+                ).all()
+            )
+            assert any(
+                item.safe_summary == "Starting independent Verification"
+                for item in verification_events
+            )
+
+    # Runtime restart reconciliation consumes the same sealed attempts and
+    # cannot launch or persist Verification attempt #2.
+    with make_client(
+        tmp_path,
+        source_repo,
+        fake_codex,
+        database_path=database,
+        timeout=10,
+    ) as restarted:
+        headers = init_and_login(restarted)
+        for _ in range(3):
+            persisted = restarted.get(f"/api/codex-runs/{run_id}", headers=headers)
+            assert persisted.status_code == 200
+            assert persisted.json()["status"] == "completed"
+        with restarted.app.state.session_factory() as session:
+            verification_attempts = list(
+                session.scalars(
+                    select(CodexExecutionAttempt).where(
+                        CodexExecutionAttempt.run_id == run_id,
+                        CodexExecutionAttempt.phase == "VERIFICATION",
+                    )
+                ).all()
+            )
+            assert len(verification_attempts) == 1
+
+
+def test_late_unready_connection_probe_blocks_independent_verification(
+    tmp_path: Path,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    fake_codex = make_fake_codex(tmp_path)
+
+    with make_client(tmp_path, source_repo, fake_codex, timeout=10) as client:
+        headers = init_and_login(client)
+        task_id = create_executable_task(
+            client,
+            headers,
+            marker="FAKE_RUNTIME_HANDOFF FAKE_OMIT_ACTUAL",
+        )
+        pack = generate_pack(client, headers, task_id)
+        approve_pack(client, headers, task_id, pack["id"])
+        started = client.post(f"/api/tasks/{task_id}/codex-runs", headers=headers)
+        assert started.status_code == 200, started.text
+        run_id = started.json()["id"]
+        wait_for_spawned_run(client, headers, run_id)
+
+        factory = client.app.state.session_factory
+        with factory() as session:
+            run = session.get(CodexRun, run_id)
+            assert run is not None
+            frozen = session.get(
+                CodexConnectivityEvidence,
+                run.execution_connectivity_evidence_id,
+            )
+            assert frozen is not None
+            blocked_digest = hashlib.sha256(
+                f"{frozen.evidence_digest}:late-unready-probe".encode("utf-8")
+            ).hexdigest()
+            session.add(
+                CodexConnectivityEvidence(
+                    evidence_id=f"controlled-blocked-{blocked_digest[:24]}",
+                    owner_id=frozen.owner_id,
+                    model_id=frozen.model_id,
+                    configuration_identity=frozen.configuration_identity,
+                    requested_model_identifier=frozen.requested_model_identifier,
+                    actual_model_identifier="",
+                    readiness_state="PROVIDER_UNREACHABLE",
+                    cli_installed=frozen.cli_installed,
+                    cli_version=frozen.cli_version,
+                    executable_identity=frozen.executable_identity,
+                    execution_context_identity=frozen.execution_context_identity,
+                    authentication_state=frozen.authentication_state,
+                    authentication_method=frozen.authentication_method,
+                    credential_store=frozen.credential_store,
+                    credential_store_accessible=frozen.credential_store_accessible,
+                    provider_reachable=False,
+                    model_available=False,
+                    interactive_prompt_detected=False,
+                    timed_out=False,
+                    exit_code=1,
+                    duration_ms=1,
+                    blocker_code="PROVIDER_UNREACHABLE",
+                    safe_summary="The later connection probe did not reach the Provider.",
+                    sanitized_command=frozen.sanitized_command,
+                    diagnostic_json=frozen.diagnostic_json,
+                    evidence_digest=blocked_digest,
+                    checked_at=utc_now(),
+                )
+            )
+            session.commit()
+
+        terminal = wait_for_run(
+            client,
+            headers,
+            run_id,
+            {"completed", "failed", "blocked"},
+            timeout=20,
+        )
+        assert terminal["status"] == "failed", terminal
+        assert terminal["verification_target"]["process_spawned"] is False
+        assert terminal["verification_target"]["status"] == "failed"
+        with factory() as session:
+            verification_attempts = list(
+                session.scalars(
+                    select(CodexExecutionAttempt).where(
+                        CodexExecutionAttempt.run_id == run_id,
+                        CodexExecutionAttempt.phase == "VERIFICATION",
+                    )
+                ).all()
+            )
+            assert verification_attempts == []
+
+
+def test_prior_ready_probe_does_not_mint_a_later_runs_actual_model(
+    tmp_path: Path,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    fake_codex = make_fake_codex(tmp_path)
+    with make_client(tmp_path, source_repo, fake_codex) as client:
+        headers = init_and_login(client)
+        configure_test_model_registry(client)
+        task_id = create_development_task(
+            client,
+            headers,
+            marker="FAKE_SUCCESS FAKE_OMIT_ACTUAL",
+        )
+        pack = generate_pack(client, headers, task_id)
+        approve_pack(client, headers, task_id, pack["id"])
+        started = client.post(f"/api/tasks/{task_id}/codex-runs", headers=headers)
+        assert started.status_code == 200, started.text
+        run = wait_for_run(client, headers, started.json()["id"], {"completed"})
+        coding = next(
+            item for item in run["model_invocations"] if item["capability"] == "coding"
+        )
+        assert coding["verified_real_invocation"] is True
+        assert coding["actual_model_identity_verified"] is False
+        assert coding["actual_resolved_model_identifier"] is None
+        assert coding["process_evidence"]["model_identity_source"] == ""
+        assert re.fullmatch(
+            r"[0-9a-f]{64}",
+            coding["process_evidence"]["connectivity_evidence_identity"],
+        )
+        assert run["result"]["coding_invocation"][
+            "actual_model_identity_verified"
+        ] is False
+        assert run["result"]["coding_invocation"][
+            "actual_resolved_model_identifier"
+        ] is None
 
 
 def test_verification_workspace_mutation_is_detected_and_never_applied_to_source(
@@ -1259,6 +2445,11 @@ def test_codex_jsonl_reroute_uses_only_the_explicit_approved_fallback(tmp_path: 
     assert run["execution_target"]["model"]["provider_model_id"] == requested_identifier
     assert run["execution_target"]["fallback_selected"] is False
     assert len(run["model_invocations"]) == 2
+    assert {item["capability"] for item in run["model_invocations"]} == {
+        "coding",
+        "verification",
+    }
+    assert run["verification_target"]["process_spawned"] is True
     evidence = next(item for item in run["model_invocations"] if item["capability"] == "coding")
     assert evidence["verified_real_invocation"] is True
     assert evidence["configured_model"]["stable_id"] == fallback_stable_id
@@ -1419,7 +2610,9 @@ def test_unknown_reroute_never_verifies_invocation_or_owner_acceptance(tmp_path:
 
     assert run["status"] == "failed"
     assert run["process_spawned"] is True
-    assert len(run["model_invocations"]) == 2
+    assert {item["capability"] for item in run["model_invocations"]} == {"coding"}
+    assert run["verification_target"]["process_spawned"] is False
+    assert run["result"]["verification"]["status"] == "not_started"
     evidence = next(item for item in run["model_invocations"] if item["capability"] == "coding")
     assert evidence["outcome"] == "failed"
     assert evidence["diagnostic_code"] == "unsupported_model_routing_event"
@@ -1453,12 +2646,20 @@ def test_incomplete_approved_pack_stdin_delivery_never_verifies_real_invocation(
         approve_pack(client, headers, task_id, pack["id"])
         started = client.post(f"/api/tasks/{task_id}/codex-runs", headers=headers)
         assert started.status_code == 200, started.text
-        run = wait_for_run(client, headers, started.json()["id"], {"failed"})
+        run = wait_for_run(
+            client,
+            headers,
+            started.json()["id"],
+            {"failed"},
+            timeout=20,
+        )
 
     assert run["exit_code"] == 0
     assert run["process_spawned"] is True
     assert run["result"]["changed_files"] == ["codex-result.txt"]
-    assert len(run["model_invocations"]) == 2
+    assert {item["capability"] for item in run["model_invocations"]} == {"coding"}
+    assert run["verification_target"]["process_spawned"] is False
+    assert run["result"]["verification"]["status"] == "not_started"
     evidence = next(item for item in run["model_invocations"] if item["capability"] == "coding")
     assert evidence["outcome"] == "failed"
     assert evidence["diagnostic_code"] == "approved_pack_delivery_incomplete"
@@ -1492,7 +2693,9 @@ def test_incomplete_jsonl_stream_collection_never_verifies_real_invocation(
 
     assert run["exit_code"] == 0
     assert run["process_spawned"] is True
-    assert len(run["model_invocations"]) == 2
+    assert {item["capability"] for item in run["model_invocations"]} == {"coding"}
+    assert run["verification_target"]["process_spawned"] is False
+    assert run["result"]["verification"]["status"] == "not_started"
     evidence = next(item for item in run["model_invocations"] if item["capability"] == "coding")
     assert evidence["outcome"] == "failed"
     assert evidence["diagnostic_code"] == "jsonl_collection_incomplete"
@@ -1501,6 +2704,51 @@ def test_incomplete_jsonl_stream_collection_never_verifies_real_invocation(
     assert evidence["process_evidence"]["codex_jsonl_observed"] is False
     assert evidence["process_evidence"]["approved_pack_stdin_complete"] is True
     assert "Ran with" not in json.dumps(run, sort_keys=True)
+
+
+@pytest.mark.parametrize(
+    "events",
+    [
+        [
+            {
+                "type": "thread.started",
+                "thread_id": "thread-1",
+                "actual_model_identifier": "fixture-approved-model",
+            },
+            {"type": "turn.started", "turn_id": "turn-A"},
+            {"type": "turn.completed", "turn_id": "turn-B"},
+        ],
+        [
+            {
+                "type": "thread.started",
+                "thread_id": "thread-1",
+                "actual_model_identifier": "fixture-approved-model",
+            },
+            {"type": "turn.completed", "turn_id": "turn-A"},
+            {"type": "turn.started", "turn_id": "turn-A"},
+        ],
+    ],
+    ids=["mismatched-turn", "out-of-order-turn"],
+)
+def test_codex_jsonl_lifecycle_conflicts_never_verify_real_invocation(
+    events: list[dict[str, str]],
+) -> None:
+    collector = codex_adapter_module._CodexJsonlEvidenceCollector(
+        "fixture-approved-model"
+    )
+    collector.feed(
+        ("\n".join(json.dumps(event) for event in events) + "\n").encode()
+    )
+    collector.finish()
+
+    assert collector.lifecycle_conflict is True
+    assert collector.structured_success is False
+    assert collector.actual_model_identity_verified is False
+    assert collector.actual_model_identifier == ""
+    assert collector.malformed is True
+    assert ai_orchestration_module.PROCESS_EVIDENCE_SCHEMA[
+        "codex_lifecycle_conflict"
+    ] == "bool"
 
 
 @pytest.mark.parametrize("fallback_fails", [False, True], ids=["fallback-recorded", "fallback-fails"])
@@ -1759,11 +3007,12 @@ def test_codex_status_requires_explicit_ready_model_binding(tmp_path: Path) -> N
         assert status.status_code == 200
         payload = status.json()
         assert payload["status"] == "unconfigured"
-        assert payload["found"] is False
-        assert payload["authentication_ready"] is False
+        assert payload["found"] is True
+        assert payload["authentication_ready"] is True
         assert payload["model_binding_ready"] is False
         assert payload["execution_ready"] is False
         assert payload["configuration_status"] == "needs_setup"
+        assert payload["connectivity"]["readiness_state"] == "AUTHENTICATED_CONNECTIVITY_NOT_VERIFIED"
 
     with make_client(
         tmp_path,
@@ -1778,8 +3027,8 @@ def test_codex_status_requires_explicit_ready_model_binding(tmp_path: Path) -> N
         assert status.status_code == 200
         payload = status.json()
         assert payload["status"] == "check_required"
-        assert payload["found"] is False
-        assert payload["authentication_ready"] is False
+        assert payload["found"] is True
+        assert payload["authentication_ready"] is True
         assert payload["model_binding_ready"] is False
         assert payload["execution_ready"] is False
 
@@ -1789,7 +3038,16 @@ def test_codex_status_requires_explicit_ready_model_binding(tmp_path: Path) -> N
             headers=headers,
         )
         assert checked.status_code == 200, checked.text
-        assert checked.json()["available"] is True
+        assert checked.json()["available"] is False
+        assert checked.json()["readiness_state"] == "AUTHENTICATED_CONNECTIVITY_NOT_VERIFIED"
+        verified = bound.post(
+            "/api/codex/setup/verify-connection",
+            json={"model_identifier": "fixture-provider-model-ready"},
+            headers=headers,
+        )
+        assert verified.status_code == 200, verified.text
+        assert verified.json()["readiness_state"] == "READY_FOR_REAL_RUN"
+        assert verified.json()["actual_model"] == "fixture-provider-model-ready"
         payload = bound.get("/api/codex/status", headers=headers).json()
         assert payload["status"] == "configured"
         assert payload["authentication_ready"] is True
@@ -1819,7 +3077,8 @@ def test_observed_codex_detection_loss_invalidates_approval_and_restore_cannot_r
             headers=headers,
         )
         assert checked.status_code == 200, checked.text
-        assert checked.json()["available"] is True
+        assert checked.json()["available"] is False
+        verify_test_model_connection(client, model_identifier)
         task_id = create_development_task(client, headers, marker=f"READINESS_{readiness_probe.upper()}")
         pack = generate_pack(client, headers, task_id)
         approved = approve_pack(client, headers, task_id, pack["id"])
@@ -1830,8 +3089,8 @@ def test_observed_codex_detection_loss_invalidates_approval_and_restore_cannot_r
         if readiness_probe == "check":
             persisted = client.get("/api/codex/status", headers=headers)
             assert persisted.status_code == 200, persisted.text
-            assert persisted.json()["execution_ready"] is True
-            assert persisted.json()["status"] == "configured"
+            assert persisted.json()["execution_ready"] is False
+            assert persisted.json()["connectivity"]["readiness_state"] == "CLI_NOT_INSTALLED"
             observed = client.post(
                 "/api/codex/setup/check",
                 json={"model_identifier": model_identifier},
@@ -1876,7 +3135,8 @@ def test_observed_codex_detection_loss_invalidates_approval_and_restore_cannot_r
             headers=headers,
         )
         assert rechecked.status_code == 200, rechecked.text
-        assert rechecked.json()["available"] is True
+        assert rechecked.json()["available"] is False
+        verify_test_model_connection(client, model_identifier)
         restored = client.get("/api/codex/status", headers=headers)
         assert restored.json()["status"] == "configured"
         assert restored.json()["execution_ready"] is True
@@ -1916,7 +3176,8 @@ def test_worker_pre_spawn_readiness_failure_invalidates_pack_without_run_claim(
             headers=headers,
         )
         assert checked.status_code == 200, checked.text
-        assert checked.json()["available"] is True
+        assert checked.json()["available"] is False
+        verify_test_model_connection(client, model_identifier)
         task_id = create_development_task(client, headers, marker=f"WORKER_{failure_stage.upper()}")
         pack = generate_pack(client, headers, task_id)
         assert approve_pack(client, headers, task_id, pack["id"])["approved"] is True
@@ -1928,21 +3189,22 @@ def test_worker_pre_spawn_readiness_failure_invalidates_pack_without_run_claim(
         run_id = queued.json()["id"]
 
         real_popen = codex_adapter_module.subprocess.Popen
-        codex_spawn_attempts: list[list[str]] = []
+        bridge_launch_attempts: list[list[str]] = []
 
         def tracked_popen(args, *popen_args, **popen_kwargs):
             argv = [str(item) for item in args]
-            is_model_execution = len(argv) > 2 and argv[0] == str(fake_codex) and argv[1:3] == [
-                "exec",
-                "--model",
-            ]
-            if is_model_execution:
-                codex_spawn_attempts.append(argv)
+            is_bridge_launch = (
+                len(argv) > 3
+                and argv[1:3] == ["-m", "twos_runtime.codex_exec_bridge"]
+                and argv[3] == "--ticket"
+            )
+            if is_bridge_launch:
+                bridge_launch_attempts.append(argv)
                 if failure_stage == "popen":
-                    raise OSError("fixture Codex process readiness failure")
+                    raise OSError("fixture detached bridge launch failure")
             return real_popen(args, *popen_args, **popen_kwargs)
 
-        monkeypatch.setattr(codex_adapter_module.subprocess, "Popen", tracked_popen)
+        monkeypatch.setattr(codex_exec_bridge_module.subprocess, "Popen", tracked_popen)
         if failure_stage == "detect":
             monkeypatch.setattr(
                 manager.adapter,
@@ -1985,7 +3247,7 @@ def test_worker_pre_spawn_readiness_failure_invalidates_pack_without_run_claim(
         )
         assert "Ran with" not in json.dumps(run)
         assert not fake_codex.with_name(fake_codex.name + ".executed").exists()
-        assert len(codex_spawn_attempts) == (1 if failure_stage == "popen" else 0)
+        assert len(bridge_launch_attempts) == (1 if failure_stage == "popen" else 0)
 
         factory = client.app.state.session_factory
         with factory() as session:
@@ -2026,7 +3288,8 @@ def test_worktree_creation_failure_keeps_machine_path_out_of_default_run_contrac
             headers=headers,
         )
         assert checked.status_code == 200, checked.text
-        assert checked.json()["available"] is True
+        assert checked.json()["available"] is False
+        verify_test_model_connection(client, model_identifier)
         task_id = create_development_task(client, headers, marker="WORKTREE_FAILURE")
         pack = generate_pack(client, headers, task_id)
         approve_pack(client, headers, task_id, pack["id"])
@@ -2070,6 +3333,62 @@ def test_worktree_creation_failure_keeps_machine_path_out_of_default_run_contrac
         assert not fake_codex.with_name(fake_codex.name + ".executed").exists()
 
 
+def test_codex_adapter_validates_exact_source_repository_branch_and_head(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    fake_codex = make_fake_codex(tmp_path)
+    with make_client(tmp_path, source_repo, fake_codex) as client:
+        adapter = client.app.state.codex_manager.adapter
+        approved = adapter.source_state()
+        validated = adapter.validate_source_identity(
+            expected_repo=str(approved["repo"]),
+            expected_branch=str(approved["branch"]),
+            expected_commit=str(approved["commit"]),
+        )
+        assert validated == approved
+
+        def source_state(**changes: object) -> dict[str, object]:
+            return {**approved, **changes}
+
+        monkeypatch.setattr(
+            adapter,
+            "source_state",
+            lambda: source_state(repo=tmp_path / "same-head-other-repository"),
+        )
+        with pytest.raises(RuntimeError, match="repository does not match"):
+            adapter.validate_source_identity(
+                expected_repo=str(approved["repo"]),
+                expected_branch=str(approved["branch"]),
+                expected_commit=str(approved["commit"]),
+            )
+
+        monkeypatch.setattr(
+            adapter,
+            "source_state",
+            lambda: source_state(branch="same-head-other-branch"),
+        )
+        with pytest.raises(RuntimeError, match="branch does not match"):
+            adapter.validate_source_identity(
+                expected_repo=str(approved["repo"]),
+                expected_branch=str(approved["branch"]),
+                expected_commit=str(approved["commit"]),
+            )
+
+        monkeypatch.setattr(
+            adapter,
+            "source_state",
+            lambda: source_state(commit="0" * 40),
+        )
+        with pytest.raises(RuntimeError, match="HEAD does not match"):
+            adapter.validate_source_identity(
+                expected_repo=str(approved["repo"]),
+                expected_branch=str(approved["branch"]),
+                expected_commit=str(approved["commit"]),
+            )
+
+
 def test_explicit_codex_model_settings_sync_only_after_local_cli_readiness(tmp_path: Path) -> None:
     source_repo = make_source_repo(tmp_path)
     fake_codex = make_fake_codex(tmp_path)
@@ -2107,8 +3426,8 @@ def test_explicit_codex_model_settings_sync_only_after_local_cli_readiness(tmp_p
                 )
             )
             assert provider is not None
-            assert provider.enabled is True
-            assert provider.status == "healthy"
+            assert provider.enabled is False
+            assert provider.status == "unconfigured"
             model = session.scalar(
                 select(AIModel).where(
                     AIModel.provider_id == provider.id,
@@ -2118,14 +3437,12 @@ def test_explicit_codex_model_settings_sync_only_after_local_cli_readiness(tmp_p
             assert model is not None
             assert model.provider_model_id == "fixture-codex-model"
             assert model.configuration_status == "configured"
-            assert model.availability_status == "available"
+            assert model.availability_status == "unavailable"
             assert model.invocation_mode == "real"
-            assert model.evidence_status == "runtime_check"
+            assert model.evidence_status == "unverified"
             assert model.evidence_source == "local_cli_readiness"
             assert model.last_verified_at is None
-            assert "exact model is verified only by an explicit Owner-approved run" in (
-                model.safe_diagnostic
-            )
+            assert "Provider connectivity must be verified by the Owner" in model.safe_diagnostic
             assert json.loads(model.capability_tags) == ["planning", "coding", "verification"]
 
 
@@ -2148,7 +3465,8 @@ def test_startup_reconciles_removed_local_codex_binding_before_api_use(tmp_path:
             headers=headers,
         )
         assert checked.status_code == 200, checked.text
-        assert checked.json()["available"] is True
+        assert checked.json()["available"] is False
+        verify_test_model_connection(initial, model_identifier)
         task_id = create_development_task(initial, headers, marker="STARTUP_RECONCILIATION")
         pack = generate_pack(initial, headers, task_id)
         approved = approve_pack(initial, headers, task_id, pack["id"])
@@ -2278,7 +3596,7 @@ def test_codex_detection_and_approval_required(
         )
     ).detect()
     assert configured.status == "configured"
-    assert configured.version == "codex-cli 1.0-test"
+    assert configured.version == "codex-cli 0.144.4"
     missing = CodexAdapter(
         Settings(
             database_url="sqlite://",
@@ -2306,19 +3624,15 @@ def test_codex_detection_and_approval_required(
 
     with make_client(tmp_path, source_repo, fake_codex) as client:
         headers = init_and_login(client)
-        runtime_detect = client.app.state.codex_manager.adapter.detect
-        monkeypatch.setattr(
-            client.app.state.codex_manager.adapter,
-            "detect",
-            lambda: (_ for _ in ()).throw(AssertionError("status GET must not probe Codex")),
-        )
         status = client.get("/api/codex/status", headers=headers).json()
         assert status["status"] == "unconfigured"
         assert status["execution_ready"] is False
+        assert status["connectivity"]["ready_for_real_run"] is False
         assert status["source"]["clean"] is True
         with client.app.state.session_factory() as session:
             assert session.query(AIModelAvailabilityEvidence).count() == 0
-        monkeypatch.setattr(client.app.state.codex_manager.adapter, "detect", runtime_detect)
+            assert session.query(CodexConnectivityEvidence).count() == 0
+        assert not fake_codex.with_name(fake_codex.name + ".probe-executed").exists()
         configure_test_model_registry(client)
         task_id = create_development_task(client, headers)
         pack = generate_pack(client, headers, task_id)
@@ -2356,7 +3670,6 @@ def test_codex_exec_uses_fixed_argv_exact_stdin_and_sanitized_environment(
 
     assert run["status"] == "completed", run
     model_identifier = run["execution_target"]["model"]["provider_model_id"]
-    expected_argv = codex_exec_args(model_identifier)
     expected_hash = hashlib.sha256(pack["content"].encode("utf-8")).hexdigest()
     events = jsonl_events(run["stdout"])
     transport_event = next(
@@ -2367,6 +3680,20 @@ def test_codex_exec_uses_fixed_argv_exact_stdin_and_sanitized_environment(
         and event.get("item", {}).get("text", "").startswith("{")
     )
     transport = json.loads(transport_event["item"]["text"])
+    assert len(transport["argv"]) == 13
+    assert transport["argv"][10] == "--output-last-message"
+    output_last_message = Path(transport["argv"][11])
+    assert output_last_message.is_relative_to(
+        (tmp_path / "codex-spool").resolve()
+    )
+    assert output_last_message.parent.name == f"run-{run['id']}-coding"
+    assert output_last_message.name == (
+        f"final-message-run-{run['id']}-coding.txt"
+    )
+    expected_argv = codex_exec_args(
+        model_identifier,
+        output_last_message=output_last_message,
+    )
     assert transport["argv"] == expected_argv
     assert transport["stdin_sha256"] == expected_hash
     assert "forbidden environment reached Codex" not in run["stderr"]
@@ -2384,14 +3711,31 @@ def test_codex_exec_uses_fixed_argv_exact_stdin_and_sanitized_environment(
         "NO_COLOR",
         "GIT_TERMINAL_PROMPT",
         "GIT_ALLOW_PROTOCOL",
+        "OPENAI_API_KEY",
+        "CODEX_ACCESS_TOKEN",
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "ALL_PROXY",
+        "NO_PROXY",
+        "http_proxy",
+        "https_proxy",
+        "all_proxy",
+        "no_proxy",
+        "SSL_CERT_FILE",
+        "SSL_CERT_DIR",
+        "REQUESTS_CA_BUNDLE",
+        "CURL_CA_BUNDLE",
     }
     assert all(key in fixed_allowed_keys or key.startswith("LC_") for key in manager_env)
     assert {"PATH", "HOME", "NO_COLOR", "GIT_TERMINAL_PROMPT"}.issubset(manager_env)
     assert manager_env["NO_COLOR"] == "1"
     assert manager_env["GIT_TERMINAL_PROMPT"] == "0"
     assert manager_env["GIT_ALLOW_PROTOCOL"] == ""
-    assert {"TWOS_OA005_SENTINEL", "OPENAI_API_KEY", "SESSION_SECRET"}.isdisjoint(manager_env)
-    assert {"TWOS_OA005_SENTINEL", "OPENAI_API_KEY", "SESSION_SECRET"}.isdisjoint(reported_env_keys)
+    assert "OPENAI_API_KEY" in manager_env
+    assert "OPENAI_API_KEY" in reported_env_keys
+    assert {"TWOS_OA005_SENTINEL", "SESSION_SECRET"}.isdisjoint(manager_env)
+    assert {"TWOS_OA005_SENTINEL", "SESSION_SECRET"}.isdisjoint(reported_env_keys)
+    assert "must-not-reach-codex" not in json.dumps(run)
     assert transport["NO_COLOR"] == "1"
     assert transport["GIT_TERMINAL_PROMPT"] == "0"
     assert transport["GIT_ALLOW_PROTOCOL"] == ""
@@ -2401,7 +3745,7 @@ def test_codex_exec_uses_fixed_argv_exact_stdin_and_sanitized_environment(
         assert not (root / "shell-injection-2").exists()
 
 
-def test_codex_run_with_origin_keeps_remote_state_and_blocks_push_transport(tmp_path: Path) -> None:
+def test_codex_run_with_origin_keeps_remote_state_and_disables_git_transport(tmp_path: Path) -> None:
     source_repo = make_source_repo(tmp_path)
     origin_repo = tmp_path / "origin.git"
     run_command(tmp_path, "git", "init", "--bare", str(origin_repo))
@@ -2416,7 +3760,7 @@ def test_codex_run_with_origin_keeps_remote_state_and_blocks_push_transport(tmp_
 
     with make_client(tmp_path, source_repo, fake_codex) as client:
         headers = init_and_login(client)
-        task_id = create_executable_task(client, headers, marker="FAKE_PUSH_ATTEMPT")
+        task_id = create_executable_task(client, headers, marker="FAKE_TRANSPORT_BOUNDARY")
         pack = generate_pack(client, headers, task_id)
         approve_pack(client, headers, task_id, pack["id"])
         started = client.post(f"/api/tasks/{task_id}/codex-runs", headers=headers)
@@ -2437,14 +3781,16 @@ def test_codex_run_with_origin_keeps_remote_state_and_blocks_push_transport(tmp_
     assert boundary["remote_state_unchanged"] is True
     assert boundary["git_transport_protocols_allowed"] is False
     assert boundary["codex_tool_network_access_allowed"] is False
-    push_event = next(
+    transport_event = next(
         event
         for event in jsonl_events(run["stdout"])
         if event.get("type") == "item.completed"
         and event.get("item", {}).get("type") == "agent_message"
-        and "push_returncode" in event.get("item", {}).get("text", "")
+        and "git_transport_protocols_allowed" in event.get("item", {}).get("text", "")
     )
-    assert json.loads(push_event["item"]["text"])["push_returncode"] != 0
+    assert json.loads(transport_event["item"]["text"])[
+        "git_transport_protocols_allowed"
+    ] is False
     remote_refs_after = run_command(
         origin_repo,
         "git",
@@ -2512,8 +3858,9 @@ def test_codex_combined_output_cap_including_tiny_limit(tmp_path: Path, output_l
     assert len(persisted_output) <= output_limit
     assert run["output_truncated"] is True
     assert run["process_spawned"] is True
-    assert len(run["model_invocations"]) == 2
-    assert {item["capability"] for item in run["model_invocations"]} == {"coding", "verification"}
+    assert {item["capability"] for item in run["model_invocations"]} == {"coding"}
+    assert run["verification_target"]["process_spawned"] is False
+    assert run["result"]["verification"]["status"] == "not_started"
     evidence = next(item for item in run["model_invocations"] if item["capability"] == "coding")
     assert evidence["verified_real_invocation"] is False
     assert evidence["outcome"] == "failed"
@@ -2535,15 +3882,21 @@ def test_codex_output_cap_is_byte_safe_for_multibyte_and_invalid_utf8(tmp_path: 
         approve_pack(client, headers, task_id, pack["id"])
         started = client.post(f"/api/tasks/{task_id}/codex-runs", headers=headers)
         assert started.status_code == 200, started.text
-        run = wait_for_run(client, headers, started.json()["id"], {"needs_review", "failed"})
+        run = wait_for_run(
+            client,
+            headers,
+            started.json()["id"],
+            {"blocked", "needs_review", "failed"},
+        )
 
-    assert run["status"] == "failed", run
+    assert run["status"] == "blocked", run
     persisted = run["stdout"].encode("utf-8") + run["stderr"].encode("utf-8")
     assert len(persisted) <= 128
     assert run["output_truncated"] is True
     assert run["process_spawned"] is True
-    assert len(run["model_invocations"]) == 2
-    assert {item["capability"] for item in run["model_invocations"]} == {"coding", "verification"}
+    assert {item["capability"] for item in run["model_invocations"]} == {"coding"}
+    assert run["verification_target"]["process_spawned"] is False
+    assert run["result"]["verification"]["status"] == "not_started"
     evidence = next(item for item in run["model_invocations"] if item["capability"] == "coding")
     assert evidence["verified_real_invocation"] is False
     assert evidence["outcome"] == "failed"
@@ -2572,9 +3925,12 @@ def test_large_pack_cannot_block_timeout_while_cli_ignores_stdin(tmp_path: Path)
         started = client.post(f"/api/tasks/{task_id}/codex-runs", headers=headers)
         assert started.status_code == 200
         run = wait_for_run(client, headers, started.json()["id"], {"timed_out"}, timeout=5)
+        # Measure the bounded execution path, not TestClient application
+        # shutdown and detached-monitor reconciliation after the assertion.
+        assert time.monotonic() - started_at < 8
 
-    assert time.monotonic() - started_at < 5
     assert run["timed_out"] is True
+    assert run["duration_ms"] < 6_000
     assert run["process_spawned"] is True
     assert len(run["model_invocations"]) == 1
     evidence = run["model_invocations"][0]
@@ -2732,7 +4088,7 @@ def test_concurrent_run_requests_queue_exactly_one_process(tmp_path: Path) -> No
         assert sorted(response.status_code for response in responses) == [200, 409]
         runs = client.get(f"/api/tasks/{task_id}/codex-runs", headers=headers).json()
         assert len(runs) == 1
-        wait_for_spawned_run(client, headers, runs[0]["id"], timeout=3)
+        wait_for_spawned_run(client, headers, runs[0]["id"], timeout=5)
         cancelled = client.post(f"/api/codex-runs/{runs[0]['id']}/cancel", headers=headers)
         assert cancelled.status_code == 200
         run = wait_for_run(client, headers, runs[0]["id"], {"cancelled"}, timeout=5)
@@ -2867,7 +4223,7 @@ def test_codex_success_git_result_acceptance_and_compact_sync(tmp_path: Path) ->
         assert acceptance["compact_sync_result"]
 
 
-def test_runtime_shutdown_is_interrupted_needs_review_and_not_owner_cancelled(
+def test_runtime_shutdown_hands_off_detached_run_for_restart_recovery(
     tmp_path: Path,
 ) -> None:
     source_repo = make_source_repo(tmp_path)
@@ -2882,28 +4238,36 @@ def test_runtime_shutdown_is_interrupted_needs_review_and_not_owner_cancelled(
     )
     with client:
         headers = init_and_login(client)
-        task_id = create_executable_task(client, headers, marker="FAKE_RUNTIME_SHUTDOWN")
+        task_id = create_executable_task(client, headers, marker="FAKE_RUNTIME_HANDOFF")
         pack = generate_pack(client, headers, task_id)
         approve_pack(client, headers, task_id, pack["id"])
         started = client.post(f"/api/tasks/{task_id}/codex-runs", headers=headers)
         assert started.status_code == 200, started.text
         run_id = started.json()["id"]
-        spawned = wait_for_spawned_run(client, headers, run_id, timeout=3)
+        spawned = wait_for_spawned_run(client, headers, run_id, timeout=5)
         assert spawned["status"] == "running"
         assert spawned["process_spawned"] is True
         factory = client.app.state.session_factory
-
-    deadline = time.monotonic() + 5
-    persisted_status = ""
-    while time.monotonic() < deadline:
         with factory() as session:
             run_row = session.get(CodexRun, run_id)
             assert run_row is not None
-            persisted_status = run_row.status
-        if persisted_status not in {"queued", "starting", "running", "verifying"}:
-            break
-        time.sleep(0.05)
-    assert persisted_status == "failed"
+            monitor = session.scalar(
+                select(CodexRunMonitor).where(CodexRunMonitor.run_id == run_id)
+            )
+            assert monitor is not None
+            coding_process_identity = (
+                monitor.process_id,
+                monitor.process_start_identity,
+            )
+            assert coding_process_identity[0] is not None
+            assert coding_process_identity[1]
+
+    with factory() as session:
+        handed_off = session.get(CodexRun, run_id)
+        assert handed_off is not None
+        assert handed_off.status in {"running", "verifying"}
+        assert handed_off.cancelled is False
+        assert handed_off.finished_at is None
 
     with make_client(
         tmp_path,
@@ -2913,67 +4277,41 @@ def test_runtime_shutdown_is_interrupted_needs_review_and_not_owner_cancelled(
         timeout=20,
     ) as restarted:
         headers = init_and_login(restarted)
-        run = restarted.get(f"/api/codex-runs/{run_id}", headers=headers).json()
+        run = wait_for_run(restarted, headers, run_id, {"completed"}, timeout=20)
         audits = [
             item
             for item in restarted.get("/api/audit", headers=headers).json()
             if item["entity_type"] == "codex_run" and item["entity_id"] == run_id
         ]
-        acceptance = restarted.get(
-            f"/api/tasks/{task_id}/owner-acceptance",
-            headers=headers,
-        ).json()["acceptance"]
-        assert acceptance is not None
-        assert next(item for item in acceptance["items"] if item["key"] == "model_evidence")[
-            "status"
-        ] == "fail"
-        for item in acceptance["items"]:
-            updated = restarted.patch(
-                f"/api/owner-acceptance/{acceptance['id']}/items/{item['id']}",
-                headers=headers,
-                json={"status": "pass", "note": "Attempted shutdown-evidence override."},
+        with restarted.app.state.session_factory() as session:
+            monitor = session.scalar(
+                select(CodexRunMonitor).where(CodexRunMonitor.run_id == run_id)
             )
-            assert updated.status_code == 200
-        blocked = restarted.post(
-            f"/api/owner-acceptance/{acceptance['id']}/accept",
-            headers=headers,
-            json={"note": "Runtime interruption cannot be accepted as verified execution."},
-        )
-        assert blocked.status_code == 409
-        assert blocked.json()["error"]["message"] == (
-            "Separately verified Coding and Verification invocation evidence is required "
-            "before acceptance."
-        )
-        persisted_acceptance = restarted.get(
-            f"/api/tasks/{task_id}/owner-acceptance",
-            headers=headers,
-        ).json()["acceptance"]
+            assert monitor is not None
+            assert (monitor.process_id, monitor.process_start_identity) == coding_process_identity
 
-    assert run["status"] == "failed"
+    assert run["status"] == "completed"
     assert run["process_spawned"] is True
+    assert run["verification_target"]["process_spawned"] is True
     assert run["cancelled"] is False
     assert run["timed_out"] is False
     assert run["finished_at"] is not None
-    assert run["result"]["process"]["runtime_interrupted"] is True
+    assert run["result"]["process"]["runtime_interrupted"] is False
     assert run["result"]["process"]["cancelled"] is False
-    assert "cancelled by the Owner" not in run["owner_summary"]
-    assert len(run["model_invocations"]) == 1
-    evidence = run["model_invocations"][0]
-    assert evidence["outcome"] == "failed"
-    assert evidence["error_category"] == "interrupted"
-    assert evidence["diagnostic_code"] == "runtime_shutdown"
-    assert evidence["cancelled"] is False
-    assert evidence["verified_real_invocation"] is False
-    assert evidence["actual_invoked_model_identifier"] is None
-    assert evidence["process_evidence"]["runtime_interrupted"] is True
-    assert "no Owner cancellation is claimed" in evidence["safe_summary"]
+    assert {item["capability"] for item in run["model_invocations"]} == {
+        "coding",
+        "verification",
+    }
+    assert all(item["verified_real_invocation"] is True for item in run["model_invocations"])
     assert all(item["action"] != "codex_run_cancelled" for item in audits)
-    completed_audit = next(item for item in audits if item["action"] == "codex_run_completed")
-    assert "status=failed" in completed_audit["details"]
-    assert persisted_acceptance["status"] == "owner_review"
-    assert persisted_acceptance["compact_sync_result"] == ""
-    time.sleep(1.7)
-    assert not (Path(run["worktree_path"]) / "child-survived.txt").exists()
+    assert any(
+        item["action"] in {
+            "codex_run_monitoring_resumed",
+            "codex_run_terminal_receipt_recovered",
+            "codex_run_recovery_finalized",
+        }
+        for item in audits
+    )
 
 
 def test_codex_failure_timeout_and_cancel(tmp_path: Path) -> None:
@@ -2981,7 +4319,11 @@ def test_codex_failure_timeout_and_cancel(tmp_path: Path) -> None:
     fake_codex = make_fake_codex(tmp_path)
     with make_client(tmp_path, source_repo, fake_codex, timeout=1) as client:
         headers = init_and_login(client)
-        for marker, expected in [("FAKE_FAIL", "failed"), ("FAKE_TIMEOUT", "timed_out")]:
+        for marker, expected in [
+            ("FAKE_FAIL", "failed"),
+            ("FAKE_TIMEOUT", "timed_out"),
+            ("FAKE_TIMEOUT_ACTUAL", "timed_out"),
+        ]:
             task_id = create_executable_task(client, headers, marker=marker)
             pack = generate_pack(client, headers, task_id)
             approve_pack(client, headers, task_id, pack["id"])
@@ -2990,22 +4332,26 @@ def test_codex_failure_timeout_and_cancel(tmp_path: Path) -> None:
             run = wait_for_run(client, headers, started.json()["id"], {expected}, timeout=8)
             assert run["status"] == expected
             assert run["process_spawned"] is True
-            expected_capabilities = (
-                {"coding"} if marker == "FAKE_TIMEOUT" else {"coding", "verification"}
-            )
-            assert {item["capability"] for item in run["model_invocations"]} == expected_capabilities
+            assert {item["capability"] for item in run["model_invocations"]} == {"coding"}
+            assert run["verification_target"]["process_spawned"] is False
+            assert run["result"]["verification"]["status"] == "not_started"
             evidence = next(
                 item for item in run["model_invocations"] if item["capability"] == "coding"
             )
             assert evidence["outcome"] == expected
             assert evidence["verified_real_invocation"] is False
             assert evidence["actual_invoked_model_identifier"] is None
-            if marker == "FAKE_TIMEOUT":
+            if marker.startswith("FAKE_TIMEOUT"):
                 assert run["timed_out"] is True
                 assert evidence["timed_out"] is True
                 assert evidence["cancelled"] is False
                 assert run["result"]["process"]["timed_out"] is True
                 assert run["result"]["process"]["cancelled"] is False
+                assert run["result"]["coding_invocation"]["actual_resolved_model"] is None
+                assert (
+                    run["result"]["coding_invocation"]["actual_model_identity_verified"]
+                    is False
+                )
                 time.sleep(1.7)
                 assert not (Path(run["worktree_path"]) / "child-survived.txt").exists()
                 assert "child-survived.txt" not in run["result"]["changed_files"]
@@ -3029,7 +4375,7 @@ def test_codex_failure_timeout_and_cancel(tmp_path: Path) -> None:
         approve_pack(client, headers, cancel_task_id, pack["id"])
         started = client.post(f"/api/tasks/{cancel_task_id}/codex-runs", headers=headers)
         run_id = started.json()["id"]
-        wait_for_spawned_run(client, headers, run_id, timeout=3)
+        wait_for_spawned_run(client, headers, run_id, timeout=5)
         duplicate = client.post(f"/api/tasks/{cancel_task_id}/codex-runs", headers=headers)
         assert duplicate.status_code == 409
         assert duplicate.json()["error"]["message"] == (

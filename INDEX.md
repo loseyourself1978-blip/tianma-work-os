@@ -52,6 +52,11 @@ Vol.9 Phase 9.3 - Future Implementation Boundary Matrix and Static Prototype Gat
 - [docs/product/TWOS_1_0_WORKBENCH_ARCHITECTURE_MAP_v0.1.md](docs/product/TWOS_1_0_WORKBENCH_ARCHITECTURE_MAP_v0.1.md)
 - [docs/product/TWOS_VOL15_CLOSEOUT_VOL16_HANDOFF.md](docs/product/TWOS_VOL15_CLOSEOUT_VOL16_HANDOFF.md)
 
+## Vol.18 Closeout / Vol.19 Readiness
+
+- [docs/runtime/VOL18_CLOSEOUT_SUMMARY_v0.1.md](docs/runtime/VOL18_CLOSEOUT_SUMMARY_v0.1.md)
+- [docs/runtime/VOL19_READINESS_GATE_v0.1.md](docs/runtime/VOL19_READINESS_GATE_v0.1.md)
+
 ## Examples
 
 - `examples/llm-daredevil-desk/CASE_STUDY_LLM_DAREDEVIL_DESK.md`

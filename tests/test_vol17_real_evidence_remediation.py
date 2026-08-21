@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import time
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -33,6 +34,7 @@ def make_structured_codex(tmp_path: Path) -> Path:
     executable.write_text(
         f'''#!/usr/bin/env python3
 import json
+import os
 import pathlib
 import sys
 
@@ -40,24 +42,133 @@ SMOKE_FILE = {SMOKE_FILE!r}
 SMOKE_LINE = {SMOKE_LINE!r}
 
 if sys.argv[1:] == ["--version"]:
-    print("codex-cli 0.144.4-controlled-test")
+    print("codex-cli 0.144.4")
     raise SystemExit(0)
 if sys.argv[1:] == ["exec", "--help"]:
-    print("Usage: codex exec --model MODEL --json [PROMPT]")
+    print(
+        "Usage: codex exec --model MODEL --json "
+        "--output-schema FILE --output-last-message FILE [PROMPT]"
+    )
+    raise SystemExit(0)
+if sys.argv[1:] == ["login", "--help"]:
+    print("Usage: codex login [status]")
     raise SystemExit(0)
 if sys.argv[1:] == ["login", "status"]:
     print("Logged in (controlled test only)")
     raise SystemExit(0)
+if sys.argv[1:] == [
+    "app-server", "-c", "mcp_servers={{}}", "--strict-config", "--listen", "stdio://"
+]:
+    thread_id = "controlled-connectivity-thread"
+    turn_id = "controlled-connectivity-turn"
+    thread_model = ""
+    for line in sys.stdin:
+        message = json.loads(line)
+        method = message.get("method")
+        if method == "initialize":
+            print(json.dumps({{
+                "id": message["id"],
+                "result": {{
+                    "userAgent": "controlled-fixture",
+                    "platformFamily": "unix",
+                    "platformOs": "test",
+                    "codexHome": os.environ.get("CODEX_HOME"),
+                }},
+            }}), flush=True)
+        elif method == "mcpServerStatus/list":
+            print(json.dumps({{
+                "id": message["id"],
+                "result": {{"data": [], "nextCursor": None}},
+            }}), flush=True)
+        elif method == "thread/start":
+            params = message.get("params", {{}})
+            thread_model = str(params.get("model") or "")
+            assert params.get("allowProviderModelFallback") is False
+            assert params.get("sandbox") == "read-only"
+            assert params.get("ephemeral") is True
+            assert params.get("modelProvider") == "openai"
+            assert params.get("config") == {{
+                "mcp_servers": {{}}, "web_search": "disabled"
+            }}
+            assert params.get("dynamicTools") == []
+            assert params.get("runtimeWorkspaceRoots") == [params.get("cwd")]
+            assert params.get("selectedCapabilityRoots") == []
+            print(json.dumps({{
+                "id": message["id"],
+                "result": {{
+                    "model": thread_model,
+                    "modelProvider": "openai",
+                    "cwd": params.get("cwd"),
+                    "approvalPolicy": "never",
+                    "approvalsReviewer": "user",
+                    "sandbox": {{"type": "readOnly", "networkAccess": False}},
+                    "instructionSources": [],
+                    "runtimeWorkspaceRoots": params.get("runtimeWorkspaceRoots"),
+                    "thread": {{"id": thread_id, "ephemeral": True}},
+                }},
+            }}), flush=True)
+        elif method == "turn/start":
+            params = message.get("params", {{}})
+            assert params.get("threadId") == thread_id
+            assert params.get("model") == thread_model
+            started = {{"id": turn_id, "items": [], "status": "inProgress"}}
+            item = {{
+                "id": "controlled-connectivity-message",
+                "type": "agentMessage",
+                "text": "TWOS_CODEX_CONNECTION_OK",
+            }}
+            print(json.dumps({{
+                "id": message["id"], "result": {{"turn": started}}
+            }}), flush=True)
+            print(json.dumps({{
+                "method": "turn/started",
+                "params": {{"threadId": thread_id, "turn": started}},
+            }}), flush=True)
+            print(json.dumps({{
+                "method": "item/completed",
+                "params": {{"threadId": thread_id, "turnId": turn_id, "completedAtMs": 1, "item": item}},
+            }}), flush=True)
+            print(json.dumps({{
+                "method": "turn/completed",
+                "params": {{
+                    "threadId": thread_id,
+                    "turn": {{
+                        "id": turn_id,
+                        "items": [item],
+                        "status": "completed",
+                        "error": None,
+                    }},
+                }},
+            }}), flush=True)
+        elif method == "thread/unsubscribe":
+            print(json.dumps({{
+                "id": message["id"], "result": {{"status": "unsubscribed"}}
+            }}), flush=True)
+    raise SystemExit(0)
 
 args = sys.argv[1:]
-if len(args) != 11 or args[:2] != ["exec", "--model"] or args[3:5] != ["--json", "--sandbox"]:
+def option(name):
+    return args[args.index(name) + 1] if name in args else ""
+
+schema_path = option("--output-schema")
+last_message_path = option("--output-last-message")
+base_args = list(args)
+for sidecar_option in ("--output-schema", "--output-last-message"):
+    if sidecar_option in base_args:
+        sidecar_index = base_args.index(sidecar_option)
+        del base_args[sidecar_index:sidecar_index + 2]
+if len(base_args) != 11 or base_args[:2] != ["exec", "--model"] or base_args[3:5] != ["--json", "--sandbox"]:
     print("unexpected controlled argv shape", file=sys.stderr)
     raise SystemExit(64)
-model_identifier = args[2]
-sandbox_mode = args[5]
-if args[6:] != ["--ephemeral", "--ignore-user-config", "--color", "never", "-"]:
+model_identifier = base_args[2]
+sandbox_mode = base_args[5]
+if base_args[6:] != ["--ephemeral", "--ignore-user-config", "--color", "never", "-"]:
     print("unexpected controlled argv tail", file=sys.stderr)
     raise SystemExit(64)
+if schema_path:
+    schema = json.loads(pathlib.Path(schema_path).read_text())
+    assert schema["required"] == ["status"]
+    assert schema["properties"]["status"]["const"] == "TWOS_CODEX_CONNECTION_OK"
 
 prompt = sys.stdin.read()
 prompt_suffix = ".coding-prompt" if sandbox_mode == "workspace-write" else ".verification-prompt"
@@ -66,7 +177,43 @@ pathlib.Path(__file__).with_suffix(prompt_suffix).write_text(prompt)
 def emit(payload):
     print(json.dumps(payload, separators=(",", ":")), flush=True)
 
-emit({{"type": "thread.started", "thread_id": "controlled-thread-" + sandbox_mode}})
+def write_last_message(value):
+    if last_message_path:
+        pathlib.Path(last_message_path).write_text(value)
+
+if "TWOS connectivity verification only" in prompt:
+    response_text = json.dumps(
+        dict(status="TWOS_CODEX_CONNECTION_OK"), separators=(",", ":")
+    )
+    write_last_message(response_text)
+    emit({{
+        "type": "thread.started",
+        "thread_id": "controlled-connectivity-thread",
+        "actual_model_identifier": model_identifier,
+    }})
+    emit({{"type": "turn.started", "turn_id": "controlled-connectivity-turn"}})
+    emit({{
+        "type": "item.completed",
+        "item": {{
+            "id": "connectivity-message-1",
+            "type": "agent_message",
+            "text": response_text,
+        }},
+    }})
+    emit({{
+        "type": "turn.completed",
+        "turn_id": "controlled-connectivity-turn",
+        "actual_model_identifier": model_identifier,
+    }})
+    raise SystemExit(0)
+
+thread_started = {{
+    "type": "thread.started",
+    "thread_id": "controlled-thread-" + sandbox_mode,
+}}
+if "invalid" not in model_identifier:
+    thread_started["actual_model_identifier"] = model_identifier
+emit(thread_started)
 emit({{"type": "turn.started", "turn_id": "controlled-turn-" + sandbox_mode}})
 
 if sandbox_mode == "workspace-write":
@@ -92,15 +239,30 @@ if sandbox_mode == "workspace-write":
             }},
         }})
     emit({{"type": "item.completed", "item": command_item}})
-    # A malformed line is retained as an Advanced diagnostic, but must not
-    # invalidate the later successful terminal turn event.
-    print("controlled non-JSON diagnostic line", flush=True)
+    # A forward-compatible additive event is consumed without displacing the
+    # later terminal event. Its payload remains outside the default result UI.
+    emit({{
+        "type": "future.progress.v2",
+        "detail": {{"presentation": "controlled additive diagnostic"}},
+    }})
+    coding_message = json.dumps(
+        {{
+            "schema": "twos.coding_handoff.v1",
+            "status": "completed",
+            "summary": (
+                "Implemented the exact approved artifact. "
+                "No test command was executed."
+            ),
+        }},
+        separators=(",", ":"),
+    )
+    write_last_message(coding_message)
     emit({{
         "type": "item.completed",
         "item": {{
             "id": "coding-message-1",
             "type": "agent_message",
-            "text": "Implemented the exact approved artifact. No test command was executed.",
+            "text": coding_message,
         }},
     }})
     emit({{
@@ -115,6 +277,7 @@ if sandbox_mode != "read-only":
 
 if "invalid" in model_identifier:
     failure = f'Configured model identifier "{{model_identifier}}" was rejected by Codex.'
+    write_last_message(failure)
     emit({{
         "type": "item.completed",
         "item": {{"id": "verification-error-1", "type": "error", "message": failure}},
@@ -139,6 +302,8 @@ contract = {{
     "git_boundary": "pass",
     "remote_boundary": "pass",
 }}
+contract_text = json.dumps(contract, separators=(",", ":"))
+write_last_message(contract_text)
 emit({{
     "type": "item.completed",
     "item": {{
@@ -155,7 +320,7 @@ emit({{
     "item": {{
         "id": "verification-message-1",
         "type": "agent_message",
-        "text": json.dumps(contract, separators=(",", ":")),
+        "text": contract_text,
     }},
 }})
 emit({{
@@ -191,8 +356,17 @@ def check_and_assign(client: TestClient, task_id: int, capability: str, identifi
         json={"model_identifier": identifier, "capability": capability},
     )
     assert checked.status_code == 200, checked.text
-    assert checked.json()["available"] is True
-    model_id = checked.json()["configuration"]["id"]
+    assert checked.json()["execution_prerequisites_available"] is True
+    assert checked.json()["provider_probe_performed"] is False
+    assert checked.json()["available"] is False
+    verified = client.post(
+        "/api/codex/setup/verify-connection",
+        json={"model_identifier": identifier, "capability": capability},
+    )
+    assert verified.status_code == 200, verified.text
+    assert verified.json()["readiness_state"] == "READY_FOR_REAL_RUN"
+    assert verified.json()["actual_model"] == identifier
+    model_id = verified.json()["configuration"]["id"]
     assigned = client.post(
         f"/api/tasks/{task_id}/codex/setup/assign",
         json={"model_id": model_id, "capability": capability},
@@ -225,13 +399,39 @@ def prepare_approved_pack(
 def start_and_wait(client: TestClient, task_id: int) -> dict:
     started = client.post(f"/api/tasks/{task_id}/codex-runs")
     assert started.status_code == 200, started.text
-    return wait_for_run(
+    run = wait_for_run(
         client,
         {},
         started.json()["id"],
         {"completed", "failed", "cancelled", "timed_out", "blocked"},
         timeout=15,
     )
+    deadline = time.monotonic() + 15
+    while time.monotonic() < deadline:
+        activity = client.get("/api/run-activity")
+        assert activity.status_code == 200, activity.text
+        record = next(
+            item
+            for item in activity.json()["runs"]
+            if item["run_id"] == run["id"]
+        )
+        if record["result_available"]:
+            refreshed = client.get(f"/api/codex-runs/{run['id']}")
+            assert refreshed.status_code == 200, refreshed.text
+            payload = refreshed.json()
+            verification_process = payload["result"]["verification_process"]
+            verification_invocation = payload["result"]["verification_invocation"]
+            terminal_turn_observed = (
+                verification_process.get("turn_terminal_state")
+                in {"completed", "failed"}
+            )
+            if (
+                not terminal_turn_observed
+                or verification_invocation.get("codex_turn_verified") is True
+            ):
+                return payload
+        time.sleep(0.05)
+    raise AssertionError("The terminal Run Result was not ingested within 15 seconds.")
 
 
 def invocation_for(run: dict, capability: str) -> dict:
@@ -310,21 +510,30 @@ def test_successful_jsonl_turn_records_one_change_and_separates_default_evidence
         assert coding["process_execution_verified"] is True
         assert coding["codex_turn_verified"] is True
         assert coding["requested_model"] == coding_model
-        assert coding["actual_resolved_model"] is None
-        assert coding["actual_model_identity_verified"] is False
+        assert coding["actual_resolved_model"] == coding_model
+        assert coding["actual_model_identity_verified"] is True
         verification = result["verification_invocation"]
         assert verification["process_execution_verified"] is True
         assert verification["codex_turn_verified"] is True
         assert verification["requested_model"] == verification_model
-        assert verification["actual_resolved_model"] is None
-        assert verification["actual_model_identity_verified"] is False
+        assert verification["actual_resolved_model"] == verification_model
+        assert verification["actual_model_identity_verified"] is True
 
         default_payload = json.dumps(result, sort_keys=True)
         assert '"type": "command_execution"' not in default_payload
         assert '"aggregated_output"' not in default_payload
-        assert "controlled non-JSON diagnostic line" not in default_payload
-        assert "Ran with" not in json.dumps(run, sort_keys=True)
-        assert "controlled non-JSON diagnostic line" in run["coding_jsonl_diagnostics"]
+        assert "controlled additive diagnostic" not in default_payload
+        display_claims = {
+            item["capability"]: item["display_claim"]
+            for item in run["model_invocations"]
+        }
+        assert display_claims == {
+            "coding": f"Ran with {coding_model}",
+            "verification": f"Ran with {verification_model}",
+        }
+        assert run["result"]["exec_bridge"]["transport_consumption_completed"] is True
+        assert '"type":"future.progress.v2"' in run["coding_jsonl_diagnostics"]
+        assert len(run["coding_jsonl_diagnostics"].encode("utf-8")) <= 200_000
         assert len(run["coding_jsonl_diagnostics"].encode("utf-8")) <= 200_000
 
 

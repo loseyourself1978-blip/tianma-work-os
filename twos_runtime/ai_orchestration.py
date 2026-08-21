@@ -89,10 +89,12 @@ PROCESS_EVIDENCE_SCHEMA = {
     "codex_turn_started": "bool",
     "codex_turn_completed": "bool",
     "codex_turn_failed": "bool",
+    "codex_lifecycle_conflict": "bool",
     "codex_turn_verified": "bool",
     "model_argument_observed": "bool",
     "model_identity_observed": "bool",
     "actual_model_identity_verified": "bool",
+    "model_identity_source": "safe_text",
     "model_reroute_observed": "bool",
     "unsupported_model_routing_observed": "bool",
     "final_agent_message_observed": "bool",
@@ -105,6 +107,7 @@ PROCESS_EVIDENCE_SCHEMA = {
     "command_shape": "safe_text",
     "executable_identity_fingerprint": "sha256",
     "process_id_fingerprint": "sha256",
+    "connectivity_evidence_identity": "sha256",
     "thread_id_fingerprint": "sha256",
     "turn_id_fingerprint": "sha256",
 }
@@ -1097,8 +1100,11 @@ def _real_invocation_proof_error(
         )
     )
     thread_fingerprint = process_evidence.get("thread_id_fingerprint")
-    if not codex_process_proof or not isinstance(thread_fingerprint, str) or not _SHA256.fullmatch(
-        thread_fingerprint
+    if (
+        not codex_process_proof
+        or process_evidence.get("codex_lifecycle_conflict") is True
+        or not isinstance(thread_fingerprint, str)
+        or not _SHA256.fullmatch(thread_fingerprint)
     ):
         return "A successful Codex invocation requires complete structured process evidence."
     return None
@@ -1261,6 +1267,81 @@ def is_verified_real_invocation(evidence: AIModelInvocationEvidence) -> bool:
         require_current_readiness=False,
         require_codex_process_proof=evidence.codex_run_id is not None,
     ) is None
+
+
+def verified_actual_model_identity(
+    evidence: AIModelInvocationEvidence | None,
+) -> tuple[str, str, str]:
+    """Return only an exact, server-revalidated model identity and provenance.
+
+    The structured result and browser payload are never authorities for this
+    claim.  Direct Codex lifecycle metadata must match the persisted invocation
+    model.  When the CLI omitted model metadata, the fallback provenance must
+    bind the exact Run capability to the exact append-only Owner connectivity
+    evidence row and digest.
+    """
+    if evidence is None or not is_verified_real_invocation(evidence):
+        return "", "", ""
+    run = evidence.codex_run
+    if run is None or run.pack is None or evidence.configured_model is None:
+        return "", "", ""
+    try:
+        process_evidence = json.loads(evidence.process_evidence or "{}")
+    except (TypeError, json.JSONDecodeError):
+        return "", "", ""
+    if not isinstance(process_evidence, dict):
+        return "", "", ""
+    actual = str(evidence.actual_invoked_model_identifier or "")
+    source = str(process_evidence.get("model_identity_source") or "")
+    connectivity_digest = str(
+        process_evidence.get("connectivity_evidence_identity") or ""
+    )
+    if (
+        not _SAFE_IDENTIFIER.fullmatch(actual)
+        or process_evidence.get("actual_model_identity_verified") is not True
+        or process_evidence.get("model_identity_observed") is not True
+        or actual != str(evidence.configured_model.provider_model_id or "")
+    ):
+        return "", "", ""
+
+    if evidence.capability == "coding":
+        terminal_ok = bool(
+            run.status in {"verifying", "completed", "failed"}
+            and run.process_spawned
+            and run.exit_code == 0
+            and not run.timed_out
+            and not run.cancelled
+            and not run.output_truncated
+        )
+        connectivity = run.execution_connectivity_evidence
+        expected_connectivity_id = run.execution_connectivity_evidence_id
+        expected_model_id = run.execution_model_id
+        requested_model = run.requested_model_identifier
+    elif evidence.capability == "verification":
+        terminal_ok = bool(
+            run.verification_status == "completed"
+            and run.verification_process_spawned
+            and run.verification_exit_code == 0
+            and not run.verification_timed_out
+            and not run.verification_cancelled
+            and not run.verification_output_truncated
+        )
+        connectivity = run.verification_connectivity_evidence
+        expected_connectivity_id = run.verification_connectivity_evidence_id
+        expected_model_id = run.verification_model_id
+        requested_model = run.verification_model_identifier
+    else:
+        return "", "", ""
+    if not terminal_ok:
+        return "", "", ""
+
+    if source in {"explicit_actual_model_metadata", "validated_reroute_event"}:
+        return actual, source, ""
+    # Owner connectivity evidence proves admission for the requested model;
+    # it is not run-local evidence of the effective model used by this later
+    # Coding or Verification turn. Historical connectivity-bound claims remain
+    # persisted as audit evidence but are never returned as Actual model truth.
+    return "", "", ""
 
 
 def has_complete_verified_codex_run_evidence(

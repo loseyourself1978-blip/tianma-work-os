@@ -9,6 +9,7 @@ import selectors
 import signal
 import shutil
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -17,20 +18,39 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from sqlalchemy import or_, select, text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
 from .ai_orchestration import is_verified_real_invocation, record_model_invocation_evidence
 from .config import Settings
+from . import codex_exec_bridge
+from .codex_connectivity import (
+    codex_child_environment,
+    executable_identity,
+    inspect_authentication,
+)
 from .models import (
     AICapability,
     AIModel,
     AIModelAssignment,
     AIModelInvocationEvidence,
     AuditEvent,
+    CodexExecutionAttempt,
     CodexRun,
+    CodexRunMonitor,
     Provider,
     Task,
     utc_now,
+)
+from .result_intake import (
+    ResultIntakeError,
+    canonical_sha256,
+    clear_stale_monitor_terminal_state,
+    ensure_run_monitor,
+    observe_monitor,
+    record_monitor_process_start,
+    reconcile_run_monitors,
+    update_monitor_from_run,
 )
 from .self_hosting import (
     capture_source_snapshot,
@@ -44,6 +64,35 @@ from .self_hosting import (
 
 
 OUTPUT_TRUNCATION_SUFFIX = "\n[output truncated by TWOS]"
+BRIDGE_PREPARATION_GRACE_SECONDS = 5.0
+CODING_HANDOFF_SCHEMA = "twos.coding_handoff.v1"
+
+
+def _valid_coding_handoff_contract(value: str) -> bool:
+    """Validate the only Coding message eligible for sidecar-loss recovery."""
+    try:
+        contract = json.loads(value)
+    except (json.JSONDecodeError, TypeError):
+        return False
+    if not isinstance(contract, dict) or set(contract) != {
+        "schema",
+        "status",
+        "summary",
+    }:
+        return False
+    summary = contract.get("summary")
+    return bool(
+        contract.get("schema") == CODING_HANDOFF_SCHEMA
+        and contract.get("status") == "completed"
+        and isinstance(summary, str)
+        and summary.strip()
+        and len(summary.encode("utf-8")) <= 4000
+    )
+
+
+class _BridgeRuntimeHandoff(Exception):
+    """Stop only the in-process waiter while the detached bridge continues."""
+
 _MODEL_REROUTE = re.compile(
     r"^model rerouted: ([A-Za-z0-9][A-Za-z0-9._:/-]{0,239}) -> "
     r"([A-Za-z0-9][A-Za-z0-9._:/-]{0,239})(?: \([^\r\n]{0,500}\))?$"
@@ -89,10 +138,33 @@ CHILD_ENV_ALLOWLIST = (
     "LOGNAME",
     "SHELL",
     "TERM",
+    # Authentication values are inherited by the protected detached child,
+    # while the immutable ticket records only these key names.
+    "OPENAI_API_KEY",
+    "CODEX_ACCESS_TOKEN",
+    # Preserve the same bounded network/trust context proven by the direct
+    # connection control without persisting any value in Run evidence.
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "ALL_PROXY",
+    "NO_PROXY",
+    "http_proxy",
+    "https_proxy",
+    "all_proxy",
+    "no_proxy",
+    "SSL_CERT_FILE",
+    "SSL_CERT_DIR",
+    "REQUESTS_CA_BUNDLE",
+    "CURL_CA_BUNDLE",
+    "NODE_EXTRA_CA_CERTS",
+    "NO_COLOR",
+    "GIT_TERMINAL_PROMPT",
+    "GIT_ALLOW_PROTOCOL",
 )
 SANITIZED_DIFF_MAX_FILES = 200
 SANITIZED_DIFF_MAX_FILE_BYTES = 1_000_000
 CODEX_MODEL_CATALOG_CACHE_SECONDS = 300.0
+CODEX_MODEL_CATALOG_APP_SERVER_TIMEOUT_SECONDS = 8.0
 CODEX_MODEL_CATALOG_MAX_BYTES = 4_000_000
 CODEX_MODEL_CATALOG_MAX_ENTRIES = 200
 CODEX_MODEL_CATALOG_FALLBACK_VERSION = "twos.codex_cli.compatibility.2026-07-21.v1"
@@ -280,6 +352,8 @@ class _CodexJsonlEvidenceCollector:
         self._event_bytes = 0
         self._event_count = 0
         self._valid_event_count = 0
+        self.evidence_truncated = False
+        self._discarding_oversized_line = False
         self._completed_item_keys: set[str] = set()
         self.malformed = False
         self.malformed_line_count = 0
@@ -306,6 +380,12 @@ class _CodexJsonlEvidenceCollector:
         self.unsupported_model_routing_observed = False
         self.resolved_model_identifier = ""
         self.actual_model_identity_verified = False
+        self.model_identity_source = ""
+        self.model_identity_conflict = False
+        self.connectivity_evidence_identity = ""
+        self.lifecycle_conflict = False
+        self._turn_started_with_identity = False
+        self._turn_terminal_with_identity = False
         self.executable_identity_fingerprint = ""
         self.process_id_fingerprint = ""
         self.usage: dict[str, int] = {}
@@ -316,26 +396,32 @@ class _CodexJsonlEvidenceCollector:
             if self._finished:
                 self.malformed = True
                 return
-            if self.limit_exceeded:
-                return
             self._buffer.extend(chunk)
-            if len(self._buffer) > self.MAX_LINE_BYTES and b"\n" not in self._buffer:
-                self.limit_exceeded = True
-                self._buffer.clear()
-                return
             while True:
                 newline = self._buffer.find(b"\n")
                 if newline < 0:
+                    if len(self._buffer) > self.MAX_LINE_BYTES:
+                        # Keep draining the transport after an unsafe frame.  A
+                        # later, well-formed terminal event must never remain
+                        # unread merely because one preceding line was too
+                        # large for bounded evidence handling.
+                        self.limit_exceeded = True
+                        self.evidence_truncated = True
+                        self._discarding_oversized_line = True
+                        self._buffer.clear()
                     break
                 line = bytes(self._buffer[:newline])
                 del self._buffer[: newline + 1]
+                if self._discarding_oversized_line:
+                    self._discarding_oversized_line = False
+                    continue
                 self._consume_line(line)
 
     def finish(self) -> None:
         with self._lock:
             if self._finished:
                 return
-            if self._buffer and not self.limit_exceeded:
+            if self._buffer and not self._discarding_oversized_line:
                 self._consume_line(bytes(self._buffer))
             self._buffer.clear()
             self._finished = True
@@ -344,16 +430,28 @@ class _CodexJsonlEvidenceCollector:
         with self._lock:
             self.collection_incomplete = True
 
+    def clear_verified_model_identity(self) -> None:
+        """Keep raw lifecycle diagnostics but remove an ineligible model claim."""
+        with self._lock:
+            self.resolved_model_identifier = ""
+            self.actual_model_identity_verified = False
+            self.model_identity_source = ""
+            self.connectivity_evidence_identity = ""
+
     def _consume_line(self, line: bytes) -> None:
         if not line.strip():
             return
         self._event_count += 1
         self._event_bytes += len(line)
         if self._event_count > self.MAX_EVENTS or self._event_bytes > self.MAX_EVENT_BYTES:
-            self.limit_exceeded = True
-            return
+            # MAX_EVENTS/MAX_EVENT_BYTES bound retained presentation evidence,
+            # not transport consumption.  Continue classifying lifecycle
+            # events so turn.completed/turn.failed cannot be displaced by a
+            # high-volume additive stream.
+            self.evidence_truncated = True
         if len(line) > self.MAX_LINE_BYTES:
             self.limit_exceeded = True
+            self.evidence_truncated = True
             return
         try:
             event = json.loads(line.decode("utf-8"))
@@ -373,24 +471,73 @@ class _CodexJsonlEvidenceCollector:
         if event_type == "thread.started":
             thread_id = event.get("thread_id")
             if not isinstance(thread_id, str) or not thread_id or len(thread_id) > 240:
-                self._record_malformed("thread.started contained an invalid thread identity.")
+                self._record_lifecycle_conflict(
+                    "thread.started contained an invalid thread identity."
+                )
                 return
             fingerprint = hashlib.sha256(thread_id.encode("utf-8")).hexdigest()
+            if self.thread_started or self.turn_started or self.turn_completed or self.turn_failed:
+                self._record_lifecycle_conflict(
+                    "JSONL stream emitted a duplicate or out-of-order thread.started event."
+                )
+                return
             if self.thread_id_fingerprint and self.thread_id_fingerprint != fingerprint:
-                self._record_malformed("JSONL stream changed thread identity.")
+                self._record_lifecycle_conflict("JSONL stream changed thread identity.")
                 return
             self.thread_id_fingerprint = fingerprint
             self.thread_started = True
         elif event_type == "turn.started":
+            if not self.thread_started or self.turn_started or self.turn_completed or self.turn_failed:
+                self._record_lifecycle_conflict(
+                    "JSONL stream emitted turn.started outside the single ordered lifecycle."
+                )
+                return
             self.turn_started = True
             turn_id = event.get("turn_id") or event.get("id")
-            if isinstance(turn_id, str) and 0 < len(turn_id) <= 240:
+            if turn_id is not None and (
+                not isinstance(turn_id, str) or not 0 < len(turn_id) <= 240
+            ):
+                self._record_lifecycle_conflict(
+                    "turn.started contained an invalid turn identity."
+                )
+                return
+            if isinstance(turn_id, str):
+                self._turn_started_with_identity = True
                 fingerprint = hashlib.sha256(turn_id.encode("utf-8")).hexdigest()
                 if self.turn_id_fingerprint and self.turn_id_fingerprint != fingerprint:
-                    self._record_malformed("JSONL stream changed turn identity.")
+                    self._record_lifecycle_conflict("JSONL stream changed turn identity.")
                 else:
                     self.turn_id_fingerprint = fingerprint
         elif event_type == "turn.completed":
+            if not self.thread_started or not self.turn_started or self.turn_completed or self.turn_failed:
+                self._record_lifecycle_conflict(
+                    "JSONL stream emitted turn.completed outside the single ordered lifecycle."
+                )
+                return
+            terminal_turn_id = event.get("turn_id") or event.get("id")
+            if terminal_turn_id is not None and (
+                not isinstance(terminal_turn_id, str)
+                or not 0 < len(terminal_turn_id) <= 240
+            ):
+                self._record_lifecycle_conflict(
+                    "turn.completed contained an invalid turn identity."
+                )
+                return
+            self._turn_terminal_with_identity = isinstance(terminal_turn_id, str)
+            if self._turn_started_with_identity != self._turn_terminal_with_identity:
+                self._record_lifecycle_conflict(
+                    "JSONL stream exposed only a partial terminal turn identity."
+                )
+                return
+            if isinstance(terminal_turn_id, str):
+                terminal_fingerprint = hashlib.sha256(
+                    terminal_turn_id.encode("utf-8")
+                ).hexdigest()
+                if terminal_fingerprint != self.turn_id_fingerprint:
+                    self._record_lifecycle_conflict(
+                        "JSONL stream completed a different turn identity."
+                    )
+                    return
             usage = event.get("usage")
             if isinstance(usage, dict):
                 allowed = {
@@ -415,6 +562,35 @@ class _CodexJsonlEvidenceCollector:
             self.turn_completed = True
             self.turn_failed = False
         elif event_type == "turn.failed":
+            if not self.thread_started or not self.turn_started or self.turn_completed or self.turn_failed:
+                self._record_lifecycle_conflict(
+                    "JSONL stream emitted turn.failed outside the single ordered lifecycle."
+                )
+                return
+            terminal_turn_id = event.get("turn_id") or event.get("id")
+            if terminal_turn_id is not None and (
+                not isinstance(terminal_turn_id, str)
+                or not 0 < len(terminal_turn_id) <= 240
+            ):
+                self._record_lifecycle_conflict(
+                    "turn.failed contained an invalid turn identity."
+                )
+                return
+            self._turn_terminal_with_identity = isinstance(terminal_turn_id, str)
+            if self._turn_started_with_identity != self._turn_terminal_with_identity:
+                self._record_lifecycle_conflict(
+                    "JSONL stream exposed only a partial failed-turn identity."
+                )
+                return
+            if isinstance(terminal_turn_id, str):
+                terminal_fingerprint = hashlib.sha256(
+                    terminal_turn_id.encode("utf-8")
+                ).hexdigest()
+                if terminal_fingerprint != self.turn_id_fingerprint:
+                    self._record_lifecycle_conflict(
+                        "JSONL stream failed a different turn identity."
+                    )
+                    return
             self.terminal_turn_status = "failed"
             self.turn_completed = False
             self.turn_failed = True
@@ -477,11 +653,21 @@ class _CodexJsonlEvidenceCollector:
             rerouted_from, rerouted_to = match.groups()
             if self.rerouted_to and self.rerouted_to != rerouted_to:
                 self._record_malformed("Codex emitted conflicting model reroute diagnostics.")
+                self.model_identity_conflict = True
+                self.actual_model_identity_verified = False
+                self.unsupported_model_routing_observed = True
+                return
+            if self.resolved_model_identifier and self.resolved_model_identifier != rerouted_to:
+                self._record_malformed("Codex emitted conflicting actual model evidence.")
+                self.model_identity_conflict = True
+                self.actual_model_identity_verified = False
+                self.unsupported_model_routing_observed = True
                 return
             self.rerouted_from = rerouted_from
             self.rerouted_to = rerouted_to
             self.resolved_model_identifier = rerouted_to
             self.actual_model_identity_verified = True
+            self.model_identity_source = "validated_reroute_event"
         elif isinstance(event_type, str) and (
             "rerout" in event_type.casefold()
             or (
@@ -503,6 +689,13 @@ class _CodexJsonlEvidenceCollector:
         self.malformed_line_count += 1
         if len(self.malformed_diagnostics) < 20:
             self.malformed_diagnostics.append(_bounded_event_text(summary, maximum=240))
+
+    def _record_lifecycle_conflict(self, summary: str) -> None:
+        self.lifecycle_conflict = True
+        self.resolved_model_identifier = ""
+        self.actual_model_identity_verified = False
+        self.model_identity_source = ""
+        self._record_malformed(summary)
 
     @staticmethod
     def _event_message(event: dict[str, object]) -> str:
@@ -534,8 +727,6 @@ class _CodexJsonlEvidenceCollector:
             "actual_resolved_model",
             "actual_model_identifier",
             "resolved_model",
-            "model_identifier",
-            "model",
         ):
             value = event.get(key)
             if isinstance(value, str) and value:
@@ -548,9 +739,13 @@ class _CodexJsonlEvidenceCollector:
             return
         if self.resolved_model_identifier and self.resolved_model_identifier != candidate:
             self._record_malformed("Trusted lifecycle metadata contained conflicting model identities.")
+            self.model_identity_conflict = True
+            self.actual_model_identity_verified = False
+            self.unsupported_model_routing_observed = True
             return
         self.resolved_model_identifier = candidate
         self.actual_model_identity_verified = True
+        self.model_identity_source = "explicit_actual_model_metadata"
 
     def _consume_command_execution(self, item: dict[str, object]) -> None:
         self.command_execution_count += 1
@@ -590,6 +785,7 @@ class _CodexJsonlEvidenceCollector:
         return bool(
             not self.limit_exceeded
             and not self.collection_incomplete
+            and not self.lifecycle_conflict
             and self.thread_started
             and self.turn_started
             and self.turn_completed
@@ -863,9 +1059,12 @@ class CodexAdapter:
             process.terminate()
             raise ValueError("app-server stdio transport was unavailable")
         selector = selectors.DefaultSelector()
-        selector.register(process.stdout, selectors.EVENT_READ)
-        deadline = time.monotonic() + 8.0
+        stdout_fd = process.stdout.fileno()
+        os.set_blocking(stdout_fd, False)
+        selector.register(stdout_fd, selectors.EVENT_READ)
+        deadline = time.monotonic() + CODEX_MODEL_CATALOG_APP_SERVER_TIMEOUT_SECONDS
         observed_bytes = 0
+        frame_buffer = bytearray()
 
         def send(message: dict[str, object]) -> None:
             process.stdin.write(json.dumps(message, separators=(",", ":")) + "\n")
@@ -874,21 +1073,34 @@ class CodexAdapter:
         def response_for(request_id: int) -> dict[str, object]:
             nonlocal observed_bytes
             while time.monotonic() < deadline:
+                while b"\n" in frame_buffer:
+                    raw_line, _, remainder = frame_buffer.partition(b"\n")
+                    frame_buffer[:] = remainder
+                    raw_line = raw_line.rstrip(b"\r")
+                    if not raw_line.strip():
+                        continue
+                    message = json.loads(raw_line.decode("utf-8"))
+                    if not isinstance(message, dict) or message.get("id") != request_id:
+                        continue
+                    if "error" in message or not isinstance(message.get("result"), dict):
+                        raise ValueError("app-server catalog request failed")
+                    return message["result"]
                 ready = selector.select(max(0.0, deadline - time.monotonic()))
                 if not ready:
                     break
-                line = process.stdout.readline()
-                if not line:
+                try:
+                    chunk = os.read(
+                        stdout_fd,
+                        min(65_536, CODEX_MODEL_CATALOG_MAX_BYTES - observed_bytes + 1),
+                    )
+                except BlockingIOError:
+                    continue
+                if not chunk:
                     break
-                observed_bytes += len(line.encode("utf-8", errors="replace"))
+                observed_bytes += len(chunk)
                 if observed_bytes > CODEX_MODEL_CATALOG_MAX_BYTES:
                     raise ValueError("app-server catalog response exceeded the bounded parser limit")
-                message = json.loads(line)
-                if not isinstance(message, dict) or message.get("id") != request_id:
-                    continue
-                if "error" in message or not isinstance(message.get("result"), dict):
-                    raise ValueError("app-server catalog request failed")
-                return message["result"]
+                frame_buffer.extend(chunk)
             raise TimeoutError("app-server catalog response timed out")
 
         raw_models: list[object] = []
@@ -1134,24 +1346,58 @@ class CodexAdapter:
         )
 
     def source_state(self) -> dict[str, object]:
-        return git_source_state(self.settings.source_repo)
+        return git_source_state(
+            self.settings.source_repo,
+            hardened_read_only=True,
+        )
+
+    def validate_source_identity(
+        self,
+        *,
+        expected_repo: str,
+        expected_branch: str,
+        expected_commit: str,
+    ) -> dict[str, object]:
+        """Bind execution preparation to the exact admitted repository state."""
+
+        state = self.source_state()
+        try:
+            repository_matches = (
+                Path(str(state["repo"])).resolve()
+                == Path(expected_repo).resolve()
+            )
+        except (KeyError, OSError, RuntimeError, ValueError) as exc:
+            raise RuntimeError(
+                "Approved source repository identity could not be verified."
+            ) from exc
+        if not repository_matches:
+            raise RuntimeError(
+                "Source repository does not match the approved Run binding."
+            )
+        if str(state.get("branch") or "") != str(expected_branch or ""):
+            raise RuntimeError(
+                "Source branch does not match the approved Run binding."
+            )
+        if str(state.get("commit") or "") != str(expected_commit or ""):
+            raise RuntimeError(
+                "Source HEAD does not match the approved Run binding."
+            )
+        return state
 
     @staticmethod
     def authentication_ready(detection: CodexDetection) -> tuple[bool, str]:
         if detection.status != "configured" or not detection.executable:
             return False, "Codex CLI readiness must pass before authentication can be verified."
-        try:
-            result = subprocess.run(
-                [detection.executable, "login", "status"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-        except (OSError, subprocess.SubprocessError):
-            return False, "Codex authentication status could not be verified locally."
-        if result.returncode != 0:
-            return False, "Codex authentication needs setup."
-        return True, "Local Codex CLI and authentication readiness checks passed."
+        diagnostic = inspect_authentication(
+            detection.executable,
+            environment=codex_child_environment(),
+        )
+        ready = bool(
+            diagnostic.state
+            in {"CHATGPT_LOGIN_AUTHENTICATED", "API_KEY_AUTHENTICATED"}
+            and diagnostic.credential_store_accessible
+        )
+        return ready, diagnostic.safe_summary
 
     def create_worktree(self, run_id: int, source_commit: str) -> tuple[Path, str]:
         state = self.source_state()
@@ -1165,10 +1411,105 @@ class CodexAdapter:
         run_git(Path(state["repo"]), "worktree", "add", "-b", branch, str(worktree), source_commit, timeout=60)
         return worktree, branch
 
-    def discard_unstarted_worktree(self, worktree: Path, branch: str) -> None:
+    def discard_unstarted_worktree(
+        self,
+        worktree: Path,
+        branch: str,
+    ) -> tuple[bool, str]:
+        """Remove one manager-created worktree and verify the final state.
+
+        The previous implementation ignored both Git exit statuses.  That made
+        a failed cleanup indistinguishable from a successful pre-launch block.
+        Return only stable diagnostic codes so callers can persist truthful
+        evidence without leaking a host path or raw Git output.
+        """
+
         source_repo = self.settings.source_repo.resolve()
-        run_git(source_repo, "worktree", "remove", "--force", str(worktree), check=False, timeout=60)
-        run_git(source_repo, "branch", "-D", branch, check=False, timeout=30)
+        authorized_root = self.settings.worktree_root.resolve(strict=False)
+        candidate = worktree.resolve(strict=False)
+        if (
+            not candidate.is_relative_to(authorized_root)
+            or not re.fullmatch(r"twos/codex-run-[0-9]+-[0-9a-f]{8}", branch)
+        ):
+            return False, "UNSTARTED_WORKTREE_IDENTITY_INVALID"
+
+        remove = run_git(
+            source_repo,
+            "worktree",
+            "remove",
+            "--force",
+            str(candidate),
+            check=False,
+            timeout=60,
+        )
+        delete_branch = run_git(
+            source_repo,
+            "branch",
+            "-D",
+            branch,
+            check=False,
+            timeout=30,
+        )
+        worktree_list = run_git(
+            source_repo,
+            "worktree",
+            "list",
+            "--porcelain",
+            check=False,
+            timeout=30,
+        )
+        branch_ref = run_git(
+            source_repo,
+            "show-ref",
+            "--verify",
+            "--quiet",
+            f"refs/heads/{branch}",
+            check=False,
+            timeout=30,
+        )
+        path_state_verified = True
+        try:
+            candidate.lstat()
+            path_present = True
+        except FileNotFoundError:
+            path_present = False
+        except OSError:
+            path_present = True
+            path_state_verified = False
+        registered = bool(
+            worktree_list.returncode == 0
+            and f"worktree {candidate}\n" in f"{worktree_list.stdout.rstrip()}\n"
+        )
+        branch_present = branch_ref.returncode == 0
+        cleanup_verified = bool(
+            worktree_list.returncode == 0
+            and branch_ref.returncode in {0, 1}
+            and path_state_verified
+            and not path_present
+            and not registered
+            and not branch_present
+        )
+        if cleanup_verified:
+            return True, "UNSTARTED_WORKTREE_CLEANUP_VERIFIED"
+
+        blockers: list[str] = []
+        if remove.returncode != 0:
+            blockers.append("WORKTREE_REMOVE_FAILED")
+        if delete_branch.returncode != 0 and branch_present:
+            blockers.append("BRANCH_DELETE_FAILED")
+        if worktree_list.returncode != 0:
+            blockers.append("WORKTREE_REGISTRY_UNVERIFIED")
+        elif registered:
+            blockers.append("WORKTREE_STILL_REGISTERED")
+        if branch_ref.returncode not in {0, 1}:
+            blockers.append("BRANCH_STATE_UNVERIFIED")
+        elif branch_present:
+            blockers.append("BRANCH_STILL_PRESENT")
+        if path_present:
+            blockers.append("WORKTREE_PATH_STILL_PRESENT")
+        if not path_state_verified:
+            blockers.append("WORKTREE_PATH_STATE_UNVERIFIED")
+        return False, ",".join(dict.fromkeys(blockers)) or "CLEANUP_UNVERIFIED"
 
     def command_for(
         self,
@@ -1177,6 +1518,7 @@ class CodexAdapter:
         model_identifier: str,
         *,
         sandbox_mode: str = "workspace-write",
+        output_last_message: Path | None = None,
     ) -> list[str]:
         if detection.status != "configured" or not detection.executable or not detection.supported_command:
             raise RuntimeError("Codex CLI is not configured for execution.")
@@ -1189,7 +1531,7 @@ class CodexAdapter:
         # The approved pack is transported through stdin using Codex's documented
         # `-` prompt sentinel. Keeping it out of argv avoids ARG_MAX failures and
         # guarantees that shell metacharacters remain inert data.
-        return [
+        command = [
             detection.executable,
             detection.supported_command,
             "--model",
@@ -1201,8 +1543,13 @@ class CodexAdapter:
             "--ignore-user-config",
             "--color",
             "never",
-            "-",
         ]
+        if output_last_message is not None:
+            if not output_last_message.is_absolute():
+                raise RuntimeError("The Codex final-result sidecar path must be absolute.")
+            command.extend(["--output-last-message", str(output_last_message)])
+        command.append("-")
+        return command
 
 
 class CodexExecutionManager:
@@ -1215,6 +1562,18 @@ class CodexExecutionManager:
         self._workers: dict[int, threading.Thread] = {}
         self._cancel_requested: set[int] = set()
         self._stopping = False
+        instance_identity = hashlib.sha256(
+            (
+                f"{settings.database_url}\0"
+                f"{settings.source_repo.resolve(strict=False)}"
+            ).encode("utf-8")
+        ).hexdigest()[:24]
+        bridge_base = codex_exec_bridge.prepare_spool_root(
+            settings.codex_spool_root.resolve(strict=False),
+            forbidden_roots=(settings.source_repo,),
+        )
+        self._bridge_root = bridge_base / instance_identity
+        self._bridge_handles: dict[tuple[int, str], codex_exec_bridge.ExecutionHandle] = {}
 
     @staticmethod
     def _invalidate_approved_model_assignments(
@@ -1338,7 +1697,13 @@ class CodexExecutionManager:
                 for item in tracked_models
             }
             authenticated, authentication_reason = self.adapter.authentication_ready(detection)
-            ready = detection.status == "configured" and authenticated
+            prerequisites_ready = detection.status == "configured" and authenticated
+            connectivity_verified = bool(
+                model.evidence_source == "codex_connectivity_probe"
+                and model.evidence_status == "verified"
+                and model.availability_status == "available"
+            )
+            ready = prerequisites_ready and connectivity_verified
             provider.enabled = ready
             provider.status = "healthy" if ready else "unconfigured"
             provider.last_checked_at = utc_now()
@@ -1355,9 +1720,11 @@ class CodexExecutionManager:
                 model.evidence_status = "runtime_check" if ready else "unverified"
                 model.evidence_source = "local_cli_readiness"
             model.safe_diagnostic = (
-                "Local Codex CLI and authentication are ready; access to this exact model is verified "
-                "only by an explicit Owner-approved run."
+                "Codex CLI, authentication, Provider connectivity, and effective probe-model "
+                "availability were verified by an explicit Owner connection probe."
                 if ready
+                else "Codex CLI and authentication prerequisites are available; Provider connectivity must be verified by the Owner."
+                if prerequisites_ready
                 else authentication_reason
                 if detection.status == "configured"
                 else detection.reason
@@ -1408,13 +1775,11 @@ class CodexExecutionManager:
             )
             .order_by(AIModel.id)
         ).all())
-        # A successful background observation may refresh only the explicit
-        # legacy startup binding. Owner-created UI configurations become
-        # Available solely through explicit Check availability. A failed
-        # observation may safely downgrade every local target so Run admission
-        # cannot rely on stale readiness.
+        # A background CLI/authentication observation may downgrade a target,
+        # but it must never promote one to Provider/model Ready. Promotion is
+        # reserved for the explicit Owner-triggered connectivity probe.
         if ready:
-            models = [item for item in models if model_identifier and item.provider_model_id == model_identifier]
+            return False
         if not models:
             return False
         provider = models[0].provider
@@ -1442,10 +1807,7 @@ class CodexExecutionManager:
                 model.evidence_status = "runtime_check" if ready else "unverified"
                 model.evidence_source = "local_cli_readiness"
             model.safe_diagnostic = (
-                "Local Codex CLI and authentication are ready; access to this exact model is verified "
-                "only by an explicit Owner-approved run."
-                if ready
-                else authentication_reason
+                authentication_reason
                 if detection.status == "configured"
                 else detection.reason
             )
@@ -1485,88 +1847,2335 @@ class CodexExecutionManager:
         )
         return True
 
+    @staticmethod
+    def _sync_result_monitor(
+        session: Session,
+        run: CodexRun,
+        *,
+        actual_model_identifier: str | None = None,
+        codex_session_identity: str | None = None,
+    ) -> None:
+        """Persist monitor progress without weakening ordinary Run finalization."""
+        try:
+            update_monitor_from_run(
+                session,
+                run,
+                actual_model_identifier=actual_model_identifier,
+                codex_session_identity=codex_session_identity,
+            )
+        except ResultIntakeError as exc:
+            session.add(
+                AuditEvent(
+                    action="codex_run_monitor_update_blocked",
+                    entity_type="codex_run",
+                    entity_id=run.id,
+                    details=f"code={exc.code}",
+                )
+            )
+
+    def _bridge_phase_key(self, run_id: int, phase: str) -> str:
+        return f"run-{run_id}-{phase}"
+
+    def _existing_bridge_handle(
+        self,
+        run_id: int,
+        phase: str,
+    ) -> codex_exec_bridge.ExecutionHandle | None:
+        key = (run_id, phase)
+        cached = self._bridge_handles.get(key)
+        if cached is not None:
+            return cached
+        ticket_path = (
+            self._bridge_root
+            / self._bridge_phase_key(run_id, phase)
+            / "ticket.json"
+        )
+        if not ticket_path.exists() and not ticket_path.is_symlink():
+            return None
+        handle = codex_exec_bridge.handle_from_ticket_path(ticket_path)
+        self._bridge_handles[key] = handle
+        return handle
+
+    def _bridge_preparation_status(self, run_id: int, phase: str) -> str:
+        """Classify the local ticket/seal publication window without launching."""
+        phase_directory = self._bridge_root / self._bridge_phase_key(run_id, phase)
+        ticket_path = phase_directory / "ticket.json"
+        seal_path = phase_directory / "ticket.seal.json"
+        if not phase_directory.exists() and not phase_directory.is_symlink():
+            return "absent"
+        if ticket_path.exists() and seal_path.exists():
+            # Full validation is intentionally delegated to the public bridge
+            # loader; mere filenames are never a ready signal.
+            codex_exec_bridge.handle_from_ticket_path(ticket_path)
+            return "ready"
+        try:
+            newest_mtime = max(
+                item.lstat().st_mtime
+                for item in (phase_directory, ticket_path, seal_path)
+                if item.exists() or item.is_symlink()
+            )
+        except (OSError, ValueError) as exc:
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "BRIDGE_PREPARATION_STATE_INVALID",
+                "The durable Codex preparation state could not be verified.",
+            ) from exc
+        if time.time() - newest_mtime <= BRIDGE_PREPARATION_GRACE_SECONDS:
+            return "preparing"
+        raise codex_exec_bridge.CodexExecBridgeError(
+            "BRIDGE_PREPARATION_INCOMPLETE",
+            "The durable Codex ticket preparation did not complete within its bounded window.",
+        )
+
+    def _bridge_phase_has_launch_evidence(self, run_id: int, phase: str) -> bool:
+        try:
+            if self._bridge_preparation_status(run_id, phase) != "ready":
+                return False
+            handle = self._existing_bridge_handle(run_id, phase)
+            if handle is None:
+                return False
+            if codex_exec_bridge.load_terminal_receipt(handle) is not None:
+                return True
+            launch = codex_exec_bridge.load_launch_info(handle)
+            # The validated immutable launch boundary is enough to prevent a
+            # synthetic pre-launch failure. Recovery independently determines
+            # whether that exact PID is live, terminal, or genuinely lost.
+            return launch is not None
+        except codex_exec_bridge.CodexExecBridgeError:
+            # A malformed durable launch boundary must flow to recovery's
+            # integrity blocker rather than being converted into exit=-1.
+            return True
+
+    def _validated_bridge_ticket(
+        self,
+        run: CodexRun,
+        *,
+        phase: str,
+        worktree: Path,
+    ) -> tuple[codex_exec_bridge.ExecutionHandle, dict[str, object]]:
+        """Load an exact sealed phase ticket without recreating launch baselines."""
+        handle = self._existing_bridge_handle(int(run.id), phase)
+        if handle is None:
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "RECOVERY_TICKET_UNAVAILABLE",
+                "The durable Codex execution ticket is unavailable.",
+            )
+        ticket = codex_exec_bridge.load_ticket(handle)
+        identity = ticket.get("identity")
+        if (
+            not isinstance(identity, dict)
+            or run.pack is None
+            or run.pack.approved_by_user_id is None
+            or run.execution_assignment is None
+            or run.verification_assignment is None
+        ):
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "RECOVERY_BINDING_INCOMPLETE",
+                "The durable Codex recovery binding is incomplete.",
+            )
+        connectivity = (
+            run.execution_connectivity_evidence
+            if phase == "coding"
+            else run.verification_connectivity_evidence
+        )
+        expected_connectivity = str(
+            connectivity.evidence_digest if connectivity is not None else ""
+        )
+        requested_model = (
+            run.requested_model_identifier
+            if phase == "coding"
+            else run.verification_model_identifier
+        )
+        expected_static: dict[str, object] = {
+            "owner_id": int(run.pack.approved_by_user_id),
+            "run_id": int(run.id),
+            "task_id": int(run.task_id),
+            "task_version": int(run.task_version),
+            "pack_id": int(run.pack_id),
+            "pack_version": int(run.pack.version),
+            "coding_assignment_id": int(run.execution_assignment.id),
+            "coding_assignment_version": int(
+                run.execution_assignment.assignment_version
+            ),
+            "verification_assignment_id": int(run.verification_assignment.id),
+            "verification_assignment_version": int(
+                run.verification_assignment.assignment_version
+            ),
+            "routing_snapshot_identity": run.routing_snapshot_hash,
+            "source_snapshot_identity": run.source_snapshot_digest,
+            "connectivity_evidence_identity": expected_connectivity,
+            "requested_model_identifier": requested_model,
+        }
+        if any(identity.get(key) != value for key, value in expected_static.items()):
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "RECOVERY_BINDING_MISMATCH",
+                "The sealed Codex ticket does not match the persisted Run binding.",
+            )
+        try:
+            ticket_worktree = Path(str(ticket.get("working_directory") or "")).resolve(
+                strict=True
+            )
+            expected_worktree = worktree.resolve(strict=True)
+        except OSError as exc:
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "RECOVERY_WORKTREE_UNAVAILABLE",
+                "The isolated recovery workspace is unavailable.",
+            ) from exc
+        boundary_keys = (
+            "source_remote_fingerprint",
+            "git_boundary_fingerprint",
+            "workspace_snapshot_digest",
+        )
+        if (
+            ticket.get("phase") != phase
+            or ticket.get("phase_key") != self._bridge_phase_key(int(run.id), phase)
+            or ticket_worktree != expected_worktree
+            or any(
+                not re.fullmatch(r"[0-9a-f]{64}", str(identity.get(key) or ""))
+                for key in boundary_keys
+            )
+            or (
+                phase == "coding"
+                and identity.get("workspace_snapshot_digest")
+                != run.source_snapshot_digest
+            )
+            or (
+                phase == "verification"
+                and identity.get("pre_verification_workspace_digest")
+                != identity.get("workspace_snapshot_digest")
+            )
+        ):
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "RECOVERY_TICKET_INTEGRITY_BLOCKED",
+                "The sealed Codex ticket failed its Run or boundary integrity check.",
+            )
+        return handle, ticket
+
+    def _bridge_execution_identity(
+        self,
+        run: CodexRun,
+        *,
+        phase: str,
+        worktree: Path,
+        executable: str,
+    ) -> codex_exec_bridge.ExecutionIdentity:
+        if (
+            run.pack is None
+            or run.pack.approved_by_user_id is None
+            or run.execution_assignment is None
+            or run.verification_assignment is None
+        ):
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "RUN_BINDING_INCOMPLETE",
+                "The exact Run binding is incomplete.",
+            )
+        connectivity = (
+            run.execution_connectivity_evidence
+            if phase == "coding"
+            else run.verification_connectivity_evidence
+        )
+        connectivity_identity = str(
+            connectivity.evidence_digest if connectivity is not None else ""
+        )
+        if not re.fullmatch(r"[0-9a-f]{64}", connectivity_identity):
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "CONNECTIVITY_BINDING_INCOMPLETE",
+                "The Owner-verified Codex connectivity binding is unavailable.",
+            )
+        requested_model = (
+            run.requested_model_identifier
+            if phase == "coding"
+            else run.verification_model_identifier
+        )
+        execution_location_identity = hashlib.sha256(
+            json.dumps(
+                {
+                    "run_id": run.id,
+                    "phase": phase,
+                    "worktree": str(worktree.resolve(strict=True)),
+                    "source_commit": run.source_commit,
+                    "source_snapshot": run.source_snapshot_digest,
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        source_remote_fingerprint, _, remote_complete = (
+            self._remote_state_fingerprint(self.settings.source_repo)
+        )
+        git_boundary_fingerprint, git_boundary_complete = (
+            self._git_boundary_fingerprint(self.settings.source_repo)
+        )
+        try:
+            workspace_snapshot_digest = str(
+                capture_source_snapshot(
+                    worktree,
+                    hardened_read_only=True,
+                    approved_source_branch=run.source_branch,
+                ).get("digest")
+                or ""
+            )
+        except RuntimeError as exc:
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "WORKSPACE_SNAPSHOT_UNAVAILABLE",
+                "The pre-execution workspace snapshot could not be verified.",
+            ) from exc
+        if (
+            not remote_complete
+            or not git_boundary_complete
+            or not re.fullmatch(r"[0-9a-f]{64}", source_remote_fingerprint)
+            or not re.fullmatch(r"[0-9a-f]{64}", git_boundary_fingerprint)
+            or not re.fullmatch(r"[0-9a-f]{64}", workspace_snapshot_digest)
+        ):
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "EXECUTION_BOUNDARY_UNAVAILABLE",
+                "The pre-execution Git or workspace boundary could not be verified.",
+            )
+        if phase == "coding" and workspace_snapshot_digest != run.source_snapshot_digest:
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "CODING_WORKSPACE_BASELINE_MISMATCH",
+                "The isolated Coding workspace does not match the approved source snapshot.",
+            )
+        return codex_exec_bridge.ExecutionIdentity(
+            owner_id=int(run.pack.approved_by_user_id),
+            run_id=int(run.id),
+            task_id=int(run.task_id),
+            task_version=int(run.task_version),
+            pack_id=int(run.pack_id),
+            pack_version=int(run.pack.version),
+            coding_assignment_id=int(run.execution_assignment.id),
+            coding_assignment_version=int(
+                run.execution_assignment.assignment_version
+            ),
+            verification_assignment_id=int(run.verification_assignment.id),
+            verification_assignment_version=int(
+                run.verification_assignment.assignment_version
+            ),
+            routing_snapshot_identity=run.routing_snapshot_hash,
+            source_snapshot_identity=run.source_snapshot_digest,
+            connectivity_evidence_identity=connectivity_identity,
+            requested_model_identifier=requested_model,
+            executable_fingerprint=self._executable_identity_fingerprint(
+                executable
+            ),
+            execution_location_identity=execution_location_identity,
+            source_remote_fingerprint=source_remote_fingerprint,
+            git_boundary_fingerprint=git_boundary_fingerprint,
+            workspace_snapshot_digest=workspace_snapshot_digest,
+            pre_verification_workspace_digest=(
+                workspace_snapshot_digest if phase == "verification" else None
+            ),
+        )
+
+    def _prepare_bridge_phase(
+        self,
+        run: CodexRun,
+        *,
+        phase: str,
+        detection: CodexDetection,
+        worktree: Path,
+        prompt: str,
+        model_identifier: str,
+        sandbox_mode: str,
+    ) -> codex_exec_bridge.ExecutionHandle:
+        if not detection.executable:
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "EXECUTABLE_UNAVAILABLE",
+                "The exact Codex executable is unavailable.",
+            )
+        phase_key = self._bridge_phase_key(int(run.id), phase)
+        # Bind Codex's sidecar to this exact immutable Run/phase attempt.  A
+        # generic filename makes stale-artifact forensics needlessly
+        # ambiguous even when the containing phase directory is unique.
+        final_message_name = f"final-message-{phase_key}.txt"
+        final_message_path = self._bridge_root / phase_key / final_message_name
+        command = self.adapter.command_for(
+            detection,
+            prompt,
+            model_identifier,
+            sandbox_mode=sandbox_mode,
+            output_last_message=final_message_path,
+        )
+        handle = codex_exec_bridge.prepare_execution(
+            self._bridge_root,
+            phase_key=phase_key,
+            phase=phase,
+            identity=self._bridge_execution_identity(
+                run,
+                phase=phase,
+                worktree=worktree,
+                executable=detection.executable,
+            ),
+            argv=command,
+            stdin_payload=prompt.encode("utf-8"),
+            working_directory=worktree,
+            environment_keys=CHILD_ENV_ALLOWLIST,
+            output_limit_bytes=max(0, int(self.settings.codex_output_limit)),
+            timeout_seconds=max(1, int(self.settings.codex_timeout_seconds)),
+            heartbeat_interval_seconds=min(
+                1.0,
+                max(0.05, float(self.settings.scheduler_poll_seconds)),
+            ),
+            final_message_relative_path=final_message_name,
+            forbidden_spool_roots=(self.settings.source_repo,),
+        )
+        self._bridge_handles[(int(run.id), phase)] = handle
+        return handle
+
+    def _bind_bridge_child(
+        self,
+        run_id: int,
+        *,
+        phase: str,
+        process_id: int,
+        process_start_identity: str,
+        executable: str,
+        worktree: Path,
+        terminal_receipt: dict[str, object] | None = None,
+    ) -> None:
+        if process_id <= 0 or not re.fullmatch(
+            r"[0-9a-f]{64}", process_start_identity
+        ):
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "PROCESS_IDENTITY_UNAVAILABLE",
+                "The exact Codex child-process identity is unavailable.",
+            )
+        with self.factory() as session:
+            run = session.get(CodexRun, run_id)
+            if run is None:
+                raise codex_exec_bridge.CodexExecBridgeError(
+                    "RUN_UNAVAILABLE",
+                    "The persisted Codex Run is unavailable.",
+                )
+            monitor = ensure_run_monitor(
+                session,
+                int(run.pack.approved_by_user_id),
+                run,
+            )
+            recorded_id = (
+                monitor.process_id
+                if phase == "coding"
+                else monitor.verification_process_id
+            )
+            recorded_identity = (
+                monitor.process_start_identity
+                if phase == "coding"
+                else monitor.verification_process_start_identity
+            )
+            if recorded_id is not None:
+                if (
+                    recorded_id != process_id
+                    or recorded_identity != process_start_identity
+                ):
+                    raise codex_exec_bridge.CodexExecBridgeError(
+                        "PROCESS_IDENTITY_MISMATCH",
+                        "The durable Codex child-process identity conflicts with this Run.",
+                    )
+                return
+            historical_receipt = terminal_receipt
+            if (
+                historical_receipt is None
+                and monitor.monitor_state
+                in {
+                    "COMPLETED",
+                    "FAILED",
+                    "CANCELLED",
+                    "TIMED_OUT",
+                    "RESULT_PENDING",
+                    "RESULT_AVAILABLE",
+                    "RESULT_UNAVAILABLE",
+                    "RESULT_INTEGRITY_BLOCKED",
+                }
+            ):
+                # Close the receipt-publication TOCTOU window: the manager may
+                # have read live state immediately before the watcher observed
+                # and committed the newly sealed terminal receipt.
+                late_handle = self._existing_bridge_handle(run_id, phase)
+                if late_handle is not None:
+                    historical_receipt = (
+                        codex_exec_bridge.load_terminal_receipt(late_handle)
+                    )
+            if (
+                historical_receipt is not None
+                and self._bind_historical_phase_process(
+                    session,
+                    run,
+                    monitor,
+                    phase=phase,
+                    process_id=process_id,
+                    process_start_identity=process_start_identity,
+                    worktree=worktree,
+                    terminal_receipt=historical_receipt,
+                )
+            ):
+                session.commit()
+                return
+            if phase == "coding":
+                run.process_spawned = True
+            else:
+                run.verification_process_spawned = True
+            record_monitor_process_start(
+                session,
+                run,
+                process_id,
+                executable,
+                worktree,
+                phase=phase,
+                trusted_process_start_identity=process_start_identity,
+            )
+            session.add(
+                AuditEvent(
+                    action=(
+                        "codex_exec_bridge_coding_started"
+                        if phase == "coding"
+                        else "codex_exec_bridge_verification_started"
+                    ),
+                    entity_type="codex_run",
+                    entity_id=run_id,
+                    details=(
+                        "Exact shell-free codex exec child identity was bound to "
+                        "the durable external spool."
+                    ),
+                )
+            )
+            session.commit()
+
+    def _bind_historical_phase_process(
+        self,
+        session: Session,
+        run: CodexRun,
+        monitor: CodexRunMonitor,
+        *,
+        phase: str,
+        process_id: int,
+        process_start_identity: str,
+        worktree: Path,
+        terminal_receipt: dict[str, object],
+    ) -> bool:
+        """Bind an exact exited child without regressing terminal monitor state.
+
+        A very fast phase can publish its sealed terminal receipt before the
+        in-process manager commits ``record_monitor_process_start``.  The
+        result watcher may then persist the exact execution attempt and move
+        the monitor to RESULT_PENDING.  Replaying the ordinary RUNNING or
+        VERIFYING transition at that point is invalid, but losing the already
+        proven child identity is equally wrong.
+
+        This path is intentionally unavailable unless the sealed ticket and
+        receipt validate against this Run and a persisted attempt already
+        binds the same phase, PID, start identity, ticket, and receipt.  It
+        changes only the missing monitor identity fields; monitor lifecycle
+        state and result evidence remain untouched.
+        """
+
+        handle, _ticket = self._validated_bridge_ticket(
+            run,
+            phase=phase,
+            worktree=worktree,
+        )
+        sealed_receipt = codex_exec_bridge.load_terminal_receipt(handle)
+        if sealed_receipt is None or sealed_receipt != terminal_receipt:
+            raise ResultIntakeError(
+                "SEALED_RECEIPT_IDENTITY_MISMATCH",
+                "The terminal Codex receipt does not match this phase binding.",
+            )
+        receipt_digest = canonical_sha256(sealed_receipt)
+        attempt = session.scalar(
+            select(CodexExecutionAttempt).where(
+                CodexExecutionAttempt.owner_id == monitor.owner_id,
+                CodexExecutionAttempt.run_id == run.id,
+                CodexExecutionAttempt.monitor_id == monitor.id,
+                CodexExecutionAttempt.phase == phase.upper(),
+                CodexExecutionAttempt.attempt_number == 1,
+            )
+        )
+        if attempt is None:
+            return False
+        receipt_process_id = sealed_receipt.get("child_process_id")
+        receipt_process_identity = sealed_receipt.get(
+            "child_process_start_identity"
+        )
+        exact_attempt = bool(
+            attempt.ticket_digest == handle.ticket_digest
+            and re.fullmatch(r"[0-9a-f]{64}", attempt.ticket_digest or "")
+            and attempt.receipt_digest == receipt_digest
+            and re.fullmatch(r"[0-9a-f]{64}", attempt.receipt_digest or "")
+            and attempt.process_id == process_id == receipt_process_id
+            and attempt.process_start_identity
+            == process_start_identity
+            == receipt_process_identity
+            and re.fullmatch(
+                r"[0-9a-f]{64}", attempt.process_start_identity or ""
+            )
+            and attempt.process_exit_known
+            and attempt.terminal_event_observed
+            and attempt.attempt_state
+            in {
+                "SETTLING",
+                "COMPLETED",
+                "FAILED",
+                "CANCELLED",
+                "TIMED_OUT",
+                "RESULT_UNAVAILABLE",
+                "RESULT_INTEGRITY_BLOCKED",
+                "VERIFICATION_ELIGIBLE",
+            }
+        )
+        if not exact_attempt:
+            raise ResultIntakeError(
+                "SEALED_ATTEMPT_PROCESS_IDENTITY_MISMATCH",
+                "The terminal Codex process does not match its sealed execution attempt.",
+            )
+        if phase == "coding":
+            recorded_id = monitor.process_id
+            recorded_identity = monitor.process_start_identity
+        else:
+            recorded_id = monitor.verification_process_id
+            recorded_identity = monitor.verification_process_start_identity
+        if recorded_id is not None or recorded_identity:
+            if (
+                recorded_id != process_id
+                or recorded_identity != process_start_identity
+            ):
+                raise ResultIntakeError(
+                    "PROCESS_IDENTITY_MISMATCH",
+                    f"The {phase.title()} process does not match this Run monitor.",
+                )
+            return True
+        if phase == "coding":
+            monitor.process_id = process_id
+            monitor.process_start_identity = process_start_identity
+            run.process_spawned = True
+        else:
+            monitor.verification_process_id = process_id
+            monitor.verification_process_start_identity = process_start_identity
+            run.verification_process_spawned = True
+        session.add(
+            AuditEvent(
+                actor_user_id=monitor.owner_id,
+                action="codex_run_monitor_terminal_process_bound",
+                entity_type="codex_run_monitor",
+                entity_id=monitor.id,
+                details=(
+                    f"run={run.id}; phase={phase}; "
+                    "sealed_attempt_identity_verified=true; state_preserved=true"
+                ),
+            )
+        )
+        return True
+
+    def _run_bridge_phase(
+        self,
+        run_id: int,
+        *,
+        phase: str,
+        detection: CodexDetection,
+        worktree: Path,
+        prompt: str,
+        model_identifier: str,
+        sandbox_mode: str,
+    ) -> dict[str, object]:
+        if not detection.executable:
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "EXECUTABLE_UNAVAILABLE",
+                "The exact Codex executable is unavailable.",
+            )
+        with self.factory() as session:
+            run = session.get(CodexRun, run_id)
+            if run is None or run.pack is None or run.pack.approved_by_user_id is None:
+                raise codex_exec_bridge.CodexExecBridgeError(
+                    "RUN_UNAVAILABLE",
+                    "The persisted Codex Run is unavailable.",
+                )
+            handle = self._existing_bridge_handle(run_id, phase)
+            ticket: dict[str, object]
+            if handle is None:
+                handle = self._prepare_bridge_phase(
+                    run,
+                    phase=phase,
+                    detection=detection,
+                    worktree=worktree,
+                    prompt=prompt,
+                    model_identifier=model_identifier,
+                    sandbox_mode=sandbox_mode,
+                )
+                ticket = codex_exec_bridge.load_ticket(handle)
+            else:
+                handle, ticket = self._validated_bridge_ticket(
+                    run,
+                    phase=phase,
+                    worktree=worktree,
+                )
+            monitor = ensure_run_monitor(
+                session,
+                int(run.pack.approved_by_user_id),
+                run,
+            )
+            if not monitor.protected_result_locator:
+                observe_monitor(
+                    session,
+                    monitor,
+                    result_path=str(self._bridge_root),
+                    result_source="codex_exec_jsonl_spool",
+                    safe_summary=(
+                        "Coding is monitored by the durable Codex Exec Bridge."
+                        if phase == "coding"
+                        else "Independent Verification is monitored by the durable Codex Exec Bridge."
+                    ),
+                )
+            elif monitor.protected_result_locator != str(self._bridge_root):
+                raise codex_exec_bridge.CodexExecBridgeError(
+                    "RESULT_LOCATOR_MISMATCH",
+                    "The durable Codex spool conflicts with this Run monitor.",
+                )
+            session.commit()
+
+        with self._lock:
+            if self._stopping:
+                raise _BridgeRuntimeHandoff()
+            if run_id in self._cancel_requested and codex_exec_bridge.load_terminal_receipt(
+                handle
+            ) is None:
+                # An Owner cancellation before this phase crosses its detached
+                # launch boundary must not create a process merely to cancel it.
+                raise _BridgeRuntimeHandoff()
+            launch = codex_exec_bridge.launch_sidecar(
+                handle,
+                python_executable=sys.executable,
+                child_environment=self._child_environment(),
+            )
+        deadline = time.monotonic() + max(
+            30.0,
+            float(self.settings.codex_timeout_seconds) + 30.0,
+        )
+        bound_child: tuple[int, str] | None = None
+        receipt: dict[str, object] | None = None
+        while receipt is None:
+            receipt = codex_exec_bridge.load_terminal_receipt(handle)
+            state = codex_exec_bridge.load_execution_state(handle)
+            if isinstance(state, dict):
+                child_pid = state.get("child_process_id")
+                child_identity = state.get("child_process_start_identity")
+                if (
+                    type(child_pid) is int
+                    and child_pid > 0
+                    and isinstance(child_identity, str)
+                    and re.fullmatch(r"[0-9a-f]{64}", child_identity)
+                    and bound_child != (child_pid, child_identity)
+                ):
+                    self._bind_bridge_child(
+                        run_id,
+                        phase=phase,
+                        process_id=child_pid,
+                        process_start_identity=child_identity,
+                        executable=detection.executable,
+                        worktree=worktree,
+                        terminal_receipt=receipt,
+                    )
+                    bound_child = (child_pid, child_identity)
+            if receipt is not None:
+                break
+            stop_reason = self._stop_reason(run_id)
+            if stop_reason == "runtime_shutdown":
+                # The detached sidecar owns the exact process and output
+                # pipes. Application shutdown abandons only this waiter; it
+                # must not publish an Owner cancellation or stop Codex.
+                raise _BridgeRuntimeHandoff()
+            if stop_reason == "owner_cancelled":
+                codex_exec_bridge.request_cancel(handle)
+            if not codex_exec_bridge.process_identity_matches(
+                launch.process_id,
+                launch.process_start_identity,
+            ):
+                receipt = codex_exec_bridge.load_terminal_receipt(handle)
+                if receipt is None:
+                    raise codex_exec_bridge.CodexExecBridgeError(
+                        "SIDECAR_PROCESS_LOST",
+                        "The durable Codex Exec Bridge process was lost before terminal evidence.",
+                    )
+                break
+            if time.monotonic() >= deadline:
+                raise codex_exec_bridge.CodexExecBridgeError(
+                    "TERMINAL_RECEIPT_UNAVAILABLE",
+                    "The Codex Exec Bridge did not publish terminal evidence after its bounded timeout.",
+                )
+            time.sleep(0.05)
+
+        assert receipt is not None
+        child_pid = receipt.get("child_process_id")
+        child_identity = receipt.get("child_process_start_identity")
+        if (
+            type(child_pid) is int
+            and child_pid > 0
+            and isinstance(child_identity, str)
+            and re.fullmatch(r"[0-9a-f]{64}", child_identity)
+        ):
+            self._bind_bridge_child(
+                run_id,
+                phase=phase,
+                process_id=child_pid,
+                process_start_identity=child_identity,
+                executable=detection.executable,
+                worktree=worktree,
+                terminal_receipt=receipt,
+            )
+            bound_child = (child_pid, child_identity)
+
+        collector = _CodexJsonlEvidenceCollector(model_identifier)
+        ticket_identity = ticket.get("identity")
+        collector.executable_identity_fingerprint = str(
+            ticket_identity.get("executable_fingerprint")
+            if isinstance(ticket_identity, dict)
+            else ""
+        )
+        if bound_child is not None:
+            collector.process_id_fingerprint = hashlib.sha256(
+                (
+                    f"{phase}:{run_id}:{bound_child[0]}:{bound_child[1]}"
+                ).encode("utf-8")
+            ).hexdigest()
+        replay = codex_exec_bridge.replay_stdout_to_collector(handle, collector)
+        stdout_bytes = codex_exec_bridge.load_stream_bytes(handle, stream="stdout")
+        stderr_bytes = codex_exec_bridge.load_stream_bytes(handle, stream="stderr")
+        stdout = self._sanitize_process_output(
+            stdout_bytes.decode("utf-8", errors="replace")
+        )
+        stderr = self._sanitize_process_output(
+            stderr_bytes.decode("utf-8", errors="replace")
+        )
+        stdout_binding = receipt.get("stdout")
+        stderr_binding = receipt.get("stderr")
+        retained_stdout_truncated = bool(
+            isinstance(stdout_binding, dict)
+            and stdout_binding.get("truncated") is True
+        )
+        retained_stderr_truncated = bool(
+            isinstance(stderr_binding, dict)
+            and stderr_binding.get("truncated") is True
+        )
+        stdout, stderr, presentation_truncated = self._rebudget_sanitized_outputs(
+            stdout,
+            stderr,
+            already_truncated=(
+                retained_stdout_truncated or retained_stderr_truncated
+            ),
+            marker_on_stdout=(
+                retained_stdout_truncated or not retained_stderr_truncated
+            ),
+        )
+        final_message = codex_exec_bridge.load_final_message(handle)
+        jsonl_final_message_recovered = False
+        if final_message is None:
+            try:
+                recovery_candidate = (
+                    codex_exec_bridge.load_jsonl_final_message_candidate(handle)
+                )
+            except codex_exec_bridge.CodexExecBridgeError:
+                recovery_candidate = None
+            if isinstance(recovery_candidate, str) and recovery_candidate.strip():
+                if phase == "verification":
+                    try:
+                        recovered_contract = json.loads(recovery_candidate)
+                    except json.JSONDecodeError:
+                        recovered_contract = None
+                    if (
+                        isinstance(recovered_contract, dict)
+                        and recovered_contract.get("schema") == "twos.verification.v1"
+                        and recovered_contract.get("verdict") in {"pass", "fail"}
+                    ):
+                        final_message = recovery_candidate
+                        jsonl_final_message_recovered = True
+                else:
+                    # Transport identity proves the exact Run and turn; the
+                    # content must independently satisfy the bounded Coding
+                    # handoff schema before a missing sidecar can be recovered.
+                    if _valid_coding_handoff_contract(recovery_candidate):
+                        final_message = recovery_candidate
+                        jsonl_final_message_recovered = True
+        # The bridge proves transport identity and semantic agreement between
+        # JSONL and the sidecar.  It deliberately supports both JSON and text,
+        # so the phase adapter must still enforce the approved structured
+        # Coding handoff contract before independent Verification can start.
+        coding_contract_invalid = bool(
+            phase == "coding"
+            and final_message is not None
+            and not _valid_coding_handoff_contract(final_message)
+        )
+        if final_message is not None:
+            collector.final_agent_message = _bounded_event_text(
+                final_message.strip(),
+                maximum=2000,
+            )
+            if phase == "verification":
+                try:
+                    recovered_verdict = json.loads(final_message)
+                except json.JSONDecodeError:
+                    recovered_verdict = None
+                if (
+                    isinstance(recovered_verdict, dict)
+                    and recovered_verdict.get("schema") == "twos.verification.v1"
+                ):
+                    collector.verification_result = recovered_verdict
+        terminal_state = str(receipt.get("terminal_state") or "")
+        outcome_facts = receipt.get("outcome_facts")
+        outcome_facts = outcome_facts if isinstance(outcome_facts, dict) else {}
+        final_message_mismatch = bool(
+            (
+                terminal_state == "RESULT_INTEGRITY_BLOCKED"
+                and not jsonl_final_message_recovered
+            )
+            or coding_contract_invalid
+        )
+        if final_message_mismatch:
+            collector.mark_incomplete()
+        stdin_delivery = receipt.get("stdin_delivery")
+        retention_truncated = bool(
+            retained_stdout_truncated
+            or retained_stderr_truncated
+            or presentation_truncated
+        )
+        return {
+            "handle": handle,
+            "receipt": receipt,
+            "collector": collector,
+            "process_spawned": bound_child is not None,
+            "process_id": bound_child[0] if bound_child else None,
+            "process_start_identity": bound_child[1] if bound_child else "",
+            "exit_code": receipt.get("process_exit_code"),
+            "timed_out": bool(
+                outcome_facts.get("timed_out") is True
+                or terminal_state == "TIMED_OUT"
+            ),
+            "cancelled": bool(
+                outcome_facts.get("cancelled") is True
+                or terminal_state == "CANCELLED"
+            ),
+            "runtime_interrupted": False,
+            "integrity_blocked": bool(
+                (
+                    terminal_state == "RESULT_INTEGRITY_BLOCKED"
+                    and not jsonl_final_message_recovered
+                )
+                or coding_contract_invalid
+            ),
+            "stdout": stdout,
+            "stderr": stderr,
+            "delivery_complete": bool(
+                isinstance(stdin_delivery, dict)
+                and stdin_delivery.get("complete") is True
+            ),
+            "retention_truncated": retention_truncated,
+            "terminal_event_replayed": replay.terminal_event_replayed,
+            "final_message": final_message,
+            "final_message_mismatch": final_message_mismatch,
+            "final_message_contract_invalid": coding_contract_invalid,
+            "jsonl_final_message_recovered": jsonl_final_message_recovered,
+        }
+
+    def _recovery_worktree(self, run: CodexRun) -> Path:
+        if not run.worktree_path:
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "RECOVERY_WORKTREE_UNAVAILABLE",
+                "The persisted isolated Codex workspace is unavailable.",
+            )
+        try:
+            worktree = Path(run.worktree_path).resolve(strict=True)
+            authorized_root = self.settings.worktree_root.resolve(strict=True)
+        except OSError as exc:
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "RECOVERY_WORKTREE_UNAVAILABLE",
+                "The persisted isolated Codex workspace is unavailable.",
+            ) from exc
+        if not worktree.is_dir() or not worktree.is_relative_to(authorized_root):
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "RECOVERY_WORKTREE_OUTSIDE_ROOT",
+                "The persisted isolated workspace is outside the authorized root.",
+            )
+        return worktree
+
+    @staticmethod
+    def _detection_from_bridge_ticket(
+        ticket: dict[str, object],
+    ) -> CodexDetection:
+        argv = ticket.get("argv")
+        identity = ticket.get("identity")
+        if (
+            not isinstance(argv, list)
+            or not argv
+            or not isinstance(argv[0], str)
+            or not argv[0]
+            or not isinstance(identity, dict)
+            or not re.fullmatch(
+                r"[0-9a-f]{64}",
+                str(identity.get("executable_fingerprint") or ""),
+            )
+        ):
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "RECOVERY_EXECUTABLE_BINDING_INVALID",
+                "The sealed Codex executable binding is invalid.",
+            )
+        return CodexDetection(
+            status="configured",
+            found=True,
+            executable=argv[0],
+            version=None,
+            supported_command="exec",
+            reason="Recovered from the sealed Codex execution ticket.",
+            next_action="Continue monitoring the exact detached execution.",
+        )
+
+    def _bridge_recovery_observation(
+        self,
+        run: CodexRun,
+        worktree: Path,
+    ) -> dict[str, object]:
+        """Classify sealed recovery evidence without launching any process."""
+        coding_preparation = self._bridge_preparation_status(int(run.id), "coding")
+        if coding_preparation == "preparing":
+            return {
+                "status": "preparing",
+                "phase": "coding",
+                "code": "BRIDGE_PREPARATION_PENDING",
+            }
+        if coding_preparation != "ready":
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "RECOVERY_TICKET_UNAVAILABLE",
+                "The durable Codex execution ticket is unavailable.",
+            )
+        coding_handle, coding_ticket = self._validated_bridge_ticket(
+            run,
+            phase="coding",
+            worktree=worktree,
+        )
+        coding_receipt = codex_exec_bridge.load_terminal_receipt(coding_handle)
+        verification_preparation = self._bridge_preparation_status(
+            int(run.id),
+            "verification",
+        )
+        if verification_preparation == "preparing":
+            return {
+                "status": "preparing",
+                "phase": "verification",
+                "code": "BRIDGE_PREPARATION_PENDING",
+            }
+        verification_handle = (
+            self._existing_bridge_handle(int(run.id), "verification")
+            if verification_preparation == "ready"
+            else None
+        )
+        if verification_handle is None and run.verification_process_spawned:
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "RECOVERY_VERIFICATION_TICKET_UNAVAILABLE",
+                "Verification was previously spawned but its sealed ticket is unavailable.",
+            )
+        phase = "coding"
+        handle = coding_handle
+        ticket = coding_ticket
+        receipt = coding_receipt
+        if verification_handle is not None:
+            if (
+                coding_receipt is None
+                or coding_receipt.get("terminal_state") != "COMPLETED"
+            ):
+                raise codex_exec_bridge.CodexExecBridgeError(
+                    "RECOVERY_PHASE_ORDER_INVALID",
+                    "Verification evidence exists without successful terminal Coding evidence.",
+                )
+            handle, ticket = self._validated_bridge_ticket(
+                run,
+                phase="verification",
+                worktree=worktree,
+            )
+            receipt = codex_exec_bridge.load_terminal_receipt(handle)
+            phase = "verification"
+        if receipt is not None:
+            terminal_state = str(receipt.get("terminal_state") or "")
+            if terminal_state not in {
+                "COMPLETED",
+                "FAILED",
+                "CANCELLED",
+                "TIMED_OUT",
+                "RESULT_INTEGRITY_BLOCKED",
+            }:
+                raise codex_exec_bridge.CodexExecBridgeError(
+                    "RECOVERY_TERMINAL_STATE_INVALID",
+                    "The sealed Codex terminal state is invalid.",
+                )
+            return {
+                "status": (
+                    "terminal"
+                ),
+                "phase": phase,
+                "handle": handle,
+                "ticket": ticket,
+                "receipt": receipt,
+            }
+        try:
+            state = codex_exec_bridge.load_execution_state(handle)
+        except codex_exec_bridge.CodexExecBridgeError:
+            receipt = codex_exec_bridge.load_terminal_receipt(handle)
+            if receipt is not None:
+                return {
+                    "status": "terminal",
+                    "phase": phase,
+                    "handle": handle,
+                    "ticket": ticket,
+                    "receipt": receipt,
+                }
+            raise
+        if not isinstance(state, dict):
+            receipt = codex_exec_bridge.load_terminal_receipt(handle)
+            if receipt is not None:
+                return {
+                    "status": "terminal",
+                    "phase": phase,
+                    "handle": handle,
+                    "ticket": ticket,
+                    "receipt": receipt,
+                }
+            try:
+                launch = codex_exec_bridge.load_launch_info(handle)
+            except codex_exec_bridge.CodexExecBridgeError:
+                receipt = codex_exec_bridge.load_terminal_receipt(handle)
+                if receipt is not None:
+                    return {
+                        "status": "terminal",
+                        "phase": phase,
+                        "handle": handle,
+                        "ticket": ticket,
+                        "receipt": receipt,
+                    }
+                raise
+            if (
+                launch is not None
+                and codex_exec_bridge.process_identity_matches(
+                    launch.process_id,
+                    launch.process_start_identity,
+                )
+            ):
+                return {
+                    "status": "starting",
+                    "phase": phase,
+                    "handle": handle,
+                    "ticket": ticket,
+                    "launch": launch,
+                }
+            # Close the launch-exit/terminal-publication race one final time.
+            receipt = codex_exec_bridge.load_terminal_receipt(handle)
+            if receipt is not None:
+                return {
+                    "status": "terminal",
+                    "phase": phase,
+                    "handle": handle,
+                    "ticket": ticket,
+                    "receipt": receipt,
+                }
+            return {
+                "status": "process_lost",
+                "phase": phase,
+                "code": (
+                    "BRIDGE_LAUNCH_IDENTITY_LOST"
+                    if launch is not None
+                    else "BRIDGE_LAUNCH_UNAVAILABLE"
+                ),
+            }
+        sidecar_pid = state.get("sidecar_process_id")
+        sidecar_identity = state.get("sidecar_process_start_identity")
+        if not (
+            type(sidecar_pid) is int
+            and isinstance(sidecar_identity, str)
+            and codex_exec_bridge.process_identity_matches(
+                sidecar_pid,
+                sidecar_identity,
+            )
+        ):
+            # One last immutable receipt read closes the child-exit/receipt
+            # publication race without trusting the now-absent PID.
+            receipt = codex_exec_bridge.load_terminal_receipt(handle)
+            if receipt is not None:
+                return {
+                    "status": (
+                        "terminal"
+                    ),
+                    "phase": phase,
+                    "handle": handle,
+                    "ticket": ticket,
+                    "receipt": receipt,
+                }
+            return {
+                "status": "process_lost",
+                "phase": phase,
+                "code": "BRIDGE_PROCESS_IDENTITY_LOST",
+            }
+        child_pid = state.get("child_process_id")
+        child_identity = state.get("child_process_start_identity")
+        if type(child_pid) is int and child_pid > 0 and not (
+            isinstance(child_identity, str)
+            and re.fullmatch(r"[0-9a-f]{64}", child_identity)
+        ):
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "RECOVERY_CHILD_IDENTITY_INVALID",
+                "The sealed Codex child-process identity is invalid.",
+            )
+        return {
+            "status": "active",
+            "phase": phase,
+            "handle": handle,
+            "ticket": ticket,
+            "state": state,
+        }
+
+    def _mark_bridge_integrity_blocked(
+        self,
+        run_id: int,
+        *,
+        code: str,
+        summary: str,
+    ) -> None:
+        with self.factory() as session:
+            run = session.get(CodexRun, run_id)
+            if run is None or run.status not in {
+                "queued",
+                "starting",
+                "running",
+                "verifying",
+            }:
+                return
+            run.status = "blocked"
+            run.finished_at = utc_now()
+            run.owner_summary = summary
+            run.task.status = "needs_review"
+            monitor = ensure_run_monitor(
+                session,
+                int(run.pack.approved_by_user_id),
+                run,
+            )
+            observe_monitor(
+                session,
+                monitor,
+                state="RESULT_INTEGRITY_BLOCKED",
+                recovery_state="INTEGRITY_BLOCKED",
+                failure_code=code,
+                safe_summary=summary,
+            )
+            session.add(
+                AuditEvent(
+                    action="codex_exec_bridge_integrity_blocked",
+                    entity_type="codex_run",
+                    entity_id=run.id,
+                    details=f"code={code}; replacement_process_started=false",
+                )
+            )
+            session.commit()
+
+    def _preserve_bridge_worker_failure(
+        self,
+        run_id: int,
+        *,
+        recovery_worker: bool,
+        failure_type: str,
+    ) -> str:
+        """Protect a detached execution from generic worker-failure handling.
+
+        Returns ``retry`` only when a normal worker failed after an immutable
+        terminal receipt became available.  Recovery workers never loop.
+        """
+        try:
+            with self.factory() as session:
+                run = session.get(CodexRun, run_id)
+                if (
+                    run is None
+                    or run.status
+                    not in {"queued", "starting", "running", "verifying", "settling"}
+                    or self._existing_bridge_handle(run_id, "coding") is None
+                ):
+                    return "none"
+                worktree = self._recovery_worktree(run)
+                observation = self._bridge_recovery_observation(run, worktree)
+                monitor = ensure_run_monitor(
+                    session,
+                    int(run.pack.approved_by_user_id),
+                    run,
+                )
+                status = str(observation.get("status") or "")
+                if status in {"starting", "active"}:
+                    clear_stale_monitor_terminal_state(
+                        session,
+                        monitor,
+                        reason="exact_bridge_worker_handoff",
+                    )
+                    observe_monitor(
+                        session,
+                        monitor,
+                        state=(
+                            "VERIFYING"
+                            if observation.get("phase") == "verification"
+                            else (
+                                "STARTING"
+                                if status == "starting"
+                                else "RUNNING"
+                            )
+                        ),
+                        recovery_state="MONITORING_RESUMED",
+                        failure_code="",
+                        safe_summary=(
+                            "The detached Codex execution remains live; TWOS will "
+                            "recover its sealed evidence without replacing it."
+                        ),
+                    )
+                elif status == "terminal":
+                    observe_monitor(
+                        session,
+                        monitor,
+                        recovery_state="RESULT_RECOVERED",
+                        failure_code="",
+                        safe_summary=(
+                            "A sealed terminal Codex receipt remains available for "
+                            "idempotent recovery."
+                        ),
+                    )
+                elif status == "preparing":
+                    clear_stale_monitor_terminal_state(
+                        session,
+                        monitor,
+                        reason="sealed_bridge_worker_handoff_pending",
+                    )
+                    observe_monitor(
+                        session,
+                        monitor,
+                        state=(
+                            "VERIFYING"
+                            if observation.get("phase") == "verification"
+                            else "STARTING"
+                        ),
+                        recovery_state="NONE",
+                        failure_code="",
+                        safe_summary=(
+                            "The sealed Codex execution boundary is still being "
+                            "published; no replacement process was started."
+                        ),
+                    )
+                else:
+                    run.status = "failed"
+                    run.finished_at = utc_now()
+                    run.owner_summary = (
+                        "The exact detached Codex process identity was lost; no "
+                        "replacement process was launched."
+                    )
+                    run.task.status = "needs_review"
+                    observe_monitor(
+                        session,
+                        monitor,
+                        state="PROCESS_LOST",
+                        recovery_state="PROCESS_LOST",
+                        failure_code=str(
+                            observation.get("code")
+                            or "BRIDGE_PROCESS_IDENTITY_LOST"
+                        ),
+                        safe_summary=run.owner_summary,
+                    )
+                session.add(
+                    AuditEvent(
+                        action="codex_exec_bridge_worker_handoff",
+                        entity_type="codex_run",
+                        entity_id=run.id,
+                        details=(
+                            f"failure_type={failure_type}; bridge_status={status}; "
+                            "replacement_process_started=false"
+                        ),
+                    )
+                )
+                session.commit()
+                if status == "terminal" and not recovery_worker:
+                    return "retry"
+                return "preserved"
+        except Exception as exc:
+            self._mark_bridge_integrity_blocked(
+                run_id,
+                code=(
+                    exc.code
+                    if isinstance(exc, codex_exec_bridge.CodexExecBridgeError)
+                    else "BRIDGE_RECOVERY_READ_FAILED"
+                ),
+                summary="Durable Codex recovery evidence could not be verified safely.",
+            )
+            return "preserved"
+
+    def _terminalize_legacy_interrupted_run(
+        self,
+        session: Session,
+        run: CodexRun,
+        monitor: CodexRunMonitor,
+    ) -> None:
+        """Preserve the Vol.17 restart boundary for Runs without bridge data."""
+        spawned = bool(run.process_spawned or run.verification_process_spawned)
+        run.status = "failed" if spawned else "blocked"
+        run.owner_summary = (
+            "Server restarted after the Codex process was spawned; its final outcome requires review."
+            if spawned
+            else (
+                "Server restarted inside the durable Codex launch window; process start cannot be proven "
+                "and no invocation is claimed."
+                if run.launch_intent_at is not None
+                else "Server restarted before the durable Codex launch boundary; no invocation is claimed."
+            )
+        )
+        run.finished_at = utc_now()
+        run.task.status = "needs_review"
+        observe_monitor(
+            session,
+            monitor,
+            state=("PROCESS_LOST" if spawned else "RESULT_UNAVAILABLE"),
+            recovery_state=("PROCESS_LOST" if spawned else "RESULT_UNAVAILABLE"),
+            failure_code=(
+                "LEGACY_PROCESS_OUTCOME_UNAVAILABLE"
+                if spawned
+                else "PROCESS_NOT_STARTED"
+            ),
+            safe_summary=run.owner_summary,
+        )
+        if spawned:
+            try:
+                with session.begin_nested():
+                    self._record_incomplete_spawn_evidence(
+                        session,
+                        run,
+                        diagnostic_code="runtime_restart",
+                        safe_summary=(
+                            "Runtime restart interrupted final Codex evidence collection."
+                        ),
+                    )
+            except Exception as exc:
+                session.add(
+                    AuditEvent(
+                        action="model_invocation_evidence_persistence_failed",
+                        entity_type="codex_run",
+                        entity_id=run.id,
+                        details=(
+                            f"failure_type={type(exc).__name__}; "
+                            "context=runtime_restart"
+                        ),
+                    )
+                )
+        session.add(
+            AuditEvent(
+                action="codex_run_recovered",
+                entity_type="codex_run",
+                entity_id=run.id,
+                details=(
+                    f"Legacy interrupted process state terminalized as {run.status}; "
+                    "replacement_process_started=false."
+                ),
+            )
+        )
+
     def recover_interrupted_runs(self) -> None:
+        """Resume exact bridge waiters or terminal finalizers without rerunning."""
         with self.factory() as session:
             run_ids = list(
                 session.scalars(
                     select(CodexRun.id).where(
-                        CodexRun.status.in_(["queued", "starting", "running", "verifying"])
+                        CodexRun.status.in_(["queued", "starting", "running", "verifying", "settling"])
                     )
                 ).all()
             )
+        recoverable: list[int] = []
         for run_id in run_ids:
-            spawned = False
             with self.factory() as session:
                 run = session.get(CodexRun, run_id)
-                if run is None or run.status not in {"queued", "starting", "running", "verifying"}:
+                if run is None or run.status not in {
+                    "queued",
+                    "starting",
+                    "running",
+                    "verifying",
+                    "settling",
+                }:
                     continue
-                spawned = run.process_spawned
-                run.status = "failed" if (run.process_spawned or run.verification_process_spawned) else "blocked"
-                run.owner_summary = (
-                    "Server restarted after the Codex process was spawned; its final outcome requires review."
-                    if run.process_spawned
-                    else (
-                        "Server restarted inside the durable Codex launch window; process start cannot be proven "
-                        "and no invocation is claimed."
-                        if run.launch_intent_at is not None
-                        else "Server restarted before the durable Codex launch boundary; no invocation is claimed."
+                if run.pack is None or run.pack.approved_by_user_id is None:
+                    continue
+                monitor = ensure_run_monitor(
+                    session,
+                    int(run.pack.approved_by_user_id),
+                    run,
+                )
+                try:
+                    if self._bridge_preparation_status(int(run.id), "coding") == "absent":
+                        self._terminalize_legacy_interrupted_run(
+                            session,
+                            run,
+                            monitor,
+                        )
+                        session.commit()
+                        continue
+                    worktree = self._recovery_worktree(run)
+                    observation = self._bridge_recovery_observation(run, worktree)
+                except codex_exec_bridge.CodexExecBridgeError as exc:
+                    if (
+                        exc.code == "RECOVERY_TICKET_UNAVAILABLE"
+                        and not run.process_spawned
+                        and not run.verification_process_spawned
+                        and run.launch_intent_at is None
+                    ):
+                        run.status = "blocked"
+                        run.finished_at = utc_now()
+                        run.owner_summary = (
+                            "Runtime restarted before a durable Codex process identity "
+                            "was established; no invocation is claimed."
+                        )
+                        run.task.status = "blocked"
+                        observe_monitor(
+                            session,
+                            monitor,
+                            state="RESULT_UNAVAILABLE",
+                            recovery_state="RESULT_UNAVAILABLE",
+                            failure_code="PROCESS_NOT_STARTED",
+                            safe_summary=run.owner_summary,
+                        )
+                    else:
+                        run.status = "blocked"
+                        run.finished_at = utc_now()
+                        run.owner_summary = (
+                            "Durable Codex recovery evidence failed its integrity checks."
+                        )
+                        run.task.status = "needs_review"
+                        observe_monitor(
+                            session,
+                            monitor,
+                            state="RESULT_INTEGRITY_BLOCKED",
+                            recovery_state="INTEGRITY_BLOCKED",
+                            failure_code=exc.code,
+                            safe_summary=exc.safe_message,
+                        )
+                    session.add(
+                        AuditEvent(
+                            action="codex_run_recovery_blocked",
+                            entity_type="codex_run",
+                            entity_id=run.id,
+                            details=f"code={exc.code}; replacement_process_started=false",
+                        )
                     )
+                    session.commit()
+                    continue
+
+                recovery_status = str(observation.get("status") or "")
+                if recovery_status == "preparing":
+                    clear_stale_monitor_terminal_state(
+                        session,
+                        monitor,
+                        reason="sealed_bridge_preparation_pending",
+                    )
+                    observe_monitor(
+                        session,
+                        monitor,
+                        state=(
+                            "VERIFYING"
+                            if observation.get("phase") == "verification"
+                            else "STARTING"
+                        ),
+                        recovery_state="NONE",
+                        failure_code="",
+                        safe_summary=(
+                            "The durable Codex launch boundary is still being prepared; "
+                            "no replacement process was started."
+                        ),
+                    )
+                    session.add(
+                        AuditEvent(
+                            action="codex_run_bridge_preparation_pending",
+                            entity_type="codex_run",
+                            entity_id=run.id,
+                            details=(
+                                f"phase={observation.get('phase')}; "
+                                "replacement_process_started=false"
+                            ),
+                        )
+                    )
+                    session.commit()
+                    continue
+                if recovery_status in {"starting", "active", "terminal"}:
+                    if recovery_status in {"starting", "active"}:
+                        clear_stale_monitor_terminal_state(
+                            session,
+                            monitor,
+                            reason="exact_bridge_process_resumed",
+                        )
+                    observe_monitor(
+                        session,
+                        monitor,
+                        state=(
+                            "RESULT_PENDING"
+                            if recovery_status == "terminal"
+                            else (
+                                "VERIFYING"
+                                if observation.get("phase") == "verification"
+                                else "STARTING"
+                            )
+                            if recovery_status == "starting"
+                            else {
+                                "queued": "QUEUED",
+                                "starting": "STARTING",
+                                "running": "RUNNING",
+                                "verifying": "VERIFYING",
+                            }.get(run.status, monitor.monitor_state)
+                        ),
+                        recovery_state=(
+                            "MONITORING_RESUMED"
+                            if recovery_status in {"starting", "active"}
+                            else "RESULT_RECOVERED"
+                        ),
+                        failure_code="",
+                        safe_summary=(
+                            "Monitoring resumed from the exact sealed detached-process identity."
+                            if recovery_status in {"starting", "active"}
+                            else "A sealed terminal Codex receipt was recovered for durable finalization."
+                        ),
+                    )
+                    session.add(
+                        AuditEvent(
+                            action=(
+                                "codex_run_monitoring_resumed"
+                                if recovery_status in {"starting", "active"}
+                                else "codex_run_terminal_receipt_recovered"
+                            ),
+                            entity_type="codex_run",
+                            entity_id=run.id,
+                            details=(
+                                f"phase={observation.get('phase')}; "
+                                "replacement_process_started=false"
+                            ),
+                        )
+                    )
+                    session.commit()
+                    recoverable.append(int(run.id))
+                    continue
+                run.status = "failed"
+                run.owner_summary = (
+                    "The exact detached Codex process identity was lost before "
+                    "terminal evidence became available. No replacement process was launched."
+                )
+                observe_monitor(
+                    session,
+                    monitor,
+                    state="PROCESS_LOST",
+                    recovery_state="PROCESS_LOST",
+                    failure_code=str(
+                        observation.get("code")
+                        or "BRIDGE_PROCESS_IDENTITY_LOST"
+                    ),
+                    safe_summary=run.owner_summary,
                 )
                 run.finished_at = utc_now()
+                monitor.terminal_at = monitor.terminal_at or run.finished_at
+                monitor.last_observed_at = utc_now()
                 run.task.status = "needs_review"
+                if run.process_spawned or run.verification_process_spawned:
+                    try:
+                        with session.begin_nested():
+                            self._record_incomplete_spawn_evidence(
+                                session,
+                                run,
+                                diagnostic_code="process_lost",
+                                safe_summary=(
+                                    "Runtime recovery could not safely finalize the exact "
+                                    "persisted Codex execution evidence."
+                                ),
+                            )
+                    except Exception as exc:
+                        session.add(
+                            AuditEvent(
+                                action="model_invocation_evidence_persistence_failed",
+                                entity_type="codex_run",
+                                entity_id=run.id,
+                                details=(
+                                    f"failure_type={type(exc).__name__}; "
+                                    "context=runtime_restart"
+                                ),
+                            )
+                        )
                 session.add(
                     AuditEvent(
                         action="codex_run_recovered",
                         entity_type="codex_run",
                         entity_id=run.id,
-                        details=f"Interrupted process state terminalized as {run.status} after restart.",
+                        details=(
+                            f"Interrupted state reconciled as {monitor.monitor_state}; "
+                            "replacement_process_started=false."
+                        ),
                     )
                 )
                 session.commit()
-            if spawned:
+        for run_id in recoverable:
+            self._start_worker(run_id, recover_bridge=True)
+        try:
+            reconcile_run_monitors(self.factory)
+        except (ResultIntakeError, OSError):
+            # Startup remains available with the persisted truthful monitor
+            # blocker; reconciliation is retried by the bounded watcher.
+            pass
+
+    @staticmethod
+    def _attach_verification_result(
+        result: dict[str, object],
+        verification: dict[str, object] | None,
+    ) -> None:
+        if verification is None:
+            result["verification"] = {
+                "status": "not_started",
+                "summary": (
+                    "Verification was not started because Coding did not reach "
+                    "the verification boundary."
+                ),
+                "process_spawned": False,
+            }
+            result["verification_process"] = {
+                "status": "not_started",
+                "process_started": False,
+                "failure": "Coding did not reach the Verification boundary.",
+            }
+            result["verification_invocation"] = {
+                "process_execution_verified": False,
+                "codex_turn_verified": False,
+                "requested_model": "",
+                "actual_resolved_model": None,
+                "actual_model_identity_verified": False,
+                "failure": "Verification was not started.",
+            }
+            result["verification_verdict"] = {
+                "status": "not_reached",
+                "passed_checks": [],
+                "failed_checks": [],
+            }
+            return
+        result["verification"] = {
+            key: value
+            for key, value in verification.items()
+            if key
+            not in {
+                "collector",
+                "prompt",
+                "delivery_complete",
+                "_started_at",
+                "_completed_at",
+            }
+        }
+        result["verification_process"] = dict(verification.get("process", {}))
+        result["verification_invocation"] = dict(
+            verification.get("invocation", {})
+        )
+        result["verification_verdict"] = dict(verification.get("verdict", {}))
+
+    @staticmethod
+    def _reconcile_recovered_task_acceptance(
+        result: dict[str, object],
+    ) -> None:
+        task_acceptance = result.get("task_acceptance")
+        if not (
+            isinstance(task_acceptance, dict)
+            and task_acceptance.get("status") == "needs_owner_review"
+        ):
+            return
+        verification_verdict = result.get("verification_verdict")
+        verdict_status = (
+            verification_verdict.get("status")
+            if isinstance(verification_verdict, dict)
+            else "not_reached"
+        )
+        if verdict_status == "passed":
+            task_acceptance["status"] = "passed"
+            task_acceptance["reason"] = (
+                "Independent Verification passed the frozen task checks."
+            )
+        elif verdict_status == "failed":
+            failed_checks = verification_verdict.get("failed_checks", [])
+            task_acceptance["status"] = "failed"
+            task_acceptance["reason"] = (
+                "Independent Verification rejected the output"
+                + (
+                    f": {', '.join(str(item) for item in failed_checks)}"
+                    if failed_checks
+                    else "."
+                )
+            )
+        else:
+            task_acceptance["reason"] = (
+                "Independent Verification did not reach a structured task verdict."
+            )
+
+    def _finalize_recovered_bridge_run(
+        self,
+        run_id: int,
+        *,
+        result: dict[str, object],
+        coding_bridge: dict[str, object],
+        coding_collector: _CodexJsonlEvidenceCollector | None,
+        pack_content: str,
+        verification: dict[str, object] | None,
+        coding_integrity_blocked: bool = False,
+    ) -> None:
+        stdout = str(coding_bridge.get("stdout") or "")
+        stderr = str(coding_bridge.get("stderr") or "")
+        exit_code = coding_bridge.get("exit_code")
+        timed_out = bool(coding_bridge.get("timed_out"))
+        cancelled = bool(coding_bridge.get("cancelled"))
+        output_truncated = bool(coding_bridge.get("retention_truncated"))
+        pack_delivery_complete = bool(coding_bridge.get("delivery_complete"))
+        coding_receipt = coding_bridge.get("receipt")
+        coding_duration = (
+            int(coding_receipt.get("duration_ms") or 0)
+            if isinstance(coding_receipt, dict)
+            else 0
+        )
+        verification_duration = (
+            int(verification.get("duration_ms") or 0)
+            if isinstance(verification, dict)
+            else 0
+        )
+        with self.factory() as session:
+            run = session.get(CodexRun, run_id)
+            if run is None:
+                return
+            run.stdout = stdout
+            run.stderr = stderr
+            run.output_truncated = output_truncated
+            run.exit_code = exit_code if type(exit_code) is int else None
+            run.duration_ms = max(
+                int(run.duration_ms or 0),
+                coding_duration + verification_duration,
+            )
+            run.timed_out = timed_out
+            run.cancelled = cancelled
+            run.structured_result = json.dumps(result, separators=(",", ":"))
+            run.finished_at = utc_now()
+            if verification is not None:
+                run.verification_status = str(verification["status"])
+                run.verification_summary = str(verification["summary"])
+                run.verification_process_spawned = bool(
+                    verification["process_spawned"]
+                )
+                run.verification_stdout = str(verification["stdout"])
+                run.verification_stderr = str(verification["stderr"])
+                verification_exit = verification.get("exit_code")
+                run.verification_exit_code = (
+                    verification_exit if type(verification_exit) is int else None
+                )
+                run.verification_duration_ms = int(
+                    verification.get("duration_ms") or 0
+                )
+                run.verification_timed_out = bool(verification["timed_out"])
+                run.verification_cancelled = bool(verification["cancelled"])
+                run.verification_output_truncated = bool(
+                    verification["output_truncated"]
+                )
+            else:
+                run.verification_status = "not_started"
+                run.verification_summary = str(
+                    result["verification"]["summary"]  # type: ignore[index]
+                )
+            coding_process = result.get("coding_process")
+            git_evidence = result.get("git_evidence")
+            task_acceptance = result.get("task_acceptance")
+            verification_verdict = result.get("verification_verdict")
+            if cancelled:
+                run.status = "cancelled"
+                run.owner_summary = "Codex execution was cancelled by the Owner."
+                run.task.status = "cancelled"
+            elif timed_out:
+                run.status = "timed_out"
+                run.owner_summary = "Codex execution exceeded the configured timeout."
+                run.task.status = "needs_review"
+            elif coding_integrity_blocked:
+                run.status = "blocked"
+                run.owner_summary = (
+                    "The detached Coding result failed its sealed result integrity checks."
+                )
+                run.task.status = "needs_review"
+            elif type(exit_code) is not int or exit_code != 0:
+                run.status = "failed"
+                run.owner_summary = str(
+                    coding_process.get("failure")
+                    if isinstance(coding_process, dict)
+                    else "Codex process failed; review is required."
+                )
+                run.task.status = "needs_review"
+            elif not isinstance(git_evidence, dict) or git_evidence.get("status") != "passed":
+                run.status = "failed"
+                run.owner_summary = (
+                    "Git evidence collection or validation failed; inspect Advanced diagnostics."
+                )
+                run.task.status = "needs_review"
+            elif not self._boundary_evidence_passes(result):
+                run.status = "failed"
+                run.owner_summary = (
+                    "Codex exited successfully, but isolation or no-commit/no-push evidence failed."
+                )
+                run.task.status = "needs_review"
+            elif verification is None:
+                run.status = "failed"
+                run.owner_summary = (
+                    "Coding finished, but independent Verification did not start."
+                )
+                run.task.status = "needs_review"
+            elif verification.get("integrity_blocked"):
+                run.status = "blocked"
+                run.owner_summary = (
+                    "Independent Verification failed its sealed result integrity checks."
+                )
+                run.task.status = "needs_review"
+            elif verification.get("cancelled"):
+                run.status = "cancelled"
+                run.owner_summary = (
+                    "Independent Verification was cancelled by the Owner."
+                )
+                run.task.status = "cancelled"
+            elif verification.get("timed_out"):
+                run.status = "timed_out"
+                run.owner_summary = (
+                    "Independent Verification exceeded the configured timeout."
+                )
+                run.task.status = "needs_review"
+            elif verification.get("status") != "completed":
+                run.status = "failed"
+                run.owner_summary = str(
+                    verification.get("failure")
+                    or "Independent Verification process failed; review is required."
+                )
+                run.task.status = "needs_review"
+            elif (
+                not isinstance(verification_verdict, dict)
+                or verification_verdict.get("status") != "passed"
+            ):
+                run.status = "failed"
+                failed_checks = (
+                    verification_verdict.get("failed_checks", [])
+                    if isinstance(verification_verdict, dict)
+                    else []
+                )
+                run.owner_summary = "Independent Verification verdict failed" + (
+                    f": {', '.join(str(item) for item in failed_checks)}."
+                    if failed_checks
+                    else "."
+                )
+                run.task.status = "needs_review"
+            elif not isinstance(task_acceptance, dict) or task_acceptance.get("status") != "passed":
+                run.status = "failed"
+                run.owner_summary = str(
+                    task_acceptance.get("reason")
+                    if isinstance(task_acceptance, dict)
+                    else "The frozen Development task acceptance result requires review."
+                )
+                run.task.status = "needs_review"
+            else:
+                run.status = "completed"
+                run.owner_summary = (
+                    "Coding and independent Verification completed in an isolated worktree."
+                )
+                run.task.status = "result_ready"
+
+            invocation_verified: bool | None = None
+            if run.process_spawned:
                 try:
-                    with self.factory() as evidence_session:
-                        evidence_run = evidence_session.get(CodexRun, run_id)
-                        if evidence_run is None:
-                            continue
-                        self._record_incomplete_spawn_evidence(
-                            evidence_session,
-                            evidence_run,
-                            diagnostic_code="runtime_restart",
-                            safe_summary="Runtime restart interrupted final Codex evidence collection.",
+                    with session.begin_nested():
+                        invocation_verified = self._record_codex_invocation_evidence(
+                            session,
+                            run,
+                            coding_collector,
+                            result,
+                            pack_content,
+                            False,
+                            pack_delivery_complete,
                         )
-                        evidence_session.commit()
                 except Exception as exc:
-                    self._audit_evidence_persistence_failure(
-                        run_id,
-                        context="runtime_restart",
-                        failure_type=type(exc).__name__,
+                    invocation_verified = False
+                    session.add(
+                        AuditEvent(
+                            action="model_invocation_evidence_persistence_failed",
+                            entity_type="codex_run",
+                            entity_id=run.id,
+                            details=(
+                                f"failure_type={type(exc).__name__}; "
+                                "context=bridge_recovery_finalization"
+                            ),
+                        )
                     )
+            verification_verified: bool | None = None
+            if verification is not None and run.verification_process_spawned:
+                try:
+                    with session.begin_nested():
+                        verification_verified = (
+                            self._record_verification_invocation_evidence(
+                                session,
+                                run,
+                                verification,
+                            )
+                        )
+                except Exception as exc:
+                    verification_verified = False
+                    session.add(
+                        AuditEvent(
+                            action="verification_invocation_evidence_persistence_failed",
+                            entity_type="codex_run",
+                            entity_id=run.id,
+                            details=(
+                                f"failure_type={type(exc).__name__}; "
+                                "context=bridge_recovery_finalization"
+                            ),
+                        )
+                    )
+            if run.status == "completed" and (
+                invocation_verified is False or verification_verified is False
+            ):
+                run.status = "failed"
+                run.owner_summary = (
+                    "Recovered process evidence could not be persisted as a verified invocation."
+                )
+                run.task.status = "needs_review"
+            create_owner_acceptance(session, run.task, run)
+            if run.status != "completed":
+                run.task.status = (
+                    "needs_review"
+                    if run.status in {"failed", "timed_out"}
+                    else run.status
+                )
+            session.add(
+                AuditEvent(
+                    action="codex_run_recovery_finalized",
+                    entity_type="codex_run",
+                    entity_id=run.id,
+                    details=(
+                        f"status={run.status}; exit_code={run.exit_code}; "
+                        f"changed_files={len(result.get('changed_files', []))}; "
+                        "replacement_process_started=false"
+                    ),
+                )
+            )
+            self._sync_result_monitor(
+                session,
+                run,
+                actual_model_identifier=(
+                    coding_collector.actual_model_identifier
+                    if coding_collector
+                    and coding_collector.actual_model_identity_verified
+                    else None
+                ),
+                codex_session_identity=(
+                    coding_collector.thread_id_fingerprint
+                    if coding_collector
+                    and coding_collector.thread_id_fingerprint
+                    else None
+                ),
+            )
+            if coding_integrity_blocked or (
+                verification is not None and verification.get("integrity_blocked")
+            ):
+                monitor = ensure_run_monitor(
+                    session,
+                    int(run.pack.approved_by_user_id),
+                    run,
+                )
+                observe_monitor(
+                    session,
+                    monitor,
+                    state="RESULT_INTEGRITY_BLOCKED",
+                    recovery_state="INTEGRITY_BLOCKED",
+                    failure_code="BRIDGE_RESULT_INTEGRITY_BLOCKED",
+                    safe_summary=run.owner_summary,
+                )
+            session.commit()
+            if coding_integrity_blocked or (
+                verification is not None and verification.get("integrity_blocked")
+            ):
+                # The Run finalization transaction is committed before taking
+                # the per-Run reconciliation lock, avoiding a SQLite
+                # writer/lock inversion with the independent monitor thread.
+                # The following transaction atomically projects attempt,
+                # snapshot, notification and Verification eligibility.
+                from .run_lifecycle import reconcile_execution_attempt
+
+                reconcile_execution_attempt(
+                    session,
+                    int(run.pack.approved_by_user_id),
+                    run,
+                    monitor,
+                )
+                session.commit()
+
+    def _recover_bridge_run(self, run_id: int) -> None:
+        """Replay one sealed Coding receipt and continue its normal finalizer."""
+        with self.factory() as session:
+            run = session.get(CodexRun, run_id)
+            if run is None or not self._bridge_recovery_allowed(run):
+                return
+            worktree = self._recovery_worktree(run)
+            _, coding_ticket = self._validated_bridge_ticket(
+                run,
+                phase="coding",
+                worktree=worktree,
+            )
+            coding_identity = coding_ticket.get("identity")
+            if not isinstance(coding_identity, dict):
+                raise codex_exec_bridge.CodexExecBridgeError(
+                    "RECOVERY_TICKET_INTEGRITY_BLOCKED",
+                    "The sealed Coding identity is unavailable.",
+                )
+            detection = self._detection_from_bridge_ticket(coding_ticket)
+            pack_content = run.pack.content
+            coding_model = run.requested_model_identifier
+
+        coding_bridge = self._run_bridge_phase(
+            run_id,
+            phase="coding",
+            detection=detection,
+            worktree=worktree,
+            prompt=pack_content,
+            model_identifier=coding_model,
+            sandbox_mode="workspace-write",
+        )
+        coding_integrity_blocked = bool(coding_bridge.get("integrity_blocked"))
+        coding_collector = coding_bridge.get("collector")
+        if not isinstance(coding_collector, _CodexJsonlEvidenceCollector):
+            coding_collector = None
+        exit_code = coding_bridge.get("exit_code")
+        timed_out = bool(coding_bridge.get("timed_out"))
+        cancelled = bool(coding_bridge.get("cancelled"))
+        output_truncated = bool(coding_bridge.get("retention_truncated"))
+        delivery_complete = bool(coding_bridge.get("delivery_complete"))
+        if (
+            coding_collector is not None
+            and coding_collector.structured_success
+            and exit_code == 0
+            and not timed_out
+            and not cancelled
+            and not output_truncated
+            and delivery_complete
+            and not coding_integrity_blocked
+        ):
+            self._bind_owner_verified_model_identity(
+                run_id,
+                coding_collector,
+                capability="coding",
+            )
+        elif coding_collector is not None:
+            coding_collector.clear_verified_model_identity()
+        result = self._derive_result(
+            worktree,
+            run_id,
+            str(coding_bridge.get("stdout") or ""),
+            str(coding_bridge.get("stderr") or ""),
+            exit_code if type(exit_code) is int else None,
+            timed_out,
+            cancelled,
+            False,
+            (
+                str(coding_identity.get("source_remote_fingerprint") or ""),
+                0,
+                True,
+            ),
+            coding_collector,
+            delivery_complete,
+        )
+        result["exec_bridge"] = {
+            "transport": "codex exec --json",
+            "presentation_evidence_truncated": output_truncated,
+            "transport_consumption_completed": bool(
+                coding_collector and not coding_collector.collection_incomplete
+            ),
+            "recovered_from_sealed_receipt": True,
+            "integrity_state": (
+                "blocked" if coding_integrity_blocked else "verified"
+            ),
+            "integrity_blocker": (
+                "FINAL_RESULT_SCHEMA_INVALID"
+                if coding_bridge.get("final_message_contract_invalid") is True
+                else "BRIDGE_RESULT_INTEGRITY_BLOCKED"
+                if coding_integrity_blocked
+                else ""
+            ),
+        }
+        if self._stop_reason(run_id) == "runtime_shutdown":
+            raise _BridgeRuntimeHandoff()
+        with self.factory() as transition_session:
+            transition_run = transition_session.get(CodexRun, run_id)
+            owner_cancelled = bool(
+                self._stop_reason(run_id) == "owner_cancelled"
+                or (
+                    transition_run is not None
+                    and (
+                        transition_run.cancelled
+                        or transition_run.status == "cancelled"
+                    )
+                )
+            )
+        coding_process = result.get("coding_process")
+        git_evidence = result.get("git_evidence")
+        coding_ready = bool(
+            coding_bridge.get("process_spawned")
+            and exit_code == 0
+            and coding_collector is not None
+            and coding_collector.structured_success
+            and delivery_complete
+            and isinstance(coding_process, dict)
+            and coding_process.get("status") == "completed"
+            and isinstance(git_evidence, dict)
+            and git_evidence.get("status") == "passed"
+            and self._boundary_evidence_passes(result)
+            and not owner_cancelled
+            and not timed_out
+            and not coding_integrity_blocked
+        )
+        verification: dict[str, object] | None = None
+        if coding_ready:
+            with self.factory() as transition_session:
+                transition_run = transition_session.get(CodexRun, run_id)
+                if transition_run is None:
+                    return
+                transition_run.stdout = str(coding_bridge.get("stdout") or "")
+                transition_run.stderr = str(coding_bridge.get("stderr") or "")
+                transition_run.output_truncated = output_truncated
+                transition_run.exit_code = (
+                    exit_code if type(exit_code) is int else None
+                )
+                transition_run.structured_result = json.dumps(
+                    result,
+                    separators=(",", ":"),
+                )
+                transition_run.status = "verifying"
+                transition_run.owner_summary = (
+                    "Recovered terminal Coding evidence; independent Verification is continuing."
+                )
+                transition_run.verification_status = "starting"
+                transition_run.verification_summary = (
+                    "Independent Verification is preparing."
+                )
+                transition_run.task.status = "verifying"
+                self._sync_result_monitor(transition_session, transition_run)
+                transition_session.commit()
+            if self._existing_bridge_handle(run_id, "verification") is not None:
+                with self.factory() as verification_session:
+                    verification_run = verification_session.get(CodexRun, run_id)
+                    if verification_run is None:
+                        return
+                    _, verification_ticket = self._validated_bridge_ticket(
+                        verification_run,
+                        phase="verification",
+                        worktree=worktree,
+                    )
+                verification_detection = self._detection_from_bridge_ticket(
+                    verification_ticket
+                )
+            else:
+                verification_detection = self.adapter.detect()
+            verification = self._execute_verification(
+                run_id,
+                worktree,
+                verification_detection,
+                pack_content,
+                result,
+            )
+        self._attach_verification_result(result, verification)
+        self._reconcile_recovered_task_acceptance(result)
+        self._finalize_recovered_bridge_run(
+            run_id,
+            result=result,
+            coding_bridge=coding_bridge,
+            coding_collector=coding_collector,
+            pack_content=pack_content,
+            verification=verification,
+            coding_integrity_blocked=coding_integrity_blocked,
+        )
 
     def start(self, run_id: int) -> bool:
+        return self._start_worker(run_id, recover_bridge=False)
+
+    def resume_persisted_execution(self, run_id: int) -> bool:
+        """Attach one finalizer to an existing sealed bridge attempt.
+
+        This callback is used by the durable result watcher after it commits
+        its observation.  It never creates a replacement Coding process: the
+        recovery worker validates the existing ticket, PID/start identity and
+        receipt before it can continue settlement.
+        """
+
+        with self.factory() as session:
+            run = session.get(CodexRun, run_id)
+            if (
+                run is None
+                or not self._bridge_recovery_allowed(run)
+                or self._existing_bridge_handle(run_id, "coding") is None
+            ):
+                return False
+        return self._start_worker(run_id, recover_bridge=True)
+
+    def _bridge_recovery_allowed(self, run: CodexRun) -> bool:
+        if run.status in {"queued", "starting", "running", "verifying"}:
+            return True
+        if run.status not in {"settling", "blocked"} or run.stdout or run.stderr:
+            return False
+        try:
+            handle = self._existing_bridge_handle(int(run.id), "coding")
+            receipt = (
+                codex_exec_bridge.load_terminal_receipt(handle)
+                if handle is not None
+                else None
+            )
+        except codex_exec_bridge.CodexExecBridgeError:
+            return False
+        return bool(
+            isinstance(receipt, dict)
+            and receipt.get("terminal_state")
+            in {
+                "COMPLETED",
+                "FAILED",
+                "CANCELLED",
+                "TIMED_OUT",
+                "RESULT_INTEGRITY_BLOCKED",
+            }
+        )
+
+    def _start_worker(self, run_id: int, *, recover_bridge: bool) -> bool:
         thread = threading.Thread(
             target=self._run_worker,
-            args=(run_id,),
+            args=(run_id, recover_bridge),
             daemon=True,
-            name=f"twos-codex-{run_id}",
+            name=(
+                f"twos-codex-recovery-{run_id}"
+                if recover_bridge
+                else f"twos-codex-{run_id}"
+            ),
         )
         with self._lock:
-            if self._stopping:
+            if self._stopping or run_id in self._workers:
                 return False
             self._workers[run_id] = thread
         thread.start()
         return True
 
-    def _run_worker(self, run_id: int) -> None:
+    def _run_worker(self, run_id: int, recover_bridge: bool = False) -> None:
+        retry_recovery = False
         try:
-            self._execute(run_id)
+            if recover_bridge:
+                self._recover_bridge_run(run_id)
+            else:
+                self._execute(run_id)
+        except _BridgeRuntimeHandoff:
+            # Durable ticket/state/receipt evidence remains owned by the
+            # detached sidecar and will be reconciled by the next runtime.
+            pass
         except Exception as exc:
-            self._mark_worker_failure(run_id, type(exc).__name__)
+            bridge_action = self._preserve_bridge_worker_failure(
+                run_id,
+                recovery_worker=recover_bridge,
+                failure_type=type(exc).__name__,
+            )
+            if bridge_action == "none":
+                self._mark_worker_failure(run_id, type(exc).__name__)
+            elif bridge_action == "retry":
+                retry_recovery = True
         finally:
             with self._lock:
                 self._workers.pop(run_id, None)
                 self._processes.pop(run_id, None)
                 self._cancel_requested.discard(run_id)
+        if retry_recovery:
+            self._start_worker(run_id, recover_bridge=True)
 
     def cancel(self, run_id: int) -> bool:
         with self._lock:
@@ -1577,6 +4186,19 @@ class CodexExecutionManager:
                 self._cancel_requested.add(run_id)
             else:
                 self._cancel_requested.add(run_id)
+        for phase in ("verification", "coding"):
+            try:
+                handle = self._existing_bridge_handle(run_id, phase)
+                if (
+                    handle is not None
+                    and codex_exec_bridge.load_terminal_receipt(handle) is None
+                ):
+                    codex_exec_bridge.request_cancel(handle)
+                    return True
+            except codex_exec_bridge.CodexExecBridgeError:
+                # Preserve the exact persisted blocker for the worker; never
+                # fall back to signalling an unverified PID.
+                return False
         if process is not None:
             self._stop_process_tree(process, force=False)
             return True
@@ -1587,7 +4209,44 @@ class CodexExecutionManager:
                     self._cancel_requested.discard(run_id)
                 return False
             if run.process_spawned:
-                # The child has exited and the worker owns finalization. A late
+                verification_handle = self._existing_bridge_handle(
+                    run_id,
+                    "verification",
+                )
+                coding_handle = self._existing_bridge_handle(run_id, "coding")
+                coding_receipt = (
+                    codex_exec_bridge.load_terminal_receipt(coding_handle)
+                    if coding_handle is not None
+                    else None
+                )
+                if (
+                    not run.verification_process_spawned
+                    and verification_handle is None
+                    and isinstance(coding_receipt, dict)
+                    and coding_receipt.get("terminal_state") == "COMPLETED"
+                ):
+                    # Coding is terminal but the separate Verification process
+                    # has not crossed its launch boundary. Persist this narrow
+                    # Owner cancellation window and let the worker retain the
+                    # completed Coding evidence without starting Verification.
+                    run.status = "cancelled"
+                    run.cancelled = True
+                    run.finished_at = utc_now()
+                    run.task.status = "cancelled"
+                    session.add(
+                        AuditEvent(
+                            action="codex_run_cancelled_before_verification",
+                            entity_type="codex_run",
+                            entity_id=run.id,
+                            details=(
+                                "Owner cancelled after Coding terminal evidence and "
+                                "before independent Verification launch."
+                            ),
+                        )
+                    )
+                    session.commit()
+                    return True
+                # A terminal phase is already owned by the finalizer. A late
                 # cancel must not overwrite captured process evidence.
                 with self._lock:
                     self._cancel_requested.discard(run_id)
@@ -1631,7 +4290,7 @@ class CodexExecutionManager:
         return True
 
     def shutdown(self) -> None:
-        """Stop every active process tree before the runtime exits."""
+        """Stop legacy children; detached bridge executions survive restart."""
         with self._lock:
             self._stopping = True
             processes = list(self._processes.values())
@@ -1651,6 +4310,18 @@ class CodexExecutionManager:
         for worker in workers:
             if worker is not threading.current_thread():
                 worker.join(timeout=max(0.0, deadline - time.monotonic()))
+
+    def _discard_snapshot_blocked_worktree(
+        self,
+        worktree: Path,
+        branch: str,
+    ) -> tuple[bool, str]:
+        """Best-effort cleanup with a safe, persistable verification result."""
+
+        try:
+            return self.adapter.discard_unstarted_worktree(worktree, branch)
+        except (OSError, RuntimeError, subprocess.SubprocessError) as exc:
+            return False, f"CLEANUP_OPERATION_{type(exc).__name__.upper()}"
 
     def _execute(self, run_id: int) -> None:
         started_monotonic = time.monotonic()
@@ -1675,6 +4346,7 @@ class CodexExecutionManager:
                     details="Accepted Run is preparing its approved isolated source snapshot.",
                 )
             )
+            self._sync_result_monitor(session, run)
             session.commit()
             run.executable_status = detection.status
             if detection.status != "configured":
@@ -1700,9 +4372,35 @@ class CodexExecutionManager:
                 self._finish_pack_blocked(session, run, reason=authentication_reason)
                 return
             try:
-                codex_run_execution_target(session, run, self.settings.source_repo)
+                codex_run_execution_target(
+                    session,
+                    run,
+                    self.settings.source_repo,
+                    codex_executable=detection.executable,
+                    child_environment=self._child_environment(),
+                )
             except ValueError as exc:
                 self._finish_pack_blocked(session, run, reason=str(exc))
+                return
+            try:
+                self.adapter.validate_source_identity(
+                    expected_repo=run.source_repo,
+                    expected_branch=run.source_branch,
+                    expected_commit=run.source_commit,
+                )
+                if (
+                    run.pack.source_snapshot_digest
+                    != run.source_snapshot_digest
+                ):
+                    raise RuntimeError(
+                        "Source snapshot does not match the approved Pack and Run binding."
+                    )
+            except (OSError, RuntimeError, ValueError) as exc:
+                self._finish_source_snapshot_unavailable(
+                    session,
+                    run,
+                    diagnostic=str(exc),
+                )
                 return
             try:
                 worktree, branch = self.adapter.create_worktree(run.id, run.source_commit)
@@ -1730,27 +4428,25 @@ class CodexExecutionManager:
             assert worktree is not None
             try:
                 source_snapshot = json.loads(run.pack.source_snapshot_json or "{}")
-                hydrate_source_snapshot(worktree, source_snapshot)
+                hydrate_source_snapshot(
+                    worktree,
+                    source_snapshot,
+                    approved_digest=run.source_snapshot_digest,
+                    approved_source_branch=run.source_branch,
+                )
             except Exception as exc:
-                self.adapter.discard_unstarted_worktree(worktree, branch)
+                cleanup_verified, cleanup_code = (
+                    self._discard_snapshot_blocked_worktree(worktree, branch)
+                )
                 worktree = None
                 branch = ""
-                run.status = "blocked"
-                run.owner_summary = "Blocked: approved source snapshot could not be prepared."
-                run.stderr = self._sanitize_process_output(str(exc)[:2000])
-                run.finished_at = utc_now()
-                run.verification_status = "not_started"
-                run.verification_summary = "Verification was not started because snapshot hydration was blocked."
-                run.task.status = "blocked"
-                session.add(
-                    AuditEvent(
-                        action="codex_run_blocked",
-                        entity_type="codex_run",
-                        entity_id=run.id,
-                        details="Approved source snapshot hydration failed.",
-                    )
+                self._finish_source_snapshot_unavailable(
+                    session,
+                    run,
+                    diagnostic=str(exc),
+                    cleanup_verified=cleanup_verified,
+                    cleanup_code=cleanup_code,
                 )
-                session.commit()
                 return
             session.refresh(run)
             if run.status == "cancelled" or self._is_cancel_requested(run_id):
@@ -1759,7 +4455,38 @@ class CodexExecutionManager:
                 return
             session.refresh(run.pack)
             try:
-                codex_run_execution_target(session, run, self.settings.source_repo)
+                self.adapter.validate_source_identity(
+                    expected_repo=run.source_repo,
+                    expected_branch=run.source_branch,
+                    expected_commit=run.source_commit,
+                )
+                if (
+                    run.pack.source_snapshot_digest
+                    != run.source_snapshot_digest
+                ):
+                    raise RuntimeError(
+                        "Source snapshot does not match the approved Pack and Run binding."
+                    )
+            except (OSError, RuntimeError, ValueError) as exc:
+                cleanup_verified, cleanup_code = (
+                    self._discard_snapshot_blocked_worktree(worktree, branch)
+                )
+                self._finish_source_snapshot_unavailable(
+                    session,
+                    run,
+                    diagnostic=str(exc),
+                    cleanup_verified=cleanup_verified,
+                    cleanup_code=cleanup_code,
+                )
+                return
+            try:
+                codex_run_execution_target(
+                    session,
+                    run,
+                    self.settings.source_repo,
+                    codex_executable=detection.executable,
+                    child_environment=self._child_environment(),
+                )
             except ValueError as exc:
                 self.adapter.discard_unstarted_worktree(worktree, branch)
                 self._finish_pack_blocked(session, run, reason=str(exc))
@@ -1778,6 +4505,7 @@ class CodexExecutionManager:
                     details=f"Isolated branch {branch} started.",
                 )
             )
+            self._sync_result_monitor(session, run)
             session.commit()
 
         if not self._record_launch_intent(run_id):
@@ -1794,15 +4522,10 @@ class CodexExecutionManager:
         timed_out = False
         cancelled = False
         runtime_interrupted = False
+        integrity_blocked = False
         output_truncated = False
-        process: subprocess.Popen[bytes] | None = None
-        drain_threads: list[threading.Thread] = []
-        output_drain_threads: list[threading.Thread] = []
-        drain_incomplete = False
-        stdin_delivery: _StdinDelivery | None = None
-        stdin_thread: threading.Thread | None = None
-        stdout_capture: _StreamCapture | None = None
-        stderr_capture: _StreamCapture | None = None
+        process_spawned = False
+        presentation_output_truncated = False
         evidence_collector: _CodexJsonlEvidenceCollector | None = None
         pack_content = ""
         remote_state_before: tuple[str, int, bool] | None = None
@@ -1818,7 +4541,11 @@ class CodexExecutionManager:
                 launch_session.refresh(launch_run.pack)
                 try:
                     execution_target = codex_run_execution_target(
-                        launch_session, launch_run, self.settings.source_repo
+                        launch_session,
+                        launch_run,
+                        self.settings.source_repo,
+                        codex_executable=detection.executable,
+                        child_environment=self._child_environment(),
                     )
                 except ValueError as exc:
                     self.adapter.discard_unstarted_worktree(worktree, branch)
@@ -1844,24 +4571,6 @@ class CodexExecutionManager:
                     )
                     return
                 pack_content = launch_run.pack.content
-                try:
-                    command = self.adapter.command_for(
-                        detection,
-                        pack_content,
-                        execution_target.requested_model_identifier,
-                    )
-                except RuntimeError as exc:
-                    self.adapter.discard_unstarted_worktree(worktree, branch)
-                    launch_run.worktree_path = ""
-                    launch_run.worktree_branch = ""
-                    self._finish_pack_blocked(launch_session, launch_run, reason=str(exc))
-                    return
-                evidence_collector = _CodexJsonlEvidenceCollector(
-                    execution_target.requested_model_identifier
-                )
-                evidence_collector.executable_identity_fingerprint = (
-                    self._executable_identity_fingerprint(detection.executable)
-                )
                 remote_state_before = self._remote_state_fingerprint(self.settings.source_repo)
                 if not remote_state_before[2]:
                     self.adapter.discard_unstarted_worktree(worktree, branch)
@@ -1880,109 +4589,72 @@ class CodexExecutionManager:
                         launch_run.worktree_branch = ""
                         self._finish_cancelled(launch_session, launch_run)
                         return
-                    try:
-                        process = subprocess.Popen(
-                            command,
-                            cwd=worktree,
-                            stdin=subprocess.PIPE,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            env=self._child_environment(),
-                            start_new_session=os.name == "posix",
-                        )
-                    except OSError:
-                        refreshed_detection = self.adapter.detect()
-                        refreshed_authenticated, refreshed_reason = self.adapter.authentication_ready(
-                            refreshed_detection
-                        )
-                        self.reconcile_observed_local_readiness(
-                            launch_session,
-                            refreshed_detection,
-                            authenticated=refreshed_authenticated,
-                            authentication_reason=refreshed_reason,
-                        )
-                        self.adapter.discard_unstarted_worktree(worktree, branch)
-                        launch_run.worktree_path = ""
-                        launch_run.worktree_branch = ""
-                        self._finish_pack_blocked(
-                            launch_session,
-                            launch_run,
-                            reason="Codex process launch failed after the final readiness check.",
-                        )
-                        return
-                    self._processes[run_id] = process
-                    evidence_collector.process_id_fingerprint = hashlib.sha256(
-                        f"coding:{run_id}:{process.pid}".encode("utf-8")
-                    ).hexdigest()
-                    launch_run.process_spawned = True
                 launch_session.commit()
-
-            budget = _SharedOutputBudget(self.settings.codex_output_limit)
-            assert process.stdout is not None
-            assert process.stderr is not None
-            stdout_capture = _StreamCapture(process.stdout, budget, observer=evidence_collector)
-            stderr_capture = _StreamCapture(process.stderr, budget)
-            for name, capture in (("stdout", stdout_capture), ("stderr", stderr_capture)):
-                thread = threading.Thread(
-                    target=capture.drain,
-                    daemon=True,
-                    name=f"twos-codex-{run_id}-{name}",
-                )
-                thread.start()
-                drain_threads.append(thread)
-                output_drain_threads.append(thread)
-
-            assert process.stdin is not None
-            stdin_delivery = _StdinDelivery(len(pack_content.encode("utf-8")))
-            stdin_thread = threading.Thread(
-                target=self._write_pack,
-                args=(process, pack_content, stdin_delivery),
-                daemon=True,
-                name=f"twos-codex-{run_id}-stdin",
-            )
-            stdin_thread.start()
-            drain_threads.append(stdin_thread)
-
-            exit_code, timed_out, cancelled, runtime_interrupted = self._wait_for_process(
+            bridge_result = self._run_bridge_phase(
                 run_id,
-                process,
+                phase="coding",
+                detection=detection,
+                worktree=worktree,
+                prompt=pack_content,
+                model_identifier=execution_target.requested_model_identifier,
+                sandbox_mode="workspace-write",
             )
-        except OSError as exc:
-            stderr = str(exc)
-            exit_code = -1
-        finally:
-            if process and process.poll() is None:
-                self._stop_process_tree(process, force=True)
-                try:
-                    process.wait(timeout=2.0)
-                except subprocess.TimeoutExpired:
-                    pass
-            for thread in drain_threads:
-                thread.join(timeout=2.0)
-            drain_incomplete = any(thread.is_alive() for thread in output_drain_threads) or any(
-                capture is not None and not capture.collection_complete()
-                for capture in (stdout_capture, stderr_capture)
+            evidence_collector = bridge_result["collector"]  # type: ignore[assignment]
+            process_spawned = bool(bridge_result["process_spawned"])
+            exit_code = bridge_result["exit_code"]  # type: ignore[assignment]
+            timed_out = bool(bridge_result["timed_out"])
+            cancelled = bool(bridge_result["cancelled"])
+            runtime_interrupted = bool(bridge_result["runtime_interrupted"])
+            integrity_blocked = bool(bridge_result.get("integrity_blocked"))
+            stdout = str(bridge_result["stdout"])
+            stderr = str(bridge_result["stderr"])
+            pack_delivery_complete = bool(bridge_result["delivery_complete"])
+            presentation_output_truncated = bool(
+                bridge_result["retention_truncated"]
             )
-            if drain_incomplete and evidence_collector is not None:
-                evidence_collector.mark_incomplete()
-            if evidence_collector is not None:
-                evidence_collector.finish()
-            if process and process.stdin and not process.stdin.closed:
-                process.stdin.close()
-
-        if stdout_capture and stderr_capture:
-            stdout, stderr, output_truncated = self._bounded_outputs(stdout_capture, stderr_capture)
-            stdout = self._sanitize_process_output(stdout)
-            stderr = self._sanitize_process_output(stderr)
-            stdout, stderr, sanitized_truncated = self._rebudget_sanitized_outputs(stdout, stderr)
-            output_truncated = output_truncated or sanitized_truncated
-
-        pack_delivery_complete = bool(
-            stdin_delivery
-            and stdin_thread
-            and not stdin_thread.is_alive()
-            and stdin_delivery.delivered_exactly()
-        )
+            # Retained stdout/stderr truncation is the legacy process-output
+            # boundary persisted on the Run. Collector event-count summaries
+            # remain separate and do not by themselves set this flag.
+            output_truncated = presentation_output_truncated
+        except (OSError, codex_exec_bridge.CodexExecBridgeError) as exc:
+            if self._bridge_phase_has_launch_evidence(run_id, "coding"):
+                # A known live sidecar or immutable terminal receipt owns the
+                # real exit/output truth. Let worker recovery re-read it;
+                # never replace it with a synthetic -1 exit.
+                raise
+            # The bridge ticket may be sealed before sidecar Popen. Without a
+            # validated launch record or receipt this is still the pre-spawn
+            # boundary: discard the isolated worktree, invalidate approval,
+            # and make no process/exit/model-invocation claim.
+            self.adapter.discard_unstarted_worktree(worktree, branch)
+            with self.factory() as blocked_session:
+                blocked_run = blocked_session.get(CodexRun, run_id)
+                if blocked_run is not None and not blocked_run.process_spawned:
+                    blocked_run.worktree_path = ""
+                    blocked_run.worktree_branch = ""
+                    self._finish_pack_blocked(
+                        blocked_session,
+                        blocked_run,
+                        reason=str(exc),
+                    )
+            return
+        if (
+            evidence_collector is not None
+            and evidence_collector.structured_success
+            and exit_code == 0
+            and not timed_out
+            and not cancelled
+            and not runtime_interrupted
+            and not output_truncated
+            and pack_delivery_complete
+        ):
+            self._bind_owner_verified_model_identity(
+                run_id,
+                evidence_collector,
+                capability="coding",
+            )
+        elif evidence_collector is not None:
+            evidence_collector.clear_verified_model_identity()
         result = self._derive_result(
             worktree,
             run_id,
@@ -1997,7 +4669,56 @@ class CodexExecutionManager:
             pack_delivery_complete,
         )
         verification: dict[str, object] | None = None
-        if process is not None and not cancelled and not timed_out and not runtime_interrupted:
+        result["exec_bridge"] = {
+            "transport": "codex exec --json",
+            "presentation_evidence_truncated": presentation_output_truncated,
+            "transport_consumption_completed": bool(
+                evidence_collector and not evidence_collector.collection_incomplete
+            ),
+            "integrity_state": "blocked" if integrity_blocked else "verified",
+            "integrity_blocker": (
+                "FINAL_RESULT_SCHEMA_INVALID"
+                if bridge_result.get("final_message_contract_invalid") is True
+                else "BRIDGE_RESULT_INTEGRITY_BLOCKED"
+                if integrity_blocked
+                else ""
+            ),
+        }
+        if self._stop_reason(run_id) == "runtime_shutdown":
+            raise _BridgeRuntimeHandoff()
+        with self.factory() as transition_session:
+            transition_run = transition_session.get(CodexRun, run_id)
+            owner_cancelled_before_verification = bool(
+                self._stop_reason(run_id) == "owner_cancelled"
+                or (
+                    transition_run is not None
+                    and (
+                        transition_run.cancelled
+                        or transition_run.status == "cancelled"
+                    )
+                )
+            )
+        if owner_cancelled_before_verification:
+            cancelled = True
+        coding_process_for_gate = result.get("coding_process")
+        git_evidence_for_gate = result.get("git_evidence")
+        coding_ready_for_verification = bool(
+            process_spawned
+            and exit_code == 0
+            and evidence_collector is not None
+            and evidence_collector.structured_success
+            and not evidence_collector.unsupported_model_routing_observed
+            and pack_delivery_complete
+            and isinstance(coding_process_for_gate, dict)
+            and coding_process_for_gate.get("status") == "completed"
+            and isinstance(git_evidence_for_gate, dict)
+            and git_evidence_for_gate.get("status") == "passed"
+            and self._boundary_evidence_passes(result)
+            and not cancelled
+            and not timed_out
+            and not runtime_interrupted
+        )
+        if coding_ready_for_verification:
             with self.factory() as verification_session:
                 verification_run = verification_session.get(CodexRun, run_id)
                 if verification_run is not None:
@@ -2021,6 +4742,10 @@ class CodexExecutionManager:
                             entity_id=run_id,
                             details="Coding process finished; independent Verification is preparing.",
                         )
+                    )
+                    self._sync_result_monitor(
+                        verification_session,
+                        verification_run,
                     )
                     verification_session.commit()
             verification = self._execute_verification(
@@ -2135,6 +4860,12 @@ class CodexExecutionManager:
                 run.status = "timed_out"
                 run.owner_summary = "Codex execution exceeded the configured timeout."
                 run.task.status = "needs_review"
+            elif integrity_blocked:
+                run.status = "blocked"
+                run.owner_summary = (
+                    "The detached Coding result failed its sealed integrity checks."
+                )
+                run.task.status = "needs_review"
             elif exit_code != 0:
                 run.status = "failed"
                 run.owner_summary = str(
@@ -2154,6 +4885,12 @@ class CodexExecutionManager:
             elif verification is None:
                 run.status = "failed"
                 run.owner_summary = "Coding finished, but independent Verification did not start."
+                run.task.status = "needs_review"
+            elif verification.get("integrity_blocked"):
+                run.status = "blocked"
+                run.owner_summary = (
+                    "Independent Verification failed its sealed result integrity checks."
+                )
                 run.task.status = "needs_review"
             elif verification["runtime_interrupted"]:
                 run.status = "failed"
@@ -2288,7 +5025,65 @@ class CodexExecutionManager:
                     details=f"status={run.status}; exit_code={run.exit_code}; changed_files={len(result['changed_files'])}",
                 )
             )
+            self._sync_result_monitor(
+                session,
+                run,
+                actual_model_identifier=(
+                    evidence_collector.actual_model_identifier
+                    if evidence_collector
+                    and evidence_collector.actual_model_identity_verified
+                    else None
+                ),
+                codex_session_identity=(
+                    evidence_collector.thread_id_fingerprint
+                    if evidence_collector
+                    and evidence_collector.thread_id_fingerprint
+                    else None
+                ),
+            )
+            if verification is not None and verification.get("integrity_blocked"):
+                monitor = ensure_run_monitor(
+                    session,
+                    int(run.pack.approved_by_user_id),
+                    run,
+                )
+                observe_monitor(
+                    session,
+                    monitor,
+                    state="RESULT_INTEGRITY_BLOCKED",
+                    recovery_state="INTEGRITY_BLOCKED",
+                    failure_code="BRIDGE_RESULT_INTEGRITY_BLOCKED",
+                    safe_summary=run.owner_summary,
+                )
+            elif integrity_blocked:
+                monitor = ensure_run_monitor(
+                    session,
+                    int(run.pack.approved_by_user_id),
+                    run,
+                )
+                observe_monitor(
+                    session,
+                    monitor,
+                    state="RESULT_INTEGRITY_BLOCKED",
+                    recovery_state="INTEGRITY_BLOCKED",
+                    failure_code="BRIDGE_RESULT_INTEGRITY_BLOCKED",
+                    safe_summary=run.owner_summary,
+                )
             session.commit()
+            if (
+                integrity_blocked
+                or verification is not None
+                and verification.get("integrity_blocked")
+            ):
+                from .run_lifecycle import reconcile_execution_attempt
+
+                reconcile_execution_attempt(
+                    session,
+                    int(run.pack.approved_by_user_id),
+                    run,
+                    monitor,
+                )
+                session.commit()
 
     def _execute_verification(
         self,
@@ -2306,15 +5101,69 @@ class CodexExecutionManager:
             for item in coding_result.get("changed_files", [])
             if isinstance(item, str)
         )
-        try:
-            verification_snapshot_before = capture_source_snapshot(worktree)
+        sealed_verification_identity: dict[str, object] | None = None
+        recovering_verification = (
+            self._existing_bridge_handle(run_id, "verification") is not None
+        )
+        if recovering_verification:
+            with self.factory() as recovery_session:
+                recovery_run = recovery_session.get(CodexRun, run_id)
+                if recovery_run is None:
+                    raise codex_exec_bridge.CodexExecBridgeError(
+                        "RUN_UNAVAILABLE",
+                        "The persisted Codex Run is unavailable.",
+                    )
+                _, sealed_ticket = self._validated_bridge_ticket(
+                    recovery_run,
+                    phase="verification",
+                    worktree=worktree,
+                )
+                raw_identity = sealed_ticket.get("identity")
+                if isinstance(raw_identity, dict):
+                    sealed_verification_identity = raw_identity
+        if sealed_verification_identity is not None:
+            # These are immutable prelaunch values.  Recomputing them after a
+            # restart would turn the post-execution workspace into a false
+            # baseline and could conceal Verification-side mutation.
             verification_snapshot_before_digest = str(
-                verification_snapshot_before.get("digest", "")
+                sealed_verification_identity.get(
+                    "pre_verification_workspace_digest"
+                )
+                or ""
             )
-        except RuntimeError:
-            verification_snapshot_before_digest = ""
-        git_boundary_before = self._git_boundary_fingerprint(self.settings.source_repo)
-        remote_boundary_before = self._remote_state_fingerprint(self.settings.source_repo)
+            git_boundary_before = (
+                str(
+                    sealed_verification_identity.get(
+                        "git_boundary_fingerprint"
+                    )
+                    or ""
+                ),
+                True,
+            )
+            remote_boundary_before = (
+                str(
+                    sealed_verification_identity.get(
+                        "source_remote_fingerprint"
+                    )
+                    or ""
+                ),
+                0,
+                True,
+            )
+        else:
+            try:
+                verification_snapshot_before = capture_source_snapshot(worktree)
+                verification_snapshot_before_digest = str(
+                    verification_snapshot_before.get("digest", "")
+                )
+            except RuntimeError:
+                verification_snapshot_before_digest = ""
+            git_boundary_before = self._git_boundary_fingerprint(
+                self.settings.source_repo
+            )
+            remote_boundary_before = self._remote_state_fingerprint(
+                self.settings.source_repo
+            )
         verification_context = {
             "changed_files": expected_changed_files,
             "changed_file_evidence": coding_result.get("changed_file_evidence", []),
@@ -2346,22 +5195,17 @@ class CodexExecutionManager:
             ]
         )
         collector: _CodexJsonlEvidenceCollector | None = None
-        process: subprocess.Popen[bytes] | None = None
-        stdout_capture: _StreamCapture | None = None
-        stderr_capture: _StreamCapture | None = None
-        drain_threads: list[threading.Thread] = []
-        output_threads: list[threading.Thread] = []
-        delivery: _StdinDelivery | None = None
-        stdin_thread: threading.Thread | None = None
+        process_spawned = False
+        presentation_output_truncated = False
         exit_code: int | None = None
         timed_out = False
         cancelled = False
         runtime_interrupted = False
+        integrity_blocked = False
         output_truncated = False
         stdout = ""
         stderr = ""
         model_identifier = ""
-        command: list[str] | None = None
         launch_failure_classification = ""
         launch_failure_summary = ""
         try:
@@ -2369,17 +5213,20 @@ class CodexExecutionManager:
                 run = session.get(CodexRun, run_id)
                 if run is None:
                     raise RuntimeError("The persisted Run no longer exists.")
-                codex_run_execution_target(session, run, self.settings.source_repo)
+                if not recovering_verification:
+                    codex_run_execution_target(
+                        session,
+                        run,
+                        self.settings.source_repo,
+                        codex_executable=detection.executable,
+                        child_environment=self._child_environment(),
+                        allow_equivalent_connectivity_supersession=True,
+                    )
                 model_identifier = run.verification_model_identifier
-                authenticated, reason = self.adapter.authentication_ready(detection)
-                if not authenticated:
-                    raise RuntimeError(reason)
-                command = self.adapter.command_for(
-                    detection,
-                    prompt,
-                    model_identifier,
-                    sandbox_mode="read-only",
-                )
+                if not recovering_verification:
+                    authenticated, reason = self.adapter.authentication_ready(detection)
+                    if not authenticated:
+                        raise RuntimeError(reason)
                 run.status = "verifying"
                 run.owner_summary = (
                     "Coding has reached a terminal process state; independent Verification is running."
@@ -2387,72 +5234,39 @@ class CodexExecutionManager:
                 run.verification_status = "running"
                 run.verification_summary = "Independent Verification is running in read-only mode."
                 run.task.status = "verifying"
+                self._sync_result_monitor(session, run)
                 session.commit()
-
-            collector = _CodexJsonlEvidenceCollector(model_identifier)
-            collector.executable_identity_fingerprint = self._executable_identity_fingerprint(
-                detection.executable
-            )
-            with self._lock:
-                if self._stopping or run_id in self._cancel_requested:
-                    raise RuntimeError("Verification was stopped before process launch.")
-                assert command is not None
-                process = subprocess.Popen(
-                    command,
-                    cwd=worktree,
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    env=self._child_environment(),
-                    start_new_session=os.name == "posix",
-                )
-                collector.process_id_fingerprint = hashlib.sha256(
-                    f"verification:{run_id}:{process.pid}".encode("utf-8")
-                ).hexdigest()
-                self._processes[run_id] = process
-            with self.factory() as session:
-                run = session.get(CodexRun, run_id)
-                if run is not None:
-                    run.verification_process_spawned = True
-                    session.add(
-                        AuditEvent(
-                            action="codex_verification_started",
-                            entity_type="codex_run",
-                            entity_id=run.id,
-                            details="Separate read-only Verification process spawned.",
-                        )
-                    )
-                    session.commit()
-
-            budget = _SharedOutputBudget(self.settings.codex_output_limit)
-            assert process.stdout is not None
-            assert process.stderr is not None
-            stdout_capture = _StreamCapture(process.stdout, budget, observer=collector)
-            stderr_capture = _StreamCapture(process.stderr, budget)
-            for name, capture in (("stdout", stdout_capture), ("stderr", stderr_capture)):
-                thread = threading.Thread(
-                    target=capture.drain,
-                    daemon=True,
-                    name=f"twos-verification-{run_id}-{name}",
-                )
-                thread.start()
-                drain_threads.append(thread)
-                output_threads.append(thread)
-            assert process.stdin is not None
-            delivery = _StdinDelivery(len(prompt.encode("utf-8")))
-            stdin_thread = threading.Thread(
-                target=self._write_pack,
-                args=(process, prompt, delivery),
-                daemon=True,
-                name=f"twos-verification-{run_id}-stdin",
-            )
-            stdin_thread.start()
-            drain_threads.append(stdin_thread)
-            exit_code, timed_out, cancelled, runtime_interrupted = self._wait_for_process(
+            bridge_result = self._run_bridge_phase(
                 run_id,
-                process,
+                phase="verification",
+                detection=detection,
+                worktree=worktree,
+                prompt=prompt,
+                model_identifier=model_identifier,
+                sandbox_mode="read-only",
             )
-        except (OSError, RuntimeError, ValueError) as exc:
+            collector = bridge_result["collector"]  # type: ignore[assignment]
+            process_spawned = bool(bridge_result["process_spawned"])
+            exit_code = bridge_result["exit_code"]  # type: ignore[assignment]
+            timed_out = bool(bridge_result["timed_out"])
+            cancelled = bool(bridge_result["cancelled"])
+            runtime_interrupted = bool(bridge_result["runtime_interrupted"])
+            integrity_blocked = bool(bridge_result.get("integrity_blocked"))
+            stdout = str(bridge_result["stdout"])
+            stderr = str(bridge_result["stderr"])
+            delivery_complete = bool(bridge_result["delivery_complete"])
+            presentation_output_truncated = bool(
+                bridge_result["retention_truncated"]
+            )
+            output_truncated = presentation_output_truncated
+        except (
+            OSError,
+            RuntimeError,
+            ValueError,
+            codex_exec_bridge.CodexExecBridgeError,
+        ) as exc:
+            if self._bridge_phase_has_launch_evidence(run_id, "verification"):
+                raise
             launch_failure_summary = _bounded_event_text(str(exc), maximum=500)
             if isinstance(exc, OSError):
                 launch_failure_classification = "process_launch_failure"
@@ -2464,36 +5278,24 @@ class CodexExecutionManager:
                 launch_failure_classification = "runtime_configuration_failure"
             stderr = self._sanitize_process_output(str(exc)[:2000])
             exit_code = -1
-        finally:
-            if process is not None and process.poll() is None:
-                self._stop_process_tree(process, force=True)
-                try:
-                    process.wait(timeout=2.0)
-                except subprocess.TimeoutExpired:
-                    pass
-            for thread in drain_threads:
-                thread.join(timeout=2.0)
-            incomplete = any(thread.is_alive() for thread in output_threads) or any(
-                capture is not None and not capture.collection_complete()
-                for capture in (stdout_capture, stderr_capture)
+            delivery_complete = False
+        if (
+            collector is not None
+            and collector.structured_success
+            and exit_code == 0
+            and not timed_out
+            and not cancelled
+            and not runtime_interrupted
+            and not output_truncated
+            and delivery_complete
+        ):
+            self._bind_owner_verified_model_identity(
+                run_id,
+                collector,
+                capability="verification",
             )
-            if incomplete and collector is not None:
-                collector.mark_incomplete()
-            if collector is not None:
-                collector.finish()
-            if process is not None and process.stdin and not process.stdin.closed:
-                process.stdin.close()
-
-        if stdout_capture is not None and stderr_capture is not None:
-            stdout, captured_stderr, output_truncated = self._bounded_outputs(
-                stdout_capture,
-                stderr_capture,
-            )
-            stderr = captured_stderr or stderr
-            stdout = self._sanitize_process_output(stdout)
-            stderr = self._sanitize_process_output(stderr)
-            stdout, stderr, sanitized_truncated = self._rebudget_sanitized_outputs(stdout, stderr)
-            output_truncated = output_truncated or sanitized_truncated
+        elif collector is not None:
+            collector.clear_verified_model_identity()
         try:
             verification_snapshot_after = capture_source_snapshot(worktree)
             verification_snapshot_after_digest = str(
@@ -2571,7 +5373,11 @@ class CodexExecutionManager:
         passed_checks = [key for key, passed in checks.items() if passed]
         completed_at = utc_now()
         duration_ms = int((time.monotonic() - started_monotonic) * 1000)
-        if runtime_interrupted:
+        if integrity_blocked:
+            process_status = "integrity_blocked"
+            failure_classification = "result_integrity_blocked"
+            failure = "Independent Verification failed its sealed result integrity checks."
+        elif runtime_interrupted:
             process_status = "failed"
             failure_classification = "runtime_interrupted"
             failure = "Runtime shutdown interrupted independent Verification."
@@ -2631,7 +5437,7 @@ class CodexExecutionManager:
         return {
             "status": process_status,
             "summary": summary,
-            "process_spawned": process is not None,
+            "process_spawned": process_spawned,
             "stdout": stdout,
             "stderr": stderr,
             "exit_code": exit_code,
@@ -2639,17 +5445,14 @@ class CodexExecutionManager:
             "timed_out": timed_out,
             "cancelled": cancelled,
             "runtime_interrupted": runtime_interrupted,
+            "integrity_blocked": integrity_blocked,
             "output_truncated": output_truncated,
+            "presentation_evidence_truncated": presentation_output_truncated,
             "started_at": started_at.isoformat() + "Z",
             "completed_at": completed_at.isoformat() + "Z",
             "collector": collector,
             "prompt": prompt,
-            "delivery_complete": bool(
-                delivery
-                and stdin_thread
-                and not stdin_thread.is_alive()
-                and delivery.delivered_exactly()
-            ),
+            "delivery_complete": delivery_complete,
             "checks": checks,
             "semantic_verification_passed": semantic_verification_passed,
             "failure_classification": failure_classification,
@@ -2666,7 +5469,13 @@ class CodexExecutionManager:
                 "actual_model_identity_verified": bool(
                     collector and collector.actual_model_identity_verified
                 ),
-                "process_started": process is not None,
+                "model_identity_source": (
+                    collector.model_identity_source if collector else ""
+                ),
+                "connectivity_evidence_identity": (
+                    collector.connectivity_evidence_identity if collector else ""
+                ),
+                "process_started": process_spawned,
                 "turn_started": bool(collector and collector.turn_started),
                 "process_exit": exit_code,
                 "turn_terminal_state": collector.terminal_turn_status if collector else "not_observed",
@@ -2675,7 +5484,7 @@ class CodexExecutionManager:
             },
             "invocation": {
                 "process_execution_verified": bool(
-                    process is not None
+                    process_spawned
                     and type(exit_code) is int
                     and not runtime_interrupted
                     and not timed_out
@@ -2695,6 +5504,12 @@ class CodexExecutionManager:
                 ),
                 "actual_model_identity_verified": bool(
                     collector and collector.actual_model_identity_verified
+                ),
+                "model_identity_source": (
+                    collector.model_identity_source if collector else ""
+                ),
+                "connectivity_evidence_identity": (
+                    collector.connectivity_evidence_identity if collector else ""
                 ),
                 "failure": failure,
             },
@@ -2968,13 +5783,20 @@ class CodexExecutionManager:
             f"{source_commit}..HEAD",
             check=False,
         ).stdout.splitlines()
-        source_post_commit = run_git(source_repo, "rev-parse", "HEAD", check=False).stdout.strip()
+        source_post_commit = run_git(
+            source_repo,
+            "rev-parse",
+            "HEAD",
+            check=False,
+            hardened_read_only=True,
+        ).stdout.strip()
         source_status = run_git(
             source_repo,
             "status",
             "--porcelain",
             "--untracked-files=all",
             check=False,
+            hardened_read_only=True,
         ).stdout.strip()
         remote_state_after = self._remote_state_fingerprint(source_repo)
         remote_state_unchanged = bool(
@@ -2993,7 +5815,10 @@ class CodexExecutionManager:
             and worktree_common == source_common
         )
         try:
-            source_post_snapshot = capture_source_snapshot(source_repo)
+            source_post_snapshot = capture_source_snapshot(
+                source_repo,
+                hardened_read_only=True,
+            )
             source_unchanged = (
                 source_post_commit == source_commit
                 and source_post_snapshot.get("digest") == approved_digest
@@ -3134,6 +5959,12 @@ class CodexExecutionManager:
             "actual_model_identity_verified": bool(
                 collector and collector.actual_model_identity_verified
             ),
+            "model_identity_source": (
+                collector.model_identity_source if collector else ""
+            ),
+            "connectivity_evidence_identity": (
+                collector.connectivity_evidence_identity if collector else ""
+            ),
             "approved_prompt_delivery_complete": pack_delivery_complete,
             "failure": invocation_failure,
         }
@@ -3268,21 +6099,40 @@ class CodexExecutionManager:
             True,
         )
 
-    def _rebudget_sanitized_outputs(self, stdout: str, stderr: str) -> tuple[str, str, bool]:
-        """Keep redaction expansion inside the same persisted combined-output cap."""
+    def _rebudget_sanitized_outputs(
+        self,
+        stdout: str,
+        stderr: str,
+        *,
+        already_truncated: bool = False,
+        marker_on_stdout: bool = True,
+    ) -> tuple[str, str, bool]:
+        """Keep safe presentation evidence inside one truthful combined cap.
+
+        The durable Exec Bridge may already have consumed the complete byte
+        budget before this presentation layer reads its retained streams.  In
+        that case the retained payload itself is not over budget, but the
+        receipt still proves that bytes were omitted.  Reserve space for the
+        truncation marker deterministically instead of depending on which
+        drain thread won the shared budget race.
+        """
         limit = max(0, self.settings.codex_output_limit)
         stdout_data = stdout.encode("utf-8")
         stderr_data = stderr.encode("utf-8")
-        if len(stdout_data) + len(stderr_data) <= limit:
+        if not already_truncated and len(stdout_data) + len(stderr_data) <= limit:
             return stdout, stderr, False
         suffix = OUTPUT_TRUNCATION_SUFFIX.encode("utf-8")
         if limit <= len(suffix):
             marker = suffix[:limit].decode("utf-8", errors="ignore")
-            return (marker, "", True) if stdout_data else ("", marker, True)
+            return (
+                (marker, "", True)
+                if marker_on_stdout
+                else ("", marker, True)
+            )
         content_limit = limit - len(suffix)
         retained_stdout = stdout_data[:content_limit]
         retained_stderr = stderr_data[: max(0, content_limit - len(retained_stdout))]
-        if len(stdout_data) > len(retained_stdout):
+        if marker_on_stdout:
             retained_stdout += suffix
         else:
             retained_stderr += suffix
@@ -3294,7 +6144,13 @@ class CodexExecutionManager:
 
     @classmethod
     def _sanitize_process_output(cls, value: str) -> str:
-        """Redact credential-shaped values and raw Codex thread IDs before persistence."""
+        """Persist only credential-safe, reasoning-safe process evidence.
+
+        Codex JSONL can contain transport events for private reasoning items.
+        Those events are useful as lifecycle evidence, but their text is not
+        Owner-visible output and must never be stored on ``CodexRun``.  Keep a
+        minimal event envelope so event ordering/counting remains auditable.
+        """
         sanitized_lines: list[str] = []
         for line in value.splitlines(keepends=True):
             ending = "\n" if line.endswith("\n") else ""
@@ -3304,12 +6160,55 @@ class CodexExecutionManager:
             except (json.JSONDecodeError, TypeError):
                 sanitized_lines.append(cls._redact_sensitive_text(payload) + ending)
                 continue
+            if cls._is_private_reasoning_event(decoded):
+                decoded = cls._reasoning_event_envelope(decoded)
             sanitized = cls._sanitize_json_value(decoded)
             sanitized_lines.append(
                 json.dumps(sanitized, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
                 + ending
             )
         return "".join(sanitized_lines)
+
+    @staticmethod
+    def _is_private_reasoning_event(value: object) -> bool:
+        if not isinstance(value, dict):
+            return False
+        event_type = str(value.get("type") or "").lower()
+        if "reasoning" in event_type or event_type.startswith("analysis."):
+            return True
+        item = value.get("item")
+        if isinstance(item, dict):
+            item_type = str(item.get("type") or "").lower()
+            if item_type in {
+                "reasoning",
+                "analysis",
+                "reasoning_summary",
+                "reasoning_summary_text",
+            }:
+                return True
+        return False
+
+    @staticmethod
+    def _reasoning_event_envelope(value: dict[str, object]) -> dict[str, object]:
+        safe: dict[str, object] = {
+            "type": str(value.get("type") or "reasoning.activity")[:120],
+            "summary": "Codex is reasoning",
+        }
+        for key in ("timestamp", "created_at", "thread_id", "turn_id"):
+            candidate = value.get(key)
+            if isinstance(candidate, (str, int, float)) and not isinstance(
+                candidate, bool
+            ):
+                safe[key] = candidate
+        item = value.get("item")
+        if isinstance(item, dict):
+            safe_item: dict[str, object] = {"type": "reasoning"}
+            for key in ("id", "status"):
+                candidate = item.get(key)
+                if isinstance(candidate, str):
+                    safe_item[key] = candidate[:240]
+            safe["item"] = safe_item
+        return safe
 
     @classmethod
     def _sanitize_json_value(cls, value, *, key: str = "", depth: int = 0):
@@ -3351,37 +6250,73 @@ class CodexExecutionManager:
         return _SENSITIVE_OUTPUT_TEXT.sub(lambda match: f"[redacted]{match.group(1)}", redacted)
 
     def _child_environment(self) -> dict[str, str]:
-        env = {key: os.environ[key] for key in CHILD_ENV_ALLOWLIST if key in os.environ}
-        env["NO_COLOR"] = "1"
-        env["GIT_TERMINAL_PROMPT"] = "0"
-        # Descendant Git commands inherit an empty transport allow-list. This
-        # prevents file, SSH, HTTPS, and other push transports while retaining
-        # local status/diff operations inside the isolated worktree.
-        env["GIT_ALLOW_PROTOCOL"] = ""
-        return env
+        return codex_child_environment()
+
+    def _bind_owner_verified_model_identity(
+        self,
+        run_id: int,
+        collector: _CodexJsonlEvidenceCollector | None,
+        *,
+        capability: str,
+    ) -> None:
+        """Bind admission evidence without inventing this Run's model identity.
+
+        A prior Owner connectivity turn can authorize the exact executable and
+        requested-model context, but it cannot attest which physical model a
+        later `codex exec` process used.  Only this Run's own structured output
+        may set the collector's actual-model fields.
+        """
+        if collector is None or not collector.structured_success:
+            return
+        with self.factory() as session:
+            run = session.get(CodexRun, run_id)
+            if run is None or run.pack is None or run.pack.approved_by_user_id is None:
+                return
+            if capability == "coding":
+                evidence = run.execution_connectivity_evidence
+                expected_evidence_id = run.execution_connectivity_evidence_id
+                expected_model_id = run.execution_model_id
+                requested_model = run.requested_model_identifier
+            elif capability == "verification":
+                evidence = run.verification_connectivity_evidence
+                expected_evidence_id = run.verification_connectivity_evidence_id
+                expected_model_id = run.verification_model_id
+                requested_model = run.verification_model_identifier
+            else:
+                return
+            if not (
+                evidence is not None
+                and evidence.id == expected_evidence_id
+                and evidence.owner_id == run.pack.approved_by_user_id
+                and evidence.model_id == expected_model_id
+                and evidence.requested_model_identifier == requested_model
+                and evidence.readiness_state == "READY_FOR_REAL_RUN"
+                and evidence.provider_reachable
+                and evidence.model_available
+                and evidence.credential_store_accessible
+                and not evidence.interactive_prompt_detected
+                and not evidence.timed_out
+                and evidence.exit_code == 0
+                and re.fullmatch(r"[0-9a-f]{64}", evidence.evidence_digest or "")
+            ):
+                return
+            collector.connectivity_evidence_identity = evidence.evidence_digest
 
     @staticmethod
     def _executable_identity_fingerprint(executable: str | None) -> str:
-        if not executable:
-            return ""
-        try:
-            path = Path(executable).resolve()
-            stat = path.stat()
-        except OSError:
-            return ""
-        payload = f"{path}:{stat.st_size}:{stat.st_mtime_ns}:{stat.st_mode}"
-        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+        return executable_identity(executable)
 
     @staticmethod
     def _remote_state_fingerprint(repo: Path) -> tuple[str, int, bool]:
         """Hash local remote config/tracking refs without persisting URLs or credentials."""
-        remotes = run_git(repo, "remote", check=False)
+        remotes = run_git(repo, "remote", check=False, hardened_read_only=True)
         refs = run_git(
             repo,
             "for-each-ref",
             "--format=%(refname)%00%(objectname)",
             "refs/remotes",
             check=False,
+            hardened_read_only=True,
         )
         config = run_git(
             repo,
@@ -3391,6 +6326,7 @@ class CodexExecutionManager:
             "--get-regexp",
             r"^remote\..*\.(url|pushurl)$",
             check=False,
+            hardened_read_only=True,
         )
         complete = (
             remotes.returncode == 0
@@ -3414,6 +6350,7 @@ class CodexExecutionManager:
             "refs/tags",
             "refs/remotes",
             check=False,
+            hardened_read_only=True,
         )
         config = run_git(
             repo,
@@ -3423,6 +6360,7 @@ class CodexExecutionManager:
             "--get-regexp",
             r"^remote\..*\.(url|pushurl)$",
             check=False,
+            hardened_read_only=True,
         )
         complete = refs.returncode == 0 and config.returncode in {0, 1}
         if not complete:
@@ -3573,6 +6511,15 @@ class CodexExecutionManager:
             and collector.actual_model_identity_verified
             and not collector.limit_exceeded
             and not collector.collection_incomplete
+            and not collector.lifecycle_conflict
+            and not collector.unsupported_model_routing_observed
+            and collector.structured_success
+            and pack_delivery_complete
+            and not runtime_interrupted
+            and not run.timed_out
+            and not run.cancelled
+            and not run.output_truncated
+            and run.exit_code == 0
         )
         if collector_identity_usable and collector is not None:
             candidate = collector.actual_model_identifier
@@ -3639,11 +6586,23 @@ class CodexExecutionManager:
             error_category = "evidence_incomplete"
             diagnostic_code = "jsonl_limit_exceeded" if collector else "jsonl_missing"
             safe_summary = "Bounded Codex JSONL evidence was unavailable or exceeded its safety limit."
+        elif not pack_delivery_complete:
+            outcome = "failed"
+            error_category = "evidence_incomplete"
+            diagnostic_code = "approved_pack_delivery_incomplete"
+            safe_summary = "The exact approved Pack was not fully delivered to Codex stdin."
         elif collector.collection_incomplete:
             outcome = "failed"
             error_category = "evidence_incomplete"
             diagnostic_code = "jsonl_collection_incomplete"
             safe_summary = "Codex output collection did not finish cleanly; no verified model claim was recorded."
+        elif collector.lifecycle_conflict:
+            outcome = "failed"
+            error_category = "evidence_integrity"
+            diagnostic_code = "jsonl_lifecycle_conflict"
+            safe_summary = (
+                "Codex JSONL did not preserve one ordered thread and turn identity."
+            )
         elif collector.unsupported_model_routing_observed:
             outcome = "failed"
             error_category = "routing_mismatch"
@@ -3652,11 +6611,6 @@ class CodexExecutionManager:
                 "Codex exposed an unsupported model-routing event, so the approved target "
                 "could not be verified."
             )
-        elif not pack_delivery_complete:
-            outcome = "failed"
-            error_category = "evidence_incomplete"
-            diagnostic_code = "approved_pack_delivery_incomplete"
-            safe_summary = "The exact approved Pack was not fully delivered to Codex stdin."
         elif not structured_success or not requested_identifier_match:
             outcome = "failed"
             error_category = (
@@ -3681,7 +6635,7 @@ class CodexExecutionManager:
             safe_summary = (
                 "Structured Codex process and terminal-turn evidence verified a real CLI invocation; "
                 + (
-                    "actual resolved model identity was independently exposed."
+                    "actual resolved model identity was independently exposed by this Run."
                     if authorized_actual
                     else "actual resolved model identity was not independently exposed."
                 )
@@ -3709,11 +6663,27 @@ class CodexExecutionManager:
             "codex_turn_failed": bool(
                 collector and collector.terminal_turn_status == "failed"
             ),
-            "codex_turn_verified": structured_success,
+            "codex_lifecycle_conflict": bool(
+                collector and collector.lifecycle_conflict
+            ),
+            "codex_turn_verified": bool(
+                collector
+                and collector.thread_started
+                and collector.turn_started
+                and collector.terminal_turn_status in {"completed", "failed"}
+                and not collector.lifecycle_conflict
+                and not collector.limit_exceeded
+                and not collector.collection_incomplete
+            ),
             "model_argument_observed": True,
             "model_identity_observed": bool(collector_identity_usable and authorized_actual),
             "actual_model_identity_verified": bool(
                 collector_identity_usable and authorized_actual
+            ),
+            "model_identity_source": (
+                collector.model_identity_source
+                if collector_identity_usable and authorized_actual and collector
+                else ""
             ),
             "model_reroute_observed": reroute_observed,
             "unsupported_model_routing_observed": bool(
@@ -3743,6 +6713,10 @@ class CodexExecutionManager:
             )
         if collector and collector.process_id_fingerprint:
             process_evidence["process_id_fingerprint"] = collector.process_id_fingerprint
+        if collector and collector.connectivity_evidence_identity:
+            process_evidence["connectivity_evidence_identity"] = (
+                collector.connectivity_evidence_identity
+            )
 
         provider_evidence = {
             "provider_response_observed": False,
@@ -3830,11 +6804,27 @@ class CodexExecutionManager:
         requested_identifier_match = (
             requested_model.provider_model_id == run.verification_model_identifier
         )
+        exit_code = verification.get("exit_code")
+        timed_out = bool(verification.get("timed_out"))
+        cancelled = bool(verification.get("cancelled"))
+        interrupted = bool(verification.get("runtime_interrupted"))
+        output_truncated = bool(verification.get("output_truncated"))
+        delivery_complete = bool(verification.get("delivery_complete"))
+        structured_success = bool(collector and collector.structured_success)
         identity_usable = bool(
             collector
             and collector.actual_model_identity_verified
             and not collector.limit_exceeded
             and not collector.collection_incomplete
+            and not collector.lifecycle_conflict
+            and not collector.unsupported_model_routing_observed
+            and structured_success
+            and delivery_complete
+            and not interrupted
+            and not timed_out
+            and not cancelled
+            and not output_truncated
+            and exit_code == 0
         )
         if identity_usable and collector is not None:
             candidate = collector.actual_model_identifier
@@ -3853,13 +6843,6 @@ class CodexExecutionManager:
             else:
                 actual_identifier = candidate
 
-        exit_code = verification.get("exit_code")
-        timed_out = bool(verification.get("timed_out"))
-        cancelled = bool(verification.get("cancelled"))
-        interrupted = bool(verification.get("runtime_interrupted"))
-        output_truncated = bool(verification.get("output_truncated"))
-        delivery_complete = bool(verification.get("delivery_complete"))
-        structured_success = bool(collector and collector.structured_success)
         if interrupted:
             outcome, category, code, summary = (
                 "failed",
@@ -3935,6 +6918,13 @@ class CodexExecutionManager:
                 "verification_jsonl_collection_incomplete",
                 "Verification output collection did not finish cleanly.",
             )
+        elif collector.lifecycle_conflict:
+            outcome, category, code, summary = (
+                "failed",
+                "evidence_integrity",
+                "verification_jsonl_lifecycle_conflict",
+                "Verification JSONL did not preserve one ordered thread and turn identity.",
+            )
         elif collector.unsupported_model_routing_observed:
             outcome, category, code, summary = (
                 "failed",
@@ -3971,7 +6961,7 @@ class CodexExecutionManager:
                 "verification_structured_evidence_verified",
                 "Structured evidence verified the separate Verification invocation; "
                 + (
-                    "actual resolved model identity was independently exposed."
+                    "actual resolved model identity was independently exposed by this Run."
                     if authorized_actual
                     else "actual resolved model identity was not independently exposed."
                 ),
@@ -4001,10 +6991,26 @@ class CodexExecutionManager:
             "codex_turn_failed": bool(
                 collector and collector.terminal_turn_status == "failed"
             ),
-            "codex_turn_verified": structured_success,
+            "codex_lifecycle_conflict": bool(
+                collector and collector.lifecycle_conflict
+            ),
+            "codex_turn_verified": bool(
+                collector
+                and collector.thread_started
+                and collector.turn_started
+                and collector.terminal_turn_status in {"completed", "failed"}
+                and not collector.lifecycle_conflict
+                and not collector.limit_exceeded
+                and not collector.collection_incomplete
+            ),
             "model_argument_observed": True,
             "model_identity_observed": bool(identity_usable and authorized_actual),
             "actual_model_identity_verified": bool(identity_usable and authorized_actual),
+            "model_identity_source": (
+                collector.model_identity_source
+                if identity_usable and authorized_actual and collector
+                else ""
+            ),
             "model_reroute_observed": reroute_observed,
             "unsupported_model_routing_observed": bool(
                 collector and collector.unsupported_model_routing_observed
@@ -4047,6 +7053,10 @@ class CodexExecutionManager:
             )
         if collector and collector.process_id_fingerprint:
             process_evidence["process_id_fingerprint"] = collector.process_id_fingerprint
+        if collector and collector.connectivity_evidence_identity:
+            process_evidence["connectivity_evidence_identity"] = (
+                collector.connectivity_evidence_identity
+            )
         usage = dict(collector.usage) if collector else {}
         if "input_tokens" in usage and "output_tokens" in usage:
             usage["total_tokens"] = min(10**12, usage["input_tokens"] + usage["output_tokens"])
@@ -4219,6 +7229,119 @@ class CodexExecutionManager:
                 entity_type="codex_run",
                 entity_id=run.id,
                 details=f"Approved pack was no longer executable before process start: {reason[:500]}",
+            )
+        )
+        session.commit()
+
+    def _finish_source_snapshot_unavailable(
+        self,
+        session: Session,
+        run: CodexRun,
+        *,
+        diagnostic: str,
+        cleanup_verified: bool | None = None,
+        cleanup_code: str = "",
+    ) -> None:
+        """Persist one truthful pre-launch blocker without result evidence."""
+
+        run.status = "blocked"
+        run.owner_summary = (
+            "Source snapshot unavailable. Regenerate Codex Pack."
+            if cleanup_verified is not False
+            else (
+                "Source snapshot unavailable. Isolated workspace cleanup could "
+                "not be verified. Review blocker evidence, then Regenerate "
+                "Codex Pack."
+            )
+        )
+        safe_diagnostic = _bounded_event_text(diagnostic, maximum=400)
+        run.stderr = (
+            safe_diagnostic
+            if cleanup_verified is not False
+            else _bounded_event_text(
+                f"{safe_diagnostic} cleanup={cleanup_code or 'CLEANUP_UNVERIFIED'}",
+                maximum=500,
+            )
+        )
+        run.finished_at = utc_now()
+        run.verification_status = "not_started"
+        run.verification_summary = (
+            "Verification was not started because the approved source snapshot "
+            "was unavailable."
+        )
+        run.task.status = "blocked"
+        if run.pack is not None and run.pack.status == "approved":
+            run.pack.status = "invalidated"
+            run.pack.invalidated_at = utc_now()
+            session.add(
+                AuditEvent(
+                    action="codex_pack_approval_invalidated",
+                    entity_type="codex_instruction_pack",
+                    entity_id=run.pack.id,
+                    details=(
+                        "code=SOURCE_SNAPSHOT_UNAVAILABLE; exact approved Pack "
+                        "invalidated after pre-launch snapshot preparation failed."
+                    ),
+                )
+            )
+        if cleanup_verified is False:
+            session.add(
+                AuditEvent(
+                    action="codex_unstarted_worktree_cleanup_unverified",
+                    entity_type="codex_run",
+                    entity_id=run.id,
+                    details=(
+                        "code=SOURCE_SNAPSHOT_UNAVAILABLE; "
+                        f"cleanup={cleanup_code or 'CLEANUP_UNVERIFIED'}"
+                    ),
+                )
+            )
+        try:
+            # Monitor state is a recoverable projection. Isolate it in a
+            # savepoint so a projection persistence error cannot roll back the
+            # authoritative Run, Pack invalidation, or blocker audit.
+            with session.begin_nested():
+                monitor = ensure_run_monitor(
+                    session,
+                    int(run.pack.approved_by_user_id),
+                    run,
+                )
+                observe_monitor(
+                    session,
+                    monitor,
+                    state="RESULT_UNAVAILABLE",
+                    recovery_state="RESULT_UNAVAILABLE",
+                    failure_code="SOURCE_SNAPSHOT_UNAVAILABLE",
+                    safe_summary="Source snapshot unavailable. Regenerate Codex Pack.",
+                )
+        except (
+            ResultIntakeError,
+            OSError,
+            RuntimeError,
+            SQLAlchemyError,
+            TypeError,
+            ValueError,
+        ) as monitor_exc:
+            session.add(
+                AuditEvent(
+                    action="codex_run_monitor_update_blocked",
+                    entity_type="codex_run",
+                    entity_id=run.id,
+                    details=(
+                        "code=SOURCE_SNAPSHOT_UNAVAILABLE; "
+                        f"monitor={type(monitor_exc).__name__}"
+                    ),
+                )
+            )
+        session.add(
+            AuditEvent(
+                action="codex_run_blocked",
+                entity_type="codex_run",
+                entity_id=run.id,
+                details=(
+                    "code=SOURCE_SNAPSHOT_UNAVAILABLE; "
+                    "approved source snapshot preparation failed."
+                ),
             )
         )
         session.commit()

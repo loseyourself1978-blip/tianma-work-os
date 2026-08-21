@@ -27,7 +27,82 @@
     implementation_scope: "Only changes required by the Development task are permitted.",
     forbidden_scope: DEFAULT_BOUNDARY
   });
-  const ACTIVE_CODEX_RUN_STATUSES = Object.freeze(["queued", "starting", "running", "verifying"]);
+  const ACTIVE_CODEX_RUN_STATUSES = Object.freeze([
+    "queued",
+    "starting",
+    "running",
+    "coding",
+    "verifying",
+    "settling",
+    "verification_eligible",
+    "result_pending"
+  ]);
+  const TERMINAL_CODEX_RUN_STATUSES = Object.freeze([
+    "completed",
+    "failed",
+    "blocked",
+    "timed_out",
+    "cancelled",
+    "process_lost",
+    "result_available",
+    "result_unavailable",
+    "result_integrity_blocked"
+  ]);
+  const RESULT_AVAILABLE_STATUSES = Object.freeze(["result_available"]);
+  const RESULT_BLOCKED_STATUSES = Object.freeze(["result_unavailable", "result_integrity_blocked", "process_lost"]);
+  const APPLY_PLAN_STATE_LABELS = Object.freeze({
+    ready_for_owner_review: "READY FOR OWNER REVIEW",
+    review_with_source_changes: "REVIEW WITH SOURCE CHANGES",
+    blocked_by_conflict: "BLOCKED BY CONFLICT",
+    blocked_by_candidate: "BLOCKED BY CANDIDATE",
+    blocked_by_repository: "BLOCKED BY REPOSITORY",
+    expired: "EXPIRED"
+  });
+  const APPLY_PLAN_DISPOSITIONS = Object.freeze(["INCLUDED", "EXCLUDED", "BLOCKED"]);
+  const APPLY_SESSION_STATE_LABELS = Object.freeze({
+    PREFLIGHT_BLOCKED: "PREFLIGHT BLOCKED",
+    APPLYING: "APPLYING",
+    APPLIED: "APPLIED",
+    APPLY_FAILED_RECOVERED: "APPLY FAILED — SOURCE RECOVERED",
+    APPLY_FAILED_PARTIAL: "APPLY FAILED — PARTIAL SOURCE CHANGE",
+    REVERTING: "REVERTING",
+    REVERTED: "REVERTED",
+    REVERT_BLOCKED: "REVERT BLOCKED",
+    REVERT_FAILED_PARTIAL: "REVERT FAILED — PARTIAL SOURCE CHANGE",
+    NOT_REQUESTED: "NOT REQUESTED"
+  });
+  const POST_APPLY_VERIFICATION_STATE_LABELS = Object.freeze({
+    READY: "READY",
+    VERIFYING: "VERIFYING",
+    PASSED: "PASSED",
+    BLOCKED: "BLOCKED",
+    FAILED: "FAILED"
+  });
+  const COMMIT_BUILDER_STATE_LABELS = Object.freeze({
+    REVIEW_REQUIRED: "READY TO REVIEW",
+    READY: "READY TO REVIEW",
+    READY_TO_STAGE: "READY TO STAGE",
+    STAGING_BLOCKED: "STAGING BLOCKED",
+    READY_TO_COMMIT: "READY TO COMMIT",
+    COMMIT_BLOCKED: "COMMIT BLOCKED",
+    STAGING: "STAGE RECOVERY REQUIRED",
+    STAGED: "STAGED",
+    COMMITTING: "COMMIT RECOVERY REQUIRED",
+    COMMITTED: "LOCAL COMMIT CREATED",
+    BLOCKED: "BLOCKED",
+    FAILED: "FAILED",
+    INTEGRITY_BLOCKED: "INTEGRITY BLOCKED",
+    EXPIRED: "EXPIRED"
+  });
+  const PUSH_DELIVERY_STATE_LABELS = Object.freeze({
+    READY_TO_PUSH: "READY TO PUSH",
+    PUSHING: "PUSHING",
+    PUSHED: "PUSHED",
+    PUSH_BLOCKED: "PUSH BLOCKED",
+    REMOTE_MOVED: "REMOTE MOVED",
+    PUSH_FAILED: "PUSH FAILED",
+    RECONCILIATION_BLOCKED: "RECONCILIATION BLOCKED"
+  });
   const RUN_BLOCKER_STATUS = Object.freeze({
     TASK_MISSING: "Task required",
     PACK_MISSING: "Pack required",
@@ -42,7 +117,9 @@
     SOURCE_CHANGED_SINCE_APPROVAL: "Approval expired",
     ACTIVE_RUN_EXISTS: "Run active"
   });
-  const POLL_INTERVAL_MS = 3000;
+  const ACTIVE_RUN_POLL_INTERVAL_MS = 2000;
+  const MAX_IMPORT_BYTES = 1024 * 1024;
+  const RUN_LOCAL_MODEL_NOT_EXPOSED = "Not exposed by the current Codex CLI protocol.";
 
   class ApiError extends Error {
     constructor(status, code, message, fields, category) {
@@ -111,6 +188,9 @@
     feedback: byId("workbench-feedback"),
     newTask: byId("new-task"),
     taskList: byId("task-list"),
+    selectedTaskContext: byId("selected-task-context"),
+    selectedTaskName: byId("selected-task-name"),
+    selectedTaskLoadState: byId("selected-task-load-state"),
     taskForm: byId("task-form"),
     taskProject: byId("task-project"),
     taskWorkflow: byId("task-workflow"),
@@ -167,8 +247,25 @@
     setupCatalogVersion: byId("setup-catalog-version"),
     setupCatalogCliVersion: byId("setup-catalog-cli-version"),
     setupCatalogWarnings: byId("setup-catalog-warnings"),
+    setupCliInstalled: byId("setup-cli-installed"),
+    setupCliVersion: byId("setup-cli-version"),
+    setupAuthMethod: byId("setup-auth-method"),
+    setupAuthStatus: byId("setup-auth-status"),
+    setupCredentialStatus: byId("setup-credential-status"),
+    setupProviderConnectivity: byId("setup-provider-connectivity"),
+    setupRequestedModel: byId("setup-requested-model"),
+    setupActualModel: byId("setup-actual-model"),
+    setupConnectivityCheckedAt: byId("setup-connectivity-checked-at"),
+    setupRunTimeout: byId("setup-run-timeout"),
+    setupConnectivityState: byId("setup-connectivity-state"),
+    setupConnectivityBlocker: byId("setup-connectivity-blocker"),
+    setupConnectivityCommand: byId("setup-connectivity-command"),
+    setupConnectivityExitCode: byId("setup-connectivity-exit-code"),
+    setupConnectivityDuration: byId("setup-connectivity-duration"),
+    setupConnectivityDiagnostics: byId("setup-connectivity-diagnostics"),
     setupAvailabilityStatus: byId("setup-availability-status"),
     checkCodexAvailability: byId("check-codex-availability"),
+    verifyCodexConnection: byId("verify-codex-connection"),
     saveAssignCodex: byId("save-assign-codex"),
     cancelCodexSetup: byId("cancel-codex-setup"),
     routingStatus: byId("routing-status"),
@@ -209,7 +306,25 @@
     runCodex: byId("run-codex"),
     cancelCodex: byId("cancel-codex"),
     viewResult: byId("view-result"),
+    runActivityStatus: byId("run-activity-status"),
+    runActivityNotification: byId("run-activity-notification"),
+    runActivityList: byId("run-activity-list"),
+    refreshRunStatus: byId("refresh-run-status"),
+    reconnectCodexRun: byId("reconnect-codex-run"),
+    importCodexResult: byId("import-codex-result"),
+    importCodexResultFile: byId("import-codex-result-file"),
+    runFallbackNote: byId("run-fallback-note"),
     resultCard: byId("result-card"),
+    resultEnvelopeStatus: byId("result-envelope-status"),
+    resultEnvelopeRequestedModel: byId("result-envelope-requested-model"),
+    resultEnvelopeRequestedModelAccepted: byId("result-envelope-requested-model-accepted"),
+    resultEnvelopeActualModel: byId("result-envelope-actual-model"),
+    resultEnvelopeDuration: byId("result-envelope-duration"),
+    resultEnvelopeCoding: byId("result-envelope-coding"),
+    resultEnvelopeVerification: byId("result-envelope-verification"),
+    resultEnvelopeTests: byId("result-envelope-tests"),
+    resultEnvelopeIntegrity: byId("result-envelope-integrity"),
+    resultEnvelopeNextAction: byId("result-envelope-next-action"),
     codexRunId: byId("codex-run-id"),
     taskRunId: byId("task-run-id"),
     taskRunAction: byId("task-run-action"),
@@ -268,6 +383,329 @@
     resultRoutingSnapshot: byId("result-routing-snapshot"),
     resultReview: byId("result-review"),
     resultCommit: byId("result-commit"),
+    handoffReviewSection: byId("handoff-review-section"),
+    reviewHandoff: byId("review-handoff"),
+    handoffReviewContent: byId("handoff-review-content"),
+    handoffRunOutcome: byId("handoff-run-outcome"),
+    handoffTaskPack: byId("handoff-task-pack"),
+    handoffCodingResult: byId("handoff-coding-result"),
+    handoffVerificationVerdict: byId("handoff-verification-verdict"),
+    handoffTests: byId("handoff-tests"),
+    handoffBoundary: byId("handoff-boundary"),
+    handoffPhaseGate: byId("handoff-phase-gate"),
+    handoffReconciliation: byId("handoff-reconciliation"),
+    handoffChangedFiles: byId("handoff-changed-files"),
+    handoffWarnings: byId("handoff-warnings"),
+    handoffLimitations: byId("handoff-limitations"),
+    handoffBlockers: byId("handoff-blockers"),
+    instructionDraftSection: byId("instruction-draft-section"),
+    instructionDraftStatus: byId("instruction-draft-status"),
+    instructionDraftContent: byId("instruction-draft-content"),
+    instructionDraftBoundary: byId("instruction-draft-boundary"),
+    reviewInstructionDraft: byId("review-instruction-draft"),
+    approveInstructionDraft: byId("approve-instruction-draft"),
+    resultIntakeAdvancedCard: byId("result-intake-advanced-card"),
+    resultMonitorState: byId("result-monitor-state"),
+    resultRecoveryState: byId("result-recovery-state"),
+    resultSourceIdentity: byId("result-source-identity"),
+    resultEnvelopeRecord: byId("result-envelope-record"),
+    resultEnvelopeDigest: byId("result-envelope-digest"),
+    resultEnvelopeTaskBinding: byId("result-envelope-task-binding"),
+    resultEnvelopePackBinding: byId("result-envelope-pack-binding"),
+    resultEnvelopeAssignmentBindings: byId("result-envelope-assignment-bindings"),
+    resultEnvelopeRoutingBinding: byId("result-envelope-routing-binding"),
+    resultProcessIdentity: byId("result-process-identity"),
+    resultSessionIdentity: byId("result-session-identity"),
+    resultIngestedAt: byId("result-ingested-at"),
+    resultIntakeDiagnostics: byId("result-intake-diagnostics"),
+    candidateReviewSection: byId("candidate-review-section"),
+    reviewChangeCandidate: byId("review-change-candidate"),
+    candidateStatus: byId("candidate-status"),
+    candidateUnexpectedFiles: byId("candidate-unexpected-files"),
+    candidateAcceptanceStatus: byId("candidate-acceptance-status"),
+    candidateVerificationStatus: byId("candidate-verification-status"),
+    candidateDriftStatus: byId("candidate-drift-status"),
+    candidateNextAction: byId("candidate-next-action"),
+    candidateFiles: byId("candidate-files"),
+    candidateBlockers: byId("candidate-blockers"),
+    candidateAdvancedCard: byId("candidate-advanced-card"),
+    candidateRecordId: byId("candidate-record-id"),
+    candidateDigest: byId("candidate-digest"),
+    candidatePatchIdentity: byId("candidate-patch-identity"),
+    candidateSourceSnapshot: byId("candidate-source-snapshot"),
+    candidateTaskBinding: byId("candidate-task-binding"),
+    candidatePackBinding: byId("candidate-pack-binding"),
+    candidateCodingAssignment: byId("candidate-coding-assignment"),
+    candidateVerificationAssignment: byId("candidate-verification-assignment"),
+    candidateRoutingSnapshot: byId("candidate-routing-snapshot"),
+    candidateRunBinding: byId("candidate-run-binding"),
+    candidateCodingEvidence: byId("candidate-coding-evidence"),
+    candidateVerificationEvidence: byId("candidate-verification-evidence"),
+    candidateCreatedAt: byId("candidate-created-at"),
+    candidateDriftEvaluation: byId("candidate-drift-evaluation"),
+    candidateDriftBaseline: byId("candidate-drift-baseline"),
+    candidateDriftCurrent: byId("candidate-drift-current"),
+    candidateDriftHead: byId("candidate-drift-head"),
+    candidateConflictPaths: byId("candidate-conflict-paths"),
+    candidateManifestDetails: byId("candidate-manifest-details"),
+    candidateDriftDiagnostics: byId("candidate-drift-diagnostics"),
+    applyPlanReviewSection: byId("apply-plan-review-section"),
+    reviewApplyPlan: byId("review-apply-plan"),
+    applyPlanStatus: byId("apply-plan-status"),
+    applyPlanCandidateStatus: byId("apply-plan-candidate-status"),
+    applyPlanDriftStatus: byId("apply-plan-drift-status"),
+    applyPlanManifestCoverage: byId("apply-plan-manifest-coverage"),
+    applyPlanConflicts: byId("apply-plan-conflicts"),
+    applyPlanUnexpectedFiles: byId("apply-plan-unexpected-files"),
+    applyPlanNextAction: byId("apply-plan-next-action"),
+    applyPlanIncludedCount: byId("apply-plan-included-count"),
+    applyPlanExcludedCount: byId("apply-plan-excluded-count"),
+    applyPlanBlockedCount: byId("apply-plan-blocked-count"),
+    applyPlanIncludedPaths: byId("apply-plan-included-paths"),
+    applyPlanExcludedPaths: byId("apply-plan-excluded-paths"),
+    applyPlanBlockedPaths: byId("apply-plan-blocked-paths"),
+    applyPlanPreconditions: byId("apply-plan-preconditions"),
+    applyPlanReversibility: byId("apply-plan-reversibility"),
+    applyPlanPreValidation: byId("apply-plan-pre-validation"),
+    applyPlanPostValidation: byId("apply-plan-post-validation"),
+    applyPlanBoundaries: byId("apply-plan-boundaries"),
+    applyPlanBlockers: byId("apply-plan-blockers"),
+    applyPlanAdvancedCard: byId("apply-plan-advanced-card"),
+    applyPlanHistory: byId("apply-plan-history"),
+    applyPlanRecordId: byId("apply-plan-record-id"),
+    applyPlanVersion: byId("apply-plan-version"),
+    applyPlanStatusAtCreation: byId("apply-plan-status-at-creation"),
+    applyPlanDigest: byId("apply-plan-digest"),
+    applyPlanBindingDigest: byId("apply-plan-binding-digest"),
+    applyPlanCandidateRecord: byId("apply-plan-candidate-record"),
+    applyPlanCandidateDigest: byId("apply-plan-candidate-digest"),
+    applyPlanDriftEvaluation: byId("apply-plan-drift-evaluation"),
+    applyPlanDriftFingerprint: byId("apply-plan-drift-fingerprint"),
+    applyPlanRepositoryIdentity: byId("apply-plan-repository-identity"),
+    applyPlanRepositoryLocator: byId("apply-plan-repository-locator"),
+    applyPlanRepositoryFingerprint: byId("apply-plan-repository-fingerprint"),
+    applyPlanBranch: byId("apply-plan-branch"),
+    applyPlanHead: byId("apply-plan-head"),
+    applyPlanCurrentSource: byId("apply-plan-current-source"),
+    applyPlanIndexFingerprint: byId("apply-plan-index-fingerprint"),
+    applyPlanWorktreeFingerprint: byId("apply-plan-worktree-fingerprint"),
+    applyPlanStagedCount: byId("apply-plan-staged-count"),
+    applyPlanPolicyVersion: byId("apply-plan-policy-version"),
+    applyPlanTaskBinding: byId("apply-plan-task-binding"),
+    applyPlanPackBinding: byId("apply-plan-pack-binding"),
+    applyPlanRunBinding: byId("apply-plan-run-binding"),
+    applyPlanSourceSnapshot: byId("apply-plan-source-snapshot"),
+    applyPlanCreatedAt: byId("apply-plan-created-at"),
+    applyPlanSupersedes: byId("apply-plan-supersedes"),
+    applyPlanSupersessionReason: byId("apply-plan-supersession-reason"),
+    applyPlanOperationOrder: byId("apply-plan-operation-order"),
+    applyPlanEntryDetails: byId("apply-plan-entry-details"),
+    applyPlanExpiryReasons: byId("apply-plan-expiry-reasons"),
+    applyPlanDiagnostics: byId("apply-plan-diagnostics"),
+    applySessionSection: byId("apply-session-section"),
+    applyAcceptedChanges: byId("apply-accepted-changes"),
+    revertAppliedChanges: byId("revert-applied-changes"),
+    applySessionReadiness: byId("apply-session-readiness"),
+    applySessionState: byId("apply-session-state"),
+    applySessionDrift: byId("apply-session-drift"),
+    applySessionOperationCounts: byId("apply-session-operation-counts"),
+    applySessionUnrelated: byId("apply-session-unrelated"),
+    applySessionIndexBoundary: byId("apply-session-index-boundary"),
+    applySessionRevertAvailability: byId("apply-session-revert-availability"),
+    applySessionNextAction: byId("apply-session-next-action"),
+    applySessionPaths: byId("apply-session-paths"),
+    applySessionBlockers: byId("apply-session-blockers"),
+    applySessionAdvancedCard: byId("apply-session-advanced-card"),
+    applySessionRecordId: byId("apply-session-record-id"),
+    applySessionApplyState: byId("apply-session-apply-state"),
+    applySessionRevertState: byId("apply-session-revert-state"),
+    applySessionPlanRecord: byId("apply-session-plan-record"),
+    applySessionPlanDigest: byId("apply-session-plan-digest"),
+    applySessionCandidateRecord: byId("apply-session-candidate-record"),
+    applySessionCandidateDigest: byId("apply-session-candidate-digest"),
+    applySessionJournalDigest: byId("apply-session-journal-digest"),
+    applySessionDriftEvaluation: byId("apply-session-drift-evaluation"),
+    applySessionRepositoryFingerprint: byId("apply-session-repository-fingerprint"),
+    applySessionBranch: byId("apply-session-branch"),
+    applySessionHead: byId("apply-session-head"),
+    applySessionIndexFingerprint: byId("apply-session-index-fingerprint"),
+    applySessionCreatedAt: byId("apply-session-created-at"),
+    applySessionApplyFinishedAt: byId("apply-session-apply-finished-at"),
+    applySessionRevertFinishedAt: byId("apply-session-revert-finished-at"),
+    applySessionEntryDetails: byId("apply-session-entry-details"),
+    applySessionIntegrity: byId("apply-session-integrity"),
+    applySessionCompensation: byId("apply-session-compensation"),
+    applySessionDiagnostics: byId("apply-session-diagnostics"),
+    postApplyVerificationSection: byId("post-apply-verification-section"),
+    verifyAppliedChanges: byId("verify-applied-changes"),
+    postApplyVerificationStatus: byId("post-apply-verification-status"),
+    postApplyVerificationChangedSummary: byId("post-apply-verification-changed-summary"),
+    postApplyVerificationUnexpectedSummary: byId("post-apply-verification-unexpected-summary"),
+    postApplyVerificationTestsSummary: byId("post-apply-verification-tests-summary"),
+    postApplyVerificationBoundariesSummary: byId("post-apply-verification-boundaries-summary"),
+    postApplyVerificationNextAction: byId("post-apply-verification-next-action"),
+    postApplyVerificationChangedFiles: byId("post-apply-verification-changed-files"),
+    postApplyVerificationUnexpectedFiles: byId("post-apply-verification-unexpected-files"),
+    postApplyVerificationTests: byId("post-apply-verification-tests"),
+    postApplyVerificationBoundaries: byId("post-apply-verification-boundaries"),
+    postApplyVerificationBlockers: byId("post-apply-verification-blockers"),
+    postApplyVerificationAdvancedCard: byId("post-apply-verification-advanced-card"),
+    postApplyVerificationRecordId: byId("post-apply-verification-record-id"),
+    postApplyVerificationPolicyVersion: byId("post-apply-verification-policy-version"),
+    postApplyVerificationDigest: byId("post-apply-verification-digest"),
+    postApplyObservationDigest: byId("post-apply-observation-digest"),
+    postApplyVerificationSessionBinding: byId("post-apply-verification-session-binding"),
+    postApplyVerificationPlanBinding: byId("post-apply-verification-plan-binding"),
+    postApplyVerificationCandidateBinding: byId("post-apply-verification-candidate-binding"),
+    postApplyVerificationRepositoryIdentity: byId("post-apply-verification-repository-identity"),
+    postApplyVerificationRepositoryFingerprints: byId("post-apply-verification-repository-fingerprints"),
+    postApplyVerificationExpectedBranch: byId("post-apply-verification-expected-branch"),
+    postApplyVerificationObservedBranch: byId("post-apply-verification-observed-branch"),
+    postApplyVerificationExpectedHead: byId("post-apply-verification-expected-head"),
+    postApplyVerificationObservedHead: byId("post-apply-verification-observed-head"),
+    postApplyVerificationSourceSnapshot: byId("post-apply-verification-source-snapshot"),
+    postApplyVerificationCreatedAt: byId("post-apply-verification-created-at"),
+    postApplyVerificationExpectedPaths: byId("post-apply-verification-expected-paths"),
+    postApplyVerificationObservedPaths: byId("post-apply-verification-observed-paths"),
+    postApplyVerificationDiagnostics: byId("post-apply-verification-diagnostics"),
+    commitBuilderSection: byId("commit-builder-section"),
+    reviewCommitPlan: byId("review-commit-plan"),
+    stageApprovedFiles: byId("stage-approved-files"),
+    createLocalCommit: byId("create-local-commit"),
+    commitMessageFields: byId("commit-message-fields"),
+    commitPlanSubject: byId("commit-plan-subject"),
+    commitPlanBody: byId("commit-plan-body"),
+    commitBuilderStatus: byId("commit-builder-status"),
+    commitPlanSummary: byId("commit-plan-summary"),
+    commitApprovedSummary: byId("commit-approved-summary"),
+    commitExcludedSummary: byId("commit-excluded-summary"),
+    commitBuilderBranch: byId("commit-builder-branch"),
+    commitBuilderHead: byId("commit-builder-head"),
+    commitBuilderSubject: byId("commit-builder-subject"),
+    commitBuilderValidation: byId("commit-builder-validation"),
+    commitStageSummary: byId("commit-stage-summary"),
+    localCommitSummary: byId("local-commit-summary"),
+    commitBuilderNextAction: byId("commit-builder-next-action"),
+    commitApprovedFiles: byId("commit-approved-files"),
+    commitExcludedFiles: byId("commit-excluded-files"),
+    commitBuilderBoundaries: byId("commit-builder-boundaries"),
+    commitBuilderBlockers: byId("commit-builder-blockers"),
+    commitBuilderAdvancedCard: byId("commit-builder-advanced-card"),
+    commitPlanRecordId: byId("commit-plan-record-id"),
+    commitPlanPolicyVersion: byId("commit-plan-policy-version"),
+    commitPlanDigest: byId("commit-plan-digest"),
+    commitPlanVerificationBinding: byId("commit-plan-verification-binding"),
+    commitPlanApplySessionBinding: byId("commit-plan-apply-session-binding"),
+    commitPlanRepositoryIdentity: byId("commit-plan-repository-identity"),
+    commitPlanBranch: byId("commit-plan-branch"),
+    commitPlanHead: byId("commit-plan-head"),
+    commitPlanIndex: byId("commit-plan-index"),
+    stageSessionRecordId: byId("stage-session-record-id"),
+    stageSessionDigest: byId("stage-session-digest"),
+    stageSessionPathCount: byId("stage-session-path-count"),
+    localCommitRecordId: byId("local-commit-record-id"),
+    localCommitSha: byId("local-commit-sha"),
+    localCommitParentSha: byId("local-commit-parent-sha"),
+    localCommitMessageDigest: byId("local-commit-message-digest"),
+    commitBuilderCreatedAt: byId("commit-builder-created-at"),
+    commitBuilderPathEvidence: byId("commit-builder-path-evidence"),
+    commitBuilderDiagnostics: byId("commit-builder-diagnostics"),
+    pushDeliverySection: byId("push-delivery-section"),
+    pushToOriginMain: byId("push-to-origin-main"),
+    viewDeliveryResult: byId("view-delivery-result"),
+    pushGateStatus: byId("push-gate-status"),
+    pushLocalCommit: byId("push-local-commit"),
+    pushCommitSubject: byId("push-commit-subject"),
+    pushDestination: byId("push-destination"),
+    pushRemoteBase: byId("push-remote-base"),
+    pushAheadBehind: byId("push-ahead-behind"),
+    pushCleanliness: byId("push-cleanliness"),
+    pushNextAction: byId("push-next-action"),
+    pushBlockers: byId("push-blockers"),
+    deliveryResult: byId("delivery-result"),
+    deliveryResultStatus: byId("delivery-result-status"),
+    deliveryRunResult: byId("delivery-run-result"),
+    deliveryIndependentVerification: byId("delivery-independent-verification"),
+    deliveryCandidate: byId("delivery-candidate"),
+    deliverySourceDrift: byId("delivery-source-drift"),
+    deliveryApplyResult: byId("delivery-apply-result"),
+    deliveryPostApplyVerification: byId("delivery-post-apply-verification"),
+    deliveryStagedPaths: byId("delivery-staged-paths"),
+    deliveryLocalCommit: byId("delivery-local-commit"),
+    deliveryCommitSubject: byId("delivery-commit-subject"),
+    deliveryPushStatus: byId("delivery-push-status"),
+    deliveryReconciliation: byId("delivery-reconciliation"),
+    deliveryLocalHead: byId("delivery-local-head"),
+    deliveryOriginMain: byId("delivery-origin-main"),
+    deliveryAheadBehind: byId("delivery-ahead-behind"),
+    deliveryWorktreeIndex: byId("delivery-worktree-index"),
+    deliveryBoundaries: byId("delivery-boundaries"),
+    deliveryWarnings: byId("delivery-warnings"),
+    deliveryBlockers: byId("delivery-blockers"),
+    deliveryNextAction: byId("delivery-next-action"),
+    pushDeliveryAdvancedCard: byId("push-delivery-advanced-card"),
+    pushCommitBinding: byId("push-commit-binding"),
+    pushCandidateBinding: byId("push-candidate-binding"),
+    pushApplyPlanBinding: byId("push-apply-plan-binding"),
+    pushVerificationBinding: byId("push-verification-binding"),
+    pushPreflightRecordId: byId("push-preflight-record-id"),
+    pushPreflightDigest: byId("push-preflight-digest"),
+    pushAttemptRecordId: byId("push-attempt-record-id"),
+    pushAttemptDigest: byId("push-attempt-digest"),
+    pushExactRefspec: byId("push-exact-refspec"),
+    pushRemoteFingerprint: byId("push-remote-fingerprint"),
+    pushRepositoryFingerprint: byId("push-repository-fingerprint"),
+    pushSanitizedDiagnostics: byId("push-sanitized-diagnostics"),
+    applyConfirmationDialog: byId("apply-confirmation-dialog"),
+    applyConfirmationPlan: byId("apply-confirmation-plan"),
+    applyConfirmationCandidate: byId("apply-confirmation-candidate"),
+    applyConfirmationDrift: byId("apply-confirmation-drift"),
+    applyConfirmationOperations: byId("apply-confirmation-operations"),
+    applyConfirmationIncluded: byId("apply-confirmation-included"),
+    applyConfirmationExcluded: byId("apply-confirmation-excluded"),
+    applyConfirmationUnrelated: byId("apply-confirmation-unrelated"),
+    applyConfirmationIndex: byId("apply-confirmation-index"),
+    confirmApplyAcceptedChanges: byId("confirm-apply-accepted-changes"),
+    cancelApplyAcceptedChanges: byId("cancel-apply-accepted-changes"),
+    revertConfirmationDialog: byId("revert-confirmation-dialog"),
+    revertConfirmationSession: byId("revert-confirmation-session"),
+    revertConfirmationPaths: byId("revert-confirmation-paths"),
+    revertConfirmationOperations: byId("revert-confirmation-operations"),
+    revertConfirmationPreconditions: byId("revert-confirmation-preconditions"),
+    revertConfirmationUnrelated: byId("revert-confirmation-unrelated"),
+    revertConfirmationIndex: byId("revert-confirmation-index"),
+    confirmRevertAppliedChanges: byId("confirm-revert-applied-changes"),
+    cancelRevertAppliedChanges: byId("cancel-revert-applied-changes"),
+    stageConfirmationDialog: byId("stage-confirmation-dialog"),
+    stageConfirmationPlan: byId("stage-confirmation-plan"),
+    stageConfirmationVerification: byId("stage-confirmation-verification"),
+    stageConfirmationApproved: byId("stage-confirmation-approved"),
+    stageConfirmationExcluded: byId("stage-confirmation-excluded"),
+    stageConfirmationHead: byId("stage-confirmation-head"),
+    stageConfirmationIndex: byId("stage-confirmation-index"),
+    confirmStageApprovedFiles: byId("confirm-stage-approved-files"),
+    cancelStageApprovedFiles: byId("cancel-stage-approved-files"),
+    localCommitConfirmationDialog: byId("local-commit-confirmation-dialog"),
+    localCommitConfirmationStage: byId("local-commit-confirmation-stage"),
+    localCommitConfirmationPaths: byId("local-commit-confirmation-paths"),
+    localCommitConfirmationSubject: byId("local-commit-confirmation-subject"),
+    localCommitConfirmationBody: byId("local-commit-confirmation-body"),
+    localCommitConfirmationBranch: byId("local-commit-confirmation-branch"),
+    localCommitConfirmationParent: byId("local-commit-confirmation-parent"),
+    confirmCreateLocalCommit: byId("confirm-create-local-commit"),
+    cancelCreateLocalCommit: byId("cancel-create-local-commit"),
+    pushConfirmationDialog: byId("push-confirmation-dialog"),
+    pushConfirmationRepository: byId("push-confirmation-repository"),
+    pushConfirmationBranch: byId("push-confirmation-branch"),
+    pushConfirmationCommit: byId("push-confirmation-commit"),
+    pushConfirmationSubject: byId("push-confirmation-subject"),
+    pushConfirmationRemoteBase: byId("push-confirmation-remote-base"),
+    pushConfirmationDestination: byId("push-confirmation-destination"),
+    pushConfirmationAheadBehind: byId("push-confirmation-ahead-behind"),
+    pushConfirmationCleanliness: byId("push-confirmation-cleanliness"),
+    pushConfirmationFastForward: byId("push-confirmation-fast-forward"),
+    confirmPushToOriginMain: byId("confirm-push-to-origin-main"),
+    cancelPushToOriginMain: byId("cancel-push-to-origin-main"),
     assignmentTechnicalDetails: byId("assignment-technical-details"),
     packRoutingDetails: byId("pack-routing-details"),
     modelInvocationDetails: byId("model-invocation-details"),
@@ -372,7 +810,35 @@
     acceptance: null,
     packs: [],
     codexRuns: [],
+    runActivity: [],
+    resultEnvelopes: Object.create(null),
+    handoffReviews: Object.create(null),
+    instructionDrafts: Object.create(null),
+    selectedActivityRunId: null,
+    taskSelectionEpoch: 0,
+    taskLoadState: "loading",
+    taskLoadMessage: "Loading your saved task selection.",
     ownerAcceptance: null,
+    deliveryCandidateReviews: Object.create(null),
+    deliveryCandidateReviewLoads: new Set(),
+    applyPlanReviews: Object.create(null),
+    applyPlanReviewLoads: new Set(),
+    applySessionReviews: Object.create(null),
+    applySessionReviewLoads: new Set(),
+    postApplyVerificationReviews: Object.create(null),
+    postApplyVerificationReviewLoads: new Set(),
+    commitBuilderReviews: Object.create(null),
+    commitBuilderReviewLoads: new Set(),
+    commitBuilderRequestSequences: Object.create(null),
+    pushDeliveryReviews: Object.create(null),
+    pushDeliveryReviewLoads: new Set(),
+    pushDeliveryRequestSequences: Object.create(null),
+    pushDeliveryResultVisible: new Set(),
+    applyConfirmationContext: null,
+    revertConfirmationContext: null,
+    stageConfirmationContext: null,
+    localCommitConfirmationContext: null,
+    pushConfirmationContext: null,
     selectedTaskId: null,
     selectedPackId: null,
     selectedScheduleId: null,
@@ -467,8 +933,12 @@
       queued: "Run accepted and queued for isolated execution.",
       starting: "The approved source snapshot is being prepared.",
       running: "Coding invocation is running in the isolated workspace.",
+      coding: "Coding invocation is running in the isolated workspace.",
       verifying: "Coding has reached a terminal process state; independent Verification is running.",
+      settling: "Terminal evidence is being reconciled into one authoritative Run Result.",
+      result_pending: "Terminal evidence is being reconciled into one authoritative Run Result.",
       completed: "Coding and Verification completed and acceptance evidence is available.",
+      result_available: "Coding and Verification completed and a trustworthy Run Result is available.",
       failed: "The Run failed. Review the failed process or acceptance checks below.",
       cancelled: "The Run was cancelled. Review the persisted process and boundary evidence below.",
       timed_out: "The Run timed out. Review the persisted process and boundary evidence below.",
@@ -486,12 +956,12 @@
   function setStatusLabel(element, value) {
     const normalized = String(value || "").toLowerCase();
     element.classList.remove("is-success", "is-warning", "is-error");
-    if (/accepted|approved|complete|configured|healthy|pass|ready|saved/.test(normalized)) {
-      element.classList.add("is-success");
-    } else if (/fail|error|timed out|cancel/.test(normalized)) {
+    if (/fail|error|timed out|cancel|integrity blocked|process lost|unavailable|unreachable|not installed|blocked/.test(normalized)) {
       element.classList.add("is-error");
-    } else if (/waiting|review|required|setup|queued|starting|running|verifying|draft|unavailable/.test(normalized)) {
+    } else if (/not verified|waiting|review|required|setup|queued|starting|running|verifying|draft/.test(normalized)) {
       element.classList.add("is-warning");
+    } else if (/accepted|approved|complete|configured|healthy|pass|ready|saved|verified|result available|pushed|delivered/.test(normalized)) {
+      element.classList.add("is-success");
     }
   }
 
@@ -839,7 +1309,40 @@
     state.acceptance = null;
     state.packs = [];
     state.codexRuns = [];
+    state.runActivity = [];
+    state.resultEnvelopes = Object.create(null);
+    state.handoffReviews = Object.create(null);
+    state.instructionDrafts = Object.create(null);
+    state.selectedActivityRunId = null;
+    state.taskSelectionEpoch += 1;
+    state.taskLoadState = "loading";
+    state.taskLoadMessage = "Loading your saved task selection.";
     state.ownerAcceptance = null;
+    state.deliveryCandidateReviews = Object.create(null);
+    state.deliveryCandidateReviewLoads = new Set();
+    state.applyPlanReviews = Object.create(null);
+    state.applyPlanReviewLoads = new Set();
+    state.applySessionReviews = Object.create(null);
+    state.applySessionReviewLoads = new Set();
+    state.postApplyVerificationReviews = Object.create(null);
+    state.postApplyVerificationReviewLoads = new Set();
+    state.commitBuilderReviews = Object.create(null);
+    state.commitBuilderReviewLoads = new Set();
+    state.commitBuilderRequestSequences = Object.create(null);
+    state.pushDeliveryReviews = Object.create(null);
+    state.pushDeliveryReviewLoads = new Set();
+    state.pushDeliveryRequestSequences = Object.create(null);
+    state.pushDeliveryResultVisible = new Set();
+    state.applyConfirmationContext = null;
+    state.revertConfirmationContext = null;
+    state.stageConfirmationContext = null;
+    state.localCommitConfirmationContext = null;
+    state.pushConfirmationContext = null;
+    if (elements.applyConfirmationDialog.open) elements.applyConfirmationDialog.close();
+    if (elements.revertConfirmationDialog.open) elements.revertConfirmationDialog.close();
+    if (elements.stageConfirmationDialog.open) elements.stageConfirmationDialog.close();
+    if (elements.localCommitConfirmationDialog.open) elements.localCommitConfirmationDialog.close();
+    if (elements.pushConfirmationDialog.open) elements.pushConfirmationDialog.close();
     state.selectedTaskId = null;
     state.selectedPackId = null;
     state.selectedScheduleId = null;
@@ -901,6 +1404,66 @@
         handleExpiredSession();
         return;
       }
+      if (key === "review-commit-plan") {
+        const verification = currentPassedPostApplyVerification(currentCodexRun());
+        if (verification && verification.id) {
+          state.commitBuilderReviews[String(verification.id)] = {
+            post_apply_verification_id: String(verification.id),
+            action_state: "STAGING_BLOCKED",
+            eligibility: {
+              status: "BLOCKED",
+              can_review: true,
+              blockers: [{
+                code: error instanceof ApiError ? error.code : "COMMIT_PLAN_REQUEST_FAILED",
+                message: productActionMessage(error)
+              }],
+              next_action: "Commit Plan request failed. Review the diagnostic evidence, then retry Review Commit Plan."
+            },
+            plan: null,
+            stage: null,
+            commit: null,
+            actions: {
+              can_review_commit_plan: true,
+              can_stage_approved_files: false,
+              can_create_local_commit: false
+            }
+          };
+        }
+      }
+      if (key === "push-preflight" || key === "confirm-push-to-origin-main") {
+        const commit = currentCommittedLocalCommit(currentCodexRun());
+        const commitId = String(commitBuilderRecordId(commit) || "");
+        if (commitId) {
+          const previous = objectRecord(state.pushDeliveryReviews[commitId]);
+          const previousReadiness = objectRecord(previous.readiness);
+          const previousExecution = objectRecord(previous.push_execution);
+          const uncertain = key === "confirm-push-to-origin-main";
+          storePushDeliveryReview(commitId, {
+            local_commit_execution_id: commitId,
+            action_state: uncertain ? "RECONCILIATION_BLOCKED" : "PUSH_BLOCKED",
+            readiness: Object.assign({}, previousReadiness, {
+              status: uncertain ? "RECONCILIATION_BLOCKED" : "PUSH_BLOCKED",
+              status_label: uncertain ? "RECONCILIATION BLOCKED" : "PUSH BLOCKED",
+              blockers: [{
+                code: error instanceof ApiError ? error.code : "PUSH_REQUEST_FAILED",
+                message: productActionMessage(error)
+              }],
+              next_action: uncertain
+                ? "Push result could not be confirmed. Reload the live Delivery Result before any new action."
+                : "Push preflight request failed. Retry only when the live remote can be inspected safely."
+            }),
+            push_execution: previousExecution,
+            delivery_result: previous.delivery_result || null,
+            actions: {
+              can_push_to_origin_main: !uncertain,
+              can_confirm_push: false,
+              can_view_delivery_result: false
+            }
+          });
+          state.pushConfirmationContext = null;
+          if (elements.pushConfirmationDialog.open) elements.pushConfirmationDialog.close();
+        }
+      }
       setFeedback(productActionMessage(error), "error");
     } finally {
       state.pending.delete(key);
@@ -920,7 +1483,511 @@
   }
 
   function currentCodexRun() {
-    return state.codexRuns.length ? state.codexRuns[0] : null;
+    const selected = state.selectedActivityRunId === null
+      ? null
+      : state.codexRuns.find(function (run) {
+          return String(run.id) === String(state.selectedActivityRunId);
+        });
+    return selected || (state.codexRuns.length ? state.codexRuns[0] : null);
+  }
+
+  function isTerminalCodexRun(run) {
+    return Boolean(run && TERMINAL_CODEX_RUN_STATUSES.indexOf(authoritativeRunStatus(run)) !== -1);
+  }
+
+  function resultEnvelopeForRun(run) {
+    return run ? state.resultEnvelopes[String(run.id)] || null : null;
+  }
+
+  function handoffReviewForRun(run) {
+    return run ? state.handoffReviews[String(run.id)] || null : null;
+  }
+
+  function instructionDraftForRun(run) {
+    return run ? state.instructionDrafts[String(run.id)] || null : null;
+  }
+
+  function runActivityItems(payload) {
+    if (Array.isArray(payload)) return payload;
+    const record = objectRecord(payload);
+    if (Array.isArray(record.runs)) return record.runs;
+    if (Array.isArray(record.items)) return record.items;
+    if (Array.isArray(record.activity)) return record.activity;
+    return [];
+  }
+
+  function lifecycleSnapshotVersion(record) {
+    const value = lifecycleRecordForActivity(record).snapshot_version;
+    const version = Number(value);
+    return Number.isFinite(version) && version >= 0 ? version : null;
+  }
+
+  function mergeRunActivityLifecycleSnapshots(previous, incoming) {
+    const priorItems = Array.isArray(previous) ? previous : [];
+    return (Array.isArray(incoming) ? incoming : []).map(function (next) {
+      const nextRunId = rawRunIdFromActivity(next);
+      const prior = priorItems.find(function (candidate) {
+        const priorRunId = rawRunIdFromActivity(candidate);
+        return nextRunId !== null
+          && nextRunId !== undefined
+          && priorRunId !== null
+          && priorRunId !== undefined
+          && String(priorRunId) === String(nextRunId);
+      });
+      if (!prior) return next;
+      const priorLifecycle = lifecycleRecordForActivity(prior);
+      const nextLifecycle = lifecycleRecordForActivity(next);
+      const priorVersion = lifecycleSnapshotVersion(prior);
+      const nextVersion = lifecycleSnapshotVersion(next);
+      if (
+        Object.keys(priorLifecycle).length
+        && (!Object.keys(nextLifecycle).length
+          || priorVersion !== null && (nextVersion === null || nextVersion < priorVersion))
+      ) {
+        return Object.assign({}, objectRecord(next), { lifecycle: priorLifecycle });
+      }
+      return next;
+    });
+  }
+
+  function resultEnvelopeRecord(payload) {
+    const record = objectRecord(payload);
+    return objectRecord(
+      record.envelope
+      || record.result_envelope
+      || record.resultEnvelope
+      || record.result
+      || record
+    );
+  }
+
+  function handoffReviewRecord(payload) {
+    const record = objectRecord(payload);
+    return objectRecord(record.review || record.handoff_review || record.handoffReview || record);
+  }
+
+  function instructionDraftRecord(payload) {
+    const record = objectRecord(payload);
+    const nested = record.instruction_draft || record.instructionDraft || record.draft;
+    if (nested) return objectRecord(nested);
+    return record.instruction_text || record.draft_text || record.draft_digest || record.instruction_digest
+      ? record
+      : {};
+  }
+
+  function resultEnvelopeIsValid(envelope) {
+    const record = objectRecord(envelope);
+    if (!Object.keys(record).length) return false;
+    const integrity = String(
+      record.integrity_state || record.result_integrity || record.integrity || ""
+    ).toLowerCase();
+    if (/blocked|invalid|mismatch|incomplete|unavailable/.test(integrity)) return false;
+    if (integrity !== "verified") return false;
+    return Boolean(
+      record.id !== null && record.id !== undefined
+      || record.result_digest
+      || record.ingested_at
+    );
+  }
+
+  async function loadResultIntake(run) {
+    if (!run || run.id === null || run.id === undefined) return;
+    const key = String(run.id);
+    try {
+      const payload = await api("/api/codex-runs/" + encodeURIComponent(run.id) + "/result-envelope");
+      const envelope = resultEnvelopeRecord(payload);
+      if (Object.keys(envelope).length && objectRecord(payload).monitor) {
+        envelope.monitor = objectRecord(payload).monitor;
+      }
+      state.resultEnvelopes[key] = Object.keys(envelope).length ? envelope : null;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) throw error;
+      if (error instanceof ApiError && error.status === 404) {
+        state.resultEnvelopes[key] = null;
+        return;
+      }
+      state.resultEnvelopes[key] = {
+        integrity_state: "result_unavailable",
+        intake_message: productActionMessage(error)
+      };
+    }
+  }
+
+  async function loadHandoffReview(run) {
+    if (!run || !resultEnvelopeIsValid(resultEnvelopeForRun(run))) return;
+    const key = String(run.id);
+    try {
+      const payload = await api("/api/codex-runs/" + encodeURIComponent(run.id) + "/handoff-review");
+      const review = handoffReviewRecord(payload);
+      const draft = instructionDraftRecord(payload);
+      state.handoffReviews[key] = Object.keys(review).length ? review : null;
+      if (Object.keys(draft).length) state.instructionDrafts[key] = draft;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) throw error;
+      if (error instanceof ApiError && error.status === 404) {
+        state.handoffReviews[key] = null;
+        return;
+      }
+      state.handoffReviews[key] = {
+        reconciliation: "BLOCKED",
+        blockers: [productActionMessage(error)],
+        review_message: "Review Handoff could not be loaded."
+      };
+    }
+  }
+
+  function deliveryCandidateReviewForRun(run) {
+    if (!run) return null;
+    return state.deliveryCandidateReviews[String(run.id)] || null;
+  }
+
+  async function loadDeliveryCandidateReview(run) {
+    if (!isTerminalCodexRun(run)) return;
+    const key = String(run.id);
+    if (state.deliveryCandidateReviewLoads.has(key)) return;
+    state.deliveryCandidateReviewLoads.add(key);
+    try {
+      const review = await api("/api/codex-runs/" + run.id + "/delivery-candidate");
+      if (!review || Number(review.run_id) !== Number(run.id)) {
+        throw new ApiError(
+          200,
+          "CANDIDATE_BINDING_MISMATCH",
+          "Change Candidate review did not match the selected Run.",
+          {},
+          "product"
+        );
+      }
+      state.deliveryCandidateReviews[key] = review;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) throw error;
+      state.deliveryCandidateReviews[key] = {
+        run_id: run.id,
+        candidate: null,
+        drift: null,
+        blockers: [{
+          code: "CANDIDATE_REVIEW_LOAD_FAILED",
+          message: productActionMessage(error)
+        }],
+        next_action: "Select Review Change Candidate to try again."
+      };
+    }
+  }
+
+  function deliveryCandidateReviewAvailable(run) {
+    const review = objectRecord(deliveryCandidateReviewForRun(run));
+    const candidate = objectRecord(review.candidate);
+    const drift = objectRecord(review.drift);
+    return Boolean(
+      candidate.id !== null && candidate.id !== undefined
+      || drift.evaluation_id !== null && drift.evaluation_id !== undefined
+      || Array.isArray(review.blockers) && review.blockers.length
+      || Array.isArray(drift.blockers) && drift.blockers.length
+    );
+  }
+
+  function applyPlanReviewForRun(run) {
+    if (!run) return null;
+    return state.applyPlanReviews[String(run.id)] || null;
+  }
+
+  async function loadApplyPlanReview(run) {
+    if (!isTerminalCodexRun(run) || !deliveryCandidateReviewAvailable(run)) return;
+    const key = String(run.id);
+    if (state.applyPlanReviewLoads.has(key)) return;
+    state.applyPlanReviewLoads.add(key);
+    try {
+      const review = await api("/api/codex-runs/" + run.id + "/apply-plans");
+      if (!review || Number(review.run_id) !== Number(run.id)) {
+        throw new ApiError(
+          200,
+          "APPLY_PLAN_BINDING_MISMATCH",
+          "Apply Plan review did not match the selected Run.",
+          {},
+          "product"
+        );
+      }
+      state.applyPlanReviews[key] = review;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) throw error;
+      state.applyPlanReviews[key] = {
+        run_id: run.id,
+        plan: null,
+        history: [],
+        blockers: [{
+          code: "APPLY_PLAN_REVIEW_LOAD_FAILED",
+          message: productActionMessage(error)
+        }],
+        next_action: "Select Review Apply Plan to try again."
+      };
+    }
+  }
+
+  function currentApplyPlanForRun(run) {
+    return objectRecord(objectRecord(applyPlanReviewForRun(run)).plan);
+  }
+
+  function applySessionReviewForPlan(plan) {
+    if (!plan || plan.id === null || plan.id === undefined) return null;
+    return state.applySessionReviews[String(plan.id)] || null;
+  }
+
+  async function loadApplySessionReview(run, force) {
+    const plan = currentApplyPlanForRun(run);
+    if (!plan.id) return;
+    const key = String(plan.id);
+    if (!force && state.applySessionReviewLoads.has(key)) return;
+    state.applySessionReviewLoads.add(key);
+    try {
+      const review = await api(
+        "/api/apply-plans/" + encodeURIComponent(plan.id) + "/apply-sessions"
+      );
+      if (!review || String(review.plan_id || "") !== key) {
+        throw new ApiError(
+          200,
+          "APPLY_SESSION_BINDING_MISMATCH",
+          "Apply readiness did not match the selected Apply Plan.",
+          {},
+          "product"
+        );
+      }
+      state.applySessionReviews[key] = review;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) throw error;
+      state.applySessionReviews[key] = {
+        plan_id: plan.id,
+        session: null,
+        actions: { can_apply: false, can_revert: false },
+        blockers: [{
+          code: "APPLY_SESSION_REVIEW_LOAD_FAILED",
+          message: productActionMessage(error)
+        }],
+        next_action: "Review Apply readiness again."
+      };
+    }
+  }
+
+  function postApplyVerificationContextAvailable(applySession) {
+    const record = objectRecord(applySession);
+    return normalizedApplySessionState(record.apply_state) === "APPLIED"
+      && normalizedApplySessionState(record.revert_state) === "NOT_REQUESTED";
+  }
+
+  function postApplyVerificationReviewForSession(applySession) {
+    const record = objectRecord(applySession);
+    if (!record.id) return null;
+    return state.postApplyVerificationReviews[String(record.id)] || null;
+  }
+
+  async function loadPostApplyVerification(run, force) {
+    const parts = applySessionReviewParts(run);
+    const applySession = objectRecord(parts.session);
+    if (!applySession.id || !postApplyVerificationContextAvailable(applySession)) return;
+    const key = String(applySession.id);
+    if (!force && state.postApplyVerificationReviewLoads.has(key)) return;
+    state.postApplyVerificationReviewLoads.add(key);
+    try {
+      const review = await api(
+        "/api/apply-sessions/" + encodeURIComponent(applySession.id)
+          + "/post-apply-verifications"
+      );
+      if (!review || String(review.apply_session_id || "") !== key) {
+        throw new ApiError(
+          200,
+          "POST_APPLY_VERIFICATION_BINDING_MISMATCH",
+          "Post-Apply Verification did not match the selected Apply session.",
+          {},
+          "product"
+        );
+      }
+      state.postApplyVerificationReviews[key] = review;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) throw error;
+      state.postApplyVerificationReviews[key] = {
+        apply_session_id: applySession.id,
+        eligibility: {
+          status: "BLOCKED",
+          status_label: "BLOCKED",
+          can_verify: false,
+          blockers: [{
+            code: "POST_APPLY_VERIFICATION_LOAD_FAILED",
+            message: productActionMessage(error)
+          }],
+          next_action: "Restore repository access, then reload Post-Apply Verification."
+        },
+        verification: null,
+        history: [],
+        actions: { can_verify: false }
+      };
+    }
+  }
+
+  function currentPassedPostApplyVerification(run) {
+    const parts = applySessionReviewParts(run);
+    const applySession = objectRecord(parts.session);
+    const review = objectRecord(postApplyVerificationReviewForSession(applySession));
+    const verification = objectRecord(review.verification);
+    return String(verification.status || "").toUpperCase() === "PASSED"
+      ? verification
+      : null;
+  }
+
+  function commitBuilderReviewForVerification(verification) {
+    if (!verification || !verification.id) return null;
+    return state.commitBuilderReviews[String(verification.id)] || null;
+  }
+
+  function commitBuilderReviewBinding(review) {
+    const value = objectRecord(review);
+    const verification = objectRecord(value.post_apply_verification);
+    const plan = objectRecord(value.plan || value.commit_plan);
+    const advanced = objectRecord(plan.advanced);
+    return String(
+      value.post_apply_verification_id
+      || value.verification_id
+      || verification.id
+      || advanced.verification_id
+      || ""
+    );
+  }
+
+  async function loadCommitBuilder(run, force) {
+    const verification = currentPassedPostApplyVerification(run);
+    if (!verification || !verification.id) return;
+    const key = String(verification.id);
+    if (!force && state.commitBuilderReviewLoads.has(key)) return;
+    state.commitBuilderReviewLoads.add(key);
+    const requestEpoch = state.taskSelectionEpoch;
+    const requestSequence = (state.commitBuilderRequestSequences[key] || 0) + 1;
+    state.commitBuilderRequestSequences[key] = requestSequence;
+    try {
+      const review = await api(
+        "/api/post-apply-verifications/" + encodeURIComponent(key)
+          + "/commit-plans"
+      );
+      if (requestEpoch !== state.taskSelectionEpoch
+          || state.commitBuilderRequestSequences[key] !== requestSequence
+          || String(currentPassedPostApplyVerification(currentCodexRun()).id || "") !== key) {
+        return;
+      }
+      if (!review || commitBuilderReviewBinding(review) !== key) {
+        throw new ApiError(
+          200,
+          "COMMIT_BUILDER_BINDING_MISMATCH",
+          "Commit workflow review did not match the verified Apply result.",
+          {},
+          "product"
+        );
+      }
+      state.commitBuilderReviews[key] = review;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) throw error;
+      if (requestEpoch !== state.taskSelectionEpoch
+          || state.commitBuilderRequestSequences[key] !== requestSequence) return;
+      state.commitBuilderReviews[key] = {
+        post_apply_verification_id: key,
+        eligibility: {
+          status: "BLOCKED",
+          status_label: "BLOCKED",
+          can_review: false,
+          blockers: [{
+            code: "COMMIT_BUILDER_REVIEW_LOAD_FAILED",
+            message: productActionMessage(error)
+          }],
+          next_action: "Restore repository access, then reload the Commit workflow."
+        },
+        plan: null,
+        stage: null,
+        commit: null,
+        actions: {
+          can_review_commit_plan: false,
+          can_stage_approved_files: false,
+          can_create_local_commit: false
+        }
+      };
+    }
+  }
+
+  function currentCommittedLocalCommit(run) {
+    const commit = objectRecord(commitBuilderParts(run).commit);
+    return String(commit.state || commit.status || "").toUpperCase() === "COMMITTED"
+      && commitBuilderRecordId(commit)
+      ? commit
+      : null;
+  }
+
+  function pushDeliveryReviewForLocalCommit(commit) {
+    const key = commit ? String(commitBuilderRecordId(commit) || "") : "";
+    return key ? state.pushDeliveryReviews[key] || null : null;
+  }
+
+  function pushDeliveryReviewBinding(review) {
+    const value = objectRecord(review);
+    const localCommit = objectRecord(value.local_commit);
+    return String(
+      value.local_commit_execution_id
+      || value.commit_execution_id
+      || localCommit.id
+      || localCommit.commit_execution_id
+      || ""
+    );
+  }
+
+  function pushDeliveryLoadFailure(commitId, error) {
+    return {
+      local_commit_execution_id: String(commitId),
+      action_state: "PUSH_BLOCKED",
+      readiness: {
+        status: "PUSH_BLOCKED",
+        status_label: "PUSH BLOCKED",
+        blockers: [{
+          code: error instanceof ApiError ? error.code : "PUSH_DELIVERY_LOAD_FAILED",
+          message: productActionMessage(error)
+        }],
+        next_action: "Push readiness could not be loaded. Review the diagnostic evidence, then retry only when meaningful."
+      },
+      push_execution: null,
+      delivery_result: null,
+      actions: {
+        can_push_to_origin_main: false,
+        can_confirm_push: false,
+        can_view_delivery_result: false
+      }
+    };
+  }
+
+  async function loadPushDelivery(run, force) {
+    const commit = currentCommittedLocalCommit(run);
+    if (!commit) return;
+    const key = String(commitBuilderRecordId(commit));
+    if (!force && state.pushDeliveryReviewLoads.has(key)) return;
+    state.pushDeliveryReviewLoads.add(key);
+    const requestEpoch = state.taskSelectionEpoch;
+    const requestSequence = (state.pushDeliveryRequestSequences[key] || 0) + 1;
+    state.pushDeliveryRequestSequences[key] = requestSequence;
+    try {
+      const review = await api(
+        "/api/local-commits/" + encodeURIComponent(key) + "/push-delivery"
+      );
+      const current = currentCommittedLocalCommit(currentCodexRun());
+      if (requestEpoch !== state.taskSelectionEpoch
+          || state.pushDeliveryRequestSequences[key] !== requestSequence
+          || String(commitBuilderRecordId(current) || "") !== key) return;
+      if (!review || pushDeliveryReviewBinding(review) !== key) {
+        throw new ApiError(
+          200,
+          "PUSH_DELIVERY_BINDING_MISMATCH",
+          "Push readiness did not match the selected local Commit result.",
+          {},
+          "product"
+        );
+      }
+      state.pushDeliveryReviews[key] = review;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) throw error;
+      if (requestEpoch !== state.taskSelectionEpoch
+          || state.pushDeliveryRequestSequences[key] !== requestSequence) return;
+      state.pushDeliveryReviews[key] = pushDeliveryLoadFailure(key, error);
+    }
   }
 
   function currentLegacyRun() {
@@ -945,10 +2012,13 @@
   }
 
   function resetTaskDetails() {
+    state.pushConfirmationContext = null;
+    if (elements.pushConfirmationDialog.open) elements.pushConfirmationDialog.close();
     state.aiPlan = null;
     state.acceptance = null;
     state.packs = [];
     state.codexRuns = [];
+    state.selectedActivityRunId = null;
     state.ownerAcceptance = null;
     state.runEligibility = null;
     state.selectedPackId = null;
@@ -1000,6 +2070,10 @@
   function beginNewTask(shouldFocus) {
     state.creatingTask = true;
     state.selectedTaskId = null;
+    state.selectedActivityRunId = null;
+    state.taskSelectionEpoch += 1;
+    state.taskLoadState = "empty";
+    state.taskLoadMessage = "Enter a Development task, then save it.";
     state.renderedTaskId = null;
     resetTaskDetails();
     initializeNewTaskForm();
@@ -1023,6 +2097,8 @@
       return;
     }
     state.refreshing = true;
+    let requestedTaskId = null;
+    let requestSelectionEpoch = null;
     try {
       const base = await Promise.all([
         api("/api/health"),
@@ -1031,7 +2107,8 @@
         api("/api/runs"),
         api("/api/schedules"),
         api("/api/audit"),
-        api("/api/codex/status")
+        api("/api/codex/status"),
+        api("/api/run-activity")
       ]);
       state.health = base[0];
       if (!state.health || state.health.version !== UI_VERSION) {
@@ -1049,6 +2126,10 @@
       state.schedules = Array.isArray(base[4]) ? base[4] : [];
       state.audit = Array.isArray(base[5]) ? base[5] : [];
       state.codexStatus = base[6] || null;
+      state.runActivity = mergeRunActivityLifecycleSnapshots(
+        state.runActivity,
+        runActivityItems(base[7])
+      );
 
       if (!state.registryLoaded) {
         const registry = await Promise.all([
@@ -1066,17 +2147,27 @@
         const stillExists = state.tasks.some(function (task) { return task.id === state.selectedTaskId; });
         if (!stillExists) {
           state.selectedTaskId = state.tasks.length ? state.tasks[state.tasks.length - 1].id : null;
+          state.taskSelectionEpoch += 1;
+          state.taskLoadState = state.selectedTaskId === null ? "empty" : "loading";
+          state.taskLoadMessage = state.selectedTaskId === null
+            ? "Create a task to begin."
+            : "Loading the selected Task.";
           state.renderedTaskId = null;
           resetTaskDetails();
         }
       }
       if (!state.tasks.length && !state.creatingTask) {
         state.creatingTask = true;
+        state.taskSelectionEpoch += 1;
+        state.taskLoadState = "empty";
+        state.taskLoadMessage = "Create your first Development task.";
         initializeNewTaskForm();
       }
 
       const task = selectedTask();
       if (task) {
+        requestedTaskId = task.id;
+        requestSelectionEpoch = state.taskSelectionEpoch;
         const detail = await Promise.all([
           api("/api/tasks/" + task.id + "/acceptance"),
           api("/api/tasks/" + task.id + "/ai-plan"),
@@ -1085,25 +2176,72 @@
           api("/api/tasks/" + task.id + "/owner-acceptance"),
           api("/api/tasks/" + task.id + "/run-eligibility")
         ]);
+        if (
+          requestSelectionEpoch !== state.taskSelectionEpoch
+          || String(state.selectedTaskId) !== String(requestedTaskId)
+        ) {
+          state.refreshQueued = true;
+          return;
+        }
         state.acceptance = detail[0] || null;
         state.aiPlan = detail[1] || null;
         state.packs = Array.isArray(detail[2]) ? detail[2] : [];
         state.codexRuns = Array.isArray(detail[3]) ? detail[3] : [];
         state.ownerAcceptance = detail[4] && detail[4].acceptance ? detail[4].acceptance : null;
         state.runEligibility = detail[5] && typeof detail[5] === "object" ? detail[5] : null;
+        if (
+          state.selectedActivityRunId !== null
+          && !state.codexRuns.some(function (run) {
+            return String(run.id) === String(state.selectedActivityRunId);
+          })
+        ) state.selectedActivityRunId = null;
+        await loadResultIntake(currentCodexRun());
+        await loadHandoffReview(currentCodexRun());
+        await loadDeliveryCandidateReview(currentCodexRun());
+        await loadApplyPlanReview(currentCodexRun());
+        await loadApplySessionReview(currentCodexRun(), true);
+        await loadPostApplyVerification(currentCodexRun(), true);
+        await loadCommitBuilder(currentCodexRun(), true);
+        await loadPushDelivery(currentCodexRun(), true);
+        if (
+          requestSelectionEpoch !== state.taskSelectionEpoch
+          || String(state.selectedTaskId) !== String(requestedTaskId)
+        ) {
+          state.refreshQueued = true;
+          return;
+        }
+        state.taskLoadState = "success";
+        state.taskLoadMessage = "Selected Task loaded.";
       } else {
         resetTaskDetails();
+        state.taskLoadState = "empty";
+        state.taskLoadMessage = state.creatingTask
+          ? "Enter a Development task, then save it."
+          : "Select a saved Task.";
       }
 
       state.workspaceLoaded = true;
       renderWorkspace();
       if (elements.feedback.textContent === "Loading your workbench…") {
         setFeedback(state.tasks.length ? "Workbench ready." : "Create your first task to begin.", "neutral");
+      } else if (elements.feedback.textContent === "Loading task…") {
+        setFeedback("Selected Task loaded.", "success");
+      } else if (elements.feedback.textContent === "Loading the selected Run Result…") {
+        setFeedback("Run Result loaded.", "success");
       }
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         handleExpiredSession();
       } else {
+        if (
+          requestedTaskId !== null
+          && requestSelectionEpoch === state.taskSelectionEpoch
+          && String(state.selectedTaskId) === String(requestedTaskId)
+        ) {
+          state.taskLoadState = "failure";
+          state.taskLoadMessage = "The selected Task could not be loaded. Refresh Run Status or choose it again.";
+          renderSelectedTaskContext();
+        }
         setFeedback(productActionMessage(error), "error");
       }
     } finally {
@@ -1121,9 +2259,11 @@
     renderCapabilityOptions();
     renderTaskList();
     renderTaskForm();
+    renderSelectedTaskContext();
     renderAIPlan();
     renderPack();
     renderCodex();
+    renderRunActivity();
     renderResult();
     renderOwnerAcceptance();
     renderCompactSync();
@@ -1137,10 +2277,12 @@
 
   function renderHeaderStatus() {
     const detection = state.codexStatus;
-    const runtimeAvailable = detection && detection.execution_ready === true;
+    const connectivity = objectRecord(objectRecord(detection).connectivity);
+    const runtimeAvailable = detection && detection.execution_ready === true
+      && connectivity.ready_for_real_run === true;
     elements.codexHeaderStatus.textContent = runtimeAvailable
-      ? "Codex runtime: Available"
-      : "Codex runtime: Needs setup";
+      ? "Codex: Ready for real Run"
+      : "Codex: " + connectivityStateLabel(connectivity.readiness_state);
     elements.codexHeaderStatus.dataset.status = runtimeAvailable ? "ready" : "setup";
     elements.accountUsername.textContent = state.user ? state.user.username : "Account";
     elements.runtimeHealth.textContent = state.health && state.health.status === "healthy" && state.health.database === "ok"
@@ -1180,6 +2322,35 @@
     elements.capabilityFocus.value = Array.from(elements.capabilityFocus.options).some(function (option) { return option.value === current; }) ? current : "";
   }
 
+  function taskDisplayName(task) {
+    const record = objectRecord(task);
+    return String(record.title || record.development_task || "Untitled Development task").trim()
+      || "Untitled Development task";
+  }
+
+  function renderSelectedTaskContext() {
+    const task = selectedTask();
+    let name;
+    let stateValue = state.taskLoadState;
+    let message = state.taskLoadMessage;
+    if (state.creatingTask) {
+      name = "New task";
+      stateValue = "empty";
+      message = "Enter a Development task, then save it.";
+    } else if (!task) {
+      name = state.workspaceLoaded ? "No Task selected" : "Loading task…";
+      stateValue = state.workspaceLoaded ? "empty" : "loading";
+      message = state.workspaceLoaded ? "Choose a saved Task or create a new one." : "Loading your saved task selection.";
+    } else {
+      name = taskDisplayName(task);
+      if (stateValue === "success") message = "Selected Task loaded.";
+    }
+    elements.selectedTaskName.textContent = name;
+    elements.selectedTaskName.title = task ? name : "";
+    elements.selectedTaskLoadState.textContent = message;
+    elements.selectedTaskContext.dataset.state = stateValue;
+  }
+
   function renderTaskList() {
     clearChildren(elements.taskList);
     if (!state.tasks.length) {
@@ -1198,7 +2369,9 @@
       button.className = "task-list-button";
       button.dataset.taskId = String(task.id);
       button.setAttribute("aria-current", !state.creatingTask && task.id === state.selectedTaskId ? "page" : "false");
-      title.textContent = task.title;
+      title.textContent = taskDisplayName(task);
+      button.title = taskDisplayName(task);
+      button.setAttribute("aria-label", "Select Task: " + taskDisplayName(task));
       status.textContent = humanStatus(task.status);
       button.appendChild(title);
       button.appendChild(status);
@@ -1206,9 +2379,14 @@
         state.creatingTask = false;
         state.newTaskInitialized = false;
         state.selectedTaskId = task.id;
+        state.selectedActivityRunId = null;
+        state.taskSelectionEpoch += 1;
+        state.taskLoadState = "loading";
+        state.taskLoadMessage = "Loading the selected Task.";
         state.renderedTaskId = null;
         resetTaskDetails();
         renderTaskList();
+        renderSelectedTaskContext();
         closeTaskDrawer();
         setFeedback("Loading task…", "neutral");
         refreshWorkspace({ force: true });
@@ -1255,6 +2433,452 @@
     setStatusLabel(elements.taskStatus, elements.taskStatus.textContent);
   }
 
+  function appendRunActivityFact(target, label, value) {
+    const item = document.createElement("span");
+    const heading = document.createElement("b");
+    heading.textContent = label;
+    item.appendChild(heading);
+    item.appendChild(document.createTextNode(value));
+    target.appendChild(item);
+  }
+
+  function lifecycleRecordForActivity(record) {
+    return objectRecord(objectRecord(record).lifecycle);
+  }
+
+  function rawRunIdFromActivity(record) {
+    const source = objectRecord(record);
+    const monitor = objectRecord(source.monitor);
+    const run = objectRecord(source.run);
+    const envelope = resultEnvelopeRecord(
+      source.result_envelope || source.resultEnvelope || source.envelope
+    );
+    return source.run_id || monitor.run_id || run.id || envelope.run_id;
+  }
+
+  function lifecycleForRun(run) {
+    if (!run || run.id === null || run.id === undefined) return {};
+    const matching = state.runActivity.find(function (record) {
+      const runId = rawRunIdFromActivity(record);
+      return runId !== null && runId !== undefined && String(runId) === String(run.id);
+    });
+    return lifecycleRecordForActivity(matching);
+  }
+
+  function authoritativeRunStatus(run) {
+    const lifecycle = lifecycleForRun(run);
+    const matching = run && state.runActivity.find(function (record) {
+      const runId = rawRunIdFromActivity(record);
+      return runId !== null && runId !== undefined && String(runId) === String(run.id);
+    });
+    const record = objectRecord(matching);
+    const monitor = objectRecord(record.monitor);
+    const nestedRun = objectRecord(record.run);
+    return String(
+      lifecycle.state
+      || record.monitor_state
+      || monitor.monitor_state
+      || record.status
+      || nestedRun.status
+      || run && run.status
+      || ""
+    ).toLowerCase();
+  }
+
+  function lifecycleIsActive(status) {
+    return ACTIVE_CODEX_RUN_STATUSES.indexOf(String(status || "").toLowerCase()) !== -1;
+  }
+
+  function formatLifecycleDuration(value, fallback) {
+    const milliseconds = Number(value);
+    if (!Number.isFinite(milliseconds) || milliseconds < 0) return fallback || "Not available";
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    if (hours) return hours + " hr " + minutes + " min " + seconds + " sec";
+    if (minutes) return minutes + " min " + seconds + " sec";
+    return seconds + " sec";
+  }
+
+  function lifecycleBoolean(value, positive, negative) {
+    if (value === true) return positive;
+    if (value === false) return negative;
+    return "Not reported";
+  }
+
+  function lifecycleActivityText(value, fallback) {
+    const text = ownerSafeText(value, fallback || "Waiting for the next lifecycle event.", 180);
+    if (/reasoning|chain[- ]of[- ]thought|\bcot\b|internal (?:thought|analysis|monologue)|thinking|deliberat/i.test(text)) {
+      return "Codex is reasoning";
+    }
+    return text.replace(/[\r\n]+/g, " ");
+  }
+
+  function lifecycleEventView(value) {
+    const event = objectRecord(value);
+    const type = ownerSafeText(
+      event.type || event.event_type || event.kind || event.state || event.phase,
+      "Activity update",
+      80
+    );
+    const reasoningEvent = /reasoning|chain[- ]of[- ]thought|\bcot\b|thinking|deliberat/i.test(
+      [type, event.category, event.item_type].filter(Boolean).join(" ")
+    );
+    const activity = lifecycleActivityText(
+      reasoningEvent
+        ? "Codex is reasoning"
+        : event.safe_summary || event.current_activity || event.activity || event.label || type,
+      "Activity update"
+    );
+    const eventPath = event.repository_relative_path || event.repository_path;
+    const path = eventPath
+      ? repositoryRelativePath(eventPath)
+      : "";
+    return {
+      sequence: Number.isFinite(Number(event.sequence)) ? String(Number(event.sequence)) : "",
+      type: humanStatus(type),
+      phase: humanStatus(event.phase || "not reported"),
+      activity: activity,
+      reasoning: reasoningEvent,
+      status: humanStatus(event.status || event.state || "not reported"),
+      path: path === "File path withheld" ? "" : path,
+      count: Number.isFinite(Number(event.event_count)) && Number(event.event_count) > 0
+        ? Number(event.event_count)
+        : null,
+      duration: event.duration_ms === null || event.duration_ms === undefined
+        ? ""
+        : formatLifecycleDuration(event.duration_ms, ""),
+      occurredAt: event.occurred_at || event.created_at || event.timestamp || event.recorded_at
+    };
+  }
+
+  function appendLifecycleTimeline(target, events) {
+    const source = Array.isArray(events) ? events : [];
+    const bounded = source.slice(-12).map(lifecycleEventView);
+    clearChildren(target);
+    if (!bounded.length) {
+      const empty = document.createElement("li");
+      empty.textContent = "No safe lifecycle events have been recorded yet.";
+      target.appendChild(empty);
+      return;
+    }
+    bounded.forEach(function (event) {
+      const item = document.createElement("li");
+      const heading = document.createElement("span");
+      const detail = document.createElement("span");
+      heading.className = "live-codex-event-heading";
+      heading.textContent = (event.sequence ? "#" + event.sequence + " · " : "")
+        + event.type + " · " + formatTime(event.occurredAt);
+      detail.className = "live-codex-event-detail";
+      detail.textContent = event.phase + " · " + event.status + " · " + event.activity
+        + (event.path ? " · " + event.path : "")
+        + (event.count ? " · " + event.count + " updates" : "")
+        + (event.duration ? " · " + event.duration : "");
+      item.appendChild(heading);
+      item.appendChild(detail);
+      target.appendChild(item);
+    });
+    if (source.length > bounded.length) {
+      const notice = document.createElement("li");
+      notice.className = "live-codex-timeline-notice";
+      notice.textContent = "Showing the latest " + bounded.length + " of " + source.length + " safe lifecycle events.";
+      target.insertBefore(notice, target.firstChild);
+    }
+  }
+
+  function safeLifecycleIdentifier(value) {
+    const text = String(value === null || value === undefined ? "" : value).trim();
+    if (!text) return "Not recorded";
+    if (!/^[A-Za-z0-9._:-]{1,160}$/.test(text)) return "Withheld";
+    return text;
+  }
+
+  function safeLifecycleNumberMap(value, emptyText) {
+    const record = objectRecord(value);
+    const entries = Object.keys(record).sort().slice(0, 24).map(function (key) {
+      const number = Number(record[key]);
+      if (!/^[A-Za-z0-9._:-]{1,80}$/.test(key) || !Number.isFinite(number) || number < 0) return "";
+      return key + ": " + String(number);
+    }).filter(Boolean);
+    return entries.length ? entries.join(" · ") : emptyText;
+  }
+
+  function appendLifecycleAdvanced(target, lifecycle) {
+    const advanced = objectRecord(lifecycle.advanced);
+    const facts = [
+      ["Lifecycle snapshot version", safeLifecycleIdentifier(lifecycle.snapshot_version)],
+      ["Execution attempt", safeLifecycleIdentifier(advanced.execution_attempt_id || advanced.attempt_id)],
+      ["Monitor", safeLifecycleIdentifier(advanced.monitor_id)],
+      ["Execution", safeLifecycleIdentifier(advanced.execution_id)],
+      ["Process-start identity", safeLifecycleIdentifier(advanced.process_start_identity)],
+      ["Terminal-event identity", safeLifecycleIdentifier(advanced.terminal_event_identity)],
+      ["Receipt digest", safeLifecycleIdentifier(advanced.receipt_digest)],
+      ["Stream offsets", safeLifecycleNumberMap(advanced.stream_offsets || advanced.offsets, "Not recorded")],
+      ["Event histogram", safeLifecycleNumberMap(advanced.event_histogram || advanced.type_histogram || advanced.histogram, "Not recorded")],
+      ["Result sidecar", humanStatus(advanced.sidecar_state || advanced.result_sidecar_state || "not recorded")],
+      [
+        "Exit code",
+        advanced.exit_code !== null
+          && advanced.exit_code !== undefined
+          && advanced.exit_code !== ""
+          && Number.isInteger(Number(advanced.exit_code))
+          ? String(Number(advanced.exit_code))
+          : "Not recorded"
+      ],
+      ["Reconciliation version", safeLifecycleIdentifier(advanced.reconciliation_version || advanced.reconcile_version)]
+    ];
+    facts.forEach(function (fact) {
+      appendRunActivityFact(target, fact[0], ownerSafeText(fact[1], "Not recorded", 360));
+    });
+  }
+
+  function appendLiveCodexActivity(target, view) {
+    const lifecycle = view.lifecycle;
+    const events = Array.isArray(lifecycle.events) ? lifecycle.events : [];
+    const latestEvent = events.length ? lifecycleEventView(events[events.length - 1]) : null;
+    const facts = document.createElement("span");
+    const timelineHeading = document.createElement("strong");
+    const timeline = document.createElement("ol");
+    const advanced = document.createElement("details");
+    const advancedSummary = document.createElement("summary");
+    const advancedFacts = document.createElement("span");
+    target.className = "live-codex-activity";
+    target.setAttribute("aria-label", "Live Codex Activity for " + view.taskName);
+    facts.className = "live-codex-facts";
+    appendRunActivityFact(facts, "Current Run state", humanStatus(view.status));
+    appendRunActivityFact(facts, "Coding / Verification phase", humanStatus(lifecycle.phase || "not reported"));
+    appendRunActivityFact(
+      facts,
+      "Current observable activity",
+      latestEvent && latestEvent.reasoning
+        ? "Codex is reasoning"
+        : lifecycleActivityText(lifecycle.current_activity, "Waiting for the next lifecycle event.")
+    );
+    appendRunActivityFact(facts, "Run started at", formatTime(lifecycle.started_at));
+    appendRunActivityFact(facts, "Current elapsed time", formatLifecycleDuration(lifecycle.elapsed_ms));
+    appendRunActivityFact(facts, "Coding elapsed time", formatLifecycleDuration(lifecycle.coding_elapsed_ms));
+    appendRunActivityFact(facts, "Verification elapsed time", formatLifecycleDuration(lifecycle.verification_elapsed_ms));
+    appendRunActivityFact(
+      facts,
+      "Result-settlement elapsed time",
+      formatLifecycleDuration(
+        lifecycle.result_settlement_elapsed_ms !== null
+          && lifecycle.result_settlement_elapsed_ms !== undefined
+          ? lifecycle.result_settlement_elapsed_ms
+          : lifecycle.settlement_elapsed_ms
+      )
+    );
+    appendRunActivityFact(facts, "Last observable activity at", formatTime(lifecycle.last_activity_at));
+    appendRunActivityFact(
+      facts,
+      "Time since last activity",
+      lifecycle.inactivity_ms === null || lifecycle.inactivity_ms === undefined
+        ? "Not available"
+        : formatLifecycleDuration(lifecycle.inactivity_ms) + " ago"
+    );
+    appendRunActivityFact(facts, "Process live", lifecycleBoolean(lifecycle.process_live, "Yes", "No"));
+    appendRunActivityFact(facts, "Monitor attached", lifecycleBoolean(lifecycle.monitor_attached, "Yes", "No"));
+    appendRunActivityFact(facts, "Coding started", lifecycleBoolean(lifecycle.coding_started, "Yes", "No"));
+    appendRunActivityFact(facts, "Process exited", lifecycleBoolean(lifecycle.process_exited, "Yes", "No"));
+    appendRunActivityFact(facts, "Verification started", lifecycleBoolean(lifecycle.verification_started, "Yes", "No"));
+    appendRunActivityFact(facts, "Sidecar evidence", humanStatus(lifecycle.sidecar_state || "not reported"));
+    appendRunActivityFact(facts, "Result integrity", humanStatus(lifecycle.result_integrity || "pending"));
+    appendRunActivityFact(
+      facts,
+      "Terminal evidence observed",
+      lifecycleBoolean(lifecycle.terminal_evidence_observed, "Yes", "No")
+    );
+    appendRunActivityFact(
+      facts,
+      "Latest safe event summary",
+      latestEvent ? latestEvent.type + " · " + latestEvent.activity : "No safe event recorded"
+    );
+    appendRunActivityFact(facts, "Blocker code", safeLifecycleIdentifier(lifecycle.blocker_code));
+    appendRunActivityFact(facts, "Event count", String(events.length));
+    appendRunActivityFact(facts, "Exact next Owner action", view.nextAction);
+    timelineHeading.className = "live-codex-timeline-title";
+    timelineHeading.textContent = "Safe activity timeline";
+    timeline.className = "live-codex-timeline";
+    appendLifecycleTimeline(timeline, events);
+    advanced.className = "live-codex-advanced";
+    advancedSummary.textContent = "Advanced";
+    advancedFacts.className = "live-codex-advanced-facts";
+    appendLifecycleAdvanced(advancedFacts, lifecycle);
+    advanced.appendChild(advancedSummary);
+    advanced.appendChild(advancedFacts);
+    target.appendChild(facts);
+    target.appendChild(timelineHeading);
+    target.appendChild(timeline);
+    target.appendChild(advanced);
+  }
+
+  function selectRunActivity(view) {
+    if (view.taskId === null || view.taskId === undefined) return;
+    state.creatingTask = false;
+    state.newTaskInitialized = false;
+    state.selectedTaskId = view.taskId;
+    state.taskSelectionEpoch += 1;
+    state.taskLoadState = "loading";
+    state.taskLoadMessage = "Loading the selected Task and Run Result.";
+    state.renderedTaskId = null;
+    resetTaskDetails();
+    state.selectedActivityRunId = view.runId;
+    renderTaskList();
+    renderSelectedTaskContext();
+    closeTaskDrawer();
+    setFeedback("Loading the selected Run Result…", "neutral");
+    refreshWorkspace({ force: true });
+  }
+
+  function activityResultIsBlocked(view) {
+    if (!view) return false;
+    return RESULT_BLOCKED_STATUSES.indexOf(view.status) !== -1
+      || !lifecycleIsActive(view.status) && /blocked|invalid|unavailable/.test(view.integrity);
+  }
+
+  function activityResultIsAvailable(view) {
+    if (!view || activityResultIsBlocked(view)) return false;
+    if (view.lifecycleAvailable) {
+      return RESULT_AVAILABLE_STATUSES.indexOf(view.status) !== -1;
+    }
+    return RESULT_AVAILABLE_STATUSES.indexOf(view.status) !== -1
+      || !lifecycleIsActive(view.status) && resultEnvelopeIsValid(view.envelope);
+  }
+
+  function renderRunActivity() {
+    const views = state.runActivity.map(activityView);
+    const observed = views.filter(function (view) {
+      return activityNeedsBrowserObservation(view);
+    });
+    const active = views.filter(function (view) {
+      return lifecycleIsActive(view.status);
+    });
+    const available = views.filter(activityResultIsAvailable);
+    const blocked = views.filter(activityResultIsBlocked);
+    const headline = views.find(function (view) {
+      return activityResultIsBlocked(view)
+        || activityResultIsAvailable(view)
+        || activityNeedsBrowserObservation(view);
+    });
+
+    elements.runActivityStatus.textContent = active.length
+      ? active.length + " active"
+      : observed.length
+        ? "Result intake pending"
+        : blocked.length
+          ? blocked.length + " result" + (blocked.length === 1 ? "" : "s") + " blocked"
+          : available.length
+            ? available.length + " result" + (available.length === 1 ? "" : "s") + " available"
+            : views.length ? humanStatus(views[0].status) : "No Runs";
+    setStatusLabel(elements.runActivityStatus, elements.runActivityStatus.textContent);
+
+    if (headline && activityResultIsBlocked(headline)) {
+      elements.runActivityNotification.dataset.state = "blocked";
+      elements.runActivityNotification.textContent = headline.taskName
+        + " · " + humanStatus(headline.status)
+        + " · Result integrity " + humanStatus(headline.integrity)
+        + " · " + headline.nextAction;
+    } else if (headline && activityResultIsAvailable(headline)) {
+      const latest = headline;
+      elements.runActivityNotification.dataset.state = "ready";
+      elements.runActivityNotification.textContent = latest.taskName
+        + " · " + humanStatus(latest.status)
+        + " · Verification " + latest.verification
+        + " · " + latest.nextAction;
+    } else {
+      elements.runActivityNotification.dataset.state = observed.length ? "monitoring" : "empty";
+      elements.runActivityNotification.textContent = observed.length
+        ? observed[0].taskName + " · " + humanStatus(observed[0].status) + " · TWOS is monitoring independently of this browser."
+        : "No Run result needs Owner review.";
+    }
+
+    clearChildren(elements.runActivityList);
+    if (!views.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty-state";
+      empty.textContent = "No Codex Runs yet. An explicitly started Run will appear here automatically.";
+      elements.runActivityList.appendChild(empty);
+    } else {
+      views.forEach(function (view) {
+        const item = document.createElement("article");
+        const itemOpen = document.createElement("button");
+        const main = document.createElement("span");
+        const heading = document.createElement("span");
+        const title = document.createElement("strong");
+        const status = document.createElement("span");
+        const facts = document.createElement("span");
+        const action = document.createElement("span");
+        const liveActivity = document.createElement("section");
+        item.className = "run-activity-item";
+        item.dataset.runId = String(view.runId || "");
+        item.setAttribute(
+          "aria-current",
+          state.selectedActivityRunId !== null && String(state.selectedActivityRunId) === String(view.runId)
+            ? "true"
+            : "false"
+        );
+        itemOpen.type = "button";
+        itemOpen.className = "run-activity-item-open";
+        itemOpen.setAttribute("aria-label", "Open Run Result for " + view.taskName);
+        itemOpen.disabled = view.taskId === null || view.taskId === undefined;
+        main.className = "run-activity-item-main";
+        heading.className = "run-activity-item-heading";
+        title.textContent = view.taskName;
+        title.title = view.taskName;
+        status.className = "status-label";
+        status.textContent = humanStatus(view.status);
+        setStatusLabel(status, status.textContent);
+        heading.appendChild(title);
+        heading.appendChild(status);
+        facts.className = "run-activity-item-grid";
+        appendRunActivityFact(facts, "Requested model", view.requestedModel);
+        appendRunActivityFact(facts, "Requested model accepted", view.requestedModelAccepted);
+        appendRunActivityFact(facts, "Run-local effective model", view.runLocalEffectiveModel);
+        appendRunActivityFact(facts, "Started", formatTime(view.startedAt));
+        appendRunActivityFact(facts, "Finished", formatTime(view.finishedAt));
+        appendRunActivityFact(facts, "Duration", view.duration);
+        appendRunActivityFact(facts, "Coding", view.coding);
+        appendRunActivityFact(facts, "Verification", view.verification);
+        appendRunActivityFact(facts, "Tests", view.tests);
+        appendRunActivityFact(facts, "Result integrity", humanStatus(view.integrity));
+        appendRunActivityFact(facts, "Exact Owner action", view.nextAction);
+        main.appendChild(heading);
+        main.appendChild(facts);
+        action.className = "run-activity-item-action";
+        action.textContent = "Open Run Result";
+        itemOpen.appendChild(main);
+        itemOpen.appendChild(action);
+        itemOpen.addEventListener("click", function () { selectRunActivity(view); });
+        item.appendChild(itemOpen);
+        appendLiveCodexActivity(liveActivity, view);
+        item.appendChild(liveActivity);
+        elements.runActivityList.appendChild(item);
+      });
+    }
+
+    const current = currentRunActivity();
+    const hasRun = Boolean(current && current.runId !== null && current.runId !== undefined);
+    const recoveryBlocked = Boolean(current && current.recoveryBlocked);
+    const reconnectable = hasRun && !recoveryBlocked && (
+      current.canReconnect
+      || ["process_lost", "result_pending", "result_unavailable"].indexOf(current.status) !== -1
+    );
+    const importable = hasRun && !recoveryBlocked && (
+      current.canImport
+      || isTerminalCodexRun({ status: current.status })
+      || ["result_pending", "result_unavailable", "result_integrity_blocked"].indexOf(current.status) !== -1
+    );
+    elements.refreshRunStatus.disabled = !hasRun || state.pending.has("refresh-run-status");
+    elements.reconnectCodexRun.disabled = !reconnectable || state.pending.has("reconnect-codex-run");
+    elements.importCodexResult.disabled = !importable || state.pending.has("import-codex-result");
+    elements.runFallbackNote.textContent = recoveryBlocked
+      ? "Source snapshot unavailable. Regenerate Codex Pack; result import and reconnect are not valid for a Run that never launched."
+      : hasRun
+      ? "Recovery controls target the selected Run for " + current.taskName + ". Structured import is a fallback, not the normal workflow."
+      : "Select a Run to use recovery controls. Structured import is a fallback, not the normal workflow.";
+  }
+
   function appendTextList(target, values, emptyText) {
     clearChildren(target);
     if (!values.length) {
@@ -1279,6 +2903,299 @@
     if (!text) return fallback;
     const limit = maximum || 600;
     return text.length > limit ? text.slice(0, limit) + "…" : text;
+  }
+
+  function ownerSafeText(value, fallback, maximum) {
+    let text = boundedText(value, fallback || "Not available", maximum || 600);
+    text = text
+      .replace(/([a-z][a-z0-9+.-]*:\/\/)[^/\s:@]+:[^/\s@]+@/gi, "$1[credentials hidden]@")
+      .replace(/\bfile:\/\/[^\s,;'"<>]+/gi, "[host file URI hidden]")
+      .replace(/(^|[\s("'=])\/(?:Users|home|private|tmp|var|opt|Volumes|root|srv|mnt|workspace|Applications|Library)\/[^\s"'<>]*/g, "$1[host path hidden]")
+      .replace(/(^|[\s("'=])[A-Za-z]:\\[^\s"'<>]*/g, "$1[host path hidden]")
+      .replace(/\b(password|passwd|token|secret|api[_-]?key)\s*[:=]\s*[^\s,;]+/gi, "$1=[hidden]");
+    return text;
+  }
+
+  function repositoryRelativePath(value) {
+    const path = String(value || "").trim().replace(/\\/g, "/");
+    if (
+      !path
+      || path.charAt(0) === "/"
+      || /^[A-Za-z]:\//.test(path)
+      || path.split("/").some(function (part) { return !part || part === "." || part === ".."; })
+    ) return "File path withheld";
+    return boundedText(path, "File path withheld", 360);
+  }
+
+  function formatDuration(value, startedAt, finishedAt) {
+    let seconds = value === null || value === undefined || value === ""
+      ? Number.NaN
+      : Number(value);
+    if (!Number.isFinite(seconds) && startedAt && finishedAt) {
+      const start = new Date(startedAt).getTime();
+      const finish = new Date(finishedAt).getTime();
+      if (Number.isFinite(start) && Number.isFinite(finish) && finish >= start) {
+        seconds = (finish - start) / 1000;
+      }
+    }
+    if (!Number.isFinite(seconds) || seconds < 0) return "Not available";
+    if (seconds < 60) return Math.round(seconds) + " sec";
+    const minutes = Math.floor(seconds / 60);
+    const remaining = Math.round(seconds % 60);
+    return minutes + " min " + remaining + " sec";
+  }
+
+  function ownerSafeList(value, emptyText) {
+    const items = Array.isArray(value) ? value : [];
+    return items.map(function (item) {
+      const record = objectRecord(item);
+      return ownerSafeText(
+        record.summary
+        || record.safe_summary
+        || record.message
+        || record.label
+        || record.status
+        || record.verdict
+        || record.path
+        || item,
+        emptyText,
+        500
+      );
+    }).filter(Boolean);
+  }
+
+  function ownerSafeSummary(value, fallback, maximum) {
+    if (Array.isArray(value)) {
+      const items = ownerSafeList(value, fallback);
+      return items.length ? items.join(" · ") : fallback;
+    }
+    if (value && typeof value === "object") {
+      const record = objectRecord(value);
+      const concise = record.summary
+        || record.safe_summary
+        || record.message
+        || record.status
+        || record.verdict
+        || record.result
+        || record.outcome;
+      if (concise) return ownerSafeText(concise, fallback, maximum || 500);
+      const safeFacts = Object.keys(record).filter(function (key) {
+        return !/(^id$|_id$|digest|identity|path|command|environment|token|secret)/i.test(key)
+          && ["string", "number", "boolean"].indexOf(typeof record[key]) !== -1;
+      }).map(function (key) {
+        return humanStatus(key) + ": " + ownerSafeText(record[key], "Not available", 160);
+      });
+      return safeFacts.length
+        ? boundedText(safeFacts.join(" · "), fallback, maximum || 500)
+        : fallback;
+    }
+    return ownerSafeText(value, fallback, maximum || 500);
+  }
+
+  function ownerWorkflowText(value, fallback, maximum) {
+    const text = ownerSafeText(value, fallback, maximum);
+    if (
+      /app[- ]server/i.test(text)
+      || /server notification|notification method/i.test(text)
+      || /APP_SERVER_[A-Z_]+|UNKNOWN_(?:NONCRITICAL|CRITICAL)_NOTIFICATION/.test(text)
+    ) {
+      return "Codex CLI compatibility details are available under Advanced.";
+    }
+    return text;
+  }
+
+  function ownerWorkflowSummary(value, fallback, maximum) {
+    return ownerWorkflowText(
+      ownerSafeSummary(value, fallback, maximum),
+      fallback,
+      maximum
+    );
+  }
+
+  function runLocalEffectiveModelView(record, monitor, envelope) {
+    const sources = [
+      {
+        available: record.actual_model_verified === true,
+        value: record.actual_model
+      },
+      {
+        available: monitor.actual_model_verified === true,
+        value: monitor.actual_model
+      },
+      {
+        available: envelope.effective_model_available === true,
+        value: envelope.effective_model
+      },
+      {
+        available: envelope.actual_model_verified === true,
+        value: envelope.actual_model
+      }
+    ];
+    const verified = sources.find(function (source) {
+      return source.available && typeof source.value === "string" && source.value.trim();
+    });
+    return {
+      available: Boolean(verified),
+      display: verified
+        ? ownerSafeText(verified.value, RUN_LOCAL_MODEL_NOT_EXPOSED, 160)
+        : RUN_LOCAL_MODEL_NOT_EXPOSED
+    };
+  }
+
+  function requestedModelAcceptanceView(record, coding, status) {
+    const accepted = record.requested_model_accepted === true
+      || coding.requested_model_accepted === true;
+    return {
+      accepted: accepted,
+      display: accepted
+        ? "Yes — confirmed by Run evidence"
+        : lifecycleIsActive(status)
+          ? "Pending Run evidence"
+          : "Not confirmed by Run evidence"
+    };
+  }
+
+  function activityView(item) {
+    const record = objectRecord(item);
+    const lifecycle = lifecycleRecordForActivity(record);
+    const monitor = objectRecord(record.monitor);
+    const run = objectRecord(record.run);
+    const envelope = resultEnvelopeRecord(
+      record.result_envelope || record.resultEnvelope || record.envelope
+    );
+    const tests = record.tests_summary || record.tests || envelope.tests_summary || envelope.tests;
+    const verification = objectRecord(
+      record.verification_result || envelope.verification_evidence || envelope.verification_verdict
+    );
+    const coding = objectRecord(
+      record.coding_result || envelope.coding_result || envelope.coding_evidence
+    );
+    const actions = objectRecord(record.actions);
+    const startedAt = lifecycle.started_at || record.started_at || monitor.started_at || run.started_at;
+    const finishedAt = lifecycle.terminal_at || record.finished_at || monitor.terminal_at || run.finished_at;
+    const monitorState = String(
+      lifecycle.state || record.monitor_state || monitor.monitor_state || record.status || run.status || "queued"
+    ).toLowerCase();
+    const integrity = String(
+      lifecycle.result_integrity
+      || record.result_integrity
+      || envelope.integrity_state
+      || record.integrity_state
+      || "pending"
+    ).toLowerCase();
+    const runId = record.run_id || monitor.run_id || run.id || envelope.run_id;
+    const taskId = record.task_id || monitor.task_id || run.task_id || envelope.task_id;
+    const effectiveModel = runLocalEffectiveModelView(record, monitor, envelope);
+    const requestedAcceptance = requestedModelAcceptanceView(
+      Object.assign({}, envelope, record),
+      coding,
+      monitorState
+    );
+    let testsSummary;
+    if (Array.isArray(tests)) {
+      testsSummary = tests.length
+        ? tests.map(function (test) {
+            const testRecord = objectRecord(test);
+            return ownerSafeText(
+              testRecord.summary || testRecord.status || testRecord.command_label || test,
+              "Test recorded",
+              120
+            );
+          }).join(" · ")
+        : "No tests reported";
+    } else {
+      testsSummary = ownerSafeText(
+        objectRecord(tests).summary || tests,
+        "No tests reported",
+        220
+      );
+    }
+    return {
+      raw: record,
+      lifecycle: lifecycle,
+      lifecycleAvailable: Object.keys(lifecycle).length > 0,
+      lifecycleActive: Object.keys(lifecycle).length > 0 && lifecycleIsActive(monitorState),
+      runId: runId,
+      taskId: taskId,
+      taskName: ownerSafeText(
+        record.task_name || record.task_title || run.task_name || run.development_task,
+        "Untitled Development task",
+        1000
+      ),
+      status: monitorState,
+      requestedModel: ownerSafeText(
+        record.requested_model || monitor.requested_model || envelope.requested_model,
+        "Not recorded",
+        160
+      ),
+      requestedModelAccepted: requestedAcceptance.display,
+      requestedModelAcceptedConfirmed: requestedAcceptance.accepted,
+      runLocalEffectiveModel: effectiveModel.display,
+      runLocalEffectiveModelAvailable: effectiveModel.available,
+      startedAt: startedAt,
+      finishedAt: finishedAt,
+      duration: lifecycle.elapsed_ms !== null && lifecycle.elapsed_ms !== undefined
+        ? formatLifecycleDuration(lifecycle.elapsed_ms)
+        : formatDuration(
+            record.duration_seconds !== null && record.duration_seconds !== undefined
+              ? record.duration_seconds
+              : record.duration_ms !== null && record.duration_ms !== undefined
+                ? Number(record.duration_ms) / 1000
+                : envelope.execution_duration_seconds !== null && envelope.execution_duration_seconds !== undefined
+                  ? envelope.execution_duration_seconds
+                  : envelope.duration_ms !== null && envelope.duration_ms !== undefined
+                    ? Number(envelope.duration_ms) / 1000
+                    : envelope.execution_duration,
+            startedAt,
+            finishedAt
+          ),
+      coding: ownerWorkflowText(
+        record.coding_summary || coding.safe_summary || coding.summary || coding.status || envelope.coding_result,
+        "Not available",
+        220
+      ),
+      verification: ownerWorkflowText(
+        record.verification_summary || verification.summary || verification.verdict || verification.status,
+        "Not available",
+        220
+      ),
+      tests: testsSummary,
+      integrity: integrity,
+      nextAction: ownerWorkflowText(
+        lifecycle.next_action || record.next_action || actions.next_action || envelope.next_action,
+        RESULT_AVAILABLE_STATUSES.indexOf(monitorState) !== -1
+          ? "Open Run Result and Review Handoff."
+          : lifecycleIsActive(monitorState)
+            ? "TWOS is monitoring this Run."
+            : "Review the persisted Run state.",
+        300
+      ),
+      canReconnect: actions.can_reconnect === true,
+      canImport: actions.can_import === true,
+      recoveryBlocked: actions.recovery_blocked === true,
+      envelope: envelope
+    };
+  }
+
+  function currentRunActivity() {
+    const run = currentCodexRun();
+    const runId = run ? run.id : state.selectedActivityRunId;
+    const matchingRun = state.runActivity.map(activityView).find(function (item) {
+      return runId !== null && runId !== undefined && String(item.runId) === String(runId);
+    });
+    if (matchingRun) return matchingRun;
+    const task = selectedTask();
+    return state.runActivity.map(activityView).find(function (item) {
+      return task && String(item.taskId) === String(task.id);
+    }) || null;
+  }
+
+  function activityNeedsBrowserObservation(activity) {
+    if (!activity) return false;
+    if (lifecycleIsActive(activity.status)) return true;
+    return ["completed", "failed", "cancelled", "timed_out"].indexOf(activity.status) !== -1
+      && !resultEnvelopeIsValid(activity.envelope)
+      && !/blocked|invalid|unavailable/.test(activity.integrity);
   }
 
   function modelDisplayName(model, fallback) {
@@ -1803,7 +3720,7 @@
       requestedModel: requestedModel,
       actualModel: actualModel && actualModelVerified
         ? actualModel
-        : "Not independently exposed by available CLI evidence",
+        : RUN_LOCAL_MODEL_NOT_EXPOSED,
       failure: failure
     };
   }
@@ -2101,12 +4018,22 @@
     const pack = currentPack();
     const eligibility = effectiveRunEligibility();
     const blocker = primaryRunBlocker(eligibility);
+    const blockerCode = String(blocker && blocker.code || "");
+    const runStatus = run ? authoritativeRunStatus(run) : "";
+    const runLifecycle = lifecycleForRun(run);
+    const active = Boolean(run && lifecycleIsActive(runStatus));
+    const terminal = Boolean(run && isTerminalCodexRun(run));
+    const terminalBlocked = terminal && activityResultIsBlocked({
+      status: runStatus,
+      integrity: runLifecycle.result_integrity || "",
+      lifecycleAvailable: Object.keys(runLifecycle).length > 0
+    });
     let status;
     let reason;
     let nextAction;
     if (eligibility) {
       status = eligibility.eligible
-        ? "Ready"
+        ? "Ready for real Run"
         : RUN_BLOCKER_STATUS[String(blocker && blocker.code || "")] || "Blocked";
       reason = eligibility.eligible
         ? "All server-validated execution conditions are satisfied."
@@ -2121,12 +4048,14 @@
     } else {
       // Compatibility fallback for older runtimes. Current Vol.17 runtimes return
       // /api/tasks/{taskId}/run-eligibility and never rely on this local gate.
-      const ready = detection && detection.execution_ready === true;
-      status = ready ? "Ready" : "Needs setup";
+      const connectivity = objectRecord(objectRecord(detection).connectivity);
+      const ready = detection && detection.execution_ready === true
+        && connectivity.ready_for_real_run === true;
+      status = ready ? "Ready for real Run" : connectivityStateLabel(connectivity.readiness_state);
       reason = detection && detection.readiness_reason
         ? detection.readiness_reason
-        : "Checking the supported local command.";
-      nextAction = ready ? "Run Codex" : "Set up Codex";
+        : boundedText(connectivity.blocker, "Checking the supported local command.", 500);
+      nextAction = ready ? "Run Codex" : "Verify Codex Connection";
       if (ready && (!coding || !coding.assignedModel || !verification || !verification.assignedModel)) {
         status = "Needs setup";
         reason = "Coding and Verification both require explicit assignments.";
@@ -2139,20 +4068,30 @@
         nextAction = "Approve Codex Pack";
       }
     }
+    if (!active && terminal && blockerCode === "ACTIVE_RUN_EXISTS") {
+      status = "Recheck required";
+      reason = "The current Run is terminal. Refresh readiness before starting a new Run.";
+    }
+    const lifecycleNextAction = runLifecycle.next_action
+      ? ownerWorkflowText(runLifecycle.next_action, "Review blocker evidence", 300)
+      : "";
+    const displayedNextAction = active
+      ? "Wait for completion or select Cancel Run."
+      : terminal && lifecycleNextAction
+        ? lifecycleNextAction
+        : terminalBlocked
+          ? "Review blocker evidence"
+          : nextAction;
     elements.codexReadiness.textContent = status;
     elements.codexReason.textContent = reason;
-    elements.runStatus.textContent = run ? humanStatus(run.status) : "Not started";
-    const active = run && ACTIVE_CODEX_RUN_STATUSES.indexOf(run.status) !== -1;
-    elements.codexNextAction.textContent = active
-      ? "Wait for completion or select Cancel Run."
-      : nextAction;
-    elements.codingSetupReason.textContent = reason + " Next Owner action: " + (active ? "Wait or Cancel Run" : nextAction) + ".";
+    elements.runStatus.textContent = run ? humanStatus(runStatus) : "Not started";
+    elements.codexNextAction.textContent = displayedNextAction;
+    elements.codingSetupReason.textContent = reason + " Next Owner action: " + displayedNextAction + ".";
     const configured = Boolean(
       detection && detection.configuration_status === "configured"
       || coding && coding.assignedModel
       || verification && verification.assignedModel
     );
-    const blockerCode = String(blocker && blocker.code || "");
     const setupRequired = blockerCode === "CODING_SETUP_REQUIRED"
       || blockerCode === "VERIFICATION_SETUP_REQUIRED";
     elements.setupCodex.hidden = configured && !setupRequired;
@@ -2164,7 +4103,9 @@
     elements.manageCodex.disabled = state.pending.has("codex-setup");
     elements.codexRunId.textContent = run ? "#" + run.id : "None";
     elements.worktreeBranch.textContent = run && run.worktree_branch ? run.worktree_branch : "None";
-    elements.worktreePath.textContent = run && run.worktree_path ? run.worktree_path : "None";
+    elements.worktreePath.textContent = run && run.worktree_path
+      ? "Isolated runtime workspace (host path withheld)"
+      : "None";
     elements.runExitCode.textContent = run && run.exit_code !== null && run.exit_code !== undefined ? String(run.exit_code) : "None";
     setStatusLabel(elements.runStatus, elements.runStatus.textContent);
   }
@@ -2320,11 +4261,13 @@
     elements.setupModelError.hidden = !visible;
   }
 
-  function setSetupPrimaryAction(availabilityVerified) {
-    elements.checkCodexAvailability.classList.toggle("button-primary", !availabilityVerified);
-    elements.checkCodexAvailability.classList.toggle("button-secondary", availabilityVerified);
-    elements.saveAssignCodex.classList.toggle("button-primary", availabilityVerified);
-    elements.saveAssignCodex.classList.toggle("button-secondary", !availabilityVerified);
+  function setSetupPrimaryAction(availabilityVerified, connectionReady) {
+    elements.checkCodexAvailability.classList.remove("button-primary");
+    elements.checkCodexAvailability.classList.add("button-secondary");
+    elements.verifyCodexConnection.classList.toggle("button-primary", !connectionReady);
+    elements.verifyCodexConnection.classList.toggle("button-secondary", connectionReady);
+    elements.saveAssignCodex.classList.toggle("button-primary", availabilityVerified && connectionReady);
+    elements.saveAssignCodex.classList.toggle("button-secondary", !(availabilityVerified && connectionReady));
   }
 
   function renderCatalogDetails(catalog) {
@@ -2355,6 +4298,164 @@
       item.textContent = boundedText(warning, "Catalog warning withheld.", 300);
       elements.setupCatalogWarnings.appendChild(item);
     });
+  }
+
+  function connectivityForSetup(draft) {
+    const setup = objectRecord(draft && draft.setup);
+    const direct = objectRecord(setup.connectivity);
+    const selected = canonicalModelIdentifier(objectRecord(draft && draft.selectedEntry));
+    if (
+      Object.keys(direct).length
+      && (!selected || !direct.requested_model || direct.requested_model === selected)
+    ) return direct;
+    const global = objectRecord(objectRecord(state.codexStatus).connectivity);
+    if (!selected || !global.requested_model || global.requested_model === selected) return global;
+    return {
+      cli_installed: direct.cli_installed !== undefined ? direct.cli_installed : global.cli_installed,
+      cli_version: direct.cli_version || global.cli_version,
+      authentication: direct.authentication || global.authentication,
+      requested_model: selected,
+      readiness_state: "AUTHENTICATED_CONNECTIVITY_NOT_VERIFIED",
+      ready_for_real_run: false,
+      provider_reachable: false,
+      model_available: false,
+      resolved_model: null,
+      actual_model: null,
+      last_connectivity_check: null,
+      blocker: "This selected model has not been verified by the Owner.",
+      configured_run_timeout_seconds: direct.configured_run_timeout_seconds
+        || global.configured_run_timeout_seconds,
+      advanced: { diagnostics: { provider_probe_performed: false } }
+    };
+  }
+
+  function connectivityStateLabel(value) {
+    const labels = {
+      CLI_NOT_INSTALLED: "CLI not installed",
+      AUTHENTICATION_REQUIRED: "Authentication required",
+      AUTHENTICATED_CONNECTIVITY_NOT_VERIFIED: "Authenticated — connectivity not verified",
+      PROTOCOL_COMPATIBILITY_BLOCKED: "Protocol compatibility blocked",
+      PROVIDER_UNREACHABLE: "Provider unreachable",
+      MODEL_UNAVAILABLE: "Model unavailable",
+      READY_FOR_REAL_RUN: "Ready for real Run",
+      BLOCKED: "Blocked"
+    };
+    return labels[String(value || "")] || "Connectivity not verified";
+  }
+
+  function connectivityBoolean(value, trueLabel, falseLabel, pendingLabel) {
+    if (value === true) return trueLabel;
+    if (value === false) return falseLabel;
+    return pendingLabel;
+  }
+
+  function renderSetupConnectivity(draft) {
+    const connectivity = connectivityForSetup(draft);
+    const authentication = objectRecord(connectivity.authentication);
+    const advanced = objectRecord(connectivity.advanced);
+    const diagnostics = objectRecord(advanced.diagnostics);
+    const requested = connectivity.requested_model
+      || canonicalModelIdentifier(objectRecord(draft && draft.selectedEntry));
+    const hasEvidence = Boolean(connectivity.evidence_id || connectivity.last_connectivity_check);
+    const readinessState = connectivity.readiness_state || "AUTHENTICATED_CONNECTIVITY_NOT_VERIFIED";
+    const runTimeout = connectivity.configured_run_timeout_seconds
+      || objectRecord(state.codexStatus).configured_run_timeout_seconds;
+
+    elements.setupCliInstalled.textContent = connectivityBoolean(
+      connectivity.cli_installed,
+      "Installed",
+      "Not installed",
+      "Not reported"
+    );
+    elements.setupCliVersion.textContent = boundedText(connectivity.cli_version, "Not reported", 120);
+    elements.setupAuthMethod.textContent = boundedText(authentication.method, "Unknown", 120);
+    elements.setupAuthStatus.textContent = authentication.authenticated === true
+      ? "Authenticated"
+      : authentication.state === "AUTHENTICATION_REQUIRED"
+        ? "Authentication required"
+        : humanStatus(authentication.state || "unknown");
+    elements.setupCredentialStatus.textContent = authentication.credential_store_accessible === true
+      ? "Accessible · " + boundedText(authentication.credential_store, "storage type withheld", 80)
+      : authentication.credential_store_accessible === false
+        ? "Unavailable or not verified · values withheld"
+        : "Not verified · values withheld";
+    elements.setupProviderConnectivity.textContent = hasEvidence
+      ? connectivityBoolean(connectivity.provider_reachable, "Reachable", "Unreachable", "Not verified")
+      : "Not verified";
+    elements.setupRequestedModel.textContent = boundedText(requested, "Select a model", 240);
+    elements.setupActualModel.textContent = boundedText(
+      connectivity.resolved_model || connectivity.actual_model,
+      readinessState === "READY_FOR_REAL_RUN"
+        ? RUN_LOCAL_MODEL_NOT_EXPOSED
+        : "Not verified",
+      240
+    );
+    elements.setupConnectivityCheckedAt.textContent = connectivity.last_connectivity_check
+      ? formatTime(connectivity.last_connectivity_check)
+      : "Never";
+    elements.setupRunTimeout.textContent = Number.isFinite(Number(runTimeout)) && Number(runTimeout) > 0
+      ? String(Number(runTimeout)) + " seconds"
+      : "Not reported";
+    elements.setupConnectivityState.textContent = connectivityStateLabel(readinessState);
+    setStatusLabel(elements.setupConnectivityState, elements.setupConnectivityState.textContent);
+
+    let blocker = ownerWorkflowText(
+      connectivity.blocker || connectivity.safe_summary,
+      "Select a model, then explicitly verify its real Codex connection.",
+      600
+    );
+    if (authentication.state === "AUTHENTICATION_REQUIRED") {
+      blocker = "Use the native Codex CLI login flow (`codex login`), then return and select Verify Codex Connection.";
+    }
+    if (readinessState === "PROTOCOL_COMPATIBILITY_BLOCKED") {
+      blocker = "The installed Codex CLI is not compatible with this TWOS runtime. Open Advanced for technical details.";
+    }
+    const connectivityNextAction = ownerWorkflowText(
+      connectivity.next_action,
+      readinessState === "READY_FOR_REAL_RUN"
+        ? "Run Codex"
+        : "Resolve the blocker, then explicitly verify the connection again.",
+      240
+    );
+    elements.setupConnectivityBlocker.textContent = blocker
+      + " Next Owner action: " + connectivityNextAction;
+    elements.setupConnectivityCommand.textContent = boundedText(
+      advanced.sanitized_command,
+      "Not run",
+      500
+    );
+    elements.setupConnectivityExitCode.textContent = connectivity.exit_code === null
+      || connectivity.exit_code === undefined
+      ? "Not run"
+      : String(connectivity.exit_code);
+    elements.setupConnectivityDuration.textContent = connectivity.duration_ms === null
+      || connectivity.duration_ms === undefined
+      ? "Not run"
+      : formatDuration(Number(connectivity.duration_ms) / 1000);
+    const protocolSchema = objectRecord(diagnostics.protocol_schema);
+    const protocolTranscript = Array.isArray(diagnostics.protocol_transcript)
+      ? diagnostics.protocol_transcript
+      : [];
+    const criticalMethod = boundedText(diagnostics.critical_protocol_method, "", 240);
+    const criticalEntry = protocolTranscript.find(function (entry) {
+      return criticalMethod && objectRecord(entry).method === criticalMethod;
+    }) || protocolTranscript[protocolTranscript.length - 1];
+    const safeProtocolDetails = [
+      criticalMethod ? "Safe method: " + criticalMethod : "",
+      protocolSchema.cli_version ? "Schema CLI: " + boundedText(protocolSchema.cli_version, "", 120) : "",
+      protocolSchema.schema_digest ? "Schema digest: " + boundedText(protocolSchema.schema_digest, "", 80) : "",
+      criticalEntry && criticalEntry.sequence ? "Message sequence: " + String(criticalEntry.sequence) : "",
+      criticalEntry && criticalEntry.payload_shape
+        ? "Payload shape: " + JSON.stringify(criticalEntry.payload_shape)
+        : ""
+    ].filter(Boolean).join(" · ");
+    elements.setupConnectivityDiagnostics.textContent = ownerSafeText(
+      safeProtocolDetails || diagnostics.output_summary || connectivity.safe_summary,
+      hasEvidence
+        ? "No additional sanitized diagnostic was returned."
+        : "No Provider probe has been run for this Owner and model.",
+      1800
+    );
   }
 
   function renderSelectedModel(draft) {
@@ -2528,31 +4629,41 @@
       && canonicalModelIdentifier(configuration) === identifier
       && evidence.result === "available"
     );
+    const connectivity = connectivityForSetup(draft);
+    const connectionReady = Boolean(
+      connectivity.readiness_state === "READY_FOR_REAL_RUN"
+      && connectivity.ready_for_real_run === true
+      && connectivity.requested_model === identifier
+    );
     const selectable = entry.selectable === true && Boolean(identifier);
     const hasOptions = Boolean(
       draft && (draft.models.length || objectRecord(draft.selectedEntry).preserved_legacy)
     );
     elements.setupModelSearch.disabled = !hasOptions;
     elements.checkCodexAvailability.disabled = !selectable || state.pending.has("check-codex-availability");
-    elements.saveAssignCodex.disabled = !verified || state.pending.has("save-assign-codex");
-    setSetupPrimaryAction(verified);
+    elements.verifyCodexConnection.disabled = !selectable || state.pending.has("verify-codex-connection");
+    elements.saveAssignCodex.disabled = !verified || !connectionReady || state.pending.has("save-assign-codex");
+    setSetupPrimaryAction(verified, connectionReady);
 
     if (entry.preserved_legacy) {
       elements.setupAvailabilityStatus.textContent = "Existing legacy/custom model — review required. The stored assignment is preserved; choose a supported catalog model to change it.";
-    } else if (verified) {
-      elements.setupAvailabilityStatus.textContent = "Runtime and authentication ready for "
-        + capabilityLabel(draft.capability) + " — checked " + formatTime(evidence.checked_at)
-        + ". The requested model identifier is configured; model support and resolution are not independently verified until an explicit Owner-approved invocation.";
+    } else if (verified && connectionReady) {
+      const effectiveModel = connectivity.resolved_model || connectivity.actual_model;
+      elements.setupAvailabilityStatus.textContent = "CLI, authentication, Provider connectivity, and requested-model execution are ready for "
+        + capabilityLabel(draft.capability) + ". Run-local effective model: "
+        + ownerSafeText(effectiveModel, RUN_LOCAL_MODEL_NOT_EXPOSED, 240)
+        + " — checked " + formatTime(evidence.checked_at) + ".";
     } else if (selectable && evidence.result) {
       elements.setupAvailabilityStatus.textContent = humanStatus(evidence.result) + " for "
         + capabilityLabel(draft.capability) + " — checked " + formatTime(evidence.checked_at) + ".";
     } else if (selectable) {
-      elements.setupAvailabilityStatus.textContent = "Check required. This selected catalog model has not been checked for local runtime and authentication readiness.";
+      elements.setupAvailabilityStatus.textContent = "Setup prerequisite check required. This does not verify Provider connectivity or model availability.";
     } else if (draft && draft.filtering && String(draft.query || "").trim()) {
       elements.setupAvailabilityStatus.textContent = "Select a supported model from the filtered options before checking availability.";
     } else {
-      elements.setupAvailabilityStatus.textContent = "Select a supported model, then click Check availability.";
+      elements.setupAvailabilityStatus.textContent = "Select a supported model, check CLI and authentication, then explicitly Verify Codex Connection.";
     }
+    renderSetupConnectivity(draft);
   }
 
   function renderCodexSetup(draft, capability) {
@@ -2610,6 +4721,7 @@
     elements.setupAvailabilityStatus.textContent = "Loading the selected capability configuration…";
     elements.saveAssignCodex.disabled = true;
     elements.checkCodexAvailability.disabled = true;
+    elements.verifyCodexConnection.disabled = true;
     setModelFieldError("");
     const draft = await loadCodexSetup(capability, token);
     if (!draft || token !== state.codexSetupLoadSequence) return;
@@ -2735,7 +4847,8 @@
       draft.setup = {
         configuration: result.configuration,
         availability_evidence: result.availability_evidence,
-        capability: capability
+        capability: capability,
+        connectivity: objectRecord(draft.setup).connectivity
       };
       draft.checkedConfiguration = result.configuration;
       draft.checkedEvidence = result.availability_evidence;
@@ -2747,14 +4860,102 @@
         state.codexSetup = draft.setup;
         renderCodexSetup(draft, capability);
       }
-      return result.available
-        ? "Local Codex CLI runtime and authentication are ready for " + capabilityLabel(capability)
-          + ". The requested model identifier is configured; support and resolution remain unverified until an explicit Owner-approved invocation."
-        : "Local Codex CLI remains unavailable for " + capabilityLabel(capability) + ".";
+      return result.execution_prerequisites_available
+        ? "Local Codex CLI and authentication prerequisites are available for "
+          + capabilityLabel(capability)
+          + ". Provider connectivity and model availability remain unverified until the Owner selects Verify Codex Connection."
+        : "Local Codex CLI or authentication prerequisites remain unavailable for "
+          + capabilityLabel(capability) + ".";
     });
     if (state.auth === AUTH_STATES.SIGNED_IN && elements.codexSetupDialog.open && activeSetupDraft()) {
       renderCodexSetup(activeSetupDraft(), normalizedSetupCapability(elements.setupCapability.value));
     }
+  }
+
+  async function verifyCodexConnection() {
+    const capability = normalizedSetupCapability(elements.setupCapability.value);
+    const draft = state.codexSetupDrafts[capability];
+    const selectedEntry = objectRecord(draft && draft.selectedEntry);
+    const selectedIdentifier = canonicalModelIdentifier(selectedEntry);
+    if (!draft || selectedEntry.selectable !== true || !selectedIdentifier) {
+      setModelFieldError("Select a supported model before verifying the real Codex connection.");
+      elements.setupConnectivityBlocker.textContent = "Connection verification is blocked until a supported model is selected.";
+      elements.setupModelSearch.focus();
+      return;
+    }
+    await performAction(
+      "verify-codex-connection",
+      elements.verifyCodexConnection,
+      "Verifying connection…",
+      async function () {
+        const result = await api("/api/codex/setup/verify-connection", {
+          method: "POST",
+          body: {
+            model_identifier: selectedIdentifier,
+            capability: capability
+          }
+        });
+        if (result.requested_model && result.requested_model !== selectedIdentifier) {
+          throw new ApiError(
+            409,
+            "CONNECTIVITY_MODEL_MISMATCH",
+            "The connection evidence did not match the selected model.",
+            {},
+            "product"
+          );
+        }
+        const configuration = objectRecord(result.configuration);
+        const checkedAt = result.last_connectivity_check || new Date().toISOString();
+        draft.setup = Object.assign({}, objectRecord(draft.setup), {
+          configuration: Object.keys(configuration).length
+            ? configuration
+            : objectRecord(draft.setup).configuration,
+          availability_evidence: {
+            configuration_identity: configuration.stable_id || configuration.configuration_identity || "",
+            adapter: "codex_cli",
+            invocation_mode: "real",
+            checked_at: checkedAt,
+            result: result.ready_for_real_run === true ? "available" : "unavailable",
+            evidence_type: "owner_triggered_connectivity_probe",
+            failure_classification: result.blocker_code || "",
+            runtime_identity: result.cli_version || ""
+          },
+          connectivity: result,
+          capability: capability
+        });
+        draft.checkedConfiguration = Object.keys(configuration).length
+          ? configuration
+          : objectRecord(draft.setup).configuration;
+        draft.checkedEvidence = draft.setup.availability_evidence;
+        draft.checkedModels.set(selectedIdentifier, {
+          configuration: draft.checkedConfiguration,
+          evidence: draft.checkedEvidence
+        });
+        renderCodexSetup(draft, capability);
+        if (result.ready_for_real_run === true) {
+          const effectiveModel = result.resolved_model || result.actual_model;
+          return "Codex connection verified. Authentication passed, the Provider responded, and requested model “"
+            + ownerSafeText(selectedIdentifier, "Unknown", 160) + "” was accepted. Run-local effective model: "
+            + ownerSafeText(effectiveModel, RUN_LOCAL_MODEL_NOT_EXPOSED, 160) + ".";
+        }
+        const publicBlocker = result.readiness_state === "PROTOCOL_COMPATIBILITY_BLOCKED"
+          ? "The installed Codex CLI is not compatible with this TWOS runtime. Open Advanced for technical details."
+          : ownerWorkflowText(
+              result.blocker || result.safe_summary,
+              "Review the connection blocker.",
+              500
+            );
+        throw new ApiError(
+          409,
+          result.blocker_code || result.readiness_state || "CODEX_CONNECTION_BLOCKED",
+          connectivityStateLabel(result.readiness_state)
+            + ". "
+            + publicBlocker,
+          {},
+          "product"
+        );
+      }
+    );
   }
 
   async function saveAndAssignCodex() {
@@ -2804,8 +5005,10 @@
   }
 
   function fileEvidenceLabel(item) {
-    if (typeof item === "string") return boundedText(item, "Unknown file", 300);
-    return boundedText(objectRecord(item).path, "Unknown file", 300);
+    if (typeof item === "string") return repositoryRelativePath(item);
+    return repositoryRelativePath(
+      objectRecord(item).path || objectRecord(item).repository_relative_path
+    );
   }
 
   function evidenceSummaryLine(record, fallbackStatus, fallbackSummary) {
@@ -2826,23 +5029,2846 @@
     const status = String(run && run.status || "not_started");
     if (status === "queued") return "not_started";
     if (status === "starting") return "starting";
-    if (status === "running") return "running";
-    if (status === "verifying" || status === "completed") return "completed";
+    if (status === "running" || status === "coding") return "running";
+    if (["verifying", "settling", "result_pending", "completed", "result_available"].indexOf(status) !== -1) return "completed";
     if (status === "failed" && Number(run.exit_code) === 0) return "completed";
     return status;
   }
 
   function resultReviewText(status) {
     const normalized = String(status || "");
-    if (["queued", "starting", "running", "verifying"].indexOf(normalized) !== -1) {
+    if (lifecycleIsActive(normalized)) {
       return "Execution is active. Review the persisted stage evidence as it advances.";
     }
     if (["failed", "blocked", "timed_out", "cancelled"].indexOf(normalized) !== -1) {
-      return "Review the failed process, invocation, or acceptance checks below.";
+      return normalized === "timed_out"
+        ? "Review Handoff is BLOCKED: no verified actual model, Verification, or accepted source result exists."
+        : "Review the failed process, invocation, or acceptance checks below.";
     }
     return state.ownerAcceptance
       ? "Complete the Owner Acceptance checklist."
       : "Inspect the structured result evidence before making an Owner decision.";
+  }
+
+  function sanitizedCandidateText(value, fallback, maximum) {
+    let text = boundedText(value, fallback, maximum);
+    text = text.replace(
+      /([a-z][a-z0-9+.-]*:\/\/)([^/\s:@]+):([^@\s/]+)@/gi,
+      "$1[credentials withheld]@"
+    );
+    text = text.replace(
+      /((?:[A-Z0-9_]*(?:TOKEN|PASSWORD|SECRET|CREDENTIAL|AUTHORIZATION|API[_-]?KEY)[A-Z0-9_]*)["']?\s*[:=]\s*["']?)[^\s,"'}\]]+/gi,
+      "$1[withheld]"
+    );
+    text = text.replace(
+      /(^|[\s"'(=])\/(?:Users|home|private|tmp|var\/folders)\/[^\s"',)}\]]+/gm,
+      "$1[path withheld]"
+    );
+    return text.replace(
+      /[A-Za-z]:\\(?:Users|Documents and Settings)\\[^\s"',)}\]]+/g,
+      "[path withheld]"
+    );
+  }
+
+  function candidateRelativePath(value) {
+    const path = boundedText(value, "", 500);
+    if (
+      !path
+      || path.charAt(0) === "/"
+      || path.charAt(0) === "\\"
+      || /^[A-Za-z]:[\\/]/.test(path)
+      || path.split(/[\\/]/).some(function (part) { return part === ".."; })
+    ) return "[unsafe path withheld]";
+    return path;
+  }
+
+  function candidateFileName(entry) {
+    const record = objectRecord(entry);
+    const suppliedName = boundedText(record.name, "", 300);
+    const source = suppliedName || candidateRelativePath(record.path);
+    const parts = source.split(/[\\/]/);
+    return boundedText(parts[parts.length - 1], "Unnamed file", 300);
+  }
+
+  function candidateOperation(value) {
+    const operation = String(value || "").toUpperCase();
+    return ["CREATE", "MODIFY", "DELETE"].indexOf(operation) !== -1 ? operation : "UNKNOWN";
+  }
+
+  function renderCandidateFiles(candidate, reviewed) {
+    clearChildren(elements.candidateFiles);
+    const files = candidate && Array.isArray(candidate.changed_files)
+      ? candidate.changed_files
+      : [];
+    if (!files.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty-state";
+      empty.textContent = candidate
+        ? "This immutable Candidate contains no changed files."
+        : reviewed
+          ? "No immutable Candidate manifest is available."
+          : "Review Change Candidate to inspect the Run-produced file manifest.";
+      elements.candidateFiles.appendChild(empty);
+      return;
+    }
+    files.forEach(function (file) {
+      const record = objectRecord(file);
+      const operation = candidateOperation(record.operation);
+      const item = document.createElement("article");
+      const heading = document.createElement("div");
+      const name = document.createElement("strong");
+      const operationLabel = document.createElement("span");
+      const metadata = document.createElement("p");
+      item.className = "candidate-file-item";
+      item.dataset.operation = operation.toLowerCase();
+      heading.className = "candidate-file-heading";
+      name.textContent = candidateFileName(record);
+      operationLabel.className = "candidate-operation";
+      operationLabel.textContent = operation;
+      metadata.textContent = record.unexpected === true
+        ? "Unexpected Run-produced file"
+        : String(record.content_kind || "").toLowerCase() === "binary"
+          ? "Binary file · metadata only"
+          : "Expected Run-produced file";
+      heading.appendChild(name);
+      heading.appendChild(operationLabel);
+      item.appendChild(heading);
+      item.appendChild(metadata);
+      elements.candidateFiles.appendChild(item);
+    });
+  }
+
+  function candidateBlockerLines(review, drift) {
+    const combined = (Array.isArray(review && review.blockers) ? review.blockers : [])
+      .concat(Array.isArray(drift && drift.blockers) ? drift.blockers : []);
+    const seen = new Set();
+    return combined.map(function (blocker) {
+      const record = objectRecord(blocker);
+      const code = boundedText(record.code, "", 100);
+      const message = sanitizedCandidateText(record.message, "Candidate review is blocked.", 600);
+      return (code ? code + " — " : "") + message;
+    }).filter(function (line) {
+      if (!line || seen.has(line)) return false;
+      seen.add(line);
+      return true;
+    });
+  }
+
+  function candidateBindingText(label, id, version) {
+    if (id === null || id === undefined || id === "") return "None";
+    const versionText = version === null || version === undefined || version === ""
+      ? ""
+      : " / v" + String(version);
+    return label + " #" + String(id) + versionText;
+  }
+
+  function candidateManifestDetailLines(candidate) {
+    const files = candidate && Array.isArray(candidate.changed_files)
+      ? candidate.changed_files
+      : [];
+    return files.map(function (file) {
+      const record = objectRecord(file);
+      const beforeSize = record.before_size === null || record.before_size === undefined
+        ? "none"
+        : String(record.before_size);
+      const afterSize = record.after_size === null || record.after_size === undefined
+        ? "none"
+        : String(record.after_size);
+      return candidateRelativePath(record.path)
+        + " · " + candidateOperation(record.operation)
+        + " · before=" + boundedText(record.before_hash, "none", 200)
+        + " · after=" + boundedText(record.after_hash, "none", 200)
+        + " · size=" + beforeSize + "→" + afterSize
+        + " · kind=" + boundedText(record.content_kind, "unknown", 80)
+        + " · evidence=" + boundedText(record.evidence_identity, "none", 240)
+        + (record.unexpected === true ? " · unexpected" : "");
+    });
+  }
+
+  function candidateVerificationFallback(run) {
+    const result = objectRecord(run && run.result);
+    const verdict = objectRecord(result.verification_verdict);
+    return boundedText(verdict.status, "Not available", 120);
+  }
+
+  function setCandidateStatusLabel(element, value) {
+    setStatusLabel(element, value);
+    const normalized = String(value || "").toLowerCase();
+    if (normalized.indexOf("conflict detected") !== -1) {
+      element.classList.remove("is-success", "is-warning");
+      element.classList.add("is-error");
+    } else if (normalized.indexOf("source changed since run") !== -1) {
+      element.classList.remove("is-success", "is-error");
+      element.classList.add("is-warning");
+    }
+  }
+
+  function renderDeliveryCandidateReview(run) {
+    const terminal = isTerminalCodexRun(run);
+    elements.candidateReviewSection.hidden = !terminal;
+    elements.reviewChangeCandidate.hidden = !terminal;
+    elements.candidateAdvancedCard.hidden = !terminal;
+    if (!terminal) return;
+
+    const review = objectRecord(deliveryCandidateReviewForRun(run));
+    const candidate = objectRecord(review.candidate);
+    const drift = objectRecord(review.drift);
+    const available = candidate.id !== null && candidate.id !== undefined;
+    const blockers = candidateBlockerLines(review, drift);
+    const reviewed = available || Object.keys(drift).length > 0 || blockers.length > 0;
+    const statusText = available
+      ? boundedText(candidate.status_label || humanStatus(candidate.status || "available"), "Available", 160)
+      : drift.status_label
+        ? boundedText(drift.status_label, "Candidate unavailable", 160)
+        : blockers.length
+          ? "Candidate unavailable"
+          : "Not reviewed";
+    const driftText = Object.keys(drift).length
+      ? boundedText(drift.status_label || humanStatus(drift.status), "Not evaluated", 160)
+      : "Not evaluated";
+    const files = available && Array.isArray(candidate.changed_files) ? candidate.changed_files : [];
+    const unexpected = files.filter(function (file) { return objectRecord(file).unexpected === true; });
+    const unexpectedCount = candidate.unexpected_file_count === null
+      || candidate.unexpected_file_count === undefined
+      ? unexpected.length
+      : Number(candidate.unexpected_file_count);
+    const acceptanceStatus = available
+      ? candidate.acceptance_status
+      : state.ownerAcceptance && state.ownerAcceptance.status;
+    const verificationStatus = available
+      ? candidate.verification_status
+      : candidateVerificationFallback(run);
+
+    elements.candidateStatus.textContent = statusText;
+    elements.candidateDriftStatus.textContent = driftText;
+    setCandidateStatusLabel(elements.candidateStatus, statusText);
+    setCandidateStatusLabel(elements.candidateDriftStatus, driftText);
+    elements.candidateUnexpectedFiles.textContent = unexpectedCount > 0
+      ? String(unexpectedCount) + " — " + unexpected.map(candidateFileName).join(", ")
+      : available ? "None" : "Not available";
+    elements.candidateAcceptanceStatus.textContent = humanStatus(acceptanceStatus || "not_available");
+    elements.candidateVerificationStatus.textContent = humanStatus(verificationStatus || "not_available");
+    elements.candidateNextAction.textContent = sanitizedCandidateText(
+      review.next_action || drift.next_action,
+      "Review Change Candidate",
+      300
+    );
+    renderCandidateFiles(available ? candidate : null, reviewed);
+    appendTextList(
+      elements.candidateBlockers,
+      blockers,
+      reviewed ? "No blockers reported." : "No blocker has been evaluated."
+    );
+
+    elements.candidateRecordId.textContent = available ? "#" + String(candidate.id) : "None";
+    elements.candidateDigest.textContent = boundedText(candidate.candidate_digest, "None", 500);
+    elements.candidatePatchIdentity.textContent = boundedText(candidate.patch_identity, "None", 500);
+    elements.candidateSourceSnapshot.textContent = boundedText(candidate.source_snapshot_identity, "None", 500);
+    elements.candidateTaskBinding.textContent = candidateBindingText(
+      "Task",
+      candidate.task_id,
+      candidate.task_version
+    );
+    elements.candidatePackBinding.textContent = candidateBindingText(
+      "Pack",
+      candidate.pack_id,
+      candidate.pack_version
+    );
+    elements.candidateCodingAssignment.textContent = candidateBindingText(
+      "Assignment",
+      candidate.coding_assignment_id,
+      candidate.coding_assignment_version
+    );
+    elements.candidateVerificationAssignment.textContent = candidateBindingText(
+      "Assignment",
+      candidate.verification_assignment_id,
+      candidate.verification_assignment_version
+    );
+    elements.candidateRoutingSnapshot.textContent = boundedText(candidate.routing_snapshot_identity, "None", 500);
+    elements.candidateRunBinding.textContent = candidate.run_id === null || candidate.run_id === undefined
+      ? "None"
+      : "Run #" + String(candidate.run_id);
+    elements.candidateCodingEvidence.textContent = boundedText(candidate.coding_evidence_identity, "None", 500);
+    elements.candidateVerificationEvidence.textContent = boundedText(candidate.verification_evidence_identity, "None", 500);
+    elements.candidateCreatedAt.textContent = available ? formatTime(candidate.created_at) : "Not recorded";
+    elements.candidateDriftEvaluation.textContent = drift.evaluation_id === null || drift.evaluation_id === undefined
+      ? "Not evaluated"
+      : "#" + String(drift.evaluation_id) + " / " + formatTime(drift.evaluated_at);
+    elements.candidateDriftBaseline.textContent = boundedText(drift.baseline_source_digest, "None", 500);
+    elements.candidateDriftCurrent.textContent = boundedText(drift.current_source_digest, "None", 500);
+    elements.candidateDriftHead.textContent = boundedText(drift.current_head, "None", 500);
+    elements.candidateConflictPaths.textContent = Array.isArray(drift.conflict_paths) && drift.conflict_paths.length
+      ? drift.conflict_paths.map(candidateRelativePath).join(", ")
+      : "None";
+    appendTextList(
+      elements.candidateManifestDetails,
+      candidateManifestDetailLines(available ? candidate : null),
+      "No immutable Candidate manifest is available."
+    );
+    elements.candidateDriftDiagnostics.textContent = sanitizedCandidateText(
+      diagnosticText(drift.diagnostics, ""),
+      "No Source Drift diagnostics are available.",
+      8000
+    );
+  }
+
+  function normalizedApplyPlanState(value) {
+    const normalized = String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+    return Object.prototype.hasOwnProperty.call(APPLY_PLAN_STATE_LABELS, normalized)
+      ? normalized
+      : "";
+  }
+
+  function applyPlanStateLabel(plan) {
+    const stateValue = normalizedApplyPlanState(plan.effective_state || plan.status_label);
+    return stateValue ? APPLY_PLAN_STATE_LABELS[stateValue] : "Not reviewed";
+  }
+
+  function setApplyPlanStatusLabel(element, value) {
+    const stateValue = normalizedApplyPlanState(value);
+    element.classList.remove("is-success", "is-warning", "is-error");
+    element.dataset.planState = stateValue || "not_reviewed";
+    if (stateValue === "ready_for_owner_review") {
+      element.classList.add("is-success");
+    } else if (stateValue === "review_with_source_changes" || stateValue === "expired") {
+      element.classList.add("is-warning");
+    } else if (stateValue.indexOf("blocked_by_") === 0) {
+      element.classList.add("is-error");
+    }
+  }
+
+  function applyPlanDisposition(value) {
+    const disposition = String(value || "").trim().toUpperCase();
+    return APPLY_PLAN_DISPOSITIONS.indexOf(disposition) !== -1
+      ? disposition
+      : "BLOCKED";
+  }
+
+  function applyPlanOperation(value, scopeOnly) {
+    if (scopeOnly) return "SCOPE ONLY";
+    return candidateOperation(value);
+  }
+
+  function sanitizedApplyPlanText(value, fallback, maximum) {
+    let text = sanitizedCandidateText(value, fallback, maximum);
+    text = text.replace(
+      /(^|[\s"'(=])\/(?!\/)[^\s"',)}\]]+/gm,
+      "$1[path withheld]"
+    );
+    return text.replace(
+      /\b[A-Za-z]:\\[^\s"',)}\]]+/g,
+      "[path withheld]"
+    );
+  }
+
+  function applyPlanSafeLine(value, fallback, maximum) {
+    if (value === null || value === undefined || value === "") return fallback;
+    if (typeof value === "string" || typeof value === "number") {
+      return sanitizedApplyPlanText(value, fallback, maximum || 800);
+    }
+    const record = objectRecord(value);
+    const direct = firstEvidenceValue(
+      record,
+      ["message", "reason", "summary", "description", "label", "name", "path", "code"],
+      ""
+    );
+    if (direct) return sanitizedApplyPlanText(direct, fallback, maximum || 800);
+    const diagnostic = diagnosticText(record, "");
+    return sanitizedApplyPlanText(diagnostic, fallback, maximum || 800);
+  }
+
+  function applyPlanTextList(value, fallback) {
+    const record = objectRecord(value);
+    const nested = Array.isArray(record.requirements)
+      ? record.requirements
+      : null;
+    const items = Array.isArray(value) ? value : nested || (value ? [value] : []);
+    return items.map(function (item) {
+      return applyPlanSafeLine(item, "", 1200);
+    }).filter(Boolean).concat(items.length ? [] : fallback ? [fallback] : []);
+  }
+
+  function applyPlanReversibilityLines(value, fallback) {
+    if (Array.isArray(value)) return applyPlanTextList(value, fallback);
+    const record = objectRecord(value);
+    const lines = applyPlanTextList(
+      Array.isArray(record.requirements) ? record.requirements : record.capture,
+      ""
+    );
+    if (record.future_reverse_operation) {
+      lines.push(
+        "Future reverse operation: "
+        + sanitizedApplyPlanText(record.future_reverse_operation, "None", 160)
+      );
+    }
+    return lines.length ? lines : fallback ? [fallback] : [];
+  }
+
+  function applyPlanFindingLines(value) {
+    const items = Array.isArray(value) ? value : [];
+    return items.map(function (item) {
+      if (typeof item === "string") return candidateRelativePath(item);
+      const record = objectRecord(item);
+      const rawPath = record.path || record.name;
+      const path = rawPath ? candidateRelativePath(rawPath) : "";
+      const reason = applyPlanSafeLine(record.reason || record.message, "", 500);
+      return path && reason ? path + " — " + reason : path || reason;
+    }).filter(Boolean);
+  }
+
+  function appendPlannedChecks(target, checks, fallback) {
+    clearChildren(target);
+    const lines = applyPlanTextList(checks, fallback);
+    lines.forEach(function (line) {
+      const item = document.createElement("li");
+      const label = document.createElement("span");
+      label.className = "planned-check-label";
+      label.textContent = "PLANNED CHECK";
+      item.appendChild(label);
+      item.appendChild(document.createTextNode(" " + line));
+      target.appendChild(item);
+    });
+  }
+
+  function applyPlanEntryPath(record) {
+    return candidateRelativePath(record.path || record.name);
+  }
+
+  function applyPlanEntryTechnicalLine(entry) {
+    const record = objectRecord(entry);
+    const beforeMode = record.before_mode === null || record.before_mode === undefined
+      ? "none"
+      : String(record.before_mode);
+    const afterMode = record.after_mode === null || record.after_mode === undefined
+      ? "none"
+      : String(record.after_mode);
+    return applyPlanEntryPath(record)
+      + " · " + applyPlanOperation(record.operation, false)
+      + " · " + applyPlanDisposition(record.disposition)
+      + " · before=" + boundedText(record.before_hash, "none", 200)
+      + " · after=" + boundedText(record.after_hash, "none", 200)
+      + " · mode=" + beforeMode + "→" + afterMode
+      + " · kind=" + boundedText(record.content_kind || record.file_type, "unknown", 100);
+  }
+
+  function createApplyPlanEntryCard(entry, scopeOnly) {
+    const record = objectRecord(entry);
+    const disposition = scopeOnly ? "EXCLUDED" : applyPlanDisposition(record.disposition);
+    const card = document.createElement("article");
+    const heading = document.createElement("div");
+    const path = document.createElement("strong");
+    const operation = document.createElement("span");
+    const reason = document.createElement("p");
+    const flags = document.createElement("div");
+    const preconditions = applyPlanTextList(record.preconditions, "");
+    const reversibility = applyPlanReversibilityLines(record.reversibility, "");
+
+    card.className = "apply-plan-path-card";
+    card.dataset.disposition = disposition.toLowerCase();
+    heading.className = "apply-plan-path-heading";
+    path.textContent = applyPlanEntryPath(record);
+    operation.className = "candidate-operation";
+    operation.textContent = applyPlanOperation(record.operation, scopeOnly);
+    reason.className = "apply-plan-path-reason";
+    reason.textContent = applyPlanSafeLine(
+      record.reason,
+      scopeOnly
+        ? "Current source path is outside this Candidate operation scope."
+        : "No disposition reason was reported.",
+      800
+    );
+    flags.className = "apply-plan-path-flags";
+
+    if (record.unexpected === true) {
+      const unexpected = document.createElement("span");
+      unexpected.textContent = "Unexpected";
+      flags.appendChild(unexpected);
+    }
+    if (String(record.content_kind || "").toLowerCase() === "binary") {
+      const binary = document.createElement("span");
+      binary.textContent = "Binary · metadata only";
+      flags.appendChild(binary);
+    }
+    const conflicts = applyPlanFindingLines(record.conflicts);
+    if (conflicts.length) {
+      const conflict = document.createElement("span");
+      conflict.textContent = "Conflict";
+      flags.appendChild(conflict);
+    }
+
+    heading.appendChild(path);
+    heading.appendChild(operation);
+    card.appendChild(heading);
+    card.appendChild(reason);
+    if (flags.childNodes.length) card.appendChild(flags);
+
+    if (preconditions.length) {
+      const title = document.createElement("h5");
+      const list = document.createElement("ul");
+      title.textContent = "Future preconditions";
+      list.className = "apply-plan-path-requirements";
+      preconditions.forEach(function (line) {
+        const item = document.createElement("li");
+        item.textContent = line;
+        list.appendChild(item);
+      });
+      card.appendChild(title);
+      card.appendChild(list);
+    }
+    if (reversibility.length) {
+      const title = document.createElement("h5");
+      const list = document.createElement("ul");
+      title.textContent = "Reversibility evidence";
+      list.className = "apply-plan-path-requirements";
+      reversibility.forEach(function (line) {
+        const item = document.createElement("li");
+        item.textContent = line;
+        list.appendChild(item);
+      });
+      card.appendChild(title);
+      card.appendChild(list);
+    }
+    return card;
+  }
+
+  function renderApplyPlanPathGroup(target, entries, disposition, reviewed) {
+    clearChildren(target);
+    if (!entries.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty-state";
+      empty.textContent = reviewed
+        ? "No " + disposition.toLowerCase() + " paths."
+        : "No paths reviewed.";
+      target.appendChild(empty);
+      return;
+    }
+    entries.forEach(function (item) {
+      target.appendChild(createApplyPlanEntryCard(item.entry, item.scopeOnly));
+    });
+  }
+
+  function renderApplyPlanPaths(plan, reviewed) {
+    const entries = Array.isArray(plan.entries)
+      ? plan.entries.filter(function (entry) { return entry && typeof entry === "object"; })
+      : [];
+    const grouped = {
+      INCLUDED: [],
+      EXCLUDED: [],
+      BLOCKED: []
+    };
+    entries.forEach(function (entry) {
+      const disposition = applyPlanDisposition(entry.disposition);
+      grouped[disposition].push({ entry: entry, scopeOnly: false });
+    });
+    const scopeExclusions = Array.isArray(plan.scope_exclusions) ? plan.scope_exclusions : [];
+    scopeExclusions.forEach(function (item) {
+      const record = typeof item === "string"
+        ? { path: item, reason: "Current source path is outside this Candidate operation scope." }
+        : objectRecord(item);
+      grouped.EXCLUDED.push({ entry: record, scopeOnly: true });
+    });
+
+    elements.applyPlanIncludedCount.textContent = String(grouped.INCLUDED.length);
+    elements.applyPlanExcludedCount.textContent = String(grouped.EXCLUDED.length);
+    elements.applyPlanBlockedCount.textContent = String(grouped.BLOCKED.length);
+    renderApplyPlanPathGroup(elements.applyPlanIncludedPaths, grouped.INCLUDED, "INCLUDED", reviewed);
+    renderApplyPlanPathGroup(elements.applyPlanExcludedPaths, grouped.EXCLUDED, "EXCLUDED", reviewed);
+    renderApplyPlanPathGroup(elements.applyPlanBlockedPaths, grouped.BLOCKED, "BLOCKED", reviewed);
+  }
+
+  function applyPlanBlockerLines(review, plan) {
+    const combined = (Array.isArray(review.blockers) ? review.blockers : [])
+      .concat(Array.isArray(plan.blockers) ? plan.blockers : []);
+    const seen = new Set();
+    return combined.map(function (blocker) {
+      const record = objectRecord(blocker);
+      const code = boundedText(record.code, "", 120);
+      const message = applyPlanSafeLine(
+        record.message || record.reason,
+        "Apply Plan review is blocked.",
+        800
+      );
+      return (code ? code + " — " : "") + message;
+    }).filter(function (line) {
+      if (!line || seen.has(line)) return false;
+      seen.add(line);
+      return true;
+    });
+  }
+
+  function applyPlanNextActionFallback(stateValue) {
+    const actions = {
+      ready_for_owner_review: "Review Apply readiness, then explicitly confirm Apply Accepted Changes.",
+      review_with_source_changes: "Review the unrelated source changes before explicitly confirming Apply.",
+      blocked_by_conflict: "Resolve the Candidate-path conflict and produce a newly approved Run.",
+      blocked_by_candidate: "Restore a valid immutable Candidate before reviewing again.",
+      blocked_by_repository: "Restore repository access before reviewing again.",
+      expired: "Review Apply Plan again to create a freshly bound Plan."
+    };
+    return actions[stateValue] || "Review Apply Plan.";
+  }
+
+  function renderApplyPlanHistory(review, plan) {
+    clearChildren(elements.applyPlanHistory);
+    const history = Array.isArray(review.history)
+      ? review.history.filter(function (item) { return item && typeof item === "object"; })
+      : [];
+    const currentId = plan.id === null || plan.id === undefined ? "" : String(plan.id);
+    const hasCurrent = history.some(function (item) { return String(item.id) === currentId; });
+    if (currentId && !hasCurrent) {
+      history.unshift({
+        id: plan.id,
+        version: plan.version,
+        status_label: applyPlanStateLabel(plan),
+        created_at: plan.created_at
+      });
+    }
+    if (!history.length) {
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = "No persisted Apply Plan";
+      elements.applyPlanHistory.appendChild(option);
+      elements.applyPlanHistory.disabled = true;
+      return;
+    }
+    history.sort(function (left, right) {
+      return Number(right.version || 0) - Number(left.version || 0);
+    }).forEach(function (item) {
+      const option = document.createElement("option");
+      const stateLabel = applyPlanStateLabel(item);
+      option.value = String(item.id);
+      option.textContent = "Plan v" + String(item.version || "?")
+        + " · " + stateLabel
+        + " · " + formatTime(item.created_at);
+      option.selected = option.value === currentId;
+      elements.applyPlanHistory.appendChild(option);
+    });
+    elements.applyPlanHistory.disabled = state.pending.has("apply-plan-history");
+  }
+
+  function applyPlanBindingValue(value, label) {
+    if (value === null || value === undefined || value === "") return "None";
+    if (typeof value === "number" || /^\d+$/.test(String(value))) {
+      return label + " #" + String(value);
+    }
+    if (typeof value === "string") {
+      return sanitizedApplyPlanText(value, "None", 800);
+    }
+    const record = objectRecord(value);
+    const id = record.id === null || record.id === undefined
+      ? record.task_id ?? record.pack_id ?? record.run_id
+      : record.id;
+    const version = record.version ?? record.task_version ?? record.pack_version;
+    return candidateBindingText(label, id, version);
+  }
+
+  function renderApplyPlanAdvanced(review, plan, reviewed) {
+    const advanced = objectRecord(plan.advanced);
+    const operationOrder = objectRecord(advanced.operation_order);
+    const operationOrderLines = [];
+    if (operationOrder.policy) {
+      operationOrderLines.push(
+        "Policy: " + sanitizedApplyPlanText(operationOrder.policy, "None", 300)
+      );
+    }
+    if (operationOrder.explanation) {
+      operationOrderLines.push(
+        sanitizedApplyPlanText(operationOrder.explanation, "", 1200)
+      );
+    }
+    if (Array.isArray(operationOrder.operations)) {
+      operationOrder.operations.forEach(function (item) {
+        const record = objectRecord(item);
+        operationOrderLines.push(
+          "#" + String(record.ordinal || "?")
+          + " · " + applyPlanOperation(record.operation, false)
+          + " · " + candidateRelativePath(record.path)
+          + (Array.isArray(record.dependencies) && record.dependencies.length
+            ? " · dependencies=" + record.dependencies.join(",")
+            : "")
+        );
+      });
+    }
+    renderApplyPlanHistory(review, plan);
+    elements.applyPlanRecordId.textContent = plan.id === null || plan.id === undefined
+      ? "None"
+      : "#" + String(plan.id);
+    elements.applyPlanVersion.textContent = plan.version === null || plan.version === undefined
+      ? "None"
+      : "v" + String(plan.version);
+    elements.applyPlanStatusAtCreation.textContent = plan.status_at_creation
+      ? applyPlanStateLabel({ effective_state: plan.status_at_creation })
+      : "None";
+    elements.applyPlanDigest.textContent = boundedText(advanced.plan_digest, "None", 500);
+    elements.applyPlanBindingDigest.textContent = boundedText(advanced.binding_digest, "None", 500);
+    elements.applyPlanCandidateRecord.textContent = advanced.candidate_id === null
+      || advanced.candidate_id === undefined
+      ? "None"
+      : "#" + String(advanced.candidate_id);
+    elements.applyPlanCandidateDigest.textContent = boundedText(advanced.candidate_digest, "None", 500);
+    elements.applyPlanDriftEvaluation.textContent = advanced.drift_evaluation_id === null
+      || advanced.drift_evaluation_id === undefined
+      ? "None"
+      : "#" + String(advanced.drift_evaluation_id);
+    elements.applyPlanDriftFingerprint.textContent = boundedText(advanced.drift_semantic_fingerprint, "None", 500);
+    elements.applyPlanRepositoryIdentity.textContent = sanitizedApplyPlanText(
+      advanced.repository_identity,
+      "None",
+      800
+    );
+    elements.applyPlanRepositoryLocator.textContent = boundedText(
+      advanced.repository_locator_fingerprint,
+      "None",
+      500
+    );
+    elements.applyPlanRepositoryFingerprint.textContent = boundedText(
+      advanced.repository_fingerprint,
+      "None",
+      500
+    );
+    elements.applyPlanBranch.textContent = boundedText(advanced.branch, "None", 200);
+    elements.applyPlanHead.textContent = boundedText(advanced.head, "None", 500);
+    elements.applyPlanCurrentSource.textContent = boundedText(advanced.current_source_digest, "None", 500);
+    elements.applyPlanIndexFingerprint.textContent = boundedText(advanced.index_fingerprint, "None", 500);
+    elements.applyPlanWorktreeFingerprint.textContent = boundedText(advanced.worktree_fingerprint, "None", 500);
+    elements.applyPlanStagedCount.textContent = advanced.staged_path_count === null
+      || advanced.staged_path_count === undefined
+      ? "None"
+      : String(advanced.staged_path_count);
+    elements.applyPlanPolicyVersion.textContent = boundedText(advanced.policy_version, "None", 300);
+    elements.applyPlanTaskBinding.textContent = applyPlanBindingValue(advanced.task_binding, "Task");
+    elements.applyPlanPackBinding.textContent = applyPlanBindingValue(advanced.pack_binding, "Pack");
+    elements.applyPlanRunBinding.textContent = applyPlanBindingValue(advanced.run_id, "Run");
+    elements.applyPlanSourceSnapshot.textContent = boundedText(advanced.source_snapshot_identity, "None", 500);
+    elements.applyPlanCreatedAt.textContent = reviewed ? formatTime(plan.created_at) : "Not recorded";
+    elements.applyPlanSupersedes.textContent = advanced.supersedes_plan_record === null
+      || advanced.supersedes_plan_record === undefined
+      ? "None"
+      : "#" + String(advanced.supersedes_plan_record);
+    elements.applyPlanSupersessionReason.textContent = applyPlanSafeLine(
+      advanced.supersession_reason,
+      "None",
+      800
+    );
+    appendTextList(
+      elements.applyPlanOperationOrder,
+      operationOrderLines,
+      "No operation order is available."
+    );
+    const advancedEntries = Array.isArray(advanced.entries) ? advanced.entries : [];
+    appendTextList(
+      elements.applyPlanEntryDetails,
+      advancedEntries.map(applyPlanEntryTechnicalLine),
+      "No Apply Plan entry metadata is available."
+    );
+    appendTextList(
+      elements.applyPlanExpiryReasons,
+      applyPlanTextList(advanced.expiry_reasons, "No expiry reason is recorded."),
+      "No expiry reason is recorded."
+    );
+    elements.applyPlanDiagnostics.textContent = sanitizedApplyPlanText(
+      diagnosticText(advanced.diagnostics, ""),
+      "No Apply Plan diagnostics are available.",
+      8000
+    );
+  }
+
+  function renderApplyPlanReview(run) {
+    const terminal = isTerminalCodexRun(run);
+    const candidateReviewed = terminal && deliveryCandidateReviewAvailable(run);
+    elements.applyPlanReviewSection.hidden = !candidateReviewed;
+    elements.reviewApplyPlan.hidden = !candidateReviewed;
+    if (!candidateReviewed) {
+      elements.applyPlanAdvancedCard.hidden = true;
+      return;
+    }
+
+    const review = objectRecord(applyPlanReviewForRun(run));
+    const plan = objectRecord(review.plan);
+    const reviewed = plan.id !== null && plan.id !== undefined
+      || Boolean(normalizedApplyPlanState(plan.effective_state || plan.status_label));
+    const stateValue = normalizedApplyPlanState(plan.effective_state || plan.status_label);
+    const statusLabel = reviewed ? applyPlanStateLabel(plan) : "Not reviewed";
+    const candidateReview = objectRecord(deliveryCandidateReviewForRun(run));
+    const candidate = objectRecord(candidateReview.candidate);
+    const candidateDrift = objectRecord(candidateReview.drift);
+    const candidateStatus = plan.candidate_status_label
+      || candidate.status_label
+      || (deliveryCandidateReviewAvailable(run) ? "Candidate unavailable" : "Not reviewed");
+    const driftStatus = plan.drift_status_label
+      || (plan.drift_status ? humanStatus(plan.drift_status) : "")
+      || candidateDrift.status_label
+      || "Not evaluated";
+    const candidateEntryCount = Number(plan.candidate_entry_count);
+    const classifiedEntryCount = Number(plan.classified_entry_count);
+    const conflicts = applyPlanFindingLines(plan.conflicts);
+    const unexpected = applyPlanFindingLines(plan.unexpected_files);
+    const blockers = applyPlanBlockerLines(review, plan);
+    const plannedValidation = objectRecord(plan.planned_validation);
+
+    elements.applyPlanStatus.textContent = statusLabel;
+    setApplyPlanStatusLabel(elements.applyPlanStatus, statusLabel);
+    elements.applyPlanCandidateStatus.textContent = sanitizedApplyPlanText(
+      candidateStatus,
+      "Not reviewed",
+      200
+    );
+    elements.applyPlanDriftStatus.textContent = sanitizedApplyPlanText(
+      driftStatus,
+      "Not evaluated",
+      200
+    );
+    setCandidateStatusLabel(elements.applyPlanDriftStatus, driftStatus);
+    elements.applyPlanManifestCoverage.textContent = Number.isFinite(candidateEntryCount)
+      && Number.isFinite(classifiedEntryCount)
+      ? "Classified " + String(classifiedEntryCount) + " of " + String(candidateEntryCount) + " Candidate entries"
+      : reviewed ? "Coverage unavailable" : "Not reviewed";
+    elements.applyPlanConflicts.textContent = conflicts.length
+      ? String(conflicts.length) + " — " + conflicts.join(", ")
+      : reviewed ? "None" : "Not reviewed";
+    elements.applyPlanUnexpectedFiles.textContent = unexpected.length
+      ? String(unexpected.length) + " — " + unexpected.join(", ")
+      : reviewed ? "None" : "Not reviewed";
+    elements.applyPlanNextAction.textContent = sanitizedApplyPlanText(
+      plan.next_action || review.next_action,
+      applyPlanNextActionFallback(stateValue),
+      500
+    );
+
+    renderApplyPlanPaths(plan, reviewed);
+    appendTextList(
+      elements.applyPlanPreconditions,
+      applyPlanTextList(
+        plan.future_preconditions,
+        reviewed
+          ? "No future preconditions were reported."
+          : "Review Apply Plan to inspect future preconditions."
+      ),
+      "Review Apply Plan to inspect future preconditions."
+    );
+    appendTextList(
+      elements.applyPlanReversibility,
+      applyPlanReversibilityLines(
+        plan.reversibility_requirements,
+        reviewed
+          ? "No future reversibility requirements were reported."
+          : "No future reversibility requirements have been reviewed."
+      ),
+      "No future reversibility requirements have been reviewed."
+    );
+    appendPlannedChecks(
+      elements.applyPlanPreValidation,
+      plannedValidation.pre_apply,
+      reviewed ? "No pre-apply checks were reported." : "Review Apply Plan to inspect pre-apply checks."
+    );
+    appendPlannedChecks(
+      elements.applyPlanPostValidation,
+      plannedValidation.post_apply,
+      reviewed ? "No post-apply checks were reported." : "No post-apply checks have been planned."
+    );
+    const boundaries = applyPlanTextList(plan.boundaries, "");
+    [
+      "Review Apply Plan never changes source.",
+      "Apply and Revert each require a separate explicit Owner confirmation.",
+      "Apply and Revert never stage, commit, or push."
+    ].forEach(function (boundary) {
+      if (boundaries.indexOf(boundary) === -1) boundaries.push(boundary);
+    });
+    appendTextList(elements.applyPlanBoundaries, boundaries, "Review Apply Plan never changes source.");
+    appendTextList(
+      elements.applyPlanBlockers,
+      blockers,
+      reviewed ? "No blockers reported." : "No blocker has been evaluated."
+    );
+
+    elements.applyPlanAdvancedCard.hidden = !reviewed;
+    renderApplyPlanAdvanced(review, plan, reviewed);
+  }
+
+  function normalizedApplySessionState(value) {
+    const normalized = String(value || "").trim().toUpperCase();
+    return Object.prototype.hasOwnProperty.call(APPLY_SESSION_STATE_LABELS, normalized)
+      ? normalized
+      : "";
+  }
+
+  function applySessionStateLabel(value, fallback) {
+    const stateValue = normalizedApplySessionState(value);
+    return stateValue ? APPLY_SESSION_STATE_LABELS[stateValue] : fallback || "Not started";
+  }
+
+  function applySessionDisplayState(session) {
+    const revertState = normalizedApplySessionState(session.revert_state);
+    if (revertState && revertState !== "NOT_REQUESTED") return revertState;
+    return normalizedApplySessionState(session.apply_state);
+  }
+
+  function setApplySessionStatusLabel(element, value) {
+    const stateValue = normalizedApplySessionState(value);
+    element.classList.remove("is-success", "is-warning", "is-error");
+    if (stateValue === "APPLIED" || stateValue === "REVERTED") {
+      element.classList.add("is-success");
+    } else if (
+      stateValue === "APPLYING"
+      || stateValue === "REVERTING"
+      || stateValue === "APPLY_FAILED_RECOVERED"
+      || stateValue === "REVERT_BLOCKED"
+    ) {
+      element.classList.add("is-warning");
+    } else if (
+      stateValue === "PREFLIGHT_BLOCKED"
+      || stateValue === "APPLY_FAILED_PARTIAL"
+      || stateValue === "REVERT_FAILED_PARTIAL"
+    ) {
+      element.classList.add("is-error");
+    }
+  }
+
+  function applySessionOperationCounts(entries, supplied) {
+    const counts = { CREATE: 0, MODIFY: 0, DELETE: 0 };
+    const provided = objectRecord(supplied);
+    Object.keys(counts).forEach(function (operation) {
+      const value = Number(provided[operation] !== undefined
+        ? provided[operation]
+        : provided[operation.toLowerCase()]);
+      if (Number.isFinite(value) && value >= 0) counts[operation] = value;
+    });
+    if (!Object.keys(provided).length) {
+      (Array.isArray(entries) ? entries : []).forEach(function (entry) {
+        const record = objectRecord(entry);
+        if (applyPlanDisposition(record.disposition) !== "INCLUDED") return;
+        const operation = String(record.operation || "").toUpperCase();
+        if (Object.prototype.hasOwnProperty.call(counts, operation)) counts[operation] += 1;
+      });
+    }
+    return counts;
+  }
+
+  function applySessionCountsText(counts) {
+    return "CREATE " + String(counts.CREATE)
+      + " · MODIFY " + String(counts.MODIFY)
+      + " · DELETE " + String(counts.DELETE);
+  }
+
+  function applySessionPathsFrom(value) {
+    return (Array.isArray(value) ? value : []).map(function (item) {
+      const record = objectRecord(item);
+      if (typeof item === "string") return candidateRelativePath(item);
+      return candidateRelativePath(record.path || record.display_path || record.repository_path);
+    }).filter(Boolean);
+  }
+
+  function applySessionReviewParts(run) {
+    const plan = currentApplyPlanForRun(run);
+    const review = objectRecord(applySessionReviewForPlan(plan));
+    const session = objectRecord(review.session);
+    const actions = objectRecord(review.actions);
+    const applyConfirmation = objectRecord(review.apply_confirmation);
+    const revertConfirmation = objectRecord(review.revert_confirmation);
+    return { plan, review, session, actions, applyConfirmation, revertConfirmation };
+  }
+
+  function renderApplySessionPaths(plan, review) {
+    clearChildren(elements.applySessionPaths);
+    const confirmation = objectRecord(review.apply_confirmation);
+    let records = [];
+    if (Array.isArray(confirmation.entries)) {
+      records = confirmation.entries;
+    } else if (Array.isArray(plan.entries)) {
+      records = plan.entries;
+    }
+    if (!records.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty-state";
+      empty.textContent = "No exact Apply path scope is available.";
+      elements.applySessionPaths.appendChild(empty);
+      return;
+    }
+    records.forEach(function (item) {
+      const record = objectRecord(item);
+      const disposition = applyPlanDisposition(record.disposition);
+      const card = document.createElement("article");
+      const path = document.createElement("strong");
+      const detail = document.createElement("span");
+      card.className = "apply-session-scope-card";
+      card.dataset.disposition = disposition.toLowerCase();
+      path.textContent = candidateRelativePath(
+        record.path || record.display_path || record.repository_path
+      );
+      detail.textContent = disposition + " · " + candidateOperation(record.operation);
+      card.appendChild(path);
+      card.appendChild(detail);
+      elements.applySessionPaths.appendChild(card);
+    });
+  }
+
+  function applySessionAdvancedEntryLine(entry) {
+    const record = objectRecord(entry);
+    const beforeMode = record.before_mode === null || record.before_mode === undefined
+      ? "none"
+      : String(record.before_mode);
+    const afterMode = record.after_mode === null || record.after_mode === undefined
+      ? "none"
+      : String(record.after_mode);
+    return candidateRelativePath(record.path || record.display_path || record.repository_path)
+      + " · " + candidateOperation(record.operation)
+      + " · " + applyPlanDisposition(record.disposition)
+      + " · before=" + boundedText(record.before_hash, "none", 200)
+      + " · after=" + boundedText(record.after_hash, "none", 200)
+      + " · mode=" + beforeMode + "→" + afterMode
+      + " · type=" + boundedText(record.file_type || record.content_kind, "unknown", 80)
+      + " · reverse=" + boundedText(record.reverse_operation, "none", 100);
+  }
+
+  function renderApplySessionAdvanced(session) {
+    const advanced = objectRecord(session.advanced);
+    const available = session.id !== null && session.id !== undefined;
+    elements.applySessionAdvancedCard.hidden = !available;
+    if (!available) return;
+    elements.applySessionRecordId.textContent = "#" + String(session.id);
+    elements.applySessionApplyState.textContent = applySessionStateLabel(session.apply_state, "None");
+    elements.applySessionRevertState.textContent = applySessionStateLabel(session.revert_state, "None");
+    elements.applySessionPlanRecord.textContent = boundedText(
+      advanced.apply_plan_id || session.apply_plan_id,
+      "None",
+      300
+    );
+    elements.applySessionPlanDigest.textContent = boundedText(advanced.apply_plan_digest, "None", 500);
+    elements.applySessionCandidateRecord.textContent = boundedText(
+      advanced.candidate_id,
+      "None",
+      300
+    );
+    elements.applySessionCandidateDigest.textContent = boundedText(advanced.candidate_digest, "None", 500);
+    elements.applySessionJournalDigest.textContent = boundedText(
+      advanced.journal_digest || session.journal_digest,
+      "None",
+      500
+    );
+    elements.applySessionDriftEvaluation.textContent = advanced.source_drift_evaluation_id === null
+      || advanced.source_drift_evaluation_id === undefined
+      ? "None"
+      : "#" + String(advanced.source_drift_evaluation_id);
+    elements.applySessionRepositoryFingerprint.textContent = boundedText(
+      advanced.repository_fingerprint,
+      "None",
+      500
+    );
+    elements.applySessionBranch.textContent = boundedText(advanced.branch, "None", 200);
+    elements.applySessionHead.textContent = boundedText(advanced.pre_apply_head, "None", 500);
+    elements.applySessionIndexFingerprint.textContent = boundedText(
+      advanced.pre_apply_index_fingerprint,
+      "None",
+      500
+    );
+    elements.applySessionCreatedAt.textContent = formatTime(session.created_at);
+    elements.applySessionApplyFinishedAt.textContent = formatTime(session.apply_finished_at);
+    elements.applySessionRevertFinishedAt.textContent = formatTime(session.revert_finished_at);
+    appendTextList(
+      elements.applySessionEntryDetails,
+      (Array.isArray(advanced.entries) ? advanced.entries : []).map(applySessionAdvancedEntryLine),
+      "No durable Apply journal entry metadata is available."
+    );
+    elements.applySessionIntegrity.textContent = sanitizedApplyPlanText(
+      diagnosticText(
+        advanced.integrity || session.integrity || {
+          apply: session.apply_integrity,
+          revert: session.revert_integrity
+        },
+        ""
+      ),
+      "No Apply or Revert integrity evidence is available.",
+      8000
+    );
+    elements.applySessionCompensation.textContent = sanitizedApplyPlanText(
+      diagnosticText(
+        advanced.compensation || session.compensation || {
+          apply: session.apply_compensation,
+          revert: session.revert_compensation
+        },
+        ""
+      ),
+      "No failure or compensation evidence is recorded.",
+      8000
+    );
+    elements.applySessionDiagnostics.textContent = sanitizedApplyPlanText(
+      diagnosticText(advanced.diagnostics || session.diagnostics, ""),
+      "No Apply session diagnostics are available.",
+      8000
+    );
+  }
+
+  function renderApplySessionReview(run) {
+    const parts = applySessionReviewParts(run);
+    const planReviewed = parts.plan.id !== null && parts.plan.id !== undefined;
+    const planId = planReviewed ? String(parts.plan.id) : "";
+    if (
+      elements.applyConfirmationDialog.open
+      && (!state.applyConfirmationContext
+        || String(state.applyConfirmationContext.plan_id) !== planId)
+    ) {
+      elements.applyConfirmationDialog.close();
+      state.applyConfirmationContext = null;
+    }
+    if (
+      elements.revertConfirmationDialog.open
+      && (!state.revertConfirmationContext
+        || String(state.revertConfirmationContext.session_id)
+          !== String(parts.session.id || ""))
+    ) {
+      elements.revertConfirmationDialog.close();
+      state.revertConfirmationContext = null;
+    }
+    elements.applySessionSection.hidden = !planReviewed;
+    if (!planReviewed) {
+      elements.applyAcceptedChanges.hidden = true;
+      elements.revertAppliedChanges.hidden = true;
+      elements.applySessionAdvancedCard.hidden = true;
+      return;
+    }
+    const planEntries = Array.isArray(parts.plan.entries) ? parts.plan.entries : [];
+    const counts = applySessionOperationCounts(
+      planEntries,
+      parts.applyConfirmation.operation_counts
+    );
+    const stateValue = applySessionDisplayState(parts.session);
+    const blockers = applyPlanTextList(parts.review.blockers, "");
+    const included = applySessionPathsFrom(
+      parts.applyConfirmation.included_paths
+      || planEntries.filter(function (entry) {
+        return applyPlanDisposition(objectRecord(entry).disposition) === "INCLUDED";
+      })
+    );
+    const excluded = applySessionPathsFrom(
+      parts.applyConfirmation.excluded_paths
+      || planEntries.filter(function (entry) {
+        return applyPlanDisposition(objectRecord(entry).disposition) !== "INCLUDED";
+      })
+    );
+    const unrelated = applySessionPathsFrom(
+      parts.applyConfirmation.unrelated_paths
+      || parts.review.unrelated_paths
+    );
+    const stagedCount = Number(
+      parts.applyConfirmation.staged_path_count !== undefined
+        ? parts.applyConfirmation.staged_path_count
+        : objectRecord(parts.plan.advanced).staged_path_count
+    );
+    const readinessLabel = sanitizedApplyPlanText(
+      parts.review.readiness_label
+      || parts.review.status_label
+      || parts.plan.status_label,
+      "Not evaluated",
+      220
+    );
+    const displayState = stateValue
+      ? applySessionStateLabel(stateValue)
+      : "Not started";
+
+    elements.applySessionReadiness.textContent = readinessLabel;
+    elements.applySessionState.textContent = displayState;
+    setApplyPlanStatusLabel(elements.applySessionReadiness, parts.plan.effective_state);
+    setApplySessionStatusLabel(elements.applySessionState, stateValue);
+    elements.applySessionDrift.textContent = sanitizedApplyPlanText(
+      parts.applyConfirmation.drift_status_label
+      || parts.applyConfirmation.drift_status
+      || parts.plan.drift_status_label,
+      "Not evaluated",
+      200
+    );
+    elements.applySessionOperationCounts.textContent = applySessionCountsText(counts);
+    elements.applySessionUnrelated.textContent = unrelated.length
+      ? String(unrelated.length) + " preserved — " + unrelated.join(", ")
+      : "None reported";
+    elements.applySessionIndexBoundary.textContent = Number.isFinite(stagedCount)
+      ? "Index observed · staged paths " + String(stagedCount)
+      : "Not evaluated";
+    elements.applySessionRevertAvailability.textContent = parts.actions.can_revert === true
+      ? "Available after separate confirmation"
+      : parts.session.revert_state
+        ? applySessionStateLabel(parts.session.revert_state, "Not available")
+        : "Not available";
+    elements.applySessionNextAction.textContent = sanitizedApplyPlanText(
+      parts.review.next_action,
+      parts.actions.can_apply === true
+        ? "Select Apply Accepted Changes."
+        : parts.actions.can_revert === true
+          ? "Select Revert Applied Changes."
+          : "Resolve the reported blocker.",
+      500
+    );
+    renderApplySessionPaths(parts.plan, parts.review);
+    appendTextList(
+      elements.applySessionBlockers,
+      blockers,
+      "No Apply or Revert blocker is reported."
+    );
+
+    elements.applyAcceptedChanges.hidden = parts.actions.can_apply !== true;
+    elements.revertAppliedChanges.hidden = parts.actions.can_revert !== true;
+    elements.applyAcceptedChanges.disabled = parts.actions.can_apply !== true
+      || state.pending.has("apply-accepted-changes");
+    elements.revertAppliedChanges.disabled = parts.actions.can_revert !== true
+      || state.pending.has("revert-applied-changes");
+    elements.applyAcceptedChanges.title = included.length
+      ? "Open final confirmation for " + String(included.length) + " INCLUDED path"
+        + (included.length === 1 ? "." : "s.")
+      : "Apply is unavailable.";
+    elements.revertAppliedChanges.title = excluded.length
+      ? "Open a separate confirmation to reverse this exact Apply session."
+      : "Open a separate confirmation to reverse this exact Apply session.";
+    renderApplySessionAdvanced(parts.session);
+  }
+
+  function normalizedPostApplyVerificationState(value) {
+    const normalized = String(value || "").trim().toUpperCase();
+    return Object.prototype.hasOwnProperty.call(
+      POST_APPLY_VERIFICATION_STATE_LABELS,
+      normalized
+    ) ? normalized : "";
+  }
+
+  function setPostApplyVerificationStatusLabel(element, value) {
+    const stateValue = normalizedPostApplyVerificationState(value);
+    element.classList.remove("is-success", "is-warning", "is-error");
+    if (stateValue === "READY" || stateValue === "PASSED") {
+      element.classList.add("is-success");
+    } else if (stateValue === "VERIFYING") {
+      element.classList.add("is-warning");
+    } else if (stateValue === "BLOCKED" || stateValue === "FAILED") {
+      element.classList.add("is-error");
+    }
+  }
+
+  function postApplyVerificationSafeLines(value) {
+    if (Array.isArray(value)) {
+      return value.map(function (item) {
+        const record = objectRecord(item);
+        if (Object.keys(record).length) {
+          const code = boundedText(record.code || record.name, "Boundary", 120);
+          const status = boundedText(record.status || record.result, "Not evaluated", 120);
+          const description = applyPlanSafeLine(
+            record.description || record.message || record.reason,
+            "No description",
+            800
+          );
+          return code + " · " + status + " — " + description;
+        }
+        return applyPlanSafeLine(item, "", 1200);
+      }).filter(Boolean);
+    }
+    const record = objectRecord(value);
+    return Object.keys(record).sort().map(function (key) {
+      const item = record[key];
+      const detail = typeof item === "boolean"
+        ? (item ? "Passed" : "Blocked")
+        : applyPlanSafeLine(item, "Not available", 1000);
+      return sanitizedApplyPlanText(humanStatus(key) + " — " + detail, "", 1200);
+    }).filter(Boolean);
+  }
+
+  function postApplyVerificationPathLine(value) {
+    if (typeof value === "string") return candidateRelativePath(value);
+    const record = objectRecord(value);
+    const path = candidateRelativePath(
+      record.path || record.repository_relative_path || record.repository_path
+    );
+    const operation = candidateOperation(record.operation || record.change_type);
+    const result = boundedText(
+      record.result || record.status || record.check_status,
+      "Not evaluated",
+      120
+    );
+    const expectedHash = boundedText(
+      record.expected_hash || record.after_hash || record.expected_sha256,
+      "none",
+      200
+    );
+    const observedHash = boundedText(
+      record.observed_hash || record.actual_hash || record.observed_sha256,
+      "none",
+      200
+    );
+    const expectedModeValue = record.expected_mode;
+    const observedModeValue = record.observed_mode;
+    const expectedMode = expectedModeValue === null || expectedModeValue === undefined
+      ? "none"
+      : String(expectedModeValue);
+    const observedMode = observedModeValue === null || observedModeValue === undefined
+      ? "none"
+      : String(observedModeValue);
+    return path + " · " + operation + " · " + result
+      + " · expected=" + expectedHash + " · observed=" + observedHash
+      + " · mode=" + expectedMode + "→" + observedMode;
+  }
+
+  function renderPostApplyVerificationFiles(target, entries, unexpected) {
+    clearChildren(target);
+    const records = Array.isArray(entries) ? entries : [];
+    if (!records.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty-state";
+      empty.textContent = unexpected
+        ? "No unexpected files were observed."
+        : "No applied paths have been verified.";
+      target.appendChild(empty);
+      return;
+    }
+    records.forEach(function (item) {
+      const record = objectRecord(item);
+      const operation = candidateOperation(record.operation || record.change_type);
+      const result = boundedText(
+        record.result || record.status || record.check_status,
+        unexpected ? "Unexpected" : "Not evaluated",
+        160
+      );
+      const card = document.createElement("article");
+      const heading = document.createElement("div");
+      const path = document.createElement("strong");
+      const operationLabel = document.createElement("span");
+      const detail = document.createElement("p");
+      card.className = "post-apply-verification-file-item";
+      card.dataset.operation = operation.toLowerCase();
+      card.dataset.result = String(result).toLowerCase();
+      heading.className = "post-apply-verification-file-heading";
+      path.textContent = candidateRelativePath(
+        record.path || record.repository_relative_path || record.repository_path || item
+      );
+      operationLabel.className = "candidate-operation";
+      operationLabel.textContent = operation;
+      detail.textContent = sanitizedApplyPlanText(
+        result,
+        unexpected ? "Unexpected repository path" : "Not evaluated",
+        500
+      );
+      heading.appendChild(path);
+      heading.appendChild(operationLabel);
+      card.appendChild(heading);
+      card.appendChild(detail);
+      target.appendChild(card);
+    });
+  }
+
+  function postApplyVerificationBinding(id, digest) {
+    const identifier = id === null || id === undefined || id === ""
+      ? "None"
+      : "#" + String(id);
+    const fingerprint = boundedText(digest, "", 500);
+    return fingerprint ? identifier + " · " + fingerprint : identifier;
+  }
+
+  function renderPostApplyVerificationAdvanced(verification) {
+    const available = verification.id !== null && verification.id !== undefined;
+    elements.postApplyVerificationAdvancedCard.hidden = !available;
+    if (!available) return;
+    const advanced = objectRecord(verification.advanced);
+    elements.postApplyVerificationRecordId.textContent = "#" + String(verification.id);
+    elements.postApplyVerificationPolicyVersion.textContent = boundedText(
+      advanced.policy_version,
+      "None",
+      160
+    );
+    elements.postApplyVerificationDigest.textContent = boundedText(
+      advanced.verification_digest || verification.verification_digest,
+      "None",
+      500
+    );
+    elements.postApplyObservationDigest.textContent = boundedText(
+      advanced.observation_digest,
+      "None",
+      500
+    );
+    elements.postApplyVerificationSessionBinding.textContent = postApplyVerificationBinding(
+      advanced.apply_session_id,
+      advanced.apply_session_digest
+    );
+    elements.postApplyVerificationPlanBinding.textContent = postApplyVerificationBinding(
+      advanced.apply_plan_id,
+      advanced.apply_plan_digest
+    );
+    elements.postApplyVerificationCandidateBinding.textContent = postApplyVerificationBinding(
+      advanced.candidate_id,
+      advanced.candidate_digest
+    );
+    elements.postApplyVerificationRepositoryIdentity.textContent = sanitizedApplyPlanText(
+      advanced.repository_identity,
+      "None",
+      800
+    );
+    elements.postApplyVerificationRepositoryFingerprints.textContent = sanitizedApplyPlanText(
+      diagnosticText(
+        advanced.repository_fingerprints || advanced.repository_fingerprint,
+        ""
+      ),
+      "None",
+      1600
+    );
+    elements.postApplyVerificationExpectedBranch.textContent = sanitizedApplyPlanText(
+      advanced.expected_branch,
+      "None",
+      240
+    );
+    elements.postApplyVerificationObservedBranch.textContent = sanitizedApplyPlanText(
+      advanced.observed_branch,
+      "None",
+      240
+    );
+    elements.postApplyVerificationExpectedHead.textContent = boundedText(
+      advanced.expected_head,
+      "None",
+      500
+    );
+    elements.postApplyVerificationObservedHead.textContent = boundedText(
+      advanced.observed_head,
+      "None",
+      500
+    );
+    elements.postApplyVerificationSourceSnapshot.textContent = boundedText(
+      advanced.source_snapshot_identity,
+      "None",
+      500
+    );
+    elements.postApplyVerificationCreatedAt.textContent = formatTime(verification.created_at);
+    appendTextList(
+      elements.postApplyVerificationExpectedPaths,
+      (Array.isArray(advanced.expected_paths) ? advanced.expected_paths : [])
+        .map(postApplyVerificationPathLine),
+      "No expected path evidence is available."
+    );
+    appendTextList(
+      elements.postApplyVerificationObservedPaths,
+      (Array.isArray(advanced.observed_paths) ? advanced.observed_paths : [])
+        .map(postApplyVerificationPathLine),
+      "No observed path evidence is available."
+    );
+    elements.postApplyVerificationDiagnostics.textContent = sanitizedApplyPlanText(
+      diagnosticText(advanced.diagnostics, ""),
+      "No Post-Apply Verification diagnostics are available.",
+      8000
+    );
+  }
+
+  function renderPostApplyVerification(run) {
+    const parts = applySessionReviewParts(run);
+    const applySession = objectRecord(parts.session);
+    const validContext = postApplyVerificationContextAvailable(applySession);
+    elements.postApplyVerificationSection.hidden = !validContext;
+    if (!validContext) {
+      elements.verifyAppliedChanges.hidden = true;
+      elements.postApplyVerificationAdvancedCard.hidden = true;
+      return;
+    }
+    const review = objectRecord(postApplyVerificationReviewForSession(applySession));
+    const eligibility = objectRecord(review.eligibility);
+    const verification = objectRecord(review.verification);
+    const actions = objectRecord(review.actions);
+    const status = normalizedPostApplyVerificationState(
+      verification.status || eligibility.status
+    ) || "READY";
+    const changedFiles = Array.isArray(verification.changed_files)
+      ? verification.changed_files
+      : [];
+    const unexpectedFiles = Array.isArray(verification.unexpected_files)
+      ? verification.unexpected_files
+      : [];
+    const tests = Array.isArray(verification.tests) ? verification.tests : [];
+    const boundaryLines = postApplyVerificationSafeLines(verification.boundaries).map(
+      function (line) {
+        if (line.indexOf("Phase 18.4A remains separately gated") !== -1) {
+          return "Stage and Local Commit are available only through separate explicit Owner controls after a PASS.";
+        }
+        if (line.indexOf("No Stage, Commit, Push") === 0) {
+          return "Post-Apply Verification itself performs no Stage, Commit, Push, merge, rebase, tag, branch, or remote change.";
+        }
+        return line;
+      }
+    );
+    const blockerLines = applyPlanTextList(eligibility.blockers, "")
+      .concat(applyPlanTextList(verification.blockers, ""));
+    const passedTests = tests.filter(function (item) {
+      return ["PASS", "PASSED"].indexOf(
+        String(objectRecord(item).status || "").toUpperCase()
+      ) !== -1;
+    }).length;
+    const canVerify = actions.can_verify === true || eligibility.can_verify === true;
+
+    elements.postApplyVerificationStatus.textContent = sanitizedApplyPlanText(
+      verification.status_label
+      || eligibility.status_label
+      || POST_APPLY_VERIFICATION_STATE_LABELS[status],
+      POST_APPLY_VERIFICATION_STATE_LABELS[status],
+      240
+    );
+    setPostApplyVerificationStatusLabel(elements.postApplyVerificationStatus, status);
+    elements.postApplyVerificationChangedSummary.textContent = changedFiles.length
+      ? String(changedFiles.length) + " applied path" + (changedFiles.length === 1 ? "" : "s")
+      : verification.id ? "No applied paths reported" : "Not verified";
+    elements.postApplyVerificationUnexpectedSummary.textContent = verification.id
+      ? unexpectedFiles.length
+        ? String(unexpectedFiles.length) + " unexpected path"
+          + (unexpectedFiles.length === 1 ? "" : "s")
+        : "None"
+      : "Not verified";
+    elements.postApplyVerificationTestsSummary.textContent = tests.length
+      ? String(passedTests) + " of " + String(tests.length) + " passed"
+      : verification.id ? "No tests reported" : "Not run";
+    elements.postApplyVerificationBoundariesSummary.textContent = boundaryLines.length
+      ? String(boundaryLines.length) + " boundary check"
+        + (boundaryLines.length === 1 ? "" : "s")
+      : verification.id ? "No boundary evidence reported" : "Not verified";
+    elements.postApplyVerificationNextAction.textContent = sanitizedApplyPlanText(
+      status === "PASSED"
+        ? "Review Commit Plan."
+        : verification.next_action || eligibility.next_action,
+      canVerify
+        ? "Select Verify Applied Changes."
+        : "Review the reported Post-Apply Verification blocker.",
+      700
+    );
+    renderPostApplyVerificationFiles(
+      elements.postApplyVerificationChangedFiles,
+      changedFiles,
+      false
+    );
+    renderPostApplyVerificationFiles(
+      elements.postApplyVerificationUnexpectedFiles,
+      unexpectedFiles,
+      true
+    );
+    appendTextList(
+      elements.postApplyVerificationTests,
+      tests.map(function (item) {
+        const record = objectRecord(item);
+        const code = boundedText(record.code, "Check", 120);
+        const description = applyPlanSafeLine(
+          record.description || record.message,
+          "No description",
+          800
+        );
+        const testStatus = boundedText(record.status, "Not evaluated", 120);
+        return code + " · " + testStatus + " — " + description;
+      }),
+      verification.id
+        ? "No post-Apply test evidence was reported."
+        : "Select Verify Applied Changes to run the planned checks."
+    );
+    appendTextList(
+      elements.postApplyVerificationBoundaries,
+      boundaryLines,
+      verification.id
+        ? "No repository boundary evidence was reported."
+        : "Select Verify Applied Changes to inspect repository boundaries."
+    );
+    appendTextList(
+      elements.postApplyVerificationBlockers,
+      blockerLines,
+      "No Post-Apply Verification blocker is reported."
+    );
+    elements.verifyAppliedChanges.hidden = false;
+    elements.verifyAppliedChanges.disabled = !canVerify
+      || state.pending.has("verify-applied-changes");
+    elements.verifyAppliedChanges.title = canVerify
+      ? "Run a read-only verification of this exact Apply session."
+      : "Post-Apply Verification is blocked; review the reported evidence.";
+    renderPostApplyVerificationAdvanced(verification);
+  }
+
+  function commitBuilderParts(run) {
+    const verification = currentPassedPostApplyVerification(run);
+    const review = objectRecord(commitBuilderReviewForVerification(verification));
+    const plan = objectRecord(review.plan || review.commit_plan);
+    return {
+      verification: objectRecord(verification),
+      review: review,
+      eligibility: objectRecord(review.eligibility),
+      plan: plan,
+      stage: objectRecord(review.stage || review.stage_execution || plan.stage),
+      commit: objectRecord(
+        review.commit || review.local_commit || review.commit_execution || plan.commit
+      ),
+      actions: Object.assign({}, objectRecord(plan.actions), objectRecord(review.actions))
+    };
+  }
+
+  function commitBuilderEntries(record, included) {
+    const value = objectRecord(record);
+    const direct = included
+      ? value.approved_files || value.included_files || value.included_paths
+        || value.verified_paths
+      : value.excluded_files || value.excluded_paths;
+    if (Array.isArray(direct)) return direct;
+    const entries = Array.isArray(value.entries) ? value.entries : [];
+    return entries.filter(function (item) {
+      const disposition = String(objectRecord(item).disposition || "INCLUDED").toUpperCase();
+      return included ? disposition === "INCLUDED" : disposition !== "INCLUDED";
+    });
+  }
+
+  function commitBuilderPath(item) {
+    const record = objectRecord(item);
+    return candidateRelativePath(
+      record.path || record.repository_path || record.repository_relative_path || item
+    );
+  }
+
+  function renderCommitBuilderFiles(target, entries, excluded) {
+    clearChildren(target);
+    const records = Array.isArray(entries) ? entries : [];
+    if (!records.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty-state";
+      empty.textContent = excluded
+        ? "No files are excluded from this Commit Plan."
+        : "No approved staging paths are available.";
+      target.appendChild(empty);
+      return;
+    }
+    records.forEach(function (item) {
+      const record = objectRecord(item);
+      const card = document.createElement("article");
+      const heading = document.createElement("div");
+      const path = document.createElement("strong");
+      const operation = document.createElement("span");
+      const detail = document.createElement("p");
+      card.className = "commit-builder-file-item";
+      heading.className = "commit-builder-file-heading";
+      path.textContent = commitBuilderPath(item);
+      operation.className = "candidate-operation";
+      operation.textContent = candidateOperation(record.operation || record.change_type);
+      detail.textContent = sanitizedApplyPlanText(
+        record.reason || record.result || record.status,
+        excluded ? "Excluded from staging" : "Approved for staging",
+        500
+      );
+      heading.appendChild(path);
+      heading.appendChild(operation);
+      card.appendChild(heading);
+      card.appendChild(detail);
+      target.appendChild(card);
+    });
+  }
+
+  function commitBuilderRecordId(record) {
+    const value = objectRecord(record);
+    return value.id || value.plan_id || value.stage_id || value.stage_execution_id
+      || value.commit_id || value.commit_execution_id || null;
+  }
+
+  function commitBuilderRecordDigest(record) {
+    const value = objectRecord(record);
+    const advanced = objectRecord(value.advanced);
+    return value.digest || value.plan_digest || value.stage_digest
+      || value.commit_digest || value.execution_digest || value.receipt_digest
+      || advanced.plan_digest || advanced.stage_digest || advanced.receipt_digest || "";
+  }
+
+  function commitBuilderState(parts) {
+    const serverState = String(parts.review.action_state || "").toUpperCase();
+    if (["REVIEW_REQUIRED", "READY_TO_STAGE", "STAGING_BLOCKED", "READY_TO_COMMIT",
+      "COMMIT_BLOCKED", "COMMITTED"].indexOf(serverState) !== -1) return serverState;
+    const commitStatus = String(parts.commit.status || parts.commit.state || "").toUpperCase();
+    const stageStatus = String(parts.stage.status || parts.stage.state || "").toUpperCase();
+    const planStatus = String(parts.plan.status || parts.plan.state || "").toUpperCase();
+    const eligibilityStatus = String(parts.eligibility.status || "").toUpperCase();
+    if (["BLOCKED", "FAILED", "INTEGRITY_BLOCKED"].indexOf(commitStatus) !== -1) {
+      return commitStatus;
+    }
+    if (commitStatus === "COMMITTED") return "COMMITTED";
+    if (["BLOCKED", "FAILED", "INTEGRITY_BLOCKED"].indexOf(stageStatus) !== -1) {
+      return stageStatus;
+    }
+    if (["BLOCKED", "FAILED", "EXPIRED"].indexOf(planStatus) !== -1) return planStatus;
+    if (["BLOCKED", "EXPIRED"].indexOf(eligibilityStatus) !== -1) {
+      return eligibilityStatus;
+    }
+    if (commitStatus === "COMMITTING") return "COMMITTING";
+    if (commitBuilderRecordId(parts.commit) && !commitStatus) return "INTEGRITY_BLOCKED";
+    if (stageStatus === "STAGED") return "STAGED";
+    if (stageStatus === "STAGING") return "STAGING";
+    if (commitBuilderRecordId(parts.stage) && !stageStatus) return "INTEGRITY_BLOCKED";
+    if (commitBuilderRecordId(parts.plan)) return "READY_TO_STAGE";
+    return "REVIEW_REQUIRED";
+  }
+
+  function renderCommitBuilderAdvanced(parts) {
+    const available = Boolean(
+      commitBuilderRecordId(parts.plan)
+      || commitBuilderRecordId(parts.stage)
+      || commitBuilderRecordId(parts.commit)
+    );
+    elements.commitBuilderAdvancedCard.hidden = !available;
+    if (!available) return;
+    const planAdvanced = objectRecord(parts.plan.advanced);
+    const stageAdvanced = objectRecord(parts.stage.advanced);
+    const commitAdvanced = objectRecord(parts.commit.advanced);
+    const reviewAdvanced = objectRecord(parts.review.advanced);
+    const boundaryEvidence = objectRecord(planAdvanced.boundary_evidence);
+    const boundaryIndex = objectRecord(boundaryEvidence.index);
+    elements.commitPlanRecordId.textContent = postApplyVerificationBinding(
+      commitBuilderRecordId(parts.plan),
+      ""
+    );
+    elements.commitPlanPolicyVersion.textContent = boundedText(
+      planAdvanced.policy_version || parts.plan.policy_version,
+      "None",
+      160
+    );
+    elements.commitPlanDigest.textContent = boundedText(
+      commitBuilderRecordDigest(parts.plan),
+      "None",
+      500
+    );
+    elements.commitPlanVerificationBinding.textContent = postApplyVerificationBinding(
+      parts.review.post_apply_verification_id || parts.verification.id,
+      planAdvanced.verification_digest || parts.verification.verification_digest
+    );
+    elements.commitPlanApplySessionBinding.textContent = postApplyVerificationBinding(
+      planAdvanced.apply_session_id,
+      planAdvanced.apply_session_digest || planAdvanced.journal_digest
+    );
+    elements.commitPlanRepositoryIdentity.textContent = sanitizedApplyPlanText(
+      planAdvanced.repository_identity || reviewAdvanced.repository_identity,
+      "None",
+      800
+    );
+    elements.commitPlanBranch.textContent = sanitizedApplyPlanText(
+      planAdvanced.branch || reviewAdvanced.branch,
+      "None",
+      240
+    );
+    elements.commitPlanHead.textContent = boundedText(
+      planAdvanced.base_head || planAdvanced.head || planAdvanced.expected_head
+        || reviewAdvanced.head,
+      "None",
+      500
+    );
+    elements.commitPlanIndex.textContent = boundedText(
+      planAdvanced.index_fingerprint || boundaryIndex.fingerprint
+        || reviewAdvanced.index_fingerprint,
+      "None",
+      500
+    );
+    elements.stageSessionRecordId.textContent = postApplyVerificationBinding(
+      commitBuilderRecordId(parts.stage),
+      ""
+    );
+    elements.stageSessionDigest.textContent = boundedText(
+      commitBuilderRecordDigest(parts.stage),
+      "None",
+      500
+    );
+    const stagedPaths = commitBuilderEntries(parts.stage, true);
+    elements.stageSessionPathCount.textContent = String(
+      parts.stage.staged_path_count === undefined
+        ? stagedPaths.length
+        : parts.stage.staged_path_count
+    );
+    elements.localCommitRecordId.textContent = postApplyVerificationBinding(
+      commitBuilderRecordId(parts.commit),
+      ""
+    );
+    elements.localCommitSha.textContent = boundedText(
+      parts.commit.commit_oid || parts.commit.commit_sha
+        || commitAdvanced.commit_oid || commitAdvanced.commit_sha,
+      "None",
+      500
+    );
+    elements.localCommitParentSha.textContent = boundedText(
+      parts.commit.parent_oid || parts.commit.parent_sha
+        || commitAdvanced.parent_oid || commitAdvanced.parent_sha
+        || planAdvanced.base_head,
+      "None",
+      500
+    );
+    elements.localCommitMessageDigest.textContent = boundedText(
+      parts.commit.message_digest || commitAdvanced.message_digest,
+      "None",
+      500
+    );
+    elements.commitBuilderCreatedAt.textContent = formatTime(
+      parts.commit.created_at || parts.stage.created_at || parts.plan.created_at
+    );
+    const identities = reviewAdvanced.approved_path_identities
+      || planAdvanced.approved_path_identities
+      || stageAdvanced.staged_path_identities;
+    appendTextList(
+      elements.commitBuilderPathEvidence,
+      Array.isArray(identities) ? identities.map(function (identity) {
+        return boundedText(identity, "Unavailable", 500);
+      }) : [],
+      "No Commit Plan path identities are available."
+    );
+    elements.commitBuilderDiagnostics.textContent = sanitizedApplyPlanText(
+      diagnosticText(
+        parts.commit.diagnostics || parts.stage.diagnostics
+          || parts.plan.diagnostics || reviewAdvanced.diagnostics,
+        ""
+      ),
+      "No Stage or local Commit diagnostics are available.",
+      8000
+    );
+  }
+
+  function renderCommitBuilder(run) {
+    const parts = commitBuilderParts(run);
+    const validContext = Boolean(parts.verification.id);
+    elements.commitBuilderSection.hidden = !validContext;
+    if (!validContext) {
+      elements.reviewCommitPlan.hidden = true;
+      elements.stageApprovedFiles.hidden = true;
+      elements.createLocalCommit.hidden = true;
+      elements.commitBuilderAdvancedCard.hidden = true;
+      return;
+    }
+    const stateValue = commitBuilderState(parts);
+    const approved = commitBuilderEntries(parts.plan, true);
+    const excluded = commitBuilderEntries(parts.plan, false);
+    const staged = commitBuilderEntries(parts.stage, true);
+    const blockers = applyPlanTextList(parts.eligibility.blockers, "")
+      .concat(applyPlanTextList(parts.review.blockers, ""))
+      .concat(applyPlanTextList(parts.plan.blockers, ""))
+      .concat(applyPlanTextList(parts.stage.blockers, ""))
+      .concat(applyPlanTextList(parts.commit.blockers, ""));
+    const boundaries = postApplyVerificationSafeLines(
+      parts.review.boundaries || parts.plan.boundaries
+    );
+    const planId = commitBuilderRecordId(parts.plan);
+    const stageId = commitBuilderRecordId(parts.stage);
+    const commitId = commitBuilderRecordId(parts.commit);
+    const stageStatus = String(parts.stage.status || parts.stage.state || "").toUpperCase();
+    const commitStatus = String(parts.commit.status || parts.commit.state || "").toUpperCase();
+    const planStatus = String(parts.plan.status || parts.plan.state || "").toUpperCase();
+    const eligibilityStatus = String(parts.eligibility.status || "").toUpperCase();
+    const canReview = parts.actions.can_review_commit_plan === true
+      || parts.eligibility.can_review === true;
+    const canStage = parts.actions.can_stage_approved_files === true
+      || parts.actions.can_stage === true;
+    const canCommit = parts.actions.can_create_local_commit === true
+      || parts.actions.can_commit === true;
+    const planAdvanced = objectRecord(parts.plan.advanced);
+    const validations = Array.isArray(parts.plan.validation)
+      ? parts.plan.validation
+      : [];
+    const passedValidations = validations.filter(function (item) {
+      return ["PASS", "PASSED"].indexOf(
+        String(objectRecord(item).status || "").toUpperCase()
+      ) !== -1;
+    }).length;
+
+    elements.commitBuilderStatus.textContent = sanitizedApplyPlanText(
+      COMMIT_BUILDER_STATE_LABELS[stateValue]
+        || parts.commit.status_label || parts.stage.status_label
+        || parts.plan.status_label || parts.eligibility.status_label,
+      COMMIT_BUILDER_STATE_LABELS[stateValue],
+      240
+    );
+    setStatusLabel(elements.commitBuilderStatus, elements.commitBuilderStatus.textContent);
+    elements.commitPlanSummary.textContent = planId
+      ? "Reviewed · " + String(planId)
+      : "Not reviewed";
+    elements.commitApprovedSummary.textContent = planId
+      ? String(approved.length) + " approved path" + (approved.length === 1 ? "" : "s")
+      : "Not reviewed";
+    elements.commitExcludedSummary.textContent = planId
+      ? excluded.length
+        ? String(excluded.length) + " excluded path" + (excluded.length === 1 ? "" : "s")
+        : "None"
+      : "Not reviewed";
+    elements.commitBuilderBranch.textContent = planId
+      ? sanitizedApplyPlanText(planAdvanced.branch, "Unavailable", 240)
+      : "Not reviewed";
+    elements.commitBuilderHead.textContent = planId
+      ? boundedText(planAdvanced.base_head, "Unavailable", 500)
+      : "Not reviewed";
+    elements.commitBuilderSubject.textContent = planId
+      ? sanitizedApplyPlanText(parts.plan.subject, "Unavailable", 200)
+      : "Not reviewed";
+    elements.commitBuilderValidation.textContent = planId
+      ? validations.length
+        ? String(passedValidations) + " of " + String(validations.length) + " passed"
+        : "No validation evidence"
+      : "Not reviewed";
+    elements.commitStageSummary.textContent = !stageId
+      ? "Not started"
+      : stageStatus === "STAGED"
+        ? staged.length
+          ? String(staged.length) + " approved path" + (staged.length === 1 ? "" : "s") + " staged"
+          : String(parts.stage.staged_path_count || 0) + " approved paths staged"
+        : stageStatus === "STAGING"
+          ? "STAGE RECOVERY REQUIRED"
+          : stageStatus === "FAILED"
+            ? "Failed"
+            : ["BLOCKED", "INTEGRITY_BLOCKED"].indexOf(stageStatus) !== -1
+              ? "Blocked"
+              : "Not settled";
+    elements.localCommitSummary.textContent = !commitId
+      ? "Not created"
+      : commitStatus === "COMMITTED"
+        ? "Created · " + boundedText(
+          parts.commit.commit_oid || parts.commit.commit_sha,
+          String(commitId),
+          200
+        )
+        : commitStatus === "COMMITTING"
+          ? "COMMIT RECOVERY REQUIRED"
+          : commitStatus === "FAILED"
+            ? "Failed"
+            : ["BLOCKED", "INTEGRITY_BLOCKED"].indexOf(commitStatus) !== -1
+              ? "Blocked"
+              : "Not settled";
+    let nextAction = "";
+    if (["FAILED", "INTEGRITY_BLOCKED"].indexOf(commitStatus) !== -1) {
+      nextAction = parts.commit.next_action;
+    } else if (["FAILED", "INTEGRITY_BLOCKED"].indexOf(stageStatus) !== -1) {
+      nextAction = parts.stage.next_action;
+    } else if (commitStatus === "COMMITTED") {
+      nextAction = "Review Push readiness.";
+    } else if (
+      ["BLOCKED", "EXPIRED"].indexOf(planStatus) !== -1
+      || ["BLOCKED", "EXPIRED"].indexOf(eligibilityStatus) !== -1
+    ) {
+      nextAction = parts.eligibility.next_action || parts.plan.next_action
+        || parts.review.next_action;
+    } else {
+      nextAction = parts.commit.next_action || parts.stage.next_action
+        || parts.plan.next_action || parts.eligibility.next_action
+        || parts.review.next_action;
+    }
+    elements.commitBuilderNextAction.textContent = sanitizedApplyPlanText(
+      nextAction,
+      ["BLOCKED", "FAILED", "INTEGRITY_BLOCKED", "EXPIRED"].indexOf(stateValue) !== -1
+        ? "Review blocker evidence."
+        : commitStatus === "COMMITTED"
+        ? "Review Push readiness."
+        : canCommit
+          ? "Select Create Local Commit."
+          : canStage
+            ? "Select Stage Approved Files."
+            : "Select Review Commit Plan.",
+      700
+    );
+    renderCommitBuilderFiles(elements.commitApprovedFiles, approved, false);
+    renderCommitBuilderFiles(elements.commitExcludedFiles, excluded, true);
+    appendTextList(
+      elements.commitBuilderBoundaries,
+      boundaries,
+      "Each Stage and local Commit mutation requires a separate Owner action. This section never performs Push."
+    );
+    appendTextList(
+      elements.commitBuilderBlockers,
+      blockers,
+      "No Stage or local Commit blocker is reported."
+    );
+    if (!planId && !elements.commitPlanSubject.value.trim()) {
+      const task = selectedTask();
+      const taskName = task ? task.title || task.development_task : "approved changes";
+      const candidate = "Apply " + String(taskName || "approved changes");
+      elements.commitPlanSubject.value = utf8ByteLength(candidate) <= 180
+        ? candidate
+        : "Apply approved task changes";
+    }
+    if (planId) {
+      elements.commitPlanSubject.value = boundedText(parts.plan.subject, elements.commitPlanSubject.value, 200);
+      elements.commitPlanBody.value = boundedText(parts.plan.body, elements.commitPlanBody.value, 4000);
+    }
+    elements.commitMessageFields.hidden = Boolean(planId);
+    elements.commitPlanSubject.disabled = Boolean(planId);
+    elements.commitPlanBody.disabled = Boolean(planId);
+    elements.reviewCommitPlan.hidden = false;
+    elements.reviewCommitPlan.disabled = !canReview
+      || state.pending.has("review-commit-plan");
+    elements.stageApprovedFiles.hidden = false;
+    elements.stageApprovedFiles.disabled = !canStage
+      || state.pending.has("stage-approved-files");
+    elements.createLocalCommit.hidden = false;
+    elements.createLocalCommit.disabled = !canCommit
+      || state.pending.has("create-local-commit");
+    renderCommitBuilderAdvanced(parts);
+  }
+
+  function pushDeliveryParts(run) {
+    const commitParts = commitBuilderParts(run);
+    const commit = objectRecord(currentCommittedLocalCommit(run));
+    const review = objectRecord(pushDeliveryReviewForLocalCommit(commit));
+    return {
+      commitParts: commitParts,
+      commit: commit,
+      review: review,
+      readiness: objectRecord(review.readiness),
+      execution: objectRecord(review.push_execution),
+      result: objectRecord(review.delivery_result),
+      actions: objectRecord(review.actions)
+    };
+  }
+
+  function pushDeliverySummary(value, fallback, maximum) {
+    if (value === true) return "Yes";
+    if (value === false) return "No";
+    if (typeof value === "string" || typeof value === "number") {
+      return sanitizedApplyPlanText(String(value), fallback, maximum || 700);
+    }
+    const record = objectRecord(value);
+    return sanitizedApplyPlanText(
+      record.status_label || record.outcome_label || record.terminal_status
+        || record.summary || record.result || record.verdict
+        || record.status || record.state || record.id,
+      fallback,
+      maximum || 700
+    );
+  }
+
+  function pushAheadBehind(value) {
+    const record = objectRecord(value);
+    const ahead = record.ahead;
+    const behind = record.behind;
+    return ahead === undefined || ahead === null
+      || behind === undefined || behind === null
+      ? "Not evaluated"
+      : String(ahead) + " / " + String(behind);
+  }
+
+  function pushCleanliness(value) {
+    const record = objectRecord(value);
+    if (record.worktree_clean === undefined || record.worktree_clean === null
+        || record.index_clean === undefined || record.index_clean === null) {
+      return "Not evaluated";
+    }
+    const staged = record.staged_path_count === undefined
+        || record.staged_path_count === null
+      ? "unknown"
+      : String(record.staged_path_count);
+    return "Worktree " + (record.worktree_clean === true ? "clean" : "dirty")
+      + " · index " + (record.index_clean === true ? "clean" : "dirty")
+      + " · staged paths " + staged;
+  }
+
+  function pushCurrentBoundary(parts) {
+    const current = Object.assign({}, parts.execution, parts.readiness);
+    const reconciliation = objectRecord(parts.result.reconciliation);
+    ["ahead", "behind", "worktree_clean", "index_clean", "staged_path_count"]
+      .forEach(function (key) {
+        if (reconciliation[key] !== undefined && reconciliation[key] !== null) {
+          current[key] = reconciliation[key];
+        }
+      });
+    return current;
+  }
+
+  function pushDeliveryState(parts) {
+    const stateValue = String(
+      parts.review.action_state || parts.execution.state
+        || parts.readiness.status || "PUSH_BLOCKED"
+    ).toUpperCase();
+    return Object.prototype.hasOwnProperty.call(PUSH_DELIVERY_STATE_LABELS, stateValue)
+      ? stateValue
+      : "PUSH_BLOCKED";
+  }
+
+  function pushDeliveryBlockers(parts) {
+    return applyPlanTextList(parts.execution.blockers, "")
+      .concat(applyPlanTextList(parts.readiness.blockers, ""))
+      .concat(applyPlanTextList(parts.review.blockers, ""));
+  }
+
+  function deliveryStagedPaths(value) {
+    if (!Array.isArray(value)) return pushDeliverySummary(value, "Not available", 1000);
+    if (!value.length) return "0 paths";
+    const paths = value.map(function (item) {
+      const record = objectRecord(item);
+      return candidateRelativePath(record.path || record.repository_path || item);
+    });
+    return String(paths.length) + " path" + (paths.length === 1 ? "" : "s")
+      + " · " + paths.join(", ");
+  }
+
+  function renderPushDeliveryAdvanced(parts) {
+    const available = Boolean(pushDeliveryReviewBinding(parts.review));
+    elements.pushDeliveryAdvancedCard.hidden = !available;
+    if (!available) return;
+    const executionAdvanced = objectRecord(parts.execution.advanced);
+    const resultAdvanced = objectRecord(parts.result.advanced);
+    const readinessAdvanced = objectRecord(parts.readiness.advanced);
+    const applyResult = objectRecord(parts.result.apply_result);
+    const applyPlanResult = objectRecord(applyResult.apply_plan);
+    const candidateResult = objectRecord(parts.result.delivery_candidate);
+    const verificationResult = objectRecord(parts.result.post_apply_verification);
+    const verificationAdvanced = objectRecord(verificationResult.advanced);
+    elements.pushCommitBinding.textContent = postApplyVerificationBinding(
+      pushDeliveryReviewBinding(parts.review),
+      parts.commit.receipt_digest || commitBuilderRecordDigest(parts.commit)
+    );
+    elements.pushCandidateBinding.textContent = postApplyVerificationBinding(
+      resultAdvanced.delivery_candidate_id || resultAdvanced.candidate_id,
+      resultAdvanced.candidate_digest || candidateResult.candidate_digest
+    );
+    elements.pushApplyPlanBinding.textContent = postApplyVerificationBinding(
+      resultAdvanced.apply_plan_id || applyResult.plan_id || applyResult.apply_plan_id
+        || applyPlanResult.id,
+      resultAdvanced.apply_plan_digest || applyResult.plan_digest
+        || applyPlanResult.digest
+    );
+    elements.pushVerificationBinding.textContent = postApplyVerificationBinding(
+      resultAdvanced.post_apply_verification_id || resultAdvanced.verification_id,
+      resultAdvanced.verification_digest || verificationResult.verification_digest
+        || verificationAdvanced.verification_digest
+    );
+    elements.pushPreflightRecordId.textContent = postApplyVerificationBinding(
+      parts.execution.id,
+      ""
+    );
+    elements.pushPreflightDigest.textContent = boundedText(
+      parts.execution.confirmation_digest,
+      "None",
+      500
+    );
+    elements.pushAttemptRecordId.textContent = postApplyVerificationBinding(
+      parts.execution.attempt_id || parts.execution.id,
+      ""
+    );
+    elements.pushAttemptDigest.textContent = boundedText(
+      parts.execution.receipt_digest || executionAdvanced.receipt_digest,
+      "None",
+      500
+    );
+    elements.pushExactRefspec.textContent = sanitizedApplyPlanText(
+      parts.execution.refspec || executionAdvanced.refspec,
+      "None",
+      800
+    );
+    elements.pushRemoteFingerprint.textContent = boundedText(
+      executionAdvanced.remote_config_fingerprint
+        || executionAdvanced.remote_fingerprint || readinessAdvanced.remote_fingerprint,
+      "None",
+      500
+    );
+    elements.pushRepositoryFingerprint.textContent = boundedText(
+      executionAdvanced.repository_locator_fingerprint
+        || readinessAdvanced.repository_locator_fingerprint
+        || resultAdvanced.repository_locator_fingerprint,
+      "None",
+      500
+    );
+    elements.pushSanitizedDiagnostics.textContent = sanitizedApplyPlanText(
+      diagnosticText(
+        parts.execution.diagnostics || parts.result.diagnostics
+          || executionAdvanced.diagnostics || executionAdvanced.command_evidence
+          || executionAdvanced.failure_category || resultAdvanced.diagnostics,
+        ""
+      ),
+      "No Push diagnostics are available.",
+      8000
+    );
+  }
+
+  function renderDeliveryResult(parts, commitId) {
+    const visible = state.pushDeliveryResultVisible.has(String(commitId));
+    elements.deliveryResult.hidden = !visible;
+    if (!visible) return;
+    const result = parts.result;
+    const reconciliation = objectRecord(result.reconciliation);
+    const approved = String(
+      reconciliation.approved_commit_sha || parts.execution.local_commit_sha
+        || parts.readiness.local_commit_sha || parts.commit.commit_oid || ""
+    );
+    const localHead = String(reconciliation.local_head || "");
+    const remoteHead = String(reconciliation.origin_main_sha || "");
+    const reconciled = Boolean(
+      approved && localHead === approved && remoteHead === approved
+      && Number(reconciliation.ahead) === 0 && Number(reconciliation.behind) === 0
+    );
+    elements.deliveryResultStatus.textContent = pushDeliverySummary(
+      result.status_label || result.status,
+      result.complete === true ? "DELIVERY COMPLETE" : "NOT DELIVERED",
+      240
+    );
+    setStatusLabel(elements.deliveryResultStatus, elements.deliveryResultStatus.textContent);
+    elements.deliveryRunResult.textContent = pushDeliverySummary(
+      result.run_result,
+      "Not available"
+    );
+    elements.deliveryIndependentVerification.textContent = pushDeliverySummary(
+      result.independent_verification,
+      "Not available"
+    );
+    elements.deliveryCandidate.textContent = pushDeliverySummary(
+      result.delivery_candidate,
+      "Not available"
+    );
+    elements.deliverySourceDrift.textContent = pushDeliverySummary(
+      result.source_drift,
+      "Not available"
+    );
+    elements.deliveryApplyResult.textContent = pushDeliverySummary(
+      result.apply_result,
+      "Not available"
+    );
+    elements.deliveryPostApplyVerification.textContent = pushDeliverySummary(
+      result.post_apply_verification,
+      "Not available"
+    );
+    elements.deliveryStagedPaths.textContent = deliveryStagedPaths(result.staged_paths);
+    const resultLocalCommit = objectRecord(result.local_commit);
+    elements.deliveryLocalCommit.textContent = boundedText(
+      resultLocalCommit.commit_oid || resultLocalCommit.commit_sha
+        || resultLocalCommit.sha || approved,
+      "Not available",
+      500
+    );
+    elements.deliveryCommitSubject.textContent = sanitizedApplyPlanText(
+      objectRecord(result.local_commit).subject || parts.execution.commit_subject
+        || parts.readiness.commit_subject || parts.commitParts.plan.subject,
+      "Not available",
+      300
+    );
+    elements.deliveryPushStatus.textContent = pushDeliverySummary(
+      result.push_status,
+      PUSH_DELIVERY_STATE_LABELS[pushDeliveryState(parts)],
+      300
+    );
+    elements.deliveryReconciliation.textContent = reconciled
+      ? "Local HEAD = origin/main = approved commit."
+      : pushDeliverySummary(result.reconciliation, "Not reconciled", 1000);
+    elements.deliveryLocalHead.textContent = boundedText(localHead, "Not evaluated", 500);
+    elements.deliveryOriginMain.textContent = boundedText(remoteHead, "Not evaluated", 500);
+    elements.deliveryAheadBehind.textContent = pushAheadBehind(reconciliation);
+    elements.deliveryWorktreeIndex.textContent = pushCleanliness(reconciliation);
+    elements.deliveryNextAction.textContent = sanitizedApplyPlanText(
+      result.next_action,
+      result.complete === true && reconciled
+        ? "Delivery is complete."
+        : "Review the Delivery Result blocker evidence.",
+      700
+    );
+    appendTextList(
+      elements.deliveryBoundaries,
+      applyPlanTextList(result.boundaries, ""),
+      "No delivery boundary evidence is available."
+    );
+    appendTextList(
+      elements.deliveryWarnings,
+      applyPlanTextList(result.warnings, ""),
+      "No delivery warning is reported."
+    );
+    appendTextList(
+      elements.deliveryBlockers,
+      applyPlanTextList(result.blockers, ""),
+      "No Delivery Result blocker is reported."
+    );
+  }
+
+  function renderPushDelivery(run) {
+    const parts = pushDeliveryParts(run);
+    const commitId = commitBuilderRecordId(parts.commit);
+    const validContext = Boolean(commitId);
+    elements.pushDeliverySection.hidden = !validContext;
+    if (!validContext) {
+      elements.pushToOriginMain.hidden = true;
+      elements.viewDeliveryResult.hidden = true;
+      elements.deliveryResult.hidden = true;
+      elements.pushDeliveryAdvancedCard.hidden = true;
+      return;
+    }
+    const stateValue = pushDeliveryState(parts);
+    const blockers = pushDeliveryBlockers(parts);
+    const canPush = parts.actions.can_push_to_origin_main === true;
+    const canConfirm = parts.actions.can_confirm_push === true;
+    const canView = parts.actions.can_view_delivery_result === true;
+    const currentBoundary = pushCurrentBoundary(parts);
+    const confirmationContext = state.pushConfirmationContext;
+    if (confirmationContext) {
+      const currentExecutionId = String(parts.execution.id || "");
+      const currentConfirmationDigest = String(
+        parts.execution.confirmation_digest || ""
+      );
+      const confirmationStillCurrent = canConfirm
+        && String(confirmationContext.local_commit_execution_id) === String(commitId)
+        && String(confirmationContext.push_execution_id) === currentExecutionId
+        && String(confirmationContext.confirmation_digest)
+          === currentConfirmationDigest;
+      if (!confirmationStillCurrent) {
+        state.pushConfirmationContext = null;
+        if (elements.pushConfirmationDialog.open) {
+          elements.pushConfirmationDialog.close();
+        }
+      } else {
+        elements.confirmPushToOriginMain.disabled = state.pending.has(
+          "confirm-push-to-origin-main"
+        );
+      }
+    }
+    elements.pushGateStatus.textContent = sanitizedApplyPlanText(
+      PUSH_DELIVERY_STATE_LABELS[stateValue] || parts.readiness.status_label,
+      PUSH_DELIVERY_STATE_LABELS[stateValue],
+      240
+    );
+    setStatusLabel(elements.pushGateStatus, elements.pushGateStatus.textContent);
+    elements.pushLocalCommit.textContent = boundedText(
+      parts.readiness.local_commit_sha || parts.execution.local_commit_sha
+        || parts.commit.commit_oid || parts.commit.commit_sha,
+      "Not available",
+      500
+    );
+    elements.pushCommitSubject.textContent = sanitizedApplyPlanText(
+      parts.readiness.commit_subject || parts.execution.commit_subject
+        || parts.commitParts.plan.subject,
+      "Not available",
+      300
+    );
+    elements.pushDestination.textContent = sanitizedApplyPlanText(
+      parts.readiness.destination || parts.execution.destination,
+      "origin/main",
+      300
+    );
+    elements.pushRemoteBase.textContent = boundedText(
+      parts.readiness.expected_remote_base_sha
+        || parts.execution.expected_remote_base_sha,
+      "Not evaluated",
+      500
+    );
+    elements.pushAheadBehind.textContent = pushAheadBehind(currentBoundary);
+    elements.pushCleanliness.textContent = pushCleanliness(currentBoundary);
+    const freshReadinessBlocked = !canConfirm
+      && Array.isArray(parts.readiness.blockers)
+      && parts.readiness.blockers.length > 0;
+    elements.pushNextAction.textContent = sanitizedApplyPlanText(
+      (freshReadinessBlocked ? parts.readiness.next_action : "")
+        || parts.execution.next_action || parts.readiness.next_action
+        || parts.review.next_action,
+      stateValue === "PUSHED" ? "View Delivery Result." : "Review Push blockers.",
+      700
+    );
+    appendTextList(
+      elements.pushBlockers,
+      blockers,
+      stateValue === "PUSHED"
+        ? "No Push blocker is reported."
+        : "No Push blocker is reported."
+    );
+    elements.pushToOriginMain.hidden = false;
+    elements.pushToOriginMain.disabled = !canPush
+      || state.pending.has("push-preflight");
+    elements.viewDeliveryResult.hidden = false;
+    elements.viewDeliveryResult.disabled = !canView
+      || state.pending.has("view-delivery-result");
+    renderDeliveryResult(parts, commitId);
+    renderPushDeliveryAdvanced(parts);
+  }
+
+  function confirmationListText(value, fallback) {
+    const paths = applySessionPathsFrom(value);
+    return paths.length ? paths.join(", ") : fallback;
+  }
+
+  function openApplyConfirmation() {
+    const run = currentCodexRun();
+    const parts = applySessionReviewParts(run);
+    if (parts.actions.can_apply !== true || !parts.plan.id) return;
+    const entries = Array.isArray(parts.plan.entries) ? parts.plan.entries : [];
+    const counts = applySessionOperationCounts(entries, parts.applyConfirmation.operation_counts);
+    const planAdvanced = objectRecord(parts.plan.advanced);
+    const candidateReview = objectRecord(deliveryCandidateReviewForRun(run));
+    const candidate = objectRecord(candidateReview.candidate);
+    state.applyConfirmationContext = {
+      plan_id: String(parts.plan.id),
+      plan_digest: String(planAdvanced.plan_digest || ""),
+      candidate_digest: String(planAdvanced.candidate_digest || candidate.candidate_digest || "")
+    };
+    elements.applyConfirmationPlan.textContent = "Plan " + String(parts.plan.id)
+      + " · version " + String(parts.plan.version || "unknown");
+    elements.applyConfirmationCandidate.textContent = candidate.id
+      ? "Candidate " + String(candidate.id)
+      : boundedText(planAdvanced.candidate_id, "Unavailable", 200);
+    elements.applyConfirmationDrift.textContent = sanitizedApplyPlanText(
+      parts.applyConfirmation.drift_status_label
+      || parts.plan.drift_status_label,
+      "Not evaluated",
+      200
+    );
+    elements.applyConfirmationOperations.textContent = String(counts.CREATE)
+      + " / " + String(counts.MODIFY)
+      + " / " + String(counts.DELETE);
+    elements.applyConfirmationIncluded.textContent = confirmationListText(
+      parts.applyConfirmation.included_paths
+      || entries.filter(function (entry) {
+        return applyPlanDisposition(objectRecord(entry).disposition) === "INCLUDED";
+      }),
+      "None"
+    );
+    elements.applyConfirmationExcluded.textContent = confirmationListText(
+      parts.applyConfirmation.excluded_paths
+      || entries.filter(function (entry) {
+        return applyPlanDisposition(objectRecord(entry).disposition) !== "INCLUDED";
+      }),
+      "None"
+    );
+    elements.applyConfirmationUnrelated.textContent = confirmationListText(
+      parts.applyConfirmation.unrelated_paths,
+      "None reported"
+    );
+    elements.applyConfirmationIndex.textContent = sanitizedApplyPlanText(
+      parts.applyConfirmation.index_boundary,
+      "Index must remain unchanged · staged paths 0",
+      300
+    );
+    elements.applyConfirmationDialog.showModal();
+    window.setTimeout(function () { elements.cancelApplyAcceptedChanges.focus(); }, 0);
+  }
+
+  function openRevertConfirmation() {
+    const run = currentCodexRun();
+    const parts = applySessionReviewParts(run);
+    if (parts.actions.can_revert !== true || !parts.session.id) return;
+    state.revertConfirmationContext = {
+      session_id: String(parts.session.id),
+      journal_digest: String(
+        objectRecord(parts.session.advanced).journal_digest
+        || parts.session.journal_digest
+        || ""
+      )
+    };
+    elements.revertConfirmationSession.textContent = "Apply session " + String(parts.session.id);
+    elements.revertConfirmationPaths.textContent = confirmationListText(
+      parts.revertConfirmation.paths,
+      "No paths available"
+    );
+    elements.revertConfirmationOperations.textContent = applyPlanTextList(
+      parts.revertConfirmation.reverse_operations,
+      "Exact reverse operations will be derived from the durable journal."
+    ).join(" · ");
+    elements.revertConfirmationPreconditions.textContent = sanitizedApplyPlanText(
+      parts.revertConfirmation.preconditions,
+      "Every path must match its exact Apply after-state.",
+      600
+    );
+    elements.revertConfirmationUnrelated.textContent = confirmationListText(
+      parts.revertConfirmation.unrelated_paths,
+      "Remain untouched"
+    );
+    elements.revertConfirmationIndex.textContent = sanitizedApplyPlanText(
+      parts.revertConfirmation.index_boundary,
+      "Index must remain unchanged · staged paths 0",
+      300
+    );
+    elements.revertConfirmationDialog.showModal();
+    window.setTimeout(function () { elements.cancelRevertAppliedChanges.focus(); }, 0);
+  }
+
+  function openStageConfirmation() {
+    const parts = commitBuilderParts(currentCodexRun());
+    const planId = commitBuilderRecordId(parts.plan);
+    if (!planId || !(
+      parts.actions.can_stage_approved_files === true
+      || parts.actions.can_stage === true
+    )) return;
+    const advanced = objectRecord(parts.plan.advanced);
+    const boundaryEvidence = objectRecord(advanced.boundary_evidence);
+    const indexEvidence = objectRecord(boundaryEvidence.index);
+    const approved = commitBuilderEntries(parts.plan, true);
+    const excluded = commitBuilderEntries(parts.plan, false);
+    state.stageConfirmationContext = {
+      plan_id: String(planId),
+      plan_digest: commitBuilderRecordDigest(parts.plan),
+      verification_id: String(parts.verification.id || "")
+    };
+    elements.stageConfirmationPlan.textContent = postApplyVerificationBinding(
+      planId,
+      commitBuilderRecordDigest(parts.plan)
+    );
+    elements.stageConfirmationVerification.textContent = postApplyVerificationBinding(
+      parts.verification.id,
+      parts.verification.verification_digest
+    );
+    elements.stageConfirmationApproved.textContent = approved.length
+      ? approved.map(commitBuilderPath).join(", ")
+      : "None";
+    elements.stageConfirmationExcluded.textContent = excluded.length
+      ? excluded.map(commitBuilderPath).join(", ")
+      : "None";
+    elements.stageConfirmationHead.textContent = boundedText(
+      advanced.base_head || boundaryEvidence.head,
+      "Not evaluated",
+      500
+    );
+    elements.stageConfirmationIndex.textContent = boundedText(
+      advanced.index_fingerprint || indexEvidence.fingerprint,
+      "Not evaluated",
+      500
+    );
+    elements.stageConfirmationDialog.showModal();
+    window.setTimeout(function () { elements.cancelStageApprovedFiles.focus(); }, 0);
+  }
+
+  function openLocalCommitConfirmation() {
+    const parts = commitBuilderParts(currentCodexRun());
+    const planId = commitBuilderRecordId(parts.plan);
+    const stageId = commitBuilderRecordId(parts.stage);
+    if (!planId || !stageId || !(
+      parts.actions.can_create_local_commit === true
+      || parts.actions.can_commit === true
+    )) return;
+    const planAdvanced = objectRecord(parts.plan.advanced);
+    const stageAdvanced = objectRecord(parts.stage.advanced);
+    const staged = commitBuilderEntries(parts.stage, true);
+    state.localCommitConfirmationContext = {
+      plan_id: String(planId),
+      stage_id: String(stageId),
+      plan_digest: commitBuilderRecordDigest(parts.plan),
+      stage_digest: commitBuilderRecordDigest(parts.stage),
+      verification_id: String(parts.verification.id || "")
+    };
+    elements.localCommitConfirmationStage.textContent = postApplyVerificationBinding(
+      stageId,
+      commitBuilderRecordDigest(parts.stage)
+    );
+    elements.localCommitConfirmationPaths.textContent = staged.length
+      ? staged.map(commitBuilderPath).join(", ")
+      : String(parts.stage.staged_path_count || 0) + " staged paths";
+    elements.localCommitConfirmationSubject.textContent = sanitizedApplyPlanText(
+      parts.plan.subject,
+      "None",
+      200
+    );
+    elements.localCommitConfirmationBody.textContent = sanitizedApplyPlanText(
+      parts.plan.body,
+      "None",
+      1200
+    );
+    elements.localCommitConfirmationBranch.textContent = sanitizedApplyPlanText(
+      planAdvanced.branch || stageAdvanced.branch,
+      "Not evaluated",
+      240
+    );
+    elements.localCommitConfirmationParent.textContent = boundedText(
+      stageAdvanced.parent_sha || stageAdvanced.expected_head
+        || planAdvanced.base_head,
+      "Not evaluated",
+      500
+    );
+    elements.localCommitConfirmationDialog.showModal();
+    window.setTimeout(function () { elements.cancelCreateLocalCommit.focus(); }, 0);
+  }
+
+  function resultManifestEntries(envelope) {
+    const record = objectRecord(envelope);
+    const handoff = objectRecord(record.structured_handoff);
+    const manifest = record.changed_file_manifest
+      || record.changed_files
+      || handoff.changed_file_manifest
+      || handoff.changed_files;
+    return Array.isArray(manifest) ? manifest : [];
+  }
+
+  function resultManifestLine(item) {
+    const record = objectRecord(item);
+    const path = repositoryRelativePath(record.path || record.repository_relative_path || item);
+    const operation = humanStatus(record.operation || record.change_type || "changed");
+    return operation + " · " + path;
+  }
+
+  function resultTestsSummary(envelope) {
+    const record = objectRecord(envelope);
+    const handoff = objectRecord(record.structured_handoff);
+    return ownerSafeSummary(
+      record.tests_summary || record.validation_summary || record.tests || handoff.tests,
+      "No test result available.",
+      500
+    );
+  }
+
+  function renderResultIntake(run) {
+    const envelope = resultEnvelopeForRun(run);
+    const record = objectRecord(envelope);
+    const handoff = objectRecord(record.structured_handoff);
+    const activity = currentRunActivity();
+    const coding = objectRecord(
+      record.coding_result || record.coding_evidence || handoff.coding_result
+    );
+    const verification = objectRecord(record.verification_evidence || handoff.verification_verdict);
+    const lifecycleActive = Boolean(activity && lifecycleIsActive(activity.status));
+    const status = String(
+      activity
+        ? activity.status
+        : record.terminal_status || run && authoritativeRunStatus(run) || "waiting"
+    ).toLowerCase();
+    const integrity = String(
+      activity && activity.lifecycleAvailable && activity.integrity
+      || record.integrity_state
+      || record.result_integrity
+      || activity && activity.integrity
+      || "pending"
+    ).toLowerCase();
+    const lifecycleBlocked = Boolean(
+      activity
+      && activity.lifecycleAvailable
+      && activityResultIsBlocked(activity)
+    );
+    const valid = resultEnvelopeIsValid(record) && !lifecycleActive && !lifecycleBlocked;
+    const requestedModel = record.requested_model || activity && activity.requestedModel;
+    const effectiveModel = runLocalEffectiveModelView(record, {}, {});
+    const effectiveModelDisplay = effectiveModel.available
+      ? effectiveModel.display
+      : activity && activity.runLocalEffectiveModelAvailable
+        ? activity.runLocalEffectiveModel
+        : RUN_LOCAL_MODEL_NOT_EXPOSED;
+    const requestedAcceptance = requestedModelAcceptanceView(
+      {
+        requested_model_accepted: record.requested_model_accepted === true
+          || Boolean(activity && activity.requestedModelAcceptedConfirmed)
+      },
+      coding,
+      status
+    );
+    const startedAt = record.started_at || activity && activity.startedAt || run && run.started_at;
+    const finishedAt = record.terminal_at || record.finished_at || activity && activity.finishedAt || run && run.finished_at;
+    const timedOut = status === "timed_out";
+
+    elements.resultEnvelopeStatus.textContent = lifecycleActive
+      ? "TWOS is monitoring this Run"
+      : lifecycleBlocked
+        ? "Result integrity blocked"
+      : valid
+      ? timedOut
+        ? "Result available — Run timed out"
+        : "Result available"
+      : /blocked|invalid/.test(integrity)
+        ? "Result integrity blocked"
+        : status === "result_unavailable" || status === "process_lost"
+          ? humanStatus(status)
+          : lifecycleIsActive(status)
+            ? "TWOS is monitoring this Run"
+            : "Waiting for a valid terminal result";
+    elements.resultEnvelopeRequestedModel.textContent = ownerSafeText(requestedModel, "Not recorded", 160);
+    elements.resultEnvelopeRequestedModelAccepted.textContent = requestedAcceptance.display;
+    elements.resultEnvelopeActualModel.textContent = effectiveModelDisplay;
+    elements.resultEnvelopeDuration.textContent = formatDuration(
+      record.execution_duration_seconds !== null && record.execution_duration_seconds !== undefined
+        ? record.execution_duration_seconds
+        : record.duration_ms !== null && record.duration_ms !== undefined
+          ? Number(record.duration_ms) / 1000
+          : record.execution_duration,
+      startedAt,
+      finishedAt
+    );
+    elements.resultEnvelopeCoding.textContent = lifecycleActive
+      ? "In progress — see Live Codex Activity"
+      : timedOut
+      ? "Run timed out — no verified model execution"
+      : ownerWorkflowSummary(
+          record.coding_result || coding,
+          valid ? "Coding evidence was not summarized." : "Not available",
+          400
+        );
+    elements.resultEnvelopeVerification.textContent = lifecycleActive
+      ? status === "verifying"
+        ? "Independent Verification is in progress"
+        : "Waiting for Coding to settle"
+      : timedOut
+      ? "Unavailable — Coding did not complete"
+      : ownerWorkflowSummary(
+          record.verification_result || verification,
+          valid ? "Verification evidence was not summarized." : "Not available",
+          400
+        );
+    elements.resultEnvelopeTests.textContent = resultTestsSummary(record);
+    elements.resultEnvelopeIntegrity.textContent = lifecycleActive
+      ? "Pending authoritative lifecycle settlement"
+      : timedOut && integrity === "verified"
+      ? "Verified timeout envelope — not verified Coding output"
+      : humanStatus(integrity);
+    setStatusLabel(elements.resultEnvelopeIntegrity, elements.resultEnvelopeIntegrity.textContent);
+    elements.resultEnvelopeNextAction.textContent = ownerWorkflowText(
+      activity && activity.nextAction
+      || (timedOut
+        ? "Review Handoff: BLOCKED. Verify Codex Connection before any new Owner-approved Run."
+        : record.next_action || record.owner_action),
+      valid
+        ? "Select Review Handoff."
+        : lifecycleBlocked || /blocked|invalid|unavailable/.test(integrity) || RESULT_BLOCKED_STATUSES.indexOf(status) !== -1
+          ? "Review blocker evidence"
+          : "TWOS will update this Run automatically.",
+      400
+    );
+
+    elements.resultIntakeAdvancedCard.hidden = !run;
+    elements.resultMonitorState.textContent = humanStatus(
+      record.monitor_state || activity && activity.status || run && run.status || "none"
+    );
+    const monitor = objectRecord(record.monitor);
+    const monitorAdvanced = objectRecord(monitor.advanced);
+    const envelopeAdvanced = objectRecord(record.advanced);
+    elements.resultRecoveryState.textContent = humanStatus(
+      record.recovery_state || monitor.recovery_state || "none"
+    );
+    elements.resultSourceIdentity.textContent = ownerSafeText(
+      record.result_source || monitor.result_source || envelopeAdvanced.result_source_identity,
+      "None",
+      240
+    );
+    elements.resultEnvelopeRecord.textContent = record.id === null || record.id === undefined
+      ? "None"
+      : "#" + String(record.id);
+    elements.resultEnvelopeDigest.textContent = ownerSafeText(
+      record.result_digest || envelopeAdvanced.result_digest,
+      "None",
+      200
+    );
+    elements.resultEnvelopeTaskBinding.textContent = record.task_id === null || record.task_id === undefined
+      ? "None"
+      : "Task #" + record.task_id + " · v" + String(record.task_version || envelopeAdvanced.task_version || "?");
+    const packId = record.pack_id || envelopeAdvanced.pack_id;
+    elements.resultEnvelopePackBinding.textContent = packId === null || packId === undefined
+      ? "None"
+      : "Pack #" + packId + " · v" + String(record.pack_version || envelopeAdvanced.pack_version || "?");
+    elements.resultEnvelopeAssignmentBindings.textContent = [
+      record.coding_assignment_id || envelopeAdvanced.coding_assignment_id
+        ? "Coding #" + String(record.coding_assignment_id || envelopeAdvanced.coding_assignment_id)
+          + " v" + String(record.coding_assignment_version || envelopeAdvanced.coding_assignment_version || "?")
+        : "",
+      record.verification_assignment_id || envelopeAdvanced.verification_assignment_id
+        ? "Verification #" + String(record.verification_assignment_id || envelopeAdvanced.verification_assignment_id)
+          + " v" + String(record.verification_assignment_version || envelopeAdvanced.verification_assignment_version || "?")
+        : ""
+    ].filter(Boolean).join(" · ") || "None";
+    elements.resultEnvelopeRoutingBinding.textContent = ownerSafeText(
+      record.routing_snapshot_identity
+      || record.routing_snapshot
+      || envelopeAdvanced.routing_snapshot_identity,
+      "None",
+      200
+    );
+    elements.resultProcessIdentity.textContent = ownerSafeText(
+      record.process_identity
+      || monitor.process_identity
+      || monitorAdvanced.process_start_identity
+      || envelopeAdvanced.process_evidence_identity,
+      "None",
+      220
+    );
+    elements.resultSessionIdentity.textContent = ownerSafeText(
+      record.codex_session_identity
+      || record.session_identity
+      || monitorAdvanced.codex_session_identity,
+      "None",
+      220
+    );
+    elements.resultIngestedAt.textContent = formatTime(record.ingested_at);
+    elements.resultIntakeDiagnostics.textContent = ownerSafeText(
+      record.intake_message || record.sanitized_diagnostics,
+      "No Result Envelope diagnostics are available.",
+      900
+    );
+  }
+
+  function renderHandoffReview(run) {
+    const envelope = resultEnvelopeForRun(run);
+    const activity = currentRunActivity();
+    const validEnvelope = resultEnvelopeIsValid(envelope)
+      && !(activity && lifecycleIsActive(activity.status));
+    const review = objectRecord(handoffReviewForRun(run));
+    const draft = objectRecord(instructionDraftForRun(run));
+    const reviewed = Object.keys(review).length > 0;
+    const reconciliation = String(
+      review.recommended_reconciliation || review.reconciliation || "not reviewed"
+    );
+
+    elements.handoffReviewSection.hidden = !validEnvelope;
+    elements.reviewHandoff.disabled = !validEnvelope || state.pending.has("review-handoff");
+    elements.handoffReviewContent.hidden = !reviewed;
+    elements.instructionDraftSection.hidden = !reviewed;
+    if (!validEnvelope) return;
+
+    elements.handoffRunOutcome.textContent = ownerSafeSummary(
+      review.run_outcome || review.outcome,
+      "No Run outcome reconciliation recorded.",
+      500
+    );
+    elements.handoffTaskPack.textContent = ownerSafeSummary(
+      review.task_pack_binding || review.task_and_pack,
+      (function () {
+        const advanced = objectRecord(objectRecord(envelope).advanced);
+        const taskVersion = objectRecord(envelope).task_version || advanced.task_version;
+        const packVersion = objectRecord(envelope).pack_version || advanced.pack_version;
+        if (!taskVersion && !packVersion) return "Task and Pack binding not summarized.";
+        return "Selected Task v" + String(taskVersion || "?")
+          + " · approved Pack v" + String(packVersion || "?");
+      }()),
+      400
+    );
+    elements.handoffCodingResult.textContent = ownerSafeSummary(
+      review.coding_result,
+      "Coding result not summarized.",
+      500
+    );
+    elements.handoffVerificationVerdict.textContent = ownerSafeSummary(
+      review.verification_verdict || review.verification_result,
+      "Verification verdict not summarized.",
+      500
+    );
+    elements.handoffTests.textContent = ownerSafeSummary(
+      review.tests || review.tests_summary,
+      "No test summary recorded.",
+      600
+    );
+    elements.handoffBoundary.textContent = ownerSafeSummary(
+      review.boundary_confirmation,
+      "No boundary confirmation recorded.",
+      600
+    );
+    elements.handoffPhaseGate.textContent = ownerSafeSummary(
+      review.current_phase_gate || review.phase_gate,
+      "No phase gate recorded.",
+      400
+    );
+    elements.handoffReconciliation.textContent = humanStatus(reconciliation);
+    setStatusLabel(elements.handoffReconciliation, elements.handoffReconciliation.textContent);
+    appendTextList(
+      elements.handoffChangedFiles,
+      (Array.isArray(review.changed_files) ? review.changed_files : resultManifestEntries(envelope))
+        .map(resultManifestLine),
+      "No changed-file summary is available."
+    );
+    appendTextList(
+      elements.handoffWarnings,
+      ownerSafeList(review.warnings, "No warnings reported."),
+      "No warnings reported."
+    );
+    appendTextList(
+      elements.handoffLimitations,
+      ownerSafeList(review.limitations, "No limitations reported."),
+      "No limitations reported."
+    );
+    appendTextList(
+      elements.handoffBlockers,
+      ownerSafeList(review.unresolved_blockers || review.blockers, "No unresolved blockers reported."),
+      "No unresolved blockers reported."
+    );
+
+    const draftAvailable = Object.keys(draft).length > 0;
+    const draftApproved = String(
+      draft.status || draft.approval_status || draft.approval_state || ""
+    ).toLowerCase() === "approved"
+      || draft.approved === true;
+    elements.instructionDraftStatus.textContent = draftApproved
+      ? "Approved — activation remains a separate Owner action"
+      : "Draft — Owner approval required";
+    elements.instructionDraftStatus.classList.toggle("is-approved", draftApproved);
+    elements.instructionDraftContent.textContent = draftAvailable
+      ? ownerSafeText(
+          draft.instruction_text || draft.content || draft.draft_text,
+          "The persisted instruction draft has no displayable content.",
+          24000
+        )
+      : "Select Review Instruction Draft to create or retrieve exactly one proposed next instruction.";
+    elements.instructionDraftBoundary.textContent = draftApproved
+      ? "Approved for future consideration. No new Codex Run was started."
+      : "A draft cannot execute itself. Approval and any future Run remain separate explicit Owner actions.";
+    elements.reviewInstructionDraft.disabled = state.pending.has("review-instruction-draft");
+    elements.approveInstructionDraft.hidden = !draftAvailable;
+    elements.approveInstructionDraft.disabled = draftApproved || state.pending.has("approve-instruction-draft");
   }
 
   function renderResult() {
@@ -2854,6 +7880,8 @@
     elements.viewResult.hidden = !hasPersistedRun;
 
     if (run) {
+      const authoritativeStatus = authoritativeRunStatus(run) || String(run.status || "").toLowerCase();
+      const runView = Object.assign({}, run, { status: authoritativeStatus });
       const result = objectRecord(run.result);
       const changes = objectRecord(result.run_produced_changes);
       const codingProcess = objectRecord(result.coding_process);
@@ -2893,10 +7921,10 @@
         evidenceFailure(taskAcceptance)
       ].find(function (value) { return value && value !== "None"; });
 
-      elements.resultStatus.textContent = humanStatus(run.status);
-      elements.resultLifecycle.textContent = humanStatus(run.status);
-      elements.resultSummary.textContent = runStateSummary(run.status);
-      elements.resultReview.textContent = resultReviewText(run.status);
+      elements.resultStatus.textContent = humanStatus(authoritativeStatus);
+      elements.resultLifecycle.textContent = humanStatus(authoritativeStatus);
+      elements.resultSummary.textContent = runStateSummary(authoritativeStatus);
+      elements.resultReview.textContent = resultReviewText(authoritativeStatus);
 
       elements.resultTask.textContent = String(
         run.development_task || "Frozen Development task unavailable for this Run."
@@ -2912,7 +7940,7 @@
         ? "v" + run.pack_version
         : "None";
 
-      elements.resultCodingProcess.textContent = humanStatus(evidenceStatus(codingProcess, codingStatusFallback(run)));
+      elements.resultCodingProcess.textContent = humanStatus(evidenceStatus(codingProcess, codingStatusFallback(runView)));
       elements.resultCodingExitCode.textContent = Object.keys(codingProcess).length
         ? evidenceExitCode(codingProcess)
         : run.exit_code === null || run.exit_code === undefined ? "None" : String(run.exit_code);
@@ -2928,7 +7956,7 @@
       elements.resultDiffEvidence.textContent = diffRecords.length
         ? diffRecords.map(function (item) {
             const record = objectRecord(item);
-            return boundedText(record.path, "Unknown file", 300)
+            return repositoryRelativePath(record.path || record.repository_relative_path)
               + " · " + humanStatus(record.change_type)
               + " · +" + String(record.added_lines === null ? "?" : record.added_lines || 0)
               + " / -" + String(record.removed_lines === null ? "?" : record.removed_lines || 0)
@@ -2975,6 +8003,14 @@
       );
       renderEvidenceChecks(elements.resultVerificationChecks, verificationVerdict, "No verification checks reported.");
 
+      if (authoritativeStatus === "timed_out") {
+        elements.resultCodingProcess.textContent = "Timed out — no verified model execution";
+        elements.resultCodingActualModel.textContent = "No verified actual model";
+        elements.resultTaskAcceptance.textContent = "Not accepted — no accepted source result exists";
+        elements.resultVerificationStatus.textContent = "Unavailable";
+        elements.resultVerificationVerdict.textContent = "Unavailable — Coding did not complete";
+      }
+
       renderStructuredTests(result.tests);
       elements.resultCommit.textContent = commits.length
         ? commits.join(" | ")
@@ -3006,7 +8042,7 @@
       elements.taskRunAction.textContent = "Approved Codex Pack v" + (run.pack_version || "?");
       elements.runStarted.textContent = formatTime(run.started_at);
       elements.runFinished.textContent = formatTime(run.finished_at);
-      elements.runError.textContent = ["failed", "blocked", "timed_out", "cancelled"].indexOf(run.status) !== -1
+      elements.runError.textContent = ["failed", "blocked", "timed_out", "cancelled"].indexOf(authoritativeStatus) !== -1
         ? terminalFailure || boundedText(run.owner_summary, "Execution did not complete successfully.", 600)
         : "None";
       elements.verificationStatus.textContent = humanStatus(evidenceStatus(verificationProcess, "not_started"));
@@ -3039,7 +8075,7 @@
       elements.resultCodingProcessProof.textContent = "Not verified";
       elements.resultCodingTurnProof.textContent = "Not verified";
       elements.resultCodingRequestedModel.textContent = "None";
-      elements.resultCodingActualModel.textContent = "Not independently exposed by available CLI evidence";
+      elements.resultCodingActualModel.textContent = RUN_LOCAL_MODEL_NOT_EXPOSED;
       elements.resultCodingInvocationFailure.textContent = "None";
       elements.resultChangedFiles.textContent = "None";
       elements.resultUnexpectedFiles.textContent = "None";
@@ -3056,7 +8092,7 @@
       elements.resultVerificationProcessProof.textContent = "Not verified";
       elements.resultVerificationTurnProof.textContent = "Not verified";
       elements.resultVerificationRequestedModel.textContent = "None";
-      elements.resultVerificationActualModel.textContent = "Not independently exposed by available CLI evidence";
+      elements.resultVerificationActualModel.textContent = RUN_LOCAL_MODEL_NOT_EXPOSED;
       elements.resultVerificationInvocationFailure.textContent = "None";
       elements.resultVerificationVerdict.textContent = "Not reached";
       renderEvidenceChecks(elements.resultVerificationChecks, {}, "No verification checks reported.");
@@ -3079,6 +8115,14 @@
       elements.verificationStdout.textContent = "No verification output.";
       elements.verificationStderr.textContent = "No verification errors.";
     }
+    renderResultIntake(run);
+    renderHandoffReview(run);
+    renderDeliveryCandidateReview(run);
+    renderApplyPlanReview(run);
+    renderApplySessionReview(run);
+    renderPostApplyVerification(run);
+    renderCommitBuilder(run);
+    renderPushDelivery(run);
     renderRunModelEvidence(run);
     setStatusLabel(elements.resultStatus, elements.resultStatus.textContent);
   }
@@ -3247,7 +8291,7 @@
     const plan = state.aiPlan && state.aiPlan.plan ? state.aiPlan.plan : null;
     const pack = currentPack();
     const codexRun = currentCodexRun();
-    const activeRun = codexRun && ACTIVE_CODEX_RUN_STATUSES.indexOf(codexRun.status) !== -1;
+    const activeRun = codexRun && lifecycleIsActive(authoritativeRunStatus(codexRun));
     const eligibility = effectiveRunEligibility();
     const acceptance = state.ownerAcceptance;
     const schedule = currentSchedule();
@@ -3269,7 +8313,51 @@
       || !eligibility
       || eligibility.eligible !== true
       || state.pending.has("run-codex");
+    elements.cancelCodex.hidden = !activeRun;
     elements.cancelCodex.disabled = !activeRun || state.pending.has("cancel-codex");
+    elements.reviewChangeCandidate.disabled = !authenticated
+      || !isTerminalCodexRun(codexRun)
+      || state.pending.has("review-change-candidate");
+    elements.reviewApplyPlan.disabled = !authenticated
+      || !isTerminalCodexRun(codexRun)
+      || !deliveryCandidateReviewAvailable(codexRun)
+      || state.pending.has("review-apply-plan");
+    const applySessionParts = applySessionReviewParts(codexRun);
+    elements.applyAcceptedChanges.disabled = !authenticated
+      || applySessionParts.actions.can_apply !== true
+      || state.pending.has("apply-accepted-changes");
+    elements.revertAppliedChanges.disabled = !authenticated
+      || applySessionParts.actions.can_revert !== true
+      || state.pending.has("revert-applied-changes");
+    const appliedSession = objectRecord(applySessionParts.session);
+    const postApplyReview = objectRecord(
+      postApplyVerificationReviewForSession(appliedSession)
+    );
+    const postApplyEligibility = objectRecord(postApplyReview.eligibility);
+    const postApplyActions = objectRecord(postApplyReview.actions);
+    const canVerifyAppliedChanges = postApplyActions.can_verify === true
+      || postApplyEligibility.can_verify === true;
+    elements.verifyAppliedChanges.disabled = !authenticated
+      || !postApplyVerificationContextAvailable(appliedSession)
+      || !canVerifyAppliedChanges
+      || state.pending.has("verify-applied-changes");
+    const commitParts = commitBuilderParts(codexRun);
+    const commitPlanId = commitBuilderRecordId(commitParts.plan);
+    const commitStageId = commitBuilderRecordId(commitParts.stage);
+    const commitActions = objectRecord(commitParts.actions);
+    elements.reviewCommitPlan.disabled = !authenticated
+      || !commitParts.verification.id
+      || !(commitParts.eligibility.can_review === true)
+      || state.pending.has("review-commit-plan");
+    elements.stageApprovedFiles.disabled = !authenticated
+      || !commitPlanId
+      || !(commitActions.can_stage_approved_files === true || commitActions.can_stage === true)
+      || state.pending.has("stage-approved-files");
+    elements.createLocalCommit.disabled = !authenticated
+      || !commitPlanId
+      || !commitStageId
+      || !(commitActions.can_create_local_commit === true || commitActions.can_commit === true)
+      || state.pending.has("create-local-commit");
     const decisionPending = state.pending.has("acceptance-decision");
     elements.acceptResult.disabled = !acceptance || !acceptance.can_accept || acceptance.status !== "owner_review" || decisionPending;
     elements.rejectResult.disabled = !acceptance || acceptance.status !== "owner_review" || decisionPending;
@@ -3332,6 +8420,10 @@
       state.creatingTask = false;
       state.newTaskInitialized = false;
       state.selectedTaskId = task.id;
+      state.selectedActivityRunId = null;
+      state.taskSelectionEpoch += 1;
+      state.taskLoadState = "loading";
+      state.taskLoadMessage = "Loading the saved Task.";
       state.renderedTaskId = null;
       await composeTeam(task);
       return "Task saved. AI Team composed and routing evaluated.";
@@ -3384,6 +8476,874 @@
       await api("/api/tasks/" + task.id + "/codex-runs", { method: "POST" });
       return "Codex run queued. TWOS will verify the isolated worktree before process launch.";
     });
+  }
+
+  function currentRunIdForRecovery() {
+    const activity = currentRunActivity();
+    const run = currentCodexRun();
+    return activity && activity.runId !== null && activity.runId !== undefined
+      ? activity.runId
+      : run && run.id !== null && run.id !== undefined ? run.id : null;
+  }
+
+  async function refreshRunStatus() {
+    await performAction("refresh-run-status", elements.refreshRunStatus, "Refreshing…", async function () {
+      const runId = currentRunIdForRecovery();
+      if (runId === null) {
+        throw new ApiError(400, "NO_RUN", "Select a Codex Run first.", {}, "product");
+      }
+      await api("/api/codex-runs/" + encodeURIComponent(runId) + "/refresh-status", {
+        method: "POST",
+        body: {}
+      });
+      return "Run status refreshed. Persisted monitor evidence remains authoritative.";
+    });
+  }
+
+  async function reconnectCodexRun() {
+    await performAction("reconnect-codex-run", elements.reconnectCodexRun, "Reconnecting…", async function () {
+      const runId = currentRunIdForRecovery();
+      if (runId === null) {
+        throw new ApiError(400, "NO_RUN", "Select a Codex Run first.", {}, "product");
+      }
+      await api("/api/codex-runs/" + encodeURIComponent(runId) + "/reconnect", {
+        method: "POST",
+        body: {}
+      });
+      return "TWOS rechecked the persisted process and result identities. No duplicate Run was started.";
+    });
+  }
+
+  async function importCodexResultFile(file) {
+    if (!file) return;
+    await performAction("import-codex-result", elements.importCodexResult, "Importing…", async function () {
+      const runId = currentRunIdForRecovery();
+      if (runId === null) {
+        throw new ApiError(400, "NO_RUN", "Select the exact Codex Run before importing a result.", {}, "product");
+      }
+      if (file.size > MAX_IMPORT_BYTES) {
+        throw new ApiError(
+          413,
+          "RESULT_TOO_LARGE",
+          "The structured Result Envelope exceeds the 1 MiB import limit.",
+          {},
+          "product"
+        );
+      }
+      let parsed;
+      try {
+        parsed = JSON.parse(await file.text());
+      } catch (error) {
+        throw new ApiError(
+          400,
+          "MALFORMED_RESULT",
+          "Choose a valid structured JSON Result Envelope.",
+          {},
+          "product"
+        );
+      }
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        throw new ApiError(
+          400,
+          "STRUCTURED_RESULT_REQUIRED",
+          "Import requires one structured Result Envelope for the selected Run.",
+          {},
+          "product"
+        );
+      }
+      await api("/api/codex-runs/" + encodeURIComponent(runId) + "/import-result", {
+        method: "POST",
+        body: { result: parsed }
+      });
+      return "Structured Codex Result imported and identity-checked for the selected Run.";
+    });
+    elements.importCodexResultFile.value = "";
+  }
+
+  async function reviewHandoff() {
+    await performAction("review-handoff", elements.reviewHandoff, "Reviewing…", async function () {
+      const run = currentCodexRun();
+      if (!run || !resultEnvelopeIsValid(resultEnvelopeForRun(run))) {
+        throw new ApiError(
+          409,
+          "RESULT_ENVELOPE_REQUIRED",
+          "Review Handoff becomes available only after a valid Result Envelope exists.",
+          {},
+          "product"
+        );
+      }
+      const payload = await api("/api/codex-runs/" + encodeURIComponent(run.id) + "/handoff-review", {
+        method: "POST",
+        body: {}
+      });
+      const review = handoffReviewRecord(payload);
+      if (
+        review.run_id !== null
+        && review.run_id !== undefined
+        && String(review.run_id) !== String(run.id)
+      ) {
+        throw new ApiError(
+          200,
+          "HANDOFF_BINDING_MISMATCH",
+          "The handoff review did not match the selected Run.",
+          {},
+          "product"
+        );
+      }
+      state.handoffReviews[String(run.id)] = review;
+      const draft = instructionDraftRecord(payload);
+      if (Object.keys(draft).length) state.instructionDrafts[String(run.id)] = draft;
+      return "Handoff reconciled for Owner review. No result was accepted and no new Run was started.";
+    });
+  }
+
+  async function reviewInstructionDraft() {
+    await performAction(
+      "review-instruction-draft",
+      elements.reviewInstructionDraft,
+      "Preparing…",
+      async function () {
+        const run = currentCodexRun();
+        if (!run || !Object.keys(objectRecord(handoffReviewForRun(run))).length) {
+          throw new ApiError(
+            409,
+            "HANDOFF_REVIEW_REQUIRED",
+            "Review Handoff before preparing a next-instruction draft.",
+            {},
+            "product"
+          );
+        }
+        const payload = await api(
+          "/api/codex-runs/" + encodeURIComponent(run.id) + "/instruction-draft",
+          { method: "POST", body: {} }
+        );
+        const draft = instructionDraftRecord(payload);
+        if (!Object.keys(draft).length) {
+          throw new ApiError(
+            200,
+            "INSTRUCTION_DRAFT_UNAVAILABLE",
+            "No Owner-reviewable instruction draft was returned.",
+            {},
+            "product"
+          );
+        }
+        state.instructionDrafts[String(run.id)] = draft;
+        return "One next-instruction draft is ready for review. Owner approval is still required.";
+      }
+    );
+  }
+
+  async function approveInstructionDraft() {
+    await performAction(
+      "approve-instruction-draft",
+      elements.approveInstructionDraft,
+      "Approving…",
+      async function () {
+        const run = currentCodexRun();
+        const draft = objectRecord(instructionDraftForRun(run));
+        if (!run || !Object.keys(draft).length) {
+          throw new ApiError(
+            409,
+            "INSTRUCTION_DRAFT_REQUIRED",
+            "Review the instruction draft before approval.",
+            {},
+            "product"
+          );
+        }
+        const payload = await api(
+          "/api/codex-runs/" + encodeURIComponent(run.id) + "/instruction-draft",
+          {
+            method: "POST",
+            body: {
+              action: "approve",
+              expected_digest: draft.draft_digest || draft.instruction_digest || draft.digest || ""
+            }
+          }
+        );
+        const approved = instructionDraftRecord(payload);
+        state.instructionDrafts[String(run.id)] = Object.keys(approved).length ? approved : draft;
+        return "Instruction draft approved. Starting another Codex Run remains a separate Owner action.";
+      }
+    );
+  }
+
+  async function reviewChangeCandidate() {
+    await performAction(
+      "review-change-candidate",
+      elements.reviewChangeCandidate,
+      "Reviewing…",
+      async function () {
+        const run = currentCodexRun();
+        if (!isTerminalCodexRun(run)) {
+          throw new ApiError(
+            409,
+            "TERMINAL_RUN_REQUIRED",
+            "Review Change Candidate is available only for a terminal Codex Run result.",
+            {},
+            "product"
+          );
+        }
+        const review = await api("/api/codex-runs/" + run.id + "/delivery-candidate", {
+          method: "POST"
+        });
+        if (!review || Number(review.run_id) !== Number(run.id)) {
+          throw new ApiError(
+            200,
+            "CANDIDATE_BINDING_MISMATCH",
+            "Change Candidate review did not match the selected Run.",
+            {},
+            "product"
+          );
+        }
+        const key = String(run.id);
+        state.deliveryCandidateReviews[key] = review;
+        state.deliveryCandidateReviewLoads.add(key);
+        renderDeliveryCandidateReview(run);
+        return "";
+      }
+    );
+  }
+
+  async function reviewApplyPlan() {
+    await performAction(
+      "review-apply-plan",
+      elements.reviewApplyPlan,
+      "Reviewing…",
+      async function () {
+        const run = currentCodexRun();
+        if (!isTerminalCodexRun(run)) {
+          throw new ApiError(
+            409,
+            "TERMINAL_RUN_REQUIRED",
+            "Review Apply Plan is available only for a terminal Codex Run result.",
+            {},
+            "product"
+          );
+        }
+        if (!deliveryCandidateReviewAvailable(run)) {
+          throw new ApiError(
+            409,
+            "CANDIDATE_REVIEW_REQUIRED",
+            "Review Change Candidate before reviewing an Apply Plan.",
+            {},
+            "product"
+          );
+        }
+        const review = await api("/api/codex-runs/" + run.id + "/apply-plans", {
+          method: "POST"
+        });
+        if (!review || Number(review.run_id) !== Number(run.id)) {
+          throw new ApiError(
+            200,
+            "APPLY_PLAN_BINDING_MISMATCH",
+            "Apply Plan review did not match the selected Run.",
+            {},
+            "product"
+          );
+        }
+        const key = String(run.id);
+        state.applyPlanReviews[key] = review;
+        state.applyPlanReviewLoads.add(key);
+        await loadApplySessionReview(run, true);
+        await loadPostApplyVerification(run, true);
+        renderApplyPlanReview(run);
+        renderApplySessionReview(run);
+        renderPostApplyVerification(run);
+        return "";
+      }
+    );
+  }
+
+  async function loadHistoricalApplyPlan() {
+    const run = currentCodexRun();
+    const planId = elements.applyPlanHistory.value;
+    if (!isTerminalCodexRun(run) || !planId || state.pending.has("apply-plan-history")) return;
+    state.pending.add("apply-plan-history");
+    elements.applyPlanHistory.disabled = true;
+    try {
+      const review = await api("/api/apply-plans/" + encodeURIComponent(planId));
+      if (!review || Number(review.run_id) !== Number(run.id)) {
+        throw new ApiError(
+          200,
+          "APPLY_PLAN_BINDING_MISMATCH",
+          "Historical Apply Plan did not match the selected Run.",
+          {},
+          "product"
+        );
+      }
+      const key = String(run.id);
+      state.applyPlanReviews[key] = review;
+      state.applyPlanReviewLoads.add(key);
+      await loadApplySessionReview(run, true);
+      await loadPostApplyVerification(run, true);
+      renderApplyPlanReview(run);
+      renderApplySessionReview(run);
+      renderPostApplyVerification(run);
+      setFeedback("Historical Apply Plan loaded for read-only review.", "neutral");
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        handleExpiredSession();
+        return;
+      }
+      setFeedback(productActionMessage(error), "error");
+    } finally {
+      state.pending.delete("apply-plan-history");
+      if (state.auth === AUTH_STATES.SIGNED_IN) {
+        renderApplyPlanReview(currentCodexRun());
+        renderApplySessionReview(currentCodexRun());
+        renderPostApplyVerification(currentCodexRun());
+      }
+    }
+  }
+
+  async function verifyAppliedChanges() {
+    await performAction(
+      "verify-applied-changes",
+      elements.verifyAppliedChanges,
+      "Verifying…",
+      async function () {
+        const run = currentCodexRun();
+        const parts = applySessionReviewParts(run);
+        const applySession = objectRecord(parts.session);
+        if (!applySession.id || !postApplyVerificationContextAvailable(applySession)) {
+          throw new ApiError(
+            409,
+            "APPLIED_SESSION_REQUIRED",
+            "Verify Applied Changes is available only for an applied, non-reverted session.",
+            {},
+            "product"
+          );
+        }
+        const review = await api(
+          "/api/apply-sessions/" + encodeURIComponent(applySession.id)
+            + "/post-apply-verifications",
+          {
+            method: "POST",
+            body: { expected_journal_digest: applySession.journal_digest || "" }
+          }
+        );
+        if (!review || String(review.apply_session_id || "") !== String(applySession.id)) {
+          throw new ApiError(
+            200,
+            "POST_APPLY_VERIFICATION_BINDING_MISMATCH",
+            "Post-Apply Verification did not match the selected Apply session.",
+            {},
+            "product"
+          );
+        }
+        const key = String(applySession.id);
+        state.postApplyVerificationReviews[key] = review;
+        state.postApplyVerificationReviewLoads.add(key);
+        renderPostApplyVerification(run);
+        const verification = objectRecord(review.verification);
+        const status = normalizedPostApplyVerificationState(verification.status);
+        return status === "PASSED"
+          ? "Applied changes verified. Nothing was staged, committed, or pushed."
+          : "Post-Apply Verification finished. Review the reported evidence.";
+      }
+    );
+  }
+
+  function postApplyVerificationDigest(verification) {
+    const record = objectRecord(verification);
+    const advanced = objectRecord(record.advanced);
+    return String(record.verification_digest || advanced.verification_digest || "");
+  }
+
+  function utf8ByteLength(value) {
+    return new TextEncoder().encode(String(value || "")).length;
+  }
+
+  function validCommitSubject(value) {
+    return Boolean(value)
+      && value === value.trim()
+      && value.indexOf("\n") === -1
+      && value.indexOf("\r") === -1
+      && value.indexOf("\u0000") === -1
+      && !Array.from(value).some(function (character) {
+        return character.codePointAt(0) < 32;
+      })
+      && utf8ByteLength(value) <= 200;
+  }
+
+  function validCommitBody(value) {
+    return value.indexOf("\r") === -1
+      && value.indexOf("\u0000") === -1
+      && !Array.from(value).some(function (character) {
+        const code = character.codePointAt(0);
+        return code < 32 && character !== "\n" && character !== "\t";
+      })
+      && utf8ByteLength(value) <= 4000;
+  }
+
+  function storeCommitBuilderReview(verificationId, review) {
+    const key = String(verificationId || "");
+    if (!key || !review || commitBuilderReviewBinding(review) !== key) {
+      throw new ApiError(
+        200,
+        "COMMIT_BUILDER_BINDING_MISMATCH",
+        "Commit workflow review did not match the verified Apply result.",
+        {},
+        "product"
+      );
+    }
+    state.commitBuilderRequestSequences[key] =
+      (state.commitBuilderRequestSequences[key] || 0) + 1;
+    state.commitBuilderReviews[key] = review;
+    state.commitBuilderReviewLoads.add(key);
+  }
+
+  function storePushDeliveryReview(commitId, review) {
+    const key = String(commitId || "");
+    if (!key || !review || pushDeliveryReviewBinding(review) !== key) {
+      throw new ApiError(
+        200,
+        "PUSH_DELIVERY_BINDING_MISMATCH",
+        "Push workflow review did not match the selected local Commit result.",
+        {},
+        "product"
+      );
+    }
+    state.pushDeliveryRequestSequences[key] =
+      (state.pushDeliveryRequestSequences[key] || 0) + 1;
+    state.pushDeliveryReviews[key] = review;
+    state.pushDeliveryReviewLoads.add(key);
+  }
+
+  async function reviewCommitPlan() {
+    await performAction(
+      "review-commit-plan",
+      elements.reviewCommitPlan,
+      "Reviewing…",
+      async function () {
+        const run = currentCodexRun();
+        const verification = currentPassedPostApplyVerification(run);
+        const subject = elements.commitPlanSubject.value;
+        const body = elements.commitPlanBody.value;
+        if (!verification || !verification.id) {
+          throw new ApiError(
+            409,
+            "PASSED_VERIFICATION_REQUIRED",
+            "Review Commit Plan requires the latest passed Post-Apply Verification.",
+            {},
+            "product"
+          );
+        }
+        if (!validCommitSubject(subject)) {
+          elements.commitPlanSubject.focus();
+          throw new ApiError(
+            422,
+            "COMMIT_SUBJECT_INVALID",
+            "Enter one nonempty Commit subject line of at most 200 UTF-8 bytes.",
+            {},
+            "product"
+          );
+        }
+        if (!validCommitBody(body)) {
+          elements.commitPlanBody.focus();
+          throw new ApiError(
+            422,
+            "COMMIT_BODY_INVALID",
+            "Commit body must be at most 4000 UTF-8 bytes of plain text.",
+            {},
+            "product"
+          );
+        }
+        const selectionEpoch = state.taskSelectionEpoch;
+        const review = await api(
+          "/api/post-apply-verifications/" + encodeURIComponent(verification.id)
+            + "/commit-plans",
+          {
+            method: "POST",
+            body: {
+              expected_verification_digest: postApplyVerificationDigest(verification),
+              subject: subject,
+              body: body
+            }
+          }
+        );
+        if (selectionEpoch !== state.taskSelectionEpoch
+            || String(currentPassedPostApplyVerification(currentCodexRun()).id || "")
+              !== String(verification.id)) {
+          throw new ApiError(409, "STALE_COMMIT_PLAN_RESPONSE",
+            "Commit Plan response no longer matches the selected Task. Review the current Task again.",
+            {}, "product");
+        }
+        storeCommitBuilderReview(verification.id, review);
+        renderCommitBuilder(run);
+        return "Commit Plan reviewed. Stage remains a separate explicit Owner action.";
+      }
+    );
+  }
+
+  async function openPushConfirmation() {
+    await performAction(
+      "push-preflight",
+      elements.pushToOriginMain,
+      "Checking live remote…",
+      async function () {
+        const run = currentCodexRun();
+        const commit = currentCommittedLocalCommit(run);
+        const commitId = String(commitBuilderRecordId(commit) || "");
+        if (!commitId) {
+          throw new ApiError(
+            409,
+            "LOCAL_COMMIT_REQUIRED",
+            "Push requires one approved, immutable local Commit result.",
+            {},
+            "product"
+          );
+        }
+        const selectionEpoch = state.taskSelectionEpoch;
+        const review = await api(
+          "/api/local-commits/" + encodeURIComponent(commitId)
+            + "/push-preflights",
+          { method: "POST" }
+        );
+        const current = currentCommittedLocalCommit(currentCodexRun());
+        if (selectionEpoch !== state.taskSelectionEpoch
+            || String(commitBuilderRecordId(current) || "") !== commitId) {
+          throw new ApiError(
+            409,
+            "STALE_PUSH_PREFLIGHT_RESPONSE",
+            "Push preflight no longer matches the selected Task and local Commit result.",
+            {},
+            "product"
+          );
+        }
+        storePushDeliveryReview(commitId, review);
+        const parts = pushDeliveryParts(run);
+        const executionId = String(parts.execution.id || "");
+        const confirmationDigest = String(parts.execution.confirmation_digest || "");
+        renderPushDelivery(run);
+        if (parts.actions.can_confirm_push !== true
+            || !executionId || !confirmationDigest) {
+          state.pushConfirmationContext = null;
+          if (elements.pushConfirmationDialog.open) elements.pushConfirmationDialog.close();
+          setFeedback(
+            pushDeliveryBlockers(parts)[0]
+              || sanitizedApplyPlanText(
+                parts.readiness.next_action || parts.execution.next_action,
+                "Push is blocked by the current live preflight.",
+                700
+              ),
+            "error"
+          );
+          return "";
+        }
+        state.pushConfirmationContext = {
+          local_commit_execution_id: commitId,
+          push_execution_id: executionId,
+          confirmation_digest: confirmationDigest,
+          task_selection_epoch: selectionEpoch
+        };
+        elements.confirmPushToOriginMain.disabled = false;
+        elements.pushConfirmationRepository.textContent = sanitizedApplyPlanText(
+          parts.readiness.repository || objectRecord(parts.execution.advanced).repository,
+          "Bound repository",
+          500
+        );
+        elements.pushConfirmationBranch.textContent = sanitizedApplyPlanText(
+          parts.readiness.branch || parts.execution.branch,
+          "main",
+          240
+        );
+        elements.pushConfirmationCommit.textContent = boundedText(
+          parts.execution.local_commit_sha || parts.readiness.local_commit_sha,
+          "Not evaluated",
+          500
+        );
+        elements.pushConfirmationSubject.textContent = sanitizedApplyPlanText(
+          parts.execution.commit_subject || parts.readiness.commit_subject,
+          "Not evaluated",
+          300
+        );
+        elements.pushConfirmationRemoteBase.textContent = boundedText(
+          parts.execution.expected_remote_base_sha
+            || parts.readiness.expected_remote_base_sha,
+          "Not evaluated",
+          500
+        );
+        elements.pushConfirmationDestination.textContent = sanitizedApplyPlanText(
+          parts.execution.destination || parts.readiness.destination,
+          "origin/main",
+          300
+        );
+        elements.pushConfirmationAheadBehind.textContent = pushAheadBehind(
+          Object.assign({}, parts.readiness, parts.execution)
+        );
+        elements.pushConfirmationCleanliness.textContent = pushCleanliness(
+          Object.assign({}, parts.readiness, parts.execution)
+        );
+        elements.pushConfirmationFastForward.textContent =
+          "Standard fast-forward of the exact approved commit to refs/heads/main; no force, tag, or other branch.";
+        elements.pushConfirmationDialog.showModal();
+        window.setTimeout(function () { elements.cancelPushToOriginMain.focus(); }, 0);
+        return "Live Push preflight passed. Review the exact remote base before confirming.";
+      }
+    );
+  }
+
+  async function confirmPushToOriginMain() {
+    const context = state.pushConfirmationContext;
+    if (!context || !context.push_execution_id || !context.confirmation_digest) return;
+    await performAction(
+      "confirm-push-to-origin-main",
+      elements.confirmPushToOriginMain,
+      "Pushing…",
+      async function () {
+        if (context.task_selection_epoch !== state.taskSelectionEpoch) {
+          throw new ApiError(
+            409,
+            "STALE_PUSH_CONFIRMATION",
+            "Push confirmation no longer matches the selected Task.",
+            {},
+            "product"
+          );
+        }
+        const review = await api(
+          "/api/push-preflights/" + encodeURIComponent(context.push_execution_id)
+            + "/push-attempts",
+          {
+            method: "POST",
+            body: {
+              confirmation: "PUSH_TO_ORIGIN_MAIN",
+              expected_confirmation_digest: context.confirmation_digest
+            }
+          }
+        );
+        const current = currentCommittedLocalCommit(currentCodexRun());
+        if (context.task_selection_epoch !== state.taskSelectionEpoch
+            || String(commitBuilderRecordId(current) || "")
+              !== String(context.local_commit_execution_id)) {
+          throw new ApiError(
+            409,
+            "STALE_PUSH_RESULT_RESPONSE",
+            "Push result no longer matches the selected Task and local Commit result.",
+            {},
+            "product"
+          );
+        }
+        storePushDeliveryReview(context.local_commit_execution_id, review);
+        state.pushConfirmationContext = null;
+        elements.pushConfirmationDialog.close();
+        const parts = pushDeliveryParts(currentCodexRun());
+        renderPushDelivery(currentCodexRun());
+        if (pushDeliveryState(parts) !== "PUSHED") {
+          setFeedback(
+            pushDeliveryBlockers(parts)[0]
+              || sanitizedApplyPlanText(
+                parts.execution.next_action || parts.readiness.next_action,
+                "Push did not complete. Review the persisted blocker evidence.",
+                700
+              ),
+            "error"
+          );
+          return "";
+        }
+        return "The exact approved local commit was pushed once to origin/main. View the Delivery Result.";
+      }
+    );
+  }
+
+  async function viewDeliveryResult() {
+    await performAction(
+      "view-delivery-result",
+      elements.viewDeliveryResult,
+      "Loading result…",
+      async function () {
+        const run = currentCodexRun();
+        const commit = currentCommittedLocalCommit(run);
+        const commitId = String(commitBuilderRecordId(commit) || "");
+        if (!commitId) {
+          throw new ApiError(
+            409,
+            "LOCAL_COMMIT_REQUIRED",
+            "Delivery Result requires one approved local Commit result.",
+            {},
+            "product"
+          );
+        }
+        await loadPushDelivery(run, true);
+        const review = objectRecord(state.pushDeliveryReviews[commitId]);
+        if (objectRecord(review.actions).can_view_delivery_result !== true) {
+          throw new ApiError(
+            409,
+            "DELIVERY_RESULT_NOT_READY",
+            "Delivery Result is not available until the Push attempt reaches a durable result.",
+            {},
+            "product"
+          );
+        }
+        state.pushDeliveryResultVisible.add(commitId);
+        renderPushDelivery(run);
+        return "Delivery Result refreshed from live local and origin/main reconciliation.";
+      }
+    );
+  }
+
+  async function confirmStageApprovedFiles() {
+    const context = state.stageConfirmationContext;
+    if (!context || !context.plan_id) return;
+    await performAction(
+      "stage-approved-files",
+      elements.confirmStageApprovedFiles,
+      "Staging…",
+      async function () {
+        const review = await api(
+          "/api/commit-plans/" + encodeURIComponent(context.plan_id)
+            + "/stage-sessions",
+          {
+            method: "POST",
+            body: {
+              confirmation: "STAGE_APPROVED_FILES",
+              expected_plan_digest: context.plan_digest
+            }
+          }
+        );
+        storeCommitBuilderReview(context.verification_id, review);
+        state.stageConfirmationContext = null;
+        elements.stageConfirmationDialog.close();
+        const run = currentCodexRun();
+        await loadApplySessionReview(run, true);
+        await loadPostApplyVerification(run, true);
+        await loadCommitBuilder(run, true);
+        renderApplySessionReview(run);
+        renderPostApplyVerification(run);
+        renderCommitBuilder(run);
+        return "Only the approved files were staged. Local Commit requires a separate Owner action.";
+      }
+    );
+  }
+
+  async function confirmCreateLocalCommit() {
+    const context = state.localCommitConfirmationContext;
+    if (!context || !context.plan_id || !context.stage_id) return;
+    await performAction(
+      "create-local-commit",
+      elements.confirmCreateLocalCommit,
+      "Creating…",
+      async function () {
+        const review = await api(
+          "/api/stage-sessions/" + encodeURIComponent(context.stage_id)
+            + "/local-commits",
+          {
+            method: "POST",
+            body: {
+              confirmation: "CREATE_LOCAL_COMMIT",
+              expected_plan_digest: context.plan_digest,
+              expected_stage_digest: context.stage_digest
+            }
+          }
+        );
+        storeCommitBuilderReview(context.verification_id, review);
+        state.localCommitConfirmationContext = null;
+        elements.localCommitConfirmationDialog.close();
+        const run = currentCodexRun();
+        await loadApplySessionReview(run, true);
+        await loadPostApplyVerification(run, true);
+        await loadCommitBuilder(run, true);
+        renderApplySessionReview(run);
+        renderPostApplyVerification(run);
+        renderCommitBuilder(run);
+        return "Local Commit created. Review Push readiness before any separate remote action.";
+      }
+    );
+  }
+
+  async function confirmApplyAcceptedChanges() {
+    const context = state.applyConfirmationContext;
+    if (!context || !context.plan_id) return;
+    await performAction(
+      "apply-accepted-changes",
+      elements.confirmApplyAcceptedChanges,
+      "Applying…",
+      async function () {
+        const review = await api(
+          "/api/apply-plans/" + encodeURIComponent(context.plan_id) + "/apply-sessions",
+          {
+            method: "POST",
+            body: {
+              confirmation: "APPLY_ACCEPTED_CHANGES",
+              expected_plan_digest: context.plan_digest,
+              expected_candidate_digest: context.candidate_digest
+            }
+          }
+        );
+        if (!review || String(review.plan_id || "") !== String(context.plan_id)) {
+          throw new ApiError(
+            200,
+            "APPLY_SESSION_BINDING_MISMATCH",
+            "The Apply session did not match the confirmed Apply Plan.",
+            {},
+            "product"
+          );
+        }
+        state.applySessionReviews[String(context.plan_id)] = review;
+        state.applySessionReviewLoads.add(String(context.plan_id));
+        state.applyConfirmationContext = null;
+        elements.applyConfirmationDialog.close();
+        renderApplySessionReview(currentCodexRun());
+        await loadPostApplyVerification(currentCodexRun(), true);
+        renderPostApplyVerification(currentCodexRun());
+        return objectRecord(review.session).apply_state === "APPLIED"
+          ? "Accepted changes applied. Nothing was staged, committed, or pushed."
+          : "";
+      }
+    );
+  }
+
+  async function confirmRevertAppliedChanges() {
+    const context = state.revertConfirmationContext;
+    if (!context || !context.session_id) return;
+    await performAction(
+      "revert-applied-changes",
+      elements.confirmRevertAppliedChanges,
+      "Reverting…",
+      async function () {
+        const review = await api(
+          "/api/apply-sessions/" + encodeURIComponent(context.session_id) + "/reverts",
+          {
+            method: "POST",
+            body: {
+              confirmation: "REVERT_APPLIED_CHANGES",
+              expected_journal_digest: context.journal_digest
+            }
+          }
+        );
+        const planId = String(review && review.plan_id || "");
+        if (!review || !planId) {
+          throw new ApiError(
+            200,
+            "REVERT_SESSION_BINDING_MISMATCH",
+            "The Revert result did not match the confirmed Apply session.",
+            {},
+            "product"
+          );
+        }
+        state.applySessionReviews[planId] = review;
+        state.applySessionReviewLoads.add(planId);
+        state.revertConfirmationContext = null;
+        elements.revertConfirmationDialog.close();
+        renderApplySessionReview(currentCodexRun());
+        delete state.postApplyVerificationReviews[String(context.session_id)];
+        state.postApplyVerificationReviewLoads.delete(String(context.session_id));
+        state.commitBuilderReviews = Object.create(null);
+        state.commitBuilderReviewLoads = new Set();
+        state.commitBuilderRequestSequences = Object.create(null);
+        state.pushDeliveryReviews = Object.create(null);
+        state.pushDeliveryReviewLoads = new Set();
+        state.pushDeliveryRequestSequences = Object.create(null);
+        state.pushDeliveryResultVisible = new Set();
+        state.pushConfirmationContext = null;
+        renderPostApplyVerification(currentCodexRun());
+        renderCommitBuilder(currentCodexRun());
+        renderPushDelivery(currentCodexRun());
+        return objectRecord(review.session).revert_state === "REVERTED"
+          ? "Applied changes reverted. Nothing was staged, committed, or pushed."
+          : "";
+      }
+    );
   }
 
   async function cancelCodex() {
@@ -3484,6 +9444,12 @@
     elements.body.classList.remove("drawer-open");
   }
 
+  function browserRunObserverActive() {
+    const run = currentCodexRun();
+    if (run && lifecycleIsActive(authoritativeRunStatus(run))) return true;
+    return state.runActivity.map(activityView).some(activityNeedsBrowserObservation);
+  }
+
   function bindEvents() {
     elements.headerSignup.addEventListener("click", function () { openAuthView("signup"); });
     elements.landingSignup.addEventListener("click", function () { openAuthView("signup"); });
@@ -3575,6 +9541,7 @@
       state.codexSetup = null;
       elements.saveAssignCodex.disabled = true;
       elements.checkCodexAvailability.disabled = true;
+      elements.verifyCodexConnection.disabled = true;
       elements.setupModelSearch.disabled = true;
       elements.setupModelOptions.hidden = true;
       elements.setupModelSearch.setAttribute("aria-expanded", "false");
@@ -3592,6 +9559,7 @@
         if (token !== state.codexSetupLoadSequence) return;
         elements.saveAssignCodex.disabled = true;
         elements.checkCodexAvailability.disabled = true;
+        elements.verifyCodexConnection.disabled = true;
         elements.setupModelSearch.disabled = true;
         elements.setupModelSearchStatus.textContent = "Supported models could not be loaded.";
         elements.setupAvailabilityStatus.textContent = "Configuration could not be loaded. Cancel or try again.";
@@ -3603,12 +9571,78 @@
     elements.setupModelSearch.addEventListener("input", handleModelSearchInput);
     elements.setupModelSearch.addEventListener("keydown", handleModelSearchKeydown);
     elements.checkCodexAvailability.addEventListener("click", checkCodexAvailability);
+    elements.verifyCodexConnection.addEventListener("click", verifyCodexConnection);
     elements.saveAssignCodex.addEventListener("click", saveAndAssignCodex);
     elements.cancelCodexSetup.addEventListener("click", function () { elements.codexSetupDialog.close(); });
     elements.codexSetupDialog.addEventListener("close", resetCodexSetupDialog);
     elements.generatePack.addEventListener("click", generatePack);
     elements.approvePack.addEventListener("click", approvePack);
     elements.runCodex.addEventListener("click", runCodex);
+    elements.refreshRunStatus.addEventListener("click", refreshRunStatus);
+    elements.reconnectCodexRun.addEventListener("click", reconnectCodexRun);
+    elements.importCodexResult.addEventListener("click", function () {
+      elements.importCodexResultFile.click();
+    });
+    elements.importCodexResultFile.addEventListener("change", function () {
+      importCodexResultFile(elements.importCodexResultFile.files[0]).catch(function (error) {
+        elements.importCodexResultFile.value = "";
+        setFeedback(productActionMessage(error), "error");
+      });
+    });
+    elements.reviewHandoff.addEventListener("click", reviewHandoff);
+    elements.reviewInstructionDraft.addEventListener("click", reviewInstructionDraft);
+    elements.approveInstructionDraft.addEventListener("click", approveInstructionDraft);
+    elements.reviewChangeCandidate.addEventListener("click", reviewChangeCandidate);
+    elements.reviewApplyPlan.addEventListener("click", reviewApplyPlan);
+    elements.applyPlanHistory.addEventListener("change", loadHistoricalApplyPlan);
+    elements.applyAcceptedChanges.addEventListener("click", openApplyConfirmation);
+    elements.revertAppliedChanges.addEventListener("click", openRevertConfirmation);
+    elements.verifyAppliedChanges.addEventListener("click", verifyAppliedChanges);
+    elements.reviewCommitPlan.addEventListener("click", reviewCommitPlan);
+    elements.stageApprovedFiles.addEventListener("click", openStageConfirmation);
+    elements.createLocalCommit.addEventListener("click", openLocalCommitConfirmation);
+    elements.pushToOriginMain.addEventListener("click", openPushConfirmation);
+    elements.viewDeliveryResult.addEventListener("click", viewDeliveryResult);
+    elements.confirmApplyAcceptedChanges.addEventListener("click", confirmApplyAcceptedChanges);
+    elements.cancelApplyAcceptedChanges.addEventListener("click", function () {
+      state.applyConfirmationContext = null;
+      elements.applyConfirmationDialog.close();
+    });
+    elements.confirmRevertAppliedChanges.addEventListener("click", confirmRevertAppliedChanges);
+    elements.cancelRevertAppliedChanges.addEventListener("click", function () {
+      state.revertConfirmationContext = null;
+      elements.revertConfirmationDialog.close();
+    });
+    elements.applyConfirmationDialog.addEventListener("cancel", function () {
+      state.applyConfirmationContext = null;
+    });
+    elements.revertConfirmationDialog.addEventListener("cancel", function () {
+      state.revertConfirmationContext = null;
+    });
+    elements.confirmStageApprovedFiles.addEventListener("click", confirmStageApprovedFiles);
+    elements.cancelStageApprovedFiles.addEventListener("click", function () {
+      state.stageConfirmationContext = null;
+      elements.stageConfirmationDialog.close();
+    });
+    elements.confirmCreateLocalCommit.addEventListener("click", confirmCreateLocalCommit);
+    elements.cancelCreateLocalCommit.addEventListener("click", function () {
+      state.localCommitConfirmationContext = null;
+      elements.localCommitConfirmationDialog.close();
+    });
+    elements.confirmPushToOriginMain.addEventListener("click", confirmPushToOriginMain);
+    elements.cancelPushToOriginMain.addEventListener("click", function () {
+      state.pushConfirmationContext = null;
+      elements.pushConfirmationDialog.close();
+    });
+    elements.stageConfirmationDialog.addEventListener("cancel", function () {
+      state.stageConfirmationContext = null;
+    });
+    elements.localCommitConfirmationDialog.addEventListener("cancel", function () {
+      state.localCommitConfirmationContext = null;
+    });
+    elements.pushConfirmationDialog.addEventListener("cancel", function () {
+      state.pushConfirmationContext = null;
+    });
     elements.cancelCodex.addEventListener("click", cancelCodex);
     elements.acceptResult.addEventListener("click", function () { decideAcceptance("accept"); });
     elements.rejectResult.addEventListener("click", function () { decideAcceptance("reject"); });
@@ -3654,6 +9688,11 @@
   renderAuthShell();
   initializeSession();
   window.setInterval(function () {
-    if (state.auth === AUTH_STATES.SIGNED_IN && !document.hidden) refreshWorkspace();
-  }, POLL_INTERVAL_MS);
+    if (
+      state.auth === AUTH_STATES.SIGNED_IN
+      && !document.hidden
+      && state.pending.size === 0
+      && browserRunObserverActive()
+    ) refreshWorkspace();
+  }, ACTIVE_RUN_POLL_INTERVAL_MS);
 }());

@@ -3,13 +3,17 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import os
 import re
+import shutil
 import subprocess
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
+import pytest
 from fastapi.testclient import TestClient
 
+import twos_runtime.self_hosting as self_hosting
 from twos_runtime.app import create_app
 from twos_runtime.config import STATIC_COCKPIT_DIR, TWOS_UI_PATH, Settings
 from twos_runtime.models import (
@@ -18,7 +22,11 @@ from twos_runtime.models import (
     CodexInstructionPack,
     CodexRun,
 )
-from twos_runtime.self_hosting import capture_source_snapshot, hydrate_source_snapshot
+from twos_runtime.self_hosting import (
+    capture_source_snapshot,
+    hydrate_source_snapshot,
+    pack_routing_binding_error,
+)
 
 
 OWNER_PASSWORD = "owner-password-123"
@@ -128,6 +136,10 @@ def test_dirty_source_snapshot_hydrates_modified_and_untracked_with_zero_staged_
     snapshot = capture_source_snapshot(source_repo)
     manifest = {item["path"]: item for item in snapshot["included_manifest"]}
     assert re.fullmatch(r"[0-9a-f]{64}", snapshot["digest"])
+    assert snapshot["source_repository_identity_method"] == (
+        "git-common-dir-sha256-v1"
+    )
+    assert re.fullmatch(r"[0-9a-f]{64}", snapshot["source_repository_identity"])
     assert manifest["src/service.py"]["kind"] == "tracked_change"
     assert manifest["src/service.py"]["staged"] is False
     assert manifest["tests/test_owner_snapshot.py"]["kind"] == "untracked"
@@ -149,7 +161,10 @@ def test_dirty_source_snapshot_hydrates_modified_and_untracked_with_zero_staged_
         assert (isolated / "tests" / "test_owner_snapshot.py").read_text().startswith(
             "def test_owner_snapshot"
         )
-        assert capture_source_snapshot(isolated)["digest"] == snapshot["digest"]
+        assert capture_source_snapshot(
+            isolated,
+            approved_source_branch=str(snapshot["source_branch"]),
+        )["digest"] == snapshot["digest"]
     finally:
         run_git(source_repo, "worktree", "remove", "--force", str(isolated))
 
@@ -197,10 +212,302 @@ def test_source_snapshot_preserves_index_state_rename_and_executable_mode(
     )
     try:
         hydrate_source_snapshot(isolated, snapshot)
-        assert capture_source_snapshot(isolated)["digest"] == snapshot["digest"]
+        assert capture_source_snapshot(
+            isolated,
+            approved_source_branch=str(snapshot["source_branch"]),
+        )["digest"] == snapshot["digest"]
         assert run_git(
             isolated, "status", "--porcelain", "--untracked-files=all"
         ).stdout == status_before
+    finally:
+        run_git(source_repo, "worktree", "remove", "--force", str(isolated))
+
+
+def test_source_snapshot_hydration_restores_approved_restrictive_tracked_mode(
+    tmp_path: Path,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    (source_repo / "README.md").chmod(0o600)
+    snapshot = capture_source_snapshot(source_repo)
+    manifest = {item["path"]: item for item in snapshot["included_manifest"]}
+    assert manifest["README.md"]["mode"] == 0o600
+
+    isolated = tmp_path / "restrictive-mode-worktree"
+    run_git(
+        source_repo,
+        "worktree",
+        "add",
+        "--detach",
+        str(isolated),
+        str(snapshot["head_sha"]),
+    )
+    try:
+        (isolated / "README.md").chmod(0o644)
+        hydrate_source_snapshot(isolated, snapshot)
+        assert (isolated / "README.md").stat().st_mode & 0o777 == 0o600
+        assert capture_source_snapshot(
+            isolated,
+            approved_source_branch=str(snapshot["source_branch"]),
+        )["digest"] == snapshot["digest"]
+    finally:
+        run_git(source_repo, "worktree", "remove", "--force", str(isolated))
+
+
+def test_source_snapshot_hydration_blocks_missing_tracked_file(tmp_path: Path) -> None:
+    source_repo = make_source_repo(tmp_path)
+    snapshot = capture_source_snapshot(source_repo)
+    isolated = tmp_path / "missing-tracked-worktree"
+    run_git(
+        source_repo,
+        "worktree",
+        "add",
+        "--detach",
+        str(isolated),
+        str(snapshot["head_sha"]),
+    )
+    try:
+        (isolated / "README.md").unlink()
+        with pytest.raises(
+            RuntimeError,
+            match="Approved tracked source file is unavailable during hydration",
+        ):
+            hydrate_source_snapshot(isolated, snapshot)
+    finally:
+        run_git(source_repo, "worktree", "remove", "--force", str(isolated))
+
+
+def test_source_snapshot_hydration_blocks_digest_mismatch(tmp_path: Path) -> None:
+    source_repo = make_source_repo(tmp_path)
+    snapshot = capture_source_snapshot(source_repo)
+    snapshot["digest"] = "0" * 64
+    isolated = tmp_path / "digest-mismatch-worktree"
+    run_git(
+        source_repo,
+        "worktree",
+        "add",
+        "--detach",
+        str(isolated),
+        str(snapshot["head_sha"]),
+    )
+    try:
+        with pytest.raises(
+            RuntimeError,
+            match="Approved source snapshot digest failed integrity validation",
+        ):
+            hydrate_source_snapshot(isolated, snapshot)
+    finally:
+        run_git(source_repo, "worktree", "remove", "--force", str(isolated))
+
+
+def test_source_snapshot_hydration_binds_recomputed_payload_to_approved_digest(
+    tmp_path: Path,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    snapshot = capture_source_snapshot(source_repo)
+    approved_digest = str(snapshot["digest"])
+    snapshot["exclusion_policy"] = str(snapshot["exclusion_policy"]) + " tampered"
+    snapshot["digest"] = self_hosting._source_snapshot_digest(snapshot)
+    assert snapshot["digest"] != approved_digest
+
+    isolated = tmp_path / "approved-digest-binding-worktree"
+    run_git(
+        source_repo,
+        "worktree",
+        "add",
+        "--detach",
+        str(isolated),
+        str(snapshot["head_sha"]),
+    )
+    try:
+        with pytest.raises(
+            RuntimeError,
+            match="Source snapshot does not match the approved Pack and Run binding",
+        ):
+            hydrate_source_snapshot(
+                isolated,
+                snapshot,
+                approved_digest=approved_digest,
+            )
+    finally:
+        run_git(source_repo, "worktree", "remove", "--force", str(isolated))
+
+
+def test_source_snapshot_hydration_blocks_wrong_repository_head(tmp_path: Path) -> None:
+    source_repo = make_source_repo(tmp_path)
+    snapshot = capture_source_snapshot(source_repo)
+    (source_repo / "other.txt").write_text("different approved-repository HEAD\n")
+    run_git(source_repo, "add", "other.txt")
+    run_git(source_repo, "commit", "-m", "different fixture head")
+    isolated = tmp_path / "wrong-repository-worktree"
+    run_git(
+        source_repo,
+        "worktree",
+        "add",
+        "--detach",
+        str(isolated),
+        "HEAD",
+    )
+    try:
+        with pytest.raises(
+            RuntimeError,
+            match="Isolated workspace HEAD does not match the approved source snapshot",
+        ):
+            hydrate_source_snapshot(isolated, snapshot)
+    finally:
+        run_git(source_repo, "worktree", "remove", "--force", str(isolated))
+
+
+def test_source_snapshot_hydration_blocks_same_head_from_different_repository(
+    tmp_path: Path,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    snapshot = capture_source_snapshot(source_repo)
+    other_repo = tmp_path / "same-head-other-repository"
+    shutil.copytree(source_repo, other_repo, symlinks=True)
+    assert run_git(other_repo, "rev-parse", "HEAD").stdout.strip() == snapshot["head_sha"]
+    assert run_git(other_repo, "branch", "--show-current").stdout.strip() == "main"
+
+    isolated = tmp_path / "same-head-other-worktree"
+    run_git(
+        other_repo,
+        "worktree",
+        "add",
+        "--detach",
+        str(isolated),
+        str(snapshot["head_sha"]),
+    )
+    try:
+        with pytest.raises(
+            RuntimeError,
+            match="workspace repository does not match the approved source snapshot",
+        ):
+            hydrate_source_snapshot(isolated, snapshot)
+    finally:
+        run_git(other_repo, "worktree", "remove", "--force", str(isolated))
+
+
+def test_source_snapshot_hydration_binds_approval_branch_and_digest(
+    tmp_path: Path,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    snapshot = capture_source_snapshot(source_repo)
+    isolated = tmp_path / "branch-bound-worktree"
+    run_git(
+        source_repo,
+        "worktree",
+        "add",
+        "--detach",
+        str(isolated),
+        str(snapshot["head_sha"]),
+    )
+    try:
+        with pytest.raises(
+            RuntimeError,
+            match="Source branch does not match the approved source snapshot",
+        ):
+            hydrate_source_snapshot(
+                isolated,
+                snapshot,
+                approved_source_branch="same-head-other-branch",
+            )
+
+        tampered = dict(snapshot)
+        tampered["source_branch"] = "same-head-other-branch"
+        with pytest.raises(
+            RuntimeError,
+            match="Approved source snapshot digest failed integrity validation",
+        ):
+            hydrate_source_snapshot(isolated, tampered)
+    finally:
+        run_git(source_repo, "worktree", "remove", "--force", str(isolated))
+
+
+def test_historical_v2_snapshot_hydrates_but_requires_regeneration_for_new_run(
+    tmp_path: Path,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    snapshot = capture_source_snapshot(source_repo)
+    snapshot.pop("source_repository_identity_method")
+    snapshot.pop("source_repository_identity")
+    snapshot["digest"] = self_hosting._source_snapshot_digest(snapshot)
+
+    isolated = tmp_path / "legacy-v2-worktree"
+    run_git(
+        source_repo,
+        "worktree",
+        "add",
+        "--detach",
+        str(isolated),
+        str(snapshot["head_sha"]),
+    )
+    try:
+        hydrate_source_snapshot(isolated, snapshot, approved_digest=snapshot["digest"])
+    finally:
+        run_git(source_repo, "worktree", "remove", "--force", str(isolated))
+
+    with make_client(tmp_path, source_repo) as client:
+        project_id = signup_and_project(client)
+        task = create_minimal_development_task(
+            client,
+            project_id,
+            "Prove a legacy Pack cannot admit a new Run.",
+        )
+        pack = compose_and_generate_pack(client, task["id"])
+        factory = client.app.state.session_factory
+        with factory() as session:
+            pack_row = session.get(CodexInstructionPack, pack["id"])
+            assert pack_row is not None
+            stored = json.loads(pack_row.source_snapshot_json)
+            stored.pop("source_repository_identity_method")
+            stored.pop("source_repository_identity")
+            stored["digest"] = self_hosting._source_snapshot_digest(stored)
+            pack_row.source_snapshot_json = json.dumps(
+                stored,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            pack_row.source_snapshot_digest = stored["digest"]
+            session.commit()
+
+        approval = client.post(
+            f"/api/tasks/{task['id']}/codex-packs/{pack['id']}/approve"
+        )
+        assert approval.status_code == 409, approval.text
+        assert approval.json()["error"]["details"] == (
+            "The approved Pack predates repository identity binding. "
+            "Regenerate Codex Pack."
+        )
+
+
+def test_source_snapshot_hydration_blocks_tracked_mode_permission_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    snapshot = capture_source_snapshot(source_repo)
+    isolated = tmp_path / "permission-error-worktree"
+    run_git(
+        source_repo,
+        "worktree",
+        "add",
+        "--detach",
+        str(isolated),
+        str(snapshot["head_sha"]),
+    )
+    real_chmod = os.chmod
+
+    def deny_tracked_mode_restore(path: str | bytes | os.PathLike[str], mode: int) -> None:
+        if Path(path).name == "README.md":
+            raise PermissionError("fixture denied tracked mode restoration")
+        real_chmod(path, mode)
+
+    monkeypatch.setattr(self_hosting.os, "chmod", deny_tracked_mode_restore)
+    try:
+        with pytest.raises(
+            PermissionError,
+            match="fixture denied tracked mode restoration",
+        ):
+            hydrate_source_snapshot(isolated, snapshot)
     finally:
         run_git(source_repo, "worktree", "remove", "--force", str(isolated))
 
@@ -289,6 +596,56 @@ def test_pack_binds_dirty_snapshot_and_source_change_returns_regenerate_blocker(
         assert client.get(f"/api/tasks/{task['id']}/codex-runs").json() == []
 
 
+def test_run_admission_blocks_same_head_wrong_branch_and_different_repository(
+    tmp_path: Path,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    with make_client(tmp_path, source_repo) as client:
+        project_id = signup_and_project(client)
+        task = create_minimal_development_task(
+            client,
+            project_id,
+            "Bind one approved Pack to the exact source repository and branch.",
+        )
+        pack = compose_and_generate_pack(client, task["id"])
+        approved = client.post(
+            f"/api/tasks/{task['id']}/codex-packs/{pack['id']}/approve"
+        )
+        assert approved.status_code == 200, approved.text
+
+        approved_head = run_git(source_repo, "rev-parse", "HEAD").stdout.strip()
+        run_git(source_repo, "switch", "-c", "same-head-other-branch")
+        assert run_git(source_repo, "rev-parse", "HEAD").stdout.strip() == approved_head
+        branch_eligibility = client.get(
+            f"/api/tasks/{task['id']}/run-eligibility"
+        )
+        assert branch_eligibility.status_code == 200, branch_eligibility.text
+        assert any(
+            blocker["code"] == "SOURCE_CHANGED_SINCE_APPROVAL"
+            for blocker in branch_eligibility.json()["blockers"]
+        )
+        rejected = client.post(f"/api/tasks/{task['id']}/codex-runs")
+        assert rejected.status_code == 409, rejected.text
+        assert client.get(f"/api/tasks/{task['id']}/codex-runs").json() == []
+        run_git(source_repo, "switch", "main")
+
+        other_repo = tmp_path / "same-head-admission-repository"
+        shutil.copytree(source_repo, other_repo, symlinks=True)
+        assert run_git(other_repo, "rev-parse", "HEAD").stdout.strip() == approved_head
+        assert run_git(other_repo, "branch", "--show-current").stdout.strip() == "main"
+        factory = client.app.state.session_factory
+        with factory() as session:
+            pack_row = session.get(CodexInstructionPack, pack["id"])
+            assert pack_row is not None
+            error = pack_routing_binding_error(
+                session,
+                pack_row.task,
+                pack_row,
+                other_repo,
+            )
+        assert error == "Source changed since approval. Regenerate Codex Pack."
+
+
 def add_excluded_secret_and_runtime_files(source_repo: Path) -> None:
     (source_repo / "src" / "service.py").write_text("VALUE = 'safe source change'\n")
     (source_repo / "safe_untracked.py").write_text("SAFE = True\n")
@@ -335,6 +692,44 @@ def test_snapshot_exclusions_are_hydratable_without_secret_material(
             ".venv/credential.txt",
         ):
             assert not (isolated / relative).exists()
+    finally:
+        run_git(source_repo, "worktree", "remove", "--force", str(isolated))
+
+
+def test_snapshot_hydration_unlinks_excluded_symlinks_without_touching_targets(
+    tmp_path: Path,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    external_target = tmp_path / "external-target.txt"
+    external_target.write_text("outside must survive\n")
+    (source_repo / "inside-link").symlink_to("README.md")
+    (source_repo / "outside-link").symlink_to(external_target)
+    snapshot = capture_source_snapshot(source_repo)
+    excluded = {item["path"] for item in snapshot["excluded_manifest"]}
+    assert {"inside-link", "outside-link"}.issubset(excluded)
+
+    isolated = tmp_path / "excluded-symlink-worktree"
+    run_git(
+        source_repo,
+        "worktree",
+        "add",
+        "--detach",
+        str(isolated),
+        str(snapshot["head_sha"]),
+    )
+    try:
+        (isolated / "inside-link").symlink_to("README.md")
+        (isolated / "outside-link").symlink_to(external_target)
+        readme_before = (isolated / "README.md").read_bytes()
+
+        hydrate_source_snapshot(isolated, snapshot)
+
+        assert not (isolated / "inside-link").exists()
+        assert not (isolated / "outside-link").exists()
+        assert not (isolated / "inside-link").is_symlink()
+        assert not (isolated / "outside-link").is_symlink()
+        assert (isolated / "README.md").read_bytes() == readme_before
+        assert external_target.read_text() == "outside must survive\n"
     finally:
         run_git(source_repo, "worktree", "remove", "--force", str(isolated))
 
@@ -402,7 +797,11 @@ def test_twos_is_canonical_and_legacy_html_redirects_without_exposing_legacy_loc
             canonical.text,
         )
         assert re.search(
-            r'<button\s+id="check-codex-availability"[^>]*class="button button-primary"[^>]*disabled',
+            r'<button\s+id="check-codex-availability"[^>]*class="button button-secondary"[^>]*disabled',
+            canonical.text,
+        )
+        assert re.search(
+            r'<button\s+id="verify-codex-connection"[^>]*class="button button-primary"[^>]*disabled',
             canonical.text,
         )
         assert re.search(
@@ -431,7 +830,10 @@ def test_twos_is_canonical_and_legacy_html_redirects_without_exposing_legacy_loc
         assert 'api("/api/model-catalog?adapter=codex_cli&capability="' in script.text
         assert "setupModelIdentifier" not in script.text
         assert "setCustomValidity(message)" not in script.text
-        assert "support and resolution remain unverified" in script.text
+        assert (
+            "Provider connectivity and model availability remain unverified"
+            in script.text
+        )
 
         legacy = client.get(
             "/static_cockpit/vol12_static_mvp/twos_command_center.html",

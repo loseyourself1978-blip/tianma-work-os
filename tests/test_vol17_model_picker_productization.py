@@ -116,11 +116,22 @@ def _check_model(client, model_id: str, capability: str = "coding") -> int:
     )
     assert response.status_code == 200, response.text
     payload = response.json()
-    assert payload["available"] is True
+    assert payload["available"] is False
+    assert payload["execution_prerequisites_available"] is True
+    assert payload["readiness_state"] == "AUTHENTICATED_CONNECTIVITY_NOT_VERIFIED"
     assert payload["configuration"]["provider_model_id"] == model_id
     assert payload["configuration"]["last_invocation_outcome"] == "not_invoked"
     assert payload["availability_evidence"]["evidence_type"] == "non_inference_cli_health"
-    return payload["configuration"]["id"]
+    verified = client.post(
+        "/api/codex/setup/verify-connection",
+        json={"model_identifier": model_id, "capability": capability},
+    )
+    assert verified.status_code == 200, verified.text
+    evidence = verified.json()
+    assert evidence["readiness_state"] == "READY_FOR_REAL_RUN"
+    assert evidence["actual_model"] == model_id
+    assert evidence["ready_for_real_run"] is True
+    return evidence["configuration"]["id"]
 
 
 def _assign_model(client, task_id: int, model_id: int, capability: str):
@@ -246,6 +257,44 @@ def test_catalog_discovery_precedence_cache_and_non_inference_fallbacks(
     )
     assert all(item.compatibility_status == "versioned_compatibility" for item in discovered.models)
     assert all(item.supported_capabilities == ("coding", "verification") for item in discovered.models)
+
+
+def test_optional_app_server_catalog_partial_frame_obeys_deadline(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    executable = tmp_path / "partial-frame-codex"
+    executable.write_text(
+        "#!/usr/bin/env python3\n"
+        "import sys, time\n"
+        "for _line in sys.stdin:\n"
+        "    sys.stdout.write('{\\\"id\\\":1,\\\"result\\\":{')\n"
+        "    sys.stdout.flush()\n"
+        "    time.sleep(5)\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    adapter = CodexAdapter(_settings(tmp_path))
+    detection = CodexDetection(
+        status="configured",
+        found=True,
+        executable=str(executable),
+        version="codex-cli 0.144.4",
+        supported_command="codex exec --json",
+        reason="Controlled partial-frame fixture.",
+        next_action="No action required.",
+    )
+    monkeypatch.setattr(
+        codex_adapter_module,
+        "CODEX_MODEL_CATALOG_APP_SERVER_TIMEOUT_SECONDS",
+        0.2,
+    )
+
+    started_at = time.monotonic()
+    with pytest.raises(TimeoutError, match="catalog response timed out"):
+        adapter._app_server_model_catalog(detection)
+
+    assert time.monotonic() - started_at < 2
 
 
 def test_authenticated_catalog_is_allowlisted_scoped_and_side_effect_free(tmp_path: Path) -> None:

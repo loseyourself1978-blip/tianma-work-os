@@ -12,8 +12,8 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field, field_validator
-from sqlalchemy import func, select, text
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from sqlalchemy import func, or_, select, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -27,10 +27,81 @@ from .ai_orchestration import (
     model_registry_snapshot,
     recompose_model_assignments,
     route_capability,
+    verified_actual_model_identity,
 )
 from .codex_adapter import CodexExecutionManager
+from .codex_connectivity import (
+    codex_child_environment,
+    connectivity_evidence_out,
+    connectivity_status,
+    verify_codex_connection,
+)
 from .config import Settings, get_settings
 from .db import initialize_database, make_engine, make_session_factory, seed_ai_registry, seed_registry
+from .delivery_candidates import (
+    delivery_candidate_eligibility,
+    delivery_candidate_out,
+    evaluate_source_drift,
+    find_owner_run,
+    get_or_create_delivery_candidate,
+    source_drift_out,
+    validate_delivery_candidate,
+)
+from .apply_plans import (
+    apply_plan_history,
+    apply_plan_out,
+    get_or_create_apply_plan,
+    latest_apply_plan,
+)
+from .apply_sessions import (
+    ApplySessionError,
+    apply_accepted_changes,
+    apply_confirmation_out,
+    apply_session_out,
+    find_owned_apply_session,
+    reconcile_incomplete_apply_sessions,
+    revert_applied_changes,
+    revert_confirmation_out,
+)
+from .post_apply_verifications import (
+    PostApplyVerificationError,
+    find_owned_post_apply_verification,
+    get_or_create_post_apply_verification,
+    post_apply_verification_review,
+)
+from .commit_builder import (
+    CommitBuilderError,
+    commit_builder_review,
+    create_local_commit,
+    find_owned_commit_plan,
+    find_owned_stage_execution,
+    get_or_create_commit_plan,
+    stage_commit_plan,
+)
+from .push_delivery import (
+    PushDeliveryError,
+    confirm_push_to_origin_main,
+    create_push_preflight,
+    find_owned_local_commit_execution,
+    find_owned_push_execution,
+    push_delivery_review,
+)
+from .result_intake import (
+    ResultIntakeError,
+    ResultIntakeMonitor,
+    approve_instruction_draft,
+    ensure_run_monitor,
+    get_or_create_handoff_review,
+    get_or_create_instruction_draft,
+    handoff_review_out,
+    import_codex_result,
+    instruction_draft_out,
+    monitor_out,
+    reconnect_run_monitor,
+    result_envelope_out,
+    source_snapshot_unavailable_for_run,
+)
+from .run_lifecycle import lifecycle_snapshot_out
 from .models import (
     AICapability,
     AIModel,
@@ -43,6 +114,17 @@ from .models import (
     AuditEvent,
     CodexInstructionPack,
     CodexRun,
+    DeliveryCandidate,
+    ApplyPlan,
+    ApplySession,
+    CommitPlan,
+    PostApplyVerification,
+    StageExecution,
+    LocalCommitExecution,
+    CodexResultEnvelope,
+    CodexRunMonitor,
+    HandoffInstructionDraft,
+    HandoffReview,
     OwnerAcceptanceItem,
     OwnerAcceptanceSession,
     Project,
@@ -165,6 +247,111 @@ class LoginIn(BaseModel):
         if not normalize_username(value):
             raise ValueError("Username is required.")
         return value
+
+
+class ApplyAcceptedChangesIn(BaseModel):
+    confirmation: Literal["APPLY_ACCEPTED_CHANGES"]
+    expected_plan_digest: str = Field(min_length=64, max_length=64)
+    expected_candidate_digest: str = Field(min_length=64, max_length=64)
+
+
+class RevertAppliedChangesIn(BaseModel):
+    confirmation: Literal["REVERT_APPLIED_CHANGES"]
+    expected_journal_digest: str = Field(min_length=64, max_length=64)
+
+
+class PostApplyVerificationIn(BaseModel):
+    expected_journal_digest: str = Field(
+        min_length=64,
+        max_length=64,
+        pattern=r"^[0-9a-f]{64}$",
+    )
+
+
+class ReviewCommitPlanIn(BaseModel):
+    expected_verification_digest: str = Field(
+        min_length=64,
+        max_length=64,
+        pattern=r"^[0-9a-f]{64}$",
+    )
+    subject: str = Field(min_length=1, max_length=200)
+    body: str = Field(default="", max_length=4_000)
+
+    @field_validator("subject")
+    @classmethod
+    def commit_subject_is_bounded_one_line(cls, value: str) -> str:
+        if (
+            value != value.strip()
+            or "\n" in value
+            or "\r" in value
+            or "\x00" in value
+            or len(value.encode("utf-8")) > 200
+            or any(ord(character) < 32 for character in value)
+        ):
+            raise ValueError("Commit subject must be one bounded UTF-8 line.")
+        return value
+
+    @field_validator("body")
+    @classmethod
+    def commit_body_is_bounded_text(cls, value: str) -> str:
+        if (
+            len(value.encode("utf-8")) > 4_000
+            or "\x00" in value
+            or "\r" in value
+            or any(
+                ord(character) < 32 and character not in {"\n", "\t"}
+                for character in value
+            )
+        ):
+            raise ValueError("Commit body must be bounded UTF-8 text.")
+        return value
+
+
+class StageApprovedFilesIn(BaseModel):
+    confirmation: Literal["STAGE_APPROVED_FILES"]
+    expected_plan_digest: str = Field(
+        min_length=64,
+        max_length=64,
+        pattern=r"^[0-9a-f]{64}$",
+    )
+
+
+class CreateLocalCommitIn(BaseModel):
+    confirmation: Literal["CREATE_LOCAL_COMMIT"]
+    expected_plan_digest: str = Field(
+        min_length=64,
+        max_length=64,
+        pattern=r"^[0-9a-f]{64}$",
+    )
+    expected_stage_digest: str = Field(
+        min_length=64,
+        max_length=64,
+        pattern=r"^[0-9a-f]{64}$",
+    )
+
+
+class CreatePushPreflightIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class ConfirmPushToOriginMainIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    confirmation: Literal["PUSH_TO_ORIGIN_MAIN"]
+    expected_confirmation_digest: str = Field(
+        min_length=64,
+        max_length=64,
+        pattern=r"^[0-9a-f]{64}$",
+    )
+
+
+class CodexResultImportIn(BaseModel):
+    result: Any
+
+
+class InstructionDraftActionIn(BaseModel):
+    action: Literal["review", "approve"] = "review"
+    expected_digest: str = Field(default="", max_length=64)
 
 
 class ProjectIn(BaseModel):
@@ -507,16 +694,19 @@ def model_invocation_out(evidence: AIModelInvocationEvidence) -> dict[str, Any]:
             requested_model_identifier = evidence.codex_run.requested_model_identifier
         elif evidence.capability == "verification":
             requested_model_identifier = evidence.codex_run.verification_model_identifier
-    actual_model_identity_verified = bool(
-        process_evidence.get("actual_model_identity_verified") is True
-        and process_evidence.get("model_identity_observed") is True
-        and evidence.actual_invoked_model_identifier
+    actual_model, model_identity_source, connectivity_digest = (
+        verified_actual_model_identity(evidence)
     )
-    actual_resolved_model_identifier = (
-        evidence.actual_invoked_model_identifier if actual_model_identity_verified else None
+    actual_model_identity_verified = bool(actual_model)
+    actual_resolved_model_identifier = actual_model or None
+    process_execution_verified = bool(
+        verified_real_invocation
+        and process_evidence.get("process_execution_verified") is True
     )
-    process_execution_verified = process_evidence.get("process_execution_verified") is True
-    codex_turn_verified = process_evidence.get("codex_turn_verified") is True
+    codex_turn_verified = bool(
+        verified_real_invocation
+        and process_evidence.get("codex_turn_verified") is True
+    )
     execution_state = (
         "invoked"
         if verified_real_invocation
@@ -540,20 +730,26 @@ def model_invocation_out(evidence: AIModelInvocationEvidence) -> dict[str, Any]:
         "actual_resolved_model_display": (
             actual_resolved_model_identifier
             if actual_resolved_model_identifier
-            else "Not independently exposed by available CLI evidence"
+            else "Not exposed by the current Codex CLI protocol."
             if verified_real_invocation
             else "Not verified"
         ),
         "actual_model_identity_verified": actual_model_identity_verified,
+        "model_identity_source": model_identity_source or None,
+        "connectivity_evidence_identity": connectivity_digest or None,
         "process_execution_verified": process_execution_verified,
         "codex_turn_verified": codex_turn_verified,
         "display_claim": (
-            f"Ran with {actual_resolved_model_identifier}"
+            (
+                f"Completed with connection-verified model {actual_resolved_model_identifier}"
+                if model_identity_source == "owner_verified_connectivity_binding"
+                else f"Ran with {actual_resolved_model_identifier}"
+            )
             if verified_real_invocation and actual_resolved_model_identifier
             else (
                 "Real Codex CLI invocation verified; "
                 f"requested model {requested_model_identifier}; "
-                "actual resolved model not independently exposed by available CLI evidence"
+                "run-local effective model was not exposed by the current Codex CLI protocol"
             )
             if verified_real_invocation
             else f"Assigned to {configured_model['display_name']}"
@@ -697,48 +893,6 @@ def codex_run_out(
     result["frozen_development_task"] = run.development_task
     result["development_task_digest"] = run.development_task_digest
 
-    def normalized_invocation_result(
-        value: object,
-        requested_model_identifier: str,
-    ) -> dict[str, Any]:
-        proof = dict(value) if isinstance(value, dict) else {}
-        requested = str(
-            proof.get("requested_model_identifier")
-            or proof.get("requested_model")
-            or requested_model_identifier
-            or ""
-        )
-        actual_model_identity_verified = proof.get("actual_model_identity_verified") is True
-        candidate = proof.get("actual_resolved_model_identifier") or proof.get(
-            "actual_resolved_model"
-        )
-        actual = str(candidate) if actual_model_identity_verified and candidate else None
-        turn_verified = proof.get("codex_turn_verified") is True
-        process_verified = proof.get("process_execution_verified") is True
-        proof["requested_model"] = requested
-        proof["requested_model_identifier"] = requested
-        proof["actual_resolved_model"] = actual
-        proof["actual_resolved_model_identifier"] = actual
-        proof["actual_resolved_model_display"] = (
-            actual
-            if actual
-            else "Not independently exposed by available CLI evidence"
-            if turn_verified
-            else "Not verified"
-        )
-        proof["actual_model_identity_verified"] = bool(actual)
-        proof["process_execution_verified"] = process_verified
-        proof["codex_turn_verified"] = turn_verified
-        return proof
-
-    result["coding_invocation"] = normalized_invocation_result(
-        result.get("coding_invocation"),
-        run.requested_model_identifier,
-    )
-    result["verification_invocation"] = normalized_invocation_result(
-        result.get("verification_invocation"),
-        run.verification_model_identifier,
-    )
     invocation_rows = (
         session.scalars(
             select(AIModelInvocationEvidence)
@@ -747,6 +901,73 @@ def codex_run_out(
         ).all()
         if session is not None
         else []
+    )
+
+    def invocation_for_capability(
+        capability: str,
+    ) -> AIModelInvocationEvidence | None:
+        capability_rows = [
+            row for row in invocation_rows if row.capability == capability
+        ]
+        return capability_rows[0] if len(capability_rows) == 1 else None
+
+    def normalized_invocation_result(
+        value: object,
+        requested_model_identifier: str,
+        evidence: AIModelInvocationEvidence | None,
+    ) -> dict[str, Any]:
+        proof = dict(value) if isinstance(value, dict) else {}
+        requested = str(requested_model_identifier or "")
+        actual_value, source, connectivity_digest = verified_actual_model_identity(
+            evidence
+        )
+        actual = actual_value or None
+        evidence_process = (
+            decoded_object(evidence.process_evidence)
+            if evidence is not None
+            else {}
+        )
+        turn_verified = bool(
+            evidence is not None
+            and (
+                evidence_process.get("codex_turn_verified") is True
+                or (
+                    evidence_process.get("codex_turn_completed") is True
+                    and evidence_process.get("codex_lifecycle_conflict") is not True
+                )
+            )
+        )
+        process_verified = bool(
+            evidence is not None
+            and evidence_process.get("process_execution_verified") is True
+        )
+        proof["requested_model"] = requested
+        proof["requested_model_identifier"] = requested
+        proof["actual_resolved_model"] = actual
+        proof["actual_resolved_model_identifier"] = actual
+        proof["actual_resolved_model_display"] = (
+            actual
+            if actual
+            else "Not exposed by the current Codex CLI protocol."
+            if turn_verified
+            else "Not verified"
+        )
+        proof["actual_model_identity_verified"] = bool(actual)
+        proof["model_identity_source"] = source or None
+        proof["connectivity_evidence_identity"] = connectivity_digest or None
+        proof["process_execution_verified"] = process_verified
+        proof["codex_turn_verified"] = turn_verified
+        return proof
+
+    result["coding_invocation"] = normalized_invocation_result(
+        result.get("coding_invocation"),
+        run.requested_model_identifier,
+        invocation_for_capability("coding"),
+    )
+    result["verification_invocation"] = normalized_invocation_result(
+        result.get("verification_invocation"),
+        run.verification_model_identifier,
+        invocation_for_capability("verification"),
     )
     output = {
         "id": run.id,
@@ -806,6 +1027,17 @@ def codex_run_out(
         "started_at": iso(run.started_at),
         "finished_at": iso(run.finished_at),
     }
+    if (
+        session is not None
+        and run.pack is not None
+        and run.pack.approved_by_user_id is not None
+    ):
+        output["lifecycle"] = lifecycle_snapshot_out(
+            session,
+            int(run.pack.approved_by_user_id),
+            run,
+            advanced=include_raw,
+        )
     if include_raw:
         output.update(
             {
@@ -994,18 +1226,38 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     engine = make_engine(settings.database_url)
     initialize_database(engine)
     factory = make_session_factory(engine)
+    with factory() as recovery_session:
+        reconcile_incomplete_apply_sessions(
+            recovery_session,
+            source_repo=settings.source_repo,
+        )
     codex_manager = CodexExecutionManager(factory, settings)
     codex_manager.sync_local_model_registry()
     codex_manager.recover_interrupted_runs()
+    result_intake_monitor = ResultIntakeMonitor(
+        factory,
+        poll_seconds=min(1.0, float(settings.scheduler_poll_seconds)),
+        on_recovery_needed=codex_manager.resume_persisted_execution,
+    )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        result_intake_monitor.start()
         if start_scheduler:
             await app.state.runtime_scheduler.start()
         try:
             yield
         finally:
             codex_manager.shutdown()
+            try:
+                result_intake_monitor.reconcile_now()
+            except Exception as exc:
+                logger.warning(
+                    "Final Codex result reconciliation deferred type=%s",
+                    type(exc).__name__,
+                )
+            finally:
+                result_intake_monitor.shutdown()
             await app.state.runtime_scheduler.stop()
 
     app = FastAPI(title="TWOS 1.0 Runtime", version=__version__, lifespan=lifespan)
@@ -1014,6 +1266,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     app.state.session_factory = factory
     app.state.runtime_scheduler = RuntimeScheduler(factory, settings.scheduler_poll_seconds)
     app.state.codex_manager = codex_manager
+    app.state.result_intake_monitor = result_intake_monitor
 
     if settings.static_cockpit_dir.exists():
         app.mount("/static_cockpit", StaticFiles(directory=settings.static_cockpit_dir), name="static_cockpit")
@@ -1492,7 +1745,10 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         source_state: dict[str, object] = {}
         if effective_workflow == "product_development":
             try:
-                source_state = git_source_state(settings.source_repo)
+                source_state = git_source_state(
+                    settings.source_repo,
+                    hardened_read_only=True,
+                )
             except RuntimeError as exc:
                 raise HTTPException(status_code=409, detail=str(exc)) from exc
 
@@ -1604,7 +1860,10 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             setattr(task, key, value)
         if task.workflow_type == "product_development":
             if not task.source_baseline_commit:
-                source_state = git_source_state(settings.source_repo)
+                source_state = git_source_state(
+                    settings.source_repo,
+                    hardened_read_only=True,
+                )
                 task.repository_identity = str(source_state["identity"])
                 task.source_baseline_commit = str(source_state["commit"])
         if material_changed:
@@ -1988,6 +2247,18 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 .where(AIModelAvailabilityEvidence.model_id == model.id)
                 .order_by(AIModelAvailabilityEvidence.id.desc())
             )
+        detection = codex_manager.adapter.detect()
+        connectivity = connectivity_status(
+            session,
+            owner_id=user.id,
+            model=model,
+            detection=detection,
+            environment=codex_child_environment(),
+        )
+        connectivity["configured_run_timeout_seconds"] = settings.codex_timeout_seconds
+        connectivity["configured_connectivity_timeout_seconds"] = (
+            settings.codex_connectivity_timeout_seconds
+        )
         return {
             "target": {
                 "adapter": "codex_cli",
@@ -2009,6 +2280,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 "failure_classification": evidence.failure_classification,
                 "runtime_identity": evidence.runtime_identity,
             } if evidence else None),
+            "connectivity": connectivity,
         }
 
     @app.post("/api/codex/setup/check")
@@ -2025,35 +2297,71 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             catalog_model.display_name,
         )
         provider = model.provider
-        material_before = (
-            provider.enabled,
-            provider.status,
-            model.status,
-            model.configuration_status,
-            model.availability_status,
-            model.invocation_mode,
+        approved_before = set(
+            session.scalars(
+                select(CodexInstructionPack.id).where(
+                    CodexInstructionPack.status == "approved"
+                )
+            ).all()
         )
         detection = codex_manager.adapter.detect()
-        authenticated, authentication_reason = codex_manager.adapter.authentication_ready(detection)
-        available = detection.status == "configured" and authenticated
-        provider.enabled = available
-        provider.status = "healthy" if available else "unconfigured"
-        provider.last_checked_at = utc_now()
-        model.status = "healthy" if available else "unconfigured"
-        model.availability_status = "available" if available else "unavailable"
-        model.evidence_status = "runtime_check" if available else "unverified"
-        model.evidence_source = "local_cli_readiness"
-        model.last_verified_at = utc_now()
-        if detection.status != "configured":
+        connectivity = connectivity_status(
+            session,
+            owner_id=user.id,
+            model=model,
+            detection=detection,
+            environment=codex_child_environment(),
+        )
+        authentication = connectivity.get("authentication") or {}
+        prerequisites_available = bool(
+            detection.status == "configured"
+            and authentication.get("authenticated") is True
+            and authentication.get("credential_store_accessible") is True
+        )
+        if not prerequisites_available:
+            codex_manager.reconcile_observed_local_readiness(
+                session,
+                detection,
+                authenticated=False,
+                authentication_reason=str(
+                    connectivity.get("blocker")
+                    or "Codex authentication is unavailable in the detached runtime context."
+                ),
+            )
+            session.flush()
+        # CLI/authentication inspection is not Provider/model connectivity proof.
+        # Rechecking prerequisites must also not erase an exact, still-current
+        # Owner-triggered Provider/model probe. Run readiness remains derived
+        # from that immutable evidence, never from this request itself.
+        available = connectivity.get("ready_for_real_run") is True
+        if available:
+            provider.enabled = True
+            provider.status = "healthy"
+            model.status = "healthy"
+            model.availability_status = "available"
+            model.evidence_status = "verified"
+            model.evidence_source = "codex_connectivity_probe"
+            failure = ""
+            diagnostic = (
+                "CLI and authentication prerequisites remain available. "
+                "Real-Run readiness is preserved from the latest matching "
+                "Owner-triggered connectivity probe; no Provider request was made."
+            )
+        elif detection.status != "configured":
             failure = "runtime_unavailable"
             diagnostic = detection.reason
-        elif not authenticated:
+        elif not prerequisites_available:
             failure = "authentication_unavailable"
-            diagnostic = authentication_reason
+            diagnostic = str(
+                connectivity.get("blocker")
+                or "Codex authentication is unavailable in the detached runtime context."
+            )
         else:
-            failure = ""
-            diagnostic = "Local Codex CLI executable, command surface, and authentication are available."
-        model.safe_diagnostic = diagnostic
+            failure = "connectivity_not_verified"
+            diagnostic = (
+                "Codex CLI and authentication prerequisites are available. "
+                "Provider connectivity and model availability are not verified."
+            )
         evidence = AIModelAvailabilityEvidence(
             configuration_identity=model.stable_id or f"model-{model.id}",
             model_id=model.id,
@@ -2061,45 +2369,36 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             adapter="codex_cli",
             invocation_mode="real",
             result="available" if available else "unavailable",
-            evidence_type="non_inference_cli_health",
+            evidence_type=(
+                "non_inference_cli_health_with_persisted_connectivity"
+                if available
+                else "non_inference_cli_health"
+            ),
             failure_classification=failure,
             runtime_identity=(detection.version or "")[:240],
         )
         session.add(evidence)
-        invalidated = 0
-        material_after = (
-            provider.enabled,
-            provider.status,
-            model.status,
-            model.configuration_status,
-            model.availability_status,
-            model.invocation_mode,
-        )
-        if material_before != material_after:
-            provider_state_changed = material_before[:2] != material_after[:2]
-            affected_model_ids = (
-                [item.id for item in model.provider.models]
-                if provider_state_changed
-                else [model.id]
-            )
-            assigned_task_ids = {
-                assignment.task_id
-                for assignment in session.scalars(
-                    select(AIModelAssignment).where(
-                        AIModelAssignment.assigned_model_id.in_(affected_model_ids)
+        invalidated = (
+            int(
+                session.scalar(
+                    select(func.count(CodexInstructionPack.id)).where(
+                        CodexInstructionPack.id.in_(approved_before),
+                        CodexInstructionPack.status == "invalidated",
                     )
-                ).all()
-            }
-            for assigned_task_id in assigned_task_ids:
-                invalidated_for_task = invalidate_approved_packs(session, assigned_task_id)
-                invalidated += invalidated_for_task
-                if invalidated_for_task:
-                    assigned_task = session.get(Task, assigned_task_id)
-                    if assigned_task is not None:
-                        assigned_task.status = "planned"
+                )
+                or 0
+            )
+            if approved_before
+            else 0
+        )
         audit(
             session, request, "codex_availability_checked", "ai_model", model.id,
-            f"adapter=codex_cli; capability={payload.capability}; result={evidence.result}; evidence_type=non_inference_cli_health", user,
+            (
+                f"adapter=codex_cli; capability={payload.capability}; "
+                f"result={evidence.result}; evidence_type={evidence.evidence_type}; "
+                "provider_probe_performed=false"
+            ),
+            user,
         )
         session.flush()
         return {
@@ -2115,8 +2414,188 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 "runtime_identity": evidence.runtime_identity,
             },
             "available": available,
+            "execution_prerequisites_available": prerequisites_available,
+            "readiness_state": connectivity.get("readiness_state"),
+            "ready_for_real_run": available,
+            "provider_probe_performed": False,
+            "connectivity_evidence_id": connectivity.get("evidence_id"),
+            "last_connectivity_check": connectivity.get("last_connectivity_check"),
             "invalidated_packs": invalidated,
         }
+
+    @app.get("/api/codex/setup/connectivity")
+    def get_codex_connectivity(
+        model_identifier: str | None = None,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        model = None
+        if model_identifier:
+            model = session.scalar(
+                select(AIModel).where(
+                    AIModel.execution_adapter == "codex_cli",
+                    AIModel.provider_model_id == model_identifier,
+                    AIModel.configuration_status != "disabled",
+                )
+            )
+        else:
+            model = local_codex_model(session)
+        detection = codex_manager.adapter.detect()
+        # Read-only authentication inspection is allowed here; this GET never
+        # performs a Provider request and never creates connectivity evidence.
+        output = connectivity_status(
+            session,
+            owner_id=user.id,
+            model=model,
+            detection=detection,
+            environment=codex_child_environment(),
+        )
+        output["configured_run_timeout_seconds"] = settings.codex_timeout_seconds
+        output["configured_connectivity_timeout_seconds"] = (
+            settings.codex_connectivity_timeout_seconds
+        )
+        return output
+
+    @app.post("/api/codex/setup/verify-connection")
+    def verify_codex_setup_connection(
+        payload: CodexSetupIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        catalog_model = selected_catalog_model(payload.model_identifier)
+        model, _ = ensure_local_codex_configuration(
+            session,
+            catalog_model.canonical_model_id,
+            catalog_model.display_name,
+        )
+        provider = model.provider
+        material_before = (
+            provider.enabled,
+            provider.status,
+            model.status,
+            model.availability_status,
+            model.evidence_status,
+            model.evidence_source,
+        )
+        detection = codex_manager.adapter.detect()
+        evidence = verify_codex_connection(
+            session,
+            owner_id=user.id,
+            model=model,
+            detection=detection,
+            command_for=codex_manager.adapter.command_for,
+            timeout_seconds=settings.codex_connectivity_timeout_seconds,
+        )
+        ready = evidence.readiness_state == "READY_FOR_REAL_RUN"
+        provider.enabled = evidence.provider_reachable
+        provider.status = (
+            "healthy"
+            if ready
+            else "degraded"
+            if evidence.provider_reachable
+            else "unconfigured"
+        )
+        provider.last_checked_at = utc_now()
+        model.status = "healthy" if ready else "unconfigured"
+        model.availability_status = "available" if ready else "unavailable"
+        model.evidence_status = "verified" if ready else "unverified"
+        model.evidence_source = "codex_connectivity_probe"
+        model.last_verified_at = evidence.checked_at
+        model.safe_diagnostic = evidence.safe_summary
+        if not evidence.provider_reachable:
+            # Provider/authentication loss invalidates every model sharing this
+            # execution target. A later successful probe for one sibling must
+            # not resurrect another sibling's older READY evidence.
+            for sibling in provider.models:
+                if sibling.id == model.id:
+                    continue
+                sibling.status = "unconfigured"
+                sibling.availability_status = "unavailable"
+                sibling.evidence_status = "unverified"
+                sibling.evidence_source = "codex_connectivity_probe"
+                sibling.last_verified_at = evidence.checked_at
+                sibling.safe_diagnostic = (
+                    "Provider connectivity is no longer verified for this model. "
+                    "The Owner must run Verify Codex Connection again."
+                )
+        material_after = (
+            provider.enabled,
+            provider.status,
+            model.status,
+            model.availability_status,
+            model.evidence_status,
+            model.evidence_source,
+        )
+        invalidated = 0
+        # Connectivity evidence provenance can advance from a prerequisite
+        # check to an Owner-triggered real probe without changing the Pack's
+        # routing material. Invalidate only when provider/model readiness
+        # itself changed; Run admission still requires the new immutable
+        # Owner-scoped connectivity evidence.
+        if material_before[:4] != material_after[:4]:
+            provider_state_changed = material_before[:2] != material_after[:2]
+            affected_model_ids = (
+                [item.id for item in provider.models]
+                if provider_state_changed
+                else [model.id]
+            )
+            assigned_task_ids = {
+                assignment.task_id
+                for assignment in session.scalars(
+                    select(AIModelAssignment).where(
+                        or_(
+                            AIModelAssignment.assigned_model_id.in_(affected_model_ids),
+                            AIModelAssignment.fallback_model_id.in_(affected_model_ids),
+                        )
+                    )
+                ).all()
+            }
+            for assigned_task_id in assigned_task_ids:
+                invalidated_for_task = invalidate_approved_packs(
+                    session, assigned_task_id
+                )
+                invalidated += invalidated_for_task
+                if invalidated_for_task:
+                    assigned_task = session.get(Task, assigned_task_id)
+                    if assigned_task is not None:
+                        assigned_task.status = "planned"
+        session.add(
+            AIModelAvailabilityEvidence(
+                configuration_identity=model.stable_id or f"model-{model.id}",
+                model_id=model.id,
+                checked_by_user_id=user.id,
+                adapter="codex_cli",
+                invocation_mode="real",
+                result="available" if ready else "unavailable",
+                evidence_type="owner_triggered_connectivity_probe",
+                failure_classification=evidence.blocker_code,
+                runtime_identity=(detection.version or "")[:240],
+            )
+        )
+        audit(
+            session,
+            request,
+            "codex_connection_verified",
+            "codex_connectivity_evidence",
+            evidence.id,
+            (
+                f"state={evidence.readiness_state}; authentication={evidence.authentication_state}; "
+                f"provider_reachable={str(evidence.provider_reachable).lower()}; "
+                f"model_available={str(evidence.model_available).lower()}; "
+                f"invalidated_packs={invalidated}"
+            ),
+            user,
+        )
+        session.flush()
+        output = connectivity_evidence_out(evidence) or {}
+        output["configuration"] = model_out(model)
+        output["configured_run_timeout_seconds"] = settings.codex_timeout_seconds
+        output["configured_connectivity_timeout_seconds"] = (
+            settings.codex_connectivity_timeout_seconds
+        )
+        output["invalidated_packs"] = invalidated
+        return output
 
     @app.post("/api/tasks/{task_id}/codex/setup/assign")
     def assign_codex_setup(
@@ -2140,7 +2619,10 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             .order_by(AIModelAvailabilityEvidence.id.desc())
         )
         if evidence is None or model.availability_status != "available":
-            raise HTTPException(status_code=409, detail="Check availability successfully before Save and assign.")
+            raise HTTPException(
+                status_code=409,
+                detail="Verify Codex Connection successfully before Save and assign.",
+            )
         plan = session.scalar(
             select(AITeamPlan).where(AITeamPlan.task_id == task.id).order_by(AITeamPlan.id.desc())
         )
@@ -2213,6 +2695,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
         configured = local_codex_model(session)
+        detection = codex_manager.adapter.detect()
+        connectivity = connectivity_status(
+            session,
+            owner_id=user.id,
+            model=configured,
+            detection=detection,
+            environment=codex_child_environment(),
+        )
         evidence = (
             session.scalar(
                 select(AIModelAvailabilityEvidence)
@@ -2233,6 +2723,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             and registry["provider"]["status"] in {"healthy", "degraded"}
             and evidence is not None
             and evidence.result == "available"
+            and connectivity.get("ready_for_real_run") is True
         )
         output: dict[str, Any] = {
             "status": (
@@ -2242,17 +2733,19 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 if configured is not None
                 else "unconfigured"
             ),
-            "found": evidence is not None,
-            "version": evidence.runtime_identity if evidence is not None else None,
-            "supported_command": "codex exec --model MODEL --json" if evidence is not None else None,
+            "found": detection.found,
+            "version": detection.version,
+            "supported_command": "codex exec --model MODEL --json" if detection.found else None,
             "reason": (
                 configured.safe_diagnostic
                 if configured is not None
                 else "No Local Codex CLI configuration has been saved."
             ),
-            "next_action": "Run Codex" if model_binding_ready else "Check availability",
+            "next_action": "Run Codex" if model_binding_ready else "Verify Codex Connection",
         }
-        output["authentication_ready"] = bool(model_binding_ready)
+        output["authentication_ready"] = bool(
+            connectivity.get("authentication", {}).get("authenticated")
+        )
         output["model_binding_ready"] = model_binding_ready
         output["execution_ready"] = model_binding_ready
         output["configuration_status"] = (
@@ -2261,6 +2754,9 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         output["availability_status"] = (
             configured.availability_status if configured is not None else "unavailable"
         )
+        output["run_timeout_seconds"] = settings.codex_timeout_seconds
+        output["configured_run_timeout_seconds"] = settings.codex_timeout_seconds
+        output["connectivity_timeout_seconds"] = settings.codex_connectivity_timeout_seconds
         if not model_identifier:
             output["readiness_reason"] = (
                 "Select a supported Local Codex CLI model before Owner-approved execution."
@@ -2271,8 +2767,8 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             )
         else:
             output["readiness_reason"] = (
-                "Local Codex CLI, authentication, and the selected model binding are ready. "
-                "Exact model access is verified only by an Owner-approved run."
+                "Local Codex CLI, authentication, Provider connectivity, and exact requested-model "
+                "acceptance are verified for a real Run."
             )
         output["readiness_evidence"] = (
             {
@@ -2285,6 +2781,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             if evidence is not None
             else None
         )
+        output["connectivity"] = connectivity
         try:
             source = codex_manager.adapter.source_state()
             output["source"] = {
@@ -2300,6 +2797,9 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 session,
                 session.get(Task, task_id),
                 settings.source_repo,
+                owner_id=user.id,
+                codex_executable=detection.executable,
+                child_environment=codex_child_environment(),
             )
         return output
 
@@ -2312,7 +2812,15 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         task = session.get(Task, task_id)
         if task is None:
             raise HTTPException(status_code=404, detail="Task not found.")
-        return run_eligibility(session, task, settings.source_repo)
+        detection = codex_manager.adapter.detect()
+        return run_eligibility(
+            session,
+            task,
+            settings.source_repo,
+            owner_id=user.id,
+            codex_executable=detection.executable,
+            child_environment=codex_child_environment(),
+        )
 
     @app.get("/api/tasks/{task_id}/codex-packs")
     def list_codex_packs(
@@ -2456,7 +2964,15 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             authenticated=authenticated,
             authentication_reason=authentication_reason,
         )
-        eligibility = run_eligibility(session, task, settings.source_repo)
+        child_environment = codex_child_environment()
+        eligibility = run_eligibility(
+            session,
+            task,
+            settings.source_repo,
+            owner_id=user.id,
+            codex_executable=detection.executable,
+            child_environment=child_environment,
+        )
         if not eligibility["eligible"]:
             material_blocker_codes = {
                 item["code"]
@@ -2483,7 +2999,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                     ),
                     user,
                 )
-                eligibility = run_eligibility(session, task, settings.source_repo)
+                eligibility = run_eligibility(
+                    session,
+                    task,
+                    settings.source_repo,
+                    owner_id=user.id,
+                    codex_executable=detection.executable,
+                    child_environment=child_environment,
+                )
             if readiness_changed or invalidated:
                 session.commit()
             raise HTTPException(
@@ -2503,7 +3026,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             or pack.development_task_digest != current_task_digest
             or pack.development_task != task.development_task
         ):
-            refreshed = run_eligibility(session, task, settings.source_repo)
+            refreshed = run_eligibility(
+                session,
+                task,
+                settings.source_repo,
+                owner_id=user.id,
+                codex_executable=detection.executable,
+                child_environment=child_environment,
+            )
             raise HTTPException(
                 status_code=409,
                 detail={
@@ -2516,10 +3046,31 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 },
             )
         try:
-            execution_target = codex_execution_target(session, task, pack)
-            verification_target = verification_execution_target(session, task, pack)
+            execution_target = codex_execution_target(
+                session,
+                task,
+                pack,
+                owner_id=user.id,
+                codex_executable=detection.executable,
+                child_environment=child_environment,
+            )
+            verification_target = verification_execution_target(
+                session,
+                task,
+                pack,
+                owner_id=user.id,
+                codex_executable=detection.executable,
+                child_environment=child_environment,
+            )
         except ValueError as exc:
-            refreshed = run_eligibility(session, task, settings.source_repo)
+            refreshed = run_eligibility(
+                session,
+                task,
+                settings.source_repo,
+                owner_id=user.id,
+                codex_executable=detection.executable,
+                child_environment=child_environment,
+            )
             raise HTTPException(
                 status_code=409,
                 detail={"type": "RUN_INELIGIBLE", "message": str(exc), **refreshed},
@@ -2532,7 +3083,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 detail="Source repository state could not be verified. Inspect Advanced runtime status.",
             ) from exc
         if source["commit"] != pack.source_baseline_commit:
-            refreshed = run_eligibility(session, task, settings.source_repo)
+            refreshed = run_eligibility(
+                session,
+                task,
+                settings.source_repo,
+                owner_id=user.id,
+                codex_executable=detection.executable,
+                child_environment=child_environment,
+            )
             raise HTTPException(
                 status_code=409,
                 detail={"type": "RUN_INELIGIBLE", **refreshed},
@@ -2554,17 +3112,22 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             execution_assignment_id=execution_target.assignment.id,
             execution_model_id=execution_target.model.id,
             execution_provider_id=execution_target.model.provider_id,
+            execution_connectivity_evidence_id=execution_target.connectivity_evidence_id,
             requested_model_identifier=execution_target.requested_model_identifier,
             fallback_selected=execution_target.fallback_selected,
             verification_assignment_id=verification_target.assignment.id,
             verification_model_id=verification_target.model.id,
             verification_provider_id=verification_target.model.provider_id,
+            verification_connectivity_evidence_id=(
+                verification_target.connectivity_evidence_id
+            ),
             verification_model_identifier=verification_target.requested_model_identifier,
             verification_status="not_started",
             owner_summary="Approved Codex run is queued for isolated execution.",
         )
         session.add(run)
         session.flush()
+        ensure_run_monitor(session, user.id, run)
         task.status = "queued"
         audit(
             session,
@@ -2593,6 +3156,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 user,
             )
             session.commit()
+        result_intake_monitor.notify()
         return codex_run_out(run, include_raw=True, session=session)
 
     @app.get("/api/codex-runs/{run_id}")
@@ -2601,10 +3165,1806 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
-        run = session.get(CodexRun, run_id)
+        run = find_owner_run(session, user.id, run_id)
         if not run:
             raise HTTPException(status_code=404, detail="Codex run not found.")
         return codex_run_out(run, include_raw=True, session=session)
+
+    def result_intake_error(exc: ResultIntakeError) -> HTTPException:
+        status_code = 404 if exc.code in {
+            "RUN_NOT_FOUND",
+            "HANDOFF_REVIEW_NOT_FOUND",
+            "INSTRUCTION_DRAFT_NOT_FOUND",
+        } else 409
+        return HTTPException(
+            status_code=status_code,
+            detail={
+                "type": exc.code,
+                "message": exc.safe_message,
+                "monitor_state": exc.monitor_state,
+            },
+        )
+
+    def owner_run_or_404(
+        session: Session,
+        owner_id: int,
+        run_id: int,
+    ) -> CodexRun:
+        run = find_owner_run(session, owner_id, run_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="Codex run not found.")
+        return run
+
+    def persisted_result_intake(
+        session: Session,
+        owner_id: int,
+        run_id: int,
+    ) -> tuple[CodexRunMonitor | None, CodexResultEnvelope | None]:
+        monitor = session.scalar(
+            select(CodexRunMonitor).where(
+                CodexRunMonitor.owner_id == owner_id,
+                CodexRunMonitor.run_id == run_id,
+            )
+        )
+        envelope = session.scalar(
+            select(CodexResultEnvelope).where(
+                CodexResultEnvelope.owner_id == owner_id,
+                CodexResultEnvelope.run_id == run_id,
+            )
+        )
+        return monitor, envelope
+
+    def run_activity_record(
+        session: Session,
+        owner_id: int,
+        run: CodexRun,
+    ) -> dict[str, Any]:
+        monitor, envelope = persisted_result_intake(
+            session,
+            owner_id,
+            run.id,
+        )
+        lifecycle = lifecycle_snapshot_out(
+            session,
+            owner_id,
+            run,
+            advanced=True,
+        )
+        snapshot_unavailable = source_snapshot_unavailable_for_run(
+            session,
+            run,
+            monitor,
+        )
+        if snapshot_unavailable:
+            # Snapshot hydration is a pre-launch product blocker, not a missing
+            # terminal result. Keep the exact recovery action on every Run
+            # Activity surface without manufacturing lifecycle evidence.
+            lifecycle = {
+                **lifecycle,
+                "state": "RESULT_UNAVAILABLE",
+                "current_activity": "Source snapshot unavailable",
+                "next_action": "Regenerate Codex Pack",
+                "blocker_code": "SOURCE_SNAPSHOT_UNAVAILABLE",
+            }
+        monitor_state = str(lifecycle.get("state") or "RESULT_UNAVAILABLE").upper()
+        owner_action = str(
+            lifecycle.get("next_action")
+            or (
+                "Open View Result, then Review Handoff."
+                if envelope is not None
+                else "Review the durable Run evidence."
+            )
+        )
+        coding_summary: object = run.owner_summary
+        verification_summary: object = run.verification_summary
+        tests: object = []
+        if envelope is not None:
+            public_envelope = result_envelope_out(envelope)
+            coding = public_envelope.get("coding_result", {})
+            coding_summary = (
+                coding.get("safe_summary")
+                if isinstance(coding, dict)
+                else coding
+            ) or run.owner_summary
+            verification = public_envelope.get("verification_result", {})
+            verification_summary = (
+                verification.get("verdict")
+                if isinstance(verification, dict)
+                else verification
+            ) or run.verification_summary
+            tests = public_envelope.get("tests", [])
+        else:
+            public_envelope = None
+        return {
+            "run_id": run.id,
+            "task_id": run.task_id,
+            "task_name": run.task.title or run.development_task,
+            "run_status": str(lifecycle.get("state") or run.status).lower(),
+            "monitor_state": monitor_state,
+            "requested_model": run.requested_model_identifier,
+            "actual_model": (
+                public_envelope.get("actual_model")
+                if public_envelope is not None
+                else None
+            ),
+            "actual_model_verified": bool(
+                public_envelope and public_envelope.get("actual_model_verified")
+            ),
+            "result_available": envelope is not None,
+            "execution_successful": bool(
+                public_envelope and public_envelope.get("execution_successful")
+            ),
+            "handoff_reconciliation": (
+                public_envelope.get("handoff_reconciliation")
+                if public_envelope
+                else None
+            ),
+            "started_at": lifecycle.get("started_at") or iso(run.started_at),
+            "finished_at": lifecycle.get("terminal_at") or iso(run.finished_at),
+            "duration_ms": lifecycle.get("elapsed_ms") if lifecycle.get("terminal_at") else run.duration_ms,
+            "coding_summary": coding_summary,
+            "verification_summary": verification_summary,
+            "tests": tests,
+            "result_integrity": (
+                envelope.integrity_state
+                if envelope is not None
+                else (
+                    "BLOCKED"
+                    if monitor_state == "RESULT_INTEGRITY_BLOCKED"
+                    else "UNAVAILABLE"
+                    if monitor_state in {"PROCESS_LOST", "RESULT_UNAVAILABLE"}
+                    else "PENDING"
+                )
+            ),
+            "owner_action": owner_action,
+            "next_action": owner_action,
+            "lifecycle": lifecycle,
+            "actions": {
+                "next_action": owner_action,
+                "can_reconnect": monitor_state in {
+                    "PROCESS_LOST",
+                    "RESULT_UNAVAILABLE",
+                    "RESULT_PENDING",
+                } and not snapshot_unavailable,
+                "can_import": monitor_state in {
+                    "PROCESS_LOST",
+                    "RESULT_UNAVAILABLE",
+                    "RESULT_INTEGRITY_BLOCKED",
+                } and not snapshot_unavailable,
+                "recovery_blocked": snapshot_unavailable,
+            },
+            "monitor": (
+                monitor_out(monitor, envelope=envelope)
+                if monitor is not None
+                else None
+            ),
+            "envelope": (
+                result_envelope_out(envelope)
+                if envelope is not None
+                else None
+            ),
+        }
+
+    @app.get("/api/run-activity")
+    def list_run_activity(
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        possible_runs = list(
+            session.scalars(
+                select(CodexRun).order_by(CodexRun.id.desc())
+            ).all()
+        )
+        owned_runs = [
+            run
+            for run in possible_runs
+            if find_owner_run(session, user.id, run.id) is not None
+        ]
+        return {
+            "label": "Run Activity",
+            "runs": [
+                run_activity_record(session, user.id, run)
+                for run in owned_runs
+            ],
+            "notification_count": sum(
+                1
+                for run in owned_runs
+                if persisted_result_intake(session, user.id, run.id)[1] is not None
+            ),
+        }
+
+    @app.get("/api/codex-runs/{run_id}/result-envelope")
+    def get_result_envelope(
+        run_id: int,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        owner_run_or_404(session, user.id, run_id)
+        monitor, envelope = persisted_result_intake(session, user.id, run_id)
+        if envelope is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Run Result not found.",
+            )
+        public_result = result_envelope_out(envelope, advanced=True)
+        return {
+            "run_id": run_id,
+            "result": public_result,
+            "envelope": public_result,
+            "lifecycle": lifecycle_snapshot_out(
+                session,
+                user.id,
+                owner_run_or_404(session, user.id, run_id),
+                advanced=True,
+            ),
+            "monitor": (
+                monitor_out(monitor, envelope=envelope, advanced=True)
+                if monitor is not None
+                else None
+            ),
+        }
+
+    @app.post("/api/codex-runs/{run_id}/refresh-status")
+    def refresh_codex_run_status(
+        run_id: int,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        owner_run_or_404(session, user.id, run_id)
+        session.commit()
+        result_intake_monitor.reconcile_now([run_id])
+        session.expire_all()
+        run = owner_run_or_404(session, user.id, run_id)
+        return {
+            "run": run_activity_record(session, user.id, run),
+            "duplicate_run_started": False,
+        }
+
+    @app.post("/api/codex-runs/{run_id}/reconnect")
+    def reconnect_codex_run(
+        run_id: int,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        owner_run_or_404(session, user.id, run_id)
+        try:
+            monitor = reconnect_run_monitor(session, user.id, run_id)
+        except ResultIntakeError as exc:
+            raise result_intake_error(exc) from exc
+        session.commit()
+        result_intake_monitor.notify()
+        _, envelope = persisted_result_intake(session, user.id, run_id)
+        return {
+            "run_id": run_id,
+            "monitor": monitor_out(
+                monitor,
+                envelope=envelope,
+                advanced=True,
+            ),
+            "duplicate_run_started": False,
+        }
+
+    @app.post("/api/codex-runs/{run_id}/import-result")
+    def import_result_envelope(
+        run_id: int,
+        payload: CodexResultImportIn,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        owner_run_or_404(session, user.id, run_id)
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+        try:
+            envelope = import_codex_result(
+                session,
+                user.id,
+                run_id,
+                payload.result,
+            )
+        except ResultIntakeError as exc:
+            raise result_intake_error(exc) from exc
+        session.flush()
+        result_intake_monitor.notify()
+        public_result = result_envelope_out(envelope, advanced=True)
+        return {
+            "run_id": run_id,
+            "result": public_result,
+            "envelope": public_result,
+        }
+
+    @app.get("/api/codex-runs/{run_id}/handoff-review")
+    def get_handoff_review(
+        run_id: int,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        owner_run_or_404(session, user.id, run_id)
+        review = session.scalar(
+            select(HandoffReview).where(
+                HandoffReview.owner_id == user.id,
+                HandoffReview.run_id == run_id,
+            )
+        )
+        if review is None:
+            raise HTTPException(status_code=404, detail="Handoff Review not found.")
+        draft = session.scalar(
+            select(HandoffInstructionDraft).where(
+                HandoffInstructionDraft.owner_id == user.id,
+                HandoffInstructionDraft.handoff_review_id == review.id,
+            )
+        )
+        return {
+            "run_id": run_id,
+            "review": handoff_review_out(review),
+            "draft": instruction_draft_out(draft) if draft is not None else None,
+        }
+
+    @app.post("/api/codex-runs/{run_id}/handoff-review")
+    def review_codex_handoff(
+        run_id: int,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        owner_run_or_404(session, user.id, run_id)
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+        try:
+            review = get_or_create_handoff_review(session, user.id, run_id)
+        except ResultIntakeError as exc:
+            raise result_intake_error(exc) from exc
+        draft = session.scalar(
+            select(HandoffInstructionDraft).where(
+                HandoffInstructionDraft.owner_id == user.id,
+                HandoffInstructionDraft.handoff_review_id == review.id,
+            )
+        )
+        return {
+            "run_id": run_id,
+            "review": handoff_review_out(review),
+            "draft": instruction_draft_out(draft) if draft is not None else None,
+        }
+
+    @app.get("/api/codex-runs/{run_id}/instruction-draft")
+    def get_instruction_draft(
+        run_id: int,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        owner_run_or_404(session, user.id, run_id)
+        draft = session.scalar(
+            select(HandoffInstructionDraft).where(
+                HandoffInstructionDraft.owner_id == user.id,
+                HandoffInstructionDraft.run_id == run_id,
+            )
+        )
+        if draft is None:
+            raise HTTPException(status_code=404, detail="Instruction draft not found.")
+        return {"run_id": run_id, "draft": instruction_draft_out(draft)}
+
+    @app.post("/api/codex-runs/{run_id}/instruction-draft")
+    def review_or_approve_instruction_draft(
+        run_id: int,
+        payload: InstructionDraftActionIn = InstructionDraftActionIn(),
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        owner_run_or_404(session, user.id, run_id)
+        review = session.scalar(
+            select(HandoffReview).where(
+                HandoffReview.owner_id == user.id,
+                HandoffReview.run_id == run_id,
+            )
+        )
+        if review is None:
+            raise HTTPException(
+                status_code=409,
+                detail="Review Handoff before preparing an instruction draft.",
+            )
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+        try:
+            draft = get_or_create_instruction_draft(session, user.id, review)
+            if payload.action == "approve":
+                if (
+                    not payload.expected_digest
+                    or payload.expected_digest != draft.draft_digest
+                ):
+                    raise ResultIntakeError(
+                        "INSTRUCTION_DRAFT_DIGEST_MISMATCH",
+                        "The instruction draft changed. Review it again before approval.",
+                    )
+                draft = approve_instruction_draft(session, user.id, draft.id)
+        except ResultIntakeError as exc:
+            raise result_intake_error(exc) from exc
+        return {"run_id": run_id, "draft": instruction_draft_out(draft)}
+
+    @app.post("/api/instruction-drafts/{draft_id}/approve")
+    def approve_instruction_draft_by_public_id(
+        draft_id: str,
+        payload: InstructionDraftActionIn,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        draft = session.scalar(
+            select(HandoffInstructionDraft).where(
+                HandoffInstructionDraft.draft_id == draft_id,
+                HandoffInstructionDraft.owner_id == user.id,
+            )
+        )
+        if draft is None:
+            raise HTTPException(status_code=404, detail="Instruction draft not found.")
+        if (
+            not payload.expected_digest
+            or payload.expected_digest != draft.draft_digest
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="The instruction draft changed. Review it again before approval.",
+            )
+        try:
+            draft = approve_instruction_draft(session, user.id, draft.id)
+        except ResultIntakeError as exc:
+            raise result_intake_error(exc) from exc
+        return {"run_id": draft.run_id, "draft": instruction_draft_out(draft)}
+
+    def delivery_candidate_review_response(
+        run_id: int,
+        request: Request,
+        session: Session,
+        user: User,
+        *,
+        create: bool,
+    ) -> dict[str, Any]:
+        run = find_owner_run(session, user.id, run_id)
+        if run is None:
+            # Deliberately do not distinguish an absent Run from a Run belonging
+            # to another Owner.
+            raise HTTPException(status_code=404, detail="Codex run not found.")
+        candidate = session.scalar(
+            select(DeliveryCandidate).where(
+                DeliveryCandidate.owner_id == user.id,
+                DeliveryCandidate.run_id == run.id,
+            )
+        )
+        if candidate is None and not create:
+            return {
+                "run_id": run.id,
+                "candidate": None,
+                "drift": None,
+                "blockers": [],
+                "next_action": "Review Change Candidate",
+            }
+        created = False
+        if create:
+            candidate, created, eligibility = get_or_create_delivery_candidate(
+                session,
+                user.id,
+                run,
+            )
+        else:
+            assert candidate is not None
+            eligibility = validate_delivery_candidate(
+                session,
+                user.id,
+                run,
+                candidate,
+            )
+        public_candidate = candidate if eligibility["eligible"] else None
+        evaluation = evaluate_source_drift(
+            session,
+            owner_id=user.id,
+            run=run,
+            candidate=candidate,
+            source_repo=settings.source_repo,
+            unavailable_blockers=(
+                None if eligibility["eligible"] else eligibility["blockers"]
+            ),
+            unavailable_next_action=(
+                None if eligibility["eligible"] else eligibility["next_action"]
+            ),
+        )
+        if public_candidate is not None:
+            audit(
+                session,
+                request,
+                "delivery_candidate_created" if created else "delivery_candidate_retrieved",
+                "delivery_candidate",
+                public_candidate.id,
+                (
+                    f"run={run.id}; candidate={public_candidate.candidate_id}; "
+                    f"digest={public_candidate.candidate_digest[:12]}"
+                ),
+                user,
+            )
+        audit(
+            session,
+            request,
+            "source_drift_evaluated",
+            "source_drift_evaluation",
+            evaluation.id,
+            (
+                f"run={run.id}; status={evaluation.status}; "
+                f"candidate_available={public_candidate is not None}"
+            ),
+            user,
+        )
+        serialized_drift = source_drift_out(evaluation)
+        response_blockers = (
+            serialized_drift["blockers"]
+            if eligibility["eligible"]
+            else eligibility["blockers"]
+        )
+        response_next_action = (
+            serialized_drift["next_action"]
+            if eligibility["eligible"]
+            else eligibility["next_action"]
+        )
+        return {
+            "run_id": run.id,
+            "candidate": (
+                delivery_candidate_out(public_candidate)
+                if public_candidate is not None
+                else None
+            ),
+            "drift": serialized_drift,
+            "blockers": response_blockers,
+            "next_action": response_next_action,
+        }
+
+    @app.get("/api/codex-runs/{run_id}/delivery-candidate")
+    def get_delivery_candidate(
+        run_id: int,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        return delivery_candidate_review_response(
+            run_id,
+            request,
+            session,
+            user,
+            create=False,
+        )
+
+    @app.post("/api/codex-runs/{run_id}/delivery-candidate")
+    def review_change_candidate(
+        run_id: int,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        if session.get_bind().dialect.name == "sqlite":
+            # Serialize the idempotent owner/run uniqueness decision.
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+        return delivery_candidate_review_response(
+            run_id,
+            request,
+            session,
+            user,
+            create=True,
+        )
+
+    def owner_candidate_for_apply_plan(
+        session: Session,
+        *,
+        owner_id: int,
+        run: CodexRun,
+    ) -> tuple[DeliveryCandidate | None, dict[str, Any]]:
+        candidate = session.scalar(
+            select(DeliveryCandidate).where(
+                DeliveryCandidate.owner_id == owner_id,
+                DeliveryCandidate.run_id == run.id,
+            )
+        )
+        if candidate is None:
+            return None, delivery_candidate_eligibility(session, owner_id, run)
+        return candidate, validate_delivery_candidate(
+            session,
+            owner_id,
+            run,
+            candidate,
+        )
+
+    def apply_plan_review_response(
+        run_id: int,
+        request: Request,
+        session: Session,
+        user: User,
+        *,
+        create: bool,
+    ) -> dict[str, Any]:
+        run = find_owner_run(session, user.id, run_id)
+        if run is None:
+            # Missing and cross-Owner Runs are deliberately indistinguishable.
+            raise HTTPException(status_code=404, detail="Codex run not found.")
+
+        if not create:
+            plan = latest_apply_plan(session, user.id, run.id)
+            return {
+                "run_id": run.id,
+                "plan": (
+                    apply_plan_out(
+                        session,
+                        plan,
+                        source_repo=settings.source_repo,
+                    )
+                    if plan is not None
+                    else None
+                ),
+                "history": apply_plan_history(
+                    session,
+                    owner_id=user.id,
+                    run_id=run.id,
+                    source_repo=settings.source_repo,
+                ),
+            }
+
+        candidate, eligibility = owner_candidate_for_apply_plan(
+            session,
+            owner_id=user.id,
+            run=run,
+        )
+        drift = evaluate_source_drift(
+            session,
+            owner_id=user.id,
+            run=run,
+            candidate=candidate,
+            source_repo=settings.source_repo,
+            unavailable_blockers=(
+                None if eligibility["eligible"] else eligibility["blockers"]
+            ),
+            unavailable_next_action=(
+                None if eligibility["eligible"] else eligibility["next_action"]
+            ),
+        )
+        plan, created = get_or_create_apply_plan(
+            session,
+            owner_id=user.id,
+            run=run,
+            candidate=candidate,
+            candidate_eligibility=eligibility,
+            drift=drift,
+            source_repo=settings.source_repo,
+        )
+        audit(
+            session,
+            request,
+            "source_drift_evaluated",
+            "source_drift_evaluation",
+            drift.id,
+            (
+                f"run={run.id}; status={drift.status}; "
+                "purpose=review_apply_plan"
+            ),
+            user,
+        )
+        audit(
+            session,
+            request,
+            "apply_plan_created" if created else "apply_plan_retrieved",
+            "apply_plan",
+            plan.id,
+            (
+                f"run={run.id}; plan={plan.plan_id}; version={plan.plan_version}; "
+                f"status={plan.status_at_creation}; digest={plan.plan_digest[:12]}"
+            ),
+            user,
+        )
+        return {
+            "run_id": run.id,
+            "plan": apply_plan_out(
+                session,
+                plan,
+                source_repo=settings.source_repo,
+            ),
+            "history": apply_plan_history(
+                session,
+                owner_id=user.id,
+                run_id=run.id,
+                source_repo=settings.source_repo,
+            ),
+        }
+
+    @app.get("/api/codex-runs/{run_id}/apply-plans")
+    def get_current_apply_plan(
+        run_id: int,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        return apply_plan_review_response(
+            run_id,
+            request,
+            session,
+            user,
+            create=False,
+        )
+
+    @app.post("/api/codex-runs/{run_id}/apply-plans")
+    def review_apply_plan(
+        run_id: int,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        if session.get_bind().dialect.name == "sqlite":
+            # Serialize the latest-version/idempotency decision without changing Git.
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+        return apply_plan_review_response(
+            run_id,
+            request,
+            session,
+            user,
+            create=True,
+        )
+
+    @app.get("/api/apply-plans/{plan_id}")
+    def get_historical_apply_plan(
+        plan_id: str,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        plan = session.scalar(
+            select(ApplyPlan).where(
+                ApplyPlan.plan_id == plan_id,
+                ApplyPlan.owner_id == user.id,
+            )
+        )
+        if plan is None or find_owner_run(session, user.id, plan.run_id) is None:
+            # Missing and cross-Owner Plans are deliberately indistinguishable.
+            raise HTTPException(status_code=404, detail="Apply Plan not found.")
+        return {
+            "run_id": plan.run_id,
+            "plan": apply_plan_out(
+                session,
+                plan,
+                source_repo=settings.source_repo,
+            ),
+            "history": apply_plan_history(
+                session,
+                owner_id=user.id,
+                run_id=plan.run_id,
+                source_repo=settings.source_repo,
+            ),
+        }
+
+    def owner_apply_plan(
+        session: Session,
+        *,
+        owner_id: int,
+        plan_id: str,
+    ) -> ApplyPlan | None:
+        plan = session.scalar(
+            select(ApplyPlan).where(
+                ApplyPlan.plan_id == plan_id,
+                ApplyPlan.owner_id == owner_id,
+            )
+        )
+        if plan is None or find_owner_run(session, owner_id, plan.run_id) is None:
+            return None
+        return plan
+
+    def normalized_apply_confirmation(
+        confirmation: dict[str, Any],
+    ) -> dict[str, Any]:
+        value = dict(confirmation)
+        included = list(value.get("included_files") or [])
+        excluded = list(value.get("excluded_files") or [])
+        blocked = list(value.get("blocked_files") or [])
+        unrelated = list(value.get("unrelated_source_changes") or [])
+        index = (
+            dict(value.get("index_boundary") or {})
+            if isinstance(value.get("index_boundary"), dict)
+            else {}
+        )
+        value.update(
+            {
+                "included_paths": included,
+                "excluded_paths": excluded,
+                "blocked_paths": blocked,
+                "unrelated_paths": unrelated,
+                "entries": [
+                    {**item, "disposition": "INCLUDED"}
+                    for item in included
+                    if isinstance(item, dict)
+                ]
+                + [
+                    {**item, "disposition": "EXCLUDED"}
+                    for item in excluded
+                    if isinstance(item, dict)
+                ]
+                + [
+                    {**item, "disposition": "BLOCKED"}
+                    for item in blocked
+                    if isinstance(item, dict)
+                ],
+                "drift_status": value.get("drift_state"),
+                "drift_status_label": {
+                    "ready_to_apply": "Ready to apply",
+                    "source_changed_since_run": "Source changed since Run",
+                    "conflict_detected": "Conflict detected",
+                    "candidate_unavailable": "Candidate unavailable",
+                    "repository_unavailable": "Repository unavailable",
+                }.get(str(value.get("drift_state") or ""), "Not evaluated"),
+                "staged_path_count": index.get("staged_path_count"),
+                "index_boundary": (
+                    "Index observed · staged paths "
+                    + str(index.get("staged_path_count"))
+                    if index.get("staged_path_count") is not None
+                    else "Index boundary unavailable"
+                ),
+            }
+        )
+        return value
+
+    def normalized_revert_confirmation(
+        confirmation: dict[str, Any],
+    ) -> dict[str, Any]:
+        value = dict(confirmation)
+        paths = list(value.get("paths") or [])
+        unrelated = list(value.get("unrelated_source_changes") or [])
+        index = (
+            dict(value.get("index_boundary") or {})
+            if isinstance(value.get("index_boundary"), dict)
+            else {}
+        )
+        value.update(
+            {
+                "paths": paths,
+                "reverse_operations": [
+                    {
+                        "path": item.get("path"),
+                        "message": (
+                            f"{item.get('path')} — {item.get('reverse_operation')}"
+                        ),
+                    }
+                    for item in paths
+                    if isinstance(item, dict)
+                ],
+                "preconditions": (
+                    "Every session path must match its exact captured Apply "
+                    "after-state before any reverse mutation."
+                ),
+                "unrelated_paths": unrelated,
+                "staged_path_count": index.get("staged_path_count"),
+                "index_boundary": (
+                    "Index observed · staged paths "
+                    + str(index.get("staged_path_count"))
+                    if index.get("staged_path_count") is not None
+                    else "Index boundary unavailable"
+                ),
+            }
+        )
+        return value
+
+    def normalized_apply_session(
+        session: Session,
+        row: ApplySession,
+    ) -> dict[str, Any]:
+        value = apply_session_out(session, row)
+        advanced = (
+            dict(value.get("advanced") or {})
+            if isinstance(value.get("advanced"), dict)
+            else {}
+        )
+        state = str(value.get("state") or row.state)
+        if state in {"REVERTING", "REVERTED", "REVERT_BLOCKED", "REVERT_FAILED_PARTIAL"}:
+            apply_state = "APPLIED"
+            revert_state = state
+        else:
+            apply_state = state
+            revert_state = "NOT_REQUESTED"
+        journal_digest = str(
+            value.get("journal_digest")
+            or advanced.get("journal_digest")
+            or ""
+        )
+        advanced.update(
+            {
+                "apply_plan_id": row.apply_plan_public_id,
+                "apply_plan_digest": row.apply_plan_digest,
+                "candidate_id": row.candidate_public_id,
+                "candidate_digest": row.candidate_digest,
+                "journal_digest": journal_digest or None,
+                "pre_apply_head": advanced.get("pre_apply_head")
+                or advanced.get("head"),
+                "pre_apply_index_fingerprint": (
+                    advanced.get("pre_apply_index_fingerprint")
+                    or advanced.get("index_fingerprint")
+                ),
+                "integrity": {
+                    "result": value.get("integrity_check_result"),
+                },
+            }
+        )
+        value.update(
+            {
+                "apply_state": apply_state,
+                "revert_state": revert_state,
+                "journal_digest": journal_digest,
+                "apply_finished_at": value.get("finished_at"),
+                "advanced": advanced,
+            }
+        )
+        return value
+
+    def apply_session_review_response(
+        session: Session,
+        *,
+        owner_id: int,
+        plan: ApplyPlan,
+        apply_session: ApplySession | None = None,
+    ) -> dict[str, Any]:
+        row = apply_session or session.scalar(
+            select(ApplySession).where(
+                ApplySession.owner_id == owner_id,
+                ApplySession.apply_plan_id == plan.id,
+            )
+        )
+        try:
+            apply_confirmation = normalized_apply_confirmation(
+                apply_confirmation_out(
+                    session,
+                    owner_id=owner_id,
+                    plan=plan,
+                    source_repo=settings.source_repo,
+                )
+            )
+        except ApplySessionError as exc:
+            apply_confirmation = {
+                "eligible": False,
+                "included_paths": [],
+                "excluded_paths": [],
+                "blocked_paths": [],
+                "entries": [],
+                "operation_counts": {"CREATE": 0, "MODIFY": 0, "DELETE": 0},
+                "unrelated_paths": [],
+                "index_boundary": "Index boundary unavailable",
+                "blockers": [{"code": exc.code, "message": exc.message}],
+            }
+        public_session = (
+            normalized_apply_session(session, row) if row is not None else None
+        )
+        revert_confirmation: dict[str, Any] = {}
+        if row is not None:
+            try:
+                revert_confirmation = normalized_revert_confirmation(
+                    revert_confirmation_out(
+                        session,
+                        owner_id=owner_id,
+                        apply_session=row,
+                        source_repo=settings.source_repo,
+                    )
+                )
+            except ApplySessionError as exc:
+                revert_confirmation = {
+                    "eligible": False,
+                    "paths": [],
+                    "blockers": [{"code": exc.code, "message": exc.message}],
+                }
+        can_apply = row is None and apply_confirmation.get("eligible") is True
+        can_revert = (
+            row is not None
+            and revert_confirmation.get("eligible") is True
+        )
+        if public_session is not None:
+            blockers = list(public_session.get("blockers") or [])
+            if row is not None and row.state == "APPLIED":
+                blockers = list(revert_confirmation.get("blockers") or [])
+            next_action = str(
+                public_session.get("next_action")
+                or "Review the persisted Apply session."
+            )
+            readiness_label = str(public_session.get("status_label") or row.state)
+        else:
+            blockers = list(apply_confirmation.get("blockers") or [])
+            if can_apply:
+                next_action = (
+                    "Select Apply Accepted Changes, review the final confirmation, "
+                    "then explicitly confirm."
+                )
+            elif blockers:
+                next_action = str(
+                    blockers[0].get("message")
+                    or "Resolve the Apply preflight blocker."
+                )
+            else:
+                next_action = "Review Apply readiness."
+            readiness_label = (
+                "READY TO APPLY" if can_apply else "PREFLIGHT BLOCKED"
+            )
+        return {
+            "plan_id": plan.plan_id,
+            "session": public_session,
+            "actions": {
+                "can_apply": can_apply,
+                "can_revert": can_revert,
+            },
+            "readiness_label": readiness_label,
+            "blockers": blockers,
+            "next_action": next_action,
+            "apply_confirmation": apply_confirmation,
+            "revert_confirmation": revert_confirmation,
+        }
+
+    @app.get("/api/apply-plans/{plan_id}/apply-sessions")
+    def get_apply_session_review(
+        plan_id: str,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        plan = owner_apply_plan(
+            session,
+            owner_id=user.id,
+            plan_id=plan_id,
+        )
+        if plan is None:
+            raise HTTPException(status_code=404, detail="Apply Plan not found.")
+        return apply_session_review_response(
+            session,
+            owner_id=user.id,
+            plan=plan,
+        )
+
+    @app.post("/api/apply-plans/{plan_id}/apply-sessions")
+    def apply_plan_accepted_changes(
+        plan_id: str,
+        payload: ApplyAcceptedChangesIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        plan = owner_apply_plan(
+            session,
+            owner_id=user.id,
+            plan_id=plan_id,
+        )
+        if plan is None:
+            raise HTTPException(status_code=404, detail="Apply Plan not found.")
+        candidate = (
+            session.get(DeliveryCandidate, plan.delivery_candidate_id)
+            if plan.delivery_candidate_id is not None
+            else None
+        )
+        if (
+            payload.expected_plan_digest != plan.plan_digest
+            or candidate is None
+            or payload.expected_candidate_digest != candidate.candidate_digest
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "APPLY_CONFIRMATION_BINDING_CHANGED",
+                    "message": (
+                        "The confirmed Plan or Candidate identity changed. "
+                        "Review Apply readiness again."
+                    ),
+                },
+            )
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+        try:
+            row, created = apply_accepted_changes(
+                session,
+                owner_id=user.id,
+                plan=plan,
+                source_repo=settings.source_repo,
+                confirmed=payload.confirmation == "APPLY_ACCEPTED_CHANGES",
+                expected_plan_digest=payload.expected_plan_digest,
+                expected_candidate_digest=payload.expected_candidate_digest,
+            )
+        except ApplySessionError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.code, "message": exc.message},
+            ) from exc
+        audit(
+            session,
+            request,
+            "apply_session_created" if created else "apply_session_retrieved",
+            "apply_session",
+            row.id,
+            (
+                f"plan={plan.plan_id}; session={row.session_id}; "
+                f"state={row.state}"
+            ),
+            user,
+        )
+        session.commit()
+        return apply_session_review_response(
+            session,
+            owner_id=user.id,
+            plan=plan,
+            apply_session=row,
+        )
+
+    @app.get("/api/apply-sessions/{session_id}")
+    def get_apply_session(
+        session_id: str,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        row = find_owned_apply_session(
+            session,
+            owner_id=user.id,
+            session_id=session_id,
+        )
+        if row is None:
+            raise HTTPException(status_code=404, detail="Apply session not found.")
+        plan = session.get(ApplyPlan, row.apply_plan_id)
+        if plan is None or owner_apply_plan(
+            session,
+            owner_id=user.id,
+            plan_id=plan.plan_id,
+        ) is None:
+            raise HTTPException(status_code=404, detail="Apply session not found.")
+        return apply_session_review_response(
+            session,
+            owner_id=user.id,
+            plan=plan,
+            apply_session=row,
+        )
+
+    @app.get("/api/apply-sessions/{session_id}/post-apply-verifications")
+    def get_post_apply_verification_review(
+        session_id: str,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        row = find_owned_apply_session(
+            session,
+            owner_id=user.id,
+            session_id=session_id,
+        )
+        if row is None:
+            raise HTTPException(status_code=404, detail="Apply session not found.")
+        return post_apply_verification_review(
+            session,
+            owner_id=user.id,
+            apply_session=row,
+        )
+
+    @app.post("/api/apply-sessions/{session_id}/post-apply-verifications")
+    def verify_applied_changes(
+        session_id: str,
+        payload: PostApplyVerificationIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        row = find_owned_apply_session(
+            session,
+            owner_id=user.id,
+            session_id=session_id,
+        )
+        if row is None:
+            raise HTTPException(status_code=404, detail="Apply session not found.")
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+            row = find_owned_apply_session(
+                session,
+                owner_id=user.id,
+                session_id=session_id,
+            )
+            if row is None:
+                raise HTTPException(status_code=404, detail="Apply session not found.")
+        try:
+            verification, created = get_or_create_post_apply_verification(
+                session,
+                owner_id=user.id,
+                apply_session=row,
+                source_repo=settings.source_repo,
+                expected_journal_digest=payload.expected_journal_digest,
+            )
+        except PostApplyVerificationError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.code, "message": exc.message},
+            ) from exc
+        audit(
+            session,
+            request,
+            (
+                "post_apply_verification_created"
+                if created
+                else "post_apply_verification_retrieved"
+            ),
+            "post_apply_verification",
+            verification.id,
+            (
+                f"apply_session={row.session_id}; "
+                f"verification={verification.verification_id}; "
+                f"status={verification.status}"
+            ),
+            user,
+        )
+        session.commit()
+        return post_apply_verification_review(
+            session,
+            owner_id=user.id,
+            apply_session=row,
+        )
+
+    def commit_builder_api_review(
+        session: Session,
+        *,
+        owner_id: int,
+        verification: PostApplyVerification,
+        effective_status_override: str | None = None,
+    ) -> dict[str, Any]:
+        try:
+            review = commit_builder_review(
+                session,
+                owner_id=owner_id,
+                post_apply_verification=verification,
+                source_repo=settings.source_repo,
+                effective_status_override=effective_status_override,
+            )
+        except CommitBuilderError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.code, "message": exc.message},
+            ) from exc
+        plan = review.get("plan") if isinstance(review.get("plan"), dict) else None
+        eligibility = (
+            review.get("eligibility")
+            if isinstance(review.get("eligibility"), dict)
+            else {}
+        )
+        plan_actions = (
+            plan.get("actions")
+            if plan is not None and isinstance(plan.get("actions"), dict)
+            else {}
+        )
+        stage = plan.get("stage") if plan is not None else None
+        commit = plan.get("commit") if plan is not None else None
+        stage_state = str((stage or {}).get("state") or "").upper()
+        commit_state = str((commit or {}).get("state") or "").upper()
+        plan_status = str((plan or {}).get("status") or "").upper()
+        eligibility_status = str(eligibility.get("status") or "").upper()
+        if commit_state == "COMMITTED":
+            action_state = "COMMITTED"
+        elif commit_state in {"BLOCKED", "FAILED", "INTEGRITY_BLOCKED", "COMMITTING"}:
+            action_state = "COMMIT_BLOCKED"
+        elif stage_state == "STAGED" and plan_actions.get("can_commit") is True:
+            action_state = "READY_TO_COMMIT"
+        elif plan_status in {"BLOCKED", "EXPIRED"} or eligibility_status in {"BLOCKED", "EXPIRED"}:
+            action_state = "STAGING_BLOCKED"
+        elif plan is not None and plan_actions.get("can_stage") is True:
+            action_state = "READY_TO_STAGE"
+        else:
+            action_state = "REVIEW_REQUIRED"
+        review.update(
+            {
+                "post_apply_verification_id": verification.verification_id,
+                "verification_id": verification.verification_id,
+                "stage": stage,
+                "commit": commit,
+                "action_state": action_state,
+                "actions": {
+                    "can_review_commit_plan": bool(
+                        eligibility.get("can_review") is True
+                        and action_state != "COMMITTED"
+                    ),
+                    "can_stage_approved_files": action_state == "READY_TO_STAGE",
+                    "can_create_local_commit": action_state == "READY_TO_COMMIT",
+                },
+            }
+        )
+        return review
+
+    def owned_commit_plan_verification(
+        session: Session,
+        *,
+        owner_id: int,
+        commit_plan_id: str,
+    ) -> tuple[CommitPlan, PostApplyVerification]:
+        plan = find_owned_commit_plan(
+            session,
+            owner_id=owner_id,
+            commit_plan_id=commit_plan_id,
+        )
+        if plan is None:
+            raise HTTPException(status_code=404, detail="Commit workflow not found.")
+        verification = session.get(PostApplyVerification, plan.post_apply_verification_id)
+        if verification is None or verification.owner_id != owner_id:
+            raise HTTPException(status_code=404, detail="Commit workflow not found.")
+        return plan, verification
+
+    def owned_stage_commit_context(
+        session: Session,
+        *,
+        owner_id: int,
+        stage_execution_id: str,
+    ) -> tuple[StageExecution, CommitPlan, PostApplyVerification]:
+        stage_execution = find_owned_stage_execution(
+            session,
+            owner_id=owner_id,
+            stage_execution_id=stage_execution_id,
+        )
+        if stage_execution is None:
+            raise HTTPException(status_code=404, detail="Commit workflow not found.")
+        plan = session.get(CommitPlan, stage_execution.commit_plan_id)
+        if plan is None or plan.owner_id != owner_id:
+            raise HTTPException(status_code=404, detail="Commit workflow not found.")
+        verification = session.get(PostApplyVerification, plan.post_apply_verification_id)
+        if verification is None or verification.owner_id != owner_id:
+            raise HTTPException(status_code=404, detail="Commit workflow not found.")
+        return stage_execution, plan, verification
+
+    @app.get("/api/post-apply-verifications/{verification_id}/commit-plans")
+    def get_commit_plan_review(
+        verification_id: str,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        verification = find_owned_post_apply_verification(
+            session,
+            owner_id=user.id,
+            verification_id=verification_id,
+        )
+        if verification is None:
+            raise HTTPException(status_code=404, detail="Commit workflow not found.")
+        return commit_builder_api_review(
+            session,
+            owner_id=user.id,
+            verification=verification,
+        )
+
+    @app.post("/api/post-apply-verifications/{verification_id}/commit-plans")
+    def review_commit_plan(
+        verification_id: str,
+        payload: ReviewCommitPlanIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        verification = find_owned_post_apply_verification(
+            session,
+            owner_id=user.id,
+            verification_id=verification_id,
+        )
+        if verification is None:
+            raise HTTPException(status_code=404, detail="Commit workflow not found.")
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+            verification = find_owned_post_apply_verification(
+                session,
+                owner_id=user.id,
+                verification_id=verification_id,
+            )
+            if verification is None:
+                raise HTTPException(status_code=404, detail="Commit workflow not found.")
+        if payload.expected_verification_digest != verification.verification_digest:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "VERIFICATION_CHANGED",
+                    "message": "The Post-Apply Verification identity changed.",
+                },
+            )
+        try:
+            plan, created = get_or_create_commit_plan(
+                session,
+                owner_id=user.id,
+                post_apply_verification=verification,
+                source_repo=settings.source_repo,
+                subject=payload.subject,
+                body=payload.body,
+            )
+        except CommitBuilderError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.code, "message": exc.message},
+            ) from exc
+        audit(
+            session,
+            request,
+            "commit_plan_created" if created else "commit_plan_retrieved",
+            "commit_plan",
+            plan.id,
+            f"verification={verification.verification_id}; plan={plan.commit_plan_id}",
+            user,
+        )
+        session.commit()
+        return commit_builder_api_review(
+            session,
+            owner_id=user.id,
+            verification=verification,
+            effective_status_override=(plan.status_at_creation if created else None),
+        )
+
+    @app.get("/api/commit-plans/{commit_plan_id}/stage-sessions")
+    def get_stage_session_review(
+        commit_plan_id: str,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        _plan, verification = owned_commit_plan_verification(
+            session,
+            owner_id=user.id,
+            commit_plan_id=commit_plan_id,
+        )
+        return commit_builder_api_review(
+            session,
+            owner_id=user.id,
+            verification=verification,
+        )
+
+    @app.post("/api/commit-plans/{commit_plan_id}/stage-sessions")
+    def stage_approved_files(
+        commit_plan_id: str,
+        payload: StageApprovedFilesIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        plan, verification = owned_commit_plan_verification(
+            session,
+            owner_id=user.id,
+            commit_plan_id=commit_plan_id,
+        )
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+            plan, verification = owned_commit_plan_verification(
+                session,
+                owner_id=user.id,
+                commit_plan_id=commit_plan_id,
+            )
+        try:
+            stage_execution, created = stage_commit_plan(
+                session,
+                owner_id=user.id,
+                plan=plan,
+                source_repo=settings.source_repo,
+                expected_plan_digest=payload.expected_plan_digest,
+            )
+        except CommitBuilderError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.code, "message": exc.message},
+            ) from exc
+        audit(
+            session,
+            request,
+            "stage_execution_created" if created else "stage_execution_retrieved",
+            "stage_execution",
+            stage_execution.id,
+            f"plan={plan.commit_plan_id}; stage={stage_execution.stage_execution_id}",
+            user,
+        )
+        session.commit()
+        return commit_builder_api_review(
+            session,
+            owner_id=user.id,
+            verification=verification,
+            effective_status_override=("STAGED" if created else None),
+        )
+
+    @app.get("/api/stage-sessions/{stage_execution_id}/local-commits")
+    def get_local_commit_review(
+        stage_execution_id: str,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        _stage, _plan, verification = owned_stage_commit_context(
+            session,
+            owner_id=user.id,
+            stage_execution_id=stage_execution_id,
+        )
+        return commit_builder_api_review(
+            session,
+            owner_id=user.id,
+            verification=verification,
+        )
+
+    @app.post("/api/stage-sessions/{stage_execution_id}/local-commits")
+    def create_owner_local_commit(
+        stage_execution_id: str,
+        payload: CreateLocalCommitIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        stage_execution, plan, verification = owned_stage_commit_context(
+            session,
+            owner_id=user.id,
+            stage_execution_id=stage_execution_id,
+        )
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+            stage_execution, plan, verification = owned_stage_commit_context(
+                session,
+                owner_id=user.id,
+                stage_execution_id=stage_execution_id,
+            )
+        try:
+            commit_execution, created = create_local_commit(
+                session,
+                owner_id=user.id,
+                plan=plan,
+                stage_execution=stage_execution,
+                source_repo=settings.source_repo,
+                expected_plan_digest=payload.expected_plan_digest,
+                expected_stage_digest=payload.expected_stage_digest,
+            )
+        except CommitBuilderError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.code, "message": exc.message},
+            ) from exc
+        audit(
+            session,
+            request,
+            (
+                "local_commit_execution_created"
+                if created
+                else "local_commit_execution_retrieved"
+            ),
+            "local_commit_execution",
+            commit_execution.id,
+            (
+                f"stage={stage_execution.stage_execution_id}; "
+                f"commit={commit_execution.commit_execution_id}"
+            ),
+            user,
+        )
+        session.commit()
+        return commit_builder_api_review(
+            session,
+            owner_id=user.id,
+            verification=verification,
+            effective_status_override=(
+                "COMMITTED"
+                if created and commit_execution.state == "COMMITTED"
+                else None
+            ),
+        )
+
+    def push_delivery_api_review(
+        session: Session,
+        *,
+        owner_id: int,
+        local_commit: LocalCommitExecution,
+    ) -> dict[str, Any]:
+        try:
+            return push_delivery_review(
+                session,
+                owner_id=owner_id,
+                local_commit=local_commit,
+                source_repo=settings.source_repo,
+            )
+        except PushDeliveryError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.code, "message": exc.message},
+            ) from exc
+
+    @app.get("/api/local-commits/{commit_execution_id}/push-delivery")
+    def get_push_delivery(
+        commit_execution_id: str,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        local_commit = find_owned_local_commit_execution(
+            session,
+            owner_id=user.id,
+            commit_execution_id=commit_execution_id,
+        )
+        if local_commit is None:
+            raise HTTPException(status_code=404, detail="Push workflow not found.")
+        return push_delivery_api_review(
+            session,
+            owner_id=user.id,
+            local_commit=local_commit,
+        )
+
+    @app.post("/api/local-commits/{commit_execution_id}/push-preflights")
+    def create_owner_push_preflight(
+        commit_execution_id: str,
+        request: Request,
+        payload: CreatePushPreflightIn | None = None,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        # The optional empty body exists only to make FastAPI reject any
+        # client-supplied commit, branch, ref, remote, or repository truth.
+        del payload
+        local_commit = find_owned_local_commit_execution(
+            session,
+            owner_id=user.id,
+            commit_execution_id=commit_execution_id,
+        )
+        if local_commit is None:
+            raise HTTPException(status_code=404, detail="Push workflow not found.")
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+            local_commit = find_owned_local_commit_execution(
+                session,
+                owner_id=user.id,
+                commit_execution_id=commit_execution_id,
+            )
+            if local_commit is None:
+                raise HTTPException(status_code=404, detail="Push workflow not found.")
+        try:
+            push_execution, created = create_push_preflight(
+                session,
+                owner_id=user.id,
+                local_commit=local_commit,
+                source_repo=settings.source_repo,
+            )
+        except PushDeliveryError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.code, "message": exc.message},
+            ) from exc
+        audit(
+            session,
+            request,
+            "push_preflight_created" if created else "push_preflight_retrieved",
+            "push_execution",
+            push_execution.id,
+            (
+                f"local_commit={local_commit.commit_execution_id}; "
+                f"push={push_execution.push_execution_id}; state={push_execution.state}"
+            ),
+            user,
+        )
+        session.commit()
+        return push_delivery_api_review(
+            session,
+            owner_id=user.id,
+            local_commit=local_commit,
+        )
+
+    @app.post("/api/push-preflights/{push_execution_id}/push-attempts")
+    def confirm_owner_push_to_origin_main(
+        push_execution_id: str,
+        payload: ConfirmPushToOriginMainIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        push_execution = find_owned_push_execution(
+            session,
+            owner_id=user.id,
+            push_execution_id=push_execution_id,
+        )
+        if push_execution is None:
+            raise HTTPException(status_code=404, detail="Push workflow not found.")
+        state_before = push_execution.state
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+            push_execution = find_owned_push_execution(
+                session,
+                owner_id=user.id,
+                push_execution_id=push_execution_id,
+            )
+            if push_execution is None:
+                raise HTTPException(status_code=404, detail="Push workflow not found.")
+        try:
+            push_execution, attempted = confirm_push_to_origin_main(
+                session,
+                owner_id=user.id,
+                push_execution=push_execution,
+                source_repo=settings.source_repo,
+                confirmation=payload.confirmation,
+                expected_confirmation_digest=payload.expected_confirmation_digest,
+            )
+        except PushDeliveryError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.code, "message": exc.message},
+            ) from exc
+        audit(
+            session,
+            request,
+            (
+                "push_attempt_completed"
+                if attempted
+                else (
+                    "push_attempt_reconciled"
+                    if state_before in {"PUSHING", "RECONCILIATION_BLOCKED"}
+                    and push_execution.state == "PUSHED"
+                    else "push_attempt_retrieved"
+                )
+            ),
+            "push_execution",
+            push_execution.id,
+            f"push={push_execution.push_execution_id}; state={push_execution.state}",
+            user,
+        )
+        session.commit()
+        local_commit = session.get(
+            LocalCommitExecution, push_execution.local_commit_execution_id
+        )
+        if local_commit is None or local_commit.owner_id != user.id:
+            raise HTTPException(status_code=404, detail="Push workflow not found.")
+        return push_delivery_api_review(
+            session,
+            owner_id=user.id,
+            local_commit=local_commit,
+        )
+
+    @app.post("/api/apply-sessions/{session_id}/reverts")
+    def revert_exact_apply_session(
+        session_id: str,
+        payload: RevertAppliedChangesIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        row = find_owned_apply_session(
+            session,
+            owner_id=user.id,
+            session_id=session_id,
+        )
+        if row is None:
+            raise HTTPException(status_code=404, detail="Apply session not found.")
+        plan = session.get(ApplyPlan, row.apply_plan_id)
+        if plan is None or owner_apply_plan(
+            session,
+            owner_id=user.id,
+            plan_id=plan.plan_id,
+        ) is None:
+            raise HTTPException(status_code=404, detail="Apply session not found.")
+        public = normalized_apply_session(session, row)
+        if payload.expected_journal_digest != public.get("journal_digest"):
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "REVERT_CONFIRMATION_BINDING_CHANGED",
+                    "message": (
+                        "The confirmed Apply journal identity changed. "
+                        "Review Revert readiness again."
+                    ),
+                },
+            )
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+        try:
+            row, changed = revert_applied_changes(
+                session,
+                owner_id=user.id,
+                apply_session=row,
+                source_repo=settings.source_repo,
+                confirmed=payload.confirmation == "REVERT_APPLIED_CHANGES",
+                expected_journal_digest=payload.expected_journal_digest,
+            )
+        except ApplySessionError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.code, "message": exc.message},
+            ) from exc
+        audit(
+            session,
+            request,
+            "apply_session_reverted" if changed else "apply_session_retrieved",
+            "apply_session",
+            row.id,
+            f"plan={plan.plan_id}; session={row.session_id}; state={row.state}",
+            user,
+        )
+        session.commit()
+        return apply_session_review_response(
+            session,
+            owner_id=user.id,
+            plan=plan,
+            apply_session=row,
+        )
 
     @app.post("/api/codex-runs/{run_id}/cancel")
     def cancel_codex_run(
@@ -2877,6 +5237,24 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
 
     @app.get("/api/audit")
     def audit_events(session: Session = Depends(get_db), user: User = Depends(current_user)) -> list[dict[str, Any]]:
-        return [audit_out(item) for item in session.scalars(select(AuditEvent).order_by(AuditEvent.id.desc()).limit(200)).all()]
+        primary_owner_id = session.scalar(
+            select(User.id)
+            .where(User.is_active == True)  # noqa: E712
+            .order_by(User.id)
+            .limit(1)
+        )
+        owner_scope = AuditEvent.actor_user_id == user.id
+        if primary_owner_id == user.id:
+            # Legacy scheduler/CLI evidence predates actor attribution. It is
+            # visible only to the canonical fresh-database Owner, never to a
+            # later account.
+            owner_scope = or_(owner_scope, AuditEvent.actor_user_id.is_(None))
+        rows = session.scalars(
+            select(AuditEvent)
+            .where(owner_scope)
+            .order_by(AuditEvent.id.desc())
+            .limit(200)
+        ).all()
+        return [audit_out(item) for item in rows]
 
     return app

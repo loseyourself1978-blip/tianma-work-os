@@ -20,10 +20,15 @@ class Settings:
     ui_path: Path = TWOS_UI_PATH
     source_repo: Path = ROOT_DIR
     worktree_root: Path = Path(tempfile.gettempdir()) / "twos-worktrees"
+    codex_spool_root: Path = Path(tempfile.gettempdir()) / "twos-codex-exec-spool"
     codex_executable: str | None = None
     codex_model_identifier: str | None = None
     codex_model_capabilities: tuple[str, ...] = ("coding",)
     codex_timeout_seconds: int = 900
+    # Gate Zero on Codex CLI 0.144.4 took ~122 seconds while safely falling
+    # back from WebSockets to HTTPS. Keep this explicit and bounded, with
+    # enough evidence-based headroom for the same detached path.
+    codex_connectivity_timeout_seconds: int = 180
     codex_output_limit: int = 200_000
 
 
@@ -38,6 +43,12 @@ def get_settings() -> Settings:
         worktree_root=Path(
             os.environ.get("TWOS_WORKTREE_ROOT", str(Path(tempfile.gettempdir()) / "twos-worktrees"))
         ).expanduser(),
+        codex_spool_root=Path(
+            os.environ.get(
+                "TWOS_CODEX_SPOOL_ROOT",
+                str(Path(tempfile.gettempdir()) / "twos-codex-exec-spool"),
+            )
+        ).expanduser(),
         codex_executable=os.environ.get("TWOS_CODEX_EXECUTABLE"),
         codex_model_identifier=os.environ.get("TWOS_CODEX_MODEL_ID"),
         codex_model_capabilities=tuple(
@@ -46,5 +57,8 @@ def get_settings() -> Settings:
             if item.strip()
         ),
         codex_timeout_seconds=int(os.environ.get("TWOS_CODEX_TIMEOUT_SECONDS", "900")),
+        codex_connectivity_timeout_seconds=int(
+            os.environ.get("TWOS_CODEX_CONNECTIVITY_TIMEOUT_SECONDS", "180")
+        ),
         codex_output_limit=int(os.environ.get("TWOS_CODEX_OUTPUT_LIMIT", "200000")),
     )

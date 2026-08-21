@@ -26,6 +26,15 @@ VOL17_SCHEMA_VERSION = "vol17.001"
 VOL17_MODEL_SETUP_SCHEMA_VERSION = "vol17.002"
 VOL17_END_TO_END_SCHEMA_VERSION = "vol17.003"
 VOL17_REAL_EVIDENCE_SCHEMA_VERSION = "vol17.004"
+VOL18_DELIVERY_CANDIDATE_SCHEMA_VERSION = "vol18.001"
+VOL18_REVIEW_APPLY_PLAN_SCHEMA_VERSION = "vol18.002"
+VOL18_APPLY_REVERT_SCHEMA_VERSION = "vol18.003"
+VOL18_RESULT_INTAKE_SCHEMA_VERSION = "vol18.004"
+VOL18_CODEX_CONNECTIVITY_SCHEMA_VERSION = "vol18.005"
+VOL18_EXEC_LIFECYCLE_SCHEMA_VERSION = "vol18.006"
+VOL18_POST_APPLY_VERIFICATION_SCHEMA_VERSION = "vol18.007"
+VOL18_LOCAL_COMMIT_BUILDER_SCHEMA_VERSION = "vol18.008"
+VOL18_PUSH_DELIVERY_SCHEMA_VERSION = "vol18.009"
 
 
 DEFAULT_PROJECTS = [
@@ -128,6 +137,7 @@ COLUMN_MIGRATIONS = {
         ("execution_assignment_id", "INTEGER"),
         ("execution_model_id", "INTEGER"),
         ("execution_provider_id", "INTEGER"),
+        ("execution_connectivity_evidence_id", "INTEGER"),
         ("requested_model_identifier", "VARCHAR(240) NOT NULL DEFAULT ''"),
         ("fallback_selected", "BOOLEAN NOT NULL DEFAULT 0"),
         ("launch_intent_at", "DATETIME"),
@@ -135,6 +145,7 @@ COLUMN_MIGRATIONS = {
         ("verification_assignment_id", "INTEGER"),
         ("verification_model_id", "INTEGER"),
         ("verification_provider_id", "INTEGER"),
+        ("verification_connectivity_evidence_id", "INTEGER"),
         ("verification_model_identifier", "VARCHAR(240) NOT NULL DEFAULT ''"),
         ("verification_status", "VARCHAR(40) NOT NULL DEFAULT 'not_started'"),
         ("verification_summary", "TEXT NOT NULL DEFAULT ''"),
@@ -146,6 +157,11 @@ COLUMN_MIGRATIONS = {
         ("verification_timed_out", "BOOLEAN NOT NULL DEFAULT 0"),
         ("verification_cancelled", "BOOLEAN NOT NULL DEFAULT 0"),
         ("verification_output_truncated", "BOOLEAN NOT NULL DEFAULT 0"),
+    ],
+    "push_executions": [
+        ("recovery_reconciliation_json", "TEXT NOT NULL DEFAULT '{}'"),
+        ("recovery_reconciliation_digest", "VARCHAR(64)"),
+        ("recovered_at", "DATETIME"),
     ],
 }
 
@@ -162,6 +178,7 @@ def make_session_factory(engine: Engine) -> sessionmaker[Session]:
 def initialize_database(engine: Engine) -> None:
     Base.metadata.create_all(engine)
     ensure_runtime_columns(engine)
+    _ensure_vol18_immutable_triggers(engine)
     factory = make_session_factory(engine)
     with factory() as session:
         if not session.scalar(select(SchemaVersion).where(SchemaVersion.version == "mvp14.001")):
@@ -186,6 +203,76 @@ def initialize_database(engine: Engine) -> None:
             select(SchemaVersion).where(SchemaVersion.version == VOL17_REAL_EVIDENCE_SCHEMA_VERSION)
         ):
             session.add(SchemaVersion(version=VOL17_REAL_EVIDENCE_SCHEMA_VERSION))
+        if not session.scalar(
+            select(SchemaVersion).where(
+                SchemaVersion.version == VOL18_DELIVERY_CANDIDATE_SCHEMA_VERSION
+            )
+        ):
+            session.add(
+                SchemaVersion(version=VOL18_DELIVERY_CANDIDATE_SCHEMA_VERSION)
+            )
+        if not session.scalar(
+            select(SchemaVersion).where(
+                SchemaVersion.version == VOL18_REVIEW_APPLY_PLAN_SCHEMA_VERSION
+            )
+        ):
+            session.add(
+                SchemaVersion(version=VOL18_REVIEW_APPLY_PLAN_SCHEMA_VERSION)
+            )
+        if not session.scalar(
+            select(SchemaVersion).where(
+                SchemaVersion.version == VOL18_APPLY_REVERT_SCHEMA_VERSION
+            )
+        ):
+            session.add(SchemaVersion(version=VOL18_APPLY_REVERT_SCHEMA_VERSION))
+        if not session.scalar(
+            select(SchemaVersion).where(
+                SchemaVersion.version == VOL18_RESULT_INTAKE_SCHEMA_VERSION
+            )
+        ):
+            session.add(SchemaVersion(version=VOL18_RESULT_INTAKE_SCHEMA_VERSION))
+        if not session.scalar(
+            select(SchemaVersion).where(
+                SchemaVersion.version == VOL18_CODEX_CONNECTIVITY_SCHEMA_VERSION
+            )
+        ):
+            session.add(SchemaVersion(version=VOL18_CODEX_CONNECTIVITY_SCHEMA_VERSION))
+        if not session.scalar(
+            select(SchemaVersion).where(
+                SchemaVersion.version == VOL18_EXEC_LIFECYCLE_SCHEMA_VERSION
+            )
+        ):
+            session.add(SchemaVersion(version=VOL18_EXEC_LIFECYCLE_SCHEMA_VERSION))
+        if not session.scalar(
+            select(SchemaVersion).where(
+                SchemaVersion.version
+                == VOL18_POST_APPLY_VERIFICATION_SCHEMA_VERSION
+            )
+        ):
+            session.add(
+                SchemaVersion(
+                    version=VOL18_POST_APPLY_VERIFICATION_SCHEMA_VERSION
+                )
+            )
+        if not session.scalar(
+            select(SchemaVersion).where(
+                SchemaVersion.version
+                == VOL18_LOCAL_COMMIT_BUILDER_SCHEMA_VERSION
+            )
+        ):
+            session.add(
+                SchemaVersion(
+                    version=VOL18_LOCAL_COMMIT_BUILDER_SCHEMA_VERSION
+                )
+            )
+        if not session.scalar(
+            select(SchemaVersion).where(
+                SchemaVersion.version == VOL18_PUSH_DELIVERY_SCHEMA_VERSION
+            )
+        ):
+            session.add(
+                SchemaVersion(version=VOL18_PUSH_DELIVERY_SCHEMA_VERSION)
+            )
         seed_projects(session)
         seed_registry(session)
         session.flush()
@@ -220,6 +307,596 @@ def ensure_runtime_columns(engine: Engine) -> None:
         _ensure_vol17_codex_run_indexes(engine)
     if "codex_instruction_packs" in tables:
         _ensure_vol17_pack_indexes(engine)
+
+
+def _ensure_vol18_immutable_triggers(engine: Engine) -> None:
+    """Enforce Phase 18 immutable history below the ORM boundary on SQLite."""
+    if engine.dialect.name != "sqlite":
+        return
+    statements = (
+        (
+            "trg_delivery_candidates_no_update",
+            "delivery_candidates",
+            "UPDATE",
+            "Delivery Candidate records are immutable.",
+        ),
+        (
+            "trg_delivery_candidates_no_delete",
+            "delivery_candidates",
+            "DELETE",
+            "Delivery Candidate records are immutable.",
+        ),
+        (
+            "trg_source_drift_evaluations_no_update",
+            "source_drift_evaluations",
+            "UPDATE",
+            "Source Drift evaluations are append-only.",
+        ),
+        (
+            "trg_source_drift_evaluations_no_delete",
+            "source_drift_evaluations",
+            "DELETE",
+            "Source Drift evaluations are append-only.",
+        ),
+        (
+            "trg_apply_plans_no_update",
+            "apply_plans",
+            "UPDATE",
+            "Apply Plan records are immutable.",
+        ),
+        (
+            "trg_apply_plans_no_delete",
+            "apply_plans",
+            "DELETE",
+            "Apply Plan records are immutable.",
+        ),
+        (
+            "trg_apply_plan_entries_no_update",
+            "apply_plan_entries",
+            "UPDATE",
+            "Apply Plan entries are immutable.",
+        ),
+        (
+            "trg_apply_plan_entries_no_delete",
+            "apply_plan_entries",
+            "DELETE",
+            "Apply Plan entries are immutable.",
+        ),
+        (
+            "trg_apply_session_audits_no_update",
+            "apply_session_audits",
+            "UPDATE",
+            "Apply session audits are append-only.",
+        ),
+        (
+            "trg_apply_session_audits_no_delete",
+            "apply_session_audits",
+            "DELETE",
+            "Apply session audits are append-only.",
+        ),
+        (
+            "trg_apply_sessions_no_delete",
+            "apply_sessions",
+            "DELETE",
+            "Apply sessions cannot be deleted.",
+        ),
+        (
+            "trg_apply_session_entries_no_delete",
+            "apply_session_entries",
+            "DELETE",
+            "Apply session entries cannot be deleted.",
+        ),
+        (
+            "trg_post_apply_verifications_no_update",
+            "post_apply_verifications",
+            "UPDATE",
+            "Post-Apply Verification records are append-only.",
+        ),
+        (
+            "trg_post_apply_verifications_no_delete",
+            "post_apply_verifications",
+            "DELETE",
+            "Post-Apply Verification records are append-only.",
+        ),
+        (
+            "trg_commit_plans_no_update",
+            "commit_plans",
+            "UPDATE",
+            "Commit Plan records are immutable.",
+        ),
+        (
+            "trg_commit_plans_no_delete",
+            "commit_plans",
+            "DELETE",
+            "Commit Plan records are immutable.",
+        ),
+        (
+            "trg_stage_executions_no_delete",
+            "stage_executions",
+            "DELETE",
+            "Stage execution records cannot be deleted.",
+        ),
+        (
+            "trg_local_commit_executions_no_delete",
+            "local_commit_executions",
+            "DELETE",
+            "Local Commit execution records cannot be deleted.",
+        ),
+        (
+            "trg_push_executions_no_delete",
+            "push_executions",
+            "DELETE",
+            "Push execution records cannot be deleted.",
+        ),
+        (
+            "trg_codex_run_monitors_no_delete",
+            "codex_run_monitors",
+            "DELETE",
+            "Codex Run monitors cannot be deleted.",
+        ),
+        (
+            "trg_codex_result_envelopes_no_update",
+            "codex_result_envelopes",
+            "UPDATE",
+            "Codex Result Envelopes are immutable.",
+        ),
+        (
+            "trg_codex_result_envelopes_no_delete",
+            "codex_result_envelopes",
+            "DELETE",
+            "Codex Result Envelopes are immutable.",
+        ),
+        (
+            "trg_codex_result_artifacts_no_update",
+            "codex_result_artifacts",
+            "UPDATE",
+            "Codex Result artifacts are immutable.",
+        ),
+        (
+            "trg_codex_result_artifacts_no_delete",
+            "codex_result_artifacts",
+            "DELETE",
+            "Codex Result artifacts are immutable.",
+        ),
+        (
+            "trg_codex_connectivity_evidence_no_update",
+            "codex_connectivity_evidence",
+            "UPDATE",
+            "Codex connectivity evidence is append-only.",
+        ),
+        (
+            "trg_codex_connectivity_evidence_no_delete",
+            "codex_connectivity_evidence",
+            "DELETE",
+            "Codex connectivity evidence is append-only.",
+        ),
+        (
+            "trg_handoff_reviews_no_update",
+            "handoff_reviews",
+            "UPDATE",
+            "Handoff Reviews are immutable.",
+        ),
+        (
+            "trg_handoff_reviews_no_delete",
+            "handoff_reviews",
+            "DELETE",
+            "Handoff Reviews are immutable.",
+        ),
+        (
+            "trg_handoff_instruction_drafts_no_delete",
+            "handoff_instruction_drafts",
+            "DELETE",
+            "Handoff instruction drafts cannot be deleted.",
+        ),
+    )
+    with engine.begin() as connection:
+        # These Phase 18.4B triggers are still evolving inside the same
+        # schema delivery; rebuild them so an already-initialized local DB
+        # receives the exact recovery semantics and set-once columns.
+        for trigger_name in (
+            "trg_push_executions_set_once",
+            "trg_push_executions_terminal_no_update",
+            "trg_push_executions_state_transition",
+        ):
+            connection.execute(text(f"DROP TRIGGER IF EXISTS {trigger_name}"))
+        for trigger_name, table_name, operation, message in statements:
+            connection.execute(
+                text(
+                    f"CREATE TRIGGER IF NOT EXISTS {trigger_name} "
+                    f"BEFORE {operation} ON {table_name} "
+                    f"BEGIN SELECT RAISE(ABORT, '{message}'); END"
+                )
+            )
+        apply_session_core_columns = (
+            "session_id",
+            "owner_id",
+            "apply_plan_id",
+            "apply_plan_public_id",
+            "apply_plan_digest",
+            "delivery_candidate_id",
+            "candidate_public_id",
+            "candidate_digest",
+            "run_id",
+            "task_id",
+            "task_version",
+            "pack_id",
+            "pack_version",
+            "source_snapshot_identity",
+            "source_drift_evaluation_id",
+            "repository_locator_fingerprint",
+            "repository_fingerprint",
+            "sanitized_repository_identity",
+            "branch",
+            "pre_apply_head",
+            "pre_apply_index_fingerprint",
+            "pre_apply_worktree_fingerprint",
+            "included_path_count",
+            "excluded_path_count",
+            "blocked_path_count",
+            "included_paths_json",
+            "excluded_paths_json",
+            "blocked_paths_json",
+            "ordered_operations_json",
+            "apply_confirmation_digest",
+            "journal_digest",
+            "before_evidence_json",
+            "created_at",
+            "started_at",
+        )
+        apply_entry_core_columns = (
+            "apply_session_id",
+            "apply_plan_entry_id",
+            "operation_ordinal",
+            "repository_path",
+            "path_identity",
+            "operation",
+            "reverse_operation",
+            "before_present",
+            "before_hash",
+            "before_size",
+            "before_mode",
+            "before_file_type",
+            "before_atime_ns",
+            "before_mtime_ns",
+            "before_material",
+            "after_present",
+            "after_hash",
+            "after_size",
+            "after_mode",
+            "after_file_type",
+            "after_atime_ns",
+            "after_mtime_ns",
+            "after_material",
+            "temporary_material_identity",
+            "parent_chain_json",
+            "created_parent_dirs_json",
+        )
+        monitor_core_columns = (
+            "monitor_id",
+            "owner_id",
+            "task_id",
+            "task_version",
+            "pack_id",
+            "pack_version",
+            "coding_assignment_id",
+            "coding_assignment_version",
+            "verification_assignment_id",
+            "verification_assignment_version",
+            "routing_snapshot_identity",
+            "source_snapshot_identity",
+            "run_id",
+            "requested_model_identifier",
+            "verification_model_identifier",
+            "monitor_digest",
+            "created_at",
+        )
+        instruction_draft_core_columns = (
+            "draft_id",
+            "owner_id",
+            "handoff_review_id",
+            "result_envelope_id",
+            "run_id",
+            "instruction_id",
+            "revision",
+            "scope",
+            "supersession",
+            "completion_gate_json",
+            "required_handoff_json",
+            "instruction_text",
+            "draft_digest",
+            "created_at",
+        )
+        stage_execution_core_columns = (
+            "stage_execution_id",
+            "owner_id",
+            "commit_plan_id",
+            "commit_plan_public_id",
+            "commit_plan_digest",
+            "verification_digest",
+            "repository_locator_fingerprint",
+            "branch",
+            "branch_ref",
+            "base_head",
+            "planned_entries_json",
+            "planned_entries_digest",
+            "pre_stage_evidence_json",
+            "pre_stage_evidence_digest",
+            "created_at",
+            "started_at",
+        )
+        local_commit_execution_core_columns = (
+            "commit_execution_id",
+            "owner_id",
+            "commit_plan_id",
+            "stage_execution_id",
+            "commit_plan_public_id",
+            "commit_plan_digest",
+            "stage_execution_public_id",
+            "stage_digest",
+            "repository_locator_fingerprint",
+            "branch",
+            "branch_ref",
+            "base_head",
+            "staged_entries_json",
+            "staged_entries_digest",
+            "subject_digest",
+            "body_digest",
+            "message_digest",
+            "intent_digest",
+            "pre_commit_evidence_json",
+            "pre_commit_evidence_digest",
+            "created_at",
+            "started_at",
+        )
+        push_execution_core_columns = (
+            "push_execution_id",
+            "owner_id",
+            "local_commit_execution_id",
+            "stage_execution_id",
+            "commit_plan_id",
+            "post_apply_verification_id",
+            "apply_session_id",
+            "delivery_candidate_id",
+            "run_id",
+            "task_id",
+            "local_commit_public_id",
+            "local_commit_receipt_digest",
+            "commit_plan_digest",
+            "stage_digest",
+            "verification_digest",
+            "candidate_digest",
+            "journal_digest",
+            "repository_locator_fingerprint",
+            "sanitized_repository_identity",
+            "branch",
+            "branch_ref",
+            "remote_name",
+            "destination_ref",
+            "approved_commit_oid",
+            "expected_parent_oid",
+            "subject",
+            "subject_digest",
+            "remote_fetch_url_digest",
+            "remote_push_url_digest",
+            "remote_config_fingerprint",
+            "observed_remote_base_oid",
+            "preflight_evidence_json",
+            "preflight_evidence_digest",
+            "confirmation_digest",
+            "refspec",
+            "command_evidence_json",
+            "command_evidence_digest",
+            "created_at",
+        )
+        for trigger_name, table_name, columns, message in (
+            (
+                "trg_apply_sessions_core_no_update",
+                "apply_sessions",
+                apply_session_core_columns,
+                "Apply session binding and journal fields are immutable.",
+            ),
+            (
+                "trg_apply_session_entries_core_no_update",
+                "apply_session_entries",
+                apply_entry_core_columns,
+                "Apply session entry journal and material fields are immutable.",
+            ),
+            (
+                "trg_codex_run_monitors_core_no_update",
+                "codex_run_monitors",
+                monitor_core_columns,
+                "Codex Run monitor binding fields are immutable.",
+            ),
+            (
+                "trg_handoff_instruction_drafts_core_no_update",
+                "handoff_instruction_drafts",
+                instruction_draft_core_columns,
+                "Handoff instruction draft content and bindings are immutable.",
+            ),
+            (
+                "trg_stage_executions_core_no_update",
+                "stage_executions",
+                stage_execution_core_columns,
+                "Stage execution binding and intent fields are immutable.",
+            ),
+            (
+                "trg_local_commit_executions_core_no_update",
+                "local_commit_executions",
+                local_commit_execution_core_columns,
+                "Local Commit execution binding and intent fields are immutable.",
+            ),
+            (
+                "trg_push_executions_core_no_update",
+                "push_executions",
+                push_execution_core_columns,
+                "Push execution binding and intent fields are immutable.",
+            ),
+        ):
+            predicate = " OR ".join(
+                f"OLD.{column_name} IS NOT NEW.{column_name}"
+                for column_name in columns
+            )
+            connection.execute(
+                text(
+                    f"CREATE TRIGGER IF NOT EXISTS {trigger_name} "
+                    f"BEFORE UPDATE ON {table_name} WHEN {predicate} "
+                    f"BEGIN SELECT RAISE(ABORT, '{message}'); END"
+                )
+            )
+        monitor_set_once_columns = (
+            "process_id",
+            "process_start_identity",
+            "verification_process_id",
+            "verification_process_start_identity",
+            "codex_session_identity",
+            "executable_fingerprint",
+            "isolated_worktree_identity",
+            "execution_location_identity",
+            "result_locator_identity",
+            "protected_result_locator",
+        )
+        monitor_set_once_predicate = " OR ".join(
+            f"((OLD.{column_name} IS NOT NULL AND OLD.{column_name} != '') "
+            f"AND OLD.{column_name} IS NOT NEW.{column_name})"
+            for column_name in monitor_set_once_columns
+        )
+        connection.execute(
+            text(
+                "CREATE TRIGGER IF NOT EXISTS trg_codex_run_monitors_set_once "
+                "BEFORE UPDATE ON codex_run_monitors "
+                f"WHEN {monitor_set_once_predicate} "
+                "BEGIN SELECT RAISE(ABORT, "
+                "'Codex Run monitor process and location bindings may be set only once.'"
+                "); END"
+            )
+        )
+        for trigger_name, table_name, columns, message in (
+            (
+                "trg_stage_executions_set_once",
+                "stage_executions",
+                (
+                    "post_stage_evidence_json",
+                    "staged_entries_json",
+                    "staged_entries_digest",
+                    "stage_digest",
+                    "finished_at",
+                ),
+                "Stage execution transition evidence may be set only once.",
+            ),
+            (
+                "trg_local_commit_executions_set_once",
+                "local_commit_executions",
+                (
+                    "tree_oid",
+                    "commit_oid",
+                    "parent_oid",
+                    "post_commit_evidence_json",
+                    "receipt_digest",
+                    "finished_at",
+                ),
+                "Local Commit transition evidence may be set only once.",
+            ),
+            (
+                "trg_push_executions_set_once",
+                "push_executions",
+                (
+                    "command_started_at",
+                    "command_finished_at",
+                    "execution_remote_base_oid",
+                    "command_exit_code",
+                    "failure_category",
+                    "failure_evidence_json",
+                    "post_push_evidence_json",
+                    "recovery_reconciliation_json",
+                    "recovery_reconciliation_digest",
+                    "recovered_at",
+                    "receipt_digest",
+                    "finished_at",
+                ),
+                "Push execution transition evidence may be set only once.",
+            ),
+        ):
+            predicate = " OR ".join(
+                f"(OLD.{column_name} IS NOT NULL "
+                f"AND CAST(OLD.{column_name} AS TEXT) NOT IN ('','{{}}','[]') "
+                f"AND OLD.{column_name} IS NOT NEW.{column_name})"
+                for column_name in columns
+            )
+            connection.execute(
+                text(
+                    f"CREATE TRIGGER IF NOT EXISTS {trigger_name} "
+                    f"BEFORE UPDATE ON {table_name} WHEN {predicate} "
+                    f"BEGIN SELECT RAISE(ABORT, '{message}'); END"
+                )
+            )
+        connection.execute(
+            text(
+                "CREATE TRIGGER IF NOT EXISTS trg_push_executions_terminal_no_update "
+                "BEFORE UPDATE ON push_executions "
+                "WHEN OLD.state IN ("
+                "'PUSHED','PUSH_BLOCKED','REMOTE_MOVED','PUSH_FAILED'"
+                ") "
+                "BEGIN SELECT RAISE(ABORT, "
+                "'Terminal Push execution records are immutable.'"
+                "); END"
+            )
+        )
+        connection.execute(
+            text(
+                "CREATE TRIGGER IF NOT EXISTS trg_push_executions_state_transition "
+                "BEFORE UPDATE OF state ON push_executions "
+                "WHEN NOT ("
+                "(OLD.state = 'READY_TO_PUSH' AND NEW.state IN ("
+                "'PUSHING','PUSH_BLOCKED','REMOTE_MOVED')) OR "
+                "(OLD.state = 'PUSHING' AND NEW.state IN ("
+                "'PUSHED','REMOTE_MOVED','PUSH_FAILED','RECONCILIATION_BLOCKED')) OR "
+                "(OLD.state = 'RECONCILIATION_BLOCKED' AND NEW.state = 'PUSHED')"
+                ") "
+                "BEGIN SELECT RAISE(ABORT, "
+                "'The Push execution state transition is invalid.'"
+                "); END"
+            )
+        )
+        connection.execute(
+            text(
+                "CREATE TRIGGER IF NOT EXISTS trg_push_executions_single_attempt "
+                "BEFORE UPDATE OF command_attempt_count ON push_executions "
+                "WHEN NOT (OLD.command_attempt_count = 0 "
+                "AND NEW.command_attempt_count = 1) "
+                "BEGIN SELECT RAISE(ABORT, "
+                "'A Push confirmation authorizes one attempt only.'"
+                "); END"
+            )
+        )
+        connection.execute(
+            text("DROP INDEX IF EXISTS ux_push_execution_local_commit_active")
+        )
+        connection.execute(
+            text(
+                "CREATE UNIQUE INDEX ux_push_execution_local_commit_active "
+                "ON push_executions (local_commit_execution_id) "
+                "WHERE state IN ("
+                "'READY_TO_PUSH','PUSHING','RECONCILIATION_BLOCKED'"
+                ")"
+            )
+        )
+        # Partial/incomplete source state owns the repository mutation boundary
+        # until an explicit recovery phase resolves it. Rebuild the partial
+        # index because an earlier vol18.003 development schema covered only
+        # the two actively executing states.
+        connection.execute(
+            text("DROP INDEX IF EXISTS ux_apply_sessions_repository_active")
+        )
+        connection.execute(
+            text(
+                "CREATE UNIQUE INDEX ux_apply_sessions_repository_active "
+                "ON apply_sessions (repository_locator_fingerprint) "
+                "WHERE state IN ("
+                "'APPLYING','REVERTING',"
+                "'APPLY_FAILED_PARTIAL','REVERT_FAILED_PARTIAL'"
+                ")"
+            )
+        )
 
 
 def _backfill_ai_model_registry(
