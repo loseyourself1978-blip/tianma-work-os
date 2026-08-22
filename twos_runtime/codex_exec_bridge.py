@@ -17,7 +17,7 @@ import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Mapping, Protocol, Sequence
+from typing import Literal, Mapping, Protocol, Sequence
 
 
 BRIDGE_POLICY = "twos.codex_exec_bridge.vol18.004.v1"
@@ -90,6 +90,145 @@ _SAFE_MODEL_IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,239}$")
 _SAFE_ENVIRONMENT_KEY = frozenset(DEFAULT_ENVIRONMENT_KEYS)
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _CHUNK_HISTOGRAM_KEYS = ("1-1024", "1025-4096", "4097-8192", "8193+")
+_SENSITIVE_ENVIRONMENT_KEY = re.compile(
+    r"(?:PASSWORD|PASSPHRASE|SECRET|CREDENTIAL|TOKEN|API_KEY|PRIVATE_KEY|"
+    r"AUTHORIZATION|COOKIE)",
+    re.IGNORECASE,
+)
+_PERSISTED_TOKEN_PATTERNS = (
+    re.compile(rb"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]{8,}"),
+    re.compile(rb"\bsk-[A-Za-z0-9_-]{12,}\b"),
+    re.compile(
+        rb"\b(?:gh[pousr]_[A-Za-z0-9]{20,}|"
+        rb"github_pat_[A-Za-z0-9_]{20,}|"
+        rb"xox[baprs]-[A-Za-z0-9-]{12,}|AKIA[A-Z0-9]{16})\b"
+    ),
+    re.compile(
+        rb"(?i)\b(?:password|passphrase|client[_ -]?secret|"
+        rb"session[_ -]?token|access[_ -]?token|refresh[_ -]?token|"
+        rb"api[_ -]?key|authorization|cookie|OPENAI_API_KEY|"
+        rb"CODEX_ACCESS_TOKEN|AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN|"
+        rb"GH_TOKEN|GITHUB_TOKEN)\s*[:=]\s*"
+        rb"[^\s,;\"\\}\]]+"
+    ),
+    re.compile(
+        rb"-----BEGIN [A-Z ]*PRIVATE KEY-----.*?"
+        rb"-----END [A-Z ]*PRIVATE KEY-----",
+        re.DOTALL,
+    ),
+)
+_PERSISTED_SENSITIVE_JSON_FIELD = re.compile(
+    rb'(?i)("(?:password|passphrase|secret|credential|token|api[_-]?key|'
+    rb'private[_-]?key|authorization|cookie|OPENAI_API_KEY|CODEX_ACCESS_TOKEN|'
+    rb'AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN|GH_TOKEN|GITHUB_TOKEN)"'
+    rb'\s*:\s*")((?:\\.|[^"\\])*)(")'
+)
+_PERSISTED_CREDENTIAL_URL = re.compile(
+    rb"(?i)([A-Za-z][A-Za-z0-9+.-]{0,31}://)([^/@\s:]+:[^/@\s]+)(@)"
+)
+
+
+def _masked_bytes(length: int) -> bytes:
+    return b"x" * max(0, length)
+
+
+def _environment_value_is_invalid(key: str, value: object) -> bool:
+    if not isinstance(value, str) or "\x00" in value:
+        return True
+    if not _SENSITIVE_ENVIRONMENT_KEY.search(key):
+        return False
+    # Very short credential-shaped values cannot be safely replaced as raw
+    # substrings without corrupting ordinary JSON/output bytes. Reject them
+    # before spawn instead of allowing any value to escape durable redaction.
+    return bool(
+        "\r" in value
+        or "\n" in value
+        or (value and len(value.encode("utf-8")) < 8)
+    )
+
+
+def _persistent_secret_values(environment: Mapping[str, str]) -> tuple[bytes, ...]:
+    values: set[bytes] = set()
+    for key, value in environment.items():
+        if _environment_value_is_invalid(key, value):
+            raise CodexExecBridgeError(
+                "ENVIRONMENT_VALUE_INVALID",
+                "The detached environment contained an invalid value.",
+            )
+        if not (_SENSITIVE_ENVIRONMENT_KEY.search(key) and value):
+            continue
+        values.add(value.encode("utf-8"))
+        # JSONL string escaping can change the byte spelling of a secret. Bind
+        # both standard JSON variants so quotes, slashes, control characters,
+        # and non-ASCII values are masked before any event reaches disk.
+        values.add(json.dumps(value)[1:-1].encode("utf-8"))
+        values.add(
+            json.dumps(value, ensure_ascii=False)[1:-1].encode("utf-8")
+        )
+    return tuple(sorted(values, key=len, reverse=True))
+
+
+def _redact_persisted_output(payload: bytes, secrets: Sequence[bytes] = ()) -> bytes:
+    """Mask credentials without changing stream byte offsets or JSON shape."""
+    redacted = payload
+    for secret in secrets:
+        if secret:
+            redacted = redacted.replace(secret, _masked_bytes(len(secret)))
+    for pattern in _PERSISTED_TOKEN_PATTERNS:
+        redacted = pattern.sub(
+            lambda match: _masked_bytes(len(match.group(0))), redacted
+        )
+    redacted = _PERSISTED_SENSITIVE_JSON_FIELD.sub(
+        lambda match: (
+            match.group(1)
+            + _masked_bytes(len(match.group(2)))
+            + match.group(3)
+        ),
+        redacted,
+    )
+    redacted = _PERSISTED_CREDENTIAL_URL.sub(
+        lambda match: (
+            match.group(1)
+            + _masked_bytes(len(match.group(2)))
+            + match.group(3)
+        ),
+        redacted,
+    )
+    if len(redacted) != len(payload):
+        raise CodexExecBridgeError(
+            "OUTPUT_REDACTION_INVALID",
+            "Credential redaction changed the durable stream boundary.",
+        )
+    return redacted
+
+
+class _PersistentOutputRedactor:
+    """Line-aware bounded redaction before any process output reaches disk."""
+
+    def __init__(self, secrets: Sequence[bytes]) -> None:
+        self.secrets = tuple(secrets)
+        self.pending = bytearray()
+        self.overlap = max(
+            (MAX_JSONL_LINE_BYTES, *(len(secret) for secret in self.secrets)),
+        )
+
+    def feed(self, chunk: bytes) -> bytes:
+        self.pending.extend(chunk)
+        newline = self.pending.rfind(b"\n")
+        if newline >= 0:
+            boundary = newline + 1
+        elif len(self.pending) > self.overlap * 2:
+            boundary = len(self.pending) - self.overlap
+        else:
+            return b""
+        value = bytes(self.pending[:boundary])
+        del self.pending[:boundary]
+        return _redact_persisted_output(value, self.secrets)
+
+    def finish(self) -> bytes:
+        value = bytes(self.pending)
+        self.pending.clear()
+        return _redact_persisted_output(value, self.secrets)
 
 
 class CodexExecBridgeError(RuntimeError):
@@ -801,12 +940,14 @@ def _validate_ticket_value(ticket: Mapping[str, object]) -> str:
         raise CodexExecBridgeError("TICKET_FINAL_MESSAGE_INVALID", "The final-message binding is invalid.")
     relative_path = final_message.get("relative_path")
     maximum_bytes = final_message.get("maximum_bytes")
+    capture_mode = final_message.get("capture_mode", "sidecar_required")
     if (
         not isinstance(relative_path, str)
         or not _SAFE_PHASE_KEY.fullmatch(relative_path)
         or "/" in relative_path
         or type(maximum_bytes) is not int
         or not 1 <= maximum_bytes <= MAX_FINAL_MESSAGE_BYTES
+        or capture_mode not in {"sidecar_required", "jsonl_only"}
     ):
         raise CodexExecBridgeError("TICKET_FINAL_MESSAGE_INVALID", "The final-message binding is invalid.")
     return digest
@@ -859,6 +1000,7 @@ def prepare_execution(
     heartbeat_interval_seconds: float = DEFAULT_HEARTBEAT_INTERVAL_SECONDS,
     final_message_relative_path: str = "final-message.txt",
     final_message_maximum_bytes: int = MAX_FINAL_MESSAGE_BYTES,
+    final_message_capture_mode: str = "sidecar_required",
     forbidden_spool_roots: Sequence[str | os.PathLike[str]] = (),
 ) -> ExecutionHandle:
     if not isinstance(phase_key, str) or not _SAFE_PHASE_KEY.fullmatch(phase_key):
@@ -879,6 +1021,7 @@ def prepare_execution(
         or "/" in final_message_relative_path
         or type(final_message_maximum_bytes) is not int
         or not 1 <= final_message_maximum_bytes <= MAX_FINAL_MESSAGE_BYTES
+        or final_message_capture_mode not in {"sidecar_required", "jsonl_only"}
     ):
         raise CodexExecBridgeError("FINAL_MESSAGE_BINDING_INVALID", "The final-message binding is invalid.")
 
@@ -920,6 +1063,7 @@ def prepare_execution(
         "final_message": {
             "relative_path": final_message_relative_path,
             "maximum_bytes": final_message_maximum_bytes,
+            "capture_mode": final_message_capture_mode,
         },
         "spool_root_identity": {"device": root_stat.st_dev, "inode": root_stat.st_ino},
     }
@@ -1563,6 +1707,7 @@ class _DrainCapture:
         budget: _RetentionBudget,
         *,
         jsonl_classifier: _JsonlStreamClassifier | None = None,
+        persistent_secrets: Sequence[bytes] = (),
     ) -> None:
         self.name = name
         self.stream = stream
@@ -1574,6 +1719,7 @@ class _DrainCapture:
         self.retained_digest = hashlib.sha256()
         self.histogram = _empty_histogram()
         self.jsonl_classifier = jsonl_classifier
+        self.redactor = _PersistentOutputRedactor(persistent_secrets)
         self.completed = False
         self.eof = False
         self.incomplete = False
@@ -1587,6 +1733,28 @@ class _DrainCapture:
 
     def drain(self) -> None:
         write_available = True
+
+        def retain_sanitized(sanitized: bytes) -> None:
+            nonlocal write_available
+            if not sanitized:
+                return
+            with self._lock:
+                self.observed_digest.update(sanitized)
+            if self.jsonl_classifier is not None:
+                self.jsonl_classifier.feed(sanitized)
+            retained = self.budget.retain(sanitized)
+            if retained and write_available:
+                try:
+                    _write_all(self.output_fd, retained)
+                except OSError:
+                    with self._lock:
+                        self.failed = True
+                    write_available = False
+                else:
+                    with self._lock:
+                        self.retained_bytes += len(retained)
+                        self.retained_digest.update(retained)
+
         try:
             stream_fd = self.stream.fileno()
             while True:
@@ -1602,29 +1770,21 @@ class _DrainCapture:
                     with self._lock:
                         self.eof = True
                     break
-                if self.jsonl_classifier is not None:
-                    self.jsonl_classifier.feed(chunk)
-                retained = self.budget.retain(chunk)
                 with self._lock:
                     self.observed_bytes += len(chunk)
-                    self.observed_digest.update(chunk)
                     self.histogram[_histogram_key(len(chunk))] += 1
-                if retained and write_available:
-                    try:
-                        _write_all(self.output_fd, retained)
-                    except OSError:
-                        with self._lock:
-                            self.failed = True
-                        write_available = False
-                    else:
-                        with self._lock:
-                            self.retained_bytes += len(retained)
-                            self.retained_digest.update(retained)
+                retain_sanitized(self.redactor.feed(chunk))
         except Exception:
             with self._lock:
                 self.failed = True
                 self.incomplete = True
         finally:
+            try:
+                retain_sanitized(self.redactor.finish())
+            except Exception:
+                with self._lock:
+                    self.failed = True
+                    self.incomplete = True
             if self.jsonl_classifier is not None:
                 self.jsonl_classifier.finish(eof=self.eof)
             try:
@@ -1792,10 +1952,12 @@ def _raise_cancel_integrity() -> bool:
     raise CodexExecBridgeError("CANCEL_REQUEST_INVALID", "The durable cancellation request is invalid.")
 
 
-def request_cancel(handle: ExecutionHandle) -> bool:
+def request_cancel(
+    handle: ExecutionHandle,
+) -> Literal["requested", "replayed", "terminal"]:
     _load_ticket_and_seal(handle)
     if (handle.phase_directory / "terminal.json").exists():
-        return False
+        return "terminal"
     value = {
         "schema": CANCEL_SCHEMA,
         "policy": BRIDGE_POLICY,
@@ -1804,13 +1966,13 @@ def request_cancel(handle: ExecutionHandle) -> bool:
     }
     try:
         _create_immutable_json(handle.phase_directory / "cancel.request.json", value)
-        return True
+        return "requested"
     except CodexExecBridgeError as exc:
         if exc.code != "IMMUTABLE_FILE_EXISTS":
             raise
         if not _cancel_requested(handle):
             raise CodexExecBridgeError("CANCEL_REQUEST_INVALID", "The durable cancellation request conflicts.")
-        return False
+        return "replayed"
 
 
 def _validate_runtime_bindings(ticket: Mapping[str, object]) -> None:
@@ -1833,7 +1995,18 @@ def _child_environment(ticket: Mapping[str, object]) -> dict[str, str]:
     approved = _validate_environment_keys(keys)
     # A detached sidecar receives these approved values from its launcher and
     # passes only the ticket-bound subset to Codex. No value is serialized.
-    return {key: os.environ[key] for key in approved if key in os.environ}
+    output: dict[str, str] = {}
+    for key in approved:
+        if key not in os.environ:
+            continue
+        value = os.environ[key]
+        if _environment_value_is_invalid(key, value):
+            raise CodexExecBridgeError(
+                "ENVIRONMENT_VALUE_INVALID",
+                "The detached environment contained an invalid value.",
+            )
+        output[key] = value
+    return output
 
 
 def _validated_detached_environment(
@@ -1859,7 +2032,7 @@ def _validated_detached_environment(
                     "The detached environment contained a key outside its ticket allowlist.",
                 )
             continue
-        if not isinstance(value, str) or "\x00" in value:
+        if _environment_value_is_invalid(key, value):
             raise CodexExecBridgeError(
                 "ENVIRONMENT_VALUE_INVALID",
                 "The detached environment contained an invalid value.",
@@ -2089,6 +2262,7 @@ def _final_message_binding_identity(
             "phase": ticket.get("phase"),
             "relative_path": binding.get("relative_path"),
             "maximum_bytes": binding.get("maximum_bytes"),
+            "capture_mode": binding.get("capture_mode", "sidecar_required"),
         }
     )
 
@@ -2208,9 +2382,47 @@ def _validate_final_message_absence(
         )
 
 
+def _sanitize_final_message_file(
+    path: Path,
+    *,
+    maximum: int,
+    persistent_secrets: Sequence[bytes],
+) -> None:
+    payload, observed = _read_protected_bytes(path, maximum=maximum)
+    redacted = _redact_persisted_output(payload, persistent_secrets)
+    if redacted == payload:
+        return
+    flags = os.O_WRONLY
+    if hasattr(os, "O_CLOEXEC"):
+        flags |= os.O_CLOEXEC
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    fd = os.open(path, flags)
+    try:
+        current = os.fstat(fd)
+        if (
+            current.st_dev != observed.st_dev
+            or current.st_ino != observed.st_ino
+            or not stat.S_ISREG(current.st_mode)
+            or current.st_uid != os.getuid()
+            or stat.S_IMODE(current.st_mode) != OWNER_FILE_MODE
+        ):
+            raise CodexExecBridgeError(
+                "FINAL_MESSAGE_REPLACED",
+                "The final message changed before credential-safe retention.",
+            )
+        os.ftruncate(fd, 0)
+        _write_all(fd, redacted)
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
 def _bind_final_message(
     handle: ExecutionHandle,
     ticket: Mapping[str, object],
+    *,
+    persistent_secrets: Sequence[bytes] = (),
 ) -> dict[str, object]:
     binding = ticket.get("final_message")
     if not isinstance(binding, dict):
@@ -2226,6 +2438,11 @@ def _bind_final_message(
             "maximum_bytes": maximum,
             "ticket_binding_identity": binding_identity,
         }
+    _sanitize_final_message_file(
+        path,
+        maximum=maximum,
+        persistent_secrets=persistent_secrets,
+    )
     digest, size, observed = _hash_file(path, maximum=maximum)
     payload, payload_stat = _read_protected_bytes(path, maximum=maximum)
     if (
@@ -2277,6 +2494,7 @@ def _settle_final_message(
     ticket: Mapping[str, object],
     *,
     process_exited_monotonic: float,
+    persistent_secrets: Sequence[bytes] = (),
 ) -> dict[str, object]:
     """Wait for a stable final sidecar without confusing process exit with durability."""
     binding = ticket.get("final_message")
@@ -2293,7 +2511,11 @@ def _settle_final_message(
     observed_once = False
     while True:
         try:
-            candidate = _bind_final_message(handle, ticket)
+            candidate = _bind_final_message(
+                handle,
+                ticket,
+                persistent_secrets=persistent_secrets,
+            )
         except CodexExecBridgeError as exc:
             candidate = None
             last_error_code = exc.code
@@ -2369,6 +2591,8 @@ def _settle_final_message(
 def _observe_final_message_once(
     handle: ExecutionHandle,
     ticket: Mapping[str, object],
+    *,
+    persistent_secrets: Sequence[bytes] = (),
 ) -> dict[str, object]:
     binding = ticket.get("final_message")
     if not isinstance(binding, dict):
@@ -2376,7 +2600,11 @@ def _observe_final_message_once(
             "FINAL_MESSAGE_BINDING_INVALID", "The final-message binding is invalid."
         )
     try:
-        candidate = _bind_final_message(handle, ticket)
+        candidate = _bind_final_message(
+            handle,
+            ticket,
+            persistent_secrets=persistent_secrets,
+        )
     except CodexExecBridgeError as exc:
         return {
             "present": False,
@@ -2732,11 +2960,13 @@ def run_execution(
             os.close(stderr_fd)
             raise CodexExecBridgeError("TICKET_INVALID", "The execution ticket is incomplete.")
         process: subprocess.Popen[bytes] | None = None
+        child_environment = _child_environment(ticket)
+        persistent_secrets = _persistent_secret_values(child_environment)
         try:
             process = subprocess.Popen(
                 argv,
                 cwd=str(ticket["working_directory"]),
-                env=_child_environment(ticket),
+                env=child_environment,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -2769,8 +2999,15 @@ def run_execution(
             stdout_fd,
             budget,
             jsonl_classifier=jsonl_classifier,
+            persistent_secrets=persistent_secrets,
         )
-        stderr = _DrainCapture("stderr", process.stderr, stderr_fd, budget)
+        stderr = _DrainCapture(
+            "stderr",
+            process.stderr,
+            stderr_fd,
+            budget,
+            persistent_secrets=persistent_secrets,
+        )
         stdin = _StdinDelivery(int(stdin_binding["size"]), str(stdin_binding["sha256"]))
         stdout_thread = threading.Thread(target=stdout.drain, name=f"twos-{handle.phase_key}-stdout", daemon=True)
         stderr_thread = threading.Thread(target=stderr.drain, name=f"twos-{handle.phase_key}-stderr", daemon=True)
@@ -2955,18 +3192,48 @@ def run_execution(
             and stdout_jsonl.get("eof_received") is True
             and stdout_jsonl.get("trailing_partial_line_resolved") is True
         )
-        if exit_code == 0 and terminal_success and streams_settled:
+        jsonl_only_result = bool(
+            isinstance(final_message_binding, Mapping)
+            and final_message_binding.get("capture_mode") == "jsonl_only"
+        )
+        if jsonl_only_result:
+            final_message = _observe_final_message_once(
+                handle,
+                ticket,
+                persistent_secrets=persistent_secrets,
+            )
+        elif exit_code == 0 and terminal_success and streams_settled:
             final_message = _settle_final_message(
                 handle,
                 ticket,
                 process_exited_monotonic=process_exited_monotonic,
+                persistent_secrets=persistent_secrets,
             )
         else:
-            final_message = _observe_final_message_once(handle, ticket)
+            final_message = _observe_final_message_once(
+                handle,
+                ticket,
+                persistent_secrets=persistent_secrets,
+            )
         final_message_matches_jsonl = False
         result_representation_normalized = False
         if exit_code == 0 and terminal_success:
-            if final_message.get("present") is not True:
+            if jsonl_only_result:
+                if int(stdout_jsonl.get("agent_message_count") or 0) < 1:
+                    integrity_blocked = True
+                    integrity_reasons.append("agent_message_missing")
+                    if not timed_out and not cancelled and terminal_reason == "process_exited":
+                        terminal_reason = "agent_message_missing"
+                else:
+                    # In JSONL-only mode the final agent-message event is the
+                    # transport-bound result representation.  Its presence and
+                    # same-turn binding are transport facts; the higher layer
+                    # separately decides whether its body is a valid TWOS
+                    # structured handoff.  Plain text or an unrelated schema
+                    # therefore remains honest, settled result evidence rather
+                    # than masquerading as transport corruption.
+                    final_message_matches_jsonl = True
+            elif final_message.get("present") is not True:
                 integrity_blocked = True
                 settlement = final_message.get("settlement")
                 settlement = settlement if isinstance(settlement, Mapping) else {}
@@ -3047,6 +3314,9 @@ def run_execution(
         )
         final_message = {
             **final_message,
+            "capture_mode": (
+                "jsonl_only" if jsonl_only_result else "sidecar_required"
+            ),
             "matches_last_agent_message": final_message_matches_jsonl,
             "representation_warning": (
                 "RESULT_REPRESENTATION_NORMALIZED"
@@ -3060,12 +3330,14 @@ def run_execution(
         result_blocker_code = ""
         if settlement.get("blocker_code") == "SIDECAR_ATTEMPT_IDENTITY_MISMATCH":
             result_blocker_code = "SIDECAR_ATTEMPT_IDENTITY_MISMATCH"
-        elif final_message.get("present") is not True:
+        elif "final_result_schema_invalid" in integrity_reasons:
+            result_blocker_code = "FINAL_RESULT_SCHEMA_INVALID"
+        elif final_message.get("present") is not True and not (
+            jsonl_only_result and final_message_matches_jsonl
+        ):
             result_blocker_code = "FINAL_AGENT_MESSAGE_UNAVAILABLE"
         elif not final_message_matches_jsonl and exit_code == 0 and terminal_success:
             result_blocker_code = "FINAL_RESULT_SEMANTIC_MISMATCH"
-        elif "final_result_schema_invalid" in integrity_reasons:
-            result_blocker_code = "FINAL_RESULT_SCHEMA_INVALID"
         state = _terminal_state(
             exit_code=exit_code,
             timed_out=timed_out,
@@ -3124,8 +3396,21 @@ def run_execution(
                 "terminal_failure": terminal_failure,
                 "terminal_contradiction": terminal_contradiction,
                 "streams_settled": streams_settled,
+                "final_result_capture_mode": (
+                    "jsonl_only" if jsonl_only_result else "sidecar_required"
+                ),
                 "final_sidecar_valid": final_message.get("present") is True,
-                "final_sidecar_matches_jsonl": final_message_matches_jsonl,
+                "final_sidecar_matches_jsonl": bool(
+                    not jsonl_only_result and final_message_matches_jsonl
+                ),
+                "final_jsonl_result_valid": bool(
+                    jsonl_only_result
+                    and final_message_matches_jsonl
+                    and recovery.get("eligible_candidate") is True
+                ),
+                "final_jsonl_message_observed": bool(
+                    jsonl_only_result and final_message_matches_jsonl
+                ),
                 "jsonl_recovery_candidate": recovery.get("eligible_candidate")
                 is True,
                 "result_representation_normalized": result_representation_normalized,

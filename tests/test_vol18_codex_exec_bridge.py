@@ -440,11 +440,12 @@ time.sleep(10)
     child_pid = int(running["child_process_id"])
     child_identity = str(running["child_process_start_identity"])
     if mode == "cancel":
-        assert request_cancel(handle) is True
-        assert request_cancel(handle) is False
+        assert request_cancel(handle) == "requested"
+        assert request_cancel(handle) == "replayed"
     worker.join(6)
     assert not worker.is_alive()
     assert result["terminal_state"] == expected_state
+    assert request_cancel(handle) == "terminal"
     assert not process_identity_matches(child_pid, child_identity)
 
 
@@ -492,7 +493,7 @@ def test_cancel_read_settles_only_the_exact_internal_publication_window(
         "_internal_publication_alias_matches",
         observed_alias_matcher,
     )
-    writer_result: list[bool] = []
+    writer_result: list[str] = []
     writer_errors: list[BaseException] = []
     reader_result: list[bool] = []
     reader_errors: list[BaseException] = []
@@ -529,7 +530,7 @@ def test_cancel_read_settles_only_the_exact_internal_publication_window(
     assert not reader.is_alive()
     assert writer_errors == []
     assert reader_errors == []
-    assert writer_result == [True]
+    assert writer_result == ["requested"]
     assert reader_result == [True]
     assert cancel_path.stat().st_nlink == 1
 
@@ -1224,6 +1225,45 @@ print(json.dumps({"type": "turn.completed", "turn_id": "environment-turn"}))
             assert secret.encode() not in payload
             assert token.encode() not in payload
             assert proxy.encode() not in payload
+
+
+def test_short_sensitive_environment_value_is_rejected_before_process_spawn(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    short_secret = "abc1234"
+    source = (
+        "import pathlib\n"
+        "pathlib.Path('spawned.txt').write_text('unexpected', encoding='utf-8')\n"
+    )
+    handle, working, _ = _prepare(
+        tmp_path,
+        source,
+        phase_key="coding-short-secret",
+        environment_keys=("PATH", "HOME", "OPENAI_API_KEY"),
+    )
+
+    with pytest.raises(CodexExecBridgeError) as detached_error:
+        launch_sidecar(
+            handle,
+            child_environment={
+                "PATH": os.environ["PATH"],
+                "HOME": os.environ["HOME"],
+                "OPENAI_API_KEY": short_secret,
+            },
+        )
+    assert detached_error.value.code == "ENVIRONMENT_VALUE_INVALID"
+    assert load_launch_info(handle) is None
+    assert not (working / "spawned.txt").exists()
+
+    monkeypatch.setenv("OPENAI_API_KEY", short_secret)
+    with pytest.raises(CodexExecBridgeError) as child_error:
+        run_execution(handle)
+    assert child_error.value.code == "ENVIRONMENT_VALUE_INVALID"
+    assert not (working / "spawned.txt").exists()
+    for artifact in handle.phase_directory.iterdir():
+        if artifact.is_file():
+            assert short_secret.encode() not in artifact.read_bytes()
 
 
 def test_module_has_no_database_dependency_or_write_surface() -> None:

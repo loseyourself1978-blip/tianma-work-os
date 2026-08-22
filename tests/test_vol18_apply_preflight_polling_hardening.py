@@ -137,7 +137,10 @@ def test_run_eligibility_revalidates_pack_through_hardened_binding_path(
         invalidated_at=None,
     )
     scalar_results = iter((pack, None))
-    session = SimpleNamespace(scalar=lambda _statement: next(scalar_results))
+    session = SimpleNamespace(
+        scalar=lambda _statement: next(scalar_results),
+        scalars=lambda _statement: (),
+    )
     calls: list[tuple[object, object, object, Path]] = []
 
     monkeypatch.setattr(

@@ -2655,6 +2655,7 @@ button:disabled,
 .delivery-result-facts dd,
 #push-blockers,
 #delivery-blockers,
+#start-codex-confirmation-dialog dd,
 #push-confirmation-dialog dd {
   overflow-wrap: anywhere;
 }

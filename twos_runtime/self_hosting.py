@@ -185,6 +185,12 @@ def codex_capability_target(
     child_environment: dict[str, str] | None = None,
 ) -> CodexExecutionTarget:
     """Resolve one exact approved executable capability target."""
+    if (
+        owner_id is not None
+        and pack.approved_by_user_id is not None
+        and pack.approved_by_user_id != owner_id
+    ):
+        raise ValueError("The current Pack requires approval by this Owner.")
     rows = list(
         session.scalars(
             select(AIModelAssignment).where(
@@ -228,37 +234,12 @@ def codex_capability_target(
             connectivity_evidence_digest=connectivity.evidence_digest,
             connection_verified_model_identifier=connectivity.actual_model_identifier,
         )
-    fallback_ok, fallback_reason = _eligible_codex_model(
-        session,
-        assignment.fallback_model,
-        owner_id=bound_owner_id,
-        codex_executable=codex_executable,
-        child_environment=child_environment,
-    )
-    if assignment.fallback_allowed and fallback_ok and assignment.fallback_model is not None:
-        connectivity = _current_connectivity_evidence(
-            session,
-            assignment.fallback_model,
-            owner_id=bound_owner_id,
-            codex_executable=codex_executable,
-            child_environment=child_environment,
-        )
-        if connectivity is None:
-            raise ValueError(
-                f"{capability.title()} fallback connectivity evidence changed during target resolution."
-            )
-        return CodexExecutionTarget(
-            assignment=assignment,
-            model=assignment.fallback_model,
-            requested_model_identifier=fallback_reason,
-            fallback_selected=True,
-            connectivity_evidence_id=connectivity.id,
-            connectivity_evidence_digest=connectivity.evidence_digest,
-            connection_verified_model_identifier=connectivity.actual_model_identifier,
-        )
     reason = primary_reason
     if assignment.fallback_allowed:
-        reason = f"{primary_reason} Approved fallback is not executable: {fallback_reason}"
+        reason = (
+            f"{primary_reason} Automatic provider fallback is not allowed; "
+            "approve a current Pack with an executable primary provider target."
+        )
     raise ValueError(f"{capability.title()} model assignment needs setup. {reason}")
 
 
@@ -458,6 +439,11 @@ RUN_BLOCKER_MESSAGES = {
     "SOURCE_SNAPSHOT_MISSING": ("The Pack has no approved source snapshot.", "Regenerate Codex Pack", "Regenerate Codex Pack"),
     "SOURCE_CHANGED_SINCE_APPROVAL": ("Source changed since approval. Regenerate Codex Pack.", "Regenerate Codex Pack", "Regenerate Codex Pack"),
     "ACTIVE_RUN_EXISTS": ("A Codex Run is already active for this task.", "Wait or Cancel Run", "Cancel Run"),
+    "ACTIVE_WORKSPACE_RUN_EXISTS": (
+        "Another Codex Run is active for this authorized workspace.",
+        "Wait for the active Run",
+        "View Run Activity",
+    ),
 }
 
 
@@ -526,19 +512,12 @@ def run_eligibility(
                     codex_executable=codex_executable,
                     child_environment=child_environment,
                 )
-                fallback_ok, fallback_reason = _eligible_codex_model(
-                    session,
-                    assignment.fallback_model,
-                    owner_id=owner_id,
-                    codex_executable=codex_executable,
-                    child_environment=child_environment,
-                )
-                if not primary_ok and not (assignment.fallback_allowed and fallback_ok):
+                if not primary_ok:
                     reason = primary_reason
                     if assignment.fallback_allowed:
                         reason = (
-                            f"{primary_reason} Approved fallback is not executable: "
-                            f"{fallback_reason}"
+                            f"{primary_reason} Automatic provider fallback is not "
+                            "allowed; approve an executable primary target."
                         )
                     blockers.append(_runtime_blocker(runtime_code, reason))
         if pack is None:
@@ -561,14 +540,40 @@ def run_eligibility(
                 blockers.append(
                     _run_blocker("APPROVAL_STALE" if pack.invalidated_at else "APPROVAL_REQUIRED")
                 )
+            elif owner_id is not None and pack.approved_by_user_id != owner_id:
+                blockers.append(_run_blocker("APPROVAL_REQUIRED"))
             active = session.scalar(
                 select(CodexRun).where(
                     CodexRun.task_id == task.id,
-                    CodexRun.status.in_(["queued", "starting", "running", "verifying"]),
+                    CodexRun.status.in_(["queued", "starting", "running", "verifying", "settling"]),
                 )
             )
             if active is not None:
                 blockers.append(_run_blocker("ACTIVE_RUN_EXISTS"))
+            else:
+                authorized_workspace = source_repo.resolve(strict=False)
+                workspace_run = None
+                for candidate in session.scalars(
+                    select(CodexRun).where(
+                        CodexRun.status.in_(
+                            ["queued", "starting", "running", "verifying", "settling"]
+                        )
+                    )
+                ):
+                    if not candidate.source_repo:
+                        continue
+                    try:
+                        same_workspace = (
+                            Path(candidate.source_repo).resolve(strict=False)
+                            == authorized_workspace
+                        )
+                    except (OSError, RuntimeError, ValueError):
+                        same_workspace = False
+                    if same_workspace:
+                        workspace_run = candidate
+                        break
+                if workspace_run is not None:
+                    blockers.append(_run_blocker("ACTIVE_WORKSPACE_RUN_EXISTS"))
     # Preserve stable order while removing duplicate codes.
     unique = {item["code"]: item for item in blockers}
     blockers = [unique[code] for code in unique]

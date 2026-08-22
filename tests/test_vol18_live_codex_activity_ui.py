@@ -35,7 +35,9 @@ def test_live_codex_activity_uses_the_authoritative_lifecycle_snapshot() -> None
         "state.runActivity = mergeRunActivityLifecycleSnapshots("
         in javascript
     )
-    assert "elements.runStatus.textContent = run ? humanStatus(runStatus)" in javascript
+    assert "elements.runStatus.textContent = run" in javascript
+    assert "humanStatus(run.canonical_status || runStatus)" in javascript
+    assert "record.completion_classification" in javascript
     assert "elements.resultStatus.textContent = humanStatus(authoritativeStatus)" in javascript
     assert "elements.resultLifecycle.textContent = humanStatus(authoritativeStatus)" in javascript
     assert "activity\n        ? activity.status" in javascript

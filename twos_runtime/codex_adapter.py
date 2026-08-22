@@ -375,6 +375,7 @@ class _CodexJsonlEvidenceCollector:
         self.command_execution_count = 0
         self.file_change_count = 0
         self.test_executions: list[dict[str, object]] = []
+        self.prohibited_git_attempts: list[str] = []
         self.rerouted_from = ""
         self.rerouted_to = ""
         self.unsupported_model_routing_observed = False
@@ -754,6 +755,19 @@ class _CodexJsonlEvidenceCollector:
             command = " ".join(str(part) for part in raw_command)
         else:
             command = str(raw_command or "")
+        prohibited_match = re.search(
+            r"(?<![A-Za-z0-9_.-])git\s+"
+            r"(?:(?:-[A-Za-z]\s+\S+|--[A-Za-z][A-Za-z-]*(?:=\S+)?)\s+)*"
+            r"(add|rm|mv|commit|push|reset|clean|checkout|switch|restore|rebase|"
+            r"merge|tag|remote|config|update-index|write-tree|commit-tree|update-ref)\b",
+            command,
+            re.IGNORECASE,
+        )
+        if prohibited_match:
+            operation = prohibited_match.group(1).upper().replace("-", "_")
+            code = f"GIT_{operation}_ATTEMPTED"
+            if code not in self.prohibited_git_attempts:
+                self.prohibited_git_attempts.append(code)
         label = _test_command_label(command)
         if not label:
             return
@@ -1437,7 +1451,6 @@ class CodexAdapter:
             source_repo,
             "worktree",
             "remove",
-            "--force",
             str(candidate),
             check=False,
             timeout=60,
@@ -1445,7 +1458,7 @@ class CodexAdapter:
         delete_branch = run_git(
             source_repo,
             "branch",
-            "-D",
+            "-d",
             branch,
             check=False,
             timeout=30,
@@ -2110,7 +2123,9 @@ class CodexExecutionManager:
                 capture_source_snapshot(
                     worktree,
                     hardened_read_only=True,
-                    approved_source_branch=run.source_branch,
+                    approved_source_branch=(
+                        run.source_branch if phase == "coding" else None
+                    ),
                 ).get("digest")
                 or ""
             )
@@ -2187,13 +2202,11 @@ class CodexExecutionManager:
         # generic filename makes stale-artifact forensics needlessly
         # ambiguous even when the containing phase directory is unique.
         final_message_name = f"final-message-{phase_key}.txt"
-        final_message_path = self._bridge_root / phase_key / final_message_name
         command = self.adapter.command_for(
             detection,
             prompt,
             model_identifier,
             sandbox_mode=sandbox_mode,
-            output_last_message=final_message_path,
         )
         handle = codex_exec_bridge.prepare_execution(
             self._bridge_root,
@@ -2216,6 +2229,7 @@ class CodexExecutionManager:
                 max(0.05, float(self.settings.scheduler_poll_seconds)),
             ),
             final_message_relative_path=final_message_name,
+            final_message_capture_mode="jsonl_only",
             forbidden_spool_roots=(self.settings.source_repo,),
         )
         self._bridge_handles[(int(run.id), phase)] = handle
@@ -2270,7 +2284,6 @@ class CodexExecutionManager:
                         "PROCESS_IDENTITY_MISMATCH",
                         "The durable Codex child-process identity conflicts with this Run.",
                     )
-                return
             historical_receipt = terminal_receipt
             if (
                 historical_receipt is None
@@ -2294,9 +2307,22 @@ class CodexExecutionManager:
                     historical_receipt = (
                         codex_exec_bridge.load_terminal_receipt(late_handle)
                     )
-            if (
-                historical_receipt is not None
-                and self._bind_historical_phase_process(
+            if historical_receipt is not None:
+                # A terminal receipt outranks a previously observed live
+                # identity.  Reconcile it before considering an identical
+                # recorded PID a no-op: otherwise a very fast child can stay
+                # persisted as Running until a later watcher pass even though
+                # this caller already holds sealed exit evidence.
+                from .run_lifecycle import reconcile_execution_attempt
+
+                reconcile_execution_attempt(
+                    session,
+                    int(monitor.owner_id),
+                    run,
+                    monitor,
+                )
+                session.flush()
+                bound_historical = self._bind_historical_phase_process(
                     session,
                     run,
                     monitor,
@@ -2306,13 +2332,55 @@ class CodexExecutionManager:
                     worktree=worktree,
                     terminal_receipt=historical_receipt,
                 )
-            ):
+                if not bound_historical:
+                    # A fast child can publish its immutable receipt before
+                    # the background watcher has projected an attempt. Build
+                    # that exact receipt-bound projection now; a terminal
+                    # process must never pass through the ordinary Running
+                    # transition merely because observation lost the race.
+                    reconcile_execution_attempt(
+                        session,
+                        int(monitor.owner_id),
+                        run,
+                        monitor,
+                    )
+                    session.flush()
+                    bound_historical = self._bind_historical_phase_process(
+                        session,
+                        run,
+                        monitor,
+                        phase=phase,
+                        process_id=process_id,
+                        process_start_identity=process_start_identity,
+                        worktree=worktree,
+                        terminal_receipt=historical_receipt,
+                    )
+                if not bound_historical:
+                    raise ResultIntakeError(
+                        "TERMINAL_ATTEMPT_BINDING_PENDING",
+                        "The terminal process could not be bound without a false Running state.",
+                    )
                 session.commit()
+                return
+            if recorded_id is not None:
                 return
             if phase == "coding":
                 run.process_spawned = True
+                run.status = "running"
+                run.started_at = run.started_at or utc_now()
+                run.owner_summary = "Coding invocation is running in the isolated workspace."
+                run.task.status = "running"
             else:
                 run.verification_process_spawned = True
+                run.verification_status = "running"
+                run.verification_summary = (
+                    "Independent Verification is running in read-only mode."
+                )
+                run.owner_summary = (
+                    "Coding is terminal; the verified independent Verification "
+                    "process is running."
+                )
+                run.task.status = "verifying"
             record_monitor_process_start(
                 session,
                 run,
@@ -2337,6 +2405,18 @@ class CodexExecutionManager:
                     ),
                 )
             )
+            if phase == "coding":
+                session.add(
+                    AuditEvent(
+                        action="codex_run_started",
+                        entity_type="codex_run",
+                        entity_id=run.id,
+                        details=(
+                            "The exact Codex child process identity was verified "
+                            "before the Run entered Running."
+                        ),
+                    )
+                )
             session.commit()
 
     def _bind_historical_phase_process(
@@ -2407,7 +2487,6 @@ class CodexExecutionManager:
                 r"[0-9a-f]{64}", attempt.process_start_identity or ""
             )
             and attempt.process_exit_known
-            and attempt.terminal_event_observed
             and attempt.attempt_state
             in {
                 "SETTLING",
@@ -2445,6 +2524,7 @@ class CodexExecutionManager:
             monitor.process_id = process_id
             monitor.process_start_identity = process_start_identity
             run.process_spawned = True
+            run.started_at = run.started_at or attempt.started_at
         else:
             monitor.verification_process_id = process_id
             monitor.verification_process_start_identity = process_start_identity
@@ -2529,6 +2609,7 @@ class CodexExecutionManager:
                 )
             session.commit()
 
+        cancel_before_launch = False
         with self._lock:
             if self._stopping:
                 raise _BridgeRuntimeHandoff()
@@ -2536,13 +2617,69 @@ class CodexExecutionManager:
                 handle
             ) is None:
                 # An Owner cancellation before this phase crosses its detached
-                # launch boundary must not create a process merely to cancel it.
-                raise _BridgeRuntimeHandoff()
-            launch = codex_exec_bridge.launch_sidecar(
-                handle,
-                python_executable=sys.executable,
-                child_environment=self._child_environment(),
+                # launch boundary must not create a process merely to cancel
+                # it. A recovery waiter may, however, reattach to an already
+                # launched exact sidecar after publishing its durable marker.
+                if codex_exec_bridge.load_launch_info(handle) is None:
+                    cancel_before_launch = True
+            launch = (
+                None
+                if cancel_before_launch
+                else codex_exec_bridge.launch_sidecar(
+                    handle,
+                    python_executable=sys.executable,
+                    child_environment=self._child_environment(),
+                )
             )
+        if cancel_before_launch:
+            if phase == "verification":
+                # Coding already has terminal evidence. Return a truthful,
+                # non-spawned Verification cancellation so the normal outer
+                # finalizer persists that Coding result instead of abandoning
+                # it at this narrow launch boundary.
+                return {
+                    "handle": handle,
+                    "receipt": None,
+                    "collector": _CodexJsonlEvidenceCollector(model_identifier),
+                    "process_spawned": False,
+                    "process_id": None,
+                    "process_start_identity": "",
+                    "exit_code": None,
+                    "timed_out": False,
+                    "cancelled": True,
+                    "runtime_interrupted": False,
+                    "integrity_blocked": False,
+                    "stdout": "",
+                    "stderr": "",
+                    "delivery_complete": False,
+                    "retention_truncated": False,
+                    "terminal_event_replayed": False,
+                    "final_message": None,
+                    "final_message_mismatch": False,
+                    "final_message_contract_invalid": False,
+                    "jsonl_final_message_recovered": False,
+                }
+            with self.factory() as cancelled_session:
+                cancelled_run = cancelled_session.get(CodexRun, run_id)
+                if (
+                    cancelled_run is not None
+                    and cancelled_run.cancellation_requested_at is not None
+                    and (
+                        not cancelled_run.process_spawned
+                        if phase == "coding"
+                        else not cancelled_run.verification_process_spawned
+                    )
+                ):
+                    if phase == "coding":
+                        self.adapter.discard_unstarted_worktree(
+                            worktree,
+                            cancelled_run.worktree_branch,
+                        )
+                        cancelled_run.worktree_path = ""
+                        cancelled_run.worktree_branch = ""
+                        self._finish_cancelled(cancelled_session, cancelled_run)
+            raise _BridgeRuntimeHandoff()
+        assert launch is not None
         deadline = time.monotonic() + max(
             30.0,
             float(self.settings.codex_timeout_seconds) + 30.0,
@@ -2556,10 +2693,15 @@ class CodexExecutionManager:
                 child_pid = state.get("child_process_id")
                 child_identity = state.get("child_process_start_identity")
                 if (
-                    type(child_pid) is int
+                    state.get("state") == "RUNNING"
+                    and type(child_pid) is int
                     and child_pid > 0
                     and isinstance(child_identity, str)
                     and re.fullmatch(r"[0-9a-f]{64}", child_identity)
+                    and codex_exec_bridge.process_identity_matches(
+                        child_pid,
+                        child_identity,
+                    )
                     and bound_child != (child_pid, child_identity)
                 ):
                     self._bind_bridge_child(
@@ -3292,13 +3434,30 @@ class CodexExecutionManager:
                     continue
                 if run.pack is None or run.pack.approved_by_user_id is None:
                     continue
+                if run.cancellation_requested_at is not None:
+                    # Rehydrate the set-once Owner intent before attaching a
+                    # recovery worker.  A runtime restart must not turn an
+                    # accepted cancellation into a replacement execution or
+                    # silently forget the request.
+                    with self._lock:
+                        self._cancel_requested.add(int(run.id))
                 monitor = ensure_run_monitor(
                     session,
                     int(run.pack.approved_by_user_id),
                     run,
                 )
                 try:
-                    if self._bridge_preparation_status(int(run.id), "coding") == "absent":
+                    bridge_preparation = self._bridge_preparation_status(
+                        int(run.id), "coding"
+                    )
+                    if bridge_preparation == "absent":
+                        if (
+                            run.cancellation_requested_at is not None
+                            and not run.process_spawned
+                            and not run.verification_process_spawned
+                        ):
+                            self._finish_cancelled(session, run)
+                            continue
                         self._terminalize_legacy_interrupted_run(
                             session,
                             run,
@@ -3306,6 +3465,24 @@ class CodexExecutionManager:
                         )
                         session.commit()
                         continue
+                    if (
+                        bridge_preparation == "preparing"
+                        and run.cancellation_requested_at is not None
+                    ):
+                        if (
+                            not run.process_spawned
+                            and not run.verification_process_spawned
+                        ):
+                            # A sidecar cannot cross launch before its ticket
+                            # and seal are both durably published. Honor the
+                            # set-once Owner intent without waiting on or
+                            # creating a process in this prelaunch window.
+                            self._finish_cancelled(session, run)
+                            continue
+                        raise codex_exec_bridge.CodexExecBridgeError(
+                            "RECOVERY_CANCEL_PREPARATION_INCOMPLETE",
+                            "A claimed process has no complete sealed cancellation binding.",
+                        )
                     worktree = self._recovery_worktree(run)
                     observation = self._bridge_recovery_observation(run, worktree)
                 except codex_exec_bridge.CodexExecBridgeError as exc:
@@ -3357,6 +3534,19 @@ class CodexExecutionManager:
                     continue
 
                 recovery_status = str(observation.get("status") or "")
+                if (
+                    run.cancellation_requested_at is not None
+                    and recovery_status in {"starting", "active"}
+                ):
+                    recovery_handle = observation.get("handle")
+                    if not isinstance(
+                        recovery_handle, codex_exec_bridge.ExecutionHandle
+                    ):
+                        raise codex_exec_bridge.CodexExecBridgeError(
+                            "RECOVERY_CANCEL_BINDING_INVALID",
+                            "The durable cancellation target is unavailable.",
+                        )
+                    codex_exec_bridge.request_cancel(recovery_handle)
                 if recovery_status == "preparing":
                     clear_stale_monitor_terminal_state(
                         session,
@@ -3447,6 +3637,43 @@ class CodexExecutionManager:
                     session.commit()
                     recoverable.append(int(run.id))
                     continue
+                if (
+                    recovery_status == "process_lost"
+                    and observation.get("phase") == "verification"
+                    and observation.get("code") == "BRIDGE_LAUNCH_UNAVAILABLE"
+                    and run.cancellation_requested_at is not None
+                    and not run.verification_process_spawned
+                ):
+                    # A sealed Verification ticket is preparation evidence,
+                    # not proof that a process crossed the launch boundary.
+                    # Preserve the completed Coding receipt and let recovery
+                    # honor the durable Owner intent without launching a
+                    # replacement Verification process.
+                    observe_monitor(
+                        session,
+                        monitor,
+                        state="RESULT_PENDING",
+                        recovery_state="RESULT_RECOVERED",
+                        failure_code="",
+                        safe_summary=(
+                            "Owner cancellation was recovered before the sealed "
+                            "Verification phase crossed its launch boundary."
+                        ),
+                    )
+                    session.add(
+                        AuditEvent(
+                            action="codex_run_prelaunch_verification_cancel_recovered",
+                            entity_type="codex_run",
+                            entity_id=run.id,
+                            details=(
+                                "phase=verification; process_spawned=false; "
+                                "replacement_process_started=false"
+                            ),
+                        )
+                    )
+                    session.commit()
+                    recoverable.append(int(run.id))
+                    continue
                 run.status = "failed"
                 run.owner_summary = (
                     "The exact detached Codex process identity was lost before "
@@ -3516,20 +3743,40 @@ class CodexExecutionManager:
     def _attach_verification_result(
         result: dict[str, object],
         verification: dict[str, object] | None,
+        *,
+        owner_cancelled_before_start: bool = False,
     ) -> None:
         if verification is None:
-            result["verification"] = {
-                "status": "not_started",
-                "summary": (
+            if owner_cancelled_before_start:
+                summary = (
+                    "Verification was not started because the Owner cancelled "
+                    "the Run before Verification launched."
+                )
+                failure = "Owner cancellation prevented Verification from starting."
+                task_acceptance = result.get("task_acceptance")
+                if (
+                    isinstance(task_acceptance, dict)
+                    and task_acceptance.get("status") == "needs_owner_review"
+                ):
+                    task_acceptance["reason"] = (
+                        "Owner cancellation ended the Run before independent "
+                        "Verification could evaluate the Coding result."
+                    )
+            else:
+                summary = (
                     "Verification was not started because Coding did not reach "
                     "the verification boundary."
-                ),
+                )
+                failure = "Coding did not reach the Verification boundary."
+            result["verification"] = {
+                "status": "not_started",
+                "summary": summary,
                 "process_spawned": False,
             }
             result["verification_process"] = {
                 "status": "not_started",
                 "process_started": False,
-                "failure": "Coding did not reach the Verification boundary.",
+                "failure": failure,
             }
             result["verification_invocation"] = {
                 "process_execution_verified": False,
@@ -3537,7 +3784,7 @@ class CodexExecutionManager:
                 "requested_model": "",
                 "actual_resolved_model": None,
                 "actual_model_identity_verified": False,
-                "failure": "Verification was not started.",
+                "failure": failure,
             }
             result["verification_verdict"] = {
                 "status": "not_reached",
@@ -3994,16 +4241,21 @@ class CodexExecutionManager:
             raise _BridgeRuntimeHandoff()
         with self.factory() as transition_session:
             transition_run = transition_session.get(CodexRun, run_id)
-            owner_cancelled = bool(
+            verification_phase_launched = self._bridge_phase_has_launch_evidence(
+                run_id,
+                "verification",
+            )
+            owner_cancelled_before_verification = bool(
                 self._stop_reason(run_id) == "owner_cancelled"
                 or (
                     transition_run is not None
                     and (
-                        transition_run.cancelled
+                        transition_run.cancellation_requested_at is not None
+                        or transition_run.cancelled
                         or transition_run.status == "cancelled"
                     )
                 )
-            )
+            ) and not verification_phase_launched
         coding_process = result.get("coding_process")
         git_evidence = result.get("git_evidence")
         coding_ready = bool(
@@ -4011,13 +4263,18 @@ class CodexExecutionManager:
             and exit_code == 0
             and coding_collector is not None
             and coding_collector.structured_success
+            and isinstance(coding_bridge.get("final_message"), str)
+            and _valid_coding_handoff_contract(
+                str(coding_bridge.get("final_message") or "")
+            )
+            and self._coding_route_is_authorized(run_id, coding_collector)
             and delivery_complete
             and isinstance(coding_process, dict)
             and coding_process.get("status") == "completed"
             and isinstance(git_evidence, dict)
             and git_evidence.get("status") == "passed"
             and self._boundary_evidence_passes(result)
-            and not owner_cancelled
+            and not owner_cancelled_before_verification
             and not timed_out
             and not coding_integrity_blocked
         )
@@ -4070,8 +4327,24 @@ class CodexExecutionManager:
                 pack_content,
                 result,
             )
-        self._attach_verification_result(result, verification)
-        self._reconcile_recovered_task_acceptance(result)
+        self._attach_verification_result(
+            result,
+            verification,
+            owner_cancelled_before_start=owner_cancelled_before_verification,
+        )
+        if not owner_cancelled_before_verification:
+            self._reconcile_recovered_task_acceptance(result)
+        coding_receipt = coding_bridge.get("receipt")
+        if (
+            owner_cancelled_before_verification
+            and isinstance(coding_receipt, dict)
+            and coding_receipt.get("terminal_state") == "COMPLETED"
+        ):
+            # Coding really completed, but the durable Owner intent arrived
+            # before Verification crossed a launch boundary. Preserve Coding
+            # process truth while terminalizing the overall Run as cancelled,
+            # matching the live narrow-window behavior.
+            coding_bridge = {**coding_bridge, "cancelled": True}
         self._finalize_recovered_bridge_run(
             run_id,
             result=result,
@@ -4131,6 +4404,13 @@ class CodexExecutionManager:
         )
 
     def _start_worker(self, run_id: int, *, recover_bridge: bool) -> bool:
+        durable_cancel = False
+        if recover_bridge:
+            with self.factory() as session:
+                run = session.get(CodexRun, run_id)
+                durable_cancel = bool(
+                    run is not None and run.cancellation_requested_at is not None
+                )
         thread = threading.Thread(
             target=self._run_worker,
             args=(run_id, recover_bridge),
@@ -4144,6 +4424,8 @@ class CodexExecutionManager:
         with self._lock:
             if self._stopping or run_id in self._workers:
                 return False
+            if durable_cancel:
+                self._cancel_requested.add(run_id)
             self._workers[run_id] = thread
         thread.start()
         return True
@@ -4174,18 +4456,30 @@ class CodexExecutionManager:
                 self._workers.pop(run_id, None)
                 self._processes.pop(run_id, None)
                 self._cancel_requested.discard(run_id)
+            # Final Run/result publication and the background watcher use
+            # separate transactions.  Reconcile this exact Run immediately
+            # after its worker releases ownership so a terminal structured
+            # result cannot miss the watcher's bounded settlement window and
+            # remain unpublished until process shutdown or a manual refresh.
+            # This pass is intake-only: it never starts a replacement process.
+            try:
+                reconcile_run_monitors(self.factory, run_ids=[run_id])
+            except Exception:
+                # The bounded watcher remains the durable retry path.  Worker
+                # teardown must not be converted into a false Run failure by
+                # a transient intake transaction error.
+                pass
         if retry_recovery:
             self._start_worker(run_id, recover_bridge=True)
 
-    def cancel(self, run_id: int) -> bool:
+    def cancel(self, run_id: int) -> str:
         with self._lock:
+            request_replayed = run_id in self._cancel_requested
             process = self._processes.get(run_id)
             if process is not None:
                 if process.poll() is not None:
-                    return False
-                self._cancel_requested.add(run_id)
-            else:
-                self._cancel_requested.add(run_id)
+                    return "unavailable"
+            self._cancel_requested.add(run_id)
         for phase in ("verification", "coding"):
             try:
                 handle = self._existing_bridge_handle(run_id, phase)
@@ -4193,21 +4487,34 @@ class CodexExecutionManager:
                     handle is not None
                     and codex_exec_bridge.load_terminal_receipt(handle) is None
                 ):
-                    codex_exec_bridge.request_cancel(handle)
-                    return True
+                    bridge_outcome = codex_exec_bridge.request_cancel(handle)
+                    if bridge_outcome == "terminal":
+                        with self._lock:
+                            self._cancel_requested.discard(run_id)
+                        return "terminal"
+                    return bridge_outcome
             except codex_exec_bridge.CodexExecBridgeError:
                 # Preserve the exact persisted blocker for the worker; never
                 # fall back to signalling an unverified PID.
-                return False
+                with self.factory() as session:
+                    durable_intent = bool(
+                        (run := session.get(CodexRun, run_id)) is not None
+                        and run.cancellation_requested_at is not None
+                    )
+                if durable_intent:
+                    return "replayed" if request_replayed else "requested"
+                with self._lock:
+                    self._cancel_requested.discard(run_id)
+                return "unavailable"
         if process is not None:
             self._stop_process_tree(process, force=False)
-            return True
+            return "replayed" if request_replayed else "requested"
         with self.factory() as session:
             run = session.get(CodexRun, run_id)
             if not run or run.status not in {"queued", "starting", "running", "verifying"}:
                 with self._lock:
                     self._cancel_requested.discard(run_id)
-                return False
+                return "unavailable"
             if run.process_spawned:
                 verification_handle = self._existing_bridge_handle(
                     run_id,
@@ -4225,35 +4532,20 @@ class CodexExecutionManager:
                     and isinstance(coding_receipt, dict)
                     and coding_receipt.get("terminal_state") == "COMPLETED"
                 ):
-                    # Coding is terminal but the separate Verification process
-                    # has not crossed its launch boundary. Persist this narrow
-                    # Owner cancellation window and let the worker retain the
-                    # completed Coding evidence without starting Verification.
-                    run.status = "cancelled"
-                    run.cancelled = True
-                    run.finished_at = utc_now()
-                    run.task.status = "cancelled"
-                    session.add(
-                        AuditEvent(
-                            action="codex_run_cancelled_before_verification",
-                            entity_type="codex_run",
-                            entity_id=run.id,
-                            details=(
-                                "Owner cancelled after Coding terminal evidence and "
-                                "before independent Verification launch."
-                            ),
-                        )
-                    )
-                    session.commit()
-                    return True
+                    # Keep the Run recoverably active. The set-once Owner
+                    # intent and request audit are already durable; the live
+                    # or restart finalizer must first retain the completed
+                    # Coding result before terminalizing the overall Run.
+                    return "replayed" if request_replayed else "requested"
                 # A terminal phase is already owned by the finalizer. A late
                 # cancel must not overwrite captured process evidence.
                 with self._lock:
                     self._cancel_requested.discard(run_id)
-                return False
+                return "unavailable"
             run.status = "cancelled"
             run.cancelled = True
             run.finished_at = utc_now()
+            run.owner_summary = "Codex execution was cancelled by the Owner."
             run.task.status = "cancelled"
             session.add(
                 AuditEvent(
@@ -4264,7 +4556,7 @@ class CodexExecutionManager:
                 )
             )
             session.commit()
-        return True
+        return "replayed" if request_replayed else "requested"
 
     def _record_launch_intent(self, run_id: int) -> bool:
         """Persist the last pre-spawn checkpoint before any child can exist."""
@@ -4272,7 +4564,7 @@ class CodexExecutionManager:
             run = session.get(CodexRun, run_id)
             if (
                 run is None
-                or run.status != "running"
+                or run.status != "starting"
                 or run.process_spawned
                 or self._is_cancel_requested(run_id)
             ):
@@ -4395,6 +4687,16 @@ class CodexExecutionManager:
                     raise RuntimeError(
                         "Source snapshot does not match the approved Pack and Run binding."
                     )
+                if (
+                    run.approved_instruction_digest
+                    and hashlib.sha256(
+                        (run.pack.content or "").encode("utf-8")
+                    ).hexdigest()
+                    != run.approved_instruction_digest
+                ):
+                    raise RuntimeError(
+                        "Instruction Pack content does not match the Owner-confirmed Run binding."
+                    )
             except (OSError, RuntimeError, ValueError) as exc:
                 self._finish_source_snapshot_unavailable(
                     session,
@@ -4467,6 +4769,16 @@ class CodexExecutionManager:
                     raise RuntimeError(
                         "Source snapshot does not match the approved Pack and Run binding."
                     )
+                if (
+                    run.approved_instruction_digest
+                    and hashlib.sha256(
+                        (run.pack.content or "").encode("utf-8")
+                    ).hexdigest()
+                    != run.approved_instruction_digest
+                ):
+                    raise RuntimeError(
+                        "Instruction Pack content does not match the Owner-confirmed Run binding."
+                    )
             except (OSError, RuntimeError, ValueError) as exc:
                 cleanup_verified, cleanup_code = (
                     self._discard_snapshot_blocked_worktree(worktree, branch)
@@ -4493,16 +4805,18 @@ class CodexExecutionManager:
                 return
             run.worktree_path = str(worktree)
             run.worktree_branch = branch
-            run.status = "running"
-            run.owner_summary = "Coding invocation is running in the isolated workspace."
-            run.started_at = utc_now()
-            run.task.status = "running"
+            run.status = "starting"
+            run.owner_summary = (
+                "The isolated workspace is prepared; TWOS is crossing the verified "
+                "Codex process launch boundary."
+            )
+            run.task.status = "starting"
             session.add(
                 AuditEvent(
-                    action="codex_run_started",
+                    action="codex_run_workspace_prepared",
                     entity_type="codex_run",
                     entity_id=run.id,
-                    details=f"Isolated branch {branch} started.",
+                    details=f"Isolated branch {branch} prepared; process_spawned=false.",
                 )
             )
             self._sync_result_monitor(session, run)
@@ -4540,6 +4854,16 @@ class CodexExecutionManager:
                     return
                 launch_session.refresh(launch_run.pack)
                 try:
+                    if (
+                        launch_run.approved_instruction_digest
+                        and hashlib.sha256(
+                            (launch_run.pack.content or "").encode("utf-8")
+                        ).hexdigest()
+                        != launch_run.approved_instruction_digest
+                    ):
+                        raise ValueError(
+                            "Instruction Pack content changed after Owner confirmation."
+                        )
                     execution_target = codex_run_execution_target(
                         launch_session,
                         launch_run,
@@ -4632,11 +4956,14 @@ class CodexExecutionManager:
                 if blocked_run is not None and not blocked_run.process_spawned:
                     blocked_run.worktree_path = ""
                     blocked_run.worktree_branch = ""
-                    self._finish_pack_blocked(
-                        blocked_session,
-                        blocked_run,
-                        reason=str(exc),
-                    )
+                    if blocked_run.cancellation_requested_at is not None:
+                        self._finish_cancelled(blocked_session, blocked_run)
+                    else:
+                        self._finish_pack_blocked(
+                            blocked_session,
+                            blocked_run,
+                            reason=str(exc),
+                        )
             return
         if (
             evidence_collector is not None
@@ -4693,7 +5020,8 @@ class CodexExecutionManager:
                 or (
                     transition_run is not None
                     and (
-                        transition_run.cancelled
+                        transition_run.cancellation_requested_at is not None
+                        or transition_run.cancelled
                         or transition_run.status == "cancelled"
                     )
                 )
@@ -4708,6 +5036,11 @@ class CodexExecutionManager:
             and evidence_collector is not None
             and evidence_collector.structured_success
             and not evidence_collector.unsupported_model_routing_observed
+            and isinstance(bridge_result.get("final_message"), str)
+            and _valid_coding_handoff_contract(
+                str(bridge_result.get("final_message") or "")
+            )
+            and self._coding_route_is_authorized(run_id, evidence_collector)
             and pack_delivery_complete
             and isinstance(coding_process_for_gate, dict)
             and coding_process_for_gate.get("status") == "completed"
@@ -4730,7 +5063,7 @@ class CodexExecutionManager:
                     verification_run.structured_result = json.dumps(result, separators=(",", ":"))
                     verification_run.status = "verifying"
                     verification_run.owner_summary = (
-                        "Coding has reached a terminal process state; independent Verification is running."
+                        "Coding has reached a terminal process state; independent Verification is preparing."
                     )
                     verification_run.verification_status = "starting"
                     verification_run.verification_summary = "Independent Verification is preparing."
@@ -4755,67 +5088,13 @@ class CodexExecutionManager:
                 pack_content,
                 result,
             )
-            result["verification"] = {
-                key: value
-                for key, value in verification.items()
-                if key not in {
-                    "collector",
-                    "prompt",
-                    "delivery_complete",
-                    "_started_at",
-                    "_completed_at",
-                }
-            }
-            result["verification_process"] = dict(verification.get("process", {}))
-            result["verification_invocation"] = dict(verification.get("invocation", {}))
-            result["verification_verdict"] = dict(verification.get("verdict", {}))
-        else:
-            result["verification"] = {
-                "status": "not_started",
-                "summary": "Verification was not started because Coding did not reach the verification boundary.",
-                "process_spawned": False,
-            }
-            result["verification_process"] = {
-                "status": "not_started",
-                "process_started": False,
-                "failure": "Coding did not reach the Verification boundary.",
-            }
-            result["verification_invocation"] = {
-                "process_execution_verified": False,
-                "codex_turn_verified": False,
-                "requested_model": "",
-                "actual_resolved_model": None,
-                "actual_model_identity_verified": False,
-                "failure": "Verification was not started.",
-            }
-            result["verification_verdict"] = {
-                "status": "not_reached",
-                "passed_checks": [],
-                "failed_checks": [],
-            }
-
-        task_acceptance = result.get("task_acceptance")
-        if isinstance(task_acceptance, dict) and task_acceptance.get("status") == "needs_owner_review":
-            verification_verdict = result.get("verification_verdict")
-            verdict_status = (
-                verification_verdict.get("status")
-                if isinstance(verification_verdict, dict)
-                else "not_reached"
-            )
-            if verdict_status == "passed":
-                task_acceptance["status"] = "passed"
-                task_acceptance["reason"] = "Independent Verification passed the frozen task checks."
-            elif verdict_status == "failed":
-                failed_checks = verification_verdict.get("failed_checks", [])
-                task_acceptance["status"] = "failed"
-                task_acceptance["reason"] = (
-                    "Independent Verification rejected the output"
-                    + (f": {', '.join(str(item) for item in failed_checks)}" if failed_checks else ".")
-                )
-            else:
-                task_acceptance["reason"] = (
-                    "Independent Verification did not reach a structured task verdict."
-                )
+        self._attach_verification_result(
+            result,
+            verification,
+            owner_cancelled_before_start=owner_cancelled_before_verification,
+        )
+        if not owner_cancelled_before_verification:
+            self._reconcile_recovered_task_acceptance(result)
         duration_ms = int((time.monotonic() - started_monotonic) * 1000)
         with self.factory() as session:
             run = session.get(CodexRun, run_id)
@@ -5229,12 +5508,31 @@ class CodexExecutionManager:
                         raise RuntimeError(reason)
                 run.status = "verifying"
                 run.owner_summary = (
-                    "Coding has reached a terminal process state; independent Verification is running."
+                    "Coding has reached a terminal process state; independent Verification is preparing."
                 )
-                run.verification_status = "running"
-                run.verification_summary = "Independent Verification is running in read-only mode."
+                run.verification_status = "starting"
+                run.verification_summary = (
+                    "Independent Verification is crossing the verified process launch boundary."
+                )
                 run.task.status = "verifying"
                 self._sync_result_monitor(session, run)
+                # Seal the persisted Coding result as Verification-eligible
+                # before any independent Verification ticket can exist. This
+                # makes the phase-order invariant independent of watcher
+                # timing and restart races.
+                from .run_lifecycle import reconcile_execution_attempt
+
+                monitor = ensure_run_monitor(
+                    session,
+                    int(run.pack.approved_by_user_id),
+                    run,
+                )
+                reconcile_execution_attempt(
+                    session,
+                    int(run.pack.approved_by_user_id),
+                    run,
+                    monitor,
+                )
                 session.commit()
             bridge_result = self._run_bridge_phase(
                 run_id,
@@ -5558,14 +5856,46 @@ class CodexExecutionManager:
             requested_model_identifier = run.requested_model_identifier if run else ""
             pack_version = run.pack.version if run and run.pack else None
             process_spawned = bool(run and run.process_spawned)
+            expected_worktree_branch = run.worktree_branch if run else ""
+            provider_fallback_observed = bool(
+                collector and collector.rerouted_to
+            )
             approved_snapshot = (
                 json.loads(run.pack.source_snapshot_json or "{}") if run and run.pack else {}
             )
             approved_digest = run.source_snapshot_digest if run else ""
+        sealed_git_boundary = ""
+        coding_handle = self._existing_bridge_handle(run_id, "coding")
+        if coding_handle is not None:
+            sealed_ticket = codex_exec_bridge.load_ticket(coding_handle)
+            sealed_identity = sealed_ticket.get("identity")
+            if isinstance(sealed_identity, dict):
+                sealed_git_boundary = str(
+                    sealed_identity.get("git_boundary_fingerprint") or ""
+                )
         post_commit = run_git(worktree, "rev-parse", "HEAD", check=False).stdout.strip()
         branch = run_git(worktree, "branch", "--show-current", check=False).stdout.strip()
-        status_text = run_git(worktree, "status", "--porcelain", "--untracked-files=all", check=False).stdout.strip()
-        untracked_files = [line[3:] for line in status_text.splitlines() if line.startswith("?? ")]
+        status_text = run_git(
+            worktree,
+            "status",
+            "--porcelain",
+            "--untracked-files=all",
+            check=False,
+        ).stdout.strip()
+        # NUL-delimited output preserves Git paths containing newlines, tabs,
+        # quotes, or backslashes. Porcelain's default quoted line format cannot
+        # be parsed safely with splitlines()/fixed offsets.
+        untracked_result = run_git(
+            worktree,
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z",
+            check=False,
+        )
+        untracked_files = [
+            path for path in untracked_result.stdout.split("\0") if path
+        ]
         post_snapshot = capture_source_snapshot(worktree)
 
         def snapshot_state(snapshot: dict[str, object]) -> dict[str, dict[str, object]]:
@@ -5710,12 +6040,26 @@ class CodexExecutionManager:
         }
 
         unexpected_excluded_artifacts: list[dict[str, str]] = []
+        workspace_symlink_observed = False
         for item in post_snapshot.get("excluded_manifest", []):
             if not isinstance(item, dict):
                 continue
             relative_path = str(item.get("path", ""))
             reason = str(item.get("reason", "excluded"))
-            candidate = (worktree / relative_path).resolve()
+            unresolved_candidate = worktree / relative_path
+            if unresolved_candidate.is_symlink():
+                # Never resolve or read a Codex-created symlink target. Any
+                # symlink is unsupported Run output because it could escape
+                # the authorized workspace when later consumed.
+                workspace_symlink_observed = True
+                unexpected_excluded_artifacts.append(
+                    {
+                        "path": relative_path,
+                        "reason": "unsafe_symlink",
+                    }
+                )
+                continue
+            candidate = unresolved_candidate.resolve()
             if not candidate.is_relative_to(worktree.resolve()) or not (
                 candidate.exists() or candidate.is_symlink()
             ):
@@ -5731,6 +6075,46 @@ class CodexExecutionManager:
                 }
             )
         untracked_files = [path for path in untracked_files if path in changed_files]
+        staged_name_result = run_git(
+            worktree,
+            "diff",
+            "--cached",
+            "--name-only",
+            "-z",
+            check=False,
+        )
+        unstaged_name_result = run_git(
+            worktree,
+            "diff",
+            "--name-only",
+            "-z",
+            check=False,
+        )
+        staged_files = sorted(
+            path
+            for path in staged_name_result.stdout.split("\0")
+            if path
+        )
+        baseline_staged_files = sorted(
+            str(item.get("path"))
+            for item in approved_snapshot.get("included_manifest", [])
+            if isinstance(item, dict)
+            and item.get("path")
+            and item.get("staged") is True
+        )
+        staged_state_changed = bool(
+            staged_name_result.returncode == 0
+            and (
+                staged_files != baseline_staged_files
+                or post_snapshot.get("staged_patch_b64")
+                != approved_snapshot.get("staged_patch_b64")
+            )
+        )
+        unstaged_files = sorted(
+            path
+            for path in unstaged_name_result.stdout.split("\0")
+            if path in changed_files
+        )
         committed_stat = run_git(worktree, "diff", "--stat", f"{source_commit}..HEAD", check=False).stdout.strip()
         working_stat = run_git(worktree, "diff", "--stat", check=False).stdout.strip()
         cached_stat = run_git(worktree, "diff", "--cached", "--stat", check=False).stdout.strip()
@@ -5805,6 +6189,14 @@ class CodexExecutionManager:
             and remote_state_after[2]
             and remote_state_before[0] == remote_state_after[0]
         )
+        git_boundary_after, git_boundary_complete = self._git_boundary_fingerprint(
+            source_repo
+        )
+        git_boundary_unchanged = bool(
+            git_boundary_complete
+            and re.fullmatch(r"[0-9a-f]{64}", sealed_git_boundary)
+            and git_boundary_after == sealed_git_boundary
+        )
         worktree_common_raw = run_git(worktree, "rev-parse", "--git-common-dir", check=False).stdout.strip()
         source_common_raw = run_git(source_repo, "rev-parse", "--git-common-dir", check=False).stdout.strip()
         worktree_common = self._resolved_git_path(worktree, worktree_common_raw)
@@ -5813,6 +6205,13 @@ class CodexExecutionManager:
             worktree.resolve() != source_repo.resolve()
             and worktree_common is not None
             and worktree_common == source_common
+        )
+        baseline_preexisting_changes = sorted(
+            str(item.get("path"))
+            for item in approved_snapshot.get("included_manifest", [])
+            if isinstance(item, dict)
+            and item.get("path")
+            and item.get("kind") in {"tracked_change", "untracked"}
         )
         try:
             source_post_snapshot = capture_source_snapshot(
@@ -5853,6 +6252,45 @@ class CodexExecutionManager:
 
         public_worktree_status = sanitized_status(status_text, post_snapshot)
         public_source_status = sanitized_status(source_status, approved_snapshot)
+        boundary_violations: list[str] = []
+        if not isolated_worktree:
+            boundary_violations.append("WORKSPACE_ISOLATION_CHANGED")
+        if post_commit != source_commit:
+            boundary_violations.append("CODEX_COMMIT_CREATED")
+        if branch != expected_worktree_branch:
+            boundary_violations.append("WORKTREE_BRANCH_CHANGED")
+        if staged_state_changed:
+            boundary_violations.append("CODEX_STAGED_CHANGES")
+        if merge_commits:
+            boundary_violations.append("CODEX_MERGE_COMMIT_CREATED")
+        if not source_unchanged:
+            boundary_violations.append("AUTHORIZED_SOURCE_CHANGED")
+        if not remote_state_unchanged:
+            boundary_violations.append("GIT_REMOTE_BOUNDARY_CHANGED")
+        if not git_boundary_complete or not re.fullmatch(
+            r"[0-9a-f]{64}", sealed_git_boundary
+        ):
+            boundary_violations.append("GIT_BOUNDARY_INSPECTION_FAILED")
+        elif not git_boundary_unchanged:
+            boundary_violations.append("GIT_BOUNDARY_CHANGED")
+        if unexpected_excluded_artifacts:
+            boundary_violations.append("UNPROVEN_EXCLUDED_ARTIFACT")
+        if workspace_symlink_observed:
+            boundary_violations.append("WORKSPACE_SYMLINK_UNSAFE")
+        if provider_fallback_observed:
+            boundary_violations.append("AUTOMATIC_PROVIDER_FALLBACK_OBSERVED")
+        if staged_name_result.returncode != 0:
+            boundary_violations.append("GIT_INDEX_INSPECTION_FAILED")
+        if unstaged_name_result.returncode != 0:
+            boundary_violations.append("GIT_WORKTREE_INSPECTION_FAILED")
+        prohibited_git_attempts = (
+            list(collector.prohibited_git_attempts) if collector else []
+        )
+        boundary_violations.extend(
+            code
+            for code in prohibited_git_attempts
+            if code not in boundary_violations
+        )
         process_execution_verified = bool(
             process_spawned
             and type(exit_code) is int
@@ -5968,6 +6406,16 @@ class CodexExecutionManager:
             "approved_prompt_delivery_complete": pack_delivery_complete,
             "failure": invocation_failure,
         }
+        structured_handoff: dict[str, object] = {}
+        final_response = ""
+        if collector and collector.final_agent_message:
+            final_response = collector.final_agent_message
+            if _valid_coding_handoff_contract(collector.final_agent_message):
+                parsed_handoff = json.loads(collector.final_agent_message)
+                if isinstance(parsed_handoff, dict):
+                    structured_handoff = parsed_handoff
+                    final_response = str(parsed_handoff.get("summary") or "")
+
         return {
             "task_id": run_id and (run.task_id if run else None),
             "task_version": run.task_version if run else None,
@@ -5985,6 +6433,59 @@ class CodexExecutionManager:
             "changed_files": changed_files,
             "changed_file_evidence": changed_file_evidence,
             "sanitized_diff_evidence": sanitized_diff_evidence,
+            "workspace_evidence": {
+                "schema": "twos.codex_workspace_evidence.v1",
+                "git_head_before": source_commit,
+                "git_head_after": post_commit,
+                "branch_before": expected_worktree_branch,
+                "branch_after": branch,
+                "tracked_modified_files": [
+                    item["path"]
+                    for item in sanitized_diff_records
+                    if item.get("change_type") in {"modified", "mode_changed"}
+                ],
+                "added_files": [
+                    item["path"]
+                    for item in sanitized_diff_records
+                    if item.get("change_type") == "created"
+                ],
+                "deleted_files": [
+                    item["path"]
+                    for item in sanitized_diff_records
+                    if item.get("change_type") == "deleted"
+                ],
+                "untracked_files": untracked_files,
+                "staged_files": [
+                    sanitized_status(path, post_snapshot) for path in staged_files
+                ],
+                "baseline_staged_files": [
+                    sanitized_status(path, approved_snapshot)
+                    for path in baseline_staged_files
+                ],
+                "run_index_changed": staged_state_changed,
+                "unstaged_files": [
+                    sanitized_status(path, post_snapshot) for path in unstaged_files
+                ],
+                "diff_statistics": {
+                    "committed": sanitized_status(committed_stat, post_snapshot),
+                    "working_tree": sanitized_status(working_stat, post_snapshot),
+                    "staged": sanitized_status(cached_stat, post_snapshot),
+                    "untracked": [
+                        sanitized_status(item, post_snapshot)
+                        for item in untracked_stats
+                    ],
+                },
+                "attribution": {
+                    "baseline_preexisting": baseline_preexisting_changes,
+                    "run_produced": changed_files,
+                    "origin_unproven": [
+                        item.get("path")
+                        for item in unexpected_excluded_artifacts
+                        if isinstance(item, dict) and item.get("path")
+                    ],
+                },
+                "boundary_violations": boundary_violations,
+            },
             "unexpected_excluded_artifacts": unexpected_excluded_artifacts,
             "source_snapshot_digest": approved_digest,
             "post_run_snapshot_digest": post_snapshot.get("digest"),
@@ -6032,12 +6533,16 @@ class CodexExecutionManager:
             },
             "tests": tests,
             "tests_reported": [str(item.get("summary", "")) for item in tests],
+            "final_response": final_response,
+            "structured_handoff": structured_handoff,
             "advanced_diagnostics": {
                 "coding_final_agent_message": collector.final_agent_message if collector else "",
                 "malformed_jsonl_lines": collector.malformed_line_count if collector else 0,
                 "malformed_jsonl_diagnostics": list(collector.malformed_diagnostics) if collector else [],
                 "command_execution_count": collector.command_execution_count if collector else 0,
                 "file_change_event_count": collector.file_change_count if collector else 0,
+                "prohibited_git_attempts": prohibited_git_attempts,
+                "automatic_provider_fallback_observed": provider_fallback_observed,
             },
             "boundary_confirmation": {
                 "isolated_worktree": isolated_worktree,
@@ -6049,10 +6554,17 @@ class CodexExecutionManager:
                 "push_target_configured": remote_state_after[1] > 0,
                 "remote_state_observed": remote_state_after[2],
                 "remote_state_unchanged": remote_state_unchanged,
+                "git_boundary_observed": git_boundary_complete,
+                "git_boundary_unchanged": git_boundary_unchanged,
                 "git_transport_protocols_allowed": False,
                 "codex_tool_network_access_allowed": False,
                 "automatic_merge": False,
                 "automatic_push": False,
+                "staged_changes_created": staged_state_changed,
+                "worktree_branch_unchanged": branch == expected_worktree_branch,
+                "prohibited_git_mutation_observed": bool(boundary_violations),
+                "boundary_violations": boundary_violations,
+                "prohibited_git_attempts": prohibited_git_attempts,
             },
         }
 
@@ -6459,12 +6971,55 @@ class CodexExecutionManager:
             and not boundary.get("merge_commits_created")
             and boundary.get("remote_state_observed") is True
             and boundary.get("remote_state_unchanged") is True
+            and boundary.get("git_boundary_observed") is True
+            and boundary.get("git_boundary_unchanged") is True
             and boundary.get("git_transport_protocols_allowed") is False
             and boundary.get("codex_tool_network_access_allowed") is False
             and boundary.get("automatic_merge") is False
             and boundary.get("automatic_push") is False
+            and boundary.get("staged_changes_created") is False
+            and boundary.get("worktree_branch_unchanged") is True
+            and boundary.get("prohibited_git_mutation_observed") is False
             and not commits
         )
+
+    def _coding_route_is_authorized(
+        self,
+        run_id: int,
+        collector: _CodexJsonlEvidenceCollector | None,
+    ) -> bool:
+        """Admit Verification only after this Run proves an approved route.
+
+        The later invocation-evidence write remains the durable audit record,
+        but Verification must not launch first and discover an unauthorized
+        reroute afterward. Any automatic reroute is blocking, including a
+        configured same-provider alternate; the Owner approved the exact
+        primary target, not an automatic fallback decision.
+        """
+        if collector is None or collector.unsupported_model_routing_observed:
+            return False
+        with self.factory() as session:
+            run = session.get(CodexRun, run_id)
+            if (
+                run is None
+                or run.execution_model is None
+                or run.execution_assignment is None
+            ):
+                return False
+            requested = run.requested_model_identifier
+            actual = collector.actual_model_identifier
+            if not collector.rerouted_to:
+                # The approved argv remains authoritative when this Codex CLI
+                # emits no actual-model field. If it does emit a verified
+                # identity without a routing event, it must still match.
+                return bool(
+                    run.execution_model.provider_model_id == requested
+                    and (
+                        not collector.actual_model_identity_verified
+                        or actual == requested
+                    )
+                )
+            return False
 
     def _record_codex_invocation_evidence(
         self,
@@ -6500,6 +7055,11 @@ class CodexExecutionManager:
             return False
 
         model = requested_model
+        coding_process = result.get("coding_process")
+        coding_cancelled = bool(
+            isinstance(coding_process, dict)
+            and coding_process.get("cancelled") is True
+        )
         actual_identifier = ""
         authorized_actual = False
         reroute_observed = bool(collector and collector.rerouted_to)
@@ -6517,7 +7077,7 @@ class CodexExecutionManager:
             and pack_delivery_complete
             and not runtime_interrupted
             and not run.timed_out
-            and not run.cancelled
+            and not coding_cancelled
             and not run.output_truncated
             and run.exit_code == 0
         )
@@ -6526,15 +7086,6 @@ class CodexExecutionManager:
             if candidate == run.requested_model_identifier:
                 actual_identifier = candidate
                 authorized_actual = requested_model.provider_model_id == candidate
-            elif (
-                collector.rerouted_from == run.requested_model_identifier
-                and assignment.fallback_allowed
-                and assignment.fallback_model is not None
-                and assignment.fallback_model.provider_model_id == candidate
-            ):
-                model = assignment.fallback_model
-                actual_identifier = candidate
-                authorized_actual = True
             else:
                 actual_identifier = candidate
 
@@ -6544,7 +7095,7 @@ class CodexExecutionManager:
             error_category = "interrupted"
             diagnostic_code = "runtime_shutdown"
             safe_summary = "Runtime shutdown interrupted the spawned Codex process; no Owner cancellation is claimed."
-        elif run.cancelled:
+        elif coding_cancelled:
             outcome = "cancelled"
             error_category = "cancelled"
             diagnostic_code = "owner_cancelled"
@@ -6575,7 +7126,10 @@ class CodexExecutionManager:
             outcome = "failed"
             error_category = "routing_mismatch"
             diagnostic_code = "unapproved_model_reroute"
-            safe_summary = "Codex reported a model reroute outside the approved fallback policy."
+            safe_summary = (
+                "Codex reported an automatic model reroute; automatic provider "
+                "fallback is not allowed."
+            )
         elif run.output_truncated:
             outcome = "failed"
             error_category = "evidence_incomplete"
@@ -6647,7 +7201,7 @@ class CodexExecutionManager:
                 type(run.exit_code) is int
                 and not runtime_interrupted
                 and not run.timed_out
-                and not run.cancelled
+                and not coding_cancelled
             ),
             "duration_ms": max(0, int(run.duration_ms or 0)),
             "isolated_worktree": bool(
@@ -6752,7 +7306,7 @@ class CodexExecutionManager:
             "response_fingerprint": response_fingerprint,
             "duration_ms": run.duration_ms,
             "timed_out": run.timed_out,
-            "cancelled": run.cancelled,
+            "cancelled": coding_cancelled,
             "output_truncated": run.output_truncated,
             "error_category": error_category,
             "diagnostic_code": diagnostic_code,
@@ -6831,15 +7385,6 @@ class CodexExecutionManager:
             if candidate == run.verification_model_identifier:
                 actual_identifier = candidate
                 authorized_actual = requested_model.provider_model_id == candidate
-            elif (
-                collector.rerouted_from == run.verification_model_identifier
-                and assignment.fallback_allowed
-                and assignment.fallback_model is not None
-                and assignment.fallback_model.provider_model_id == candidate
-            ):
-                model = assignment.fallback_model
-                actual_identifier = candidate
-                authorized_actual = True
             else:
                 actual_identifier = candidate
 
@@ -6888,7 +7433,7 @@ class CodexExecutionManager:
                 "failed",
                 "routing_mismatch",
                 "unapproved_model_reroute",
-                "Verification reported a model reroute outside the approved fallback policy.",
+                "Verification reported an automatic model reroute; automatic provider fallback is not allowed.",
             )
         elif output_truncated:
             outcome, category, code, summary = (
@@ -7182,6 +7727,8 @@ class CodexExecutionManager:
             return None
 
     def _finish_cancelled(self, session: Session, run: CodexRun) -> None:
+        if run.status == "cancelled" and run.cancelled and run.finished_at is not None:
+            return
         if self._stop_reason(run.id) == "runtime_shutdown":
             run.status = "failed" if run.process_spawned or run.verification_process_spawned else "blocked"
             run.cancelled = False
@@ -7201,6 +7748,7 @@ class CodexExecutionManager:
         run.status = "cancelled"
         run.cancelled = True
         run.finished_at = utc_now()
+        run.owner_summary = "Codex execution was cancelled by the Owner."
         run.task.status = "cancelled"
         session.add(
             AuditEvent(

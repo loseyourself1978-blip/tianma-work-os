@@ -301,11 +301,20 @@
     packBaseline: byId("pack-baseline"),
     runStatus: byId("run-status"),
     codexReadiness: byId("codex-readiness"),
+    runPackVersion: byId("run-pack-version"),
     codexReason: byId("codex-reason"),
     codexNextAction: byId("codex-next-action"),
     runCodex: byId("run-codex"),
     cancelCodex: byId("cancel-codex"),
     viewResult: byId("view-result"),
+    startCodexConfirmationDialog: byId("start-codex-confirmation-dialog"),
+    startCodexConfirmationTask: byId("start-codex-confirmation-task"),
+    startCodexConfirmationPack: byId("start-codex-confirmation-pack"),
+    startCodexConfirmationRouting: byId("start-codex-confirmation-routing"),
+    startCodexConfirmationWorkspace: byId("start-codex-confirmation-workspace"),
+    startCodexConfirmationSource: byId("start-codex-confirmation-source"),
+    confirmStartCodexRun: byId("confirm-start-codex-run"),
+    cancelStartCodexRun: byId("cancel-start-codex-run"),
     runActivityStatus: byId("run-activity-status"),
     runActivityNotification: byId("run-activity-notification"),
     runActivityList: byId("run-activity-list"),
@@ -320,6 +329,9 @@
     resultEnvelopeRequestedModelAccepted: byId("result-envelope-requested-model-accepted"),
     resultEnvelopeActualModel: byId("result-envelope-actual-model"),
     resultEnvelopeDuration: byId("result-envelope-duration"),
+    resultEnvelopeClassification: byId("result-envelope-classification"),
+    resultEnvelopeFinalResponse: byId("result-envelope-final-response"),
+    resultEnvelopeChangedCount: byId("result-envelope-changed-count"),
     resultEnvelopeCoding: byId("result-envelope-coding"),
     resultEnvelopeVerification: byId("result-envelope-verification"),
     resultEnvelopeTests: byId("result-envelope-tests"),
@@ -839,6 +851,7 @@
     pushDeliveryReviewLoads: new Set(),
     pushDeliveryRequestSequences: Object.create(null),
     pushDeliveryResultVisible: new Set(),
+    runConfirmationContext: null,
     applyConfirmationContext: null,
     revertConfirmationContext: null,
     stageConfirmationContext: null,
@@ -1338,11 +1351,13 @@
     state.pushDeliveryReviewLoads = new Set();
     state.pushDeliveryRequestSequences = Object.create(null);
     state.pushDeliveryResultVisible = new Set();
+    state.runConfirmationContext = null;
     state.applyConfirmationContext = null;
     state.revertConfirmationContext = null;
     state.stageConfirmationContext = null;
     state.localCommitConfirmationContext = null;
     state.pushConfirmationContext = null;
+    if (elements.startCodexConfirmationDialog.open) elements.startCodexConfirmationDialog.close();
     if (elements.applyConfirmationDialog.open) elements.applyConfirmationDialog.close();
     if (elements.revertConfirmationDialog.open) elements.revertConfirmationDialog.close();
     if (elements.stageConfirmationDialog.open) elements.stageConfirmationDialog.close();
@@ -2017,6 +2032,8 @@
   }
 
   function resetTaskDetails() {
+    state.runConfirmationContext = null;
+    if (elements.startCodexConfirmationDialog.open) elements.startCodexConfirmationDialog.close();
     state.pushConfirmationContext = null;
     if (elements.pushConfirmationDialog.open) elements.pushConfirmationDialog.close();
     state.aiPlan = null;
@@ -2616,6 +2633,10 @@
       ["Execution attempt", safeLifecycleIdentifier(advanced.execution_attempt_id || advanced.attempt_id)],
       ["Monitor", safeLifecycleIdentifier(advanced.monitor_id)],
       ["Execution", safeLifecycleIdentifier(advanced.execution_id)],
+      ["Process PID", safeLifecycleIdentifier(advanced.process_id)],
+      ["Bridge PID", safeLifecycleIdentifier(advanced.sidecar_process_id)],
+      ["Executable fingerprint", safeLifecycleIdentifier(advanced.executable_fingerprint)],
+      ["Local log reference", ownerSafeText(advanced.protected_log_reference, "Not recorded", 1000)],
       ["Process-start identity", safeLifecycleIdentifier(advanced.process_start_identity)],
       ["Terminal-event identity", safeLifecycleIdentifier(advanced.terminal_event_identity)],
       ["Receipt digest", safeLifecycleIdentifier(advanced.receipt_digest)],
@@ -2711,10 +2732,10 @@
     advancedFacts.className = "live-codex-advanced-facts";
     appendLifecycleAdvanced(advancedFacts, lifecycle);
     advanced.appendChild(advancedSummary);
+    advanced.appendChild(timelineHeading);
+    advanced.appendChild(timeline);
     advanced.appendChild(advancedFacts);
     target.appendChild(facts);
-    target.appendChild(timelineHeading);
-    target.appendChild(timeline);
     target.appendChild(advanced);
   }
 
@@ -2825,7 +2846,7 @@
         );
         itemOpen.type = "button";
         itemOpen.className = "run-activity-item-open";
-        itemOpen.setAttribute("aria-label", "Open Run Result for " + view.taskName);
+        itemOpen.setAttribute("aria-label", "Review Run Result for " + view.taskName);
         itemOpen.disabled = view.taskId === null || view.taskId === undefined;
         main.className = "run-activity-item-main";
         heading.className = "run-activity-item-heading";
@@ -2851,7 +2872,7 @@
         main.appendChild(heading);
         main.appendChild(facts);
         action.className = "run-activity-item-action";
-        action.textContent = "Open Run Result";
+        action.textContent = "Review Run Result";
         itemOpen.appendChild(main);
         itemOpen.appendChild(action);
         itemOpen.addEventListener("click", function () { selectRunActivity(view); });
@@ -4033,6 +4054,17 @@
       integrity: runLifecycle.result_integrity || "",
       lifecycleAvailable: Object.keys(runLifecycle).length > 0
     });
+    if (
+      elements.startCodexConfirmationDialog.open
+      && (!state.runConfirmationContext
+        || !pack
+        || eligibility && eligibility.eligible !== true
+        || String(state.runConfirmationContext.pack_id) !== String(pack.id)
+        || String(state.runConfirmationContext.pack_version) !== String(pack.version))
+    ) {
+      elements.startCodexConfirmationDialog.close();
+      state.runConfirmationContext = null;
+    }
     let status;
     let reason;
     let nextAction;
@@ -4088,8 +4120,14 @@
           ? "Review blocker evidence"
           : nextAction;
     elements.codexReadiness.textContent = status;
+    elements.runPackVersion.textContent = pack
+      ? "Pack #" + pack.id + " · v" + pack.version + " · "
+        + (pack.approved ? "Approved" : humanStatus(pack.status))
+      : "No approved Pack";
     elements.codexReason.textContent = reason;
-    elements.runStatus.textContent = run ? humanStatus(runStatus) : "Not started";
+    elements.runStatus.textContent = run
+      ? humanStatus(run.canonical_status || runStatus)
+      : "Not started";
     elements.codexNextAction.textContent = displayedNextAction;
     elements.codingSetupReason.textContent = reason + " Next Owner action: " + displayedNextAction + ".";
     const configured = Boolean(
@@ -7609,6 +7647,37 @@
     );
   }
 
+  function resultCompletionClassification(envelope, lifecycleStatus, changedFileCount) {
+    const record = objectRecord(envelope);
+    const persisted = String(record.completion_classification || "").toLowerCase();
+    const persistedLabels = {
+      succeeded_with_changes: "Process succeeded with captured changes",
+      succeeded_without_workspace_changes: "Process succeeded with no workspace change",
+      failed: "Process failed",
+      cancelled: "Process cancelled",
+      timed_out: "Process timed out",
+      interrupted: "Process interrupted",
+      result_incomplete: "Result incomplete",
+      workspace_evidence_conflict: "Workspace evidence conflict"
+    };
+    if (persistedLabels[persisted]) return persistedLabels[persisted];
+    const terminal = String(record.terminal_status || lifecycleStatus || "waiting").toLowerCase();
+    const integrity = String(record.integrity_state || record.result_integrity || "pending").toLowerCase();
+    if (lifecycleIsActive(terminal) || lifecycleIsActive(lifecycleStatus)) return "In progress";
+    if (/conflict/.test(integrity)) return "Workspace evidence conflict";
+    if (/blocked|invalid|incomplete|unavailable/.test(integrity)) return "Result incomplete";
+    if (["completed", "succeeded", "result_available"].indexOf(terminal) !== -1) {
+      return changedFileCount > 0
+        ? "Process succeeded with captured changes"
+        : "Process succeeded with no workspace change";
+    }
+    if (terminal === "failed") return "Process failed";
+    if (terminal === "cancelled") return "Process cancelled";
+    if (terminal === "timed_out") return "Process timed out";
+    if (["interrupted", "process_lost"].indexOf(terminal) !== -1) return "Process interrupted";
+    return "Waiting for completion";
+  }
+
   function renderResultIntake(run) {
     const envelope = resultEnvelopeForRun(run);
     const record = objectRecord(envelope);
@@ -7655,6 +7724,7 @@
     const startedAt = record.started_at || activity && activity.startedAt || run && run.started_at;
     const finishedAt = record.terminal_at || record.finished_at || activity && activity.finishedAt || run && run.finished_at;
     const timedOut = status === "timed_out";
+    const changedFileCount = resultManifestEntries(record).length;
 
     elements.resultEnvelopeStatus.textContent = lifecycleActive
       ? "TWOS is monitoring this Run"
@@ -7683,6 +7753,19 @@
       startedAt,
       finishedAt
     );
+    elements.resultEnvelopeClassification.textContent = resultCompletionClassification(
+      record,
+      status,
+      changedFileCount
+    );
+    elements.resultEnvelopeFinalResponse.textContent = lifecycleActive
+      ? "Available automatically after the process settles."
+      : ownerSafeSummary(
+          record.final_response || handoff.final_response || coding.safe_summary || coding.summary,
+          valid ? "No final Codex response was captured." : "Not available",
+          1200
+        );
+    elements.resultEnvelopeChangedCount.textContent = String(changedFileCount);
     elements.resultEnvelopeCoding.textContent = lifecycleActive
       ? "In progress — see Live Codex Activity"
       : timedOut
@@ -8053,13 +8136,18 @@
         && boundary.merge_commits_created === false
         && boundary.remote_state_observed === true
         && boundary.remote_state_unchanged === true
+        && boundary.git_boundary_observed === true
+        && boundary.git_boundary_unchanged === true
         && boundary.git_transport_protocols_allowed === false
         && boundary.codex_tool_network_access_allowed === false
         && boundary.automatic_merge === false
         && boundary.automatic_push === false
+        && boundary.staged_changes_created === false
+        && boundary.worktree_branch_unchanged === true
+        && boundary.prohibited_git_mutation_observed === false
         && commits.length === 0;
       elements.resultBoundary.textContent = boundaryVerified
-        ? "Verified isolated worktree; no commit or remote-state mutation, and Git push transport remained blocked."
+        ? "Verified isolated worktree; no local Commit; local Git refs and remote configuration/tracking refs remained unchanged; Git transport remained blocked."
         : Object.keys(boundary).length
           ? evidenceSummaryLine(boundary, "needs_review", "Boundary evidence requires review; inspect Advanced.")
           : "No boundary evidence recorded.";
@@ -8343,6 +8431,7 @@
       || !eligibility
       || eligibility.eligible !== true
       || state.pending.has("run-codex");
+    elements.confirmStartCodexRun.disabled = state.pending.has("run-codex");
     elements.cancelCodex.hidden = !activeRun;
     elements.cancelCodex.disabled = !activeRun || state.pending.has("cancel-codex");
     elements.reviewChangeCandidate.disabled = !authenticated
@@ -8499,11 +8588,115 @@
     });
   }
 
+  function codexRunIdempotencyKey(task, pack) {
+    const prefix = "twos-run-" + task.id + "-" + pack.id + "-";
+    if (window.crypto && typeof window.crypto.randomUUID === "function") {
+      return prefix + window.crypto.randomUUID();
+    }
+    const bytes = new Uint8Array(16);
+    if (window.crypto && typeof window.crypto.getRandomValues === "function") {
+      window.crypto.getRandomValues(bytes);
+      return prefix + Array.from(bytes).map(function (value) {
+        return value.toString(16).padStart(2, "0");
+      }).join("");
+    }
+    throw new Error("Secure browser request identity generation is unavailable.");
+  }
+
+  function openCodexRunConfirmation() {
+    const task = selectedTask();
+    const pack = currentPack();
+    const eligibility = effectiveRunEligibility();
+    if (!task || !pack || !pack.approved || !eligibility || eligibility.eligible !== true) {
+      setFeedback("Resolve the current Run blocker before confirming Codex execution.", "error");
+      return;
+    }
+    const existing = state.runConfirmationContext;
+    let context = existing
+      && String(existing.task_id) === String(task.id)
+      && String(existing.pack_id) === String(pack.id)
+      && String(existing.pack_version) === String(pack.version)
+      ? existing
+      : null;
+    if (!context) {
+      try {
+        context = {
+          task_id: task.id,
+          pack_id: pack.id,
+          pack_version: pack.version,
+          idempotency_key: codexRunIdempotencyKey(task, pack)
+        };
+      } catch (error) {
+        setFeedback("This browser cannot create a safe Run request identity.", "error");
+        return;
+      }
+    }
+    state.runConfirmationContext = context;
+    const source = objectRecord(objectRecord(state.codexStatus).source);
+    const sourceIdentity = task.repository_identity || source.identity || "Configured source repository";
+    const sourceBoundary = [sourceIdentity, source.branch, source.commit]
+      .filter(Boolean)
+      .join(" · ");
+    elements.startCodexConfirmationTask.textContent = ownerSafeText(
+      task.development_task || task.title,
+      "Untitled Development task",
+      4000
+    );
+    elements.startCodexConfirmationPack.textContent = "Pack #" + pack.id + " · v" + pack.version + " · Approved";
+    const approvedRouting = assignmentsForPack(pack).filter(function (assignment) {
+      return assignment.capability === "coding" || assignment.capability === "verification";
+    }).map(function (assignment) {
+      const primary = modelStableIdentifier(assignment.assignedModel);
+      const fallback = assignment.fallbackAllowed && assignment.fallbackModel
+        ? " · configured alternate " + modelStableIdentifier(assignment.fallbackModel)
+          + " (automatic fallback blocked)"
+        : " · no fallback";
+      return humanStatus(assignment.capability) + ": " + primary + fallback;
+    });
+    elements.startCodexConfirmationRouting.textContent = ownerSafeText(
+      approvedRouting.join(" | "),
+      "No executable model routing is bound — confirmation blocked.",
+      2000
+    );
+    const codexStatus = objectRecord(state.codexStatus);
+    const workspaceBoundary = [
+      codexStatus.authorized_workspace,
+      codexStatus.isolated_worktree_root
+        ? "isolated Run root " + codexStatus.isolated_worktree_root
+        : ""
+    ].filter(Boolean).join(" · ");
+    elements.startCodexConfirmationWorkspace.textContent = ownerSafeText(
+      workspaceBoundary,
+      "Configured authorized workspace for " + sourceIdentity,
+      2000
+    );
+    elements.startCodexConfirmationSource.textContent = ownerSafeText(
+      sourceBoundary,
+      "Configured source identity unavailable — confirmation blocked.",
+      1000
+    );
+    elements.startCodexConfirmationDialog.showModal();
+    window.setTimeout(function () { elements.confirmStartCodexRun.focus(); }, 0);
+  }
+
   async function runCodex() {
-    await performAction("run-codex", elements.runCodex, "Checking eligibility…", async function () {
+    await performAction("run-codex", elements.confirmStartCodexRun, "Checking eligibility…", async function () {
       const task = selectedTask();
-      if (!task) throw new ApiError(400, "NO_TASK", "Select a saved task first.", {}, "product");
-      await api("/api/tasks/" + task.id + "/codex-runs", { method: "POST" });
+      const context = state.runConfirmationContext;
+      if (!task || !context || String(context.task_id) !== String(task.id)) {
+        throw new ApiError(400, "RUN_CONFIRMATION_REQUIRED", "Confirm the exact Codex Run first.", {}, "product");
+      }
+      await api("/api/tasks/" + task.id + "/codex-runs", {
+        method: "POST",
+        body: {
+          confirmation: "START_CODEX_RUN",
+          idempotency_key: context.idempotency_key,
+          pack_id: context.pack_id,
+          pack_version: context.pack_version
+        }
+      });
+      state.runConfirmationContext = null;
+      elements.startCodexConfirmationDialog.close();
       return "Codex run queued. TWOS will verify the isolated worktree before process launch.";
     });
   }
@@ -9380,8 +9573,10 @@
     await performAction("cancel-codex", elements.cancelCodex, "Cancelling…", async function () {
       const run = currentCodexRun();
       if (!run) throw new ApiError(400, "NO_RUN", "No active Codex run is available.", {}, "product");
-      await api("/api/codex-runs/" + run.id + "/cancel", { method: "POST" });
-      return "Codex cancellation requested.";
+      const result = await api("/api/codex-runs/" + run.id + "/cancel", { method: "POST" });
+      return result.cancellation_request_replayed
+        ? "Codex cancellation was already requested."
+        : "Codex cancellation requested.";
     });
   }
 
@@ -9607,7 +9802,15 @@
     elements.codexSetupDialog.addEventListener("close", resetCodexSetupDialog);
     elements.generatePack.addEventListener("click", generatePack);
     elements.approvePack.addEventListener("click", approvePack);
-    elements.runCodex.addEventListener("click", runCodex);
+    elements.runCodex.addEventListener("click", openCodexRunConfirmation);
+    elements.confirmStartCodexRun.addEventListener("click", runCodex);
+    elements.cancelStartCodexRun.addEventListener("click", function () {
+      state.runConfirmationContext = null;
+      elements.startCodexConfirmationDialog.close();
+    });
+    elements.startCodexConfirmationDialog.addEventListener("cancel", function () {
+      state.runConfirmationContext = null;
+    });
     elements.refreshRunStatus.addEventListener("click", refreshRunStatus);
     elements.reconnectCodexRun.addEventListener("click", reconnectCodexRun);
     elements.importCodexResult.addEventListener("click", function () {

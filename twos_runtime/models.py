@@ -535,6 +535,19 @@ class CodexRun(Base):
     task_version: Mapped[int] = mapped_column(Integer, default=1)
     routing_snapshot_hash: Mapped[str] = mapped_column(String(64), default="")
     source_snapshot_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
+    approved_instruction_digest: Mapped[str] = mapped_column(String(64), default="")
+    start_idempotency_digest: Mapped[Optional[str]] = mapped_column(
+        String(64), nullable=True, unique=True, index=True
+    )
+    start_request_digest: Mapped[Optional[str]] = mapped_column(
+        String(64), nullable=True, index=True
+    )
+    owner_start_confirmed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    cancellation_requested_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     execution_assignment_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("ai_model_assignments.id"), nullable=True, index=True
     )
@@ -1850,12 +1863,19 @@ class CodexResultEnvelope(Base):
     verification_assignment_version: Mapped[int] = mapped_column(Integer)
     routing_snapshot_identity: Mapped[str] = mapped_column(String(64))
     source_snapshot_identity: Mapped[str] = mapped_column(String(64))
+    approved_instruction_digest: Mapped[str] = mapped_column(String(64), default="")
+    authorized_workspace_identity: Mapped[str] = mapped_column(String(64), default="")
+    workspace_baseline_identity: Mapped[str] = mapped_column(String(64), default="")
     requested_model_identifier: Mapped[str] = mapped_column(String(240), default="")
     actual_model_identifier: Mapped[str] = mapped_column(String(240), default="")
     terminal_status: Mapped[str] = mapped_column(String(40), index=True)
     process_exit_code: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     final_response: Mapped[str] = mapped_column(Text, default="")
     structured_handoff_json: Mapped[str] = mapped_column(Text, default="{}")
+    structured_handoff_status: Mapped[str] = mapped_column(
+        String(40), default="unavailable"
+    )
+    task_acceptance_json: Mapped[str] = mapped_column(Text, default="{}")
     tests_summary_json: Mapped[str] = mapped_column(Text, default="[]")
     changed_file_manifest_json: Mapped[str] = mapped_column(Text, default="[]")
     diff_identity: Mapped[str] = mapped_column(String(64), index=True)
@@ -1865,7 +1885,18 @@ class CodexResultEnvelope(Base):
     warnings_json: Mapped[str] = mapped_column(Text, default="[]")
     limitations_json: Mapped[str] = mapped_column(Text, default="[]")
     boundary_statements_json: Mapped[str] = mapped_column(Text, default="{}")
+    process_evidence_json: Mapped[str] = mapped_column(Text, default="{}")
+    workspace_evidence_json: Mapped[str] = mapped_column(Text, default="{}")
+    completion_classification: Mapped[str] = mapped_column(
+        String(40), default="result_incomplete", index=True
+    )
     execution_duration_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    execution_started_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    execution_finished_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     result_source: Mapped[str] = mapped_column(String(80))
     result_source_identity: Mapped[str] = mapped_column(String(64))
     process_evidence_identity: Mapped[str] = mapped_column(String(64))
@@ -2094,6 +2125,41 @@ _CODEX_RUN_MONITOR_SET_ONCE_FIELDS = frozenset(
         "protected_result_locator",
     }
 )
+
+_CODEX_RUN_OWNER_START_SET_ONCE_FIELDS = frozenset(
+    {
+        "approved_instruction_digest",
+        "start_idempotency_digest",
+        "start_request_digest",
+        "owner_start_confirmed_at",
+        "cancellation_requested_at",
+    }
+)
+
+
+def _reject_codex_run_owner_start_rebinding(
+    _mapper: object,
+    _connection: object,
+    target: CodexRun,
+) -> None:
+    """Allow legacy rows to acquire start bindings once, never to rewrite them."""
+    state = sa_inspect(target)
+    rebound: list[str] = []
+    for field in _CODEX_RUN_OWNER_START_SET_ONCE_FIELDS:
+        history = state.attrs[field].history
+        if not history.has_changes():
+            continue
+        old_values = list(history.deleted)
+        old_value = old_values[0] if old_values else None
+        if old_value not in {None, ""}:
+            rebound.append(field)
+    if rebound:
+        raise RuntimeError(
+            "CodexRun Owner action bindings may be set only once."
+        )
+
+
+event.listen(CodexRun, "before_update", _reject_codex_run_owner_start_rebinding)
 
 
 def _reject_result_intake_core_mutation(

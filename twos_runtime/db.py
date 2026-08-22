@@ -35,6 +35,7 @@ VOL18_EXEC_LIFECYCLE_SCHEMA_VERSION = "vol18.006"
 VOL18_POST_APPLY_VERIFICATION_SCHEMA_VERSION = "vol18.007"
 VOL18_LOCAL_COMMIT_BUILDER_SCHEMA_VERSION = "vol18.008"
 VOL18_PUSH_DELIVERY_SCHEMA_VERSION = "vol18.009"
+VOL19_CODEX_RUN_RESULT_SCHEMA_VERSION = "vol19.001"
 
 
 DEFAULT_PROJECTS = [
@@ -134,6 +135,11 @@ COLUMN_MIGRATIONS = {
         ("task_version", "INTEGER NOT NULL DEFAULT 1"),
         ("routing_snapshot_hash", "VARCHAR(64) NOT NULL DEFAULT ''"),
         ("source_snapshot_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("approved_instruction_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("start_idempotency_digest", "VARCHAR(64)"),
+        ("start_request_digest", "VARCHAR(64)"),
+        ("owner_start_confirmed_at", "DATETIME"),
+        ("cancellation_requested_at", "DATETIME"),
         ("execution_assignment_id", "INTEGER"),
         ("execution_model_id", "INTEGER"),
         ("execution_provider_id", "INTEGER"),
@@ -157,6 +163,18 @@ COLUMN_MIGRATIONS = {
         ("verification_timed_out", "BOOLEAN NOT NULL DEFAULT 0"),
         ("verification_cancelled", "BOOLEAN NOT NULL DEFAULT 0"),
         ("verification_output_truncated", "BOOLEAN NOT NULL DEFAULT 0"),
+    ],
+    "codex_result_envelopes": [
+        ("approved_instruction_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("authorized_workspace_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("workspace_baseline_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("structured_handoff_status", "VARCHAR(40) NOT NULL DEFAULT 'unavailable'"),
+        ("task_acceptance_json", "TEXT NOT NULL DEFAULT '{}'"),
+        ("process_evidence_json", "TEXT NOT NULL DEFAULT '{}'"),
+        ("workspace_evidence_json", "TEXT NOT NULL DEFAULT '{}'"),
+        ("completion_classification", "VARCHAR(40) NOT NULL DEFAULT 'result_incomplete'"),
+        ("execution_started_at", "DATETIME"),
+        ("execution_finished_at", "DATETIME"),
     ],
     "push_executions": [
         ("recovery_reconciliation_json", "TEXT NOT NULL DEFAULT '{}'"),
@@ -273,6 +291,14 @@ def initialize_database(engine: Engine) -> None:
             session.add(
                 SchemaVersion(version=VOL18_PUSH_DELIVERY_SCHEMA_VERSION)
             )
+        if not session.scalar(
+            select(SchemaVersion).where(
+                SchemaVersion.version == VOL19_CODEX_RUN_RESULT_SCHEMA_VERSION
+            )
+        ):
+            session.add(
+                SchemaVersion(version=VOL19_CODEX_RUN_RESULT_SCHEMA_VERSION)
+            )
         seed_projects(session)
         seed_registry(session)
         session.flush()
@@ -305,6 +331,9 @@ def ensure_runtime_columns(engine: Engine) -> None:
         _ensure_vol17_ai_model_indexes(engine)
     if "codex_runs" in tables:
         _ensure_vol17_codex_run_indexes(engine)
+        _ensure_vol19_codex_run_indexes(engine)
+    if "codex_result_envelopes" in tables:
+        _ensure_vol19_result_envelope_indexes(engine)
     if "codex_instruction_packs" in tables:
         _ensure_vol17_pack_indexes(engine)
 
@@ -770,6 +799,39 @@ def _ensure_vol18_immutable_triggers(engine: Engine) -> None:
                 "); END"
             )
         )
+        codex_run_start_set_once_columns = (
+            "approved_instruction_digest",
+            "start_idempotency_digest",
+            "start_request_digest",
+            "owner_start_confirmed_at",
+        )
+        codex_run_start_set_once_predicate = " OR ".join(
+            f"((OLD.{column_name} IS NOT NULL AND OLD.{column_name} != '') "
+            f"AND OLD.{column_name} IS NOT NEW.{column_name})"
+            for column_name in codex_run_start_set_once_columns
+        )
+        connection.execute(
+            text(
+                "CREATE TRIGGER IF NOT EXISTS trg_codex_runs_owner_start_set_once "
+                "BEFORE UPDATE ON codex_runs "
+                f"WHEN {codex_run_start_set_once_predicate} "
+                "BEGIN SELECT RAISE(ABORT, "
+                "'Codex Run Owner-confirmed start bindings may be set only once.'"
+                "); END"
+            )
+        )
+        connection.execute(
+            text(
+                "CREATE TRIGGER IF NOT EXISTS "
+                "trg_codex_runs_cancellation_requested_set_once "
+                "BEFORE UPDATE ON codex_runs "
+                "WHEN OLD.cancellation_requested_at IS NOT NULL "
+                "AND OLD.cancellation_requested_at IS NOT NEW.cancellation_requested_at "
+                "BEGIN SELECT RAISE(ABORT, "
+                "'Codex Run cancellation request time may be set only once.'"
+                "); END"
+            )
+        )
         for trigger_name, table_name, columns, message in (
             (
                 "trg_stage_executions_set_once",
@@ -1053,6 +1115,47 @@ def _ensure_vol17_codex_run_indexes(engine: Engine) -> None:
     with engine.begin() as connection:
         for index_name, column_name in missing:
             connection.execute(text(f"CREATE INDEX {index_name} ON codex_runs ({column_name})"))
+
+
+def _ensure_vol19_codex_run_indexes(engine: Engine) -> None:
+    """Enforce one accepted start identity while preserving legacy NULL rows."""
+    inspector = inspect(engine)
+    indexes = inspector.get_indexes("codex_runs")
+    indexed_columns = {
+        tuple(item.get("column_names") or []): item for item in indexes
+    }
+    with engine.begin() as connection:
+        if ("start_idempotency_digest",) not in indexed_columns:
+            connection.execute(
+                text(
+                    "CREATE UNIQUE INDEX ix_codex_runs_start_idempotency_digest "
+                    "ON codex_runs (start_idempotency_digest)"
+                )
+            )
+        if ("start_request_digest",) not in indexed_columns:
+            connection.execute(
+                text(
+                    "CREATE INDEX ix_codex_runs_start_request_digest "
+                    "ON codex_runs (start_request_digest)"
+                )
+            )
+
+
+def _ensure_vol19_result_envelope_indexes(engine: Engine) -> None:
+    inspector = inspect(engine)
+    indexed_columns = {
+        tuple(item.get("column_names") or [])
+        for item in inspector.get_indexes("codex_result_envelopes")
+    }
+    if ("completion_classification",) in indexed_columns:
+        return
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "CREATE INDEX ix_codex_result_envelopes_completion_classification "
+                "ON codex_result_envelopes (completion_classification)"
+            )
+        )
 
 
 def _ensure_vol17_pack_indexes(engine: Engine) -> None:

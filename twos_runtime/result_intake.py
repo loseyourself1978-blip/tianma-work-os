@@ -1408,6 +1408,47 @@ def _safe_mapping(value: object) -> dict[str, object]:
     return sanitized if isinstance(sanitized, dict) else {}
 
 
+def _validated_coding_handoff(value: object) -> dict[str, object]:
+    """Return only the already-supported Coding handoff contract."""
+    candidate: object = value
+    if isinstance(candidate, str):
+        try:
+            candidate = json.loads(candidate)
+        except json.JSONDecodeError:
+            return {}
+    if not isinstance(candidate, Mapping):
+        return {}
+    if (
+        set(candidate) != {"schema", "status", "summary"}
+        or candidate.get("schema") != "twos.coding_handoff.v1"
+        or candidate.get("status") != "completed"
+        or not isinstance(candidate.get("summary"), str)
+        or not str(candidate["summary"]).strip()
+    ):
+        return {}
+    return _safe_mapping(candidate)
+
+
+def _opaque_log_reference(monitor: CodexRunMonitor) -> str:
+    """Expose a stable Run-local handle without returning a filesystem path."""
+    locator_identity = (
+        monitor.result_locator_identity
+        if _SHA256_RE.fullmatch(monitor.result_locator_identity or "")
+        else canonical_sha256(monitor.protected_result_locator)
+        if monitor.protected_result_locator
+        else ""
+    )
+    if not locator_identity:
+        return ""
+    identity = canonical_sha256(
+        {
+            "monitor": monitor.monitor_digest,
+            "locator": locator_identity,
+        }
+    )
+    return f"local-log-{identity[:24]}"
+
+
 def _verification_verdict(payload: Mapping[str, object]) -> str:
     verdict = payload.get("verification_verdict")
     status = (
@@ -1579,18 +1620,43 @@ def _result_material(
             if isinstance(payload.get("advanced_diagnostics"), Mapping)
             else ""
         ),
-        run.owner_summary,
     ):
         if isinstance(candidate, str) and candidate.strip():
             final_response = _sanitize_text(candidate.strip())
             break
+    # Reconstruct the exact Vol.18 final-response fallback separately. Existing
+    # immutable envelopes may have bound the Owner summary when Codex supplied
+    # neither an explicit response nor a final agent message.
+    legacy_final_response = final_response
+    if not legacy_final_response and isinstance(run.owner_summary, str):
+        if run.owner_summary.strip():
+            legacy_final_response = _sanitize_text(run.owner_summary.strip())
     coding_process = _safe_mapping(payload.get("coding_process"))
     task_acceptance = _safe_mapping(payload.get("task_acceptance"))
-    structured_handoff = _safe_mapping(
-        payload.get("structured_handoff") or payload.get("handoff")
+    top_level_handoff_value = payload.get("structured_handoff") or payload.get(
+        "handoff"
     )
+    # Preserve the historical mapping only for legacy digest reconstruction.
+    # Current evidence may be called captured only after the same strict
+    # contract validation used for the terminal Codex message.
+    top_level_structured_handoff = _safe_mapping(top_level_handoff_value)
+    structured_handoff = _validated_coding_handoff(top_level_handoff_value)
     if not structured_handoff:
-        structured_handoff = {
+        advanced = payload.get("advanced_diagnostics")
+        final_agent_message = (
+            advanced.get("coding_final_agent_message")
+            if isinstance(advanced, Mapping)
+            else None
+        )
+        structured_handoff = _validated_coding_handoff(final_agent_message)
+    structured_handoff_status = (
+        "captured" if structured_handoff else "unavailable"
+    )
+    # The legacy digest accepted only an explicit top-level handoff. Do not let
+    # the new extraction of a validated final agent message rewrite history.
+    legacy_structured_handoff = top_level_structured_handoff
+    if not legacy_structured_handoff:
+        legacy_structured_handoff = {
             "schema": RESULT_INTAKE_SCHEMA,
             "run_outcome": run.status,
             "coding_result": coding_process,
@@ -1609,6 +1675,17 @@ def _result_material(
             "warnings": warnings,
             "limitations": limitations,
             "boundary_confirmation": boundaries,
+        }
+    captured_workspace_evidence = _safe_mapping(payload.get("workspace_evidence"))
+    workspace_evidence_available = bool(captured_workspace_evidence)
+    workspace_evidence = captured_workspace_evidence
+    if not workspace_evidence_available:
+        workspace_evidence = {
+            "schema": "twos.codex_workspace_evidence.v1",
+            "status": "unavailable",
+            "availability_reason": (
+                "Structured workspace evidence was not captured for this result."
+            ),
         }
     diff_identity = canonical_sha256(
         {
@@ -1654,7 +1731,156 @@ def _result_material(
             "connectivity_bindings": connectivity_bindings,
         }
     )
-    immutable_payload = {
+    approved_instruction_digest = (
+        run.approved_instruction_digest
+        or hashlib.sha256((run.pack.content or "").encode("utf-8")).hexdigest()
+    )
+    try:
+        approved_source_snapshot = json.loads(run.pack.source_snapshot_json or "{}")
+    except (TypeError, json.JSONDecodeError):
+        approved_source_snapshot = {}
+    source_repository_identity = (
+        approved_source_snapshot.get("source_repository_identity")
+        if isinstance(approved_source_snapshot, Mapping)
+        else None
+    )
+    authorized_workspace_identity = (
+        str(source_repository_identity)
+        if isinstance(source_repository_identity, str)
+        and _SHA256_RE.fullmatch(source_repository_identity)
+        else canonical_sha256(
+            {
+                "source_repository": str(run.source_repo or ""),
+            }
+        )
+    )
+    process_evidence = {
+        "terminal_state": run.status,
+        "exit_code": run.exit_code,
+        "verification_exit_code": run.verification_exit_code,
+        "started_at": _iso(run.started_at),
+        "finished_at": _iso(run.finished_at),
+        "duration_ms": run.duration_ms,
+        "timed_out": bool(run.timed_out or run.verification_timed_out),
+        "cancelled": bool(run.cancelled or run.verification_cancelled),
+        "coding_timed_out": run.timed_out,
+        "coding_cancelled": run.cancelled,
+        "verification_timed_out": run.verification_timed_out,
+        "verification_cancelled": run.verification_cancelled,
+        "stdout_summary": _sanitize_text(run.stdout)[:2000],
+        "stderr_summary": _sanitize_text(run.stderr)[:2000],
+        "output_truncated": run.output_truncated,
+        "protected_log_reference": _opaque_log_reference(monitor),
+        "process_evidence_identity": process_evidence_identity,
+    }
+    boundary_violations = workspace_evidence.get("boundary_violations")
+    boundary_conflict = bool(
+        isinstance(boundary_violations, list) and boundary_violations
+    )
+    process = _safe_mapping(payload.get("process"))
+    verification = _safe_mapping(payload.get("verification"))
+    verification_process = _safe_mapping(payload.get("verification_process"))
+    process_loss_observed = bool(
+        monitor.monitor_state == "PROCESS_LOST"
+        or monitor.recovery_state == "PROCESS_LOST"
+        or "PROCESS_LOST" in str(monitor.failure_code or "").upper()
+        or "PROCESS_IDENTITY_LOST" in str(monitor.failure_code or "").upper()
+    )
+    runtime_interrupted = bool(
+        coding_process.get("runtime_interrupted") is True
+        or process.get("runtime_interrupted") is True
+        or verification.get("runtime_interrupted") is True
+        or verification_process.get("runtime_interrupted") is True
+        or process_loss_observed
+    )
+    coding_status = str(coding_process.get("status") or "").lower()
+    coding_exit_code = coding_process.get("exit_code")
+    effective_coding_exit_code = (
+        coding_exit_code
+        if type(coding_exit_code) is int
+        else run.exit_code
+        if type(run.exit_code) is int
+        else None
+    )
+    coding_cancelled = bool(
+        coding_process.get("cancelled") is True
+        or process.get("cancelled") is True
+        or coding_status == "cancelled"
+    )
+    coding_timed_out = bool(
+        coding_process.get("timed_out") is True
+        or process.get("timed_out") is True
+        or coding_status == "timed_out"
+    )
+    coding_succeeded = bool(
+        coding_status in {"completed", "succeeded"}
+        and effective_coding_exit_code == 0
+    )
+    coding_failed = bool(
+        coding_status in {"failed", "error"}
+        or (
+            type(effective_coding_exit_code) is int
+            and effective_coding_exit_code != 0
+        )
+    )
+    verification_status = str(
+        verification_process.get("status")
+        or verification.get("status")
+        or ""
+    ).lower()
+    persisted_verification_status = str(run.verification_status or "").lower()
+    verification_exit_code = verification_process.get("process_exit")
+    if type(verification_exit_code) is not int:
+        verification_exit_code = verification.get("exit_code")
+    if type(verification_exit_code) is not int:
+        verification_exit_code = run.verification_exit_code
+    verification_failed = bool(
+        verification_status in {"failed", "error", "integrity_blocked"}
+        or persisted_verification_status
+        in {"failed", "blocked", "error", "integrity_blocked"}
+        or (
+            type(verification_exit_code) is int
+            and verification_exit_code != 0
+        )
+        or reported_verdict == "FAIL"
+    )
+    exec_bridge = _safe_mapping(payload.get("exec_bridge"))
+    execution_integrity_blocked = bool(
+        str(exec_bridge.get("integrity_state") or "").lower() == "blocked"
+    )
+    if runtime_interrupted:
+        completion_classification = "interrupted"
+    elif run.status == "cancelled":
+        completion_classification = "cancelled"
+    elif run.status == "timed_out":
+        completion_classification = "timed_out"
+    elif coding_cancelled:
+        completion_classification = "cancelled"
+    elif coding_timed_out:
+        completion_classification = "timed_out"
+    elif coding_failed:
+        completion_classification = "failed"
+    elif execution_integrity_blocked:
+        completion_classification = "result_incomplete"
+    elif verification_failed:
+        # A terminal task-acceptance decision is separate from process truth.
+        # Surface an actual failed Verification process or verdict, without
+        # converting a successful Coding/no-change result into a process fail.
+        completion_classification = "failed"
+    elif coding_succeeded and structured_handoff_status != "captured":
+        completion_classification = "result_incomplete"
+    elif coding_succeeded and not workspace_evidence_available:
+        completion_classification = "result_incomplete"
+    elif coding_succeeded and boundary_conflict:
+        completion_classification = "workspace_evidence_conflict"
+    elif coding_succeeded and manifest:
+        completion_classification = "succeeded_with_changes"
+    elif coding_succeeded:
+        completion_classification = "succeeded_without_workspace_changes"
+    else:
+        completion_classification = "result_incomplete"
+
+    legacy_immutable_payload = {
         "schema": RESULT_INTAKE_SCHEMA,
         "owner_id": monitor.owner_id,
         "run_id": monitor.run_id,
@@ -1672,8 +1898,8 @@ def _result_material(
         "actual_model_identifier": actual_model,
         "terminal_status": run.status,
         "process_exit_code": run.exit_code,
-        "final_response": final_response,
-        "structured_handoff": structured_handoff,
+        "final_response": legacy_final_response,
+        "structured_handoff": legacy_structured_handoff,
         "tests": tests,
         "manifest": manifest,
         "diff_identity": diff_identity,
@@ -1687,9 +1913,25 @@ def _result_material(
         "process_evidence_identity": process_evidence_identity,
         "connectivity_bindings": connectivity_bindings,
     }
+    immutable_payload = {
+        **legacy_immutable_payload,
+        "final_response": final_response,
+        "structured_handoff": structured_handoff,
+        "structured_handoff_status": structured_handoff_status,
+        "task_acceptance": task_acceptance,
+        "approved_instruction_digest": approved_instruction_digest,
+        "authorized_workspace_identity": authorized_workspace_identity,
+        "workspace_baseline_identity": monitor.source_snapshot_identity,
+        "execution_started_at": _iso(run.started_at),
+        "execution_finished_at": _iso(run.finished_at),
+        "process_evidence": process_evidence,
+        "workspace_evidence": workspace_evidence,
+        "completion_classification": completion_classification,
+    }
     return {
         **immutable_payload,
         "result_digest": canonical_sha256(immutable_payload),
+        "legacy_result_digest": canonical_sha256(legacy_immutable_payload),
         "source_identity": canonical_sha256(payload),
     }
 
@@ -1896,7 +2138,12 @@ def ingest_result_payload(
             )
         )
         if existing is not None:
-            if existing.result_digest != material["result_digest"]:
+            compatible_digest = (
+                material["result_digest"]
+                if existing.approved_instruction_digest
+                else material["legacy_result_digest"]
+            )
+            if existing.result_digest != compatible_digest:
                 raise ResultIntakeError(
                     "RESULT_IMMUTABILITY_CONFLICT",
                     "A different immutable result is already bound to this Run.",
@@ -1925,12 +2172,19 @@ def ingest_result_payload(
             verification_assignment_version=monitor.verification_assignment_version,
             routing_snapshot_identity=monitor.routing_snapshot_identity,
             source_snapshot_identity=monitor.source_snapshot_identity,
+            approved_instruction_digest=str(material["approved_instruction_digest"]),
+            authorized_workspace_identity=str(
+                material["authorized_workspace_identity"]
+            ),
+            workspace_baseline_identity=str(material["workspace_baseline_identity"]),
             requested_model_identifier=monitor.requested_model_identifier,
             actual_model_identifier=str(material["actual_model_identifier"]),
             terminal_status=run.status,
             process_exit_code=run.exit_code,
             final_response=str(material["final_response"]),
             structured_handoff_json=canonical_json(material["structured_handoff"]),
+            structured_handoff_status=str(material["structured_handoff_status"]),
+            task_acceptance_json=canonical_json(material["task_acceptance"]),
             tests_summary_json=canonical_json(material["tests"]),
             changed_file_manifest_json=canonical_json(material["manifest"]),
             diff_identity=str(material["diff_identity"]),
@@ -1942,13 +2196,24 @@ def ingest_result_payload(
             warnings_json=canonical_json(material["warnings"]),
             limitations_json=canonical_json(material["limitations"]),
             boundary_statements_json=canonical_json(material["boundaries"]),
+            process_evidence_json=canonical_json(material["process_evidence"]),
+            workspace_evidence_json=canonical_json(material["workspace_evidence"]),
+            completion_classification=str(material["completion_classification"]),
             execution_duration_ms=run.duration_ms,
+            execution_started_at=run.started_at,
+            execution_finished_at=run.finished_at,
             result_source=_sanitize_text(result_source)[:80],
             result_source_identity=str(material["source_identity"]),
             process_evidence_identity=str(material["process_evidence_identity"]),
             result_digest=str(material["result_digest"]),
-            integrity_state="VERIFIED",
-            integrity_findings_json="[]",
+            integrity_state=(
+                "BLOCKED" if execution_integrity_blocked else "VERIFIED"
+            ),
+            integrity_findings_json=canonical_json(
+                ["CODING_RESULT_INTEGRITY_BLOCKED"]
+                if execution_integrity_blocked
+                else []
+            ),
         )
         session.add(envelope)
         try:
@@ -2017,7 +2282,7 @@ def ingest_result_payload(
                 entity_id=envelope.id,
                 details=(
                     f"run={run.id}; source={_sanitize_text(result_source)[:80]}; "
-                    f"integrity=VERIFIED"
+                    f"integrity={envelope.integrity_state}"
                 ),
             )
         )
@@ -3124,13 +3389,46 @@ class ResultIntakeMonitor:
             }
         )
         with self.factory() as session:
-            return (
-                session.scalar(
-                    select(CodexRunMonitor.id)
-                    .where(CodexRunMonitor.monitor_state.in_(fast_poll_states))
-                    .limit(1)
+            ordinary_pending = session.scalar(
+                select(CodexRunMonitor.id)
+                .where(CodexRunMonitor.monitor_state.in_(fast_poll_states))
+                .limit(1)
+            )
+            if ordinary_pending is not None:
+                return True
+            # A sealed bridge may publish an integrity blocker just before the
+            # execution manager commits its terminal process/workspace payload.
+            # Keep polling only that bounded evidence-without-envelope gap so a
+            # missing structured handoff still receives an immutable, honestly
+            # incomplete Run Result. Once the envelope exists, this query drops
+            # the terminal monitor and avoids permanent busy polling.
+            terminal_evidence_rows = session.execute(
+                select(CodexRunMonitor.terminal_at, CodexRun.finished_at)
+                .join(CodexRun, CodexRun.id == CodexRunMonitor.run_id)
+                .outerjoin(
+                    CodexResultEnvelope,
+                    CodexResultEnvelope.run_id == CodexRunMonitor.run_id,
                 )
-                is not None
+                .where(
+                    CodexRunMonitor.monitor_state.in_(
+                        (
+                            "RESULT_INTEGRITY_BLOCKED",
+                            "RESULT_UNAVAILABLE",
+                            "PROCESS_LOST",
+                        )
+                    ),
+                    CodexRun.status.in_(tuple(TERMINAL_RUN_STATES)),
+                    CodexRun.structured_result.not_in(("", "{}")),
+                    CodexResultEnvelope.id.is_(None),
+                )
+            ).all()
+            now = utc_now()
+            return any(
+                anchor is not None
+                and (now - anchor).total_seconds()
+                <= PERSISTED_RESULT_SETTLEMENT_SECONDS
+                for monitor_terminal_at, run_finished_at in terminal_evidence_rows
+                for anchor in (monitor_terminal_at or run_finished_at,)
             )
 
     def _loop(self) -> None:
@@ -3206,6 +3504,8 @@ def get_or_create_handoff_review(
     boundaries = _decoded_json(envelope.boundary_statements_json, {})
     manifest = _decoded_json(envelope.changed_file_manifest_json, [])
     task_acceptance = handoff.get("task_acceptance", {})
+    if not isinstance(task_acceptance, Mapping) or not task_acceptance:
+        task_acceptance = _decoded_json(envelope.task_acceptance_json, {})
     acceptance_status = (
         str(task_acceptance.get("status", "")).lower()
         if isinstance(task_acceptance, Mapping)
@@ -3611,6 +3911,7 @@ def monitor_out(
             "isolated_worktree_identity": monitor.isolated_worktree_identity,
             "execution_location_identity": monitor.execution_location_identity,
             "result_locator_identity": monitor.result_locator_identity,
+            "protected_log_reference": _opaque_log_reference(monitor),
             "heartbeat_sequence": monitor.heartbeat_sequence,
         }
     return output
@@ -3636,12 +3937,24 @@ def result_envelope_out(
         and verification_verified
     )
     timed_out = envelope.terminal_status == "timed_out"
+    canonical_terminal_state = {
+        "completed": "succeeded",
+        "failed": "failed",
+        "cancelled": "cancelled",
+        "timed_out": "timed_out",
+        "blocked": "blocked",
+    }.get(envelope.terminal_status, envelope.terminal_status)
+    if envelope.completion_classification == "interrupted":
+        canonical_terminal_state = "interrupted"
+    tests = _decoded_json(envelope.tests_summary_json, [])
     output: dict[str, object] = {
         "id": envelope.envelope_id,
         "run_id": envelope.run_id,
         "task_id": envelope.task_id,
         "terminal_status": envelope.terminal_status,
-        "outcome_label": "Run timed out" if timed_out else envelope.terminal_status.replace("_", " ").title(),
+        "canonical_terminal_state": canonical_terminal_state,
+        "completion_classification": envelope.completion_classification,
+        "outcome_label": "Run timed out" if timed_out else canonical_terminal_state.replace("_", " ").title(),
         "result_available": True,
         "execution_successful": execution_successful,
         "requested_model": envelope.requested_model_identifier,
@@ -3660,8 +3973,13 @@ def result_envelope_out(
             "verdict": envelope.verification_verdict,
             "evidence": verification_evidence,
         },
-        "tests": _decoded_json(envelope.tests_summary_json, []),
+        "tests": tests,
+        "validation_summary": {
+            "evidence_count": len(tests) if isinstance(tests, list) else 0,
+            "available": bool(tests),
+        },
         "changed_files": manifest,
+        "changed_file_count": len(manifest) if isinstance(manifest, list) else 0,
         "warnings": _decoded_json(envelope.warnings_json, []),
         "limitations": _decoded_json(envelope.limitations_json, []),
         "result_integrity": envelope.integrity_state,
@@ -3671,7 +3989,10 @@ def result_envelope_out(
         "source_result_eligible_for_owner_review": execution_successful,
         "handoff_reconciliation": "PASS" if execution_successful else "BLOCKED",
         "final_response": envelope.final_response,
+        "structured_handoff_status": envelope.structured_handoff_status,
         "duration_ms": envelope.execution_duration_ms,
+        "started_at": _iso(envelope.execution_started_at),
+        "finished_at": _iso(envelope.execution_finished_at),
         "ingested_at": _iso(envelope.ingested_at),
         "owner_action": "Review Handoff",
     }
@@ -3688,8 +4009,16 @@ def result_envelope_out(
             "verification_assignment_version": envelope.verification_assignment_version,
             "routing_snapshot_identity": envelope.routing_snapshot_identity,
             "source_snapshot_identity": envelope.source_snapshot_identity,
+            "approved_instruction_digest": envelope.approved_instruction_digest,
+            "authorized_workspace_identity": envelope.authorized_workspace_identity,
+            "workspace_baseline_identity": envelope.workspace_baseline_identity,
             "result_source_identity": envelope.result_source_identity,
             "process_evidence_identity": envelope.process_evidence_identity,
+            "process_evidence": _decoded_json(envelope.process_evidence_json, {}),
+            "workspace_evidence": _decoded_json(
+                envelope.workspace_evidence_json,
+                {},
+            ),
             "boundary_statements": _decoded_json(
                 envelope.boundary_statements_json,
                 {},

@@ -13,8 +13,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from sqlalchemy import func, or_, select, text
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import func, or_, select, text, update
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
 from . import __version__
@@ -97,6 +97,7 @@ from .result_intake import (
     import_codex_result,
     instruction_draft_out,
     monitor_out,
+    process_identity_matches,
     reconnect_run_monitor,
     result_envelope_out,
     source_snapshot_unavailable_for_run,
@@ -258,6 +259,19 @@ class ApplyAcceptedChangesIn(BaseModel):
 class RevertAppliedChangesIn(BaseModel):
     confirmation: Literal["REVERT_APPLIED_CHANGES"]
     expected_journal_digest: str = Field(min_length=64, max_length=64)
+
+
+class StartCodexRunIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    confirmation: Literal["START_CODEX_RUN"]
+    idempotency_key: str = Field(
+        min_length=16,
+        max_length=128,
+        pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$",
+    )
+    pack_id: int = Field(ge=1)
+    pack_version: int = Field(ge=1)
 
 
 class PostApplyVerificationIn(BaseModel):
@@ -880,6 +894,48 @@ def codex_pack_out(pack: CodexInstructionPack, include_raw: bool = False) -> dic
     return output
 
 
+def codex_approved_instruction_digest(pack: CodexInstructionPack) -> str:
+    """Bind a Run to the exact approved Pack content without exposing it."""
+    return hashlib.sha256((pack.content or "").encode("utf-8")).hexdigest()
+
+
+def codex_start_idempotency_digest(
+    owner_id: int,
+    task_id: int,
+    idempotency_key: str,
+) -> str:
+    material = json.dumps(
+        {
+            "owner_id": owner_id,
+            "task_id": task_id,
+            "idempotency_key": idempotency_key,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()
+
+
+def codex_start_request_digest(
+    owner_id: int,
+    task_id: int,
+    payload: StartCodexRunIn,
+) -> str:
+    material = json.dumps(
+        {
+            "owner_id": owner_id,
+            "task_id": task_id,
+            "pack_id": payload.pack_id,
+            "pack_version": payload.pack_version,
+            "idempotency_key": payload.idempotency_key,
+            "confirmation": payload.confirmation,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()
+
+
 def codex_run_out(
     run: CodexRun,
     include_raw: bool = False,
@@ -892,6 +948,135 @@ def codex_run_out(
     result["development_task"] = run.development_task
     result["frozen_development_task"] = run.development_task
     result["development_task_digest"] = run.development_task_digest
+
+    canonical_state = {
+        "approval_required": "pending",
+        "queued": "pending",
+        "starting": "starting",
+        "running": "running",
+        "verifying": "starting",
+        "settling": "starting",
+        "completed": "succeeded",
+        "cancelled": "cancelled",
+        "timed_out": "timed_out",
+        "blocked": "blocked",
+        "failed": "failed",
+    }.get(str(run.status or "").lower(), "blocked")
+    process_result = result.get("process")
+    coding_process = result.get("coding_process")
+    verification_process = result.get("verification_process")
+    run_monitor = (
+        session.scalar(
+            select(CodexRunMonitor).where(CodexRunMonitor.run_id == run.id)
+        )
+        if session is not None
+        else None
+    )
+    monitor_state = run_monitor.monitor_state if run_monitor is not None else None
+    runtime_interrupted = bool(
+        isinstance(process_result, dict)
+        and process_result.get("runtime_interrupted") is True
+    ) or bool(
+        isinstance(coding_process, dict)
+        and "interrupt" in str(coding_process.get("failure") or "").lower()
+    ) or bool(
+        isinstance(verification_process, dict)
+        and (
+            verification_process.get("runtime_interrupted") is True
+            or "interrupt"
+            in str(verification_process.get("failure") or "").lower()
+        )
+    ) or str(monitor_state or "").upper() == "PROCESS_LOST"
+    coding_process_identity_verified = bool(
+        run_monitor is not None
+        and run_monitor.process_id
+        and len(run_monitor.process_start_identity or "") == 64
+        and process_identity_matches(
+            int(run_monitor.process_id),
+            run_monitor.process_start_identity,
+        )
+    )
+    verification_process_identity_verified = bool(
+        run_monitor is not None
+        and run_monitor.verification_process_id
+        and len(run_monitor.verification_process_start_identity or "") == 64
+        and process_identity_matches(
+            int(run_monitor.verification_process_id),
+            run_monitor.verification_process_start_identity,
+        )
+    )
+    if canonical_state == "running" and (
+        str(monitor_state or "").upper() != "RUNNING"
+        or not coding_process_identity_verified
+    ):
+        # A live PID is necessary but not sufficient for an Owner-visible
+        # Running claim.  The durable monitor must still describe the exact
+        # process as RUNNING; settlement/result-pending states stay Starting.
+        canonical_state = "starting"
+    if (
+        str(run.status or "").lower() == "verifying"
+        and run.verification_process_spawned
+        and run.verification_status == "running"
+        and str(monitor_state or "").upper() == "VERIFYING"
+        and verification_process_identity_verified
+    ):
+        canonical_state = "running"
+    if runtime_interrupted:
+        canonical_state = "interrupted"
+    elif (
+        canonical_state == "blocked"
+        and run.executable_status in {"needs_setup", "unconfigured"}
+        and not run.process_spawned
+    ):
+        canonical_state = "needs_setup"
+
+    result_envelope = (
+        session.scalar(
+            select(CodexResultEnvelope).where(CodexResultEnvelope.run_id == run.id)
+        )
+        if session is not None
+        else None
+    )
+    changed_files = result.get("changed_files")
+    changed_file_count = len(changed_files) if isinstance(changed_files, list) else 0
+    structured_handoff = result.get("structured_handoff")
+    workspace_evidence = result.get("workspace_evidence")
+    exec_bridge = result.get("exec_bridge")
+    preliminary_result_incomplete = bool(
+        run.finished_at is not None
+        and isinstance(coding_process, dict)
+        and str(coding_process.get("status") or "").lower()
+        in {"completed", "succeeded"}
+        and coding_process.get("exit_code") == 0
+        and (
+            not isinstance(structured_handoff, dict)
+            or not structured_handoff
+            or not isinstance(workspace_evidence, dict)
+            or not workspace_evidence
+            or (
+                isinstance(exec_bridge, dict)
+                and str(exec_bridge.get("integrity_state") or "").lower()
+                == "blocked"
+            )
+        )
+    )
+    completion_classification = (
+        result_envelope.completion_classification
+        if result_envelope is not None
+        else "interrupted"
+        if canonical_state == "interrupted"
+        else "succeeded_with_changes"
+        if canonical_state == "succeeded" and changed_file_count
+        else "succeeded_without_workspace_changes"
+        if canonical_state == "succeeded"
+        else "result_incomplete"
+        if preliminary_result_incomplete
+        else canonical_state
+        if canonical_state in {"failed", "cancelled", "timed_out"}
+        else "result_incomplete"
+        if run.finished_at is not None
+        else "pending"
+    )
 
     invocation_rows = (
         session.scalars(
@@ -975,6 +1160,9 @@ def codex_run_out(
         "pack_id": run.pack_id,
         "pack_version": run.pack.version if run.pack else None,
         "status": run.status,
+        "canonical_status": canonical_state,
+        "completion_classification": completion_classification,
+        "changed_file_count": changed_file_count,
         "executable_status": run.executable_status,
         "owner_summary": run.owner_summary,
         "source_branch": run.source_branch,
@@ -985,6 +1173,9 @@ def codex_run_out(
         "assignment_version": run.assignment_version,
         "routing_snapshot_hash": run.routing_snapshot_hash,
         "source_snapshot_digest": run.source_snapshot_digest,
+        "owner_start_confirmed": run.owner_start_confirmed_at is not None,
+        "owner_start_confirmed_at": iso(run.owner_start_confirmed_at),
+        "cancellation_requested_at": iso(run.cancellation_requested_at),
         "launch_intent_recorded": run.launch_intent_at is not None,
         "launch_intent_at": iso(run.launch_intent_at),
         "process_spawned": run.process_spawned,
@@ -1020,8 +1211,8 @@ def codex_run_out(
         "worktree_branch": run.worktree_branch,
         "exit_code": run.exit_code,
         "duration_ms": run.duration_ms,
-        "timed_out": run.timed_out,
-        "cancelled": run.cancelled,
+        "timed_out": bool(run.timed_out or run.verification_timed_out),
+        "cancelled": bool(run.cancelled or run.verification_cancelled),
         "result": result,
         "created_at": iso(run.created_at),
         "started_at": iso(run.started_at),
@@ -1043,6 +1234,9 @@ def codex_run_out(
             {
                 "source_repo": run.source_repo,
                 "worktree_path": run.worktree_path,
+                "approved_instruction_digest": run.approved_instruction_digest,
+                "start_request_digest": run.start_request_digest,
+                "start_idempotency_digest": run.start_idempotency_digest,
                 "stdout": run.stdout,
                 "stderr": run.stderr,
                 # Sanitized, bounded Codex JSONL is intentionally exposed only
@@ -2743,6 +2937,15 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             ),
             "next_action": "Run Codex" if model_binding_ready else "Verify Codex Connection",
         }
+        output["readiness_state"] = (
+            "Ready"
+            if model_binding_ready
+            else "Unavailable"
+            if not detection.found
+            else "Misconfigured"
+            if detection.status == "needs_setup"
+            else "Needs setup"
+        )
         output["authentication_ready"] = bool(
             connectivity.get("authentication", {}).get("authenticated")
         )
@@ -2757,6 +2960,12 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         output["run_timeout_seconds"] = settings.codex_timeout_seconds
         output["configured_run_timeout_seconds"] = settings.codex_timeout_seconds
         output["connectivity_timeout_seconds"] = settings.codex_connectivity_timeout_seconds
+        output["authorized_workspace"] = str(
+            settings.source_repo.resolve(strict=False)
+        )
+        output["isolated_worktree_root"] = str(
+            settings.worktree_root.resolve(strict=False)
+        )
         if not model_identifier:
             output["readiness_reason"] = (
                 "Select a supported Local Codex CLI model before Owner-approved execution."
@@ -2936,14 +3145,20 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     ) -> list[dict[str, Any]]:
         if not session.get(Task, task_id):
             raise HTTPException(status_code=404, detail="Task not found.")
-        runs = session.scalars(
+        possible_runs = session.scalars(
             select(CodexRun).where(CodexRun.task_id == task_id).order_by(CodexRun.id.desc())
         ).all()
+        runs = [
+            run
+            for run in possible_runs
+            if find_owner_run(session, user.id, run.id) is not None
+        ]
         return [codex_run_out(run, include_raw=True, session=session) for run in runs]
 
     @app.post("/api/tasks/{task_id}/codex-runs")
     def start_codex_run(
         task_id: int,
+        payload: StartCodexRunIn,
         request: Request,
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
@@ -2956,6 +3171,37 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         task = session.get(Task, task_id)
         if not task:
             raise HTTPException(status_code=404, detail="Task not found.")
+        idempotency_digest = codex_start_idempotency_digest(
+            user.id,
+            task.id,
+            payload.idempotency_key,
+        )
+        request_digest = codex_start_request_digest(user.id, task.id, payload)
+        existing = session.scalar(
+            select(CodexRun).where(
+                CodexRun.start_idempotency_digest == idempotency_digest
+            )
+        )
+        if existing is not None:
+            if (
+                existing.start_request_digest != request_digest
+                or find_owner_run(session, user.id, existing.id) is None
+            ):
+                session.rollback()
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "type": "IDEMPOTENCY_KEY_REUSED",
+                        "message": (
+                            "This Run start identity is already bound to a different "
+                            "Owner-confirmed request. Review the current Run before retrying."
+                        ),
+                    },
+                )
+            session.commit()
+            output = codex_run_out(existing, include_raw=True, session=session)
+            output["start_request_replayed"] = True
+            return output
         detection = codex_manager.adapter.detect()
         authenticated, authentication_reason = codex_manager.adapter.authentication_ready(detection)
         readiness_changed = codex_manager.reconcile_observed_local_readiness(
@@ -3016,6 +3262,18 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         pack = session.get(CodexInstructionPack, eligibility["pack_id"])
         if pack is None:
             raise HTTPException(status_code=409, detail={"type": "RUN_INELIGIBLE", **eligibility})
+        if pack.id != payload.pack_id or pack.version != payload.pack_version:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "type": "RUN_CONFIRMATION_BINDING_CHANGED",
+                    "message": (
+                        "The confirmed Instruction Pack identity changed. "
+                        "Review the current Pack and confirm Start Codex Run again."
+                    ),
+                    **eligibility,
+                },
+            )
         current_task_digest = development_task_digest(task.development_task)
         pack_task_digest = development_task_digest(pack.development_task)
         if (
@@ -3109,6 +3367,10 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             assignment_version=pack.assignment_version,
             routing_snapshot_hash=pack.routing_snapshot_hash,
             source_snapshot_digest=pack.source_snapshot_digest,
+            approved_instruction_digest=codex_approved_instruction_digest(pack),
+            start_idempotency_digest=idempotency_digest,
+            start_request_digest=request_digest,
+            owner_start_confirmed_at=utc_now(),
             execution_assignment_id=execution_target.assignment.id,
             execution_model_id=execution_target.model.id,
             execution_provider_id=execution_target.model.provider_id,
@@ -3135,10 +3397,36 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             "codex_run_queued",
             "codex_run",
             run.id,
-            f"task={task.id}; pack_version={pack.version}",
+            (
+                f"task={task.id}; pack_version={pack.version}; "
+                "owner_confirmation=true; stable_request_identity=true"
+            ),
             user,
         )
-        session.commit()
+        try:
+            session.commit()
+        except IntegrityError:
+            session.rollback()
+            existing = session.scalar(
+                select(CodexRun).where(
+                    CodexRun.start_idempotency_digest == idempotency_digest
+                )
+            )
+            if (
+                existing is None
+                or existing.start_request_digest != request_digest
+                or find_owner_run(session, user.id, existing.id) is None
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "type": "RUN_START_CONFLICT",
+                        "message": "A conflicting Run start was accepted concurrently.",
+                    },
+                )
+            output = codex_run_out(existing, include_raw=True, session=session)
+            output["start_request_replayed"] = True
+            return output
         if not codex_manager.start(run.id):
             run.status = "blocked"
             run.finished_at = utc_now()
@@ -3157,7 +3445,9 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             )
             session.commit()
         result_intake_monitor.notify()
-        return codex_run_out(run, include_raw=True, session=session)
+        output = codex_run_out(run, include_raw=True, session=session)
+        output["start_request_replayed"] = False
+        return output
 
     @app.get("/api/codex-runs/{run_id}")
     def get_codex_run(
@@ -5023,18 +5313,63 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
-        run = session.get(CodexRun, run_id)
-        if not run:
-            raise HTTPException(status_code=404, detail="Codex run not found.")
+        run = owner_run_or_404(session, user.id, run_id)
+        if run.status == "cancelled":
+            output = codex_run_out(run, include_raw=True, session=session)
+            output["cancellation_request_replayed"] = True
+            return output
+        if run.status == "settling" and run.cancellation_requested_at is not None:
+            # The Owner intent is already durable and terminal process
+            # evidence is being projected. A repeated click is an idempotent
+            # replay, not a new cancellation or a conflict.
+            output = codex_run_out(run, include_raw=True, session=session)
+            output["cancellation_request_replayed"] = True
+            return output
         if run.status not in {"queued", "starting", "running", "verifying"}:
             raise HTTPException(status_code=409, detail="Only an active Codex Run can be cancelled.")
-        audit(session, request, "codex_cancel_requested", "codex_run", run.id, "Owner requested cancellation.", user)
+        requested_at = utc_now()
+        cancellation_intent_created = bool(
+            session.execute(
+                update(CodexRun)
+                .where(
+                    CodexRun.id == run.id,
+                    CodexRun.cancellation_requested_at.is_(None),
+                )
+                .values(cancellation_requested_at=requested_at)
+            ).rowcount
+        )
+        if cancellation_intent_created:
+            audit(
+                session,
+                request,
+                "codex_cancel_requested",
+                "codex_run",
+                run.id,
+                "Owner requested cancellation.",
+                user,
+            )
         session.commit()
-        if not codex_manager.cancel(run.id):
+        cancellation_outcome = codex_manager.cancel(run.id)
+        if cancellation_outcome in {"unavailable", "terminal"}:
+            refreshed = owner_run_or_404(session, user.id, run.id)
+            session.refresh(refreshed)
+            if refreshed.status == "cancelled":
+                output = codex_run_out(refreshed, include_raw=True, session=session)
+                output["cancellation_request_replayed"] = True
+                return output
+            if (
+                not cancellation_intent_created
+                and refreshed.cancellation_requested_at is not None
+            ):
+                output = codex_run_out(refreshed, include_raw=True, session=session)
+                output["cancellation_request_replayed"] = True
+                return output
             raise HTTPException(status_code=409, detail="Codex run was no longer cancellable.")
         refreshed = session.get(CodexRun, run.id)
         session.refresh(refreshed)
-        return codex_run_out(refreshed, include_raw=True, session=session)
+        output = codex_run_out(refreshed, include_raw=True, session=session)
+        output["cancellation_request_replayed"] = not cancellation_intent_created
+        return output
 
     @app.get("/api/tasks/{task_id}/owner-acceptance")
     def current_owner_acceptance(

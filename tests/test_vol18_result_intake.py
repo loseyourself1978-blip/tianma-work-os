@@ -21,6 +21,7 @@ from tests.test_self_hosting import (
     make_client,
     make_fake_codex,
     make_source_repo,
+    start_codex_run,
     wait_for_run,
 )
 from tests.test_vol18_delivery_candidate import (
@@ -130,7 +131,11 @@ if not args or args[0] != "exec":
 
 model = args[args.index("--model") + 1]
 sandbox = args[args.index("--sandbox") + 1]
-last_message = pathlib.Path(args[args.index("--output-last-message") + 1])
+last_message = (
+    pathlib.Path(args[args.index("--output-last-message") + 1])
+    if "--output-last-message" in args
+    else None
+)
 prompt = sys.stdin.read()
 phase = "coding" if sandbox == "workspace-write" else "verification"
 counter = pathlib.Path(__file__).with_name(pathlib.Path(__file__).name + f".{{phase}}-count")
@@ -169,8 +174,14 @@ else:
 durable_message = message
 if phase == "coding" and {coding_final_message_mismatch!r}:
     durable_message = message + " tampered durable final message"
-last_message.write_text(durable_message)
-emit({{"type":"item.completed","item":{{"id":f"restart-recovery-{{phase}}-message","type":"agent_message","text":message}}}})
+if last_message is not None:
+    last_message.write_text(durable_message)
+emitted_message = (
+    durable_message
+    if last_message is None and phase == "coding" and {coding_final_message_mismatch!r}
+    else message
+)
+emit({{"type":"item.completed","item":{{"id":f"restart-recovery-{{phase}}-message","type":"agent_message","text":emitted_message}}}})
 emit({{"type":"turn.completed","turn_id":turn_id,"usage":{{"input_tokens":5,"output_tokens":3}}}})
 ''',
         encoding="utf-8",
@@ -1179,7 +1190,7 @@ def test_real_detached_bridge_restart_recovers_without_duplicate_coding(
         )
         pack = generate_pack(first, headers, task_id)
         approve_pack(first, headers, task_id, pack["id"])
-        started = first.post(f"/api/tasks/{task_id}/codex-runs", headers=headers)
+        started = start_codex_run(first, headers, task_id, pack)
         assert started.status_code == 200, started.text
         run_id = started.json()["id"]
         coding_handle = _wait_for_bridge_handle(spool_root, run_id, "coding")
@@ -1307,7 +1318,7 @@ def test_post_launch_adapter_error_recovers_terminal_receipt_without_fake_exit(
         )
         pack = generate_pack(client, headers, task_id)
         approve_pack(client, headers, task_id, pack["id"])
-        started = client.post(f"/api/tasks/{task_id}/codex-runs", headers=headers)
+        started = start_codex_run(client, headers, task_id, pack)
         assert started.status_code == 200, started.text
         run_id = started.json()["id"]
         terminal = wait_for_run(client, headers, run_id, {"completed"}, timeout=15)
@@ -1328,7 +1339,7 @@ def test_post_launch_adapter_error_recovers_terminal_receipt_without_fake_exit(
     assert fake_codex.with_name(fake_codex.name + ".verification-count").read_text() == "1"
 
 
-def test_recovered_integrity_blocked_receipt_persists_real_exit_output_and_evidence(
+def test_recovered_invalid_handoff_persists_real_exit_output_and_evidence(
     tmp_path: Path,
 ) -> None:
     source_repo = make_source_repo(tmp_path)
@@ -1357,7 +1368,7 @@ def test_recovered_integrity_blocked_receipt_persists_real_exit_output_and_evide
         )
         pack = generate_pack(first, headers, task_id)
         approve_pack(first, headers, task_id, pack["id"])
-        started = first.post(f"/api/tasks/{task_id}/codex-runs", headers=headers)
+        started = start_codex_run(first, headers, task_id, pack)
         assert started.status_code == 200, started.text
         run_id = started.json()["id"]
         coding_handle = _wait_for_bridge_handle(spool_root, run_id, "coding")
@@ -1378,8 +1389,9 @@ def test_recovered_integrity_blocked_receipt_persists_real_exit_output_and_evide
             break
         time.sleep(0.02)
     assert receipt is not None
-    assert receipt["terminal_state"] == "RESULT_INTEGRITY_BLOCKED"
+    assert receipt["terminal_state"] == "COMPLETED"
     assert receipt["process_exit_code"] == 0
+    assert receipt["outcome_facts"]["integrity_blocked"] is False
 
     with make_client(
         tmp_path,
@@ -1389,11 +1401,12 @@ def test_recovered_integrity_blocked_receipt_persists_real_exit_output_and_evide
         timeout=15,
     ) as restarted:
         headers = init_and_login(restarted)
-        terminal = wait_for_run(restarted, headers, run_id, {"blocked"}, timeout=15)
+        terminal = wait_for_run(restarted, headers, run_id, {"failed"}, timeout=15)
+        _wait_for_envelope(restarted.app.state.session_factory, run_id)
         with restarted.app.state.session_factory() as session:
             run = session.get(CodexRun, run_id)
             assert run is not None
-            assert run.status == "blocked"
+            assert run.status == "failed"
             assert run.exit_code == 0
             assert "thread.started" in run.stdout
             assert run.verification_process_spawned is False
@@ -1407,11 +1420,20 @@ def test_recovered_integrity_blocked_receipt_persists_real_exit_output_and_evide
                 select(CodexRunMonitor).where(CodexRunMonitor.run_id == run_id)
             )
             assert monitor is not None
-            assert monitor.monitor_state == "RESULT_INTEGRITY_BLOCKED"
-            assert monitor.recovery_state == "INTEGRITY_BLOCKED"
+            assert monitor.monitor_state == "RESULT_AVAILABLE"
+            assert monitor.recovery_state == "RESULT_RECOVERED"
             assert monitor.process_exit_code == 0
+        result_response = restarted.get(
+            f"/api/codex-runs/{run_id}/result-envelope",
+            headers=headers,
+        )
+        assert result_response.status_code == 200, result_response.text
+        envelope = result_response.json()["result"]
+        assert envelope["integrity_state"] == "VERIFIED"
+        assert envelope["structured_handoff_status"] == "unavailable"
+        assert envelope["completion_classification"] == "result_incomplete"
 
-    assert terminal["status"] == "blocked"
+    assert terminal["status"] == "failed"
     assert fake_codex.with_name(fake_codex.name + ".coding-count").read_text() == "1"
     assert not fake_codex.with_name(
         fake_codex.name + ".verification-count"
@@ -1444,10 +1466,10 @@ def test_valid_transport_with_invalid_coding_handoff_never_starts_verification(
         )
         pack = generate_pack(client, headers, task_id)
         approve_pack(client, headers, task_id, pack["id"])
-        started = client.post(f"/api/tasks/{task_id}/codex-runs", headers=headers)
+        started = start_codex_run(client, headers, task_id, pack)
         assert started.status_code == 200, started.text
         run_id = started.json()["id"]
-        terminal = wait_for_run(client, headers, run_id, {"blocked"}, timeout=15)
+        terminal = wait_for_run(client, headers, run_id, {"failed"}, timeout=15)
         # Run finalization commits before taking the per-Run lifecycle lock so
         # it cannot deadlock the independent monitor's SQLite writer.  Bound
         # the intentionally tiny projection window and prove convergence.
@@ -1462,15 +1484,14 @@ def test_valid_transport_with_invalid_coding_handoff_never_starts_verification(
                 )
                 if (
                     projected_attempt is not None
-                    and projected_attempt.attempt_state
-                    == "RESULT_INTEGRITY_BLOCKED"
+                    and projected_attempt.attempt_state == "COMPLETED"
                 ):
                     break
             time.sleep(0.02)
         with client.app.state.session_factory() as session:
             run = session.get(CodexRun, run_id)
             assert run is not None
-            assert run.status == "blocked"
+            assert run.status == "failed"
             assert run.exit_code == 0
             assert run.verification_process_spawned is False
             assert run.verification_status == "not_started"
@@ -1481,8 +1502,11 @@ def test_valid_transport_with_invalid_coding_handoff_never_starts_verification(
                 )
             )
             assert attempt is not None
-            assert attempt.attempt_state == "RESULT_INTEGRITY_BLOCKED"
-            assert attempt.blocker_code == "FINAL_RESULT_SCHEMA_INVALID"
+            assert attempt.attempt_state == "COMPLETED"
+            assert (
+                attempt.blocker_code
+                == "STRUCTURED_CODING_HANDOFF_UNAVAILABLE"
+            )
             assert attempt.verification_eligible is False
             snapshot = session.scalar(
                 select(CodexLifecycleSnapshot).where(
@@ -1490,15 +1514,25 @@ def test_valid_transport_with_invalid_coding_handoff_never_starts_verification(
                 )
             )
             assert snapshot is not None
-            assert snapshot.lifecycle_state == "RESULT_INTEGRITY_BLOCKED"
-            assert snapshot.result_integrity_state == "BLOCKED"
+            assert snapshot.lifecycle_state == "RESULT_AVAILABLE"
+            assert snapshot.result_integrity_state == "VERIFIED"
             assert session.scalar(
                 select(func.count(AIModelInvocationEvidence.id)).where(
                     AIModelInvocationEvidence.codex_run_id == run_id
                 )
             ) == 1
 
-    assert terminal["status"] == "blocked"
+        result_response = client.get(
+            f"/api/codex-runs/{run_id}/result-envelope",
+            headers=headers,
+        )
+        assert result_response.status_code == 200, result_response.text
+        envelope = result_response.json()["result"]
+        assert envelope["integrity_state"] == "VERIFIED"
+        assert envelope["structured_handoff_status"] == "unavailable"
+        assert envelope["completion_classification"] == "result_incomplete"
+
+    assert terminal["status"] == "failed"
     assert fake_codex.with_name(fake_codex.name + ".coding-count").read_text() == "1"
     assert not fake_codex.with_name(
         fake_codex.name + ".verification-count"
@@ -1553,7 +1587,7 @@ def test_fake_local_cli_run_is_automatically_monitored_and_ingested(
         )
         pack = generate_pack(client, headers, task_id)
         approve_pack(client, headers, task_id, pack["id"])
-        started = client.post(f"/api/tasks/{task_id}/codex-runs", headers=headers)
+        started = start_codex_run(client, headers, task_id, pack)
         assert started.status_code == 200, started.text
         run_id = started.json()["id"]
         terminal = wait_for_run(client, headers, run_id, {"completed"}, timeout=10)
@@ -2179,6 +2213,7 @@ def test_verification_launch_failure_surfaces_exact_safe_blocker(
             )
             public_result = result_envelope_out(envelope)
             assert envelope.verification_verdict == "UNAVAILABLE"
+            assert envelope.completion_classification == "failed"
             assert public_result["verification_result"]["evidence"][
                 "safe_summary"
             ] == exact_blocker

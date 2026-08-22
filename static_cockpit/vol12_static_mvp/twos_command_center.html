@@ -316,14 +316,15 @@
             </div>
             <dl class="fact-list">
               <div><dt>Readiness for a new Run</dt><dd id="codex-readiness">Checking</dd></div>
+              <div><dt>Approved Pack</dt><dd id="run-pack-version">No approved Pack</dd></div>
               <div><dt>New Run readiness reason</dt><dd id="codex-reason">Checking the supported local command.</dd></div>
               <div><dt>Exact next Owner action</dt><dd id="codex-next-action">Save a task and generate a pack.</dd></div>
             </dl>
-            <p class="boundary-note">A run requires an approved pack and a configured local Codex. TWOS never merges or pushes automatically.</p>
+            <p class="boundary-note">Codex never starts automatically. Starting a Run requires explicit Owner confirmation. Completion does not automatically Apply, Stage, Commit, or Push.</p>
             <div class="button-row">
-              <button id="run-codex" class="button button-primary" type="button">Run Codex</button>
-              <button id="cancel-codex" class="button button-secondary" type="button" hidden>Cancel Run</button>
-              <a id="view-result" class="button button-quiet" href="#result-card" hidden>View Result</a>
+              <button id="run-codex" class="button button-primary" type="button">Start Codex Run</button>
+              <button id="cancel-codex" class="button button-secondary" type="button" hidden>Stop Run</button>
+              <a id="view-result" class="button button-quiet" href="#result-card" hidden>Review Run Result</a>
             </div>
           </section>
 
@@ -436,9 +437,12 @@
                 <div><dt>Requested model accepted</dt><dd id="result-envelope-requested-model-accepted">Pending Run evidence</dd></div>
                 <div><dt>Run-local effective model</dt><dd id="result-envelope-actual-model">Not exposed by the current Codex CLI protocol.</dd></div>
                 <div><dt>Duration</dt><dd id="result-envelope-duration">Not available</dd></div>
+                <div><dt>Completion classification</dt><dd id="result-envelope-classification">Waiting for completion</dd></div>
+                <div><dt>Final Codex response</dt><dd id="result-envelope-final-response">Not available</dd></div>
+                <div><dt>Changed-file count</dt><dd id="result-envelope-changed-count">0</dd></div>
                 <div><dt>Coding result</dt><dd id="result-envelope-coding">Not started</dd></div>
                 <div><dt>Independent Verification</dt><dd id="result-envelope-verification">Not started</dd></div>
-                <div><dt>Tests</dt><dd id="result-envelope-tests">No test result available.</dd></div>
+                <div><dt>Validation / tests</dt><dd id="result-envelope-tests">No test result available.</dd></div>
                 <div><dt>Result integrity</dt><dd id="result-envelope-integrity" class="candidate-inline-status">Pending</dd></div>
                 <div><dt>Exact Owner action</dt><dd id="result-envelope-next-action">Run Codex when the approved Pack is ready.</dd></div>
               </dl>
@@ -475,8 +479,8 @@
             </section>
 
             <section class="result-section" aria-labelledby="result-task-acceptance-title">
-              <h3 id="result-task-acceptance-title">Task acceptance</h3>
-              <p id="result-task-acceptance" class="result-section-copy">Needs Owner review</p>
+              <h3 id="result-task-acceptance-title">Automated evidence assessment</h3>
+              <p id="result-task-acceptance" class="result-section-copy">Needs Owner review; this evidence does not accept objective completion.</p>
               <ul id="result-task-acceptance-checks" class="result-check-list"><li>No acceptance checks reported.</li></ul>
             </section>
 
@@ -1239,6 +1243,32 @@
           </div>
         </details>
       </main>
+
+      <dialog id="start-codex-confirmation-dialog" class="confirmation-dialog" aria-labelledby="start-codex-confirmation-title">
+        <form method="dialog" class="confirmation-surface">
+          <div class="confirmation-heading">
+            <span class="confirmation-eyebrow">Explicit Owner execution</span>
+            <h2 id="start-codex-confirmation-title">Confirm Start Codex Run</h2>
+            <p>This confirmation starts the approved Codex Run. Coding and its bound independent Verification may run as separate Codex processes.</p>
+          </div>
+          <dl class="fact-list compact-facts confirmation-facts">
+            <div><dt>Development task</dt><dd id="start-codex-confirmation-task">None</dd></div>
+            <div><dt>Approved Pack</dt><dd id="start-codex-confirmation-pack">None</dd></div>
+            <div><dt>Approved model routing</dt><dd id="start-codex-confirmation-routing">Not evaluated</dd></div>
+            <div><dt>Authorized workspace</dt><dd id="start-codex-confirmation-workspace">Not evaluated</dd></div>
+            <div><dt>Source identity</dt><dd id="start-codex-confirmation-source">Not evaluated</dd></div>
+          </dl>
+          <ul class="result-check-list confirmation-boundaries">
+            <li>Only this exact approved Task and Pack are authorized for the new Run.</li>
+            <li>Codex executes in the configured isolated authorized workspace; no different provider is selected silently.</li>
+            <li>Completion does not automatically Apply, Stage, Commit, or Push.</li>
+          </ul>
+          <div class="button-row confirmation-actions">
+            <button id="confirm-start-codex-run" class="button button-danger" type="button">Confirm Start Codex Run</button>
+            <button id="cancel-start-codex-run" class="button button-secondary" type="button">Cancel</button>
+          </div>
+        </form>
+      </dialog>
 
       <dialog id="apply-confirmation-dialog" class="confirmation-dialog" aria-labelledby="apply-confirmation-title">
         <form method="dialog" class="confirmation-surface">

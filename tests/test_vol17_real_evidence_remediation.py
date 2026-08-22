@@ -12,6 +12,7 @@ from tests.test_self_hosting import (
     init_and_login,
     make_client,
     make_source_repo,
+    start_codex_run,
     wait_for_run,
 )
 from twos_runtime.config import STATIC_COCKPIT_DIR
@@ -397,7 +398,10 @@ def prepare_approved_pack(
 
 
 def start_and_wait(client: TestClient, task_id: int) -> dict:
-    started = client.post(f"/api/tasks/{task_id}/codex-runs")
+    current = client.get(f"/api/tasks/{task_id}/codex-packs/current")
+    assert current.status_code == 200, current.text
+    pack = current.json()["pack"]
+    started = start_codex_run(client, {}, task_id, pack)
     assert started.status_code == 200, started.text
     run = wait_for_run(
         client,

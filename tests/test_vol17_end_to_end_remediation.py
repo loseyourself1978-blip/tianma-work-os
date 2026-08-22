@@ -13,6 +13,7 @@ from urllib.parse import urljoin, urlparse
 import pytest
 from fastapi.testclient import TestClient
 
+from tests.test_self_hosting import start_codex_run
 import twos_runtime.self_hosting as self_hosting
 from twos_runtime.app import create_app
 from twos_runtime.config import STATIC_COCKPIT_DIR, TWOS_UI_PATH, Settings
@@ -585,7 +586,7 @@ def test_pack_binds_dirty_snapshot_and_source_change_returns_regenerate_blocker(
             "control": "Regenerate Codex Pack",
         }
 
-        rejected = client.post(f"/api/tasks/{task['id']}/codex-runs")
+        rejected = start_codex_run(client, {}, task["id"], pack)
         assert rejected.status_code == 409, rejected.text
         details = rejected.json()["error"]["details"]
         assert details["type"] == "RUN_INELIGIBLE"
@@ -624,7 +625,7 @@ def test_run_admission_blocks_same_head_wrong_branch_and_different_repository(
             blocker["code"] == "SOURCE_CHANGED_SINCE_APPROVAL"
             for blocker in branch_eligibility.json()["blockers"]
         )
-        rejected = client.post(f"/api/tasks/{task['id']}/codex-runs")
+        rejected = start_codex_run(client, {}, task["id"], pack)
         assert rejected.status_code == 409, rejected.text
         assert client.get(f"/api/tasks/{task['id']}/codex-runs").json() == []
         run_git(source_repo, "switch", "main")

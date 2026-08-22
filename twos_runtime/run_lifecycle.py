@@ -123,6 +123,35 @@ def _manager_phase_integrity_blocker(
     return code if _SAFE_IDENTIFIER.fullmatch(code) else ""
 
 
+def _manager_phase_handoff_unavailable(run: CodexRun, phase: str) -> bool:
+    """Recognize a settled Coding process whose result content is incomplete.
+
+    This is deliberately separate from transport integrity: an exact,
+    same-turn JSONL message can be retained successfully while failing the
+    TWOS structured handoff contract.  Such evidence is reviewable and must
+    not launch Verification, but it is not corrupted process evidence.
+    """
+
+    if phase != "CODING" or run.status != "failed" or not run.structured_result:
+        return False
+    try:
+        result = json.loads(run.structured_result)
+    except (json.JSONDecodeError, TypeError):
+        return False
+    if not isinstance(result, dict):
+        return False
+    bridge = result.get("exec_bridge")
+    coding_process = result.get("coding_process")
+    handoff = result.get("structured_handoff")
+    return bool(
+        isinstance(bridge, dict)
+        and bridge.get("integrity_state") == "verified"
+        and isinstance(coding_process, dict)
+        and coding_process.get("status") == "completed"
+        and (not isinstance(handoff, dict) or not handoff)
+    )
+
+
 def _iso(value: datetime | None) -> str | None:
     if value is None:
         return None
@@ -277,6 +306,20 @@ def _bridge_evidence(
         launch = codex_exec_bridge.load_launch_info(handle)
     except codex_exec_bridge.CodexExecBridgeError as exc:
         raise LifecycleReconciliationError(exc.code, exc.safe_message) from exc
+
+    if (
+        phase == "VERIFICATION"
+        and run.cancellation_requested_at is not None
+        and receipt is None
+        and state is None
+        and launch is None
+        and not run.verification_process_spawned
+    ):
+        # A valid sealed ticket is only preparation evidence. When the Owner
+        # has durably cancelled before launch, do not manufacture a process
+        # attempt or let that non-process ticket regress the captured Coding
+        # result during later reconciliation.
+        return None
 
     source: Mapping[str, object] = receipt or state or {}
     ticket_identity = ticket.get("identity")
@@ -505,6 +548,12 @@ def _bridge_evidence(
         ),
         "jsonl_recovery_candidate": bool(
             jsonl_recovery.get("eligible_candidate") is True
+            and outcome_facts.get("process_exit_known") is True
+            and outcome_facts.get("terminal_success") is True
+            and outcome_facts.get("streams_settled") is True
+        ),
+        "final_jsonl_message_observed": bool(
+            outcome_facts.get("final_jsonl_message_observed") is True
             and outcome_facts.get("process_exit_known") is True
             and outcome_facts.get("terminal_success") is True
             and outcome_facts.get("streams_settled") is True
@@ -1420,7 +1469,11 @@ def _apply_attempt_evidence(
                 and evidence.get("terminal_event_observed") is True
                 and evidence.get("terminal_success") is True
                 and evidence.get("terminal_contradiction") is not True
-                and evidence.get("sidecar_state") == "VALID"
+                and (
+                    evidence.get("sidecar_state") == "VALID"
+                    or evidence.get("jsonl_recovery_candidate") is True
+                    or evidence.get("final_jsonl_message_observed") is True
+                )
             )
             if settlement_complete:
                 # Transport settlement is necessary but not sufficient for
@@ -1545,11 +1598,24 @@ def _settle_terminal_failure(
         terminal_receipt_available = stat.S_ISREG(terminal_receipt_stat.st_mode)
     except OSError:
         terminal_receipt_available = False
+    try:
+        persisted_result = json.loads(run.structured_result or "{}")
+    except (TypeError, json.JSONDecodeError):
+        persisted_result = {}
+    verification_projection_pending = bool(
+        attempt.phase == "VERIFICATION"
+        and (
+            not isinstance(persisted_result, dict)
+            or not isinstance(persisted_result.get("verification_process"), dict)
+        )
+    )
     evidence_persistence_pending = bool(
         terminal_receipt_available
         and attempt.receipt_digest
-        and not run.stdout
-        and not run.stderr
+        and (
+            verification_projection_pending
+            or (attempt.phase == "CODING" and not run.stdout and not run.stderr)
+        )
         # Empty output is valid for a process that times out before emitting
         # anything.  Once the manager has committed an authoritative terminal
         # Run projection, a later monitor pass must not regress that terminal
@@ -1569,6 +1635,7 @@ def _settle_terminal_failure(
     )
     monitor_state, recovery_state = _monitor_terminal_state(attempt.attempt_state)
     terminal_at = attempt.terminal_at or utc_now()
+    verification_phase = attempt.phase == "VERIFICATION"
     monitor_before = (
         monitor.monitor_state,
         monitor.recovery_state,
@@ -1578,18 +1645,35 @@ def _settle_terminal_failure(
         monitor.terminal_at,
     )
     run.status = run_state
-    run.exit_code = attempt.process_exit_code
-    run.timed_out = timeout_proved
-    run.cancelled = attempt.attempt_state == "CANCELLED"
     run.finished_at = terminal_at
-    run.owner_summary = attempt.safe_summary
+    if verification_phase:
+        run.verification_status = run_state
+        run.verification_exit_code = attempt.process_exit_code
+        run.verification_timed_out = timeout_proved
+        run.verification_cancelled = attempt.attempt_state == "CANCELLED"
+        run.verification_summary = attempt.safe_summary
+        if attempt.started_at is not None:
+            run.verification_duration_ms = max(
+                0,
+                int((terminal_at - attempt.started_at).total_seconds() * 1000),
+            )
+    else:
+        run.exit_code = attempt.process_exit_code
+        run.timed_out = timeout_proved
+        run.cancelled = attempt.attempt_state == "CANCELLED"
+    if not (
+        attempt.attempt_state == "CANCELLED"
+        and run.status == "cancelled"
+        and run.owner_summary
+    ):
+        run.owner_summary = attempt.safe_summary
     if run.started_at is not None:
         run.duration_ms = max(
             0, int((terminal_at - run.started_at).total_seconds() * 1000)
         )
     task = session.get(Task, run.task_id)
     if task is not None:
-        task.status = "needs_review"
+        task.status = "cancelled" if run_state == "cancelled" else "needs_review"
         task.acceptance_state = "needs_review"
     monitor.monitor_state = monitor_state
     monitor.recovery_state = recovery_state
@@ -1963,7 +2047,16 @@ def _reconcile_execution_attempt_locked(
             coding_attempt is None
             or coding_attempt.attempt_state != "COMPLETED"
             or not coding_attempt.verification_eligible
-            or run.status not in {"verifying", "completed", "failed"}
+            or run.status
+            not in {
+                "verifying",
+                "settling",
+                "completed",
+                "failed",
+                "cancelled",
+                "timed_out",
+                "blocked",
+            }
         ):
             raise LifecycleReconciliationError(
                 "VERIFICATION_PRECONDITION_INVALID",
@@ -1993,6 +2086,31 @@ def _reconcile_execution_attempt_locked(
                 status="BLOCKED",
                 summary="Final result evidence mismatch",
                 event_at=attempt.terminal_at,
+                source="execution_manager_validation",
+                source_sequence=max(1, attempt.event_count + 2),
+                evidence_reference=attempt.receipt_digest,
+            )
+        if (
+            phase == "CODING"
+            and attempt.attempt_state == "SETTLING"
+            and str(evidence.get("terminal_state") or "") == "COMPLETED"
+            and _manager_phase_handoff_unavailable(run, phase)
+        ):
+            attempt.attempt_state = "COMPLETED"
+            attempt.verification_eligible = False
+            attempt.blocker_code = "STRUCTURED_CODING_HANDOFF_UNAVAILABLE"
+            attempt.safe_summary = (
+                "Coding ended without a valid structured handoff; "
+                "the captured result requires Owner review."
+            )
+            _record_event(
+                session,
+                attempt,
+                category="BLOCKER",
+                event_type="settlement.structured_handoff_unavailable",
+                status="BLOCKED",
+                summary=attempt.safe_summary,
+                event_at=attempt.terminal_at or utc_now(),
                 source="execution_manager_validation",
                 source_sequence=max(1, attempt.event_count + 2),
                 evidence_reference=attempt.receipt_digest,
@@ -2351,7 +2469,8 @@ def _activity_rows(
     )
     output: list[dict[str, object]] = [
         {
-            "sequence": event.event_sequence,
+            "sequence": 0,
+            "source_sequence": event.event_sequence,
             "type": event.event_category,
             "event_type": event.event_source,
             "phase": event.phase,
@@ -2365,7 +2484,8 @@ def _activity_rows(
     ]
     output.extend(
         {
-            "sequence": None,
+            "sequence": 0,
+            "source_sequence": None,
             "type": aggregate.event_category,
             "event_type": aggregate.event_type,
             "phase": aggregate.phase,
@@ -2378,7 +2498,10 @@ def _activity_rows(
         for aggregate in aggregates
     )
     output.sort(key=lambda row: str(row.get("occurred_at") or ""))
-    return output[-24:]
+    output = output[-24:]
+    for display_sequence, row in enumerate(output, start=1):
+        row["sequence"] = display_sequence
+    return output
 
 
 def lifecycle_snapshot_out(
@@ -2421,6 +2544,73 @@ def lifecycle_snapshot_out(
             }
             else str(run.status or "queued").upper()
         )
+        phase = "VERIFICATION" if run.status == "verifying" else "CODING"
+        live_process_id = (
+            monitor.verification_process_id
+            if monitor is not None and phase == "VERIFICATION"
+            else monitor.process_id
+            if monitor is not None
+            else None
+        )
+        live_process_identity = (
+            monitor.verification_process_start_identity
+            if monitor is not None and phase == "VERIFICATION"
+            else monitor.process_start_identity
+            if monitor is not None
+            else ""
+        )
+        process_live = False
+        receipt_observed = False
+        if state in {"RUNNING", "VERIFYING"}:
+            bridge_observation: dict[str, object] | None = None
+            if monitor is not None:
+                try:
+                    phase_evidence = _bridge_evidence(
+                        monitor, run, owner_id, phase
+                    )
+                    bridge_observation = (
+                        phase_evidence[0]
+                        if phase_evidence is not None
+                        else None
+                    )
+                except LifecycleReconciliationError:
+                    bridge_observation = None
+            if bridge_observation is not None:
+                receipt_observed = (
+                    bridge_observation.get("receipt_present") is True
+                )
+                process_live = bridge_observation.get("process_live") is True
+                bridge_stage = str(
+                    bridge_observation.get("bridge_stage") or ""
+                )
+                if receipt_observed:
+                    state = "SETTLING"
+                elif bridge_stage in {"STARTING", "SETTLING"}:
+                    state = bridge_stage
+                elif bridge_stage != "RUNNING" or not process_live:
+                    state = (
+                        "SETTLING"
+                        if bridge_observation.get(
+                            "settlement_publication_pending"
+                        )
+                        is True
+                        else "STARTING"
+                        if bridge_observation.get(
+                            "preparation_publication_pending"
+                        )
+                        is True
+                        else "PROCESS_LOST"
+                    )
+            else:
+                process_live = bool(
+                    live_process_id
+                    and live_process_identity
+                    and codex_exec_bridge.process_identity_matches(
+                        int(live_process_id), live_process_identity
+                    )
+                )
+                if not process_live:
+                    state = "PROCESS_LOST"
         terminal = state in TERMINAL_LIFECYCLE_STATES
         integrity = (
             "blocked"
@@ -2433,9 +2623,13 @@ def lifecycle_snapshot_out(
         return {
             "snapshot_version": 0,
             "state": state.lower(),
-            "phase": "verification" if run.status == "verifying" else "coding",
+            "phase": phase.lower(),
             "current_activity": (
-                "Run blocked" if terminal else "Preparing execution environment"
+                "Settling terminal Run evidence"
+                if state == "SETTLING"
+                else "Run blocked"
+                if terminal
+                else "Preparing execution environment"
             ),
             "next_action": _next_action(state),
             "server_now": _iso(now),
@@ -2453,9 +2647,9 @@ def lifecycle_snapshot_out(
                 now,
                 now,
             ),
-            "process_live": False,
+            "process_live": process_live,
             "monitor_attached": monitor is not None,
-            "terminal_evidence_observed": False,
+            "terminal_evidence_observed": receipt_observed,
             "sidecar_state": "not_observed",
             "result_integrity": integrity,
             "coding_started": bool(run.process_spawned or run.started_at),
@@ -2469,15 +2663,99 @@ def lifecycle_snapshot_out(
         if snapshot.current_attempt_id is not None
         else None
     )
-    terminal = snapshot.lifecycle_state in TERMINAL_LIFECYCLE_STATES
+    displayed_state = snapshot.lifecycle_state
+    displayed_process_live = snapshot.process_live
+    displayed_process_exited = snapshot.process_exited
+    displayed_terminal_evidence = snapshot.terminal_evidence_observed
+    displayed_activity = snapshot.current_activity
+    if (
+        displayed_state in {"RUNNING", "VERIFYING"}
+        and attempt is not None
+    ):
+        # A persisted heartbeat is not authority to keep saying Running.
+        # Observe the exact bridge child, sidecar and launch identities so the
+        # child-exit/receipt-publication window is shown as Settling rather
+        # than either stale Running or a false Process lost state.
+        bridge_observation: dict[str, object] | None = None
+        if monitor is not None:
+            try:
+                phase_evidence = _bridge_evidence(
+                    monitor, run, owner_id, attempt.phase
+                )
+                bridge_observation = (
+                    phase_evidence[0]
+                    if phase_evidence is not None
+                    else None
+                )
+            except LifecycleReconciliationError:
+                bridge_observation = None
+        if bridge_observation is not None:
+            receipt_observed = (
+                bridge_observation.get("receipt_present") is True
+            )
+            bridge_stage = str(
+                bridge_observation.get("bridge_stage") or ""
+            )
+            displayed_process_live = (
+                bridge_observation.get("process_live") is True
+            )
+            if receipt_observed:
+                displayed_state = "SETTLING"
+            elif bridge_stage in {"STARTING", "SETTLING"}:
+                displayed_state = bridge_stage
+            elif bridge_stage != "RUNNING" or not displayed_process_live:
+                displayed_state = (
+                    "SETTLING"
+                    if bridge_observation.get(
+                        "settlement_publication_pending"
+                    )
+                    is True
+                    else "STARTING"
+                    if bridge_observation.get(
+                        "preparation_publication_pending"
+                    )
+                    is True
+                    else "PROCESS_LOST"
+                )
+            if displayed_state != snapshot.lifecycle_state:
+                displayed_process_exited = displayed_state in {
+                    "SETTLING",
+                    "PROCESS_LOST",
+                }
+                displayed_terminal_evidence = (
+                    displayed_terminal_evidence or receipt_observed
+                )
+                displayed_activity = (
+                    "Settling terminal Run evidence"
+                    if displayed_state == "SETTLING"
+                    else "Publishing the verified process identity"
+                    if displayed_state == "STARTING"
+                    else "Process identity is no longer live"
+                )
+        elif (
+            not attempt.process_id
+            or not attempt.process_start_identity
+            or not codex_exec_bridge.process_identity_matches(
+                int(attempt.process_id), attempt.process_start_identity
+            )
+        ):
+            displayed_state = "PROCESS_LOST"
+            displayed_process_live = False
+            displayed_process_exited = True
+            displayed_activity = "Process identity is no longer live"
+    terminal = displayed_state in TERMINAL_LIFECYCLE_STATES
     terminal_at = snapshot.terminal_at if terminal else None
     last_activity = snapshot.last_activity_at or snapshot.started_at
     output: dict[str, object] = {
         "snapshot_version": snapshot.snapshot_version,
-        "state": snapshot.lifecycle_state.lower(),
+        "state": displayed_state.lower(),
         "phase": snapshot.phase.lower(),
-        "current_activity": snapshot.current_activity,
-        "next_action": snapshot.next_owner_action or _next_action(snapshot.lifecycle_state),
+        "current_activity": displayed_activity,
+        "next_action": (
+            _next_action(displayed_state)
+            if displayed_state != snapshot.lifecycle_state
+            else snapshot.next_owner_action or _next_action(snapshot.lifecycle_state)
+        ),
         "server_now": _iso(now),
         "started_at": _iso(snapshot.started_at),
         "terminal_at": _iso(snapshot.terminal_at),
@@ -2505,14 +2783,14 @@ def lifecycle_snapshot_out(
         ),
         "last_activity_at": _iso(last_activity),
         "inactivity_ms": _duration_ms(last_activity, now, now),
-        "process_live": snapshot.process_live,
+        "process_live": displayed_process_live,
         "monitor_attached": snapshot.monitor_attached,
-        "terminal_evidence_observed": snapshot.terminal_evidence_observed,
+        "terminal_evidence_observed": displayed_terminal_evidence,
         "sidecar_state": snapshot.sidecar_state.lower(),
         "result_integrity": snapshot.result_integrity_state.lower(),
         "blocker_code": snapshot.blocker_code or None,
         "coding_started": snapshot.coding_started,
-        "process_exited": snapshot.process_exited,
+        "process_exited": displayed_process_exited,
         "verification_started": snapshot.verification_started,
         "events": _activity_rows(session, owner_id, run.id),
     }
@@ -2528,6 +2806,20 @@ def lifecycle_snapshot_out(
             "monitor_id": monitor.monitor_id if monitor is not None else None,
             "execution_id": (
                 attempt.ticket_digest[:24] if attempt is not None else None
+            ),
+            "process_id": attempt.process_id if attempt is not None else None,
+            "sidecar_process_id": (
+                attempt.sidecar_process_id if attempt is not None else None
+            ),
+            "executable_fingerprint": (
+                attempt.executable_fingerprint if attempt is not None else None
+            ),
+            "protected_log_reference": (
+                (
+                    f"codex-run-log:{attempt.spool_locator_identity[:24]}"
+                    if attempt is not None and attempt.spool_locator_identity
+                    else None
+                )
             ),
             "stream_offsets": {
                 "stdout": attempt.stdout_offset if attempt is not None else 0,
