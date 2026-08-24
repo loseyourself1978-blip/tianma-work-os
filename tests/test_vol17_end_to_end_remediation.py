@@ -138,7 +138,7 @@ def test_dirty_source_snapshot_hydrates_modified_and_untracked_with_zero_staged_
     manifest = {item["path"]: item for item in snapshot["included_manifest"]}
     assert re.fullmatch(r"[0-9a-f]{64}", snapshot["digest"])
     assert snapshot["source_repository_identity_method"] == (
-        "git-common-dir-sha256-v1"
+        "git-common-dir-device-inode-sha256-v2"
     )
     assert re.fullmatch(r"[0-9a-f]{64}", snapshot["source_repository_identity"])
     assert manifest["src/service.py"]["kind"] == "tracked_change"
@@ -173,6 +173,49 @@ def test_dirty_source_snapshot_hydrates_modified_and_untracked_with_zero_staged_
         source_repo, "status", "--porcelain", "--untracked-files=all"
     ).stdout == status_before
     assert source_files_fingerprint(source_repo) == files_before
+
+
+def test_historical_v1_repository_identity_snapshot_recomputes_exactly(
+    tmp_path: Path,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    (source_repo / "src" / "service.py").write_text(
+        "VALUE = 'historical v1 approved state'\n"
+    )
+    snapshot = capture_source_snapshot(
+        source_repo,
+        source_repository_identity_method=(
+            self_hosting.SOURCE_REPOSITORY_IDENTITY_METHOD_V1
+        ),
+    )
+    assert snapshot["source_repository_identity_method"] == (
+        "git-common-dir-sha256-v1"
+    )
+
+    isolated = tmp_path / "historical-v1-worktree"
+    run_git(
+        source_repo,
+        "worktree",
+        "add",
+        "--detach",
+        str(isolated),
+        str(snapshot["head_sha"]),
+    )
+    try:
+        hydrate_source_snapshot(isolated, snapshot)
+        recomputed = capture_source_snapshot(
+            isolated,
+            approved_source_branch=str(snapshot["source_branch"]),
+            source_repository_identity_method=(
+                self_hosting.SOURCE_REPOSITORY_IDENTITY_METHOD_V1
+            ),
+        )
+        assert recomputed["source_repository_identity"] == snapshot[
+            "source_repository_identity"
+        ]
+        assert recomputed["digest"] == snapshot["digest"]
+    finally:
+        run_git(source_repo, "worktree", "remove", "--force", str(isolated))
 
 
 def test_source_snapshot_preserves_index_state_rename_and_executable_mode(

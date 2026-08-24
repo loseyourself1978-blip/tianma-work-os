@@ -55,7 +55,10 @@ from .models import (
 )
 from .post_apply_verifications import post_apply_verification_out
 from .result_intake import result_envelope_out
-from .self_hosting import _source_repository_identity
+from .self_hosting import (
+    SOURCE_REPOSITORY_IDENTITY_METHODS,
+    _source_repository_identity,
+)
 from .apply_sessions import _global_evidence_after_mutation
 
 
@@ -257,16 +260,20 @@ def _bound_push_context(
             "LOCAL_COMMIT_BINDING_INVALID",
             "The local Commit evidence chain is inconsistent.",
         )
+    approved_source_snapshot = _decoded_object(pack.source_snapshot_json)
     expected_repository_identity = str(
-        _decoded_object(pack.source_snapshot_json).get(
-            "source_repository_identity"
-        )
-        or ""
+        approved_source_snapshot.get("source_repository_identity") or ""
+    )
+    expected_repository_identity_method = str(
+        approved_source_snapshot.get("source_repository_identity_method") or ""
     )
     try:
+        if expected_repository_identity_method not in SOURCE_REPOSITORY_IDENTITY_METHODS:
+            raise RuntimeError("Repository identity method is unsupported.")
         observed_repository_identity = _source_repository_identity(
             root,
             hardened_read_only=True,
+            method=expected_repository_identity_method,
         )
     except (OSError, RuntimeError, ValueError) as exc:
         raise _failure(

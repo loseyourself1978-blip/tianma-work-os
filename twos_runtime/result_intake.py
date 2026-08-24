@@ -47,7 +47,7 @@ RESULT_INTAKE_POLICY = "twos.result_intake.vol18.004"
 # Explicit safety contract used by both the service and Owner-facing handoff.
 AUTOMATION_BOUNDARIES = (
     "No automatic Result acceptance",
-    "No automatic Candidate",
+    "Automatic Candidate metadata materialization; no automatic Candidate acceptance",
     "No automatic Apply",
     "No automatic Revert",
     "No automatic next Codex Run",
@@ -57,6 +57,34 @@ MAX_RESULT_STRING = 64 * 1024
 MAX_RESULT_ITEMS = 1000
 MAX_RESULT_DEPTH = 12
 PERSISTED_RESULT_SETTLEMENT_SECONDS = 5.0
+
+
+def _materialize_result_delivery_candidate(
+    session: Session,
+    *,
+    owner_id: int,
+    envelope: CodexResultEnvelope,
+) -> None:
+    # Local import preserves the established result-intake/connectivity module
+    # boundary while settlement adds only immutable Candidate metadata.
+    from .delivery_candidates import (
+        ManifestError,
+        materialize_result_delivery_candidate,
+    )
+
+    try:
+        materialize_result_delivery_candidate(
+            session,
+            owner_id=owner_id,
+            envelope=envelope,
+        )
+    except ManifestError as exc:
+        raise ResultIntakeError(
+            "CANDIDATE_MATERIALIZATION_BLOCKED",
+            str(exc),
+            monitor_state="RESULT_INTEGRITY_BLOCKED",
+        ) from exc
+
 
 MONITOR_STATES = frozenset(
     {
@@ -727,8 +755,13 @@ def record_monitor_process_start(
         run,
         executable_fingerprint=executable_fingerprint,
     )
+    # The monitor-level executable identity is the Coding executable. A
+    # supported deterministic local Verification command can use a different
+    # executable; its identity is bound independently on the sealed
+    # Verification attempt and receipt.
     if (
-        monitor.executable_fingerprint
+        phase == "coding"
+        and monitor.executable_fingerprint
         and monitor.executable_fingerprint != executable_fingerprint
     ):
         raise ResultIntakeError(
@@ -751,7 +784,8 @@ def record_monitor_process_start(
             "EXECUTION_LOCATION_MISMATCH",
             "The spawned process location does not match this Run monitor.",
         )
-    monitor.executable_fingerprint = executable_fingerprint
+    if phase == "coding":
+        monitor.executable_fingerprint = executable_fingerprint
     monitor.isolated_worktree_identity = worktree_identity
     monitor.execution_location_identity = execution_location_identity
     if phase == "coding":
@@ -2326,6 +2360,11 @@ def ingest_result_payload(
                 result_source=result_source,
                 execution_integrity_blocked=execution_integrity_blocked,
             )
+            _materialize_result_delivery_candidate(
+                session,
+                owner_id=owner_id,
+                envelope=existing,
+            )
             return existing
         envelope = CodexResultEnvelope(
             envelope_id=f"result-{str(material['result_digest'])[:24]}",
@@ -2407,6 +2446,11 @@ def ingest_result_payload(
                     material["prior_policy_result_digest"],
                 }
             ):
+                _materialize_result_delivery_candidate(
+                    session,
+                    owner_id=owner_id,
+                    envelope=winner,
+                )
                 return winner
             raise ResultIntakeError(
                 "RESULT_IMMUTABILITY_CONFLICT",
@@ -2459,6 +2503,11 @@ def ingest_result_payload(
                     f"integrity={envelope.integrity_state}"
                 ),
             )
+        )
+        _materialize_result_delivery_candidate(
+            session,
+            owner_id=owner_id,
+            envelope=envelope,
         )
         return envelope
     except ResultIntakeError as error:
@@ -3203,6 +3252,11 @@ def _reconcile_one(
             ):
                 return result
     if envelope is not None:
+        _materialize_result_delivery_candidate(
+            session,
+            owner_id=monitor.owner_id,
+            envelope=envelope,
+        )
         if lifecycle_state in {
             "RESULT_INTEGRITY_BLOCKED",
             "PROCESS_LOST",

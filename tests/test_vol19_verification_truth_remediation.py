@@ -22,9 +22,12 @@ from tests.test_self_hosting import (
 )
 from twos_runtime.models import (
     AIModelInvocationEvidence,
+    ApplyPlan,
     ApplySession,
     CodexExecutionAttempt,
     CodexRun,
+    CommitPlan,
+    DeliveryCandidate,
     LocalCommitExecution,
     PushExecution,
 )
@@ -100,6 +103,8 @@ def test_real_coding_then_deterministic_verification_persists_one_terminal_truth
     fake_codex = make_fake_codex(tmp_path)
     database_path = tmp_path / "terminal-truth.sqlite3"
     command = make_local_verifier(tmp_path)
+    candidate_identity = ""
+    candidate_digest = ""
 
     with make_client(
         tmp_path,
@@ -210,7 +215,29 @@ def test_real_coding_then_deterministic_verification_persists_one_terminal_truth
                 ).all()
             )
             assert evidence == []
+            candidates = list(
+                session.scalars(
+                    select(DeliveryCandidate).where(
+                        DeliveryCandidate.run_id == run_id
+                    )
+                ).all()
+            )
+            assert len(candidates) == 1
+            candidate = candidates[0]
+            assert candidate.derivation_version == (
+                "twos.result_delivery_candidate.v1"
+            )
+            assert candidate.readiness_state == "ready"
+            assert candidate.acceptance_status == "owner_review"
+            assert candidate.acceptance.status == "owner_review"
+            assert candidate.acceptance.decision_digest == ""
+            assert candidate.result_envelope_public_id == envelope["id"]
+            assert len(candidate.candidate_digest) == 64
+            candidate_identity = candidate.candidate_id
+            candidate_digest = candidate.candidate_digest
+            assert session.query(ApplyPlan).count() == 0
             assert session.query(ApplySession).count() == 0
+            assert session.query(CommitPlan).count() == 0
             assert session.query(LocalCommitExecution).count() == 0
             assert session.query(PushExecution).count() == 0
             protected_spool = Path(attempt.protected_spool_locator)
@@ -262,6 +289,20 @@ def test_real_coding_then_deterministic_verification_persists_one_terminal_truth
             )
             assert attempt is not None
             assert (Path(attempt.protected_spool_locator) / "terminal.json").stat().st_mtime_ns == receipt_mtime
+            candidate = session.scalar(
+                select(DeliveryCandidate).where(
+                    DeliveryCandidate.run_id == run_id
+                )
+            )
+            assert candidate is not None
+            assert candidate.candidate_id == candidate_identity
+            assert candidate.candidate_digest == candidate_digest
+            assert candidate.acceptance.status == "owner_review"
+            assert session.query(ApplyPlan).count() == 0
+            assert session.query(ApplySession).count() == 0
+            assert session.query(CommitPlan).count() == 0
+            assert session.query(LocalCommitExecution).count() == 0
+            assert session.query(PushExecution).count() == 0
         assert restarted.app.state.codex_manager._local_verification_backend_selected(
             run_id,
             Path(persisted["worktree_path"]),

@@ -54,6 +54,9 @@ from .result_intake import (
     update_monitor_from_run,
 )
 from .self_hosting import (
+    SOURCE_REPOSITORY_IDENTITY_METHOD,
+    SOURCE_REPOSITORY_IDENTITY_METHODS,
+    _source_snapshot_digest,
     capture_source_snapshot,
     codex_run_execution_target,
     create_owner_acceptance,
@@ -81,6 +84,34 @@ LOCAL_VERIFICATION_ENVIRONMENT_KEYS = (
     "GIT_TERMINAL_PROMPT",
     "GIT_ALLOW_PROTOCOL",
 )
+
+
+def _capture_approved_source_snapshot(
+    repo: Path,
+    approved_snapshot: dict[str, object],
+    *,
+    hardened_read_only: bool = False,
+    approved_source_branch: str | None = None,
+) -> dict[str, object]:
+    """Recompute a snapshot with its historical repository-identity method."""
+    identity_method = str(
+        approved_snapshot.get("source_repository_identity_method") or ""
+    )
+    snapshot = capture_source_snapshot(
+        repo,
+        hardened_read_only=hardened_read_only,
+        approved_source_branch=approved_source_branch,
+        source_repository_identity_method=(
+            identity_method
+            if identity_method in SOURCE_REPOSITORY_IDENTITY_METHODS
+            else SOURCE_REPOSITORY_IDENTITY_METHOD
+        ),
+    )
+    if not approved_snapshot.get("source_repository_identity"):
+        snapshot.pop("source_repository_identity_method", None)
+        snapshot.pop("source_repository_identity", None)
+        snapshot["digest"] = _source_snapshot_digest(snapshot)
+    return snapshot
 
 
 def _file_content_identity(path: Path) -> str:
@@ -2173,9 +2204,13 @@ class CodexExecutionManager:
             self._git_boundary_fingerprint(self.settings.source_repo)
         )
         try:
+            approved_snapshot = json.loads(run.pack.source_snapshot_json or "{}")
+            if not isinstance(approved_snapshot, dict):
+                raise RuntimeError("The approved source snapshot is invalid.")
             workspace_snapshot_digest = str(
-                capture_source_snapshot(
+                _capture_approved_source_snapshot(
                     worktree,
+                    approved_snapshot,
                     hardened_read_only=True,
                     approved_source_branch=(
                         run.source_branch if phase == "coding" else None
@@ -2183,7 +2218,7 @@ class CodexExecutionManager:
                 ).get("digest")
                 or ""
             )
-        except RuntimeError as exc:
+        except (RuntimeError, TypeError, json.JSONDecodeError) as exc:
             raise codex_exec_bridge.CodexExecBridgeError(
                 "WORKSPACE_SNAPSHOT_UNAVAILABLE",
                 "The pre-execution workspace snapshot could not be verified.",
@@ -2594,6 +2629,58 @@ class CodexExecutionManager:
                 "SEALED_ATTEMPT_PROCESS_IDENTITY_MISMATCH",
                 "The terminal Codex process does not match its sealed execution attempt.",
             )
+        # A very fast child can reach this historical binding path before the
+        # ordinary process-start transaction records its workspace identity.
+        # Preserve the same exact device/inode/path binding used by
+        # ``record_monitor_process_start`` before Result/Candidate settlement;
+        # a PID/receipt alone is not enough to prove the delivery workspace.
+        try:
+            resolved_worktree = worktree.resolve(strict=True)
+            worktree_stat = resolved_worktree.stat()
+        except OSError as exc:
+            raise ResultIntakeError(
+                "WORKTREE_IDENTITY_UNAVAILABLE",
+                "The isolated Codex worktree identity could not be verified.",
+            ) from exc
+        if not stat.S_ISDIR(worktree_stat.st_mode):
+            raise ResultIntakeError(
+                "WORKTREE_IDENTITY_UNAVAILABLE",
+                "The isolated Codex worktree identity could not be verified.",
+            )
+        worktree_identity = canonical_sha256(
+            {
+                "device": worktree_stat.st_dev,
+                "inode": worktree_stat.st_ino,
+                "resolved_location": str(resolved_worktree),
+                "source_snapshot_identity": run.source_snapshot_digest,
+                "worktree_branch": run.worktree_branch,
+            }
+        )
+        execution_location_identity = canonical_sha256(
+            {
+                "isolated_worktree_identity": worktree_identity,
+                "source_commit": run.source_commit,
+                "source_branch": run.source_branch,
+            }
+        )
+        if (
+            monitor.isolated_worktree_identity
+            and monitor.isolated_worktree_identity != worktree_identity
+        ):
+            raise ResultIntakeError(
+                "WORKTREE_IDENTITY_MISMATCH",
+                "The spawned process worktree does not match this Run monitor.",
+            )
+        if (
+            monitor.execution_location_identity
+            and monitor.execution_location_identity != execution_location_identity
+        ):
+            raise ResultIntakeError(
+                "EXECUTION_LOCATION_MISMATCH",
+                "The spawned process location does not match this Run monitor.",
+            )
+        monitor.isolated_worktree_identity = worktree_identity
+        monitor.execution_location_identity = execution_location_identity
         if phase == "coding":
             recorded_id = monitor.process_id
             recorded_identity = monitor.process_start_identity
@@ -5455,6 +5542,42 @@ class CodexExecutionManager:
             create_owner_acceptance(session, run.task, run)
             if run.status != "completed":
                 run.task.status = "needs_review" if run.status in {"failed", "timed_out"} else run.status
+            # Do not expose a terminal Run before its already sealed phase
+            # receipts have reached the same persisted terminal truth. The
+            # background watcher remains the recovery path, but ordinary
+            # finalization must close this projection window in one
+            # transaction so a completed response cannot momentarily render
+            # Verification as unverified.
+            monitor = ensure_run_monitor(
+                session,
+                int(run.pack.approved_by_user_id),
+                run,
+            )
+            if (
+                monitor.result_source == "codex_exec_jsonl_spool"
+                and monitor.protected_result_locator
+            ):
+                from .run_lifecycle import (
+                    LifecycleReconciliationError,
+                    reconcile_execution_attempt,
+                    settle_reconciliation_error,
+                )
+
+                try:
+                    reconcile_execution_attempt(
+                        session,
+                        int(run.pack.approved_by_user_id),
+                        run,
+                        monitor,
+                    )
+                except LifecycleReconciliationError as exc:
+                    settle_reconciliation_error(
+                        session,
+                        int(run.pack.approved_by_user_id),
+                        run,
+                        monitor,
+                        exc,
+                    )
             session.add(
                 AuditEvent(
                     action="codex_run_completed",
@@ -5494,11 +5617,6 @@ class CodexExecutionManager:
                     safe_summary=run.owner_summary,
                 )
             elif integrity_blocked:
-                monitor = ensure_run_monitor(
-                    session,
-                    int(run.pack.approved_by_user_id),
-                    run,
-                )
                 observe_monitor(
                     session,
                     monitor,
@@ -5508,20 +5626,6 @@ class CodexExecutionManager:
                     safe_summary=run.owner_summary,
                 )
             session.commit()
-            if (
-                integrity_blocked
-                or verification is not None
-                and verification.get("integrity_blocked")
-            ):
-                from .run_lifecycle import reconcile_execution_attempt
-
-                reconcile_execution_attempt(
-                    session,
-                    int(run.pack.approved_by_user_id),
-                    run,
-                    monitor,
-                )
-                session.commit()
 
     @staticmethod
     def _local_verification_environment(
@@ -6758,7 +6862,10 @@ class CodexExecutionManager:
         untracked_files = [
             path for path in untracked_result.stdout.split("\0") if path
         ]
-        post_snapshot = capture_source_snapshot(worktree)
+        post_snapshot = _capture_approved_source_snapshot(
+            worktree,
+            approved_snapshot,
+        )
 
         def snapshot_state(snapshot: dict[str, object]) -> dict[str, dict[str, object]]:
             output: dict[str, dict[str, object]] = {}
@@ -7076,8 +7183,9 @@ class CodexExecutionManager:
             and item.get("kind") in {"tracked_change", "untracked"}
         )
         try:
-            source_post_snapshot = capture_source_snapshot(
+            source_post_snapshot = _capture_approved_source_snapshot(
                 source_repo,
+                approved_snapshot,
                 hardened_read_only=True,
             )
             source_unchanged = (

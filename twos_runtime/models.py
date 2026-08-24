@@ -627,10 +627,45 @@ class CodexRun(Base):
 
 class OwnerAcceptanceSession(Base):
     __tablename__ = "owner_acceptance_sessions"
+    __table_args__ = (
+        CheckConstraint(
+            "candidate_version IS NULL OR candidate_version >= 1",
+            name="ck_owner_acceptance_candidate_version_positive",
+        ),
+        CheckConstraint(
+            "decision_version >= 1",
+            name="ck_owner_acceptance_decision_version_positive",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), index=True)
     codex_run_id: Mapped[int] = mapped_column(ForeignKey("codex_runs.id"), unique=True, index=True)
+    owner_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("users.id"), nullable=True, index=True
+    )
+    result_envelope_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("codex_result_envelopes.id"), nullable=True, unique=True, index=True
+    )
+    result_envelope_public_id: Mapped[str] = mapped_column(String(80), default="")
+    result_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
+    result_task_version: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    result_pack_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("codex_instruction_packs.id"), nullable=True, index=True
+    )
+    result_pack_version: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    approved_instruction_digest: Mapped[str] = mapped_column(String(64), default="")
+    delivery_candidate_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("delivery_candidates.id"), nullable=True, unique=True, index=True
+    )
+    candidate_public_id: Mapped[str] = mapped_column(String(80), default="")
+    candidate_version: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    candidate_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
+    review_policy_version: Mapped[str] = mapped_column(
+        String(80), default="twos.result_delivery_review.v1", index=True
+    )
+    decision_version: Mapped[int] = mapped_column(Integer, default=1)
+    decision_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
     status: Mapped[str] = mapped_column(String(40), default="owner_review", index=True)
     owner_note: Mapped[str] = mapped_column(Text, default="")
     compact_sync_result: Mapped[str] = mapped_column(Text, default="")
@@ -641,6 +676,16 @@ class OwnerAcceptanceSession(Base):
 
     task: Mapped[Task] = relationship(back_populates="owner_acceptance_sessions")
     codex_run: Mapped[CodexRun] = relationship(back_populates="acceptance_session")
+    owner: Mapped[Optional[User]] = relationship(foreign_keys=[owner_id])
+    result_envelope: Mapped[Optional["CodexResultEnvelope"]] = relationship(
+        foreign_keys=[result_envelope_id]
+    )
+    result_pack: Mapped[Optional[CodexInstructionPack]] = relationship(
+        foreign_keys=[result_pack_id]
+    )
+    delivery_candidate: Mapped[Optional["DeliveryCandidate"]] = relationship(
+        foreign_keys=[delivery_candidate_id]
+    )
     items: Mapped[list["OwnerAcceptanceItem"]] = relationship(back_populates="session")
 
 
@@ -667,6 +712,16 @@ class DeliveryCandidate(Base):
     __tablename__ = "delivery_candidates"
     __table_args__ = (
         UniqueConstraint("owner_id", "run_id", name="uq_delivery_candidate_owner_run"),
+        UniqueConstraint(
+            "owner_id",
+            "result_envelope_id",
+            "candidate_version",
+            name="uq_delivery_candidate_owner_result_version",
+        ),
+        CheckConstraint(
+            "candidate_version >= 1",
+            name="ck_delivery_candidate_version_positive",
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -676,31 +731,83 @@ class DeliveryCandidate(Base):
     task_version: Mapped[int] = mapped_column(Integer)
     pack_id: Mapped[int] = mapped_column(ForeignKey("codex_instruction_packs.id"), index=True)
     pack_version: Mapped[int] = mapped_column(Integer)
-    coding_assignment_id: Mapped[int] = mapped_column(ForeignKey("ai_model_assignments.id"))
-    coding_assignment_version: Mapped[int] = mapped_column(Integer)
-    verification_assignment_id: Mapped[int] = mapped_column(ForeignKey("ai_model_assignments.id"))
-    verification_assignment_version: Mapped[int] = mapped_column(Integer)
+    candidate_version: Mapped[int] = mapped_column(Integer, default=1)
+    derivation_version: Mapped[str] = mapped_column(
+        String(80), default="twos.delivery_candidate.v1", index=True
+    )
+    coding_assignment_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("ai_model_assignments.id"), nullable=True
+    )
+    coding_assignment_version: Mapped[int] = mapped_column(Integer, default=0)
+    verification_assignment_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("ai_model_assignments.id"), nullable=True
+    )
+    verification_assignment_version: Mapped[int] = mapped_column(Integer, default=0)
     routing_snapshot_identity: Mapped[str] = mapped_column(String(64))
     source_snapshot_identity: Mapped[str] = mapped_column(String(64), index=True)
     source_baseline_commit: Mapped[str] = mapped_column(String(80))
     run_id: Mapped[int] = mapped_column(ForeignKey("codex_runs.id"), unique=True, index=True)
-    coding_evidence_id: Mapped[int] = mapped_column(
-        ForeignKey("ai_model_invocation_evidence.id")
+    result_envelope_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("codex_result_envelopes.id"), nullable=True, unique=True, index=True
     )
-    coding_evidence_identity: Mapped[str] = mapped_column(String(160))
-    coding_evidence_digest: Mapped[str] = mapped_column(String(64))
-    verification_evidence_id: Mapped[int] = mapped_column(
-        ForeignKey("ai_model_invocation_evidence.id")
+    result_envelope_public_id: Mapped[str] = mapped_column(String(80), default="")
+    result_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
+    approved_instruction_digest: Mapped[str] = mapped_column(String(64), default="")
+    coding_attempt_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("codex_execution_attempts.id"), nullable=True, index=True
     )
-    verification_evidence_identity: Mapped[str] = mapped_column(String(160))
-    verification_evidence_digest: Mapped[str] = mapped_column(String(64))
-    verification_verdict: Mapped[str] = mapped_column(String(40))
+    coding_attempt_identity: Mapped[str] = mapped_column(String(96), default="")
+    coding_outcome: Mapped[str] = mapped_column(String(40), default="unknown", index=True)
+    coding_evidence_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("ai_model_invocation_evidence.id"), nullable=True
+    )
+    coding_evidence_identity: Mapped[str] = mapped_column(String(160), default="")
+    coding_evidence_digest: Mapped[str] = mapped_column(String(64), default="")
+    verification_policy: Mapped[str] = mapped_column(
+        String(40), default="required", index=True
+    )
+    verification_attempt_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("codex_execution_attempts.id"), nullable=True, index=True
+    )
+    verification_attempt_identity: Mapped[str] = mapped_column(String(96), default="")
+    verification_receipt_identity: Mapped[str] = mapped_column(String(64), default="")
+    verification_evidence_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("ai_model_invocation_evidence.id"), nullable=True
+    )
+    verification_evidence_identity: Mapped[str] = mapped_column(String(160), default="")
+    verification_evidence_digest: Mapped[str] = mapped_column(String(64), default="")
+    verification_verdict: Mapped[str] = mapped_column(String(40), default="unavailable")
+    result_integrity_state: Mapped[str] = mapped_column(
+        String(24), default="unverified", index=True
+    )
+    source_workspace_identity: Mapped[str] = mapped_column(String(64), default="")
+    run_workspace_identity: Mapped[str] = mapped_column(String(64), default="")
+    run_workspace_baseline_identity: Mapped[str] = mapped_column(String(64), default="")
+    run_workspace_post_state_identity: Mapped[str] = mapped_column(String(64), default="")
     acceptance_id: Mapped[int] = mapped_column(ForeignKey("owner_acceptance_sessions.id"))
     acceptance_status: Mapped[str] = mapped_column(String(40))
     file_manifest_json: Mapped[str] = mapped_column(Text)
+    excluded_manifest_json: Mapped[str] = mapped_column(Text, default="[]")
+    attribution_summary_json: Mapped[str] = mapped_column(Text, default="{}")
+    readiness_state: Mapped[str] = mapped_column(String(48), default="blocked", index=True)
+    readiness_reason: Mapped[str] = mapped_column(Text, default="")
+    readiness_blockers_json: Mapped[str] = mapped_column(Text, default="[]")
     patch_identity: Mapped[str] = mapped_column(String(64))
     candidate_digest: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    result_envelope: Mapped[Optional["CodexResultEnvelope"]] = relationship(
+        foreign_keys=[result_envelope_id]
+    )
+    coding_attempt: Mapped[Optional["CodexExecutionAttempt"]] = relationship(
+        foreign_keys=[coding_attempt_id]
+    )
+    verification_attempt: Mapped[Optional["CodexExecutionAttempt"]] = relationship(
+        foreign_keys=[verification_attempt_id]
+    )
+    acceptance: Mapped[OwnerAcceptanceSession] = relationship(
+        foreign_keys=[acceptance_id]
+    )
 
 
 class SourceDriftEvaluation(Base):
@@ -744,6 +851,10 @@ class ApplyPlan(Base):
             name="ck_apply_plan_all_entries_classified",
         ),
         CheckConstraint(
+            "candidate_version >= 1",
+            name="ck_apply_plan_candidate_version_positive",
+        ),
+        CheckConstraint(
             "staged_path_count >= 0",
             name="ck_apply_plan_staged_path_count_nonnegative",
         ),
@@ -767,6 +878,18 @@ class ApplyPlan(Base):
     )
     candidate_public_id: Mapped[str] = mapped_column(String(80), default="")
     candidate_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
+    candidate_version: Mapped[int] = mapped_column(Integer, default=1)
+    result_envelope_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("codex_result_envelopes.id"), nullable=True, index=True
+    )
+    result_envelope_public_id: Mapped[str] = mapped_column(String(80), default="")
+    result_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
+    owner_acceptance_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("owner_acceptance_sessions.id"), nullable=True, index=True
+    )
+    result_review_decision_digest: Mapped[str] = mapped_column(
+        String(64), default="", index=True
+    )
     run_id: Mapped[int] = mapped_column(ForeignKey("codex_runs.id"), index=True)
     task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), index=True)
     task_version: Mapped[int] = mapped_column(Integer)
@@ -774,7 +897,21 @@ class ApplyPlan(Base):
         ForeignKey("codex_instruction_packs.id"), index=True
     )
     pack_version: Mapped[int] = mapped_column(Integer)
+    approved_instruction_digest: Mapped[str] = mapped_column(String(64), default="")
     source_snapshot_identity: Mapped[str] = mapped_column(String(64), default="")
+    source_workspace_identity: Mapped[str] = mapped_column(String(64), default="")
+    run_workspace_identity: Mapped[str] = mapped_column(String(64), default="")
+    run_workspace_baseline_identity: Mapped[str] = mapped_column(
+        String(64), default=""
+    )
+    run_workspace_post_state_identity: Mapped[str] = mapped_column(
+        String(64), default=""
+    )
+    verification_policy: Mapped[str] = mapped_column(
+        String(40), default="required", index=True
+    )
+    verification_verdict: Mapped[str] = mapped_column(String(40), default="unavailable")
+    verification_receipt_identity: Mapped[str] = mapped_column(String(64), default="")
     source_drift_evaluation_id: Mapped[int] = mapped_column(
         ForeignKey("source_drift_evaluations.id"), index=True
     )
@@ -822,6 +959,16 @@ class ApplyPlan(Base):
     entries: Mapped[list["ApplyPlanEntry"]] = relationship(
         back_populates="apply_plan",
         order_by="ApplyPlanEntry.manifest_ordinal",
+    )
+    approval: Mapped[Optional["ApplyPlanApproval"]] = relationship(
+        back_populates="apply_plan",
+        uselist=False,
+    )
+    result_envelope: Mapped[Optional["CodexResultEnvelope"]] = relationship(
+        foreign_keys=[result_envelope_id]
+    )
+    owner_acceptance: Mapped[Optional[OwnerAcceptanceSession]] = relationship(
+        foreign_keys=[owner_acceptance_id]
     )
 
 
@@ -891,6 +1038,66 @@ class ApplyPlanEntry(Base):
     apply_plan: Mapped[ApplyPlan] = relationship(back_populates="entries")
 
 
+class ApplyPlanApproval(Base):
+    """Immutable Owner approval for one exact Apply Plan and delivery lineage."""
+
+    __tablename__ = "apply_plan_approvals"
+    __table_args__ = (
+        UniqueConstraint("apply_plan_id", name="uq_apply_plan_approval_plan"),
+        CheckConstraint(
+            "candidate_version >= 1",
+            name="ck_apply_plan_approval_candidate_version_positive",
+        ),
+        CheckConstraint(
+            "approval_state = 'APPROVED'",
+            name="ck_apply_plan_approval_state",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    approval_id: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    apply_plan_id: Mapped[int] = mapped_column(ForeignKey("apply_plans.id"), index=True)
+    plan_public_id: Mapped[str] = mapped_column(String(80), index=True)
+    plan_digest: Mapped[str] = mapped_column(String(64), index=True)
+    delivery_candidate_id: Mapped[int] = mapped_column(
+        ForeignKey("delivery_candidates.id"), index=True
+    )
+    candidate_public_id: Mapped[str] = mapped_column(String(80), index=True)
+    candidate_version: Mapped[int] = mapped_column(Integer, default=1)
+    candidate_digest: Mapped[str] = mapped_column(String(64), index=True)
+    result_envelope_id: Mapped[int] = mapped_column(
+        ForeignKey("codex_result_envelopes.id"), index=True
+    )
+    result_envelope_public_id: Mapped[str] = mapped_column(String(80), index=True)
+    result_digest: Mapped[str] = mapped_column(String(64), index=True)
+    owner_acceptance_id: Mapped[int] = mapped_column(
+        ForeignKey("owner_acceptance_sessions.id"), index=True
+    )
+    result_review_decision_digest: Mapped[str] = mapped_column(String(64), index=True)
+    source_workspace_identity: Mapped[str] = mapped_column(String(64))
+    run_workspace_identity: Mapped[str] = mapped_column(String(64))
+    run_workspace_baseline_identity: Mapped[str] = mapped_column(String(64))
+    run_workspace_post_state_identity: Mapped[str] = mapped_column(String(64))
+    approval_state: Mapped[str] = mapped_column(String(24), default="APPROVED", index=True)
+    approved_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    approved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    approval_digest: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    apply_plan: Mapped[ApplyPlan] = relationship(back_populates="approval")
+    delivery_candidate: Mapped[DeliveryCandidate] = relationship(
+        foreign_keys=[delivery_candidate_id]
+    )
+    result_envelope: Mapped["CodexResultEnvelope"] = relationship(
+        foreign_keys=[result_envelope_id]
+    )
+    owner_acceptance: Mapped[OwnerAcceptanceSession] = relationship(
+        foreign_keys=[owner_acceptance_id]
+    )
+    approved_by: Mapped[User] = relationship(foreign_keys=[approved_by_user_id])
+
+
 class ApplySession(Base):
     __tablename__ = "apply_sessions"
     __table_args__ = (
@@ -914,6 +1121,10 @@ class ApplySession(Base):
             "AND blocked_path_count >= 0",
             name="ck_apply_session_path_counts_nonnegative",
         ),
+        CheckConstraint(
+            "candidate_version >= 1",
+            name="ck_apply_session_candidate_version_positive",
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -927,6 +1138,25 @@ class ApplySession(Base):
     )
     candidate_public_id: Mapped[str] = mapped_column(String(80), index=True)
     candidate_digest: Mapped[str] = mapped_column(String(64), index=True)
+    candidate_version: Mapped[int] = mapped_column(Integer, default=1)
+    result_envelope_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("codex_result_envelopes.id"), nullable=True, index=True
+    )
+    result_envelope_public_id: Mapped[str] = mapped_column(String(80), default="")
+    result_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
+    owner_acceptance_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("owner_acceptance_sessions.id"), nullable=True, index=True
+    )
+    result_review_decision_digest: Mapped[str] = mapped_column(
+        String(64), default="", index=True
+    )
+    apply_plan_approval_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("apply_plan_approvals.id"), nullable=True, unique=True, index=True
+    )
+    apply_plan_approval_public_id: Mapped[str] = mapped_column(String(80), default="")
+    apply_plan_approval_digest: Mapped[str] = mapped_column(
+        String(64), default="", index=True
+    )
     run_id: Mapped[int] = mapped_column(ForeignKey("codex_runs.id"), index=True)
     task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), index=True)
     task_version: Mapped[int] = mapped_column(Integer)
@@ -935,6 +1165,14 @@ class ApplySession(Base):
     )
     pack_version: Mapped[int] = mapped_column(Integer)
     source_snapshot_identity: Mapped[str] = mapped_column(String(64))
+    source_workspace_identity: Mapped[str] = mapped_column(String(64), default="")
+    run_workspace_identity: Mapped[str] = mapped_column(String(64), default="")
+    run_workspace_baseline_identity: Mapped[str] = mapped_column(
+        String(64), default=""
+    )
+    run_workspace_post_state_identity: Mapped[str] = mapped_column(
+        String(64), default=""
+    )
     source_drift_evaluation_id: Mapped[int] = mapped_column(
         ForeignKey("source_drift_evaluations.id"), index=True
     )
@@ -985,6 +1223,15 @@ class ApplySession(Base):
     entries: Mapped[list["ApplySessionEntry"]] = relationship(
         back_populates="apply_session",
         order_by="ApplySessionEntry.operation_ordinal",
+    )
+    result_envelope: Mapped[Optional["CodexResultEnvelope"]] = relationship(
+        foreign_keys=[result_envelope_id]
+    )
+    owner_acceptance: Mapped[Optional[OwnerAcceptanceSession]] = relationship(
+        foreign_keys=[owner_acceptance_id]
+    )
+    apply_plan_approval: Mapped[Optional[ApplyPlanApproval]] = relationship(
+        foreign_keys=[apply_plan_approval_id]
     )
 
 
@@ -2053,6 +2300,7 @@ for _immutable_delivery_model in (
     SourceDriftEvaluation,
     ApplyPlan,
     ApplyPlanEntry,
+    ApplyPlanApproval,
     ApplySessionAudit,
     PostApplyVerification,
     CommitPlan,
@@ -2070,6 +2318,91 @@ for _immutable_delivery_model in (
         "before_delete",
         _reject_immutable_delivery_record_mutation,
     )
+
+
+_OWNER_ACCEPTANCE_SET_ONCE_FIELDS = frozenset(
+    {
+        "owner_id",
+        "result_envelope_id",
+        "result_envelope_public_id",
+        "result_digest",
+        "result_task_version",
+        "result_pack_id",
+        "result_pack_version",
+        "approved_instruction_digest",
+        "delivery_candidate_id",
+        "candidate_public_id",
+        "candidate_version",
+        "candidate_digest",
+        "review_policy_version",
+        "decision_version",
+        "decision_digest",
+    }
+)
+
+
+def _reject_owner_acceptance_rebinding(
+    _mapper: object,
+    _connection: object,
+    target: OwnerAcceptanceSession,
+) -> None:
+    """Permit pending Result bindings to be filled once, never rebound."""
+    state = sa_inspect(target)
+    rebound: list[str] = []
+    for field in _OWNER_ACCEPTANCE_SET_ONCE_FIELDS:
+        history = state.attrs[field].history
+        if not history.has_changes():
+            continue
+        old_values = list(history.deleted)
+        old_value = old_values[0] if old_values else None
+        if old_value not in {None, ""}:
+            rebound.append(field)
+    status_history = state.attrs.status.history
+    if (
+        not status_history.has_changes()
+        and target.status in {"accepted", "rejected"}
+        and (target.result_envelope_id is not None or target.decision_digest)
+    ):
+        rebound.append("terminal_result_decision")
+    if status_history.has_changes():
+        old_statuses = list(status_history.deleted)
+        if old_statuses and old_statuses[0] in {"accepted", "rejected"}:
+            result_history = state.attrs.result_envelope_id.history
+            decision_history = state.attrs.decision_digest.history
+            old_result_ids = list(result_history.deleted)
+            old_decision_digests = list(decision_history.deleted)
+            old_result_id = (
+                old_result_ids[0]
+                if old_result_ids
+                else target.result_envelope_id
+            )
+            old_decision_digest = (
+                old_decision_digests[0]
+                if old_decision_digests
+                else target.decision_digest
+            )
+            # A pre-19.1C acceptance was not a delivery decision.  Permit its
+            # one-time reconciliation to pending only while it has neither a
+            # Result binding nor decision evidence; a real Result decision is
+            # terminal and cannot be rewritten.
+            if old_result_id is not None or old_decision_digest:
+                rebound.append("status")
+    if rebound:
+        raise RuntimeError(
+            "Owner Acceptance Result, Candidate, and decision bindings may be set only once."
+        )
+
+
+event.listen(
+    OwnerAcceptanceSession,
+    "before_update",
+    _reject_owner_acceptance_rebinding,
+)
+event.listen(
+    OwnerAcceptanceSession,
+    "before_delete",
+    _reject_immutable_delivery_record_mutation,
+)
 
 
 _CODEX_RUN_MONITOR_IMMUTABLE_FIELDS = frozenset(
@@ -2221,12 +2554,25 @@ _APPLY_SESSION_IMMUTABLE_FIELDS = frozenset(
         "delivery_candidate_id",
         "candidate_public_id",
         "candidate_digest",
+        "candidate_version",
+        "result_envelope_id",
+        "result_envelope_public_id",
+        "result_digest",
+        "owner_acceptance_id",
+        "result_review_decision_digest",
+        "apply_plan_approval_id",
+        "apply_plan_approval_public_id",
+        "apply_plan_approval_digest",
         "run_id",
         "task_id",
         "task_version",
         "pack_id",
         "pack_version",
         "source_snapshot_identity",
+        "source_workspace_identity",
+        "run_workspace_identity",
+        "run_workspace_baseline_identity",
+        "run_workspace_post_state_identity",
         "source_drift_evaluation_id",
         "repository_locator_fingerprint",
         "repository_fingerprint",

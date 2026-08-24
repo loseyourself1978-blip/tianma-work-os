@@ -37,7 +37,10 @@ from .repository_observer import (
     semantic_diff as canonical_semantic_diff,
     semantic_projection,
 )
-from .self_hosting import _source_repository_identity
+from .self_hosting import (
+    SOURCE_REPOSITORY_IDENTITY_METHODS,
+    _source_repository_identity,
+)
 
 
 POST_APPLY_VERIFICATION_POLICY_VERSION = "twos.post_apply_verification.v2"
@@ -413,7 +416,7 @@ def _repository_observation(
         approved_snapshot.get("source_repository_identity_method") or ""
     )
     if (
-        expected_identity_method != "git-common-dir-sha256-v1"
+        expected_identity_method not in SOURCE_REPOSITORY_IDENTITY_METHODS
         or not expected_repository_identity
     ):
         raise PostApplyVerificationError(
@@ -423,6 +426,7 @@ def _repository_observation(
     current_repository_identity = _source_repository_identity(
         root,
         hardened_read_only=True,
+        method=expected_identity_method,
     )
     target_paths = [entry.repository_path for entry in entries]
     _assert_repository_tree_inspectable(root)

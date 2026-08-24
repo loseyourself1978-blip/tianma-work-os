@@ -51,6 +51,7 @@
   const RESULT_AVAILABLE_STATUSES = Object.freeze(["result_available"]);
   const RESULT_BLOCKED_STATUSES = Object.freeze(["result_unavailable", "result_integrity_blocked", "process_lost"]);
   const APPLY_PLAN_STATE_LABELS = Object.freeze({
+    awaiting_owner_approval: "AWAITING OWNER APPROVAL",
     ready_for_owner_review: "READY FOR OWNER REVIEW",
     review_with_source_changes: "REVIEW WITH SOURCE CHANGES",
     blocked_by_conflict: "BLOCKED BY CONFLICT",
@@ -433,6 +434,9 @@
     candidateReviewSection: byId("candidate-review-section"),
     reviewChangeCandidate: byId("review-change-candidate"),
     candidateStatus: byId("candidate-status"),
+    candidateSourceRun: byId("candidate-source-run"),
+    candidateIncludedCount: byId("candidate-included-count"),
+    candidateExcludedCount: byId("candidate-excluded-count"),
     candidateUnexpectedFiles: byId("candidate-unexpected-files"),
     candidateAcceptanceStatus: byId("candidate-acceptance-status"),
     candidateVerificationStatus: byId("candidate-verification-status"),
@@ -463,7 +467,9 @@
     candidateDriftDiagnostics: byId("candidate-drift-diagnostics"),
     applyPlanReviewSection: byId("apply-plan-review-section"),
     reviewApplyPlan: byId("review-apply-plan"),
+    approveApplyPlan: byId("approve-apply-plan"),
     applyPlanStatus: byId("apply-plan-status"),
+    applyPlanApprovalStatus: byId("apply-plan-approval-status"),
     applyPlanCandidateStatus: byId("apply-plan-candidate-status"),
     applyPlanDriftStatus: byId("apply-plan-drift-status"),
     applyPlanManifestCoverage: byId("apply-plan-manifest-coverage"),
@@ -2242,6 +2248,23 @@
             return String(run.id) === String(state.selectedActivityRunId);
           })
         ) state.selectedActivityRunId = null;
+        const selectedRun = currentCodexRun();
+        if (selectedRun) {
+          const exactAcceptance = await api(
+            "/api/tasks/" + encodeURIComponent(task.id)
+              + "/owner-acceptance?run_id=" + encodeURIComponent(selectedRun.id)
+          );
+          if (
+            requestSelectionEpoch !== state.taskSelectionEpoch
+            || String(state.selectedTaskId) !== String(requestedTaskId)
+          ) {
+            state.refreshQueued = true;
+            return;
+          }
+          state.ownerAcceptance = exactAcceptance && exactAcceptance.acceptance
+            ? exactAcceptance.acceptance
+            : null;
+        }
         await loadResultIntake(currentCodexRun());
         await loadHandoffReview(currentCodexRun());
         await loadDeliveryCandidateReview(currentCodexRun());
@@ -5319,18 +5342,30 @@
   function renderDeliveryCandidateReview(run) {
     const terminal = isTerminalCodexRun(run);
     elements.candidateReviewSection.hidden = !terminal;
-    elements.reviewChangeCandidate.hidden = !terminal;
     elements.candidateAdvancedCard.hidden = !terminal;
     if (!terminal) return;
 
     const review = objectRecord(deliveryCandidateReviewForRun(run));
     const candidate = objectRecord(review.candidate);
+    const candidateAdvanced = objectRecord(candidate.advanced);
     const drift = objectRecord(review.drift);
     const available = candidate.id !== null && candidate.id !== undefined;
+    const resultDerived = Boolean(
+      candidate.derivation_version === "twos.result_delivery_candidate.v1"
+      || candidate.result_envelope_id
+      || candidateAdvanced.result_digest
+    );
+    elements.reviewChangeCandidate.hidden = resultDerived || !terminal;
     const blockers = candidateBlockerLines(review, drift);
     const reviewed = available || Object.keys(drift).length > 0 || blockers.length > 0;
     const statusText = available
-      ? boundedText(candidate.status_label || humanStatus(candidate.status || "available"), "Available", 160)
+      ? boundedText(
+        candidate.readiness_state
+          ? humanStatus(candidate.readiness_state)
+          : candidate.status_label || humanStatus(candidate.status || "available"),
+        "Available",
+        160
+      )
       : drift.status_label
         ? boundedText(drift.status_label, "Candidate unavailable", 160)
         : blockers.length
@@ -5353,13 +5388,24 @@
       : candidateVerificationFallback(run);
 
     elements.candidateStatus.textContent = statusText;
+    elements.candidateSourceRun.textContent = available
+      ? "Run #" + String(candidate.run_id || run.id)
+      : "Not available";
+    elements.candidateIncludedCount.textContent = available
+      ? String(files.length)
+      : "0";
+    elements.candidateExcludedCount.textContent = available
+      ? String(Number(candidate.excluded_file_count || 0))
+      : "0";
     elements.candidateDriftStatus.textContent = driftText;
     setCandidateStatusLabel(elements.candidateStatus, statusText);
     setCandidateStatusLabel(elements.candidateDriftStatus, driftText);
     elements.candidateUnexpectedFiles.textContent = unexpectedCount > 0
       ? String(unexpectedCount) + " — " + unexpected.map(candidateFileName).join(", ")
       : available ? "None" : "Not available";
-    elements.candidateAcceptanceStatus.textContent = humanStatus(acceptanceStatus || "not_available");
+    elements.candidateAcceptanceStatus.textContent = humanStatus(
+      candidate.result_review_state || acceptanceStatus || "not_available"
+    );
     elements.candidateVerificationStatus.textContent = humanStatus(verificationStatus || "not_available");
     elements.candidateNextAction.textContent = sanitizedCandidateText(
       review.next_action || drift.next_action,
@@ -5374,9 +5420,21 @@
     );
 
     elements.candidateRecordId.textContent = available ? "#" + String(candidate.id) : "None";
-    elements.candidateDigest.textContent = boundedText(candidate.candidate_digest, "None", 500);
-    elements.candidatePatchIdentity.textContent = boundedText(candidate.patch_identity, "None", 500);
-    elements.candidateSourceSnapshot.textContent = boundedText(candidate.source_snapshot_identity, "None", 500);
+    elements.candidateDigest.textContent = boundedText(
+      candidateAdvanced.candidate_digest || candidate.candidate_digest,
+      "None",
+      500
+    );
+    elements.candidatePatchIdentity.textContent = boundedText(
+      candidateAdvanced.patch_identity || candidate.patch_identity,
+      "None",
+      500
+    );
+    elements.candidateSourceSnapshot.textContent = boundedText(
+      candidateAdvanced.source_snapshot_identity || candidate.source_snapshot_identity,
+      "None",
+      500
+    );
     elements.candidateTaskBinding.textContent = candidateBindingText(
       "Task",
       candidate.task_id,
@@ -5389,20 +5447,36 @@
     );
     elements.candidateCodingAssignment.textContent = candidateBindingText(
       "Assignment",
-      candidate.coding_assignment_id,
-      candidate.coding_assignment_version
+      candidateAdvanced.coding_assignment_id ?? candidate.coding_assignment_id,
+      candidateAdvanced.coding_assignment_version ?? candidate.coding_assignment_version
     );
     elements.candidateVerificationAssignment.textContent = candidateBindingText(
       "Assignment",
-      candidate.verification_assignment_id,
-      candidate.verification_assignment_version
+      candidateAdvanced.verification_assignment_id ?? candidate.verification_assignment_id,
+      candidateAdvanced.verification_assignment_version ?? candidate.verification_assignment_version
     );
-    elements.candidateRoutingSnapshot.textContent = boundedText(candidate.routing_snapshot_identity, "None", 500);
+    elements.candidateRoutingSnapshot.textContent = boundedText(
+      candidateAdvanced.routing_snapshot_identity || candidate.routing_snapshot_identity,
+      "None",
+      500
+    );
     elements.candidateRunBinding.textContent = candidate.run_id === null || candidate.run_id === undefined
       ? "None"
       : "Run #" + String(candidate.run_id);
-    elements.candidateCodingEvidence.textContent = boundedText(candidate.coding_evidence_identity, "None", 500);
-    elements.candidateVerificationEvidence.textContent = boundedText(candidate.verification_evidence_identity, "None", 500);
+    elements.candidateCodingEvidence.textContent = boundedText(
+      candidateAdvanced.coding_attempt_identity
+        || candidateAdvanced.coding_evidence_identity
+        || candidate.coding_evidence_identity,
+      "None",
+      500
+    );
+    elements.candidateVerificationEvidence.textContent = boundedText(
+      candidateAdvanced.verification_receipt_identity
+        || candidateAdvanced.verification_evidence_identity
+        || candidate.verification_evidence_identity,
+      "None",
+      500
+    );
     elements.candidateCreatedAt.textContent = available ? formatTime(candidate.created_at) : "Not recorded";
     elements.candidateDriftEvaluation.textContent = drift.evaluation_id === null || drift.evaluation_id === undefined
       ? "Not evaluated"
@@ -5447,7 +5521,11 @@
     element.dataset.planState = stateValue || "not_reviewed";
     if (stateValue === "ready_for_owner_review") {
       element.classList.add("is-success");
-    } else if (stateValue === "review_with_source_changes" || stateValue === "expired") {
+    } else if (
+      stateValue === "awaiting_owner_approval"
+      || stateValue === "review_with_source_changes"
+      || stateValue === "expired"
+    ) {
       element.classList.add("is-warning");
     } else if (stateValue.indexOf("blocked_by_") === 0) {
       element.classList.add("is-error");
@@ -5715,6 +5793,7 @@
 
   function applyPlanNextActionFallback(stateValue) {
     const actions = {
+      awaiting_owner_approval: "Explicitly approve this exact Apply Plan.",
       ready_for_owner_review: "Review Apply readiness, then explicitly confirm Apply Accepted Changes.",
       review_with_source_changes: "Review the unrelated source changes before explicitly confirming Apply.",
       blocked_by_conflict: "Resolve the Candidate-path conflict and produce a newly approved Run.",
@@ -5894,8 +5973,9 @@
     const terminal = isTerminalCodexRun(run);
     const candidateReviewed = terminal && deliveryCandidateReviewAvailable(run);
     elements.applyPlanReviewSection.hidden = !candidateReviewed;
-    elements.reviewApplyPlan.hidden = !candidateReviewed;
     if (!candidateReviewed) {
+      elements.reviewApplyPlan.hidden = true;
+      elements.approveApplyPlan.hidden = true;
       elements.applyPlanAdvancedCard.hidden = true;
       return;
     }
@@ -5922,8 +6002,32 @@
     const unexpected = applyPlanFindingLines(plan.unexpected_files);
     const blockers = applyPlanBlockerLines(review, plan);
     const plannedValidation = objectRecord(plan.planned_validation);
+    const resultDerived = Boolean(
+      candidate.result_envelope_id
+      || candidate.derivation_version === "twos.result_delivery_candidate.v1"
+      || objectRecord(candidate.advanced).result_digest
+    );
+    const candidateAccepted = candidate.result_review_state === "accepted_for_delivery";
+    const candidateReady = candidate.readiness_state === "ready";
+    const approvalState = String(plan.approval_state || "NOT REQUIRED").toUpperCase();
+    const canPreparePlan = !resultDerived || (candidateAccepted && candidateReady);
+    elements.reviewApplyPlan.hidden = !canPreparePlan || (
+      reviewed && stateValue !== "expired"
+    );
+    elements.approveApplyPlan.hidden = !(
+      reviewed
+      && plan.approval_required === true
+      && approvalState === "PENDING"
+    );
 
     elements.applyPlanStatus.textContent = statusLabel;
+    elements.applyPlanApprovalStatus.textContent = reviewed
+      ? humanStatus(approvalState)
+      : "Not approved";
+    setStatusLabel(
+      elements.applyPlanApprovalStatus,
+      elements.applyPlanApprovalStatus.textContent
+    );
     setApplyPlanStatusLabel(elements.applyPlanStatus, statusLabel);
     elements.applyPlanCandidateStatus.textContent = sanitizedApplyPlanText(
       candidateStatus,
@@ -6282,11 +6386,24 @@
       ? applySessionStateLabel(stateValue)
       : "Not started";
 
-    elements.applySessionApproval.textContent = sanitizedApplyPlanText(
-      parts.review.approval_state,
-      parts.session.id ? "OWNER CONFIRMED" : "AWAITING OWNER CONFIRMATION",
+    const planApprovalState = sanitizedApplyPlanText(
+      parts.review.plan_approval_state || parts.review.approval_state,
+      "PENDING",
       100
     );
+    const applyConfirmationState = sanitizedApplyPlanText(
+      parts.review.apply_confirmation_state,
+      parts.session.id ? "CONFIRMED" : "PENDING",
+      100
+    );
+    elements.applySessionApproval.textContent = parts.plan.approval_required === true
+      ? "Plan " + humanStatus(planApprovalState)
+        + " · Apply confirmation " + humanStatus(applyConfirmationState)
+      : sanitizedApplyPlanText(
+          parts.review.approval_state,
+          parts.session.id ? "OWNER CONFIRMED" : "AWAITING OWNER CONFIRMATION",
+          100
+        );
     elements.applySessionReadiness.textContent = readinessLabel;
     elements.applySessionState.textContent = sanitizedApplyPlanText(
       parts.review.execution_state,
@@ -7510,10 +7627,22 @@
     const planAdvanced = objectRecord(parts.plan.advanced);
     const candidateReview = objectRecord(deliveryCandidateReviewForRun(run));
     const candidate = objectRecord(candidateReview.candidate);
+    const planApproval = objectRecord(parts.plan.approval);
+    const planApprovalAdvanced = objectRecord(planApproval.advanced);
     state.applyConfirmationContext = {
       plan_id: String(parts.plan.id),
       plan_digest: String(planAdvanced.plan_digest || ""),
-      candidate_digest: String(planAdvanced.candidate_digest || candidate.candidate_digest || "")
+      candidate_digest: String(
+        planAdvanced.candidate_digest
+        || objectRecord(candidate.advanced).candidate_digest
+        || candidate.candidate_digest
+        || ""
+      ),
+      plan_approval_digest: String(planApprovalAdvanced.approval_digest || ""),
+      result_digest: String(planAdvanced.result_digest || ""),
+      result_review_decision_digest: String(
+        planAdvanced.result_review_decision_digest || ""
+      )
     };
     elements.applyConfirmationPlan.textContent = "Plan " + String(parts.plan.id)
       + " · version " + String(parts.plan.version || "unknown");
@@ -8350,6 +8479,10 @@
     return JSON.stringify({
       id: acceptance.id,
       status: acceptance.status,
+      review_state: acceptance.review_state,
+      result_id: acceptance.result_id,
+      candidate_id: acceptance.candidate_id,
+      candidate_version: acceptance.candidate_version,
       items: (acceptance.items || []).map(function (item) {
         return [item.id, item.status, item.note];
       })
@@ -8358,7 +8491,9 @@
 
   function renderOwnerAcceptance() {
     const acceptance = state.ownerAcceptance;
-    elements.acceptanceStatus.textContent = acceptance ? humanStatus(acceptance.status) : "Waiting for result";
+    elements.acceptanceStatus.textContent = acceptance
+      ? humanStatus(acceptance.review_state || acceptance.status)
+      : "Waiting for result";
     setStatusLabel(elements.acceptanceStatus, elements.acceptanceStatus.textContent);
     const signature = ownerAcceptanceSignature(acceptance);
     if (signature !== state.renderedAcceptanceSignature) {
@@ -8368,6 +8503,13 @@
         empty.className = "empty-state";
         empty.textContent = "No Codex result is ready for review.";
         elements.acceptanceItems.appendChild(empty);
+      } else if (acceptance.review_kind === "result_delivery") {
+        const summary = document.createElement("p");
+        summary.className = "result-section-copy";
+        summary.textContent = "This captured Result is immutably bound to its versioned Candidate. "
+          + "Coding, Verification, workspace evidence, and included files remain available in the Result and Candidate sections. "
+          + "Exact Result, Candidate, and Run record identifiers remain under Advanced.";
+        elements.acceptanceItems.appendChild(summary);
       } else {
         (acceptance.items || []).forEach(function (item) {
           const row = document.createElement("section");
@@ -8541,6 +8683,12 @@
       || !isTerminalCodexRun(codexRun)
       || !deliveryCandidateReviewAvailable(codexRun)
       || state.pending.has("review-apply-plan");
+    const currentPlan = currentApplyPlanForRun(codexRun);
+    elements.approveApplyPlan.disabled = !authenticated
+      || !currentPlan.id
+      || currentPlan.approval_required !== true
+      || String(currentPlan.approval_state || "").toUpperCase() !== "PENDING"
+      || state.pending.has("approve-apply-plan");
     const applySessionParts = applySessionReviewParts(codexRun);
     elements.applyAcceptedChanges.disabled = !authenticated
       || applySessionParts.actions.can_apply !== true
@@ -8579,7 +8727,10 @@
       || state.pending.has("create-local-commit");
     const decisionPending = state.pending.has("acceptance-decision");
     elements.acceptResult.disabled = !acceptance || !acceptance.can_accept || acceptance.status !== "owner_review" || decisionPending;
-    elements.rejectResult.disabled = !acceptance || acceptance.status !== "owner_review" || decisionPending;
+    elements.rejectResult.disabled = !acceptance
+      || acceptance.can_reject === false
+      || acceptance.status !== "owner_review"
+      || decisionPending;
     elements.runCompactSync.disabled = !authenticated || !task || task.action !== "Compact Sync" || state.pending.has("run-compact-sync");
     elements.runCompactSync.title = task && task.action === "Compact Sync"
       ? "Run the safe internal Compact Sync worker."
@@ -9073,6 +9224,63 @@
         renderApplySessionReview(run);
         renderPostApplyVerification(run);
         return "";
+      }
+    );
+  }
+
+  async function approveApplyPlan() {
+    await performAction(
+      "approve-apply-plan",
+      elements.approveApplyPlan,
+      "Approving…",
+      async function () {
+        const run = currentCodexRun();
+        const plan = currentApplyPlanForRun(run);
+        const advanced = objectRecord(plan.advanced);
+        if (!run || !plan.id || plan.approval_required !== true) {
+          throw new ApiError(
+            409,
+            "APPLY_PLAN_APPROVAL_NOT_READY",
+            "Review one current Result-bound Apply Plan before approval.",
+            {},
+            "product"
+          );
+        }
+        const response = await api(
+          "/api/apply-plans/" + encodeURIComponent(plan.id) + "/approve",
+          {
+            method: "POST",
+            body: {
+              confirmation: "APPROVE_APPLY_PLAN",
+              expected_plan_digest: advanced.plan_digest || "",
+              expected_candidate_digest: advanced.candidate_digest || "",
+              expected_result_digest: advanced.result_digest || "",
+              expected_result_review_decision_digest:
+                advanced.result_review_decision_digest || ""
+            }
+          }
+        );
+        if (!response || Number(response.run_id) !== Number(run.id)) {
+          throw new ApiError(
+            200,
+            "APPLY_PLAN_APPROVAL_BINDING_MISMATCH",
+            "Apply Plan approval did not match the selected Run.",
+            {},
+            "product"
+          );
+        }
+        const key = String(run.id);
+        state.applyPlanReviews[key] = {
+          run_id: run.id,
+          plan: response.plan,
+          history: objectRecord(state.applyPlanReviews[key]).history || []
+        };
+        await loadApplySessionReview(run, true);
+        renderApplyPlanReview(run);
+        renderApplySessionReview(run);
+        return response.approval_replayed
+          ? "This exact Apply Plan was already approved. No file action was repeated."
+          : "Apply Plan approved. Apply remains a separate explicit Owner confirmation.";
       }
     );
   }
@@ -9589,7 +9797,11 @@
             body: {
               confirmation: "APPLY_ACCEPTED_CHANGES",
               expected_plan_digest: context.plan_digest,
-              expected_candidate_digest: context.candidate_digest
+              expected_candidate_digest: context.candidate_digest,
+              expected_plan_approval_digest: context.plan_approval_digest || null,
+              expected_result_digest: context.result_digest || null,
+              expected_result_review_decision_digest:
+                context.result_review_decision_digest || null
             }
           }
         );
@@ -9686,6 +9898,50 @@
     await performAction("acceptance-decision", button, pending, async function () {
       const acceptance = state.ownerAcceptance;
       if (!acceptance) throw new ApiError(400, "NO_ACCEPTANCE", "No acceptance session is ready.", {}, "product");
+      if (acceptance.review_kind === "result_delivery") {
+        const run = currentCodexRun();
+        const envelope = resultEnvelopeForRun(run);
+        const candidate = objectRecord(
+          objectRecord(deliveryCandidateReviewForRun(run)).candidate
+        );
+        const advanced = objectRecord(candidate.advanced);
+        if (!run || !envelope || !candidate.id) {
+          throw new ApiError(
+            409,
+            "RESULT_DELIVERY_BINDING_UNAVAILABLE",
+            "The exact Result and Candidate binding is unavailable.",
+            {},
+            "product"
+          );
+        }
+        const routeDecision = decision === "accept" ? "accept" : "reject";
+        const response = await api(
+          "/api/codex-runs/" + encodeURIComponent(run.id)
+            + "/delivery-review/" + routeDecision,
+          {
+            method: "POST",
+            body: {
+              confirmation: decision === "accept"
+                ? "ACCEPT_RESULT_FOR_DELIVERY"
+                : "REJECT_RESULT_FOR_DELIVERY",
+              expected_result_id: envelope.id || acceptance.result_id || "",
+              expected_result_digest:
+                advanced.result_digest || objectRecord(acceptance.advanced).result_digest || "",
+              expected_candidate_id: candidate.id,
+              expected_candidate_version: Number(candidate.candidate_version || 1),
+              expected_candidate_digest:
+                advanced.candidate_digest || objectRecord(acceptance.advanced).candidate_digest || "",
+              note: elements.acceptanceNote.value
+            }
+          }
+        );
+        state.ownerAcceptance = response.review;
+        state.deliveryCandidateReviewLoads.delete(String(run.id));
+        await loadDeliveryCandidateReview(run);
+        return decision === "accept"
+          ? "Result accepted for delivery. No Apply, Stage, Commit, Push, or new Run started."
+          : "Result rejected for delivery. The captured Result remains available.";
+      }
       await api("/api/owner-acceptance/" + acceptance.id + "/" + decision, {
         method: "POST",
         body: { note: elements.acceptanceNote.value }
@@ -9927,6 +10183,7 @@
     elements.approveInstructionDraft.addEventListener("click", approveInstructionDraft);
     elements.reviewChangeCandidate.addEventListener("click", reviewChangeCandidate);
     elements.reviewApplyPlan.addEventListener("click", reviewApplyPlan);
+    elements.approveApplyPlan.addEventListener("click", approveApplyPlan);
     elements.applyPlanHistory.addEventListener("change", loadHistoricalApplyPlan);
     elements.applyAcceptedChanges.addEventListener("click", openApplyConfirmation);
     elements.revertAppliedChanges.addEventListener("click", openRevertConfirmation);

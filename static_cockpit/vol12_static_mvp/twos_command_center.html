@@ -447,6 +447,29 @@
                 <div><dt>Exact Owner action</dt><dd id="result-envelope-next-action">Run Codex when the approved Pack is ready.</dd></div>
               </dl>
             </section>
+            <section id="acceptance-card" class="result-section result-delivery-review-section" aria-labelledby="acceptance-title">
+              <div class="candidate-review-heading">
+                <div>
+                  <h3 id="acceptance-title">Review Run Result</h3>
+                  <p>Accept or reject this exact captured Result for delivery. This decision creates no file change and starts no later action.</p>
+                </div>
+                <strong id="acceptance-status" class="status-label">Waiting for result</strong>
+              </div>
+              <p class="result-section-copy">Candidate metadata is prepared automatically, but only the Owner can accept the Result for delivery.</p>
+              <div class="field-group">
+                <label for="acceptance-note">Decision note <span class="optional">optional</span></label>
+                <textarea id="acceptance-note" rows="3" maxlength="2000" placeholder="Record the reason for acceptance or rejection."></textarea>
+              </div>
+              <div class="button-row result-delivery-review-controls">
+                <button id="accept-result" class="button button-primary" type="button">Accept for Delivery</button>
+                <button id="reject-result" class="button button-secondary" type="button">Reject Result</button>
+              </div>
+              <details class="result-review-evidence-details">
+                <summary>Review evidence checklist</summary>
+                <div id="acceptance-items" class="acceptance-items"><p class="empty-state">No captured Result is ready for review.</p></div>
+              </details>
+              <p class="apply-plan-boundary-note">Accepting or rejecting never Applies, Reverts, stages, commits, pushes, or starts another Run.</p>
+            </section>
             <section class="result-section" aria-labelledby="result-run-status-title">
               <h3 id="result-run-status-title">Run status</h3>
               <dl class="fact-list result-facts">
@@ -559,16 +582,19 @@
               <div class="candidate-review-heading">
                 <div>
                   <h3 id="candidate-review-title">Change Candidate</h3>
-                  <p>The locked set of file changes produced by this accepted and independently verified Run. Reviewing it does not change your source repository.</p>
+                  <p>The versioned, read-only file set materialized automatically from this exact captured Run Result. Reviewing it does not change your source repository.</p>
+                  <p class="result-section-copy">The locked file set reflects this captured Run Result. Candidate readiness, Owner review, and independent Verification are shown separately below. Reviewing it does not change your source repository.</p>
                 </div>
                 <div class="button-row">
-                  <button id="review-change-candidate" class="button button-primary" type="button" hidden disabled>Review Change Candidate</button>
+                  <button id="review-change-candidate" class="button button-secondary" type="button" hidden disabled>Refresh Candidate</button>
                 </div>
               </div>
               <dl class="fact-list result-facts candidate-review-facts">
                 <div><dt>Candidate status</dt><dd id="candidate-status" class="candidate-inline-status">Not reviewed</dd></div>
+                <div><dt>Included files</dt><dd id="candidate-included-count">0</dd></div>
+                <div><dt>Excluded files</dt><dd id="candidate-excluded-count">0</dd></div>
                 <div><dt>Unexpected files</dt><dd id="candidate-unexpected-files">Not reviewed</dd></div>
-                <div><dt>Task acceptance</dt><dd id="candidate-acceptance-status">Not reviewed</dd></div>
+                <div><dt>Result review</dt><dd id="candidate-acceptance-status">Not reviewed</dd></div>
                 <div><dt>Independent Verification</dt><dd id="candidate-verification-status">Not reviewed</dd></div>
                 <div><dt>Source Drift</dt><dd id="candidate-drift-status" class="candidate-inline-status">Not evaluated</dd></div>
                 <div><dt>Exact next action</dt><dd id="candidate-next-action">Review Change Candidate</dd></div>
@@ -591,11 +617,13 @@
                 </div>
                 <div class="button-row">
                   <button id="review-apply-plan" class="button button-primary" type="button" hidden disabled>Review Apply Plan</button>
+                  <button id="approve-apply-plan" class="button button-primary" type="button" hidden disabled>Approve Apply Plan</button>
                 </div>
               </div>
               <p class="apply-plan-boundary-note">Review Apply Plan remains read-only. Applying changes always requires the separate Apply Accepted Changes action and a final confirmation.</p>
               <dl class="fact-list result-facts apply-plan-facts">
                 <div><dt>Apply Plan status</dt><dd id="apply-plan-status" class="candidate-inline-status">Not reviewed</dd></div>
+                <div><dt>Plan approval</dt><dd id="apply-plan-approval-status" class="candidate-inline-status">Not approved</dd></div>
                 <div><dt>Candidate status</dt><dd id="apply-plan-candidate-status">Not reviewed</dd></div>
                 <div><dt>Current Source Drift</dt><dd id="apply-plan-drift-status" class="candidate-inline-status">Not evaluated</dd></div>
                 <div><dt>Manifest coverage</dt><dd id="apply-plan-manifest-coverage">Not reviewed</dd></div>
@@ -827,23 +855,6 @@
             </section>
           </section>
 
-          <section id="acceptance-card" class="workbench-card card-wide" aria-labelledby="acceptance-title">
-            <div class="card-heading">
-              <div><span class="step-label">07</span><h2 id="acceptance-title">Owner Acceptance</h2></div>
-              <strong id="acceptance-status" class="status-label">Waiting for result</strong>
-            </div>
-            <p class="card-intro">Inspect each required path, record Pass, Needs Review, or Fail, then make the explicit decision.</p>
-            <div id="acceptance-items" class="acceptance-items"><p class="empty-state">No Codex result is ready for review.</p></div>
-            <div class="field-group">
-              <label for="acceptance-note">Decision note</label>
-              <textarea id="acceptance-note" rows="3" placeholder="Record the reason for acceptance or rejection."></textarea>
-            </div>
-            <div class="button-row">
-              <button id="accept-result" class="button button-primary" type="button">Accept Result</button>
-              <button id="reject-result" class="button button-danger" type="button">Reject Result</button>
-            </div>
-          </section>
-
           <section id="compact-sync-card" class="workbench-card card-wide" aria-labelledby="compact-sync-title">
             <div class="card-heading">
               <div><span class="step-label">08</span><h2 id="compact-sync-title">Compact Sync</h2></div>
@@ -1002,6 +1013,7 @@
               <h2 id="advanced-candidate-title">Delivery Candidate evidence</h2>
               <dl class="fact-list compact-facts">
                 <div><dt>Candidate record</dt><dd id="candidate-record-id">None</dd></div>
+                <div><dt>Source Run record</dt><dd id="candidate-source-run">Not available</dd></div>
                 <div><dt>Candidate digest</dt><dd id="candidate-digest">None</dd></div>
                 <div><dt>Patch identity</dt><dd id="candidate-patch-identity">None</dd></div>
                 <div><dt>Source snapshot</dt><dd id="candidate-source-snapshot">None</dd></div>

@@ -10,6 +10,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .ai_orchestration import (
@@ -21,8 +22,13 @@ from .ai_orchestration import (
 from .models import (
     AIModelAssignment,
     AIModelInvocationEvidence,
+    AuditEvent,
+    CodexExecutionAttempt,
     CodexInstructionPack,
+    CodexResultArtifact,
+    CodexResultEnvelope,
     CodexRun,
+    CodexRunMonitor,
     DeliveryCandidate,
     OwnerAcceptanceItem,
     OwnerAcceptanceSession,
@@ -30,6 +36,8 @@ from .models import (
     Task,
 )
 from .self_hosting import (
+    SOURCE_REPOSITORY_IDENTITY_METHOD,
+    SOURCE_REPOSITORY_IDENTITY_METHODS,
     SOURCE_SNAPSHOT_SCHEMA,
     _snapshot_exclusion_reason,
     _source_snapshot_digest,
@@ -37,6 +45,7 @@ from .self_hosting import (
     development_task_digest,
     git_source_state,
     run_git,
+    source_snapshot_has_strong_repository_identity,
 )
 
 
@@ -73,6 +82,10 @@ SOURCE_DRIFT_READ_ONLY_GIT_ALLOWLIST = (
 TERMINAL_RUN_STATUSES = frozenset(
     {"completed", "failed", "blocked", "cancelled", "timed_out"}
 )
+LEGACY_CANDIDATE_DERIVATION_VERSION = "twos.delivery_candidate.v1"
+RESULT_CANDIDATE_DERIVATION_VERSION = "twos.result_delivery_candidate.v1"
+RESULT_REVIEW_POLICY_VERSION = "twos.result_delivery_review.v1"
+ATTEMPT_ID_PATTERN = re.compile(r"^attempt-[0-9a-f]{32}$")
 VERIFICATION_INDEPENDENCE_STATES = frozenset(
     {"independent", "independent_fallback", "separate_invocation"}
 )
@@ -335,6 +348,1094 @@ def _verified_evidence(
         ).all()
     )
     return next((row for row in rows if is_verified_real_invocation(row)), None)
+
+
+def _execution_attempt(
+    session: Session,
+    *,
+    owner_id: int,
+    run_id: int,
+    phase: str,
+) -> CodexExecutionAttempt | None:
+    return session.scalar(
+        select(CodexExecutionAttempt)
+        .where(
+            CodexExecutionAttempt.owner_id == owner_id,
+            CodexExecutionAttempt.run_id == run_id,
+            CodexExecutionAttempt.phase == phase,
+        )
+        .order_by(
+            CodexExecutionAttempt.attempt_number.desc(),
+            CodexExecutionAttempt.id.desc(),
+        )
+        .limit(1)
+    )
+
+
+def _result_review_status(value: object) -> str:
+    normalized = str(value or "owner_review").strip().lower()
+    return {
+        "owner_review": "pending",
+        "pending": "pending",
+        "accepted": "accepted_for_delivery",
+        "accepted_for_delivery": "accepted_for_delivery",
+        "rejected": "rejected",
+    }.get(normalized, "pending")
+
+
+def result_review_decision_payload(
+    acceptance: OwnerAcceptanceSession,
+    *,
+    decision_status: str | None = None,
+) -> dict[str, Any]:
+    """Canonical immutable Owner decision binding shared with delivery gates."""
+    status = str(decision_status or acceptance.status or "").strip().lower()
+    return {
+        "schema": "twos.result_delivery_review_decision.v1",
+        "review_policy_version": acceptance.review_policy_version,
+        "decision_version": acceptance.decision_version,
+        "acceptance_id": acceptance.id,
+        "owner_id": acceptance.owner_id,
+        "result_envelope_id": acceptance.result_envelope_id,
+        "result_envelope_public_id": acceptance.result_envelope_public_id,
+        "result_digest": acceptance.result_digest,
+        "result_task_version": acceptance.result_task_version,
+        "result_pack_id": acceptance.result_pack_id,
+        "result_pack_version": acceptance.result_pack_version,
+        "approved_instruction_digest": acceptance.approved_instruction_digest,
+        "delivery_candidate_id": acceptance.delivery_candidate_id,
+        "candidate_public_id": acceptance.candidate_public_id,
+        "candidate_version": acceptance.candidate_version,
+        "candidate_digest": acceptance.candidate_digest,
+        "status": status,
+        "owner_note_digest": hashlib.sha256(
+            (acceptance.owner_note or "").encode("utf-8")
+        ).hexdigest(),
+        "decided_by_user_id": acceptance.decided_by_user_id,
+        "decided_at": _iso(acceptance.decided_at),
+    }
+
+
+def result_review_decision_digest(
+    acceptance: OwnerAcceptanceSession,
+    *,
+    decision_status: str | None = None,
+) -> str:
+    return canonical_sha256(
+        result_review_decision_payload(
+            acceptance,
+            decision_status=decision_status,
+        )
+    )
+
+
+def _result_candidate_blocker(code: str, message: str) -> dict[str, str]:
+    return {"code": code, "message": message}
+
+
+def _result_artifact_manifest(
+    session: Session,
+    envelope: CodexResultEnvelope,
+) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
+    rows = list(
+        session.scalars(
+            select(CodexResultArtifact)
+            .where(CodexResultArtifact.result_envelope_id == envelope.id)
+            .order_by(CodexResultArtifact.ordinal)
+        ).all()
+    )
+    blockers: list[dict[str, str]] = []
+    manifest: list[dict[str, Any]] = []
+    ordinals: list[int] = []
+    seen_paths: set[str] = set()
+    for row in rows:
+        try:
+            path = normalize_repository_path(row.repository_path)
+        except ManifestError:
+            blockers.append(
+                _result_candidate_blocker(
+                    "ATTRIBUTED_PATH_UNSAFE",
+                    "A Run-attributed path failed the authorized workspace boundary.",
+                )
+            )
+            continue
+        if path in seen_paths:
+            blockers.append(
+                _result_candidate_blocker(
+                    "ATTRIBUTION_DUPLICATE_PATH",
+                    "Run attribution contains a duplicate path.",
+                )
+            )
+            continue
+        seen_paths.add(path)
+        ordinals.append(row.ordinal)
+        operation = str(row.operation or "").upper()
+        if operation not in {"CREATE", "MODIFY", "DELETE"}:
+            blockers.append(
+                _result_candidate_blocker(
+                    "ATTRIBUTION_OPERATION_UNSUPPORTED",
+                    "A Run-attributed file action is unsupported.",
+                )
+            )
+            continue
+        artifact_payload = {
+            "result_digest": envelope.result_digest,
+            "ordinal": row.ordinal,
+            "path": row.repository_path,
+            "display_path": row.display_path,
+            "path_identity": row.path_identity,
+            "operation": row.operation,
+            "before_hash": row.before_hash,
+            "after_hash": row.after_hash,
+            "before_size": row.before_size,
+            "after_size": row.after_size,
+            "before_mode": row.before_mode,
+            "after_mode": row.after_mode,
+            "content_kind": row.content_kind,
+            "unexpected": row.unexpected,
+            "evidence_identity": row.evidence_identity,
+        }
+        if (
+            not SHA256_PATTERN.fullmatch(row.path_identity or "")
+            or row.path_identity != canonical_sha256(path)
+            or not SHA256_PATTERN.fullmatch(row.evidence_identity or "")
+            or not SHA256_PATTERN.fullmatch(row.artifact_digest or "")
+            or row.artifact_digest != canonical_sha256(artifact_payload)
+        ):
+            blockers.append(
+                _result_candidate_blocker(
+                    "ATTRIBUTION_INTEGRITY_INVALID",
+                    "A Run-attributed file action failed its immutable evidence check.",
+                )
+            )
+            continue
+        manifest.append(
+            {
+                "name": PurePosixPath(path).name,
+                "path": path,
+                "operation": operation,
+                "unexpected": bool(row.unexpected),
+                "before_hash": row.before_hash,
+                "after_hash": row.after_hash,
+                "before_size": row.before_size,
+                "after_size": row.after_size,
+                "before_mode": row.before_mode,
+                "after_mode": row.after_mode,
+                "content_kind": row.content_kind,
+                "evidence_identity": row.evidence_identity,
+                "artifact_digest": row.artifact_digest,
+            }
+        )
+    if ordinals and ordinals != list(range(1, len(rows) + 1)):
+        blockers.append(
+            _result_candidate_blocker(
+                "ATTRIBUTION_ORDINAL_INVALID",
+                "Run attribution contains incomplete file-action ordering.",
+            )
+        )
+    return manifest, blockers
+
+
+def _attribution_material(
+    envelope: CodexResultEnvelope,
+    manifest: list[dict[str, Any]],
+) -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, str]]]:
+    workspace = _decoded_object(envelope.workspace_evidence_json)
+    raw_attribution = workspace.get("attribution")
+    attribution = raw_attribution if isinstance(raw_attribution, dict) else {}
+    blockers: list[dict[str, str]] = []
+    if not isinstance(raw_attribution, dict):
+        blockers.append(
+            _result_candidate_blocker(
+                "ATTRIBUTION_EVIDENCE_INCOMPLETE",
+                "Run-produced workspace attribution evidence is unavailable.",
+            )
+        )
+
+    def safe_paths(key: str) -> list[str]:
+        raw = attribution.get(key, [])
+        if not isinstance(raw, list):
+            blockers.append(
+                _result_candidate_blocker(
+                    "ATTRIBUTION_EVIDENCE_INCOMPLETE",
+                    "Run attribution evidence is incomplete.",
+                )
+            )
+            return []
+        output: list[str] = []
+        for value in raw:
+            try:
+                output.append(normalize_repository_path(value))
+            except ManifestError:
+                blockers.append(
+                    _result_candidate_blocker(
+                        "ATTRIBUTION_EXCLUDED_PATH_UNSAFE",
+                        "An excluded attribution path failed the workspace boundary.",
+                    )
+                )
+        return sorted(set(output))
+
+    baseline_preexisting = safe_paths("baseline_preexisting")
+    run_produced = safe_paths("run_produced")
+    origin_unproven = safe_paths("origin_unproven")
+    included_paths = sorted(str(item["path"]) for item in manifest)
+    if run_produced != included_paths:
+        blockers.append(
+            _result_candidate_blocker(
+                "ATTRIBUTION_RESULT_MISMATCH",
+                "Run-produced attribution does not match the immutable Result artifacts.",
+            )
+        )
+    if set(baseline_preexisting) & set(run_produced):
+        blockers.append(
+            _result_candidate_blocker(
+                "ATTRIBUTION_ORIGIN_CONFLICT",
+                "A Run-produced path is also classified as pre-existing content.",
+            )
+        )
+    excluded = [
+        {
+            "path": path,
+            "reason_code": "BASELINE_PREEXISTING",
+            "reason": "The path pre-existed this Run and is excluded from delivery.",
+        }
+        for path in baseline_preexisting
+    ] + [
+        {
+            "path": path,
+            "reason_code": "ORIGIN_UNPROVEN",
+            "reason": "The file origin was not proven as a Run-created deliverable.",
+        }
+        for path in origin_unproven
+        if path not in set(baseline_preexisting)
+    ]
+    summary = {
+        "schema": "twos.result_candidate_attribution.v1",
+        "baseline_preexisting": baseline_preexisting,
+        "run_produced": included_paths,
+        "origin_unproven": origin_unproven,
+        "included_count": len(included_paths),
+        "excluded_count": len(excluded),
+    }
+    return summary, excluded, blockers
+
+
+def _attempt_succeeded(
+    attempt: CodexExecutionAttempt | None,
+    *,
+    owner_id: int,
+    envelope: CodexResultEnvelope,
+    phase: str,
+) -> bool:
+    expected_assignment_id = (
+        envelope.coding_assignment_id
+        if phase == "CODING"
+        else envelope.verification_assignment_id
+    )
+    expected_assignment_version = (
+        envelope.coding_assignment_version
+        if phase == "CODING"
+        else envelope.verification_assignment_version
+    )
+    return bool(
+        attempt is not None
+        and ATTEMPT_ID_PATTERN.fullmatch(attempt.attempt_id or "")
+        and attempt.owner_id == owner_id
+        and attempt.task_id == envelope.task_id
+        and attempt.task_version == envelope.task_version
+        and attempt.run_id == envelope.run_id
+        and attempt.pack_id == envelope.pack_id
+        and attempt.pack_version == envelope.pack_version
+        and attempt.coding_assignment_id == envelope.coding_assignment_id
+        and attempt.coding_assignment_version
+        == envelope.coding_assignment_version
+        and attempt.verification_assignment_id
+        == envelope.verification_assignment_id
+        and attempt.verification_assignment_version
+        == envelope.verification_assignment_version
+        and (
+            attempt.coding_assignment_id
+            if phase == "CODING"
+            else attempt.verification_assignment_id
+        )
+        == expected_assignment_id
+        and (
+            attempt.coding_assignment_version
+            if phase == "CODING"
+            else attempt.verification_assignment_version
+        )
+        == expected_assignment_version
+        and attempt.routing_snapshot_identity == envelope.routing_snapshot_identity
+        and attempt.source_snapshot_identity == envelope.source_snapshot_identity
+        and attempt.monitor_id == envelope.monitor_id
+        and attempt.phase == phase
+        and attempt.attempt_state == "COMPLETED"
+        and attempt.process_exit_known
+        and attempt.process_exit_code == 0
+        and attempt.terminal_event_observed
+    )
+
+
+def _result_candidate_digest_payload(material: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "schema": RESULT_CANDIDATE_DERIVATION_VERSION,
+        "candidate_id": material["candidate_id"],
+        "candidate_version": material["candidate_version"],
+        "derivation_version": material["derivation_version"],
+        "owner_id": material["owner_id"],
+        "task_id": material["task_id"],
+        "task_version": material["task_version"],
+        "pack_id": material["pack_id"],
+        "pack_version": material["pack_version"],
+        "coding_assignment_id": material["coding_assignment_id"],
+        "coding_assignment_version": material["coding_assignment_version"],
+        "verification_assignment_id": material["verification_assignment_id"],
+        "verification_assignment_version": material[
+            "verification_assignment_version"
+        ],
+        "routing_snapshot_identity": material["routing_snapshot_identity"],
+        "source_snapshot_identity": material["source_snapshot_identity"],
+        "source_baseline_commit": material["source_baseline_commit"],
+        "run_id": material["run_id"],
+        "result_envelope_id": material["result_envelope_id"],
+        "result_envelope_public_id": material["result_envelope_public_id"],
+        "result_digest": material["result_digest"],
+        "approved_instruction_digest": material["approved_instruction_digest"],
+        "coding_attempt_id": material["coding_attempt_id"],
+        "coding_attempt_identity": material["coding_attempt_identity"],
+        "coding_outcome": material["coding_outcome"],
+        "coding_evidence_id": material["coding_evidence_id"],
+        "coding_evidence_identity": material["coding_evidence_identity"],
+        "coding_evidence_digest": material["coding_evidence_digest"],
+        "verification_policy": material["verification_policy"],
+        "verification_attempt_id": material["verification_attempt_id"],
+        "verification_attempt_identity": material[
+            "verification_attempt_identity"
+        ],
+        "verification_receipt_identity": material[
+            "verification_receipt_identity"
+        ],
+        "verification_evidence_id": material["verification_evidence_id"],
+        "verification_evidence_identity": material[
+            "verification_evidence_identity"
+        ],
+        "verification_evidence_digest": material[
+            "verification_evidence_digest"
+        ],
+        "verification_verdict": material["verification_verdict"],
+        "result_integrity_state": material["result_integrity_state"],
+        "source_workspace_identity": material["source_workspace_identity"],
+        "run_workspace_identity": material["run_workspace_identity"],
+        "run_workspace_baseline_identity": material[
+            "run_workspace_baseline_identity"
+        ],
+        "run_workspace_post_state_identity": material[
+            "run_workspace_post_state_identity"
+        ],
+        "acceptance_id": material["acceptance_id"],
+        "acceptance_status": material["acceptance_status"],
+        "file_manifest": material["file_manifest"],
+        "excluded_manifest": material["excluded_manifest"],
+        "attribution_summary": material["attribution_summary"],
+        "readiness_state": material["readiness_state"],
+        "readiness_reason": material["readiness_reason"],
+        "readiness_blockers": material["readiness_blockers"],
+        "patch_identity": material["patch_identity"],
+    }
+
+
+def _result_candidate_material(
+    session: Session,
+    *,
+    owner_id: int,
+    envelope: CodexResultEnvelope,
+    acceptance: OwnerAcceptanceSession,
+) -> dict[str, Any]:
+    run = session.get(CodexRun, envelope.run_id)
+    monitor = session.get(CodexRunMonitor, envelope.monitor_id)
+    if run is None:
+        raise ManifestError("The Result-bound Run is unavailable.")
+    coding_attempt = _execution_attempt(
+        session,
+        owner_id=owner_id,
+        run_id=run.id,
+        phase="CODING",
+    )
+    verification_attempt = _execution_attempt(
+        session,
+        owner_id=owner_id,
+        run_id=run.id,
+        phase="VERIFICATION",
+    )
+    coding_evidence = _verified_evidence(
+        session,
+        run,
+        "coding",
+        envelope.coding_assignment_id,
+    )
+    verification_evidence = _verified_evidence(
+        session,
+        run,
+        "verification",
+        envelope.verification_assignment_id,
+    )
+    manifest, blockers = _result_artifact_manifest(session, envelope)
+    attribution, excluded, attribution_blockers = _attribution_material(
+        envelope,
+        manifest,
+    )
+    blockers.extend(attribution_blockers)
+    coding_summary = _decoded_object(envelope.coding_evidence_json)
+    verification_summary = _decoded_object(envelope.verification_evidence_json)
+    workspace = _decoded_object(envelope.workspace_evidence_json)
+    approved_source_snapshot = (
+        _decoded_object(run.pack.source_snapshot_json)
+        if run.pack is not None
+        else {}
+    )
+    try:
+        approved_source_snapshot_digest = _source_snapshot_digest(
+            approved_source_snapshot
+        )
+    except (TypeError, ValueError):
+        approved_source_snapshot_digest = ""
+    strong_source_binding = bool(
+        source_snapshot_has_strong_repository_identity(approved_source_snapshot)
+        and approved_source_snapshot_digest
+        == approved_source_snapshot.get("digest")
+        == run.source_snapshot_digest
+        == envelope.source_snapshot_identity
+        and approved_source_snapshot.get("source_repository_identity")
+        == envelope.authorized_workspace_identity
+    )
+
+    binding_valid = bool(
+        envelope.owner_id == owner_id
+        and envelope.task_id == run.task_id
+        and envelope.task_version == run.task_version
+        and envelope.pack_id == run.pack_id
+        and run.pack is not None
+        and envelope.pack_version == run.pack.version
+        and monitor is not None
+        and monitor.owner_id == owner_id
+        and monitor.run_id == run.id
+        and monitor.task_id == envelope.task_id
+        and monitor.task_version == envelope.task_version
+        and monitor.pack_id == envelope.pack_id
+        and monitor.pack_version == envelope.pack_version
+        and monitor.coding_assignment_id == envelope.coding_assignment_id
+        and monitor.coding_assignment_version
+        == envelope.coding_assignment_version
+        and monitor.verification_assignment_id
+        == envelope.verification_assignment_id
+        and monitor.verification_assignment_version
+        == envelope.verification_assignment_version
+        and envelope.routing_snapshot_identity == run.routing_snapshot_hash
+        and monitor.routing_snapshot_identity == envelope.routing_snapshot_identity
+        and envelope.source_snapshot_identity == run.source_snapshot_digest
+        and monitor.source_snapshot_identity == envelope.source_snapshot_identity
+        and SHA256_PATTERN.fullmatch(envelope.result_digest or "")
+        and SHA256_PATTERN.fullmatch(envelope.approved_instruction_digest or "")
+    )
+    if not binding_valid:
+        blockers.append(
+            _result_candidate_blocker(
+                "RESULT_BINDING_INVALID",
+                "The immutable Result no longer matches its Run, Task, or approved Pack binding.",
+            )
+        )
+    if not strong_source_binding:
+        blockers.append(
+            _result_candidate_blocker(
+                "SOURCE_WORKSPACE_IDENTITY_WEAK",
+                "The Result is not bound to the exact approved source repository identity. Regenerate and run an approved Pack before delivery.",
+            )
+        )
+
+    coding_succeeded = bool(
+        envelope.terminal_status == "completed"
+        and envelope.process_exit_code == 0
+        and coding_summary.get("outcome") == "succeeded"
+        and _attempt_succeeded(
+            coding_attempt,
+            owner_id=owner_id,
+            envelope=envelope,
+            phase="CODING",
+        )
+    )
+    coding_outcome = (
+        "succeeded"
+        if coding_succeeded
+        else "cancelled"
+        if envelope.terminal_status == "cancelled"
+        else "timed_out"
+        if envelope.terminal_status == "timed_out"
+        else "failed"
+    )
+    if not coding_succeeded:
+        blockers.append(
+            _result_candidate_blocker(
+                "CODING_NOT_SUCCEEDED",
+                "Coding did not produce a sealed successful process outcome.",
+            )
+        )
+    if coding_attempt is None:
+        blockers.append(
+            _result_candidate_blocker(
+                "CODING_ATTEMPT_UNAVAILABLE",
+                "The sealed Coding attempt identity is unavailable.",
+            )
+        )
+
+    result_integrity = str(envelope.integrity_state or "").upper()
+    if result_integrity != "VERIFIED":
+        blockers.append(
+            _result_candidate_blocker(
+                "RESULT_INTEGRITY_INVALID",
+                "The Result evidence envelope is not integrity-verified.",
+            )
+        )
+
+    verification_required = envelope.verification_assignment_id is not None
+    verification_policy = "required" if verification_required else "not_required"
+    raw_verdict = str(envelope.verification_verdict or "UNAVAILABLE").upper()
+    if not verification_required:
+        verification_verdict = "not_required"
+    elif raw_verdict == "PASS":
+        verification_verdict = "passed"
+    elif raw_verdict == "FAIL":
+        verification_verdict = "failed"
+    else:
+        verification_verdict = "unavailable"
+    if verification_required:
+        verification_attempt_valid = bool(
+            _attempt_succeeded(
+                verification_attempt,
+                owner_id=owner_id,
+                envelope=envelope,
+                phase="VERIFICATION",
+            )
+            and verification_attempt is not None
+            and SHA256_PATTERN.fullmatch(verification_attempt.receipt_digest or "")
+            and verification_summary.get("outcome") == "succeeded"
+        )
+        if verification_verdict != "passed":
+            blockers.append(
+                _result_candidate_blocker(
+                    "VERIFICATION_GATE_NOT_PASSED",
+                    "Required independent Verification did not pass.",
+                )
+            )
+        if not verification_attempt_valid:
+            blockers.append(
+                _result_candidate_blocker(
+                    "VERIFICATION_ATTEMPT_UNAVAILABLE",
+                    "Required independent Verification lacks a sealed passing attempt and receipt.",
+                )
+            )
+
+    boundary_violations = workspace.get("boundary_violations")
+    boundary_codes = (
+        [str(value) for value in boundary_violations]
+        if isinstance(boundary_violations, list)
+        else []
+    )
+    workspace_available = bool(
+        workspace
+        and workspace.get("status") != "unavailable"
+        and envelope.completion_classification
+        in {"succeeded_with_changes", "succeeded_without_workspace_changes"}
+    )
+    if not workspace_available or boundary_codes:
+        blockers.append(
+            _result_candidate_blocker(
+                "WORKSPACE_EVIDENCE_BLOCKED",
+                (
+                    "Workspace evidence reported a boundary conflict: "
+                    + ", ".join(sorted(set(boundary_codes)))
+                    if boundary_codes
+                    else "Workspace evidence is incomplete or conflicted."
+                ),
+            )
+        )
+
+    source_workspace_identity = envelope.authorized_workspace_identity or ""
+    run_workspace_identity = (
+        monitor.isolated_worktree_identity if monitor is not None else ""
+    )
+    baseline_identity = envelope.workspace_baseline_identity or ""
+    verification_repository_identity = (
+        verification_attempt.repository_state_identity
+        if verification_attempt is not None
+        else ""
+    )
+    post_state_identity = (
+        verification_repository_identity
+        if SHA256_PATTERN.fullmatch(verification_repository_identity)
+        else canonical_sha256(
+            {
+                "schema": "twos.result_candidate_post_state.v1",
+                "result_digest": envelope.result_digest,
+                "diff_identity": envelope.diff_identity,
+                "artifacts": [item.get("artifact_digest") for item in manifest],
+                "workspace_evidence": workspace,
+            }
+        )
+    )
+    if any(
+        not SHA256_PATTERN.fullmatch(value or "")
+        for value in (
+            source_workspace_identity,
+            run_workspace_identity,
+            baseline_identity,
+            post_state_identity,
+        )
+    ):
+        blockers.append(
+            _result_candidate_blocker(
+                "WORKSPACE_BINDING_INCOMPLETE",
+                "Source and isolated Run workspace identities are incomplete.",
+            )
+        )
+
+    unique_blockers = {
+        str(item["code"]): item for item in blockers if item.get("code")
+    }
+    blockers = [unique_blockers[code] for code in unique_blockers]
+    if blockers:
+        readiness_state = "blocked"
+        readiness_reason = blockers[0]["message"]
+    elif not manifest:
+        readiness_state = "no_changes"
+        readiness_reason = (
+            "Coding completed, but the immutable Result contains no attributed "
+            "deliverable file change."
+        )
+    else:
+        readiness_state = "ready"
+        readiness_reason = (
+            "The immutable Run Result and its Verification and workspace evidence "
+            "are ready for explicit Owner delivery review."
+        )
+
+    patch_identity = canonical_sha256(
+        {
+            "schema": "twos.result_delivery_patch.v1",
+            "result_digest": envelope.result_digest,
+            "source_workspace_identity": source_workspace_identity,
+            "run_workspace_identity": run_workspace_identity,
+            "run_workspace_baseline_identity": baseline_identity,
+            "run_workspace_post_state_identity": post_state_identity,
+            "manifest": manifest,
+            "excluded_manifest": excluded,
+        }
+    )
+    candidate_id = "dc_" + canonical_sha256(
+        {
+            "schema": "twos.result_delivery_candidate_public_id.v1",
+            "owner_id": owner_id,
+            "result_envelope_id": envelope.envelope_id,
+            "result_digest": envelope.result_digest,
+            "candidate_version": 1,
+        }
+    )[:40]
+    material: dict[str, Any] = {
+        "candidate_id": candidate_id,
+        "candidate_version": 1,
+        "derivation_version": RESULT_CANDIDATE_DERIVATION_VERSION,
+        "owner_id": owner_id,
+        "task_id": envelope.task_id,
+        "task_version": envelope.task_version,
+        "pack_id": envelope.pack_id,
+        "pack_version": envelope.pack_version,
+        "coding_assignment_id": envelope.coding_assignment_id,
+        "coding_assignment_version": envelope.coding_assignment_version,
+        "verification_assignment_id": envelope.verification_assignment_id,
+        "verification_assignment_version": envelope.verification_assignment_version,
+        "routing_snapshot_identity": envelope.routing_snapshot_identity,
+        "source_snapshot_identity": envelope.source_snapshot_identity,
+        "source_baseline_commit": run.source_commit,
+        "run_id": envelope.run_id,
+        "result_envelope_id": envelope.id,
+        "result_envelope_public_id": envelope.envelope_id,
+        "result_digest": envelope.result_digest,
+        "approved_instruction_digest": envelope.approved_instruction_digest,
+        "coding_attempt_id": coding_attempt.id if coding_attempt is not None else None,
+        "coding_attempt_identity": (
+            coding_attempt.attempt_id if coding_attempt is not None else ""
+        ),
+        "coding_outcome": coding_outcome,
+        "coding_evidence_id": coding_evidence.id if coding_evidence is not None else None,
+        "coding_evidence_identity": (
+            coding_evidence.invocation_ref if coding_evidence is not None else ""
+        ),
+        "coding_evidence_digest": (
+            _evidence_digest(coding_evidence) if coding_evidence is not None else ""
+        ),
+        "verification_policy": verification_policy,
+        "verification_attempt_id": (
+            verification_attempt.id if verification_attempt is not None else None
+        ),
+        "verification_attempt_identity": (
+            verification_attempt.attempt_id if verification_attempt is not None else ""
+        ),
+        "verification_receipt_identity": (
+            verification_attempt.receipt_digest
+            if verification_attempt is not None
+            else ""
+        ),
+        "verification_evidence_id": (
+            verification_evidence.id if verification_evidence is not None else None
+        ),
+        "verification_evidence_identity": (
+            verification_evidence.invocation_ref
+            if verification_evidence is not None
+            else ""
+        ),
+        "verification_evidence_digest": (
+            _evidence_digest(verification_evidence)
+            if verification_evidence is not None
+            else ""
+        ),
+        "verification_verdict": verification_verdict,
+        "result_integrity_state": result_integrity,
+        "source_workspace_identity": source_workspace_identity,
+        "run_workspace_identity": run_workspace_identity,
+        "run_workspace_baseline_identity": baseline_identity,
+        "run_workspace_post_state_identity": post_state_identity,
+        "acceptance_id": acceptance.id,
+        "acceptance_status": "owner_review",
+        "file_manifest": manifest,
+        "excluded_manifest": excluded,
+        "attribution_summary": attribution,
+        "readiness_state": readiness_state,
+        "readiness_reason": readiness_reason,
+        "readiness_blockers": blockers,
+        "patch_identity": patch_identity,
+    }
+    material["candidate_digest"] = canonical_sha256(
+        _result_candidate_digest_payload(material)
+    )
+    return material
+
+
+def _stored_result_candidate_material(candidate: DeliveryCandidate) -> dict[str, Any]:
+    return {
+        "candidate_id": candidate.candidate_id,
+        "candidate_version": candidate.candidate_version,
+        "derivation_version": candidate.derivation_version,
+        "owner_id": candidate.owner_id,
+        "task_id": candidate.task_id,
+        "task_version": candidate.task_version,
+        "pack_id": candidate.pack_id,
+        "pack_version": candidate.pack_version,
+        "coding_assignment_id": candidate.coding_assignment_id,
+        "coding_assignment_version": candidate.coding_assignment_version,
+        "verification_assignment_id": candidate.verification_assignment_id,
+        "verification_assignment_version": candidate.verification_assignment_version,
+        "routing_snapshot_identity": candidate.routing_snapshot_identity,
+        "source_snapshot_identity": candidate.source_snapshot_identity,
+        "source_baseline_commit": candidate.source_baseline_commit,
+        "run_id": candidate.run_id,
+        "result_envelope_id": candidate.result_envelope_id,
+        "result_envelope_public_id": candidate.result_envelope_public_id,
+        "result_digest": candidate.result_digest,
+        "approved_instruction_digest": candidate.approved_instruction_digest,
+        "coding_attempt_id": candidate.coding_attempt_id,
+        "coding_attempt_identity": candidate.coding_attempt_identity,
+        "coding_outcome": candidate.coding_outcome,
+        "coding_evidence_id": candidate.coding_evidence_id,
+        "coding_evidence_identity": candidate.coding_evidence_identity,
+        "coding_evidence_digest": candidate.coding_evidence_digest,
+        "verification_policy": candidate.verification_policy,
+        "verification_attempt_id": candidate.verification_attempt_id,
+        "verification_attempt_identity": candidate.verification_attempt_identity,
+        "verification_receipt_identity": candidate.verification_receipt_identity,
+        "verification_evidence_id": candidate.verification_evidence_id,
+        "verification_evidence_identity": candidate.verification_evidence_identity,
+        "verification_evidence_digest": candidate.verification_evidence_digest,
+        "verification_verdict": candidate.verification_verdict,
+        "result_integrity_state": candidate.result_integrity_state,
+        "source_workspace_identity": candidate.source_workspace_identity,
+        "run_workspace_identity": candidate.run_workspace_identity,
+        "run_workspace_baseline_identity": candidate.run_workspace_baseline_identity,
+        "run_workspace_post_state_identity": candidate.run_workspace_post_state_identity,
+        "acceptance_id": candidate.acceptance_id,
+        "acceptance_status": candidate.acceptance_status,
+        "file_manifest": _decoded_list(candidate.file_manifest_json),
+        "excluded_manifest": _decoded_list(candidate.excluded_manifest_json),
+        "attribution_summary": _decoded_object(candidate.attribution_summary_json),
+        "readiness_state": candidate.readiness_state,
+        "readiness_reason": candidate.readiness_reason,
+        "readiness_blockers": _decoded_list(candidate.readiness_blockers_json),
+        "patch_identity": candidate.patch_identity,
+        "candidate_digest": candidate.candidate_digest,
+    }
+
+
+def _bind_result_acceptance(
+    acceptance: OwnerAcceptanceSession,
+    *,
+    owner_id: int,
+    envelope: CodexResultEnvelope,
+    candidate: DeliveryCandidate | None = None,
+) -> None:
+    terminal_binding_valid = bool(
+        acceptance.status in {"accepted", "rejected"}
+        and acceptance.owner_id == owner_id
+        and acceptance.result_envelope_id == envelope.id
+        and acceptance.result_envelope_public_id == envelope.envelope_id
+        and acceptance.result_digest == envelope.result_digest
+        and acceptance.result_task_version == envelope.task_version
+        and acceptance.result_pack_id == envelope.pack_id
+        and acceptance.result_pack_version == envelope.pack_version
+        and acceptance.approved_instruction_digest
+        == envelope.approved_instruction_digest
+        and acceptance.delivery_candidate_id is not None
+        and acceptance.candidate_public_id
+        and acceptance.candidate_version is not None
+        and acceptance.candidate_digest
+        and acceptance.decided_by_user_id == owner_id
+        and acceptance.decided_at is not None
+        and SHA256_PATTERN.fullmatch(acceptance.decision_digest or "")
+        and acceptance.decision_digest == result_review_decision_digest(acceptance)
+    )
+    if acceptance.status in {"accepted", "rejected"} and not terminal_binding_valid:
+        if acceptance.result_envelope_id is None and not acceptance.decision_digest:
+            # A pre-19.1C task-acceptance decision is not a delivery decision
+            # for this immutable Result. Reconcile it once to Owner review.
+            acceptance.status = "owner_review"
+            acceptance.owner_note = ""
+            acceptance.decided_by_user_id = None
+            acceptance.decided_at = None
+        else:
+            raise ManifestError(
+                "The final Owner review decision failed its immutable binding check."
+            )
+    expected = {
+        "owner_id": owner_id,
+        "result_envelope_id": envelope.id,
+        "result_envelope_public_id": envelope.envelope_id,
+        "result_digest": envelope.result_digest,
+        "result_task_version": envelope.task_version,
+        "result_pack_id": envelope.pack_id,
+        "result_pack_version": envelope.pack_version,
+        "approved_instruction_digest": envelope.approved_instruction_digest,
+        "review_policy_version": RESULT_REVIEW_POLICY_VERSION,
+    }
+    for field, value in expected.items():
+        observed = getattr(acceptance, field)
+        if observed not in {None, "", value}:
+            raise ManifestError("Owner review is already bound to another Result.")
+        if observed in {None, ""}:
+            setattr(acceptance, field, value)
+    if acceptance.status not in {"accepted", "rejected"}:
+        acceptance.status = "owner_review"
+        acceptance.decided_by_user_id = None
+        acceptance.decided_at = None
+        acceptance.decision_digest = ""
+    if candidate is not None:
+        candidate_expected = {
+            "delivery_candidate_id": candidate.id,
+            "candidate_public_id": candidate.candidate_id,
+            "candidate_version": candidate.candidate_version,
+            "candidate_digest": candidate.candidate_digest,
+        }
+        for field, value in candidate_expected.items():
+            observed = getattr(acceptance, field)
+            if observed not in {None, "", value}:
+                raise ManifestError("Owner review is already bound to another Candidate.")
+            if observed in {None, ""}:
+                setattr(acceptance, field, value)
+
+
+def materialize_result_delivery_candidate(
+    session: Session,
+    *,
+    owner_id: int,
+    envelope: CodexResultEnvelope,
+) -> tuple[DeliveryCandidate, bool, dict[str, Any]]:
+    """Idempotently create metadata for one immutable Result; never mutate source."""
+    if envelope.owner_id != owner_id:
+        raise ManifestError("The Result is unavailable for this Owner.")
+    run = session.get(CodexRun, envelope.run_id)
+    if run is None or run.task_id != envelope.task_id:
+        raise ManifestError("The Result-bound Run is unavailable.")
+    existing = session.scalar(
+        select(DeliveryCandidate).where(
+            DeliveryCandidate.owner_id == owner_id,
+            DeliveryCandidate.run_id == run.id,
+        )
+    )
+    if (
+        existing is not None
+        and existing.derivation_version == LEGACY_CANDIDATE_DERIVATION_VERSION
+        and existing.result_envelope_id is None
+    ):
+        # Historical Vol.18 Candidates and their accepted review decisions are
+        # immutable evidence. Result settlement may coexist with that history,
+        # but it must not reinterpret or reset the prior Candidate as a new
+        # 19.1C Result-delivery decision.
+        return existing, False, validate_delivery_candidate(
+            session,
+            owner_id,
+            run,
+            existing,
+        )
+    acceptance = session.scalar(
+        select(OwnerAcceptanceSession).where(
+            OwnerAcceptanceSession.codex_run_id == run.id,
+            OwnerAcceptanceSession.task_id == run.task_id,
+        )
+    )
+    if acceptance is None:
+        acceptance = OwnerAcceptanceSession(
+            task_id=run.task_id,
+            codex_run_id=run.id,
+            owner_id=owner_id,
+            status="owner_review",
+            review_policy_version=RESULT_REVIEW_POLICY_VERSION,
+        )
+        session.add(acceptance)
+        session.flush()
+    _bind_result_acceptance(
+        acceptance,
+        owner_id=owner_id,
+        envelope=envelope,
+    )
+    if existing is not None:
+        if existing.result_envelope_id == envelope.id:
+            _bind_result_acceptance(
+                acceptance,
+                owner_id=owner_id,
+                envelope=envelope,
+                candidate=existing,
+            )
+        return existing, False, validate_delivery_candidate(
+            session,
+            owner_id,
+            run,
+            existing,
+        )
+
+    material = _result_candidate_material(
+        session,
+        owner_id=owner_id,
+        envelope=envelope,
+        acceptance=acceptance,
+    )
+    candidate = DeliveryCandidate(
+        candidate_id=material["candidate_id"],
+        candidate_version=material["candidate_version"],
+        derivation_version=material["derivation_version"],
+        owner_id=material["owner_id"],
+        task_id=material["task_id"],
+        task_version=material["task_version"],
+        pack_id=material["pack_id"],
+        pack_version=material["pack_version"],
+        coding_assignment_id=material["coding_assignment_id"],
+        coding_assignment_version=material["coding_assignment_version"],
+        verification_assignment_id=material["verification_assignment_id"],
+        verification_assignment_version=material[
+            "verification_assignment_version"
+        ],
+        routing_snapshot_identity=material["routing_snapshot_identity"],
+        source_snapshot_identity=material["source_snapshot_identity"],
+        source_baseline_commit=material["source_baseline_commit"],
+        run_id=material["run_id"],
+        result_envelope_id=material["result_envelope_id"],
+        result_envelope_public_id=material["result_envelope_public_id"],
+        result_digest=material["result_digest"],
+        approved_instruction_digest=material["approved_instruction_digest"],
+        coding_attempt_id=material["coding_attempt_id"],
+        coding_attempt_identity=material["coding_attempt_identity"],
+        coding_outcome=material["coding_outcome"],
+        coding_evidence_id=material["coding_evidence_id"],
+        coding_evidence_identity=material["coding_evidence_identity"],
+        coding_evidence_digest=material["coding_evidence_digest"],
+        verification_policy=material["verification_policy"],
+        verification_attempt_id=material["verification_attempt_id"],
+        verification_attempt_identity=material["verification_attempt_identity"],
+        verification_receipt_identity=material[
+            "verification_receipt_identity"
+        ],
+        verification_evidence_id=material["verification_evidence_id"],
+        verification_evidence_identity=material["verification_evidence_identity"],
+        verification_evidence_digest=material["verification_evidence_digest"],
+        verification_verdict=material["verification_verdict"],
+        result_integrity_state=material["result_integrity_state"],
+        source_workspace_identity=material["source_workspace_identity"],
+        run_workspace_identity=material["run_workspace_identity"],
+        run_workspace_baseline_identity=material[
+            "run_workspace_baseline_identity"
+        ],
+        run_workspace_post_state_identity=material[
+            "run_workspace_post_state_identity"
+        ],
+        acceptance_id=material["acceptance_id"],
+        acceptance_status=material["acceptance_status"],
+        file_manifest_json=canonical_json(material["file_manifest"]),
+        excluded_manifest_json=canonical_json(material["excluded_manifest"]),
+        attribution_summary_json=canonical_json(material["attribution_summary"]),
+        readiness_state=material["readiness_state"],
+        readiness_reason=material["readiness_reason"],
+        readiness_blockers_json=canonical_json(material["readiness_blockers"]),
+        patch_identity=material["patch_identity"],
+        candidate_digest=material["candidate_digest"],
+    )
+    try:
+        with session.begin_nested():
+            session.add(candidate)
+            session.flush()
+    except IntegrityError as exc:
+        winner = session.scalar(
+            select(DeliveryCandidate).where(
+                DeliveryCandidate.owner_id == owner_id,
+                DeliveryCandidate.run_id == run.id,
+            )
+        )
+        if winner is None or winner.result_envelope_id != envelope.id:
+            raise ManifestError(
+                "A different Candidate is already bound to this Run."
+            ) from exc
+        _bind_result_acceptance(
+            acceptance,
+            owner_id=owner_id,
+            envelope=envelope,
+            candidate=winner,
+        )
+        session.flush()
+        return winner, False, validate_delivery_candidate(
+            session,
+            owner_id,
+            run,
+            winner,
+        )
+    _bind_result_acceptance(
+        acceptance,
+        owner_id=owner_id,
+        envelope=envelope,
+        candidate=candidate,
+    )
+    session.add(
+        AuditEvent(
+            actor_user_id=owner_id,
+            action="delivery_candidate_materialized",
+            entity_type="delivery_candidate",
+            entity_id=candidate.id,
+            details=(
+                f"run={run.id}; result={envelope.envelope_id}; "
+                f"candidate={candidate.candidate_id}; readiness={candidate.readiness_state}"
+            ),
+        )
+    )
+    session.flush()
+    return candidate, True, validate_delivery_candidate(
+        session,
+        owner_id,
+        run,
+        candidate,
+    )
 
 
 def _unexpected_paths(result: dict[str, Any]) -> set[str]:
@@ -1137,12 +2238,197 @@ def _stored_candidate_material(candidate: DeliveryCandidate) -> dict[str, Any]:
     }
 
 
+def _result_candidate_validation(
+    session: Session,
+    owner_id: int,
+    run: CodexRun,
+    candidate: DeliveryCandidate,
+) -> dict[str, Any]:
+    integrity_blocker = _result_candidate_blocker(
+        "CANDIDATE_INTEGRITY_INVALID",
+        "The immutable Result-derived Delivery Candidate failed its integrity check.",
+    )
+
+    def invalid() -> dict[str, Any]:
+        return {
+            "eligible": False,
+            "reviewable": False,
+            "readiness_state": "blocked",
+            "result_review_state": "pending",
+            "blockers": [integrity_blocker],
+            "next_action": "Review the immutable Run Result evidence.",
+        }
+
+    if (
+        candidate.owner_id != owner_id
+        or candidate.run_id != run.id
+        or candidate.task_id != run.task_id
+        or candidate.candidate_version < 1
+        or candidate.derivation_version != RESULT_CANDIDATE_DERIVATION_VERSION
+        or candidate.result_envelope_id is None
+    ):
+        return invalid()
+    stored = _stored_result_candidate_material(candidate)
+    if (
+        not SHA256_PATTERN.fullmatch(candidate.candidate_digest or "")
+        or canonical_sha256(_result_candidate_digest_payload(stored))
+        != candidate.candidate_digest
+    ):
+        return invalid()
+    envelope = session.get(CodexResultEnvelope, candidate.result_envelope_id)
+    acceptance = session.get(OwnerAcceptanceSession, candidate.acceptance_id)
+    if envelope is None or acceptance is None:
+        return invalid()
+    exact_acceptance_binding = bool(
+        acceptance.id == candidate.acceptance_id
+        and acceptance.owner_id == owner_id
+        and acceptance.task_id == candidate.task_id
+        and acceptance.codex_run_id == candidate.run_id
+        and acceptance.result_envelope_id == envelope.id
+        and acceptance.result_envelope_public_id == envelope.envelope_id
+        and acceptance.result_digest == envelope.result_digest
+        and acceptance.result_task_version == envelope.task_version
+        and acceptance.result_pack_id == envelope.pack_id
+        and acceptance.result_pack_version == envelope.pack_version
+        and acceptance.approved_instruction_digest
+        == envelope.approved_instruction_digest
+        and acceptance.delivery_candidate_id == candidate.id
+        and acceptance.candidate_public_id == candidate.candidate_id
+        and acceptance.candidate_version == candidate.candidate_version
+        and acceptance.candidate_digest == candidate.candidate_digest
+        and acceptance.review_policy_version == RESULT_REVIEW_POLICY_VERSION
+        and acceptance.decision_version >= 1
+    )
+    if not exact_acceptance_binding:
+        return invalid()
+    try:
+        current = _result_candidate_material(
+            session,
+            owner_id=owner_id,
+            envelope=envelope,
+            acceptance=acceptance,
+        )
+    except ManifestError:
+        return invalid()
+    if canonical_json(_result_candidate_digest_payload(stored)) != canonical_json(
+        _result_candidate_digest_payload(current)
+    ):
+        return invalid()
+
+    review_state = _result_review_status(acceptance.status)
+    readiness_state = str(candidate.readiness_state or "blocked")
+    readiness_blockers = [
+        item
+        for item in _decoded_list(candidate.readiness_blockers_json)
+        if isinstance(item, dict)
+        and isinstance(item.get("code"), str)
+        and isinstance(item.get("message"), str)
+    ]
+    if readiness_state not in {"ready", "blocked", "no_changes"}:
+        return invalid()
+    if readiness_state == "blocked" and not readiness_blockers:
+        readiness_blockers = [
+            _result_candidate_blocker(
+                "CANDIDATE_BLOCKED",
+                candidate.readiness_reason
+                or "The Result-derived Candidate is blocked by its immutable evidence.",
+            )
+        ]
+    if readiness_state == "no_changes":
+        readiness_blockers = [
+            _result_candidate_blocker(
+                "NO_DELIVERABLE_CHANGES",
+                candidate.readiness_reason
+                or "The immutable Result contains no attributed deliverable changes.",
+            )
+        ]
+
+    decision_valid = bool(
+        acceptance.status in {"accepted", "rejected"}
+        and acceptance.decided_by_user_id == owner_id
+        and acceptance.decided_at is not None
+        and SHA256_PATTERN.fullmatch(acceptance.decision_digest or "")
+        and acceptance.decision_digest == result_review_decision_digest(acceptance)
+    )
+    if review_state in {"accepted_for_delivery", "rejected"} and not decision_valid:
+        return {
+            "eligible": False,
+            "reviewable": True,
+            "readiness_state": readiness_state,
+            "result_review_state": review_state,
+            "blockers": [
+                _result_candidate_blocker(
+                    "OWNER_DECISION_INTEGRITY_INVALID",
+                    "The final Owner review decision failed its immutable binding check.",
+                )
+            ],
+            "next_action": "Review the bound Owner decision evidence.",
+        }
+    if review_state == "pending" and (
+        acceptance.decision_digest
+        or acceptance.decided_by_user_id is not None
+        or acceptance.decided_at is not None
+    ):
+        return invalid()
+
+    blockers = list(readiness_blockers)
+    eligible = bool(
+        readiness_state == "ready"
+        and review_state == "accepted_for_delivery"
+        and decision_valid
+    )
+    if readiness_state == "ready" and review_state == "pending":
+        blockers.append(
+            _result_candidate_blocker(
+                "OWNER_REVIEW_PENDING",
+                "The Owner has not accepted this exact Result and Candidate for delivery.",
+            )
+        )
+    elif readiness_state == "ready" and review_state == "rejected":
+        blockers.append(
+            _result_candidate_blocker(
+                "RESULT_REJECTED",
+                "The Owner rejected this exact Result and Candidate for delivery.",
+            )
+        )
+    if eligible:
+        next_action = "Create or review the exact Apply Plan."
+    elif readiness_state == "no_changes":
+        next_action = "Review the no-change Result; there is nothing to deliver."
+    elif readiness_state == "blocked":
+        next_action = "Review the exact Candidate blockers and Run evidence."
+    elif review_state == "rejected":
+        next_action = "Review the rejected Result and run a new approved Pack if needed."
+    else:
+        next_action = "Accept or reject this exact Result and Candidate."
+    return {
+        "eligible": eligible,
+        "reviewable": True,
+        "readiness_state": readiness_state,
+        "readiness_reason": candidate.readiness_reason,
+        "result_review_state": review_state,
+        "decision_digest": acceptance.decision_digest or None,
+        "blockers": blockers,
+        "next_action": next_action,
+    }
+
+
 def validate_delivery_candidate(
     session: Session,
     owner_id: int,
     run: CodexRun,
     candidate: DeliveryCandidate,
 ) -> dict[str, Any]:
+    if (
+        candidate.result_envelope_id is not None
+        or candidate.derivation_version == RESULT_CANDIDATE_DERIVATION_VERSION
+    ):
+        return _result_candidate_validation(
+            session,
+            owner_id,
+            run,
+            candidate,
+        )
     if (
         candidate.owner_id != owner_id
         or candidate.run_id != run.id
@@ -1192,11 +2478,25 @@ def get_or_create_delivery_candidate(
         return existing, False, validate_delivery_candidate(
             session, owner_id, run, existing
         )
+    envelope = session.scalar(
+        select(CodexResultEnvelope).where(
+            CodexResultEnvelope.owner_id == owner_id,
+            CodexResultEnvelope.run_id == run.id,
+        )
+    )
+    if envelope is not None:
+        return materialize_result_delivery_candidate(
+            session,
+            owner_id=owner_id,
+            envelope=envelope,
+        )
     material, eligibility = _candidate_material(session, owner_id, run)
     if material is None:
         return None, False, eligibility
     candidate = DeliveryCandidate(
         candidate_id=material["candidate_id"],
+        candidate_version=1,
+        derivation_version=LEGACY_CANDIDATE_DERIVATION_VERSION,
         owner_id=material["owner_id"],
         task_id=material["task_id"],
         task_version=material["task_version"],
@@ -1354,11 +2654,32 @@ def evaluate_source_drift(
             )
             diagnostics["branch_matches_baseline"] = branch_matches_baseline
             diagnostics["detached_head"] = not bool(current_branch)
+            approved_source_snapshot = (
+                _decoded_object(run.pack.source_snapshot_json)
+                if run.pack is not None
+                else {}
+            )
+            approved_identity_method = str(
+                approved_source_snapshot.get(
+                    "source_repository_identity_method"
+                )
+                or ""
+            )
             snapshot = capture_source_snapshot(
                 verified_root,
                 hardened_read_only=True,
                 verified_source_state=source,
+                source_repository_identity_method=(
+                    approved_identity_method
+                    if approved_identity_method
+                    in SOURCE_REPOSITORY_IDENTITY_METHODS
+                    else SOURCE_REPOSITORY_IDENTITY_METHOD
+                ),
             )
+            if not approved_source_snapshot.get("source_repository_identity"):
+                snapshot.pop("source_repository_identity_method", None)
+                snapshot.pop("source_repository_identity", None)
+                snapshot["digest"] = _source_snapshot_digest(snapshot)
             current_digest = str(snapshot.get("digest") or "")
             current_head = str(snapshot.get("head_sha") or "")
             if (
@@ -1446,7 +2767,114 @@ def evaluate_source_drift(
 
 def delivery_candidate_out(candidate: DeliveryCandidate) -> dict[str, Any]:
     manifest = _decoded_list(candidate.file_manifest_json)
-    return {
+    if (
+        candidate.result_envelope_id is not None
+        or candidate.derivation_version == RESULT_CANDIDATE_DERIVATION_VERSION
+    ):
+        excluded = [
+            item
+            for item in _decoded_list(candidate.excluded_manifest_json)
+            if isinstance(item, dict)
+        ]
+        review_status = _result_review_status(
+            candidate.acceptance.status
+            if candidate.acceptance is not None
+            else candidate.acceptance_status
+        )
+        verification_status = (
+            "NOT_REQUIRED"
+            if candidate.verification_policy == "not_required"
+            else str(candidate.verification_verdict or "unavailable").upper()
+        )
+        primary_files = [
+            {
+                "name": item.get("name"),
+                "path": item.get("path"),
+                "operation": item.get("operation"),
+                "unexpected": item.get("unexpected"),
+            }
+            for item in manifest
+            if isinstance(item, dict)
+        ]
+        return {
+            "id": candidate.candidate_id,
+            "status": "available",
+            "status_label": "Available",
+            "candidate_version": candidate.candidate_version,
+            "readiness_state": candidate.readiness_state,
+            "readiness_reason": candidate.readiness_reason,
+            "readiness_blockers": _decoded_list(
+                candidate.readiness_blockers_json
+            ),
+            "result_review_state": review_status,
+            "acceptance_status": review_status,
+            "verification_policy": candidate.verification_policy,
+            "verification_status": verification_status,
+            "result_integrity_state": candidate.result_integrity_state,
+            "changed_files": primary_files,
+            "changed_file_count": len(primary_files),
+            "unexpected_file_count": sum(
+                1 for item in primary_files if item.get("unexpected") is True
+            ),
+            "excluded_files": [
+                {
+                    "path": item.get("path"),
+                    "reason_code": item.get("reason_code"),
+                    "reason": item.get("reason"),
+                }
+                for item in excluded
+            ],
+            "excluded_file_count": len(excluded),
+            "created_at": _iso(candidate.created_at),
+            "advanced": {
+                "derivation_version": candidate.derivation_version,
+                "candidate_digest": candidate.candidate_digest,
+                "patch_identity": candidate.patch_identity,
+                "result_envelope_id": candidate.result_envelope_public_id,
+                "result_digest": candidate.result_digest,
+                "approved_instruction_digest": (
+                    candidate.approved_instruction_digest
+                ),
+                "task_id": candidate.task_id,
+                "task_version": candidate.task_version,
+                "pack_id": candidate.pack_id,
+                "pack_version": candidate.pack_version,
+                "run_id": candidate.run_id,
+                "coding_assignment_id": candidate.coding_assignment_id,
+                "coding_assignment_version": candidate.coding_assignment_version,
+                "verification_assignment_id": candidate.verification_assignment_id,
+                "verification_assignment_version": (
+                    candidate.verification_assignment_version
+                ),
+                "routing_snapshot_identity": candidate.routing_snapshot_identity,
+                "source_snapshot_identity": candidate.source_snapshot_identity,
+                "coding_outcome": candidate.coding_outcome,
+                "coding_attempt_identity": candidate.coding_attempt_identity,
+                "coding_evidence_identity": candidate.coding_evidence_identity,
+                "verification_attempt_identity": (
+                    candidate.verification_attempt_identity
+                ),
+                "verification_receipt_identity": (
+                    candidate.verification_receipt_identity
+                ),
+                "verification_evidence_identity": (
+                    candidate.verification_evidence_identity
+                ),
+                "source_workspace_identity": candidate.source_workspace_identity,
+                "run_workspace_identity": candidate.run_workspace_identity,
+                "run_workspace_baseline_identity": (
+                    candidate.run_workspace_baseline_identity
+                ),
+                "run_workspace_post_state_identity": (
+                    candidate.run_workspace_post_state_identity
+                ),
+                "attribution_summary": _decoded_object(
+                    candidate.attribution_summary_json
+                ),
+                "file_evidence": manifest,
+            },
+        }
+    payload = {
         "id": candidate.candidate_id,
         "status": "available",
         "status_label": "Available",
@@ -1494,6 +2922,7 @@ def delivery_candidate_out(candidate: DeliveryCandidate) -> dict[str, Any]:
         "verification_evidence_identity": candidate.verification_evidence_identity,
         "created_at": _iso(candidate.created_at),
     }
+    return payload
 
 
 def source_drift_out(evaluation: SourceDriftEvaluation) -> dict[str, Any]:

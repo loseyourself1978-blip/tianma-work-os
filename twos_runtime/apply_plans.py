@@ -10,6 +10,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .delivery_candidates import (
@@ -18,21 +19,29 @@ from .delivery_candidates import (
     canonical_json,
     canonical_sha256,
     normalize_repository_path,
+    result_review_decision_digest,
     validate_delivery_candidate,
 )
 from .models import (
     ApplyPlan,
+    ApplyPlanApproval,
     ApplyPlanEntry,
+    CodexResultEnvelope,
     CodexRun,
     DeliveryCandidate,
+    OwnerAcceptanceSession,
     SourceDriftEvaluation,
     utc_now,
 )
 from .self_hosting import (
+    SOURCE_REPOSITORY_IDENTITY_METHOD,
+    SOURCE_REPOSITORY_IDENTITY_METHODS,
     _snapshot_exclusion_reason,
+    _source_snapshot_digest,
     capture_source_snapshot,
     git_source_state,
     run_git,
+    source_snapshot_has_strong_repository_identity,
 )
 
 
@@ -50,6 +59,7 @@ APPLY_PLAN_ORDER_EXPLANATION = (
 )
 
 READINESS_LABELS = {
+    "awaiting_owner_approval": "AWAITING OWNER APPROVAL",
     "ready_for_owner_review": "READY FOR OWNER REVIEW",
     "review_with_source_changes": "REVIEW WITH SOURCE CHANGES",
     "blocked_by_conflict": "BLOCKED BY CONFLICT",
@@ -148,7 +158,15 @@ _OBSERVATION_UNSET = object()
 
 
 class ApplyPlanError(ValueError):
-    pass
+    def __init__(self, code: str, message: str | None = None) -> None:
+        # Retain the historical one-argument exception contract while giving
+        # new result-delivery callers stable, Owner-readable error codes.
+        if message is None:
+            message = code
+            code = "APPLY_PLAN_INVALID"
+        super().__init__(message)
+        self.code = code
+        self.message = message
 
 
 def _decoded_object(value: object) -> dict[str, Any]:
@@ -293,11 +311,28 @@ def observe_repository(run: CodexRun, source_repo: Path) -> dict[str, Any]:
         hardened_read_only=True,
         verified_root=verified_root,
     )
+    approved_source_snapshot = (
+        _decoded_object(run.pack.source_snapshot_json)
+        if run.pack is not None
+        else {}
+    )
+    approved_identity_method = str(
+        approved_source_snapshot.get("source_repository_identity_method") or ""
+    )
     snapshot = capture_source_snapshot(
         verified_root,
         hardened_read_only=True,
         verified_source_state=source,
+        source_repository_identity_method=(
+            approved_identity_method
+            if approved_identity_method in SOURCE_REPOSITORY_IDENTITY_METHODS
+            else SOURCE_REPOSITORY_IDENTITY_METHOD
+        ),
     )
+    if not approved_source_snapshot.get("source_repository_identity"):
+        snapshot.pop("source_repository_identity_method", None)
+        snapshot.pop("source_repository_identity", None)
+        snapshot["digest"] = _source_snapshot_digest(snapshot)
     head = str(snapshot.get("head_sha") or "")
     current_source_digest = str(snapshot.get("digest") or "")
     observed_branch = str(source.get("branch") or "")
@@ -1102,9 +1137,286 @@ def _unique_blockers(blockers: Iterable[dict[str, str]]) -> list[dict[str, str]]
     return list(unique.values())
 
 
+def _plan_has_result_lineage(plan: ApplyPlan) -> bool:
+    """Distinguish canonical Result delivery from historical Apply Plans.
+
+    Vol.18/19.1A Plans predate Result-envelope delivery lineage. They keep
+    their literal Apply-confirmation behavior, but they can never be silently
+    converted into a canonical Plan approval.
+    """
+    return bool(
+        plan.result_envelope_id is not None
+        or plan.result_envelope_public_id
+        or plan.result_digest
+        or plan.owner_acceptance_id is not None
+        or plan.result_review_decision_digest
+        or plan.source_workspace_identity
+        or plan.run_workspace_identity
+    )
+
+
+def _material_has_result_lineage(material: dict[str, Any]) -> bool:
+    return bool(
+        material.get("result_envelope_id") is not None
+        or material.get("result_envelope_public_id")
+        or material.get("result_digest")
+        or material.get("owner_acceptance_id") is not None
+        or material.get("result_review_decision_digest")
+        or material.get("source_workspace_identity")
+        or material.get("run_workspace_identity")
+    )
+
+
+def _candidate_result_lineage(
+    session: Session,
+    *,
+    owner_id: int,
+    candidate: DeliveryCandidate,
+) -> tuple[dict[str, Any], list[dict[str, str]]]:
+    """Resolve and validate immutable Result-to-Candidate delivery bindings."""
+    lineage = {
+        "candidate_version": max(int(candidate.candidate_version or 1), 1),
+        "result_envelope_id": candidate.result_envelope_id,
+        "result_envelope_public_id": candidate.result_envelope_public_id or "",
+        "result_digest": candidate.result_digest or "",
+        "owner_acceptance_id": None,
+        "result_review_decision_digest": "",
+        "approved_instruction_digest": candidate.approved_instruction_digest or "",
+        "source_workspace_identity": candidate.source_workspace_identity or "",
+        "run_workspace_identity": candidate.run_workspace_identity or "",
+        "run_workspace_baseline_identity": (
+            candidate.run_workspace_baseline_identity or ""
+        ),
+        "run_workspace_post_state_identity": (
+            candidate.run_workspace_post_state_identity or ""
+        ),
+        "verification_policy": candidate.verification_policy or "required",
+        "verification_verdict": candidate.verification_verdict or "unavailable",
+        "verification_receipt_identity": (
+            candidate.verification_receipt_identity or ""
+        ),
+    }
+    # An empty Result binding is a historical Candidate, not a partially
+    # trusted modern one. Its old Apply confirmation remains available, while
+    # create_apply_plan_approval() rejects it explicitly.
+    if (
+        candidate.derivation_version != "twos.result_delivery_candidate.v1"
+        and candidate.result_envelope_id is None
+        and not any(
+            (
+                candidate.result_envelope_public_id,
+                candidate.result_digest,
+                candidate.approved_instruction_digest,
+                candidate.source_workspace_identity,
+                candidate.run_workspace_identity,
+            )
+        )
+    ):
+        return lineage, []
+
+    lineage["owner_acceptance_id"] = candidate.acceptance_id
+
+    blockers: list[dict[str, str]] = []
+    envelope = (
+        session.get(CodexResultEnvelope, candidate.result_envelope_id)
+        if candidate.result_envelope_id is not None
+        else None
+    )
+    run = session.get(CodexRun, candidate.run_id)
+    acceptance = (
+        session.get(OwnerAcceptanceSession, candidate.acceptance_id)
+        if candidate.acceptance_id is not None
+        else None
+    )
+    if envelope is None:
+        blockers.append(
+            {
+                "code": "RESULT_BINDING_UNAVAILABLE",
+                "message": "The Candidate-bound immutable Run Result is unavailable.",
+            }
+        )
+    approved_source_snapshot = (
+        _decoded_object(run.pack.source_snapshot_json)
+        if run is not None and run.pack is not None
+        else {}
+    )
+    try:
+        approved_source_snapshot_digest = _source_snapshot_digest(
+            approved_source_snapshot
+        )
+    except (TypeError, ValueError):
+        approved_source_snapshot_digest = ""
+    if not (
+        run is not None
+        and run.id == candidate.run_id
+        and run.task_id == candidate.task_id
+        and run.pack_id == candidate.pack_id
+        and run.pack is not None
+        and run.pack.version == candidate.pack_version
+        and source_snapshot_has_strong_repository_identity(
+            approved_source_snapshot
+        )
+        and approved_source_snapshot_digest
+        == approved_source_snapshot.get("digest")
+        == run.source_snapshot_digest
+        == candidate.source_snapshot_identity
+        and approved_source_snapshot.get("source_repository_identity")
+        == candidate.source_workspace_identity
+    ):
+        blockers.append(
+            {
+                "code": "SOURCE_WORKSPACE_BINDING_INVALID",
+                "message": "The Result-derived Candidate is not bound to the exact approved source repository identity.",
+            }
+        )
+    if acceptance is None:
+        blockers.append(
+            {
+                "code": "RESULT_REVIEW_UNAVAILABLE",
+                "message": "The Candidate-bound Owner Result review is unavailable.",
+            }
+        )
+    if candidate.readiness_state != "ready":
+        blockers.append(
+            {
+                "code": (
+                    "RESULT_HAS_NO_DELIVERABLE_CHANGES"
+                    if candidate.readiness_state == "no_changes"
+                    else "RESULT_CANDIDATE_BLOCKED"
+                ),
+                "message": candidate.readiness_reason
+                or "The Result-derived Candidate is not ready for delivery.",
+            }
+        )
+    if envelope is not None:
+        envelope_binding = (
+            envelope.owner_id == owner_id
+            and envelope.id == candidate.result_envelope_id
+            and envelope.envelope_id == candidate.result_envelope_public_id
+            and envelope.result_digest == candidate.result_digest
+            and envelope.run_id == candidate.run_id
+            and envelope.task_id == candidate.task_id
+            and envelope.task_version == candidate.task_version
+            and envelope.pack_id == candidate.pack_id
+            and envelope.pack_version == candidate.pack_version
+            and envelope.approved_instruction_digest
+            == candidate.approved_instruction_digest
+            and envelope.authorized_workspace_identity
+            == candidate.source_workspace_identity
+            and envelope.integrity_state == "VERIFIED"
+            and str(candidate.result_integrity_state or "").lower() == "verified"
+        )
+        if not envelope_binding:
+            blockers.append(
+                {
+                    "code": "RESULT_BINDING_CHANGED",
+                    "message": "The immutable Result, Candidate, or workspace binding changed.",
+                }
+            )
+    if acceptance is not None:
+        lineage["result_review_decision_digest"] = acceptance.decision_digest or ""
+        acceptance_binding = (
+            acceptance.owner_id == owner_id
+            and acceptance.codex_run_id == candidate.run_id
+            and acceptance.task_id == candidate.task_id
+            and acceptance.result_envelope_id == candidate.result_envelope_id
+            and acceptance.result_envelope_public_id
+            == candidate.result_envelope_public_id
+            and acceptance.result_digest == candidate.result_digest
+            and acceptance.result_task_version == candidate.task_version
+            and acceptance.result_pack_id == candidate.pack_id
+            and acceptance.result_pack_version == candidate.pack_version
+            and acceptance.approved_instruction_digest
+            == candidate.approved_instruction_digest
+            and acceptance.delivery_candidate_id == candidate.id
+            and acceptance.candidate_public_id == candidate.candidate_id
+            and acceptance.candidate_version == candidate.candidate_version
+            and acceptance.candidate_digest == candidate.candidate_digest
+        )
+        if not acceptance_binding:
+            blockers.append(
+                {
+                    "code": "RESULT_REVIEW_BINDING_CHANGED",
+                    "message": "The Owner Result review no longer binds this exact Result and Candidate.",
+                }
+            )
+        if acceptance.status != "accepted":
+            blockers.append(
+                {
+                    "code": (
+                        "RESULT_REVIEW_REJECTED"
+                        if acceptance.status == "rejected"
+                        else "RESULT_REVIEW_REQUIRED"
+                    ),
+                    "message": (
+                        "The Owner rejected this Result for delivery."
+                        if acceptance.status == "rejected"
+                        else "The Owner must explicitly accept this Result for delivery before preparing an Apply Plan."
+                    ),
+                }
+            )
+        elif (
+            acceptance.decided_by_user_id != owner_id
+            or acceptance.decided_at is None
+            or not SHA256_PATTERN.fullmatch(acceptance.decision_digest or "")
+            or acceptance.decision_digest
+            != result_review_decision_digest(acceptance)
+        ):
+            blockers.append(
+                {
+                    "code": "RESULT_REVIEW_DECISION_INVALID",
+                    "message": "The accepted Owner Result decision lacks complete immutable evidence.",
+                }
+            )
+    verification_policy = str(candidate.verification_policy or "required").lower()
+    verification_verdict = str(candidate.verification_verdict or "unavailable").lower()
+    if verification_policy == "required":
+        if verification_verdict != "passed" or not SHA256_PATTERN.fullmatch(
+            candidate.verification_receipt_identity or ""
+        ):
+            blockers.append(
+                {
+                    "code": "VERIFICATION_GATE_NOT_PASSED",
+                    "message": "Required independent Verification has not produced a bound passing receipt.",
+                }
+            )
+    elif verification_policy in {"not_required", "optional"}:
+        if verification_verdict not in {"not_required", "passed"}:
+            blockers.append(
+                {
+                    "code": "VERIFICATION_POLICY_UNSATISFIED",
+                    "message": "The Result does not satisfy its declared Verification policy.",
+                }
+            )
+    else:
+        blockers.append(
+            {
+                "code": "VERIFICATION_POLICY_INVALID",
+                "message": "The Candidate has an unsupported Verification policy.",
+            }
+        )
+    for field in (
+        "result_digest",
+        "approved_instruction_digest",
+        "source_workspace_identity",
+        "run_workspace_identity",
+        "run_workspace_baseline_identity",
+        "run_workspace_post_state_identity",
+    ):
+        if not SHA256_PATTERN.fullmatch(str(lineage[field] or "")):
+            blockers.append(
+                {
+                    "code": "RESULT_LINEAGE_INCOMPLETE",
+                    "message": "The Result delivery lineage is incomplete.",
+                }
+            )
+            break
+    return lineage, _unique_blockers(blockers)
+
+
 def _binding_digest_payload(material: dict[str, Any]) -> dict[str, Any]:
     """Return only server-observed, semantically stable Plan-binding inputs."""
-    return {
+    payload = {
         "schema": "twos.apply_plan_binding.v1",
         "owner_id": material["owner_id"],
         "delivery_candidate_id": material["delivery_candidate_id"],
@@ -1146,6 +1458,41 @@ def _binding_digest_payload(material: dict[str, Any]) -> dict[str, Any]:
         "conflict_findings": material["conflict_findings"],
         "blockers": material["blockers"],
     }
+    if _material_has_result_lineage(material):
+        payload.update(
+            {
+                "delivery_lineage_schema": "twos.result_apply_plan_lineage.v1",
+                "candidate_version": material["candidate_version"],
+                "result_envelope_id": material["result_envelope_id"],
+                "result_envelope_public_id": material[
+                    "result_envelope_public_id"
+                ],
+                "result_digest": material["result_digest"],
+                "owner_acceptance_id": material["owner_acceptance_id"],
+                "result_review_decision_digest": material[
+                    "result_review_decision_digest"
+                ],
+                "approved_instruction_digest": material[
+                    "approved_instruction_digest"
+                ],
+                "source_workspace_identity": material[
+                    "source_workspace_identity"
+                ],
+                "run_workspace_identity": material["run_workspace_identity"],
+                "run_workspace_baseline_identity": material[
+                    "run_workspace_baseline_identity"
+                ],
+                "run_workspace_post_state_identity": material[
+                    "run_workspace_post_state_identity"
+                ],
+                "verification_policy": material["verification_policy"],
+                "verification_verdict": material["verification_verdict"],
+                "verification_receipt_identity": material[
+                    "verification_receipt_identity"
+                ],
+            }
+        )
+    return payload
 
 
 def build_apply_plan_material(
@@ -1161,6 +1508,47 @@ def build_apply_plan_material(
 ) -> dict[str, Any]:
     candidate_valid = bool(candidate is not None and candidate_eligibility.get("eligible") is True)
     blockers: list[dict[str, str]] = []
+    lineage: dict[str, Any] = {
+        "candidate_version": int(getattr(candidate, "candidate_version", 1) or 1),
+        "result_envelope_id": None,
+        "result_envelope_public_id": "",
+        "result_digest": "",
+        "owner_acceptance_id": None,
+        "result_review_decision_digest": "",
+        "approved_instruction_digest": "",
+        "source_workspace_identity": "",
+        "run_workspace_identity": "",
+        "run_workspace_baseline_identity": "",
+        "run_workspace_post_state_identity": "",
+        "verification_policy": "required",
+        "verification_verdict": "unavailable",
+        "verification_receipt_identity": "",
+    }
+    canonical_result_candidate = bool(
+        candidate is not None
+        and (
+            candidate.derivation_version == "twos.result_delivery_candidate.v1"
+            or candidate.result_envelope_id is not None
+            or candidate.result_envelope_public_id
+            or candidate.result_digest
+            or candidate.source_workspace_identity
+            or candidate.run_workspace_identity
+        )
+    )
+    if candidate is not None:
+        lineage, lineage_blockers = _candidate_result_lineage(
+            session,
+            owner_id=owner_id,
+            candidate=candidate,
+        )
+        if canonical_result_candidate:
+            if not candidate_valid:
+                lineage_blockers = _unique_blockers(
+                    [*lineage_blockers, *_candidate_blockers(candidate_eligibility)]
+                )
+            if lineage_blockers:
+                first = lineage_blockers[0]
+                raise ApplyPlanError(first["code"], first["message"])
     if not candidate_valid:
         blockers.extend(_candidate_blockers(candidate_eligibility))
         if not blockers:
@@ -1338,21 +1726,72 @@ def build_apply_plan_material(
         if entry["unexpected"]
     ]
     validation = planned_validation()
+    plan_preconditions = global_preconditions()
+    if canonical_result_candidate:
+        plan_preconditions.extend(
+            [
+                _planned_check(
+                    "RESULT_REVIEW_ACCEPTED",
+                    "The exact immutable Result and Candidate must retain the accepted Owner decision binding.",
+                    phase="PRE_APPLY",
+                ),
+                _planned_check(
+                    "PLAN_APPROVAL",
+                    "The exact current Apply Plan must retain a valid immutable Owner approval.",
+                    phase="PRE_APPLY",
+                ),
+                _planned_check(
+                    "DELIVERY_LINEAGE",
+                    "Result, Candidate version, Verification receipt, and source workspace bindings must remain exact.",
+                    phase="PRE_APPLY",
+                ),
+            ]
+        )
+        validation["pre_apply"] = [
+            _planned_check(
+                "PLAN_APPROVAL_INTEGRITY",
+                "Revalidate the persisted Plan approval and exact delivery lineage.",
+                phase="PRE_APPLY",
+            ),
+            *validation["pre_apply"],
+        ]
     material: dict[str, Any] = {
         "owner_id": owner_id,
         "delivery_candidate_id": candidate.id if candidate is not None else None,
         "candidate_public_id": candidate.candidate_id if candidate is not None else "",
         "candidate_digest": candidate.candidate_digest if candidate is not None else "",
+        "candidate_version": lineage["candidate_version"],
+        "result_envelope_id": lineage["result_envelope_id"],
+        "result_envelope_public_id": lineage["result_envelope_public_id"],
+        "result_digest": lineage["result_digest"],
+        "owner_acceptance_id": lineage["owner_acceptance_id"],
+        "result_review_decision_digest": lineage[
+            "result_review_decision_digest"
+        ],
         "run_id": run.id,
         "task_id": run.task_id,
         "task_version": run.task_version,
         "pack_id": run.pack_id,
         "pack_version": run.pack.version if run.pack is not None else 0,
+        "approved_instruction_digest": lineage["approved_instruction_digest"],
         "source_snapshot_identity": (
             candidate.source_snapshot_identity
             if candidate is not None
             else run.source_snapshot_digest
         ),
+        "source_workspace_identity": lineage["source_workspace_identity"],
+        "run_workspace_identity": lineage["run_workspace_identity"],
+        "run_workspace_baseline_identity": lineage[
+            "run_workspace_baseline_identity"
+        ],
+        "run_workspace_post_state_identity": lineage[
+            "run_workspace_post_state_identity"
+        ],
+        "verification_policy": lineage["verification_policy"],
+        "verification_verdict": lineage["verification_verdict"],
+        "verification_receipt_identity": lineage[
+            "verification_receipt_identity"
+        ],
         "source_drift_evaluation_id": drift.id,
         "source_drift_state": drift.status,
         "drift_semantic_fingerprint": drift_semantic_fingerprint(drift),
@@ -1409,7 +1848,7 @@ def build_apply_plan_material(
         ],
         "unexpected_findings": unexpected_findings,
         "conflict_findings": conflict_findings,
-        "global_preconditions": global_preconditions(),
+        "global_preconditions": plan_preconditions,
         "reversibility_requirements": reversibility_requirements(),
         "pre_apply_checks": validation["pre_apply"],
         "post_apply_checks": validation["post_apply"],
@@ -1460,7 +1899,7 @@ def _plan_digest_payload(
     plan_version: int,
     supersedes_plan_digest: str,
 ) -> dict[str, Any]:
-    return {
+    payload = {
         "schema": "twos.review_apply_plan.v1",
         "owner_id": material["owner_id"],
         "delivery_candidate_id": material["delivery_candidate_id"],
@@ -1509,6 +1948,41 @@ def _plan_digest_payload(
         "supersession_reason": material.get("supersession_reason", ""),
         "expires_at": material.get("expires_at"),
     }
+    if _material_has_result_lineage(material):
+        payload.update(
+            {
+                "delivery_lineage_schema": "twos.result_apply_plan_lineage.v1",
+                "candidate_version": material["candidate_version"],
+                "result_envelope_id": material["result_envelope_id"],
+                "result_envelope_public_id": material[
+                    "result_envelope_public_id"
+                ],
+                "result_digest": material["result_digest"],
+                "owner_acceptance_id": material["owner_acceptance_id"],
+                "result_review_decision_digest": material[
+                    "result_review_decision_digest"
+                ],
+                "approved_instruction_digest": material[
+                    "approved_instruction_digest"
+                ],
+                "source_workspace_identity": material[
+                    "source_workspace_identity"
+                ],
+                "run_workspace_identity": material["run_workspace_identity"],
+                "run_workspace_baseline_identity": material[
+                    "run_workspace_baseline_identity"
+                ],
+                "run_workspace_post_state_identity": material[
+                    "run_workspace_post_state_identity"
+                ],
+                "verification_policy": material["verification_policy"],
+                "verification_verdict": material["verification_verdict"],
+                "verification_receipt_identity": material[
+                    "verification_receipt_identity"
+                ],
+            }
+        )
+    return payload
 
 
 def latest_apply_plan(
@@ -1579,12 +2053,34 @@ def get_or_create_apply_plan(
         delivery_candidate_id=material["delivery_candidate_id"],
         candidate_public_id=material["candidate_public_id"],
         candidate_digest=material["candidate_digest"],
+        candidate_version=material["candidate_version"],
+        result_envelope_id=material["result_envelope_id"],
+        result_envelope_public_id=material["result_envelope_public_id"],
+        result_digest=material["result_digest"],
+        owner_acceptance_id=material["owner_acceptance_id"],
+        result_review_decision_digest=material[
+            "result_review_decision_digest"
+        ],
         run_id=material["run_id"],
         task_id=material["task_id"],
         task_version=material["task_version"],
         pack_id=material["pack_id"],
         pack_version=material["pack_version"],
+        approved_instruction_digest=material["approved_instruction_digest"],
         source_snapshot_identity=material["source_snapshot_identity"],
+        source_workspace_identity=material["source_workspace_identity"],
+        run_workspace_identity=material["run_workspace_identity"],
+        run_workspace_baseline_identity=material[
+            "run_workspace_baseline_identity"
+        ],
+        run_workspace_post_state_identity=material[
+            "run_workspace_post_state_identity"
+        ],
+        verification_policy=material["verification_policy"],
+        verification_verdict=material["verification_verdict"],
+        verification_receipt_identity=material[
+            "verification_receipt_identity"
+        ],
         source_drift_evaluation_id=material["source_drift_evaluation_id"],
         source_drift_state=material["source_drift_state"],
         drift_semantic_fingerprint=material["drift_semantic_fingerprint"],
@@ -1708,12 +2204,28 @@ def _stored_plan_material(session: Session, plan: ApplyPlan) -> dict[str, Any]:
         "delivery_candidate_id": plan.delivery_candidate_id,
         "candidate_public_id": plan.candidate_public_id,
         "candidate_digest": plan.candidate_digest,
+        "candidate_version": plan.candidate_version,
+        "result_envelope_id": plan.result_envelope_id,
+        "result_envelope_public_id": plan.result_envelope_public_id,
+        "result_digest": plan.result_digest,
+        "owner_acceptance_id": plan.owner_acceptance_id,
+        "result_review_decision_digest": plan.result_review_decision_digest,
         "run_id": plan.run_id,
         "task_id": plan.task_id,
         "task_version": plan.task_version,
         "pack_id": plan.pack_id,
         "pack_version": plan.pack_version,
+        "approved_instruction_digest": plan.approved_instruction_digest,
         "source_snapshot_identity": plan.source_snapshot_identity,
+        "source_workspace_identity": plan.source_workspace_identity,
+        "run_workspace_identity": plan.run_workspace_identity,
+        "run_workspace_baseline_identity": plan.run_workspace_baseline_identity,
+        "run_workspace_post_state_identity": (
+            plan.run_workspace_post_state_identity
+        ),
+        "verification_policy": plan.verification_policy,
+        "verification_verdict": plan.verification_verdict,
+        "verification_receipt_identity": plan.verification_receipt_identity,
         "source_drift_evaluation_id": plan.source_drift_evaluation_id,
         "source_drift_state": plan.source_drift_state,
         "drift_semantic_fingerprint": plan.drift_semantic_fingerprint,
@@ -1838,6 +2350,68 @@ def validate_apply_plan_integrity(session: Session, plan: ApplyPlan) -> bool:
     ):
         return False
 
+    if _plan_has_result_lineage(plan):
+        if candidate is None:
+            return False
+        lineage, lineage_blockers = _candidate_result_lineage(
+            session,
+            owner_id=plan.owner_id,
+            candidate=candidate,
+        )
+        if lineage_blockers or (
+            candidate.candidate_version != plan.candidate_version
+            or lineage["result_envelope_id"] != plan.result_envelope_id
+            or lineage["result_envelope_public_id"]
+            != plan.result_envelope_public_id
+            or lineage["result_digest"] != plan.result_digest
+            or lineage["owner_acceptance_id"] != plan.owner_acceptance_id
+            or lineage["result_review_decision_digest"]
+            != plan.result_review_decision_digest
+            or lineage["approved_instruction_digest"]
+            != plan.approved_instruction_digest
+            or lineage["source_workspace_identity"]
+            != plan.source_workspace_identity
+            or lineage["run_workspace_identity"]
+            != plan.run_workspace_identity
+            or lineage["run_workspace_baseline_identity"]
+            != plan.run_workspace_baseline_identity
+            or lineage["run_workspace_post_state_identity"]
+            != plan.run_workspace_post_state_identity
+            or lineage["verification_policy"] != plan.verification_policy
+            or lineage["verification_verdict"] != plan.verification_verdict
+            or lineage["verification_receipt_identity"]
+            != plan.verification_receipt_identity
+        ):
+            return False
+        if any(
+            not SHA256_PATTERN.fullmatch(value or "")
+            for value in (
+                plan.result_digest,
+                plan.result_review_decision_digest,
+                plan.approved_instruction_digest,
+                plan.source_workspace_identity,
+                plan.run_workspace_identity,
+                plan.run_workspace_baseline_identity,
+                plan.run_workspace_post_state_identity,
+            )
+        ):
+            return False
+    elif any(
+        (
+            plan.result_envelope_id is not None,
+            bool(plan.result_envelope_public_id),
+            bool(plan.result_digest),
+            plan.owner_acceptance_id is not None,
+            bool(plan.result_review_decision_digest),
+            bool(plan.source_workspace_identity),
+            bool(plan.run_workspace_identity),
+            bool(plan.run_workspace_baseline_identity),
+            bool(plan.run_workspace_post_state_identity),
+        )
+    ):
+        # Defensive completeness guard for a partially migrated Plan.
+        return False
+
     if plan.expires_at is not None and plan.expires_at <= plan.created_at:
         return False
     if plan.sanitized_repository_identity and (
@@ -1858,6 +2432,337 @@ def validate_apply_plan_integrity(session: Session, plan: ApplyPlan) -> bool:
     return True
 
 
+def get_apply_plan_approval(
+    session: Session,
+    *,
+    owner_id: int,
+    plan: ApplyPlan,
+) -> ApplyPlanApproval | None:
+    return session.scalar(
+        select(ApplyPlanApproval).where(
+            ApplyPlanApproval.owner_id == owner_id,
+            ApplyPlanApproval.apply_plan_id == plan.id,
+        )
+    )
+
+
+def _approval_digest_payload(material: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "schema": "twos.apply_plan_approval.v1",
+        "policy_version": APPLY_PLAN_POLICY_VERSION,
+        "owner_id": material["owner_id"],
+        "apply_plan_id": material["apply_plan_id"],
+        "plan_public_id": material["plan_public_id"],
+        "plan_digest": material["plan_digest"],
+        "delivery_candidate_id": material["delivery_candidate_id"],
+        "candidate_public_id": material["candidate_public_id"],
+        "candidate_version": material["candidate_version"],
+        "candidate_digest": material["candidate_digest"],
+        "result_envelope_id": material["result_envelope_id"],
+        "result_envelope_public_id": material["result_envelope_public_id"],
+        "result_digest": material["result_digest"],
+        "owner_acceptance_id": material["owner_acceptance_id"],
+        "result_review_decision_digest": material[
+            "result_review_decision_digest"
+        ],
+        "source_workspace_identity": material["source_workspace_identity"],
+        "run_workspace_identity": material["run_workspace_identity"],
+        "run_workspace_baseline_identity": material[
+            "run_workspace_baseline_identity"
+        ],
+        "run_workspace_post_state_identity": material[
+            "run_workspace_post_state_identity"
+        ],
+        "approval_state": "APPROVED",
+        "approved_by_user_id": material["approved_by_user_id"],
+        "approved_at": material["approved_at"],
+    }
+
+
+def _stored_approval_material(approval: ApplyPlanApproval) -> dict[str, Any]:
+    return {
+        "owner_id": approval.owner_id,
+        "apply_plan_id": approval.apply_plan_id,
+        "plan_public_id": approval.plan_public_id,
+        "plan_digest": approval.plan_digest,
+        "delivery_candidate_id": approval.delivery_candidate_id,
+        "candidate_public_id": approval.candidate_public_id,
+        "candidate_version": approval.candidate_version,
+        "candidate_digest": approval.candidate_digest,
+        "result_envelope_id": approval.result_envelope_id,
+        "result_envelope_public_id": approval.result_envelope_public_id,
+        "result_digest": approval.result_digest,
+        "owner_acceptance_id": approval.owner_acceptance_id,
+        "result_review_decision_digest": (
+            approval.result_review_decision_digest
+        ),
+        "source_workspace_identity": approval.source_workspace_identity,
+        "run_workspace_identity": approval.run_workspace_identity,
+        "run_workspace_baseline_identity": (
+            approval.run_workspace_baseline_identity
+        ),
+        "run_workspace_post_state_identity": (
+            approval.run_workspace_post_state_identity
+        ),
+        "approval_state": approval.approval_state,
+        "approved_by_user_id": approval.approved_by_user_id,
+        "approved_at": _timestamp_identity(approval.approved_at),
+    }
+
+
+def validate_apply_plan_approval(
+    session: Session,
+    approval: ApplyPlanApproval,
+    *,
+    plan: ApplyPlan | None = None,
+    owner_id: int | None = None,
+) -> bool:
+    bound_plan = plan or session.get(ApplyPlan, approval.apply_plan_id)
+    acceptance = (
+        session.get(OwnerAcceptanceSession, bound_plan.owner_acceptance_id)
+        if bound_plan is not None and bound_plan.owner_acceptance_id is not None
+        else None
+    )
+    if (
+        bound_plan is None
+        or acceptance is None
+        or not _plan_has_result_lineage(bound_plan)
+        or not validate_apply_plan_integrity(session, bound_plan)
+        or (owner_id is not None and approval.owner_id != owner_id)
+    ):
+        return False
+    material = _stored_approval_material(approval)
+    calculated = canonical_sha256(_approval_digest_payload(material))
+    return bool(
+        approval.approval_state == "APPROVED"
+        and approval.approved_by_user_id == approval.owner_id
+        and approval.approved_at is not None
+        and acceptance.decided_at is not None
+        and approval.approved_at >= acceptance.decided_at
+        and approval.approved_at >= bound_plan.created_at
+        and SHA256_PATTERN.fullmatch(approval.approval_digest or "")
+        and calculated == approval.approval_digest
+        and approval.approval_id == "apa_" + approval.approval_digest[:40]
+        and approval.owner_id == bound_plan.owner_id
+        and approval.apply_plan_id == bound_plan.id
+        and approval.plan_public_id == bound_plan.plan_id
+        and approval.plan_digest == bound_plan.plan_digest
+        and approval.delivery_candidate_id == bound_plan.delivery_candidate_id
+        and approval.candidate_public_id == bound_plan.candidate_public_id
+        and approval.candidate_version == bound_plan.candidate_version
+        and approval.candidate_digest == bound_plan.candidate_digest
+        and approval.result_envelope_id == bound_plan.result_envelope_id
+        and approval.result_envelope_public_id
+        == bound_plan.result_envelope_public_id
+        and approval.result_digest == bound_plan.result_digest
+        and approval.owner_acceptance_id == bound_plan.owner_acceptance_id
+        and approval.result_review_decision_digest
+        == bound_plan.result_review_decision_digest
+        and approval.source_workspace_identity
+        == bound_plan.source_workspace_identity
+        and approval.run_workspace_identity == bound_plan.run_workspace_identity
+        and approval.run_workspace_baseline_identity
+        == bound_plan.run_workspace_baseline_identity
+        and approval.run_workspace_post_state_identity
+        == bound_plan.run_workspace_post_state_identity
+    )
+
+
+def create_apply_plan_approval(
+    session: Session,
+    *,
+    owner_id: int,
+    plan: ApplyPlan,
+    source_repo: Path,
+    confirmed: bool,
+    approved_by_user_id: int | None = None,
+    expected_plan_digest: str | None = None,
+    expected_candidate_digest: str | None = None,
+    expected_result_digest: str | None = None,
+    expected_result_review_decision_digest: str | None = None,
+) -> tuple[ApplyPlanApproval, bool]:
+    """Persist one immutable Owner approval for an exact current Plan.
+
+    Approval is intentionally separate from the later literal Apply mutation
+    confirmation. Historical Plans cannot acquire a synthesized approval.
+    """
+    if plan.owner_id != owner_id:
+        raise ApplyPlanError("APPLY_PLAN_NOT_FOUND", "The Apply Plan is unavailable.")
+    if confirmed is not True:
+        raise ApplyPlanError(
+            "PLAN_APPROVAL_CONFIRMATION_REQUIRED",
+            "Apply Plan approval requires an explicit Owner confirmation.",
+        )
+    if approved_by_user_id not in {None, owner_id}:
+        raise ApplyPlanError(
+            "PLAN_APPROVAL_OWNER_MISMATCH",
+            "Only the authenticated Owner may approve this Apply Plan.",
+        )
+    if not _plan_has_result_lineage(plan):
+        raise ApplyPlanError(
+            "LEGACY_PLAN_APPROVAL_UNSUPPORTED",
+            "This historical Apply Plan retains its original Apply-confirmation boundary and cannot receive a Result-bound approval.",
+        )
+    if plan.candidate_entry_count <= 0 or not _decoded_list(
+        plan.included_paths_json
+    ):
+        raise ApplyPlanError(
+            "RESULT_HAS_NO_DELIVERABLE_CHANGES",
+            "A no-change Result cannot produce an approvable Apply Plan.",
+        )
+    expected_bindings = (
+        (expected_plan_digest, plan.plan_digest, "EXPECTED_PLAN_DIGEST_MISMATCH"),
+        (
+            expected_candidate_digest,
+            plan.candidate_digest,
+            "EXPECTED_CANDIDATE_DIGEST_MISMATCH",
+        ),
+        (expected_result_digest, plan.result_digest, "EXPECTED_RESULT_DIGEST_MISMATCH"),
+        (
+            expected_result_review_decision_digest,
+            plan.result_review_decision_digest,
+            "EXPECTED_RESULT_REVIEW_DIGEST_MISMATCH",
+        ),
+    )
+    for expected, actual, code in expected_bindings:
+        if expected is not None and expected != actual:
+            raise ApplyPlanError(code, "The confirmed delivery binding is stale.")
+    existing = get_apply_plan_approval(
+        session,
+        owner_id=owner_id,
+        plan=plan,
+    )
+    if existing is not None:
+        if not validate_apply_plan_approval(
+            session,
+            existing,
+            plan=plan,
+            owner_id=owner_id,
+        ):
+            raise ApplyPlanError(
+                "PLAN_APPROVAL_INVALID",
+                "The persisted Apply Plan approval failed its integrity check.",
+            )
+        return existing, False
+    effective_state, blockers = effective_apply_plan_state(
+        session,
+        plan,
+        source_repo=source_repo,
+        require_approval=False,
+    )
+    if effective_state not in {
+        "ready_for_owner_review",
+        "review_with_source_changes",
+    }:
+        first = blockers[0] if blockers else {
+            "code": "PLAN_NOT_APPROVABLE",
+            "message": "The Apply Plan is not current and approvable.",
+        }
+        raise ApplyPlanError(str(first["code"]), str(first["message"]))
+    approved_at = utc_now()
+    material = {
+        "owner_id": owner_id,
+        "apply_plan_id": plan.id,
+        "plan_public_id": plan.plan_id,
+        "plan_digest": plan.plan_digest,
+        "delivery_candidate_id": plan.delivery_candidate_id,
+        "candidate_public_id": plan.candidate_public_id,
+        "candidate_version": plan.candidate_version,
+        "candidate_digest": plan.candidate_digest,
+        "result_envelope_id": plan.result_envelope_id,
+        "result_envelope_public_id": plan.result_envelope_public_id,
+        "result_digest": plan.result_digest,
+        "owner_acceptance_id": plan.owner_acceptance_id,
+        "result_review_decision_digest": plan.result_review_decision_digest,
+        "source_workspace_identity": plan.source_workspace_identity,
+        "run_workspace_identity": plan.run_workspace_identity,
+        "run_workspace_baseline_identity": plan.run_workspace_baseline_identity,
+        "run_workspace_post_state_identity": (
+            plan.run_workspace_post_state_identity
+        ),
+        "approval_state": "APPROVED",
+        "approved_by_user_id": owner_id,
+        "approved_at": _timestamp_identity(approved_at),
+    }
+    approval_digest = canonical_sha256(_approval_digest_payload(material))
+    approval = ApplyPlanApproval(
+        approval_id="apa_" + approval_digest[:40],
+        owner_id=owner_id,
+        apply_plan_id=plan.id,
+        plan_public_id=plan.plan_id,
+        plan_digest=plan.plan_digest,
+        delivery_candidate_id=int(plan.delivery_candidate_id),
+        candidate_public_id=plan.candidate_public_id,
+        candidate_version=plan.candidate_version,
+        candidate_digest=plan.candidate_digest,
+        result_envelope_id=int(plan.result_envelope_id),
+        result_envelope_public_id=plan.result_envelope_public_id,
+        result_digest=plan.result_digest,
+        owner_acceptance_id=int(plan.owner_acceptance_id),
+        result_review_decision_digest=plan.result_review_decision_digest,
+        source_workspace_identity=plan.source_workspace_identity,
+        run_workspace_identity=plan.run_workspace_identity,
+        run_workspace_baseline_identity=plan.run_workspace_baseline_identity,
+        run_workspace_post_state_identity=plan.run_workspace_post_state_identity,
+        approval_state="APPROVED",
+        approved_by_user_id=owner_id,
+        approved_at=approved_at,
+        approval_digest=approval_digest,
+    )
+    session.add(approval)
+    try:
+        session.flush()
+    except IntegrityError:
+        session.rollback()
+        replay = get_apply_plan_approval(session, owner_id=owner_id, plan=plan)
+        if replay is None or not validate_apply_plan_approval(
+            session, replay, plan=plan, owner_id=owner_id
+        ):
+            raise ApplyPlanError(
+                "CONCURRENT_PLAN_APPROVAL",
+                "A conflicting Apply Plan approval was created concurrently.",
+            )
+        return replay, False
+    return approval, True
+
+
+def get_or_create_apply_plan_approval(
+    session: Session,
+    **kwargs: Any,
+) -> tuple[ApplyPlanApproval, bool]:
+    """Stable service alias for route and bootstrap callers."""
+    return create_apply_plan_approval(session, **kwargs)
+
+
+def apply_plan_approval_out(approval: ApplyPlanApproval) -> dict[str, Any]:
+    return {
+        "id": approval.approval_id,
+        "state": approval.approval_state,
+        "approved_at": _timestamp_identity(approval.approved_at),
+        "apply_plan_id": approval.plan_public_id,
+        "candidate_id": approval.candidate_public_id,
+        "candidate_version": approval.candidate_version,
+        "result_envelope_id": approval.result_envelope_public_id,
+        "advanced": {
+            "approval_digest": approval.approval_digest,
+            "plan_digest": approval.plan_digest,
+            "candidate_digest": approval.candidate_digest,
+            "result_digest": approval.result_digest,
+            "result_review_decision_digest": (
+                approval.result_review_decision_digest
+            ),
+            "source_workspace_identity": approval.source_workspace_identity,
+            "run_workspace_identity": approval.run_workspace_identity,
+            "run_workspace_baseline_identity": (
+                approval.run_workspace_baseline_identity
+            ),
+            "run_workspace_post_state_identity": (
+                approval.run_workspace_post_state_identity
+            ),
+        },
+    }
+
+
 def effective_apply_plan_state(
     session: Session,
     plan: ApplyPlan,
@@ -1865,6 +2770,7 @@ def effective_apply_plan_state(
     source_repo: Path,
     policy_version: str = APPLY_PLAN_POLICY_VERSION,
     repository_observation: object = _OBSERVATION_UNSET,
+    require_approval: bool = True,
 ) -> tuple[str, list[dict[str, str]]]:
     reasons: list[dict[str, str]] = []
     if not validate_apply_plan_integrity(session, plan):
@@ -2007,15 +2913,52 @@ def effective_apply_plan_state(
                         "message": "Repository, branch, HEAD, index, or worktree binding changed.",
                     }
                 )
-    return ("expired", _unique_blockers(reasons)) if reasons else (
-        plan.status_at_creation,
-        [],
-    )
+    if reasons:
+        return "expired", _unique_blockers(reasons)
+    if (
+        require_approval
+        and _plan_has_result_lineage(plan)
+        and plan.status_at_creation
+        in {"ready_for_owner_review", "review_with_source_changes"}
+    ):
+        approval = get_apply_plan_approval(
+            session,
+            owner_id=plan.owner_id,
+            plan=plan,
+        )
+        if approval is None:
+            return (
+                "awaiting_owner_approval",
+                [
+                    {
+                        "code": "PLAN_APPROVAL_REQUIRED",
+                        "message": "The Owner must explicitly approve this exact current Apply Plan before Apply.",
+                    }
+                ],
+            )
+        if not validate_apply_plan_approval(
+            session,
+            approval,
+            plan=plan,
+            owner_id=plan.owner_id,
+        ):
+            return (
+                "expired",
+                [
+                    {
+                        "code": "PLAN_APPROVAL_INVALID",
+                        "message": "The persisted Apply Plan approval no longer matches the immutable delivery lineage.",
+                    }
+                ],
+            )
+    return plan.status_at_creation, []
 
 
 def _next_action_for_state(
     state: str, blockers: list[dict[str, str]]
 ) -> str:
+    if state == "awaiting_owner_approval":
+        return "Explicitly approve this exact current Apply Plan before confirming Apply."
     if state == "ready_for_owner_review":
         return (
             "Explicitly choose Apply Accepted Changes to run a fresh preflight and "
@@ -2043,10 +2986,21 @@ def apply_plan_out(
     effective_state, expiry_reasons = effective_apply_plan_state(
         session, plan, source_repo=source_repo
     )
+    approval = (
+        get_apply_plan_approval(session, owner_id=plan.owner_id, plan=plan)
+        if _plan_has_result_lineage(plan)
+        else None
+    )
+    approval_valid = bool(
+        approval is not None
+        and validate_apply_plan_approval(
+            session, approval, plan=plan, owner_id=plan.owner_id
+        )
+    )
     entries = _stored_entries(session, plan)
     blockers = (
         expiry_reasons
-        if effective_state == "expired"
+        if expiry_reasons
         else [
             {
                 "code": str(item.get("code") or "APPLY_PLAN_BLOCKED"),
@@ -2095,9 +3049,29 @@ def apply_plan_out(
         "version": plan.plan_version,
         "effective_state": effective_state,
         "status_label": READINESS_LABELS[effective_state],
+        "approval_required": _plan_has_result_lineage(plan),
+        "approval_state": (
+            "APPROVED"
+            if approval_valid
+            else "INVALID"
+            if approval is not None
+            else "PENDING"
+            if _plan_has_result_lineage(plan)
+            else "LEGACY_CONFIRMATION_ONLY"
+        ),
+        "approval": (
+            apply_plan_approval_out(approval) if approval_valid and approval else None
+        ),
         "status_at_creation": plan.status_at_creation,
         "candidate_status_label": (
             "Available" if plan.delivery_candidate_id is not None else "Candidate unavailable"
+        ),
+        "candidate": {
+            "id": plan.candidate_public_id or None,
+            "version": plan.candidate_version,
+        },
+        "result_review_state": (
+            "accepted_for_delivery" if _plan_has_result_lineage(plan) else None
         ),
         "drift_status": plan.source_drift_state,
         "drift_status_label": DRIFT_STATUS_LABELS.get(
@@ -2126,6 +3100,37 @@ def apply_plan_out(
             "binding_digest": plan.binding_digest,
             "candidate_id": plan.candidate_public_id or None,
             "candidate_digest": plan.candidate_digest or None,
+            "candidate_version": plan.candidate_version,
+            "result_envelope_id": plan.result_envelope_public_id or None,
+            "result_digest": plan.result_digest or None,
+            "owner_acceptance_id": plan.owner_acceptance_id,
+            "result_review_decision_digest": (
+                plan.result_review_decision_digest or None
+            ),
+            "approved_instruction_digest": (
+                plan.approved_instruction_digest or None
+            ),
+            "source_workspace_identity": (
+                plan.source_workspace_identity or None
+            ),
+            "run_workspace_identity": plan.run_workspace_identity or None,
+            "run_workspace_baseline_identity": (
+                plan.run_workspace_baseline_identity or None
+            ),
+            "run_workspace_post_state_identity": (
+                plan.run_workspace_post_state_identity or None
+            ),
+            "verification": {
+                "policy": plan.verification_policy,
+                "verdict": plan.verification_verdict,
+                "receipt_identity": plan.verification_receipt_identity or None,
+            },
+            "apply_plan_approval_id": (
+                approval.approval_id if approval_valid and approval else None
+            ),
+            "apply_plan_approval_digest": (
+                approval.approval_digest if approval_valid and approval else None
+            ),
             "drift_evaluation_id": plan.source_drift_evaluation_id,
             "drift_semantic_fingerprint": plan.drift_semantic_fingerprint,
             "repository_identity": plan.sanitized_repository_identity or None,

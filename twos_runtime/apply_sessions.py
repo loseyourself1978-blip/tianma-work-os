@@ -18,9 +18,12 @@ from sqlalchemy.orm import Session
 
 from .apply_plans import (
     APPLY_PLAN_POLICY_VERSION,
+    _plan_has_result_lineage,
     _stored_entries,
     effective_apply_plan_state,
+    get_apply_plan_approval,
     observe_repository,
+    validate_apply_plan_approval,
     validate_apply_plan_integrity,
 )
 from .delivery_candidates import (
@@ -33,6 +36,7 @@ from .delivery_candidates import (
 )
 from .models import (
     ApplyPlan,
+    ApplyPlanApproval,
     ApplyPlanEntry,
     ApplySession,
     ApplySessionAudit,
@@ -48,9 +52,14 @@ from .repository_observer import (
     semantic_projection,
 )
 from .self_hosting import (
+    SOURCE_REPOSITORY_IDENTITY_METHOD,
+    SOURCE_REPOSITORY_IDENTITY_METHODS,
     _snapshot_exclusion_reason,
+    _source_repository_identity,
+    _source_snapshot_digest,
     capture_source_snapshot,
     run_git,
+    source_snapshot_has_strong_repository_identity,
 )
 
 
@@ -280,7 +289,14 @@ def _append_audit(
     return audit
 
 
-def _verified_repository_root(run: CodexRun, source_repo: Path) -> Path:
+def _verified_repository_root(
+    run: CodexRun,
+    source_repo: Path,
+    *,
+    expected_source_workspace_identity: str = "",
+    expected_source_snapshot_identity: str = "",
+    require_strong_source_identity: bool = False,
+) -> Path:
     try:
         configured_root = source_repo.resolve(strict=True)
         verified_root = Path(
@@ -313,6 +329,63 @@ def _verified_repository_root(run: CodexRun, source_repo: Path) -> Path:
             "REPOSITORY_IDENTITY_MISMATCH",
             "The Run no longer binds the configured repository.",
         )
+    if (
+        expected_source_workspace_identity
+        or expected_source_snapshot_identity
+        or require_strong_source_identity
+    ):
+        approved_snapshot = (
+            _decoded_object(run.pack.source_snapshot_json)
+            if run.pack is not None
+            else {}
+        )
+        identity_method = str(
+            approved_snapshot.get("source_repository_identity_method") or ""
+        )
+        try:
+            calculated_snapshot_digest = _source_snapshot_digest(approved_snapshot)
+            observed_repository_identity = _source_repository_identity(
+                configured_root,
+                hardened_read_only=True,
+                method=identity_method,
+            )
+        except (OSError, RuntimeError, TypeError, ValueError) as exc:
+            raise ApplySessionError(
+                "SOURCE_WORKSPACE_IDENTITY_MISMATCH",
+                "The exact approved source repository identity cannot be verified.",
+            ) from exc
+        if require_strong_source_identity and not (
+            identity_method == SOURCE_REPOSITORY_IDENTITY_METHOD
+            and source_snapshot_has_strong_repository_identity(approved_snapshot)
+        ):
+            raise ApplySessionError(
+                "SOURCE_WORKSPACE_IDENTITY_MISMATCH",
+                "The Result-derived Plan lacks a strong source repository identity.",
+            )
+        approved_snapshot_digest = str(approved_snapshot.get("digest") or "")
+        approved_repository_identity = str(
+            approved_snapshot.get("source_repository_identity") or ""
+        )
+        if not (
+            SHA256_PATTERN.fullmatch(approved_snapshot_digest)
+            and calculated_snapshot_digest == approved_snapshot_digest
+            and approved_snapshot_digest == run.source_snapshot_digest
+            and (
+                not expected_source_snapshot_identity
+                or approved_snapshot_digest == expected_source_snapshot_identity
+            )
+            and SHA256_PATTERN.fullmatch(approved_repository_identity)
+            and approved_repository_identity == observed_repository_identity
+            and (
+                not expected_source_workspace_identity
+                or approved_repository_identity
+                == expected_source_workspace_identity
+            )
+        ):
+            raise ApplySessionError(
+                "SOURCE_WORKSPACE_IDENTITY_MISMATCH",
+                "The configured repository is not the exact source repository approved for this delivery.",
+            )
     return configured_root
 
 
@@ -963,7 +1036,12 @@ def _global_static_mismatches(
     return sorted(set(mismatches))
 
 
-def _run_worktree_root(run: CodexRun, source_root: Path) -> Path:
+def _run_worktree_root(
+    run: CodexRun,
+    source_root: Path,
+    *,
+    plan: ApplyPlan,
+) -> Path:
     if not run.worktree_path:
         raise ApplySessionError(
             "POSTIMAGE_MATERIAL_MISSING",
@@ -981,6 +1059,41 @@ def _run_worktree_root(run: CodexRun, source_root: Path) -> Path:
             "POSTIMAGE_MATERIAL_UNSAFE",
             "The persisted Run worktree is not an isolated source of postimages.",
         )
+    result_lineage = _plan_has_result_lineage(plan)
+    if result_lineage:
+        expected_identities = (
+            plan.run_workspace_identity,
+            plan.run_workspace_baseline_identity,
+            plan.run_workspace_post_state_identity,
+        )
+        if any(
+            not SHA256_PATTERN.fullmatch(value or "")
+            for value in expected_identities
+        ):
+            raise ApplySessionError(
+                "RUN_WORKSPACE_BINDING_INCOMPLETE",
+                "The immutable Plan lacks complete Run workspace lineage.",
+            )
+        if plan.run_workspace_baseline_identity != run.source_snapshot_digest:
+            raise ApplySessionError(
+                "RUN_WORKSPACE_BASELINE_MISMATCH",
+                "The Run workspace baseline no longer matches the immutable Plan.",
+            )
+        run_root_stat = run_root.stat()
+        observed_workspace_identity = canonical_sha256(
+            {
+                "device": run_root_stat.st_dev,
+                "inode": run_root_stat.st_ino,
+                "resolved_location": str(run_root),
+                "source_snapshot_identity": run.source_snapshot_digest,
+                "worktree_branch": run.worktree_branch,
+            }
+        )
+        if observed_workspace_identity != plan.run_workspace_identity:
+            raise ApplySessionError(
+                "RUN_WORKSPACE_IDENTITY_MISMATCH",
+                "The persisted Run workspace is not the workspace bound to the immutable Candidate and Plan.",
+            )
     verified_root = Path(
         run_git(
             run_root,
@@ -1033,13 +1146,18 @@ def _run_worktree_root(run: CodexRun, source_root: Path) -> Path:
     if not source_common_candidate.is_absolute():
         source_common_candidate = source_root / source_common_candidate
     source_common_dir = source_common_candidate.resolve(strict=True)
-    if (
-        not git_dir.is_dir()
-        or not common_dir.is_dir()
-        or (
+    unsafe_git_relationship = (
+        common_dir != source_common_dir
+        if result_lineage
+        else (
             not git_dir.is_relative_to(run_root)
             and common_dir != source_common_dir
         )
+    )
+    if (
+        not git_dir.is_dir()
+        or not common_dir.is_dir()
+        or unsafe_git_relationship
     ):
         raise ApplySessionError(
             "POSTIMAGE_MATERIAL_UNSAFE",
@@ -1054,14 +1172,40 @@ def _run_worktree_root(run: CodexRun, source_root: Path) -> Path:
             "POSTIMAGE_MATERIAL_MISSING",
             "The persisted Run postimage snapshot identity is unavailable.",
         )
+    approved_source_snapshot = (
+        _decoded_object(run.pack.source_snapshot_json)
+        if run.pack is not None
+        else {}
+    )
+    source_identity_method = str(
+        approved_source_snapshot.get("source_repository_identity_method") or ""
+    )
     post_snapshot = capture_source_snapshot(
         run_root,
         hardened_read_only=True,
+        source_repository_identity_method=(
+            source_identity_method
+            if source_identity_method in SOURCE_REPOSITORY_IDENTITY_METHODS
+            else SOURCE_REPOSITORY_IDENTITY_METHOD
+        ),
     )
+    if not approved_source_snapshot.get("source_repository_identity"):
+        post_snapshot.pop("source_repository_identity_method", None)
+        post_snapshot.pop("source_repository_identity", None)
+        post_snapshot["digest"] = _source_snapshot_digest(post_snapshot)
     if post_snapshot.get("digest") != expected_snapshot_digest:
         raise ApplySessionError(
             "POSTIMAGE_MATERIAL_INVALID",
             "The persisted Run worktree no longer matches its exact postimage snapshot.",
+        )
+    if (
+        result_lineage
+        and plan.verification_policy == "required"
+        and plan.run_workspace_post_state_identity != expected_snapshot_digest
+    ):
+        raise ApplySessionError(
+            "RUN_WORKSPACE_POST_STATE_MISMATCH",
+            "The verified Run workspace post-state no longer matches the immutable Plan.",
         )
     return run_root
 
@@ -1116,9 +1260,43 @@ def _assert_state_matches_plan(
         )
 
 
-def _confirmation_digest(plan: ApplyPlan, candidate: DeliveryCandidate) -> str:
-    return canonical_sha256(
-        {
+def _required_plan_approval(
+    session: Session,
+    *,
+    owner_id: int,
+    plan: ApplyPlan,
+) -> ApplyPlanApproval | None:
+    if not _plan_has_result_lineage(plan):
+        return None
+    approval = get_apply_plan_approval(
+        session,
+        owner_id=owner_id,
+        plan=plan,
+    )
+    if approval is None:
+        raise ApplySessionError(
+            "PLAN_APPROVAL_REQUIRED",
+            "The Owner must explicitly approve this exact current Apply Plan before Apply.",
+        )
+    if not validate_apply_plan_approval(
+        session,
+        approval,
+        plan=plan,
+        owner_id=owner_id,
+    ):
+        raise ApplySessionError(
+            "PLAN_APPROVAL_INVALID",
+            "The persisted Apply Plan approval failed its delivery-lineage integrity check.",
+        )
+    return approval
+
+
+def _confirmation_digest(
+    plan: ApplyPlan,
+    candidate: DeliveryCandidate,
+    approval: ApplyPlanApproval | None,
+) -> str:
+    payload: dict[str, Any] = {
             "schema": "twos.apply_confirmation.v1",
             "policy": APPLY_SESSION_POLICY_VERSION,
             "owner_id": plan.owner_id,
@@ -1127,8 +1305,33 @@ def _confirmation_digest(plan: ApplyPlan, candidate: DeliveryCandidate) -> str:
             "candidate_id": candidate.candidate_id,
             "candidate_digest": candidate.candidate_digest,
             "explicit_confirmation": True,
-        }
-    )
+    }
+    if approval is not None:
+        payload.update(
+            {
+                "delivery_lineage_schema": "twos.result_apply_confirmation.v1",
+                "candidate_version": plan.candidate_version,
+                "result_envelope_id": plan.result_envelope_id,
+                "result_envelope_public_id": plan.result_envelope_public_id,
+                "result_digest": plan.result_digest,
+                "owner_acceptance_id": plan.owner_acceptance_id,
+                "result_review_decision_digest": (
+                    plan.result_review_decision_digest
+                ),
+                "apply_plan_approval_id": approval.id,
+                "apply_plan_approval_public_id": approval.approval_id,
+                "apply_plan_approval_digest": approval.approval_digest,
+                "source_workspace_identity": plan.source_workspace_identity,
+                "run_workspace_identity": plan.run_workspace_identity,
+                "run_workspace_baseline_identity": (
+                    plan.run_workspace_baseline_identity
+                ),
+                "run_workspace_post_state_identity": (
+                    plan.run_workspace_post_state_identity
+                ),
+            }
+        )
+    return canonical_sha256(payload)
 
 
 def _revert_confirmation_digest(apply_session: ApplySession) -> str:
@@ -1223,6 +1426,11 @@ def validate_apply_session_journal(
         DeliveryCandidate,
         apply_session.delivery_candidate_id,
     )
+    approval = (
+        session.get(ApplyPlanApproval, apply_session.apply_plan_approval_id)
+        if apply_session.apply_plan_approval_id is not None
+        else None
+    )
     if (
         plan is None
         or candidate is None
@@ -1231,6 +1439,57 @@ def validate_apply_session_journal(
         or candidate.candidate_id != apply_session.candidate_public_id
         or candidate.candidate_digest != apply_session.candidate_digest
         or not SHA256_PATTERN.fullmatch(apply_session.journal_digest or "")
+    ):
+        return False
+    if _plan_has_result_lineage(plan):
+        if (
+            approval is None
+            or not validate_apply_plan_approval(
+                session,
+                approval,
+                plan=plan,
+                owner_id=apply_session.owner_id,
+            )
+            or candidate.candidate_version != apply_session.candidate_version
+            or plan.candidate_version != apply_session.candidate_version
+            or plan.result_envelope_id != apply_session.result_envelope_id
+            or plan.result_envelope_public_id
+            != apply_session.result_envelope_public_id
+            or plan.result_digest != apply_session.result_digest
+            or plan.owner_acceptance_id != apply_session.owner_acceptance_id
+            or plan.result_review_decision_digest
+            != apply_session.result_review_decision_digest
+            or approval.id != apply_session.apply_plan_approval_id
+            or approval.approval_id
+            != apply_session.apply_plan_approval_public_id
+            or approval.approval_digest
+            != apply_session.apply_plan_approval_digest
+            or plan.source_workspace_identity
+            != apply_session.source_workspace_identity
+            or plan.run_workspace_identity
+            != apply_session.run_workspace_identity
+            or plan.run_workspace_baseline_identity
+            != apply_session.run_workspace_baseline_identity
+            or plan.run_workspace_post_state_identity
+            != apply_session.run_workspace_post_state_identity
+        ):
+            return False
+    elif any(
+        (
+            approval is not None,
+            apply_session.result_envelope_id is not None,
+            bool(apply_session.result_envelope_public_id),
+            bool(apply_session.result_digest),
+            apply_session.owner_acceptance_id is not None,
+            bool(apply_session.result_review_decision_digest),
+            apply_session.apply_plan_approval_id is not None,
+            bool(apply_session.apply_plan_approval_public_id),
+            bool(apply_session.apply_plan_approval_digest),
+            bool(apply_session.source_workspace_identity),
+            bool(apply_session.run_workspace_identity),
+            bool(apply_session.run_workspace_baseline_identity),
+            bool(apply_session.run_workspace_post_state_identity),
+        )
     ):
         return False
     rows = apply_session_entries(session, apply_session)
@@ -1316,8 +1575,7 @@ def validate_apply_session_journal(
                 temporary_material_identity=row.temporary_material_identity,
             )
         )
-    calculated = canonical_sha256(
-        {
+    journal_payload: dict[str, Any] = {
             "schema": "twos.apply_journal.v1",
             "policy": APPLY_SESSION_POLICY_VERSION,
             "owner_id": apply_session.owner_id,
@@ -1341,8 +1599,43 @@ def validate_apply_session_journal(
                 apply_session.before_evidence_json
             ),
             "entries": entry_material,
-        }
-    )
+    }
+    if approval is not None:
+        journal_payload.update(
+            {
+                "delivery_lineage_schema": "twos.result_apply_journal.v1",
+                "candidate_version": apply_session.candidate_version,
+                "result_envelope_id": apply_session.result_envelope_id,
+                "result_envelope_public_id": (
+                    apply_session.result_envelope_public_id
+                ),
+                "result_digest": apply_session.result_digest,
+                "owner_acceptance_id": apply_session.owner_acceptance_id,
+                "result_review_decision_digest": (
+                    apply_session.result_review_decision_digest
+                ),
+                "apply_plan_approval_id": (
+                    apply_session.apply_plan_approval_id
+                ),
+                "apply_plan_approval_public_id": (
+                    apply_session.apply_plan_approval_public_id
+                ),
+                "apply_plan_approval_digest": (
+                    apply_session.apply_plan_approval_digest
+                ),
+                "source_workspace_identity": (
+                    apply_session.source_workspace_identity
+                ),
+                "run_workspace_identity": apply_session.run_workspace_identity,
+                "run_workspace_baseline_identity": (
+                    apply_session.run_workspace_baseline_identity
+                ),
+                "run_workspace_post_state_identity": (
+                    apply_session.run_workspace_post_state_identity
+                ),
+            }
+        )
+    calculated = canonical_sha256(journal_payload)
     return calculated == apply_session.journal_digest
 
 
@@ -1416,13 +1709,13 @@ def _journal_digest_from_material(
     *,
     plan: ApplyPlan,
     candidate: DeliveryCandidate,
+    approval: ApplyPlanApproval | None,
     confirmation_digest: str,
     drift_id: int,
     before_evidence: dict[str, Any],
     journal_material: list[dict[str, Any]],
 ) -> str:
-    return canonical_sha256(
-        {
+    payload: dict[str, Any] = {
             "schema": "twos.apply_journal.v1",
             "policy": APPLY_SESSION_POLICY_VERSION,
             "owner_id": plan.owner_id,
@@ -1454,14 +1747,40 @@ def _journal_digest_from_material(
                 )
                 for item in journal_material
             ],
-        }
-    )
+    }
+    if approval is not None:
+        payload.update(
+            {
+                "delivery_lineage_schema": "twos.result_apply_journal.v1",
+                "candidate_version": plan.candidate_version,
+                "result_envelope_id": plan.result_envelope_id,
+                "result_envelope_public_id": plan.result_envelope_public_id,
+                "result_digest": plan.result_digest,
+                "owner_acceptance_id": plan.owner_acceptance_id,
+                "result_review_decision_digest": (
+                    plan.result_review_decision_digest
+                ),
+                "apply_plan_approval_id": approval.id,
+                "apply_plan_approval_public_id": approval.approval_id,
+                "apply_plan_approval_digest": approval.approval_digest,
+                "source_workspace_identity": plan.source_workspace_identity,
+                "run_workspace_identity": plan.run_workspace_identity,
+                "run_workspace_baseline_identity": (
+                    plan.run_workspace_baseline_identity
+                ),
+                "run_workspace_post_state_identity": (
+                    plan.run_workspace_post_state_identity
+                ),
+            }
+        )
+    return canonical_sha256(payload)
 
 
 def _session_base(
     *,
     plan: ApplyPlan,
     candidate: DeliveryCandidate,
+    approval: ApplyPlanApproval | None,
     drift_id: int,
     state: str,
     before_evidence: dict[str, Any],
@@ -1518,6 +1837,26 @@ def _session_base(
             "candidate_id": candidate.candidate_id,
             "candidate_digest": candidate.candidate_digest,
             "confirmation_digest": confirmation_digest,
+            **(
+                {
+                    "candidate_version": plan.candidate_version,
+                    "result_digest": plan.result_digest,
+                    "result_review_decision_digest": (
+                        plan.result_review_decision_digest
+                    ),
+                    "apply_plan_approval_digest": approval.approval_digest,
+                    "source_workspace_identity": plan.source_workspace_identity,
+                    "run_workspace_identity": plan.run_workspace_identity,
+                    "run_workspace_baseline_identity": (
+                        plan.run_workspace_baseline_identity
+                    ),
+                    "run_workspace_post_state_identity": (
+                        plan.run_workspace_post_state_identity
+                    ),
+                }
+                if approval is not None
+                else {}
+            ),
         }
     )
     index = _decoded_object(before_evidence.get("index"))
@@ -1530,12 +1869,29 @@ def _session_base(
         delivery_candidate_id=candidate.id,
         candidate_public_id=candidate.candidate_id,
         candidate_digest=candidate.candidate_digest,
+        candidate_version=plan.candidate_version,
+        result_envelope_id=plan.result_envelope_id,
+        result_envelope_public_id=plan.result_envelope_public_id,
+        result_digest=plan.result_digest,
+        owner_acceptance_id=plan.owner_acceptance_id,
+        result_review_decision_digest=plan.result_review_decision_digest,
+        apply_plan_approval_id=approval.id if approval is not None else None,
+        apply_plan_approval_public_id=(
+            approval.approval_id if approval is not None else ""
+        ),
+        apply_plan_approval_digest=(
+            approval.approval_digest if approval is not None else ""
+        ),
         run_id=plan.run_id,
         task_id=plan.task_id,
         task_version=plan.task_version,
         pack_id=plan.pack_id,
         pack_version=plan.pack_version,
         source_snapshot_identity=plan.source_snapshot_identity,
+        source_workspace_identity=plan.source_workspace_identity,
+        run_workspace_identity=plan.run_workspace_identity,
+        run_workspace_baseline_identity=plan.run_workspace_baseline_identity,
+        run_workspace_post_state_identity=plan.run_workspace_post_state_identity,
         source_drift_evaluation_id=drift_id,
         repository_locator_fingerprint=str(
             before_evidence.get("repository_locator_fingerprint")
@@ -1583,6 +1939,7 @@ def _persist_blocked_session(
     *,
     plan: ApplyPlan,
     candidate: DeliveryCandidate,
+    approval: ApplyPlanApproval | None,
     plan_entries: list[ApplyPlanEntry],
     confirmation_digest: str,
     drift_id: int,
@@ -1592,6 +1949,7 @@ def _persist_blocked_session(
     blocked = _session_base(
         plan=plan,
         candidate=candidate,
+        approval=approval,
         drift_id=drift_id,
         state="PREFLIGHT_BLOCKED",
         before_evidence=before_evidence,
@@ -1603,6 +1961,43 @@ def _persist_blocked_session(
                 "owner_id": plan.owner_id,
                 "plan_digest": plan.plan_digest,
                 "candidate_digest": candidate.candidate_digest,
+                **(
+                    {
+                        "delivery_lineage_schema": "twos.result_apply_blocked_journal.v1",
+                        "candidate_version": plan.candidate_version,
+                        "result_envelope_id": plan.result_envelope_id,
+                        "result_envelope_public_id": (
+                            plan.result_envelope_public_id
+                        ),
+                        "apply_plan_approval_digest": approval.approval_digest,
+                        "apply_plan_approval_id": approval.id,
+                        "apply_plan_approval_public_id": approval.approval_id,
+                        "result_digest": plan.result_digest,
+                        "owner_acceptance_id": plan.owner_acceptance_id,
+                        "result_review_decision_digest": (
+                            plan.result_review_decision_digest
+                        ),
+                        "source_workspace_identity": (
+                            plan.source_workspace_identity
+                        ),
+                        "run_workspace_identity": plan.run_workspace_identity,
+                        "run_workspace_baseline_identity": (
+                            plan.run_workspace_baseline_identity
+                        ),
+                        "run_workspace_post_state_identity": (
+                            plan.run_workspace_post_state_identity
+                        ),
+                        "run_workspace_identity": plan.run_workspace_identity,
+                        "run_workspace_baseline_identity": (
+                            plan.run_workspace_baseline_identity
+                        ),
+                        "run_workspace_post_state_identity": (
+                            plan.run_workspace_post_state_identity
+                        ),
+                    }
+                    if approval is not None
+                    else {}
+                ),
                 "confirmation_digest": confirmation_digest,
                 "failure": failure,
             }
@@ -1657,6 +2052,7 @@ def _prepare_apply_journal(
     *,
     owner_id: int,
     plan: ApplyPlan,
+    approval: ApplyPlanApproval | None,
     source_repo: Path,
 ) -> tuple[
     CodexRun,
@@ -1671,6 +2067,23 @@ def _prepare_apply_journal(
         raise ApplySessionError(
             "APPLY_PLAN_NOT_FOUND",
             "The Apply Plan is unavailable.",
+        )
+    required_approval = _required_plan_approval(
+        session,
+        owner_id=owner_id,
+        plan=plan,
+    )
+    if (
+        (required_approval is None) != (approval is None)
+        or (
+            required_approval is not None
+            and approval is not None
+            and required_approval.id != approval.id
+        )
+    ):
+        raise ApplySessionError(
+            "PLAN_APPROVAL_BINDING_CHANGED",
+            "The Apply Plan approval changed before preflight.",
         )
     if not validate_apply_plan_integrity(session, plan):
         raise ApplySessionError(
@@ -1709,7 +2122,13 @@ def _prepare_apply_journal(
             "CANDIDATE_INTEGRITY_INVALID",
             "The immutable Candidate no longer satisfies its exact bindings.",
         )
-    root = _verified_repository_root(run, source_repo)
+    root = _verified_repository_root(
+        run,
+        source_repo,
+        expected_source_workspace_identity=plan.source_workspace_identity,
+        expected_source_snapshot_identity=plan.source_snapshot_identity,
+        require_strong_source_identity=_plan_has_result_lineage(plan),
+    )
     plan_entries = _plan_entries(session, plan)
     blocked_entries = [row for row in plan_entries if row.disposition == "BLOCKED"]
     included_entries = [row for row in plan_entries if row.disposition == "INCLUDED"]
@@ -1838,7 +2257,7 @@ def _prepare_apply_journal(
         root,
         target_paths=target_paths,
     )
-    run_root = _run_worktree_root(run, root)
+    run_root = _run_worktree_root(run, root, plan=plan)
     journal_material: list[dict[str, Any]] = []
     for row in included_entries:
         before_state, parent_chain = _target_state(root, row.repository_path)
@@ -1973,6 +2392,7 @@ def _persist_applying_session(
     *,
     plan: ApplyPlan,
     candidate: DeliveryCandidate,
+    approval: ApplyPlanApproval | None,
     drift_id: int,
     before_evidence: dict[str, Any],
     confirmation_digest: str,
@@ -1982,6 +2402,7 @@ def _persist_applying_session(
     applying = _session_base(
         plan=plan,
         candidate=candidate,
+        approval=approval,
         drift_id=drift_id,
         state="APPLYING",
         before_evidence=before_evidence,
@@ -1989,6 +2410,7 @@ def _persist_applying_session(
         journal_digest=_journal_digest_from_material(
             plan=plan,
             candidate=candidate,
+            approval=approval,
             confirmation_digest=confirmation_digest,
             drift_id=drift_id,
             before_evidence=before_evidence,
@@ -3081,7 +3503,20 @@ def _reconcile_apply_session_locked(
         session.commit()
         return apply_session
     try:
-        root = _verified_repository_root(run, source_repo)
+        root = _verified_repository_root(
+            run,
+            source_repo,
+            expected_source_workspace_identity=(
+                apply_session.source_workspace_identity
+            ),
+            expected_source_snapshot_identity=(
+                apply_session.source_snapshot_identity
+            ),
+            require_strong_source_identity=bool(
+                apply_session.result_envelope_id is not None
+                or apply_session.result_digest
+            ),
+        )
         if (
             _sha256_bytes(str(root).encode("utf-8"))
             != apply_session.repository_locator_fingerprint
@@ -3200,6 +3635,9 @@ def _apply_accepted_changes_locked(
     confirmed: bool,
     expected_plan_digest: str | None = None,
     expected_candidate_digest: str | None = None,
+    expected_plan_approval_digest: str | None = None,
+    expected_result_digest: str | None = None,
+    expected_result_review_decision_digest: str | None = None,
     fault_injector: FaultInjector | None = None,
 ) -> tuple[ApplySession, bool]:
     """Apply one exact immutable Plan after a separate explicit confirmation.
@@ -3233,6 +3671,34 @@ def _apply_accepted_changes_locked(
             "EXPECTED_CANDIDATE_DIGEST_MISMATCH",
             "The confirmed Candidate digest is stale.",
         )
+    approval = _required_plan_approval(
+        session,
+        owner_id=owner_id,
+        plan=plan,
+    )
+    expected_lineage = (
+        (
+            expected_plan_approval_digest,
+            approval.approval_digest if approval is not None else None,
+            "EXPECTED_PLAN_APPROVAL_DIGEST_MISMATCH",
+            "The confirmed Apply Plan approval digest is stale.",
+        ),
+        (
+            expected_result_digest,
+            plan.result_digest or None,
+            "EXPECTED_RESULT_DIGEST_MISMATCH",
+            "The confirmed Result digest is stale.",
+        ),
+        (
+            expected_result_review_decision_digest,
+            plan.result_review_decision_digest or None,
+            "EXPECTED_RESULT_REVIEW_DIGEST_MISMATCH",
+            "The confirmed Owner Result decision digest is stale.",
+        ),
+    )
+    for expected, actual, code, message in expected_lineage:
+        if expected is not None and expected != actual:
+            raise ApplySessionError(code, message)
     existing = _owned_existing_for_plan(
         session,
         owner_id=owner_id,
@@ -3260,7 +3726,7 @@ def _apply_accepted_changes_locked(
             "CANDIDATE_UNAVAILABLE",
             "The Plan-bound Candidate is unavailable.",
         )
-    confirmation_digest = _confirmation_digest(plan, candidate)
+    confirmation_digest = _confirmation_digest(plan, candidate, approval)
     plan_entries = _plan_entries(session, plan)
     try:
         (
@@ -3275,6 +3741,7 @@ def _apply_accepted_changes_locked(
             session,
             owner_id=owner_id,
             plan=plan,
+            approval=approval,
             source_repo=source_repo,
         )
     except ApplySessionError as exc:
@@ -3302,6 +3769,7 @@ def _apply_accepted_changes_locked(
             session,
             plan=plan,
             candidate=candidate,
+            approval=approval,
             plan_entries=plan_entries,
             confirmation_digest=confirmation_digest,
             drift_id=latest_drift_id,
@@ -3321,6 +3789,7 @@ def _apply_accepted_changes_locked(
             session,
             plan=plan,
             candidate=candidate,
+            approval=approval,
             drift_id=drift_id,
             before_evidence=before_evidence,
             confirmation_digest=confirmation_digest,
@@ -3334,6 +3803,7 @@ def _apply_accepted_changes_locked(
             session,
             plan=plan,
             candidate=candidate,
+            approval=approval,
             plan_entries=plan_entries,
             confirmation_digest=confirmation_digest,
             drift_id=plan.source_drift_evaluation_id,
@@ -3553,6 +4023,9 @@ def apply_accepted_changes(
     confirmed: bool,
     expected_plan_digest: str | None = None,
     expected_candidate_digest: str | None = None,
+    expected_plan_approval_digest: str | None = None,
+    expected_result_digest: str | None = None,
+    expected_result_review_decision_digest: str | None = None,
     fault_injector: FaultInjector | None = None,
 ) -> tuple[ApplySession, bool]:
     try:
@@ -3565,6 +4038,11 @@ def apply_accepted_changes(
                 confirmed=confirmed,
                 expected_plan_digest=expected_plan_digest,
                 expected_candidate_digest=expected_candidate_digest,
+                expected_plan_approval_digest=expected_plan_approval_digest,
+                expected_result_digest=expected_result_digest,
+                expected_result_review_decision_digest=(
+                    expected_result_review_decision_digest
+                ),
                 fault_injector=fault_injector,
             )
     except ApplySessionError as exc:
@@ -3941,7 +4419,20 @@ def _revert_applied_changes_locked(
                 "DURABLE_JOURNAL_INVALID",
                 "The immutable Apply journal failed its integrity check.",
             )
-        root = _verified_repository_root(run, source_repo)
+        root = _verified_repository_root(
+            run,
+            source_repo,
+            expected_source_workspace_identity=(
+                apply_session.source_workspace_identity
+            ),
+            expected_source_snapshot_identity=(
+                apply_session.source_snapshot_identity
+            ),
+            require_strong_source_identity=bool(
+                apply_session.result_envelope_id is not None
+                or apply_session.result_digest
+            ),
+        )
         entries = apply_session_entries(session, apply_session)
         if len(entries) != apply_session.included_path_count or not entries:
             raise ApplySessionError(
@@ -4308,12 +4799,32 @@ def apply_confirmation_out(
             "CANDIDATE_UNAVAILABLE",
             "The Plan-bound Candidate is unavailable.",
         )
+    approval = (
+        get_apply_plan_approval(session, owner_id=owner_id, plan=plan)
+        if _plan_has_result_lineage(plan)
+        else None
+    )
+    approval_valid = bool(
+        approval is not None
+        and validate_apply_plan_approval(
+            session,
+            approval,
+            plan=plan,
+            owner_id=owner_id,
+        )
+    )
     observation: dict[str, Any] | None = None
     preview_before: dict[str, Any] = {}
     preview_drift_id: int | None = None
     blockers: list[dict[str, str]] = []
     try:
-        root = _verified_repository_root(run, source_repo)
+        root = _verified_repository_root(
+            run,
+            source_repo,
+            expected_source_workspace_identity=plan.source_workspace_identity,
+            expected_source_snapshot_identity=plan.source_snapshot_identity,
+            require_strong_source_identity=_plan_has_result_lineage(plan),
+        )
         with _repository_mutation_lock(plan.repository_locator_fingerprint):
             observation = observe_repository(run, root)
             effective_state, state_blockers = effective_apply_plan_state(
@@ -4373,6 +4884,31 @@ def apply_confirmation_out(
         },
         "expected_plan_digest": plan.plan_digest,
         "expected_candidate_digest": candidate.candidate_digest,
+        "expected_plan_approval_digest": (
+            approval.approval_digest if approval_valid and approval else None
+        ),
+        "expected_result_digest": plan.result_digest or None,
+        "expected_result_review_decision_digest": (
+            plan.result_review_decision_digest or None
+        ),
+        "approval_required": _plan_has_result_lineage(plan),
+        "approval_state": (
+            "APPROVED"
+            if approval_valid
+            else "INVALID"
+            if approval is not None
+            else "PENDING"
+            if _plan_has_result_lineage(plan)
+            else "LEGACY_CONFIRMATION_ONLY"
+        ),
+        "apply_plan_approval": (
+            {
+                "id": approval.approval_id,
+                "approved_at": approval.approved_at.isoformat() + "Z",
+            }
+            if approval_valid and approval is not None
+            else None
+        ),
         "candidate": {
             "id": candidate.candidate_id,
             "digest": candidate.candidate_digest,
@@ -4453,7 +4989,20 @@ def revert_confirmation_out(
         )
     else:
         try:
-            root = _verified_repository_root(run, source_repo)
+            root = _verified_repository_root(
+                run,
+                source_repo,
+                expected_source_workspace_identity=(
+                    apply_session.source_workspace_identity
+                ),
+                expected_source_snapshot_identity=(
+                    apply_session.source_snapshot_identity
+                ),
+                require_strong_source_identity=bool(
+                    apply_session.result_envelope_id is not None
+                    or apply_session.result_digest
+                ),
+            )
             for entry in entries:
                 if not _entry_matches_after(root, entry):
                     blockers.append(
@@ -4590,8 +5139,22 @@ def apply_session_out(
         },
         "candidate": {
             "id": apply_session.candidate_public_id,
+            "version": apply_session.candidate_version,
             "digest": apply_session.candidate_digest,
         },
+        "result_lineage": (
+            {
+                "result_envelope_id": (
+                    apply_session.result_envelope_public_id
+                ),
+                "owner_review": "accepted_for_delivery",
+                "apply_plan_approval_id": (
+                    apply_session.apply_plan_approval_public_id
+                ),
+            }
+            if apply_session.result_envelope_id is not None
+            else None
+        ),
         "files": [
             {
                 "path": entry.repository_path,
@@ -4654,6 +5217,39 @@ def apply_session_out(
                 "pack_version": apply_session.pack_version,
             },
             "source_snapshot_identity": apply_session.source_snapshot_identity,
+            "source_workspace_identity": (
+                apply_session.source_workspace_identity or None
+            ),
+            "run_workspace_identity": (
+                apply_session.run_workspace_identity or None
+            ),
+            "run_workspace_baseline_identity": (
+                apply_session.run_workspace_baseline_identity or None
+            ),
+            "run_workspace_post_state_identity": (
+                apply_session.run_workspace_post_state_identity or None
+            ),
+            "run_workspace_identity": (
+                apply_session.run_workspace_identity or None
+            ),
+            "run_workspace_baseline_identity": (
+                apply_session.run_workspace_baseline_identity or None
+            ),
+            "run_workspace_post_state_identity": (
+                apply_session.run_workspace_post_state_identity or None
+            ),
+            "result_envelope_id": (
+                apply_session.result_envelope_public_id or None
+            ),
+            "result_digest": apply_session.result_digest or None,
+            "owner_acceptance_id": apply_session.owner_acceptance_id,
+            "result_review_decision_digest": (
+                apply_session.result_review_decision_digest or None
+            ),
+            "apply_plan_approval": {
+                "id": apply_session.apply_plan_approval_public_id or None,
+                "digest": apply_session.apply_plan_approval_digest or None,
+            },
             "source_drift_evaluation_id": (
                 apply_session.source_drift_evaluation_id
             ),

@@ -687,7 +687,11 @@ def git_source_state(
 
 
 SOURCE_SNAPSHOT_SCHEMA = "twos.source_snapshot.v2"
-SOURCE_REPOSITORY_IDENTITY_METHOD = "git-common-dir-sha256-v1"
+SOURCE_REPOSITORY_IDENTITY_METHOD_V1 = "git-common-dir-sha256-v1"
+SOURCE_REPOSITORY_IDENTITY_METHOD = "git-common-dir-device-inode-sha256-v2"
+SOURCE_REPOSITORY_IDENTITY_METHODS = frozenset(
+    {SOURCE_REPOSITORY_IDENTITY_METHOD_V1, SOURCE_REPOSITORY_IDENTITY_METHOD}
+)
 SOURCE_SNAPSHOT_MAX_FILE_BYTES = 4_000_000
 SOURCE_SNAPSHOT_MAX_TOTAL_BYTES = 24_000_000
 _SECRET_PATH = re.compile(
@@ -816,6 +820,7 @@ def _source_repository_identity(
     repo: Path,
     *,
     hardened_read_only: bool = False,
+    method: str = SOURCE_REPOSITORY_IDENTITY_METHOD,
 ) -> str:
     """Return a safe identity shared by worktrees of one exact Git repository."""
 
@@ -834,19 +839,23 @@ def _source_repository_identity(
     canonical_common_dir = common_dir.resolve(strict=True)
     if not canonical_common_dir.is_dir():
         raise RuntimeError("Git repository identity could not be verified.")
-    return hashlib.sha256(
-        (
-            f"{SOURCE_REPOSITORY_IDENTITY_METHOD}\0"
-            f"{canonical_common_dir}"
-        ).encode("utf-8")
-    ).hexdigest()
+    if method not in SOURCE_REPOSITORY_IDENTITY_METHODS:
+        raise RuntimeError("Git repository identity method is unsupported.")
+    identity_material = f"{method}\0{canonical_common_dir}"
+    if method == SOURCE_REPOSITORY_IDENTITY_METHOD:
+        common_dir_stat = canonical_common_dir.stat()
+        identity_material += (
+            f"\0device={common_dir_stat.st_dev}"
+            f"\0inode={common_dir_stat.st_ino}"
+        )
+    return hashlib.sha256(identity_material.encode("utf-8")).hexdigest()
 
 
 def _snapshot_has_approval_bound_source_identity(snapshot: dict[str, Any]) -> bool:
     return bool(
         snapshot.get("schema") == SOURCE_SNAPSHOT_SCHEMA
         and snapshot.get("source_repository_identity_method")
-        == SOURCE_REPOSITORY_IDENTITY_METHOD
+        in SOURCE_REPOSITORY_IDENTITY_METHODS
         and isinstance(snapshot.get("source_repository_identity"), str)
         and re.fullmatch(
             r"[0-9a-f]{64}",
@@ -854,6 +863,15 @@ def _snapshot_has_approval_bound_source_identity(snapshot: dict[str, Any]) -> bo
         )
         and isinstance(snapshot.get("source_branch"), str)
         and bool(str(snapshot.get("source_branch")))
+    )
+
+
+def source_snapshot_has_strong_repository_identity(snapshot: object) -> bool:
+    return bool(
+        isinstance(snapshot, dict)
+        and _snapshot_has_approval_bound_source_identity(snapshot)
+        and snapshot.get("source_repository_identity_method")
+        == SOURCE_REPOSITORY_IDENTITY_METHOD
     )
 
 
@@ -870,6 +888,7 @@ def capture_source_snapshot(
     hardened_read_only: bool = False,
     verified_source_state: dict[str, object] | None = None,
     approved_source_branch: str | None = None,
+    source_repository_identity_method: str = SOURCE_REPOSITORY_IDENTITY_METHOD,
 ) -> dict[str, Any]:
     """Capture the approval-bound dirty source state without secret material."""
     source = verified_source_state or git_source_state(
@@ -1077,10 +1096,11 @@ def capture_source_snapshot(
         "schema": SOURCE_SNAPSHOT_SCHEMA,
         "head_sha": source["commit"],
         "source_branch": snapshot_branch,
-        "source_repository_identity_method": SOURCE_REPOSITORY_IDENTITY_METHOD,
+        "source_repository_identity_method": source_repository_identity_method,
         "source_repository_identity": _source_repository_identity(
             root,
             hardened_read_only=hardened_read_only,
+            method=source_repository_identity_method,
         ),
         "staged_patch_b64": base64.b64encode(staged_patch_bytes).decode("ascii"),
         "unstaged_patch_b64": base64.b64encode(unstaged_patch_bytes).decode("ascii"),
@@ -1154,9 +1174,11 @@ def hydrate_source_snapshot(
         or snapshot.get("source_branch") != approved_source_branch
     ):
         raise RuntimeError("Source branch does not match the approved source snapshot.")
-    if identity_bound and _source_repository_identity(worktree) != snapshot.get(
-        "source_repository_identity"
-    ):
+    identity_method = str(snapshot.get("source_repository_identity_method") or "")
+    if identity_bound and _source_repository_identity(
+        worktree,
+        method=identity_method,
+    ) != snapshot.get("source_repository_identity"):
         raise RuntimeError(
             "Isolated workspace repository does not match the approved source snapshot."
         )
@@ -1257,6 +1279,9 @@ def hydrate_source_snapshot(
     hydrated = capture_source_snapshot(
         worktree,
         approved_source_branch=str(snapshot.get("source_branch") or ""),
+        source_repository_identity_method=(
+            identity_method if identity_bound else SOURCE_REPOSITORY_IDENTITY_METHOD
+        ),
     )
     if not identity_bound:
         # Preserve deterministic hydration of already-created historical v2
@@ -1488,6 +1513,11 @@ def pack_routing_binding_error(
             current_source = capture_source_snapshot(
                 source_repo,
                 hardened_read_only=True,
+                source_repository_identity_method=(
+                    str(approved_snapshot.get("source_repository_identity_method"))
+                    if identity_bound
+                    else SOURCE_REPOSITORY_IDENTITY_METHOD
+                ),
             )
         except RuntimeError:
             return "Source snapshot could not be verified. Regenerate Codex Pack."

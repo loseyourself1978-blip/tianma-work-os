@@ -134,7 +134,9 @@ def test_fresh_signup_receives_exact_executable_phase18_4a_task(
         assert activity[0]["lifecycle"]["result_integrity"] == "verified"
         initial_candidate = client.get(f"/api/codex-runs/{run_id}/delivery-candidate")
         assert initial_candidate.status_code == 200, initial_candidate.text
-        assert initial_candidate.json()["candidate"] is None
+        candidate = initial_candidate.json()["candidate"]
+        assert candidate is not None
+        assert candidate["acceptance_status"] == "accepted"
         assert repository_boundary() == boundary_before
 
     with factory() as session:
@@ -142,8 +144,10 @@ def test_fresh_signup_receives_exact_executable_phase18_4a_task(
         assert session.scalar(select(func.count()).select_from(SessionToken)) == 1
         assert session.scalar(select(func.count()).select_from(CodexRunMonitor)) == 1
         assert session.scalar(select(func.count()).select_from(CodexResultEnvelope)) == 1
+        persisted_candidate = session.scalar(select(DeliveryCandidate))
+        assert persisted_candidate is not None
+        assert persisted_candidate.derivation_version == "twos.delivery_candidate.v1"
         for model in (
-            DeliveryCandidate,
             ApplyPlan,
             ApplySession,
             PostApplyVerification,

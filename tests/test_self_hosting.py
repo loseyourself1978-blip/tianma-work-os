@@ -4382,6 +4382,19 @@ def test_codex_success_git_result_acceptance_and_compact_sync(tmp_path: Path) ->
         assert run_command(source_repo, "git", "rev-parse", "HEAD").stdout.strip() == baseline
         assert run_command(source_repo, "git", "status", "--porcelain").stdout.strip() == ""
 
+        intake_deadline = time.monotonic() + 8
+        envelope_response = None
+        while time.monotonic() < intake_deadline:
+            envelope_response = client.get(
+                f"/api/codex-runs/{run['id']}/result-envelope",
+                headers=headers,
+            )
+            if envelope_response.status_code == 200:
+                break
+            time.sleep(0.05)
+        assert envelope_response is not None
+        assert envelope_response.status_code == 200, envelope_response.text
+
         acceptance = client.get(f"/api/tasks/{task_id}/owner-acceptance", headers=headers).json()["acceptance"]
         assert acceptance["status"] == "owner_review"
         blocked_acceptance = client.post(
@@ -4397,15 +4410,43 @@ def test_codex_success_git_result_acceptance_and_compact_sync(tmp_path: Path) ->
                 json={"status": "pass", "note": "Verified in the named UI path."},
             )
             assert updated.status_code == 200
-        accepted = client.post(
+        legacy_accept = client.post(
             f"/api/owner-acceptance/{acceptance['id']}/accept",
             headers=headers,
             json={"note": "Owner accepted Git-derived evidence."},
         )
+        assert legacy_accept.status_code == 409
+        assert legacy_accept.json()["error"]["message"] == (
+            "Use the exact Result-bound Accept for Delivery action."
+        )
+        exact_payload = {
+            "confirmation": "ACCEPT_RESULT_FOR_DELIVERY",
+            "expected_result_id": acceptance["result_id"],
+            "expected_result_digest": acceptance["advanced"]["result_digest"],
+            "expected_candidate_id": acceptance["candidate_id"],
+            "expected_candidate_version": acceptance["candidate_version"],
+            "expected_candidate_digest": acceptance["advanced"]["candidate_digest"],
+            "note": "Owner accepted Git-derived evidence.",
+        }
+        accepted = client.post(
+            f"/api/codex-runs/{run['id']}/delivery-review/accept",
+            headers=headers,
+            json=exact_payload,
+        )
         assert accepted.status_code == 200, accepted.text
         body = accepted.json()
-        assert body["status"] == "accepted"
-        assert "Accepted in TWOS does not mean merged or pushed." in body["compact_sync_result"]
+        assert body["review"]["status"] == "accepted"
+        assert body["review"]["review_state"] == "accepted_for_delivery"
+        assert body["review"]["compact_sync_result"] == ""
+        assert len(body["review"]["advanced"]["decision_digest"]) == 64
+        assert body["automatic_actions"] == []
+        replay = client.post(
+            f"/api/codex-runs/{run['id']}/delivery-review/accept",
+            headers=headers,
+            json=exact_payload,
+        )
+        assert replay.status_code == 200, replay.text
+        assert replay.json()["decision_replayed"] is True
         rejected_after_acceptance = client.post(
             f"/api/owner-acceptance/{acceptance['id']}/reject",
             headers=headers,
@@ -4419,8 +4460,8 @@ def test_codex_success_git_result_acceptance_and_compact_sync(tmp_path: Path) ->
         )
         assert accepted_again.status_code == 409
         task = next(item for item in client.get("/api/tasks", headers=headers).json() if item["id"] == task_id)
-        assert task["status"] == "accepted"
-        assert task["compact_sync_result"] == body["compact_sync_result"]
+        assert task["status"] != "accepted"
+        assert task["compact_sync_result"] in {None, ""}
 
     with make_client(tmp_path, source_repo, fake_codex) as restarted:
         headers = init_and_login(restarted)
@@ -4435,7 +4476,8 @@ def test_codex_success_git_result_acceptance_and_compact_sync(tmp_path: Path) ->
         assert all(item["verified_real_invocation"] is True for item in runs[0]["model_invocations"])
         acceptance = restarted.get(f"/api/tasks/{task_id}/owner-acceptance", headers=headers).json()["acceptance"]
         assert acceptance["status"] == "accepted"
-        assert acceptance["compact_sync_result"]
+        assert acceptance["review_state"] == "accepted_for_delivery"
+        assert acceptance["compact_sync_result"] == ""
 
 
 def test_runtime_shutdown_hands_off_detached_run_for_restart_recovery(
@@ -4573,17 +4615,53 @@ def test_codex_failure_timeout_and_cancel(tmp_path: Path) -> None:
             if marker == "FAKE_FAIL":
                 assert evidence["timed_out"] is False
                 assert evidence["cancelled"] is False
+                intake_deadline = time.monotonic() + 8
+                envelope_response = None
+                while time.monotonic() < intake_deadline:
+                    envelope_response = client.get(
+                        f"/api/codex-runs/{run['id']}/result-envelope",
+                        headers=headers,
+                    )
+                    if envelope_response.status_code == 200:
+                        break
+                    time.sleep(0.05)
+                assert envelope_response is not None
+                assert envelope_response.status_code == 200, envelope_response.text
                 acceptance = client.get(
                     f"/api/tasks/{task_id}/owner-acceptance",
                     headers=headers,
                 ).json()["acceptance"]
-                rejected = client.post(
+                legacy_reject = client.post(
                     f"/api/owner-acceptance/{acceptance['id']}/reject",
                     headers=headers,
                     json={"note": "Owner rejected the failed run."},
                 )
+                assert legacy_reject.status_code == 409
+                assert legacy_reject.json()["error"]["message"] == (
+                    "Use the exact Result-bound Reject Result action."
+                )
+                rejected = client.post(
+                    f"/api/codex-runs/{run['id']}/delivery-review/reject",
+                    headers=headers,
+                    json={
+                        "confirmation": "REJECT_RESULT_FOR_DELIVERY",
+                        "expected_result_id": acceptance["result_id"],
+                        "expected_result_digest": acceptance["advanced"][
+                            "result_digest"
+                        ],
+                        "expected_candidate_id": acceptance["candidate_id"],
+                        "expected_candidate_version": acceptance[
+                            "candidate_version"
+                        ],
+                        "expected_candidate_digest": acceptance["advanced"][
+                            "candidate_digest"
+                        ],
+                        "note": "Owner rejected the failed run.",
+                    },
+                )
                 assert rejected.status_code == 200
-                assert rejected.json()["status"] == "rejected"
+                assert rejected.json()["review"]["review_state"] == "rejected"
+                assert rejected.json()["automatic_actions"] == []
 
         cancel_task_id = create_executable_task(client, headers, marker="FAKE_CANCEL")
         pack = generate_pack(client, headers, cancel_task_id)

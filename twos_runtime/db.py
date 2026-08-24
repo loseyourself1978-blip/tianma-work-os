@@ -5,9 +5,10 @@ import re
 from contextlib import contextmanager
 from typing import Iterator
 
-from sqlalchemy import Engine, create_engine, inspect, select, text
+from sqlalchemy import Engine, MetaData, create_engine, inspect, select, text
 from sqlalchemy.engine import Connection
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.schema import CreateTable
 
 from .models import (
     AICapability,
@@ -36,6 +37,7 @@ VOL18_POST_APPLY_VERIFICATION_SCHEMA_VERSION = "vol18.007"
 VOL18_LOCAL_COMMIT_BUILDER_SCHEMA_VERSION = "vol18.008"
 VOL18_PUSH_DELIVERY_SCHEMA_VERSION = "vol18.009"
 VOL19_CODEX_RUN_RESULT_SCHEMA_VERSION = "vol19.001"
+VOL19_RESULT_DELIVERY_LOOP_SCHEMA_VERSION = "vol19.002"
 
 
 DEFAULT_PROJECTS = [
@@ -176,6 +178,90 @@ COLUMN_MIGRATIONS = {
         ("execution_started_at", "DATETIME"),
         ("execution_finished_at", "DATETIME"),
     ],
+    "owner_acceptance_sessions": [
+        ("owner_id", "INTEGER REFERENCES users(id)"),
+        ("result_envelope_id", "INTEGER REFERENCES codex_result_envelopes(id)"),
+        ("result_envelope_public_id", "VARCHAR(80) NOT NULL DEFAULT ''"),
+        ("result_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("result_task_version", "INTEGER"),
+        ("result_pack_id", "INTEGER REFERENCES codex_instruction_packs(id)"),
+        ("result_pack_version", "INTEGER"),
+        ("approved_instruction_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("delivery_candidate_id", "INTEGER REFERENCES delivery_candidates(id)"),
+        ("candidate_public_id", "VARCHAR(80) NOT NULL DEFAULT ''"),
+        ("candidate_version", "INTEGER"),
+        ("candidate_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        (
+            "review_policy_version",
+            "VARCHAR(80) NOT NULL DEFAULT 'twos.result_delivery_review.v1'",
+        ),
+        ("decision_version", "INTEGER NOT NULL DEFAULT 1"),
+        ("decision_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+    ],
+    "delivery_candidates": [
+        ("candidate_version", "INTEGER NOT NULL DEFAULT 1"),
+        (
+            "derivation_version",
+            "VARCHAR(80) NOT NULL DEFAULT 'twos.delivery_candidate.v1'",
+        ),
+        ("result_envelope_id", "INTEGER REFERENCES codex_result_envelopes(id)"),
+        ("result_envelope_public_id", "VARCHAR(80) NOT NULL DEFAULT ''"),
+        ("result_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("approved_instruction_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("coding_attempt_id", "INTEGER REFERENCES codex_execution_attempts(id)"),
+        ("coding_attempt_identity", "VARCHAR(96) NOT NULL DEFAULT ''"),
+        ("coding_outcome", "VARCHAR(40) NOT NULL DEFAULT 'unknown'"),
+        ("verification_policy", "VARCHAR(40) NOT NULL DEFAULT 'required'"),
+        ("verification_attempt_id", "INTEGER REFERENCES codex_execution_attempts(id)"),
+        ("verification_attempt_identity", "VARCHAR(96) NOT NULL DEFAULT ''"),
+        ("verification_receipt_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("result_integrity_state", "VARCHAR(24) NOT NULL DEFAULT 'unverified'"),
+        ("source_workspace_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("run_workspace_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("run_workspace_baseline_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("run_workspace_post_state_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("excluded_manifest_json", "TEXT NOT NULL DEFAULT '[]'"),
+        ("attribution_summary_json", "TEXT NOT NULL DEFAULT '{}'"),
+        ("readiness_state", "VARCHAR(48) NOT NULL DEFAULT 'blocked'"),
+        ("readiness_reason", "TEXT NOT NULL DEFAULT ''"),
+        ("readiness_blockers_json", "TEXT NOT NULL DEFAULT '[]'"),
+    ],
+    "apply_plans": [
+        ("candidate_version", "INTEGER NOT NULL DEFAULT 1"),
+        ("result_envelope_id", "INTEGER REFERENCES codex_result_envelopes(id)"),
+        ("result_envelope_public_id", "VARCHAR(80) NOT NULL DEFAULT ''"),
+        ("result_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("owner_acceptance_id", "INTEGER REFERENCES owner_acceptance_sessions(id)"),
+        ("result_review_decision_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("approved_instruction_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("source_workspace_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("run_workspace_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("run_workspace_baseline_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("run_workspace_post_state_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("verification_policy", "VARCHAR(40) NOT NULL DEFAULT 'required'"),
+        ("verification_verdict", "VARCHAR(40) NOT NULL DEFAULT 'unavailable'"),
+        ("verification_receipt_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+    ],
+    "apply_sessions": [
+        ("candidate_version", "INTEGER NOT NULL DEFAULT 1"),
+        ("result_envelope_id", "INTEGER REFERENCES codex_result_envelopes(id)"),
+        ("result_envelope_public_id", "VARCHAR(80) NOT NULL DEFAULT ''"),
+        ("result_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("owner_acceptance_id", "INTEGER REFERENCES owner_acceptance_sessions(id)"),
+        ("result_review_decision_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("apply_plan_approval_id", "INTEGER REFERENCES apply_plan_approvals(id)"),
+        ("apply_plan_approval_public_id", "VARCHAR(80) NOT NULL DEFAULT ''"),
+        ("apply_plan_approval_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("source_workspace_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("run_workspace_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("run_workspace_baseline_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("run_workspace_post_state_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+    ],
+    "apply_plan_approvals": [
+        ("run_workspace_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("run_workspace_baseline_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("run_workspace_post_state_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+    ],
     "push_executions": [
         ("recovery_reconciliation_json", "TEXT NOT NULL DEFAULT '{}'"),
         ("recovery_reconciliation_digest", "VARCHAR(64)"),
@@ -194,6 +280,10 @@ def make_session_factory(engine: Engine) -> sessionmaker[Session]:
 
 
 def initialize_database(engine: Engine) -> None:
+    # Reconcile the one SQLite shape that requires a table rebuild before
+    # creating any new Vol.19 tables.  This keeps an unsafe legacy schema from
+    # being partially advanced merely by ``create_all``.
+    _ensure_vol19_delivery_candidate_schema(engine)
     Base.metadata.create_all(engine)
     ensure_runtime_columns(engine)
     _ensure_vol18_immutable_triggers(engine)
@@ -299,6 +389,14 @@ def initialize_database(engine: Engine) -> None:
             session.add(
                 SchemaVersion(version=VOL19_CODEX_RUN_RESULT_SCHEMA_VERSION)
             )
+        if not session.scalar(
+            select(SchemaVersion).where(
+                SchemaVersion.version == VOL19_RESULT_DELIVERY_LOOP_SCHEMA_VERSION
+            )
+        ):
+            session.add(
+                SchemaVersion(version=VOL19_RESULT_DELIVERY_LOOP_SCHEMA_VERSION)
+            )
         seed_projects(session)
         seed_registry(session)
         session.flush()
@@ -336,6 +434,340 @@ def ensure_runtime_columns(engine: Engine) -> None:
         _ensure_vol19_result_envelope_indexes(engine)
     if "codex_instruction_packs" in tables:
         _ensure_vol17_pack_indexes(engine)
+    _ensure_vol19_result_delivery_indexes(engine)
+
+
+def _ensure_vol19_delivery_candidate_schema(engine: Engine) -> None:
+    """Relax legacy evidence bindings without losing an existing Candidate.
+
+    SQLite cannot remove a ``NOT NULL`` constraint with ``ALTER TABLE``.  The
+    Vol.18 table required model-assignment and model-invocation evidence for
+    both phases, while the canonical local Verification path introduced in
+    Vol.19 can truthfully have only a ``CodexExecutionAttempt`` and receipt.
+    Rebuild only the legacy shape, copy every historical column, and give new
+    lineage/readiness columns conservative blocked defaults.  Fresh databases
+    already have the nullable mapped shape and take no rebuild path.
+    """
+    if engine.dialect.name != "sqlite":
+        return
+    inspector = inspect(engine)
+    if "delivery_candidates" not in set(inspector.get_table_names()):
+        return
+    columns = {item["name"]: item for item in inspector.get_columns("delivery_candidates")}
+    relaxed_columns = (
+        "coding_assignment_id",
+        "verification_assignment_id",
+        "coding_evidence_id",
+        "verification_evidence_id",
+    )
+    required_legacy_columns = {
+        "id",
+        "candidate_id",
+        "owner_id",
+        "task_id",
+        "task_version",
+        "pack_id",
+        "pack_version",
+        "coding_assignment_id",
+        "coding_assignment_version",
+        "verification_assignment_id",
+        "verification_assignment_version",
+        "routing_snapshot_identity",
+        "source_snapshot_identity",
+        "source_baseline_commit",
+        "run_id",
+        "coding_evidence_id",
+        "coding_evidence_identity",
+        "coding_evidence_digest",
+        "verification_evidence_id",
+        "verification_evidence_identity",
+        "verification_evidence_digest",
+        "verification_verdict",
+        "acceptance_id",
+        "acceptance_status",
+        "file_manifest_json",
+        "patch_identity",
+        "candidate_digest",
+        "created_at",
+    }
+    missing = sorted(required_legacy_columns.difference(columns))
+    if missing:
+        raise RuntimeError(
+            "The legacy Delivery Candidate schema cannot be reconciled safely; "
+            f"required columns are missing: {', '.join(missing)}."
+        )
+    if all(bool(columns[name].get("nullable")) for name in relaxed_columns):
+        return
+
+    temporary_name = "delivery_candidates_vol19_002"
+    migration_metadata = MetaData()
+    # Cloning is name-based only; no DDL ordering is needed here.  Iterating
+    # insertion order also avoids treating the intentional Acceptance ↔
+    # Candidate lineage cycle as a table-creation ordering problem.
+    for table in Base.metadata.tables.values():
+        table.to_metadata(migration_metadata)
+    target_table = Base.metadata.tables["delivery_candidates"].to_metadata(
+        migration_metadata,
+        name=temporary_name,
+    )
+    conservative_defaults: dict[str, object] = {
+        "candidate_version": 1,
+        "derivation_version": "twos.delivery_candidate.v1",
+        "result_envelope_public_id": "",
+        "result_digest": "",
+        "approved_instruction_digest": "",
+        "coding_attempt_identity": "",
+        "coding_outcome": "legacy_unbound",
+        "verification_policy": "required",
+        "verification_attempt_identity": "",
+        "verification_receipt_identity": "",
+        "result_integrity_state": "unverified",
+        "source_workspace_identity": "",
+        "run_workspace_identity": "",
+        "run_workspace_baseline_identity": "",
+        "run_workspace_post_state_identity": "",
+        "excluded_manifest_json": "[]",
+        "attribution_summary_json": "{}",
+        "readiness_state": "blocked",
+        "readiness_reason": (
+            "Legacy Candidate lacks immutable Result-envelope lineage."
+        ),
+        "readiness_blockers_json": '["LEGACY_RESULT_LINEAGE_MISSING"]',
+    }
+
+    with engine.connect() as connection:
+        existing_violations = list(
+            connection.execute(text("PRAGMA foreign_key_check"))
+        )
+        if existing_violations:
+            raise RuntimeError(
+                "The Delivery Candidate schema cannot be rebuilt while the "
+                "existing database has foreign-key violations."
+            )
+        connection.commit()
+        connection.execute(text("PRAGMA foreign_keys=OFF"))
+        connection.commit()
+        try:
+            with connection.begin():
+                connection.execute(
+                    text("DROP TABLE IF EXISTS delivery_candidates_vol19_002")
+                )
+                connection.execute(CreateTable(target_table))
+                destination_columns: list[str] = []
+                select_expressions: list[str] = []
+                parameters: dict[str, object] = {}
+                quote = connection.dialect.identifier_preparer.quote
+                for column in target_table.columns:
+                    name = column.name
+                    destination_columns.append(quote(name))
+                    if name in columns:
+                        select_expressions.append(quote(name))
+                    elif name in conservative_defaults:
+                        parameter_name = f"default_{name}"
+                        select_expressions.append(f":{parameter_name}")
+                        parameters[parameter_name] = conservative_defaults[name]
+                    elif column.nullable:
+                        select_expressions.append("NULL")
+                    else:
+                        raise RuntimeError(
+                            "The Delivery Candidate migration has no safe value for "
+                            f"the required column {name}."
+                        )
+                connection.execute(
+                    text(
+                        f"INSERT INTO {quote(temporary_name)} "
+                        f"({', '.join(destination_columns)}) "
+                        f"SELECT {', '.join(select_expressions)} "
+                        "FROM delivery_candidates"
+                    ),
+                    parameters,
+                )
+                old_count = int(
+                    connection.scalar(text("SELECT COUNT(*) FROM delivery_candidates"))
+                    or 0
+                )
+                new_count = int(
+                    connection.scalar(
+                        text(
+                            "SELECT COUNT(*) FROM delivery_candidates_vol19_002"
+                        )
+                    )
+                    or 0
+                )
+                if old_count != new_count:
+                    raise RuntimeError(
+                        "The Delivery Candidate migration row-count check failed."
+                    )
+                copied_violations = list(
+                    connection.execute(
+                        text(
+                            "PRAGMA foreign_key_check("
+                            "delivery_candidates_vol19_002)"
+                        )
+                    )
+                )
+                if copied_violations:
+                    raise RuntimeError(
+                        "The copied Delivery Candidate rows failed their "
+                        "foreign-key check."
+                    )
+                connection.execute(text("DROP TABLE delivery_candidates"))
+                connection.execute(
+                    text(
+                        "ALTER TABLE delivery_candidates_vol19_002 "
+                        "RENAME TO delivery_candidates"
+                    )
+                )
+            connection.execute(text("PRAGMA foreign_keys=ON"))
+            violations = list(connection.execute(text("PRAGMA foreign_key_check")))
+            if violations:
+                raise RuntimeError(
+                    "The Delivery Candidate migration failed its foreign-key check."
+                )
+        except Exception:
+            if connection.in_transaction():
+                connection.rollback()
+            connection.execute(text("PRAGMA foreign_keys=ON"))
+            raise
+
+
+def _ensure_vol19_result_delivery_indexes(engine: Engine) -> None:
+    """Create indexes/uniqueness omitted by additive SQLite column upgrades."""
+    tables = set(inspect(engine).get_table_names())
+    specifications: dict[str, tuple[tuple[str, tuple[str, ...], bool], ...]] = {
+        "owner_acceptance_sessions": (
+            ("ix_owner_acceptance_sessions_owner_id", ("owner_id",), False),
+            (
+                "ix_owner_acceptance_sessions_result_envelope_id",
+                ("result_envelope_id",),
+                True,
+            ),
+            ("ix_owner_acceptance_sessions_result_digest", ("result_digest",), False),
+            ("ix_owner_acceptance_sessions_result_pack_id", ("result_pack_id",), False),
+            (
+                "ix_owner_acceptance_sessions_delivery_candidate_id",
+                ("delivery_candidate_id",),
+                True,
+            ),
+            ("ix_owner_acceptance_sessions_candidate_digest", ("candidate_digest",), False),
+            (
+                "ix_owner_acceptance_sessions_review_policy_version",
+                ("review_policy_version",),
+                False,
+            ),
+            ("ix_owner_acceptance_sessions_decision_digest", ("decision_digest",), False),
+        ),
+        "delivery_candidates": (
+            ("ix_delivery_candidates_candidate_id", ("candidate_id",), True),
+            ("ix_delivery_candidates_owner_id", ("owner_id",), False),
+            ("ix_delivery_candidates_task_id", ("task_id",), False),
+            ("ix_delivery_candidates_pack_id", ("pack_id",), False),
+            (
+                "ux_delivery_candidate_owner_result_version",
+                ("owner_id", "result_envelope_id", "candidate_version"),
+                True,
+            ),
+            ("ix_delivery_candidates_derivation_version", ("derivation_version",), False),
+            (
+                "ix_delivery_candidates_source_snapshot_identity",
+                ("source_snapshot_identity",),
+                False,
+            ),
+            ("ix_delivery_candidates_run_id", ("run_id",), True),
+            (
+                "ix_delivery_candidates_result_envelope_id",
+                ("result_envelope_id",),
+                True,
+            ),
+            ("ix_delivery_candidates_result_digest", ("result_digest",), False),
+            ("ix_delivery_candidates_coding_attempt_id", ("coding_attempt_id",), False),
+            ("ix_delivery_candidates_coding_outcome", ("coding_outcome",), False),
+            ("ix_delivery_candidates_verification_policy", ("verification_policy",), False),
+            (
+                "ix_delivery_candidates_verification_attempt_id",
+                ("verification_attempt_id",),
+                False,
+            ),
+            (
+                "ix_delivery_candidates_result_integrity_state",
+                ("result_integrity_state",),
+                False,
+            ),
+            ("ix_delivery_candidates_readiness_state", ("readiness_state",), False),
+            (
+                "ix_delivery_candidates_candidate_digest",
+                ("candidate_digest",),
+                True,
+            ),
+        ),
+        "apply_plans": (
+            ("ix_apply_plans_result_envelope_id", ("result_envelope_id",), False),
+            ("ix_apply_plans_result_digest", ("result_digest",), False),
+            ("ix_apply_plans_owner_acceptance_id", ("owner_acceptance_id",), False),
+            (
+                "ix_apply_plans_result_review_decision_digest",
+                ("result_review_decision_digest",),
+                False,
+            ),
+            ("ix_apply_plans_verification_policy", ("verification_policy",), False),
+        ),
+        "apply_sessions": (
+            ("ix_apply_sessions_result_envelope_id", ("result_envelope_id",), False),
+            ("ix_apply_sessions_result_digest", ("result_digest",), False),
+            ("ix_apply_sessions_owner_acceptance_id", ("owner_acceptance_id",), False),
+            (
+                "ix_apply_sessions_result_review_decision_digest",
+                ("result_review_decision_digest",),
+                False,
+            ),
+            (
+                "ix_apply_sessions_apply_plan_approval_id",
+                ("apply_plan_approval_id",),
+                True,
+            ),
+            (
+                "ix_apply_sessions_apply_plan_approval_digest",
+                ("apply_plan_approval_digest",),
+                False,
+            ),
+        ),
+    }
+    with engine.begin() as connection:
+        for table_name, table_specs in specifications.items():
+            if table_name not in tables:
+                continue
+            table_inspector = inspect(connection)
+            column_names = {
+                item["name"] for item in table_inspector.get_columns(table_name)
+            }
+            existing_indexes = {
+                (
+                    tuple(item.get("column_names") or ()),
+                    bool(item.get("unique")),
+                )
+                for item in table_inspector.get_indexes(table_name)
+            }
+            existing_indexes.update(
+                (
+                    tuple(item.get("column_names") or ()),
+                    True,
+                )
+                for item in table_inspector.get_unique_constraints(table_name)
+            )
+            for index_name, indexed_columns, unique in table_specs:
+                if not set(indexed_columns).issubset(column_names):
+                    continue
+                if (indexed_columns, unique) in existing_indexes:
+                    continue
+                uniqueness = "UNIQUE " if unique else ""
+                columns_sql = ", ".join(indexed_columns)
+                connection.execute(
+                    text(
+                        f"CREATE {uniqueness}INDEX IF NOT EXISTS {index_name} "
+                        f"ON {table_name} ({columns_sql})"
+                    )
+                )
+                existing_indexes.add((indexed_columns, unique))
 
 
 def _ensure_vol18_immutable_triggers(engine: Engine) -> None:
@@ -390,6 +822,24 @@ def _ensure_vol18_immutable_triggers(engine: Engine) -> None:
             "apply_plan_entries",
             "DELETE",
             "Apply Plan entries are immutable.",
+        ),
+        (
+            "trg_apply_plan_approvals_no_update",
+            "apply_plan_approvals",
+            "UPDATE",
+            "Apply Plan approvals are immutable.",
+        ),
+        (
+            "trg_apply_plan_approvals_no_delete",
+            "apply_plan_approvals",
+            "DELETE",
+            "Apply Plan approvals are immutable.",
+        ),
+        (
+            "trg_owner_acceptance_sessions_no_delete",
+            "owner_acceptance_sessions",
+            "DELETE",
+            "Owner Result-review decisions cannot be deleted.",
         ),
         (
             "trg_apply_session_audits_no_update",
@@ -523,6 +973,9 @@ def _ensure_vol18_immutable_triggers(engine: Engine) -> None:
         # schema delivery; rebuild them so an already-initialized local DB
         # receives the exact recovery semantics and set-once columns.
         for trigger_name in (
+            "trg_apply_sessions_core_no_update",
+            "trg_owner_acceptance_sessions_set_once",
+            "trg_owner_acceptance_sessions_terminal_no_update",
             "trg_push_executions_set_once",
             "trg_push_executions_terminal_no_update",
             "trg_push_executions_state_transition",
@@ -545,12 +998,25 @@ def _ensure_vol18_immutable_triggers(engine: Engine) -> None:
             "delivery_candidate_id",
             "candidate_public_id",
             "candidate_digest",
+            "candidate_version",
+            "result_envelope_id",
+            "result_envelope_public_id",
+            "result_digest",
+            "owner_acceptance_id",
+            "result_review_decision_digest",
+            "apply_plan_approval_id",
+            "apply_plan_approval_public_id",
+            "apply_plan_approval_digest",
             "run_id",
             "task_id",
             "task_version",
             "pack_id",
             "pack_version",
             "source_snapshot_identity",
+            "source_workspace_identity",
+            "run_workspace_identity",
+            "run_workspace_baseline_identity",
+            "run_workspace_post_state_identity",
             "source_drift_evaluation_id",
             "repository_locator_fingerprint",
             "repository_fingerprint",
@@ -772,6 +1238,51 @@ def _ensure_vol18_immutable_triggers(engine: Engine) -> None:
                     f"BEGIN SELECT RAISE(ABORT, '{message}'); END"
                 )
             )
+        owner_acceptance_set_once_columns = (
+            "owner_id",
+            "result_envelope_id",
+            "result_envelope_public_id",
+            "result_digest",
+            "result_task_version",
+            "result_pack_id",
+            "result_pack_version",
+            "approved_instruction_digest",
+            "delivery_candidate_id",
+            "candidate_public_id",
+            "candidate_version",
+            "candidate_digest",
+            "review_policy_version",
+            "decision_version",
+            "decision_digest",
+        )
+        owner_acceptance_set_once_predicate = " OR ".join(
+            f"(OLD.{column_name} IS NOT NULL "
+            f"AND CAST(OLD.{column_name} AS TEXT) != '' "
+            f"AND OLD.{column_name} IS NOT NEW.{column_name})"
+            for column_name in owner_acceptance_set_once_columns
+        )
+        connection.execute(
+            text(
+                "CREATE TRIGGER trg_owner_acceptance_sessions_set_once "
+                "BEFORE UPDATE ON owner_acceptance_sessions "
+                f"WHEN {owner_acceptance_set_once_predicate} "
+                "BEGIN SELECT RAISE(ABORT, "
+                "'Owner Result and Candidate bindings may be set only once.'"
+                "); END"
+            )
+        )
+        connection.execute(
+            text(
+                "CREATE TRIGGER trg_owner_acceptance_sessions_terminal_no_update "
+                "BEFORE UPDATE ON owner_acceptance_sessions "
+                "WHEN OLD.status IN ('accepted','rejected') "
+                "AND (OLD.result_envelope_id IS NOT NULL "
+                "OR OLD.decision_digest != '') "
+                "BEGIN SELECT RAISE(ABORT, "
+                "'Terminal Owner Result-review decisions are immutable.'"
+                "); END"
+            )
+        )
         monitor_set_once_columns = (
             "process_id",
             "process_start_identity",

@@ -120,7 +120,17 @@ def test_pack_binding_and_run_eligibility_use_hardened_snapshot_capture(
         )
         is None
     )
-    assert capture_calls == [(source_repo, {"hardened_read_only": True})]
+    assert capture_calls == [
+        (
+            source_repo,
+            {
+                "hardened_read_only": True,
+                "source_repository_identity_method": (
+                    self_hosting_module.SOURCE_REPOSITORY_IDENTITY_METHOD
+                ),
+            },
+        )
+    ]
 
 
 def test_run_eligibility_revalidates_pack_through_hardened_binding_path(

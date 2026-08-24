@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sqlite3
 import threading
 import time
@@ -34,6 +35,7 @@ from twos_runtime.codex_exec_bridge import (
 from twos_runtime.config import STATIC_COCKPIT_DIR
 from twos_runtime.models import (
     AIModelAssignment,
+    ApplyPlan,
     ApplySession,
     CodexInstructionPack,
     CodexRun,
@@ -254,6 +256,8 @@ def test_real_result_captures_modified_and_created_files_tests_stderr_and_reload
     database_path = tmp_path / "vol19-codex-result.sqlite3"
     run_id = 0
     expected_result: dict = {}
+    candidate_identity = ""
+    candidate_digest = ""
 
     with make_client(
         tmp_path,
@@ -348,7 +352,27 @@ def test_real_result_captures_modified_and_created_files_tests_stderr_and_reload
         )
         with client.app.state.session_factory() as session:
             assert session.query(CodexRun).count() == 1
-            assert session.query(DeliveryCandidate).count() == 0
+            candidates = list(
+                session.scalars(
+                    select(DeliveryCandidate).where(
+                        DeliveryCandidate.run_id == run_id
+                    )
+                ).all()
+            )
+            assert len(candidates) == 1
+            candidate = candidates[0]
+            assert candidate.derivation_version == (
+                "twos.result_delivery_candidate.v1"
+            )
+            assert candidate.readiness_state == "ready"
+            assert candidate.acceptance_status == "owner_review"
+            assert candidate.acceptance.status == "owner_review"
+            assert candidate.acceptance.decision_digest == ""
+            assert candidate.result_envelope_public_id == envelope["id"]
+            assert len(candidate.candidate_digest) == 64
+            candidate_identity = candidate.candidate_id
+            candidate_digest = candidate.candidate_digest
+            assert session.query(ApplyPlan).count() == 0
             assert session.query(ApplySession).count() == 0
             assert session.query(CommitPlan).count() == 0
             assert session.query(LocalCommitExecution).count() == 0
@@ -378,6 +402,21 @@ def test_real_result_captures_modified_and_created_files_tests_stderr_and_reload
         )
         assert persisted["result_available"] is True
         assert persisted["lifecycle"]["events"]
+        with restarted.app.state.session_factory() as session:
+            candidate = session.scalar(
+                select(DeliveryCandidate).where(
+                    DeliveryCandidate.run_id == run_id
+                )
+            )
+            assert candidate is not None
+            assert candidate.candidate_id == candidate_identity
+            assert candidate.candidate_digest == candidate_digest
+            assert candidate.acceptance.status == "owner_review"
+            assert session.query(ApplyPlan).count() == 0
+            assert session.query(ApplySession).count() == 0
+            assert session.query(CommitPlan).count() == 0
+            assert session.query(LocalCommitExecution).count() == 0
+            assert session.query(PushExecution).count() == 0
 
 
 def test_missing_structured_handoff_keeps_automatic_terminal_evidence(
@@ -792,6 +831,28 @@ def test_fast_terminal_receipt_never_regresses_through_running(
             item["action"] == "codex_run_monitor_terminal_process_bound"
             for item in run_audits
         )
+        _wait_for_result_envelope(client, headers, terminal["id"])
+        candidate_response = client.get(
+            f"/api/codex-runs/{terminal['id']}/delivery-candidate",
+            headers=headers,
+        )
+        assert candidate_response.status_code == 200, candidate_response.text
+        candidate = candidate_response.json()["candidate"]
+        assert candidate is not None
+        assert candidate["readiness_state"] == "ready", candidate
+        with client.app.state.session_factory() as session:
+            monitor = session.scalar(
+                select(CodexRunMonitor).where(
+                    CodexRunMonitor.run_id == terminal["id"]
+                )
+            )
+            assert monitor is not None
+            assert re.fullmatch(
+                r"[0-9a-f]{64}", monitor.isolated_worktree_identity or ""
+            )
+            assert re.fullmatch(
+                r"[0-9a-f]{64}", monitor.execution_location_identity or ""
+            )
 
 
 def test_live_bound_terminal_receipt_is_non_running_on_detail_and_activity(

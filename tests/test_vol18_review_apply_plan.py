@@ -712,8 +712,21 @@ def test_apply_plan_has_no_update_delete_or_later_phase_routes(
                 ).status_code
                 == 405
             )
-        forbidden_posts = (
+        legacy_approval = fixture.client.post(
             f"/api/apply-plans/{plan['id']}/approve",
+            json={
+                "confirmation": "APPROVE_APPLY_PLAN",
+                "expected_plan_digest": "0" * 64,
+                "expected_candidate_digest": "0" * 64,
+                "expected_result_digest": "0" * 64,
+                "expected_result_review_decision_digest": "0" * 64,
+            },
+        )
+        assert legacy_approval.status_code == 409
+        assert legacy_approval.json()["error"]["details"]["type"] == (
+            "LEGACY_PLAN_APPROVAL_UNSUPPORTED"
+        )
+        forbidden_posts = (
             f"/api/apply-plans/{plan['id']}/apply",
             f"/api/apply-plans/{plan['id']}/revert",
             f"/api/apply-plans/{plan['id']}/verify",

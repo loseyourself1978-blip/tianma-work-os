@@ -3493,6 +3493,36 @@ button:disabled,
   }
 }
 
+.result-delivery-review-section,
+.result-delivery-review-section p,
+.candidate-file-list,
+.apply-plan-path-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.result-review-evidence-details {
+  margin-top: 0.9rem;
+}
+
+.result-review-evidence-details > summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+@media (max-width: 520px) {
+  .result-delivery-review-controls,
+  .apply-plan-review-heading .button-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .result-delivery-review-controls .button,
+  .apply-plan-review-heading .button {
+    width: 100%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

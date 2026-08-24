@@ -45,12 +45,16 @@ from .delivery_candidates import (
     evaluate_source_drift,
     find_owner_run,
     get_or_create_delivery_candidate,
+    result_review_decision_digest,
     source_drift_out,
     validate_delivery_candidate,
 )
 from .apply_plans import (
+    ApplyPlanError,
+    apply_plan_approval_out,
     apply_plan_history,
     apply_plan_out,
+    get_or_create_apply_plan_approval,
     get_or_create_apply_plan,
     latest_apply_plan,
 )
@@ -256,6 +260,52 @@ class ApplyAcceptedChangesIn(BaseModel):
     confirmation: Literal["APPLY_ACCEPTED_CHANGES"]
     expected_plan_digest: str = Field(min_length=64, max_length=64)
     expected_candidate_digest: str = Field(min_length=64, max_length=64)
+    expected_plan_approval_digest: Optional[str] = Field(
+        default=None, min_length=64, max_length=64
+    )
+    expected_result_digest: Optional[str] = Field(
+        default=None, min_length=64, max_length=64
+    )
+    expected_result_review_decision_digest: Optional[str] = Field(
+        default=None, min_length=64, max_length=64
+    )
+
+
+class ResultDeliveryDecisionIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    confirmation: Literal[
+        "ACCEPT_RESULT_FOR_DELIVERY",
+        "REJECT_RESULT_FOR_DELIVERY",
+    ]
+    expected_result_id: str = Field(min_length=1, max_length=80)
+    expected_result_digest: str = Field(
+        min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$"
+    )
+    expected_candidate_id: str = Field(min_length=1, max_length=80)
+    expected_candidate_version: int = Field(ge=1)
+    expected_candidate_digest: str = Field(
+        min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$"
+    )
+    note: str = Field(default="", max_length=2000)
+
+
+class ApplyPlanApprovalIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    confirmation: Literal["APPROVE_APPLY_PLAN"]
+    expected_plan_digest: str = Field(
+        min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$"
+    )
+    expected_candidate_digest: str = Field(
+        min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$"
+    )
+    expected_result_digest: str = Field(
+        min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$"
+    )
+    expected_result_review_decision_digest: str = Field(
+        min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$"
+    )
 
 
 class RevertAppliedChangesIn(BaseModel):
@@ -1339,14 +1389,47 @@ def owner_acceptance_out(session: Session, acceptance: OwnerAcceptanceSession) -
         .order_by(OwnerAcceptanceItem.ordinal)
     ).all()
     required_complete = all(item.status == "pass" for item in items if item.required)
+    result_delivery_review = bool(
+        acceptance.result_envelope_id is not None
+        or acceptance.delivery_candidate_id is not None
+        or acceptance.result_digest
+        or acceptance.candidate_digest
+    )
+    review_state = {
+        "owner_review": "pending",
+        "accepted": "accepted_for_delivery",
+        "rejected": "rejected",
+    }.get(acceptance.status, acceptance.status)
+    exact_delivery_binding = bool(
+        acceptance.owner_id is not None
+        and acceptance.result_envelope_id is not None
+        and acceptance.result_envelope_public_id
+        and re.fullmatch(r"[0-9a-f]{64}", acceptance.result_digest or "")
+        and acceptance.delivery_candidate_id is not None
+        and acceptance.candidate_public_id
+        and acceptance.candidate_version is not None
+        and re.fullmatch(r"[0-9a-f]{64}", acceptance.candidate_digest or "")
+    )
     return {
         "id": acceptance.id,
         "task_id": acceptance.task_id,
         "codex_run_id": acceptance.codex_run_id,
         "status": acceptance.status,
+        "review_state": review_state,
+        "review_kind": (
+            "result_delivery" if result_delivery_review else "legacy_owner_acceptance"
+        ),
+        "result_id": acceptance.result_envelope_public_id or None,
+        "candidate_id": acceptance.candidate_public_id or None,
+        "candidate_version": acceptance.candidate_version,
         "owner_note": acceptance.owner_note,
         "compact_sync_result": acceptance.compact_sync_result,
-        "can_accept": bool(items) and required_complete,
+        "can_accept": (
+            acceptance.status == "owner_review" and exact_delivery_binding
+            if result_delivery_review
+            else bool(items) and required_complete
+        ),
+        "can_reject": acceptance.status == "owner_review",
         "items": [
             {
                 "id": item.id,
@@ -1364,6 +1447,21 @@ def owner_acceptance_out(session: Session, acceptance: OwnerAcceptanceSession) -
         "created_at": iso(acceptance.created_at),
         "updated_at": iso(acceptance.updated_at),
         "decided_at": iso(acceptance.decided_at),
+        "advanced": {
+            "review_policy_version": acceptance.review_policy_version,
+            "decision_version": acceptance.decision_version,
+            "decision_digest": acceptance.decision_digest or None,
+            "result_digest": acceptance.result_digest or None,
+            "candidate_digest": acceptance.candidate_digest or None,
+            "approved_instruction_digest": (
+                acceptance.approved_instruction_digest or None
+            ),
+            "task_version": acceptance.result_task_version,
+            "pack_id": acceptance.result_pack_id,
+            "pack_version": acceptance.result_pack_version,
+        }
+        if result_delivery_review
+        else {},
     }
 
 
@@ -4275,7 +4373,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 run,
                 candidate,
             )
-        public_candidate = candidate if eligibility["eligible"] else None
+        # A Result-derived Candidate remains reviewable while Owner acceptance
+        # or another readiness gate is pending. Readiness and visibility are
+        # intentionally separate; only later Plan creation uses eligibility.
+        public_candidate = candidate
+        candidate_reviewable = bool(
+            candidate is not None
+            and (eligibility.get("reviewable") is True or eligibility.get("eligible"))
+        )
         evaluation = evaluate_source_drift(
             session,
             owner_id=user.id,
@@ -4283,10 +4388,10 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             candidate=candidate,
             source_repo=settings.source_repo,
             unavailable_blockers=(
-                None if eligibility["eligible"] else eligibility["blockers"]
+                None if candidate_reviewable else eligibility["blockers"]
             ),
             unavailable_next_action=(
-                None if eligibility["eligible"] else eligibility["next_action"]
+                None if candidate_reviewable else eligibility["next_action"]
             ),
         )
         if public_candidate is not None:
@@ -4315,15 +4420,22 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             user,
         )
         serialized_drift = source_drift_out(evaluation)
-        response_blockers = (
-            serialized_drift["blockers"]
-            if eligibility["eligible"]
-            else eligibility["blockers"]
-        )
+        response_blockers = []
+        seen_blocker_codes: set[str] = set()
+        for blocker in list(eligibility.get("blockers") or []) + list(
+            serialized_drift.get("blockers") or []
+        ):
+            if not isinstance(blocker, dict):
+                continue
+            code = str(blocker.get("code") or "CANDIDATE_BLOCKED")
+            if code in seen_blocker_codes:
+                continue
+            seen_blocker_codes.add(code)
+            response_blockers.append(blocker)
         response_next_action = (
-            serialized_drift["next_action"]
-            if eligibility["eligible"]
-            else eligibility["next_action"]
+            eligibility["next_action"]
+            if not eligibility.get("eligible")
+            else serialized_drift["next_action"]
         )
         return {
             "run_id": run.id,
@@ -4369,6 +4481,221 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             session,
             user,
             create=True,
+        )
+
+    def owner_result_review_for_run(
+        session: Session,
+        *,
+        owner_id: int,
+        run: CodexRun,
+    ) -> tuple[OwnerAcceptanceSession, CodexResultEnvelope, DeliveryCandidate]:
+        acceptance = session.scalar(
+            select(OwnerAcceptanceSession).where(
+                OwnerAcceptanceSession.owner_id == owner_id,
+                OwnerAcceptanceSession.codex_run_id == run.id,
+                OwnerAcceptanceSession.task_id == run.task_id,
+            )
+        )
+        if acceptance is None:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "type": "RESULT_REVIEW_NOT_READY",
+                    "message": "The immutable Run Result is not ready for Owner delivery review.",
+                },
+            )
+        envelope = (
+            session.get(CodexResultEnvelope, acceptance.result_envelope_id)
+            if acceptance.result_envelope_id is not None
+            else None
+        )
+        candidate = (
+            session.get(DeliveryCandidate, acceptance.delivery_candidate_id)
+            if acceptance.delivery_candidate_id is not None
+            else None
+        )
+        if (
+            envelope is None
+            or candidate is None
+            or envelope.owner_id != owner_id
+            or envelope.run_id != run.id
+            or candidate.owner_id != owner_id
+            or candidate.run_id != run.id
+            or acceptance.result_envelope_public_id != envelope.envelope_id
+            or acceptance.result_digest != envelope.result_digest
+            or acceptance.candidate_public_id != candidate.candidate_id
+            or acceptance.candidate_version != candidate.candidate_version
+            or acceptance.candidate_digest != candidate.candidate_digest
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "type": "RESULT_REVIEW_BINDING_INVALID",
+                    "message": "The Result review no longer binds one exact immutable Result and Candidate.",
+                },
+            )
+        eligibility = validate_delivery_candidate(
+            session,
+            owner_id,
+            run,
+            candidate,
+        )
+        if eligibility.get("reviewable") is not True:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "type": "RESULT_REVIEW_INTEGRITY_INVALID",
+                    "message": "The Result-derived Candidate failed its immutable review binding.",
+                },
+            )
+        return acceptance, envelope, candidate
+
+    def decide_result_delivery(
+        run_id: int,
+        payload: ResultDeliveryDecisionIn,
+        request: Request,
+        session: Session,
+        user: User,
+        *,
+        decision: Literal["accepted", "rejected"],
+    ) -> dict[str, Any]:
+        run = owner_run_or_404(session, user.id, run_id)
+        acceptance, envelope, candidate = owner_result_review_for_run(
+            session,
+            owner_id=user.id,
+            run=run,
+        )
+        required_confirmation = (
+            "ACCEPT_RESULT_FOR_DELIVERY"
+            if decision == "accepted"
+            else "REJECT_RESULT_FOR_DELIVERY"
+        )
+        if payload.confirmation != required_confirmation:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "type": "RESULT_REVIEW_CONFIRMATION_REQUIRED",
+                    "message": "Use the exact explicit Owner Result-review confirmation.",
+                },
+            )
+        stale = any(
+            (
+                payload.expected_result_id != envelope.envelope_id,
+                payload.expected_result_digest != envelope.result_digest,
+                payload.expected_candidate_id != candidate.candidate_id,
+                payload.expected_candidate_version != candidate.candidate_version,
+                payload.expected_candidate_digest != candidate.candidate_digest,
+            )
+        )
+        if stale:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "type": "RESULT_REVIEW_BINDING_STALE",
+                    "message": "The Result or Candidate changed. Review the current immutable evidence before deciding.",
+                },
+            )
+        if acceptance.status in {"accepted", "rejected"}:
+            exact_replay = bool(
+                acceptance.status == decision
+                and acceptance.owner_note == payload.note
+                and acceptance.decided_by_user_id == user.id
+                and acceptance.decided_at is not None
+                and re.fullmatch(r"[0-9a-f]{64}", acceptance.decision_digest or "")
+                and acceptance.decision_digest
+                == result_review_decision_digest(acceptance)
+            )
+            if not exact_replay:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "type": "RESULT_REVIEW_ALREADY_FINAL",
+                        "message": "This exact Result already has a different final Owner decision.",
+                    },
+                )
+            return {
+                "run_id": run.id,
+                "review": owner_acceptance_out(session, acceptance),
+                "candidate": delivery_candidate_out(candidate),
+                "decision_replayed": True,
+                "automatic_actions": [],
+            }
+        if acceptance.status != "owner_review":
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "type": "RESULT_REVIEW_STATE_INVALID",
+                    "message": "The Result review is not pending an Owner decision.",
+                },
+            )
+        acceptance.status = decision
+        acceptance.owner_note = payload.note
+        acceptance.decided_by_user_id = user.id
+        acceptance.decided_at = utc_now()
+        acceptance.decision_digest = result_review_decision_digest(acceptance)
+        audit(
+            session,
+            request,
+            (
+                "owner_result_accepted_for_delivery"
+                if decision == "accepted"
+                else "owner_result_rejected_for_delivery"
+            ),
+            "owner_acceptance",
+            acceptance.id,
+            (
+                f"run={run.id}; result={envelope.envelope_id}; "
+                f"candidate={candidate.candidate_id}; no_downstream_action=true"
+            ),
+            user,
+        )
+        session.flush()
+        return {
+            "run_id": run.id,
+            "review": owner_acceptance_out(session, acceptance),
+            "candidate": delivery_candidate_out(candidate),
+            "decision_replayed": False,
+            "automatic_actions": [],
+        }
+
+    @app.post("/api/codex-runs/{run_id}/delivery-review/accept")
+    def accept_result_for_delivery(
+        run_id: int,
+        payload: ResultDeliveryDecisionIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+        return decide_result_delivery(
+            run_id,
+            payload,
+            request,
+            session,
+            user,
+            decision="accepted",
+        )
+
+    @app.post("/api/codex-runs/{run_id}/delivery-review/reject")
+    def reject_result_for_delivery(
+        run_id: int,
+        payload: ResultDeliveryDecisionIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+        return decide_result_delivery(
+            run_id,
+            payload,
+            request,
+            session,
+            user,
+            decision="rejected",
         )
 
     def owner_candidate_for_apply_plan(
@@ -4444,6 +4771,32 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 None if eligibility["eligible"] else eligibility["next_action"]
             ),
         )
+        if candidate is not None and candidate.result_envelope_id is not None:
+            canonical_blockers = list(eligibility.get("blockers") or []) + list(
+                json.loads(drift.blockers_json or "[]")
+            )
+            if not eligibility.get("eligible") or drift.status not in {
+                "ready_to_apply",
+                "source_changed_since_run",
+            }:
+                first = next(
+                    (
+                        item
+                        for item in canonical_blockers
+                        if isinstance(item, dict) and item.get("message")
+                    ),
+                    {
+                        "code": "RESULT_CANDIDATE_NOT_ELIGIBLE",
+                        "message": "Accept an eligible immutable Result Candidate before preparing an Apply Plan.",
+                    },
+                )
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "type": str(first.get("code") or "RESULT_CANDIDATE_NOT_ELIGIBLE"),
+                        "message": str(first.get("message")),
+                    },
+                )
         plan, created = get_or_create_apply_plan(
             session,
             owner_id=user.id,
@@ -4571,6 +4924,69 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         if plan is None or find_owner_run(session, owner_id, plan.run_id) is None:
             return None
         return plan
+
+    @app.post("/api/apply-plans/{plan_id}/approve")
+    def approve_apply_plan(
+        plan_id: str,
+        payload: ApplyPlanApprovalIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+        plan = owner_apply_plan(
+            session,
+            owner_id=user.id,
+            plan_id=plan_id,
+        )
+        if plan is None:
+            raise HTTPException(status_code=404, detail="Apply Plan not found.")
+        try:
+            approval, created = get_or_create_apply_plan_approval(
+                session,
+                owner_id=user.id,
+                plan=plan,
+                source_repo=settings.source_repo,
+                confirmed=payload.confirmation == "APPROVE_APPLY_PLAN",
+                approved_by_user_id=user.id,
+                expected_plan_digest=payload.expected_plan_digest,
+                expected_candidate_digest=payload.expected_candidate_digest,
+                expected_result_digest=payload.expected_result_digest,
+                expected_result_review_decision_digest=(
+                    payload.expected_result_review_decision_digest
+                ),
+            )
+        except ApplyPlanError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"type": exc.code, "message": exc.message},
+            ) from exc
+        audit(
+            session,
+            request,
+            "apply_plan_approved" if created else "apply_plan_approval_replayed",
+            "apply_plan_approval",
+            approval.id,
+            (
+                f"plan={plan.plan_id}; candidate={plan.candidate_public_id}; "
+                f"result={plan.result_envelope_public_id}; no_apply=true"
+            ),
+            user,
+        )
+        session.flush()
+        return {
+            "run_id": plan.run_id,
+            "plan": apply_plan_out(
+                session,
+                plan,
+                source_repo=settings.source_repo,
+            ),
+            "approval": apply_plan_approval_out(approval),
+            "approval_replayed": not created,
+            "automatic_actions": [],
+        }
 
     def normalized_apply_confirmation(
         confirmation: dict[str, Any],
@@ -4837,6 +5253,15 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             "Blocked": "No unsafe file overwrite was performed.",
             "Failed": "The operation failed; review recovery and blocker details.",
         }[execution_state]
+        plan_approval_state = str(
+            apply_confirmation.get("approval_state")
+            or (
+                "LEGACY_CONFIRMATION_ONLY"
+                if plan.result_envelope_id is None
+                else "PENDING"
+            )
+        )
+        apply_confirmation_state = "CONFIRMED" if row is not None else "PENDING"
         return {
             "plan_id": plan.plan_id,
             "session": public_session,
@@ -4847,9 +5272,18 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             "readiness_label": readiness_label,
             "blockers": blockers,
             "next_action": next_action,
+            # Preserve the historical 19.1A label for legacy Plans while the
+            # canonical Result-bound path exposes Plan approval and the later
+            # Apply confirmation as two independent Owner decisions.
             "approval_state": (
-                "OWNER CONFIRMED" if row is not None else "AWAITING OWNER CONFIRMATION"
+                plan_approval_state
+                if plan.result_envelope_id is not None
+                else "OWNER CONFIRMED"
+                if row is not None
+                else "AWAITING OWNER CONFIRMATION"
             ),
+            "plan_approval_state": plan_approval_state,
+            "apply_confirmation_state": apply_confirmation_state,
             "execution_state": execution_state,
             "result_summary": result_summary,
             "changed_file_count": changed_file_count,
@@ -4908,6 +5342,15 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             payload.expected_plan_digest != plan.plan_digest
             or candidate is None
             or payload.expected_candidate_digest != candidate.candidate_digest
+            or (
+                plan.result_envelope_id is not None
+                and (
+                    payload.expected_result_digest != plan.result_digest
+                    or payload.expected_result_review_decision_digest
+                    != plan.result_review_decision_digest
+                    or payload.expected_plan_approval_digest is None
+                )
+            )
         ):
             raise HTTPException(
                 status_code=409,
@@ -4931,6 +5374,13 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 confirmed=payload.confirmation == "APPLY_ACCEPTED_CHANGES",
                 expected_plan_digest=payload.expected_plan_digest,
                 expected_candidate_digest=payload.expected_candidate_digest,
+                expected_plan_approval_digest=(
+                    payload.expected_plan_approval_digest
+                ),
+                expected_result_digest=payload.expected_result_digest,
+                expected_result_review_decision_digest=(
+                    payload.expected_result_review_decision_digest
+                ),
             )
         except ApplySessionError as exc:
             raise HTTPException(
@@ -4983,6 +5433,177 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             plan=plan,
             apply_session=row,
         )
+
+    @app.get("/api/codex-runs/{run_id}/delivery")
+    def get_result_delivery_projection(
+        run_id: int,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        """One refresh-safe Owner projection for the complete delivery lineage."""
+        run = owner_run_or_404(session, user.id, run_id)
+        envelope = session.scalar(
+            select(CodexResultEnvelope).where(
+                CodexResultEnvelope.owner_id == user.id,
+                CodexResultEnvelope.run_id == run.id,
+            )
+        )
+        candidate_review = delivery_candidate_review_response(
+            run.id,
+            request,
+            session,
+            user,
+            create=False,
+        )
+        candidate = session.scalar(
+            select(DeliveryCandidate).where(
+                DeliveryCandidate.owner_id == user.id,
+                DeliveryCandidate.run_id == run.id,
+            )
+        )
+        acceptance = session.scalar(
+            select(OwnerAcceptanceSession).where(
+                OwnerAcceptanceSession.owner_id == user.id,
+                OwnerAcceptanceSession.codex_run_id == run.id,
+            )
+        )
+        plan = latest_apply_plan(session, user.id, run.id)
+        plan_view = (
+            apply_plan_out(session, plan, source_repo=settings.source_repo)
+            if plan is not None
+            else None
+        )
+        apply_view = (
+            apply_session_review_response(
+                session,
+                owner_id=user.id,
+                plan=plan,
+            )
+            if plan is not None
+            else None
+        )
+        review_view = (
+            owner_acceptance_out(session, acceptance)
+            if acceptance is not None
+            else None
+        )
+        candidate_view = candidate_review.get("candidate") or {}
+        review_state = str(
+            (review_view or {}).get("review_state") or "unavailable"
+        )
+        readiness_state = str(candidate_view.get("readiness_state") or "unavailable")
+        drift_state = str(
+            (candidate_review.get("drift") or {}).get("status") or "unavailable"
+        )
+        persisted_apply_state = str(
+            ((apply_view or {}).get("session") or {}).get("state") or ""
+        )
+        primary_action: dict[str, Any] | None = None
+        secondary_actions: list[dict[str, Any]] = []
+        next_action = "Review the captured Run Result."
+        if envelope is None or candidate is None or acceptance is None:
+            next_action = "Wait for one immutable Run Result and Review Candidate."
+        elif review_state == "pending":
+            primary_action = {
+                "code": "accept_result_for_delivery",
+                "label": "Accept for Delivery",
+            }
+            secondary_actions = [
+                {"code": "reject_result", "label": "Reject Result"}
+            ]
+            next_action = "Accept or reject this exact Result for delivery."
+        elif review_state == "rejected":
+            next_action = "This Result was rejected; start a new approved Run if needed."
+        elif persisted_apply_state:
+            # Once an Apply session exists it is the authoritative downstream
+            # lifecycle.  In particular, the exact intended source mutation
+            # makes a fresh Candidate-drift evaluation look plan-impacting;
+            # that upstream observation must not hide an eligible Revert or
+            # overwrite a persisted Reverted terminal state on refresh.
+            if (
+                persisted_apply_state == "APPLIED"
+                and (apply_view.get("actions") or {}).get("can_revert") is True
+            ):
+                primary_action = {
+                    "code": "revert_applied_changes",
+                    "label": "Revert Applied Changes",
+                }
+                next_action = (
+                    "Optionally review recovery scope and explicitly confirm Revert."
+                )
+            elif persisted_apply_state == "REVERTED":
+                next_action = (
+                    "Delivery is reverted; the immutable Run Result remains available."
+                )
+            else:
+                blockers = list(apply_view.get("blockers") or [])
+                next_action = str(
+                    (
+                        blockers[0].get("message")
+                        if blockers and isinstance(blockers[0], dict)
+                        else None
+                    )
+                    or apply_view.get("next_action")
+                    or "Review the persisted delivery state."
+                )
+        elif readiness_state == "no_changes":
+            next_action = "No attributed deliverable change is available to apply."
+        elif readiness_state != "ready" or drift_state in {
+            "conflict_detected",
+            "candidate_unavailable",
+            "repository_unavailable",
+        }:
+            next_action = str(
+                candidate_review.get("next_action")
+                or "Resolve the Candidate or source-drift blocker."
+            )
+        elif plan is None:
+            primary_action = {
+                "code": "review_apply_plan",
+                "label": "Review Apply Plan",
+            }
+            next_action = "Prepare the immutable Apply Plan from this accepted Candidate."
+        elif str((plan_view or {}).get("approval_state")) == "PENDING":
+            primary_action = {
+                "code": "approve_apply_plan",
+                "label": "Approve Apply Plan",
+            }
+            next_action = "Approve this exact current Apply Plan."
+        elif apply_view and (apply_view.get("actions") or {}).get("can_apply") is True:
+            primary_action = {
+                "code": "apply_accepted_changes",
+                "label": "Apply Accepted Changes",
+            }
+            next_action = "Review the final path scope and explicitly confirm Apply."
+        elif apply_view:
+            next_action = str(
+                apply_view.get("next_action") or "Review the persisted delivery state."
+            )
+        return {
+            "run_id": run.id,
+            "result": (
+                result_envelope_out(envelope, advanced=False)
+                if envelope is not None
+                else None
+            ),
+            "result_review": review_view,
+            "candidate": candidate_review,
+            "apply_plan": plan_view,
+            "apply_session": apply_view,
+            "next_action": {
+                "primary": primary_action,
+                "secondary": secondary_actions,
+                "message": next_action,
+            },
+            "automatic_actions": [],
+            "boundaries": [
+                "Candidate materialization changes metadata only.",
+                "Result acceptance and Apply Plan approval never mutate source.",
+                "Apply and Revert require their own explicit confirmations.",
+                "No automatic Stage, Commit, Push, Run, or connector action occurs.",
+            ],
+        }
 
     @app.get("/api/apply-sessions/{session_id}/post-apply-verifications")
     def get_post_apply_verification_review(
@@ -5707,18 +6328,38 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     @app.get("/api/tasks/{task_id}/owner-acceptance")
     def current_owner_acceptance(
         task_id: int,
+        run_id: Optional[int] = None,
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
         if not session.get(Task, task_id):
             raise HTTPException(status_code=404, detail="Task not found.")
+        owned_run = None
+        if run_id is not None:
+            owned_run = find_owner_run(session, user.id, run_id)
+            if owned_run is None or owned_run.task_id != task_id:
+                # A missing, cross-Owner, or cross-Task Run is deliberately
+                # indistinguishable at this read-only projection boundary.
+                raise HTTPException(status_code=404, detail="Task or Run not found.")
+        conditions = [OwnerAcceptanceSession.task_id == task_id]
+        if owned_run is not None:
+            conditions.extend(
+                [
+                    OwnerAcceptanceSession.codex_run_id == owned_run.id,
+                ]
+            )
         acceptance = session.scalar(
             select(OwnerAcceptanceSession)
-            .where(OwnerAcceptanceSession.task_id == task_id)
+            .where(*conditions)
             .order_by(OwnerAcceptanceSession.id.desc())
         )
+        if acceptance is not None and find_owner_run(
+            session, user.id, acceptance.codex_run_id
+        ) is None:
+            acceptance = None
         return {
             "task_id": task_id,
+            "run_id": owned_run.id if owned_run is not None else None,
             "acceptance": owner_acceptance_out(session, acceptance) if acceptance else None,
         }
 
@@ -5733,7 +6374,12 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     ) -> dict[str, Any]:
         acceptance = session.get(OwnerAcceptanceSession, acceptance_id)
         item = session.get(OwnerAcceptanceItem, item_id)
-        if not acceptance or not item or item.session_id != acceptance.id:
+        if (
+            not acceptance
+            or not item
+            or item.session_id != acceptance.id
+            or find_owner_run(session, user.id, acceptance.codex_run_id) is None
+        ):
             raise HTTPException(status_code=404, detail="Owner Acceptance item not found.")
         if acceptance.status in {"accepted", "rejected"}:
             raise HTTPException(status_code=409, detail="Decided Owner Acceptance cannot be edited.")
@@ -5762,7 +6408,9 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         if session.get_bind().dialect.name == "sqlite":
             session.execute(text("BEGIN IMMEDIATE"))
         acceptance = session.get(OwnerAcceptanceSession, acceptance_id)
-        if not acceptance:
+        if not acceptance or find_owner_run(
+            session, user.id, acceptance.codex_run_id
+        ) is None:
             raise HTTPException(status_code=404, detail="Owner Acceptance not found.")
         if acceptance.status != "owner_review":
             raise HTTPException(status_code=409, detail="Owner Acceptance decision is already final.")
@@ -5778,6 +6426,16 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                     "Separately verified Coding and Verification invocation evidence is required "
                     "before acceptance."
                 ),
+            )
+        if acceptance.result_envelope_id is not None:
+            # A Result-bound review must use the immutable Result/Candidate
+            # decision endpoint.  Keep the historical checklist and evidence
+            # gates ahead of this migration boundary so an older Owner review
+            # still receives its precise safety failure instead of a
+            # misleading route-selection error.
+            raise HTTPException(
+                status_code=409,
+                detail="Use the exact Result-bound Accept for Delivery action.",
             )
         acceptance.status = "accepted"
         acceptance.owner_note = payload.note
@@ -5811,8 +6469,15 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         if session.get_bind().dialect.name == "sqlite":
             session.execute(text("BEGIN IMMEDIATE"))
         acceptance = session.get(OwnerAcceptanceSession, acceptance_id)
-        if not acceptance:
+        if not acceptance or find_owner_run(
+            session, user.id, acceptance.codex_run_id
+        ) is None:
             raise HTTPException(status_code=404, detail="Owner Acceptance not found.")
+        if acceptance.result_envelope_id is not None:
+            raise HTTPException(
+                status_code=409,
+                detail="Use the exact Result-bound Reject Result action.",
+            )
         if acceptance.status != "owner_review":
             raise HTTPException(status_code=409, detail="Owner Acceptance decision is already final.")
         acceptance.status = "rejected"

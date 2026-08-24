@@ -13,6 +13,7 @@ from sqlalchemy import func, select
 
 from twos_runtime.app import create_app as create_product_app
 from twos_runtime.config import Settings, get_settings
+from twos_runtime.delivery_candidates import get_or_create_delivery_candidate
 from twos_runtime.models import (
     AIModel,
     AIModelAssignment,
@@ -677,6 +678,19 @@ def bind_fixture_to_owner(factory, *, task_title: str = TASK_TITLE) -> None:
             raise AcceptanceFixtureError("Acceptance evidence is bound to another Owner.")
         pack.approved_by_user_id = owner.id
         acceptance.decided_by_user_id = owner.id
+        # This disposable fixture is historical Vol.18 evidence. Materialize
+        # its accepted legacy Candidate before result intake so Vol.19's
+        # automatic Result-derived Candidate path does not reinterpret the
+        # deliberately pre-Vol.19 evidence as a canonical delivery Result.
+        candidate, _created, eligibility = get_or_create_delivery_candidate(
+            session,
+            owner.id,
+            run,
+        )
+        if candidate is None or eligibility.get("eligible") is not True:
+            raise AcceptanceFixtureError(
+                "The historical acceptance Candidate is unavailable."
+            )
         try:
             payload = json.loads(run.structured_result)
         except (TypeError, json.JSONDecodeError) as exc:

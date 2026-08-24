@@ -1717,10 +1717,12 @@ def test_ui_copy_confirmation_surfaces_and_phase18_4_boundary(
         )
         assert page.status_code == script.status_code == styles.status_code == 200
         assert (
-            "The locked set of file changes produced by this accepted and "
-            "independently verified Run. Reviewing it does not change your "
-            "source repository."
+            "The locked file set reflects this captured Run Result. Candidate "
+            "readiness, Owner review, and independent Verification are shown "
+            "separately below. Reviewing it does not change your source "
+            "repository."
         ) in page.text
+        assert "produced by this accepted and independently verified Run" not in page.text
         assert (
             "Read-only instructions for how TWOS would apply the locked "
             "Candidate to the current repository. Reviewing it does not apply "

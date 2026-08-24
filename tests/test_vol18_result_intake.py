@@ -31,6 +31,8 @@ from tests.test_vol18_delivery_candidate import (
 )
 from twos_runtime.models import (
     AIModelInvocationEvidence,
+    ApplyPlan,
+    ApplySession,
     AuditEvent,
     CodexExecutionAttempt,
     CodexLifecycleSnapshot,
@@ -38,9 +40,12 @@ from twos_runtime.models import (
     CodexResultEnvelope,
     CodexRun,
     CodexRunMonitor,
+    CommitPlan,
     DeliveryCandidate,
     HandoffInstructionDraft,
     HandoffReview,
+    LocalCommitExecution,
+    PushExecution,
     SchemaVersion,
     SessionToken,
     User,
@@ -83,7 +88,7 @@ from twos_runtime.security import hash_password, hash_token
 
 FORBIDDEN_AUTOMATIC_ACTIONS = (
     "automatic Result acceptance",
-    "automatic Candidate",
+    "automatic Candidate acceptance",
     "automatic Apply",
     "automatic Revert",
     "automatic next Codex Run",
@@ -302,6 +307,38 @@ def _run(session, fixture: CandidateFixture) -> CodexRun:
     run = session.get(CodexRun, fixture.run_id)
     assert run is not None
     return run
+
+
+def _assert_one_pending_result_candidate(
+    session,
+    run_id: int,
+) -> DeliveryCandidate:
+    candidates = list(
+        session.scalars(
+            select(DeliveryCandidate).where(DeliveryCandidate.run_id == run_id)
+        ).all()
+    )
+    assert len(candidates) == 1
+    candidate = candidates[0]
+    envelope = session.get(CodexResultEnvelope, candidate.result_envelope_id)
+    assert envelope is not None
+    assert candidate.derivation_version == "twos.result_delivery_candidate.v1"
+    assert candidate.candidate_version == 1
+    assert candidate.result_envelope_public_id == envelope.envelope_id
+    assert candidate.result_digest == envelope.result_digest
+    assert candidate.acceptance_status == "owner_review"
+    assert candidate.acceptance.status == "owner_review"
+    assert candidate.acceptance.decision_digest == ""
+    assert len(candidate.candidate_digest) == 64
+    return candidate
+
+
+def _assert_no_downstream_delivery_actions(session) -> None:
+    assert session.scalar(select(func.count(ApplyPlan.id))) == 0
+    assert session.scalar(select(func.count(ApplySession.id))) == 0
+    assert session.scalar(select(func.count(CommitPlan.id))) == 0
+    assert session.scalar(select(func.count(LocalCommitExecution.id))) == 0
+    assert session.scalar(select(func.count(PushExecution.id))) == 0
 
 
 def valid_result_payload(
@@ -1617,11 +1654,9 @@ def test_fake_local_cli_run_is_automatically_monitored_and_ingested(
                     CodexResultEnvelope.run_id == run_id
                 )
             ) == 1
-            assert session.scalar(
-                select(func.count(DeliveryCandidate.id)).where(
-                    DeliveryCandidate.run_id == run_id
-                )
-            ) == 0
+            candidate = _assert_one_pending_result_candidate(session, run_id)
+            assert candidate.readiness_state == "ready"
+            _assert_no_downstream_delivery_actions(session)
             assert session.scalar(
                 select(func.count(HandoffInstructionDraft.id)).where(
                     HandoffInstructionDraft.run_id == run_id
@@ -2145,7 +2180,7 @@ def test_result_file_intake_rejects_symlink_escape_and_accepts_bounded_json(
             assert envelope.result_source == "durable_result_file"
 
 
-def test_restart_recovery_preserves_one_result_and_creates_no_candidate_or_draft(
+def test_restart_recovery_preserves_one_result_and_pending_candidate_without_draft(
     tmp_path: Path,
 ) -> None:
     with result_intake_fixture(tmp_path / "fixture") as fixture:
@@ -2177,12 +2212,11 @@ def test_restart_recovery_preserves_one_result_and_creates_no_candidate_or_draft
                 assert session.scalar(
                     select(func.count(CodexResultEnvelope.id))
                 ) == 1
-                assert session.scalar(
-                    select(func.count(DeliveryCandidate.id))
-                ) == 0
+                _assert_one_pending_result_candidate(session, fixture.run_id)
                 assert session.scalar(
                     select(func.count(HandoffInstructionDraft.id))
                 ) == 0
+                _assert_no_downstream_delivery_actions(session)
         finally:
             restarted.__exit__(None, None, None)
 
@@ -2236,9 +2270,8 @@ def test_review_handoff_pass_and_exactly_one_nonexecuting_draft(
                 select(func.count(HandoffInstructionDraft.id))
             ) == 1
             assert session.scalar(select(func.count(CodexRun.id))) == run_count
-            assert session.scalar(
-                select(func.count(DeliveryCandidate.id))
-            ) == 0
+            _assert_one_pending_result_candidate(session, fixture.run_id)
+            _assert_no_downstream_delivery_actions(session)
 
 
 def test_review_handoff_truthfully_recommends_blocked_with_warnings_and_limitations(
@@ -2671,6 +2704,7 @@ def test_result_intake_source_has_no_automatic_delivery_or_provider_actions() ->
     assert "CodexExecutionManager(" not in result_source
     assert "RuntimeScheduler(" not in result_source
     assert "get_or_create_delivery_candidate(" not in result_source
+    assert "_materialize_result_delivery_candidate(" in result_source
     assert "apply_accepted_changes(" not in result_source
     assert "revert_applied_changes(" not in result_source
     assert "Verify Applied Changes" in ui_source
