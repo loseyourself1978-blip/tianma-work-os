@@ -946,7 +946,32 @@
       .join(" ");
   }
 
-  function runStateSummary(status) {
+  function runStateSummary(status, terminalTruth) {
+    const truth = objectRecord(terminalTruth);
+    const verification = objectRecord(truth.verification);
+    const coding = objectRecord(truth.coding);
+    const workspace = objectRecord(truth.workspace);
+    if (coding.status === "failed") {
+      return "Coding failed. Review the process evidence and any partial Run Result separately.";
+    }
+    if (coding.status === "succeeded" && verification.status === "not_required") {
+      return "Coding completed; independent Verification was not required. Review the available Run evidence.";
+    }
+    if (coding.status === "succeeded" && verification.started === false) {
+      return "Coding completed; independent Verification was not started. Review the available Run evidence.";
+    }
+    if (coding.status === "succeeded" && verification.status === "failed") {
+      return "Coding completed; independent Verification failed. Review the exact Verification reason.";
+    }
+    if (coding.status === "succeeded" && verification.status === "unavailable") {
+      return "Coding completed; independent Verification is unavailable. Review the exact Verification reason.";
+    }
+    if (coding.status === "succeeded" && workspace.state === "conflict") {
+      return "Coding completed; workspace evidence needs Owner review because a conflict was captured.";
+    }
+    if (coding.status === "succeeded" && verification.status === "passed") {
+      return "Coding and independent Verification completed. Review the available Run evidence.";
+    }
     const summaries = {
       queued: "Run accepted and queued for isolated execution.",
       starting: "The approved source snapshot is being prepared.",
@@ -955,8 +980,8 @@
       verifying: "Coding has reached a terminal process state; independent Verification is running.",
       settling: "Terminal evidence is being reconciled into one authoritative Run Result.",
       result_pending: "Terminal evidence is being reconciled into one authoritative Run Result.",
-      completed: "Coding and Verification completed and acceptance evidence is available.",
-      result_available: "Coding and Verification completed and a trustworthy Run Result is available.",
+      completed: "Coding completed. Review the persisted phase evidence.",
+      result_available: "A Run Result is available for review; availability does not by itself establish objective success.",
       failed: "The Run failed. Review the failed process or acceptance checks below.",
       cancelled: "The Run was cancelled. Review the persisted process and boundary evidence below.",
       timed_out: "The Run timed out. Review the persisted process and boundary evidence below.",
@@ -2643,6 +2668,7 @@
       ["Stream offsets", safeLifecycleNumberMap(advanced.stream_offsets || advanced.offsets, "Not recorded")],
       ["Event histogram", safeLifecycleNumberMap(advanced.event_histogram || advanced.type_histogram || advanced.histogram, "Not recorded")],
       ["Result sidecar", humanStatus(advanced.sidecar_state || advanced.result_sidecar_state || "not recorded")],
+      ["Evidence envelope integrity", humanStatus(lifecycle.result_integrity || "pending")],
       [
         "Exit code",
         advanced.exit_code !== null
@@ -2661,6 +2687,12 @@
 
   function appendLiveCodexActivity(target, view) {
     const lifecycle = view.lifecycle;
+    const truth = objectRecord(view.terminalTruth);
+    const truthCoding = objectRecord(truth.coding);
+    const truthVerification = objectRecord(truth.verification);
+    const truthResult = objectRecord(truth.result);
+    const truthWorkspace = objectRecord(truth.workspace);
+    const truthReview = objectRecord(truth.owner_review);
     const events = Array.isArray(lifecycle.events) ? lifecycle.events : [];
     const latestEvent = events.length ? lifecycleEventView(events[events.length - 1]) : null;
     const facts = document.createElement("span");
@@ -2672,7 +2704,18 @@
     target.className = "live-codex-activity";
     target.setAttribute("aria-label", "Live Codex Activity for " + view.taskName);
     facts.className = "live-codex-facts";
-    appendRunActivityFact(facts, "Current Run state", humanStatus(view.status));
+    appendRunActivityFact(facts, "Run outcome", view.primaryLabel);
+    appendRunActivityFact(facts, "Coding outcome", humanStatus(truthCoding.status || view.coding));
+    appendRunActivityFact(facts, "Independent Verification", humanStatus(truthVerification.status || view.verification));
+    appendRunActivityFact(facts, "Result availability", humanStatus(truthResult.state || "unavailable"));
+    appendRunActivityFact(facts, "Workspace evidence", humanStatus(truthWorkspace.state || "incomplete"));
+    appendRunActivityFact(facts, "Evidence envelope integrity", humanStatus(truthResult.integrity || view.integrity));
+    appendRunActivityFact(
+      facts,
+      "Owner warning",
+      ownerWorkflowText(truthReview.summary, "No additional warning.", 600)
+    );
+    appendRunActivityFact(facts, "Current execution state", humanStatus(view.status));
     appendRunActivityFact(facts, "Coding / Verification phase", humanStatus(lifecycle.phase || "not reported"));
     appendRunActivityFact(
       facts,
@@ -2708,8 +2751,6 @@
     appendRunActivityFact(facts, "Coding started", lifecycleBoolean(lifecycle.coding_started, "Yes", "No"));
     appendRunActivityFact(facts, "Process exited", lifecycleBoolean(lifecycle.process_exited, "Yes", "No"));
     appendRunActivityFact(facts, "Verification started", lifecycleBoolean(lifecycle.verification_started, "Yes", "No"));
-    appendRunActivityFact(facts, "Sidecar evidence", humanStatus(lifecycle.sidecar_state || "not reported"));
-    appendRunActivityFact(facts, "Result integrity", humanStatus(lifecycle.result_integrity || "pending"));
     appendRunActivityFact(
       facts,
       "Terminal evidence observed",
@@ -2759,12 +2800,19 @@
 
   function activityResultIsBlocked(view) {
     if (!view) return false;
+    const truth = objectRecord(view.terminalTruth);
+    const primary = String(truth.primary_status || "").toLowerCase();
+    if (["needs_review", "failed", "cancelled", "timed_out", "interrupted", "blocked"].indexOf(primary) !== -1) {
+      return true;
+    }
+    if (truth.result && truth.result.available === true) return false;
     return RESULT_BLOCKED_STATUSES.indexOf(view.status) !== -1
       || !lifecycleIsActive(view.status) && /blocked|invalid|unavailable/.test(view.integrity);
   }
 
   function activityResultIsAvailable(view) {
     if (!view || activityResultIsBlocked(view)) return false;
+    if (view.terminalTruth && view.terminalTruth.result) return view.terminalTruth.result.available === true;
     if (view.lifecycleAvailable) {
       return RESULT_AVAILABLE_STATUSES.indexOf(view.status) !== -1;
     }
@@ -2793,23 +2841,25 @@
       : observed.length
         ? "Result intake pending"
         : blocked.length
-          ? blocked.length + " result" + (blocked.length === 1 ? "" : "s") + " blocked"
+          ? blocked.length + " result" + (blocked.length === 1 ? "" : "s") + " need Owner review"
           : available.length
             ? available.length + " result" + (available.length === 1 ? "" : "s") + " available"
             : views.length ? humanStatus(views[0].status) : "No Runs";
     setStatusLabel(elements.runActivityStatus, elements.runActivityStatus.textContent);
 
     if (headline && activityResultIsBlocked(headline)) {
-      elements.runActivityNotification.dataset.state = "blocked";
+      elements.runActivityNotification.dataset.state = headline.primaryStatus === "needs_review"
+        ? "review"
+        : "blocked";
       elements.runActivityNotification.textContent = headline.taskName
-        + " · " + humanStatus(headline.status)
-        + " · Result integrity " + humanStatus(headline.integrity)
+        + " · " + headline.primaryLabel
+        + " · Evidence envelope integrity " + humanStatus(headline.integrity)
         + " · " + headline.nextAction;
     } else if (headline && activityResultIsAvailable(headline)) {
       const latest = headline;
       elements.runActivityNotification.dataset.state = "ready";
       elements.runActivityNotification.textContent = latest.taskName
-        + " · " + humanStatus(latest.status)
+        + " · " + latest.primaryLabel
         + " · Verification " + latest.verification
         + " · " + latest.nextAction;
     } else {
@@ -2853,7 +2903,7 @@
         title.textContent = view.taskName;
         title.title = view.taskName;
         status.className = "status-label";
-        status.textContent = humanStatus(view.status);
+        status.textContent = lifecycleIsActive(view.status) ? humanStatus(view.status) : view.primaryLabel;
         setStatusLabel(status, status.textContent);
         heading.appendChild(title);
         heading.appendChild(status);
@@ -2866,8 +2916,18 @@
         appendRunActivityFact(facts, "Duration", view.duration);
         appendRunActivityFact(facts, "Coding", view.coding);
         appendRunActivityFact(facts, "Verification", view.verification);
+        appendRunActivityFact(
+          facts,
+          "Result availability",
+          humanStatus(objectRecord(view.terminalTruth.result).state || "unavailable")
+        );
+        appendRunActivityFact(
+          facts,
+          "Workspace evidence",
+          humanStatus(objectRecord(view.terminalTruth.workspace).state || "incomplete")
+        );
         appendRunActivityFact(facts, "Tests", view.tests);
-        appendRunActivityFact(facts, "Result integrity", humanStatus(view.integrity));
+        appendRunActivityFact(facts, "Evidence envelope integrity", humanStatus(view.integrity));
         appendRunActivityFact(facts, "Exact Owner action", view.nextAction);
         main.appendChild(heading);
         main.appendChild(facts);
@@ -3089,6 +3149,8 @@
     const envelope = resultEnvelopeRecord(
       record.result_envelope || record.resultEnvelope || record.envelope
     );
+    const terminalTruth = objectRecord(record.terminal_truth || record.terminalTruth);
+    const terminalReview = objectRecord(terminalTruth.owner_review);
     const tests = record.tests_summary || record.tests || envelope.tests_summary || envelope.tests;
     const verification = objectRecord(
       record.verification_result || envelope.verification_evidence || envelope.verification_verdict
@@ -3138,6 +3200,9 @@
     }
     return {
       raw: record,
+      terminalTruth: terminalTruth,
+      primaryStatus: terminalTruth.primary_status || monitorState,
+      primaryLabel: terminalTruth.primary_label || humanStatus(monitorState),
       lifecycle: lifecycle,
       lifecycleAvailable: Object.keys(lifecycle).length > 0,
       lifecycleActive: Object.keys(lifecycle).length > 0 && lifecycleIsActive(monitorState),
@@ -3176,19 +3241,21 @@
             finishedAt
           ),
       coding: ownerWorkflowText(
-        record.coding_summary || coding.safe_summary || coding.summary || coding.status || envelope.coding_result,
+        terminalTruth.coding && terminalTruth.coding.status
+          || record.coding_summary || coding.safe_summary || coding.summary || coding.status || envelope.coding_result,
         "Not available",
         220
       ),
       verification: ownerWorkflowText(
-        record.verification_summary || verification.summary || verification.verdict || verification.status,
+        terminalTruth.verification && terminalTruth.verification.status
+          || record.verification_summary || verification.summary || verification.verdict || verification.status,
         "Not available",
         220
       ),
       tests: testsSummary,
       integrity: integrity,
       nextAction: ownerWorkflowText(
-        lifecycle.next_action || record.next_action || actions.next_action || envelope.next_action,
+        terminalReview.next_action || lifecycle.next_action || record.next_action || actions.next_action || envelope.next_action,
         RESULT_AVAILABLE_STATUSES.indexOf(monitorState) !== -1
           ? "Open Run Result and Review Handoff."
           : lifecycleIsActive(monitorState)
@@ -4125,8 +4192,11 @@
         + (pack.approved ? "Approved" : humanStatus(pack.status))
       : "No approved Pack";
     elements.codexReason.textContent = reason;
+    const runTerminalTruth = objectRecord(run && (run.terminal_truth || run.terminalTruth));
     elements.runStatus.textContent = run
-      ? humanStatus(run.canonical_status || runStatus)
+      ? active
+        ? humanStatus(run.canonical_status || runStatus)
+        : runTerminalTruth.primary_label || humanStatus(run.canonical_status || runStatus)
       : "Not started";
     elements.codexNextAction.textContent = displayedNextAction;
     elements.codingSetupReason.textContent = reason + " Next Owner action: " + displayedNextAction + ".";
@@ -7683,6 +7753,12 @@
     const record = objectRecord(envelope);
     const handoff = objectRecord(record.structured_handoff);
     const activity = currentRunActivity();
+    const terminalTruth = objectRecord(
+      activity && activity.terminalTruth
+      || run && (run.terminal_truth || run.terminalTruth)
+    );
+    const truthCoding = objectRecord(terminalTruth.coding);
+    const truthVerification = objectRecord(terminalTruth.verification);
     const coding = objectRecord(
       record.coding_result || record.coding_evidence || handoff.coding_result
     );
@@ -7770,6 +7846,8 @@
       ? "In progress — see Live Codex Activity"
       : timedOut
       ? "Run timed out — no verified model execution"
+      : truthCoding.status
+      ? humanStatus(truthCoding.status)
       : ownerWorkflowSummary(
           record.coding_result || coding,
           valid ? "Coding evidence was not summarized." : "Not available",
@@ -7781,6 +7859,8 @@
         : "Waiting for Coding to settle"
       : timedOut
       ? "Unavailable — Coding did not complete"
+      : truthVerification.status
+      ? humanStatus(truthVerification.status)
       : ownerWorkflowSummary(
           record.verification_result || verification,
           valid ? "Verification evidence was not summarized." : "Not available",
@@ -7791,6 +7871,8 @@
       ? "Pending authoritative lifecycle settlement"
       : timedOut && integrity === "verified"
       ? "Verified timeout envelope — not verified Coding output"
+      : integrity === "verified"
+      ? "Verified evidence envelope — independent Verification is shown separately"
       : humanStatus(integrity);
     setStatusLabel(elements.resultEnvelopeIntegrity, elements.resultEnvelopeIntegrity.textContent);
     elements.resultEnvelopeNextAction.textContent = ownerWorkflowText(
@@ -7995,6 +8077,10 @@
     if (run) {
       const authoritativeStatus = authoritativeRunStatus(run) || String(run.status || "").toLowerCase();
       const runView = Object.assign({}, run, { status: authoritativeStatus });
+      const terminalTruth = objectRecord(run.terminal_truth || run.terminalTruth);
+      const truthCoding = objectRecord(terminalTruth.coding);
+      const truthVerification = objectRecord(terminalTruth.verification);
+      const primaryLabel = terminalTruth.primary_label || humanStatus(authoritativeStatus);
       const result = objectRecord(run.result);
       const changes = objectRecord(result.run_produced_changes);
       const codingProcess = objectRecord(result.coding_process);
@@ -8034,10 +8120,18 @@
         evidenceFailure(taskAcceptance)
       ].find(function (value) { return value && value !== "None"; });
 
-      elements.resultStatus.textContent = humanStatus(authoritativeStatus);
+      elements.resultStatus.textContent = lifecycleIsActive(authoritativeStatus)
+        ? humanStatus(authoritativeStatus)
+        : primaryLabel;
       elements.resultLifecycle.textContent = humanStatus(authoritativeStatus);
-      elements.resultSummary.textContent = runStateSummary(authoritativeStatus);
-      elements.resultReview.textContent = resultReviewText(authoritativeStatus);
+      elements.resultSummary.textContent = runStateSummary(
+        authoritativeStatus,
+        terminalTruth.primary_status ? terminalTruth : {
+          verification: { started: run.lifecycle && run.lifecycle.verification_started }
+        }
+      );
+      elements.resultReview.textContent = objectRecord(terminalTruth.owner_review).summary
+        || resultReviewText(terminalTruth.primary_status || authoritativeStatus);
 
       elements.resultTask.textContent = String(
         run.development_task || "Frozen Development task unavailable for this Run."
@@ -8053,7 +8147,9 @@
         ? "v" + run.pack_version
         : "None";
 
-      elements.resultCodingProcess.textContent = humanStatus(evidenceStatus(codingProcess, codingStatusFallback(runView)));
+      elements.resultCodingProcess.textContent = humanStatus(
+        truthCoding.status || evidenceStatus(codingProcess, codingStatusFallback(runView))
+      );
       elements.resultCodingExitCode.textContent = Object.keys(codingProcess).length
         ? evidenceExitCode(codingProcess)
         : run.exit_code === null || run.exit_code === undefined ? "None" : String(run.exit_code);
@@ -8092,18 +8188,22 @@
       elements.resultVerificationAssignedModel.textContent = typeof assignedVerificationModel === "object"
         ? modelStableIdentifier(assignedVerificationModel)
         : boundedText(assignedVerificationModel, "None", 240);
-      elements.resultVerificationStatus.textContent = humanStatus(evidenceStatus(verificationProcess, "not_started"));
-      elements.resultVerificationProcessStarted.textContent = evidenceBoolean(
-        verificationProcess,
-        ["process_started", "process_spawned"]
-      ) ? "Yes" : "No";
+      elements.resultVerificationStatus.textContent = humanStatus(
+        truthVerification.status || evidenceStatus(verificationProcess, "not_started")
+      );
+      elements.resultVerificationProcessStarted.textContent = typeof truthVerification.started === "boolean"
+        ? truthVerification.started ? "Yes" : "No"
+        : evidenceBoolean(verificationProcess, ["process_started", "process_spawned"])
+          ? "Yes"
+          : "No";
       elements.resultVerificationTurnTerminal.textContent = humanStatus(firstEvidenceValue(
         verificationProcess,
         ["turn_terminal_state", "terminal_turn_state", "final_turn_status"],
         "not_reached"
       ));
       elements.resultVerificationProcessExitCode.textContent = evidenceExitCode(verificationProcess);
-      elements.resultVerificationSummary.textContent = evidenceFailure(verificationProcess);
+      elements.resultVerificationSummary.textContent = truthVerification.reason
+        || evidenceFailure(verificationProcess);
       elements.resultVerificationProcessProof.textContent = verificationView.processProof;
       elements.resultVerificationTurnProof.textContent = verificationView.turnProof;
       elements.resultVerificationRequestedModel.textContent = verificationView.requestedModel;

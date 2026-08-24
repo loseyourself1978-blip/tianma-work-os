@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 from dataclasses import dataclass
@@ -30,6 +31,41 @@ class Settings:
     # enough evidence-based headroom for the same detached path.
     codex_connectivity_timeout_seconds: int = 180
     codex_output_limit: int = 200_000
+    # Optional operator-configured, deterministic local Verification backend.
+    # This is never populated from Owner/UI input and is invoked as an exact
+    # argument vector with the isolated Run worktree as cwd.
+    local_verification_command: tuple[str, ...] = ()
+    local_verification_timeout_seconds: int = 60
+    local_verification_output_limit: int = 20_000
+
+
+def _local_verification_command() -> tuple[str, ...]:
+    raw = os.environ.get("TWOS_LOCAL_VERIFICATION_COMMAND_JSON", "").strip()
+    if not raw:
+        return ()
+    try:
+        decoded = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            "TWOS_LOCAL_VERIFICATION_COMMAND_JSON must be a JSON argument-vector array."
+        ) from exc
+    if not isinstance(decoded, list) or not 1 <= len(decoded) <= 32:
+        raise ValueError(
+            "TWOS_LOCAL_VERIFICATION_COMMAND_JSON must contain 1 to 32 arguments."
+        )
+    command: list[str] = []
+    for value in decoded:
+        if (
+            not isinstance(value, str)
+            or not value
+            or "\0" in value
+            or len(value.encode("utf-8")) > 4096
+        ):
+            raise ValueError(
+                "TWOS_LOCAL_VERIFICATION_COMMAND_JSON contains an invalid argument."
+            )
+        command.append(value)
+    return tuple(command)
 
 
 def get_settings() -> Settings:
@@ -61,4 +97,11 @@ def get_settings() -> Settings:
             os.environ.get("TWOS_CODEX_CONNECTIVITY_TIMEOUT_SECONDS", "180")
         ),
         codex_output_limit=int(os.environ.get("TWOS_CODEX_OUTPUT_LIMIT", "200000")),
+        local_verification_command=_local_verification_command(),
+        local_verification_timeout_seconds=int(
+            os.environ.get("TWOS_LOCAL_VERIFICATION_TIMEOUT_SECONDS", "60")
+        ),
+        local_verification_output_limit=int(
+            os.environ.get("TWOS_LOCAL_VERIFICATION_OUTPUT_LIMIT", "20000")
+        ),
     )

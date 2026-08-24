@@ -2254,8 +2254,10 @@ def _reconcile_execution_attempt_locked(
                 "RESULT_UNAVAILABLE",
             }
             and bool(attempt.receipt_digest)
-            and not run.stdout
-            and not run.stderr
+            and (
+                attempt.phase == "VERIFICATION"
+                or (not run.stdout and not run.stderr)
+            )
         )
     )
     return {

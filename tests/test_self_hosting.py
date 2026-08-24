@@ -540,6 +540,19 @@ if args[5] == "workspace-write":
                 "exit_code": 0,
             },
         })
+    if "FAKE_READ_ONLY_GIT_INSPECTION" in prompt:
+        emit({
+            "type": "item.completed",
+            "item": {
+                "type": "command_execution",
+                "command": (
+                    "git ls-tree -r HEAD && git remote -v && "
+                    "git config --local --list"
+                ),
+                "aggregated_output": "read-only Git evidence captured",
+                "exit_code": 0,
+            },
+        })
     if "FAKE_SAFE_STDERR" in prompt:
         print("VOL19 controlled stderr diagnostic", file=sys.stderr, flush=True)
     if "FAKE_EXCLUDED_ARTIFACT" in prompt:
@@ -727,6 +740,9 @@ def make_client(
     database_path: Path | None = None,
     codex_model_identifier: str | None = None,
     codex_model_capabilities: tuple[str, ...] = ("coding",),
+    local_verification_command: tuple[str, ...] = (),
+    local_verification_timeout_seconds: int = 5,
+    local_verification_output_limit: int = 20_000,
 ) -> TestClient:
     codex_spool_root = tmp_path / "codex-spool"
     codex_spool_root.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -743,6 +759,9 @@ def make_client(
         codex_model_capabilities=codex_model_capabilities,
         codex_timeout_seconds=timeout,
         codex_output_limit=output_limit,
+        local_verification_command=local_verification_command,
+        local_verification_timeout_seconds=local_verification_timeout_seconds,
+        local_verification_output_limit=local_verification_output_limit,
     )
     app = create_app(settings=settings, start_scheduler=False)
     identifiers = list(CONTROLLED_CATALOG_MODELS)

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import hashlib
+import re
 import uuid
 from contextlib import asynccontextmanager
 from datetime import timedelta
@@ -114,6 +115,7 @@ from .models import (
     AcceptanceCheck,
     AuditEvent,
     CodexInstructionPack,
+    CodexExecutionAttempt,
     CodexRun,
     DeliveryCandidate,
     ApplyPlan,
@@ -1102,6 +1104,75 @@ def codex_run_out(
         evidence: AIModelInvocationEvidence | None,
     ) -> dict[str, Any]:
         proof = dict(value) if isinstance(value, dict) else {}
+        if (
+            evidence is None
+            and proof.get("mode") == "local_command"
+            and proof.get("model_provider_invoked") is False
+        ):
+            local_digest_shape_valid = all(
+                re.fullmatch(r"[0-9a-f]{64}", str(proof.get(key) or ""))
+                for key in (
+                    "ticket_digest",
+                    "command_digest",
+                    "executable_fingerprint",
+                )
+            )
+            local_attempt = (
+                session.scalar(
+                    select(CodexExecutionAttempt)
+                    .where(
+                        CodexExecutionAttempt.run_id == run.id,
+                        CodexExecutionAttempt.phase == "VERIFICATION",
+                    )
+                    .order_by(CodexExecutionAttempt.id.desc())
+                )
+                if session is not None
+                else None
+            )
+            local_binding_valid = bool(
+                local_digest_shape_valid
+                and local_attempt is not None
+                and local_attempt.attempt_state == "COMPLETED"
+                and local_attempt.ticket_digest == proof.get("ticket_digest")
+                and re.fullmatch(
+                    r"[0-9a-f]{64}", local_attempt.receipt_digest or ""
+                )
+                and local_attempt.executable_fingerprint
+                == proof.get("command_digest")
+                and type(local_attempt.process_id) is int
+                and local_attempt.process_id > 0
+                and re.fullmatch(
+                    r"[0-9a-f]{64}",
+                    local_attempt.process_start_identity or "",
+                )
+                and local_attempt.process_exit_known
+                and local_attempt.process_exit_code == 0
+                and local_attempt.terminal_event_observed
+                and local_attempt.result_resolution_source
+                in {
+                    "FINAL_MESSAGE_SIDECAR",
+                    "JSONL_FINAL_MESSAGE_RECOVERY",
+                }
+            )
+            proof["requested_model"] = ""
+            proof["requested_model_identifier"] = ""
+            proof["configured_assignment_model"] = str(
+                requested_model_identifier or ""
+            )
+            proof["actual_resolved_model"] = None
+            proof["actual_resolved_model_identifier"] = None
+            proof["actual_resolved_model_display"] = (
+                "No model/provider invoked; deterministic local Verification."
+            )
+            proof["actual_model_identity_verified"] = False
+            proof["model_identity_source"] = None
+            proof["connectivity_evidence_identity"] = None
+            proof["process_execution_verified"] = bool(
+                local_binding_valid
+                and proof.get("process_execution_verified") is True
+            )
+            proof["codex_turn_verified"] = False
+            return proof
         requested = str(requested_model_identifier or "")
         actual_value, source, connectivity_digest = verified_actual_model_identity(
             evidence
@@ -1229,6 +1300,15 @@ def codex_run_out(
             run,
             advanced=include_raw,
         )
+        output["terminal_truth"] = terminal_truth_out(
+            run,
+            output["lifecycle"],
+            (
+                result_envelope_out(result_envelope, advanced=True)
+                if result_envelope is not None
+                else None
+            ),
+        )
     if include_raw:
         output.update(
             {
@@ -1297,6 +1377,256 @@ def audit_out(event: AuditEvent) -> dict[str, Any]:
         "request_id": event.request_id,
         "details": event.details,
         "created_at": iso(event.created_at),
+    }
+
+
+def terminal_truth_out(
+    run: CodexRun,
+    lifecycle: dict[str, Any],
+    envelope: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Project one owner-safe terminal truth record for every Run surface."""
+    state = str(lifecycle.get("state") or run.status or "queued").lower()
+    raw_integrity = str(
+        (envelope or {}).get("integrity_state")
+        or lifecycle.get("result_integrity")
+        or "pending"
+    ).lower()
+    integrity = (
+        "verified"
+        if raw_integrity == "verified"
+        else "invalid"
+        if raw_integrity in {"blocked", "invalid", "mismatch"}
+        else "unverified"
+    )
+    envelope_verified = integrity == "verified" and bool(envelope)
+    structured = decoded_object(run.structured_result)
+    structured_coding_process = structured.get("coding_process")
+    coding_process = (
+        structured_coding_process
+        if isinstance(structured_coding_process, dict)
+        else {}
+    )
+    raw_coding_status = str(coding_process.get("status") or "").lower()
+    reported_coding_exit_code = coding_process.get("exit_code")
+    effective_coding_exit_code = (
+        reported_coding_exit_code
+        if type(reported_coding_exit_code) is int
+        else run.exit_code
+    )
+    coding_exit_conflict = bool(
+        type(reported_coding_exit_code) is int
+        and type(run.exit_code) is int
+        and reported_coding_exit_code != run.exit_code
+    )
+    coding_cancelled = bool(
+        coding_process.get("cancelled") is True or raw_coding_status == "cancelled"
+    )
+    coding_timed_out = bool(
+        coding_process.get("timed_out") is True or raw_coding_status == "timed_out"
+    )
+    coding_interrupted = bool(
+        coding_process.get("runtime_interrupted") is True
+        or raw_coding_status in {"interrupted", "process_lost"}
+    )
+    if not (run.process_spawned or run.started_at or run.exit_code is not None):
+        coding_status = "pending"
+    elif coding_cancelled:
+        coding_status = "cancelled"
+    elif coding_timed_out:
+        coding_status = "timed_out"
+    elif coding_interrupted:
+        coding_status = "interrupted"
+    elif raw_coding_status in {
+        "failed",
+        "error",
+        "blocked",
+        "integrity_blocked",
+    } or coding_exit_conflict or (
+        type(effective_coding_exit_code) is int
+        and effective_coding_exit_code != 0
+    ):
+        coding_status = "failed"
+    elif effective_coding_exit_code == 0:
+        coding_status = "succeeded"
+    elif state in {"queued", "starting"}:
+        coding_status = state
+    elif state in {"running", "coding", "verifying", "settling", "result_pending"}:
+        coding_status = "running"
+    elif state == "cancelled":
+        coding_status = "cancelled"
+    elif state == "timed_out":
+        coding_status = "timed_out"
+    elif state in {"interrupted", "process_lost"}:
+        coding_status = "interrupted"
+    else:
+        coding_status = "failed"
+    # The current immutable Pack architecture represents a required
+    # independent phase with a persisted Verification assignment. Runs with
+    # no such binding project Verification as not_required.
+    verification_required = run.verification_assignment_id is not None
+    verification_started = bool(
+        lifecycle.get("verification_started")
+        or getattr(run, "verification_process_spawned", False)
+    )
+    if not verification_required and not verification_started:
+        verification_status = "not_required"
+    elif not verification_started:
+        verification_status = "unavailable" if state in {"completed", "failed", "cancelled", "timed_out", "interrupted", "result_available"} or str(run.status or "").lower() in {"completed", "failed", "cancelled", "timed_out", "blocked"} else "pending"
+    else:
+        structured_verification = structured.get("verification_verdict") or structured.get("verification_result") or {}
+        structured_verification_process = structured.get("verification_process")
+        envelope_verdict = (
+            (envelope or {}).get("verification_result", {}).get("verdict")
+            if envelope_verified
+            else ""
+        )
+        raw_verdict = str(envelope_verdict or (structured_verification.get("verdict") if isinstance(structured_verification, dict) else structured_verification) or "").lower()
+        raw_verification = raw_verdict if raw_verdict in {"pass", "passed", "verified", "succeeded", "success", "fail", "failed"} else str((structured_verification_process.get("status") if isinstance(structured_verification_process, dict) else "") or run.verification_status or raw_verdict).lower()
+        verification_status = "passed" if raw_verification in {"pass", "passed", "verified", "succeeded", "success"} else "failed" if raw_verification in {"fail", "failed", "blocked", "integrity_blocked"} else "running" if raw_verification in {"running", "in_progress"} else "cancelled" if raw_verification == "cancelled" else "timed_out" if raw_verification == "timed_out" else "interrupted" if raw_verification in {"interrupted", "process_lost"} or state in {"interrupted", "process_lost"} else "unavailable"
+    structured_verification_process = structured.get("verification_process")
+    verification_reason = str(
+        (
+            structured_verification_process.get("failure")
+            if isinstance(structured_verification_process, dict)
+            else ""
+        )
+        or getattr(run, "verification_summary", None)
+        or (
+            "Independent Verification was not required."
+            if verification_status == "not_required"
+            else "Independent Verification has not produced evidence."
+        )
+    )
+    # Availability belongs to the sealed envelope, not the legacy aggregate
+    # Run label. A verified envelope remains reviewable even when a separate
+    # phase or workspace dimension needs review.
+    result_available = envelope_verified
+    result_state = "available" if result_available else "incomplete" if envelope is not None else "unavailable"
+    workspace = ((envelope or {}).get("workspace_evidence") or (envelope or {}).get("advanced", {}).get("workspace_evidence") or structured.get("workspace_evidence") or {})
+    workspace_evidence_status = (
+        str(workspace.get("status") or "").lower()
+        if isinstance(workspace, dict)
+        else ""
+    )
+    workspace_evidence_available = bool(
+        isinstance(workspace, dict)
+        and workspace
+        and workspace_evidence_status
+        not in {"unavailable", "incomplete", "missing", "not_captured"}
+    )
+    attribution = workspace.get("attribution") if isinstance(workspace, dict) else {}
+    run_produced = (
+        attribution.get("run_produced", [])
+        if isinstance(attribution, dict)
+        else []
+    )
+    workspace_conflict = bool(
+        isinstance(workspace, dict)
+        and (
+            workspace_evidence_status == "conflict"
+            or workspace.get("boundary_violations")
+            or workspace.get("unexpected_files")
+            or (
+                isinstance(attribution, dict)
+                and attribution.get("origin_unproven")
+            )
+        )
+    )
+    workspace_conflict_reasons = (
+        [str(item) for item in workspace.get("boundary_violations", [])]
+        if isinstance(workspace, dict)
+        and isinstance(workspace.get("boundary_violations"), list)
+        else []
+    )
+    if isinstance(workspace, dict):
+        unexpected = workspace.get("unexpected_files")
+        if isinstance(unexpected, list) and unexpected:
+            workspace_conflict_reasons.append(
+                "Unexpected workspace paths: " + ", ".join(str(item) for item in unexpected)
+            )
+        if isinstance(attribution, dict) and attribution.get("origin_unproven"):
+            workspace_conflict_reasons.append(
+                "The Run could not prove that all captured changes originated from this execution."
+            )
+        if workspace_evidence_status == "conflict" and not workspace_conflict_reasons:
+            workspace_conflict_reasons.append(
+                str(
+                    workspace.get("conflict_reason")
+                    or workspace.get("availability_reason")
+                    or "Persisted workspace evidence is classified as conflict."
+                )
+            )
+    workspace_state = (
+        "conflict"
+        if workspace_conflict
+        else "captured"
+        if workspace_evidence_available
+        and (run_produced or structured.get("changed_files"))
+        else "no_change"
+        if workspace_evidence_available
+        else "incomplete"
+    )
+    if coding_status in {"failed", "cancelled", "timed_out", "interrupted"}:
+        primary_status = coding_status
+    elif coding_status == "succeeded" and (
+        verification_status
+        in {"unavailable", "failed", "cancelled", "timed_out", "interrupted"}
+        or workspace_state in {"conflict", "incomplete"}
+    ):
+        primary_status = "needs_review"
+    elif result_available:
+        primary_status = "result_available"
+    else:
+        primary_status = state
+    return {
+        "primary_status": primary_status,
+        "primary_label": "Needs Review" if primary_status == "needs_review" else "Result Available" if primary_status == "result_available" else primary_status.replace("_", " ").title(),
+        "terminal_state": state,
+        "coding": {"status": coding_status, "exit_code": run.exit_code},
+        "verification": {
+            "status": verification_status,
+            "required": verification_required,
+            "started": verification_started,
+            "reason": verification_reason,
+        },
+        "result": {
+            "state": result_state,
+            "available": result_available,
+            "integrity": integrity,
+            "envelope_present": envelope is not None,
+        },
+        "workspace": {
+            "state": workspace_state,
+            "conflict_reasons": workspace_conflict_reasons,
+            "terminal_evidence_observed": bool(lifecycle.get("terminal_evidence_observed")),
+            "process_exited": bool(lifecycle.get("process_exited")),
+        },
+        "owner_review": {
+            "status": (
+                "reviewed"
+                if getattr(run, "acceptance_session", None) is not None
+                and str(run.acceptance_session.status or "").lower()
+                not in {"", "pending", "owner_review"}
+                else "pending"
+            ),
+            "next_action": lifecycle.get("next_action") or "Review the persisted Run evidence.",
+            "summary": (
+                (
+                    "Workspace evidence conflict: "
+                    + ", ".join(workspace_conflict_reasons)
+                )
+                if workspace_conflict_reasons
+                else verification_reason
+                if verification_status
+                in {"failed", "unavailable", "cancelled", "timed_out", "interrupted"}
+                else "Run Result is available for Owner review."
+                if result_available
+                else "Verification has not started; review the persisted Run evidence."
+                if not verification_started and state in {"completed", "failed"}
+                else "Review the persisted Run evidence."
+            ),
+        },
     }
 
 
@@ -3550,6 +3880,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         tests: object = []
         if envelope is not None:
             public_envelope = result_envelope_out(envelope)
+            terminal_envelope = result_envelope_out(envelope, advanced=True)
             coding = public_envelope.get("coding_result", {})
             coding_summary = (
                 coding.get("safe_summary")
@@ -3565,6 +3896,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             tests = public_envelope.get("tests", [])
         else:
             public_envelope = None
+            terminal_envelope = None
         return {
             "run_id": run.id,
             "task_id": run.task_id,
@@ -3580,7 +3912,9 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             "actual_model_verified": bool(
                 public_envelope and public_envelope.get("actual_model_verified")
             ),
-            "result_available": envelope is not None,
+            "result_available": bool(
+                public_envelope and public_envelope.get("result_available")
+            ),
             "execution_successful": bool(
                 public_envelope and public_envelope.get("execution_successful")
             ),
@@ -3609,6 +3943,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             "owner_action": owner_action,
             "next_action": owner_action,
             "lifecycle": lifecycle,
+            "terminal_truth": terminal_truth_out(run, lifecycle, terminal_envelope),
             "actions": {
                 "next_action": owner_action,
                 "can_reconnect": monitor_state in {
@@ -3677,16 +4012,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 detail="Run Result not found.",
             )
         public_result = result_envelope_out(envelope, advanced=True)
+        run = owner_run_or_404(session, user.id, run_id)
+        lifecycle = lifecycle_snapshot_out(session, user.id, run, advanced=True)
         return {
             "run_id": run_id,
             "result": public_result,
             "envelope": public_result,
-            "lifecycle": lifecycle_snapshot_out(
-                session,
-                user.id,
-                owner_run_or_404(session, user.id, run_id),
-                advanced=True,
-            ),
+            "lifecycle": lifecycle,
+            "terminal_truth": terminal_truth_out(run, lifecycle, public_result),
             "monitor": (
                 monitor_out(monitor, envelope=envelope, advanced=True)
                 if monitor is not None

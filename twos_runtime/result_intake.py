@@ -24,6 +24,7 @@ from .ai_orchestration import (
 from .models import (
     AIModelInvocationEvidence,
     AuditEvent,
+    CodexExecutionAttempt,
     CodexResultArtifact,
     CodexResultEnvelope,
     CodexLifecycleSnapshot,
@@ -1477,6 +1478,127 @@ def _evidence_summary(
         .order_by(AIModelInvocationEvidence.id.desc())
     )
     if evidence is None:
+        if capability == "verification":
+            try:
+                persisted_result = json.loads(run.structured_result or "{}")
+            except (TypeError, json.JSONDecodeError):
+                persisted_result = {}
+            invocation = (
+                persisted_result.get("verification_invocation", {})
+                if isinstance(persisted_result, Mapping)
+                else {}
+            )
+            verification = (
+                persisted_result.get("verification", {})
+                if isinstance(persisted_result, Mapping)
+                else {}
+            )
+            verdict = (
+                persisted_result.get("verification_verdict", {})
+                if isinstance(persisted_result, Mapping)
+                else {}
+            )
+            if (
+                isinstance(invocation, Mapping)
+                and invocation.get("mode") == "local_command"
+                and invocation.get("model_provider_invoked") is False
+            ):
+                ticket_digest = str(invocation.get("ticket_digest") or "")
+                command_digest = str(invocation.get("command_digest") or "")
+                executable_fingerprint = str(
+                    invocation.get("executable_fingerprint") or ""
+                )
+                binding_valid = all(
+                    _SHA256_RE.fullmatch(value)
+                    for value in (
+                        ticket_digest,
+                        command_digest,
+                        executable_fingerprint,
+                    )
+                )
+                attempt = session.scalar(
+                    select(CodexExecutionAttempt)
+                    .where(
+                        CodexExecutionAttempt.run_id == run.id,
+                        CodexExecutionAttempt.phase == "VERIFICATION",
+                    )
+                    .order_by(CodexExecutionAttempt.id.desc())
+                )
+                sealed_attempt_valid = bool(
+                    binding_valid
+                    and attempt is not None
+                    and attempt.ticket_digest == ticket_digest
+                    and _SHA256_RE.fullmatch(attempt.receipt_digest or "")
+                    and attempt.executable_fingerprint == command_digest
+                    and type(attempt.process_id) is int
+                    and attempt.process_id > 0
+                    and _SHA256_RE.fullmatch(
+                        attempt.process_start_identity or ""
+                    )
+                    and attempt.process_exit_known
+                    and attempt.terminal_event_observed
+                    and attempt.result_resolution_source
+                    in {
+                        "FINAL_MESSAGE_SIDECAR",
+                        "JSONL_FINAL_MESSAGE_RECOVERY",
+                    }
+                )
+                process_verified = bool(
+                    sealed_attempt_valid
+                    and attempt is not None
+                    and attempt.attempt_state == "COMPLETED"
+                    and attempt.process_exit_code == 0
+                    and invocation.get("process_execution_verified") is True
+                )
+                outcome = (
+                    "succeeded"
+                    if isinstance(verification, Mapping)
+                    and verification.get("status") == "completed"
+                    and isinstance(verdict, Mapping)
+                    and verdict.get("status") == "passed"
+                    else "failed"
+                    if isinstance(verification, Mapping)
+                    and verification.get("status")
+                    in {"failed", "timed_out", "cancelled", "integrity_blocked"}
+                    else "unavailable"
+                )
+                payload = {
+                    "capability": "verification",
+                    "mode": "local_command",
+                    "identity": (
+                        f"local-verification:{ticket_digest[:24]}"
+                        if sealed_attempt_valid
+                        else ""
+                    ),
+                    "outcome": outcome,
+                    "verified_local_process": process_verified,
+                    "model_provider_invoked": False,
+                    "ticket_digest": ticket_digest if sealed_attempt_valid else "",
+                    "command_digest": command_digest if sealed_attempt_valid else "",
+                    "executable_fingerprint": (
+                        executable_fingerprint if sealed_attempt_valid else ""
+                    ),
+                    "safe_summary": _sanitize_text(
+                        str(
+                            verification.get("summary")
+                            if isinstance(verification, Mapping)
+                            else "Deterministic Verification evidence is unavailable."
+                        )
+                    ),
+                }
+                return {
+                    "available": sealed_attempt_valid,
+                    **payload,
+                    "digest": (
+                        canonical_sha256(payload) if sealed_attempt_valid else ""
+                    ),
+                    "verified_real_invocation": False,
+                    "actual_model_verified": False,
+                    "requested_model": "",
+                    "requested_model_accepted": False,
+                    "configured_assignment_model": run.verification_model_identifier,
+                    "effective_model_available": False,
+                }
         requested_model = (
             run.requested_model_identifier
             if capability == "coding"
@@ -1605,7 +1727,10 @@ def _result_material(
     verdict = (
         "PASS"
         if reported_verdict == "PASS"
-        and verification_evidence.get("verified_real_invocation") is True
+        and (
+            verification_evidence.get("verified_real_invocation") is True
+            or verification_evidence.get("verified_local_process") is True
+        )
         else "FAIL"
         if reported_verdict == "FAIL"
         else "UNAVAILABLE"
@@ -1778,20 +1903,15 @@ def _result_material(
         isinstance(boundary_violations, list) and boundary_violations
     )
     process = _safe_mapping(payload.get("process"))
-    verification = _safe_mapping(payload.get("verification"))
-    verification_process = _safe_mapping(payload.get("verification_process"))
     process_loss_observed = bool(
         monitor.monitor_state == "PROCESS_LOST"
         or monitor.recovery_state == "PROCESS_LOST"
         or "PROCESS_LOST" in str(monitor.failure_code or "").upper()
         or "PROCESS_IDENTITY_LOST" in str(monitor.failure_code or "").upper()
     )
-    runtime_interrupted = bool(
+    coding_interrupted = bool(
         coding_process.get("runtime_interrupted") is True
         or process.get("runtime_interrupted") is True
-        or verification.get("runtime_interrupted") is True
-        or verification_process.get("runtime_interrupted") is True
-        or process_loss_observed
     )
     coding_status = str(coding_process.get("status") or "").lower()
     coding_exit_code = coding_process.get("exit_code")
@@ -1801,6 +1921,11 @@ def _result_material(
         else run.exit_code
         if type(run.exit_code) is int
         else None
+    )
+    coding_exit_conflict = bool(
+        type(coding_exit_code) is int
+        and type(run.exit_code) is int
+        and coding_exit_code != run.exit_code
     )
     coding_cancelled = bool(
         coding_process.get("cancelled") is True
@@ -1814,14 +1939,27 @@ def _result_material(
     )
     coding_succeeded = bool(
         coding_status in {"completed", "succeeded"}
+        and not coding_exit_conflict
         and effective_coding_exit_code == 0
     )
     coding_failed = bool(
         coding_status in {"failed", "error"}
+        or coding_exit_conflict
         or (
             type(effective_coding_exit_code) is int
             and effective_coding_exit_code != 0
         )
+    )
+    # Keep the immediately preceding policy's derived classification solely as
+    # a replay digest. The source evidence is unchanged; only the presentation
+    # rule separating Coding outcome from Verification outcome was corrected.
+    verification = _safe_mapping(payload.get("verification"))
+    verification_process = _safe_mapping(payload.get("verification_process"))
+    prior_runtime_interrupted = bool(
+        coding_interrupted
+        or verification.get("runtime_interrupted") is True
+        or verification_process.get("runtime_interrupted") is True
+        or process_loss_observed
     )
     verification_status = str(
         verification_process.get("status")
@@ -1834,7 +1972,7 @@ def _result_material(
         verification_exit_code = verification.get("exit_code")
     if type(verification_exit_code) is not int:
         verification_exit_code = run.verification_exit_code
-    verification_failed = bool(
+    prior_verification_failed = bool(
         verification_status in {"failed", "error", "integrity_blocked"}
         or persisted_verification_status
         in {"failed", "blocked", "error", "integrity_blocked"}
@@ -1848,25 +1986,16 @@ def _result_material(
     execution_integrity_blocked = bool(
         str(exec_bridge.get("integrity_state") or "").lower() == "blocked"
     )
-    if runtime_interrupted:
-        completion_classification = "interrupted"
-    elif run.status == "cancelled":
-        completion_classification = "cancelled"
-    elif run.status == "timed_out":
-        completion_classification = "timed_out"
-    elif coding_cancelled:
+    if coding_cancelled:
         completion_classification = "cancelled"
     elif coding_timed_out:
         completion_classification = "timed_out"
+    elif coding_interrupted or (process_loss_observed and not coding_succeeded):
+        completion_classification = "interrupted"
     elif coding_failed:
         completion_classification = "failed"
     elif execution_integrity_blocked:
         completion_classification = "result_incomplete"
-    elif verification_failed:
-        # A terminal task-acceptance decision is separate from process truth.
-        # Surface an actual failed Verification process or verdict, without
-        # converting a successful Coding/no-change result into a process fail.
-        completion_classification = "failed"
     elif coding_succeeded and structured_handoff_status != "captured":
         completion_classification = "result_incomplete"
     elif coding_succeeded and not workspace_evidence_available:
@@ -1877,8 +2006,41 @@ def _result_material(
         completion_classification = "succeeded_with_changes"
     elif coding_succeeded:
         completion_classification = "succeeded_without_workspace_changes"
+    elif run.status == "cancelled":
+        completion_classification = "cancelled"
+    elif run.status == "timed_out":
+        completion_classification = "timed_out"
     else:
         completion_classification = "result_incomplete"
+
+    if prior_runtime_interrupted:
+        prior_completion_classification = "interrupted"
+    elif run.status == "cancelled":
+        prior_completion_classification = "cancelled"
+    elif run.status == "timed_out":
+        prior_completion_classification = "timed_out"
+    elif coding_cancelled:
+        prior_completion_classification = "cancelled"
+    elif coding_timed_out:
+        prior_completion_classification = "timed_out"
+    elif coding_failed:
+        prior_completion_classification = "failed"
+    elif execution_integrity_blocked:
+        prior_completion_classification = "result_incomplete"
+    elif prior_verification_failed:
+        prior_completion_classification = "failed"
+    elif coding_succeeded and structured_handoff_status != "captured":
+        prior_completion_classification = "result_incomplete"
+    elif coding_succeeded and not workspace_evidence_available:
+        prior_completion_classification = "result_incomplete"
+    elif coding_succeeded and boundary_conflict:
+        prior_completion_classification = "workspace_evidence_conflict"
+    elif coding_succeeded and manifest:
+        prior_completion_classification = "succeeded_with_changes"
+    elif coding_succeeded:
+        prior_completion_classification = "succeeded_without_workspace_changes"
+    else:
+        prior_completion_classification = "result_incomplete"
 
     legacy_immutable_payload = {
         "schema": RESULT_INTAKE_SCHEMA,
@@ -1928,9 +2090,14 @@ def _result_material(
         "workspace_evidence": workspace_evidence,
         "completion_classification": completion_classification,
     }
+    prior_policy_payload = {
+        **immutable_payload,
+        "completion_classification": prior_completion_classification,
+    }
     return {
         **immutable_payload,
         "result_digest": canonical_sha256(immutable_payload),
+        "prior_policy_result_digest": canonical_sha256(prior_policy_payload),
         "legacy_result_digest": canonical_sha256(legacy_immutable_payload),
         "source_identity": canonical_sha256(payload),
     }
@@ -2138,12 +2305,15 @@ def ingest_result_payload(
             )
         )
         if existing is not None:
-            compatible_digest = (
-                material["result_digest"]
+            compatible_digests = (
+                {
+                    material["result_digest"],
+                    material["prior_policy_result_digest"],
+                }
                 if existing.approved_instruction_digest
-                else material["legacy_result_digest"]
+                else {material["legacy_result_digest"]}
             )
-            if existing.result_digest != compatible_digest:
+            if existing.result_digest not in compatible_digests:
                 raise ResultIntakeError(
                     "RESULT_IMMUTABILITY_CONFLICT",
                     "A different immutable result is already bound to this Run.",
@@ -2231,7 +2401,11 @@ def ingest_result_payload(
             )
             if (
                 winner is not None
-                and winner.result_digest == material["result_digest"]
+                and winner.result_digest
+                in {
+                    material["result_digest"],
+                    material["prior_policy_result_digest"],
+                }
             ):
                 return winner
             raise ResultIntakeError(
@@ -3512,9 +3686,10 @@ def get_or_create_handoff_review(
         else ""
     )
     blockers: list[str] = []
+    verification_required = envelope.verification_assignment_id is not None
     if envelope.terminal_status != "completed":
         blockers.append(f"Run ended as {envelope.terminal_status}.")
-    if envelope.verification_verdict != "PASS":
+    if verification_required and envelope.verification_verdict != "PASS":
         verification_public = public_result.get("verification_result", {})
         verification_public_evidence = (
             verification_public.get("evidence", {})
@@ -3555,10 +3730,20 @@ def get_or_create_handoff_review(
         if isinstance(verification_public, Mapping)
         else {}
     )
-    if not (
+    if verification_required and not (
         isinstance(verification_public_evidence, Mapping)
-        and verification_public_evidence.get("verified_real_invocation") is True
-        and verification_public_evidence.get("requested_model_accepted") is True
+        and (
+            (
+                verification_public_evidence.get("verified_real_invocation") is True
+                and verification_public_evidence.get("requested_model_accepted")
+                is True
+            )
+            or (
+                verification_public_evidence.get("verified_local_process") is True
+                and verification_public_evidence.get("mode") == "local_command"
+                and verification_public_evidence.get("model_provider_invoked") is False
+            )
+        )
     ):
         blockers.append("Verified independent Verification process evidence is unavailable.")
     recommendation = "PASS" if not blockers else "BLOCKED"
@@ -3819,7 +4004,6 @@ def _sealed_envelope_execution_truth(
     )
     coding_verified = bool(
         envelope.integrity_state == "VERIFIED"
-        and envelope.terminal_status == "completed"
         and envelope.process_exit_code == 0
         and coding.get("verified_real_invocation") is True
         and coding.get("outcome") == "succeeded"
@@ -3833,11 +4017,19 @@ def _sealed_envelope_execution_truth(
     )
     verification_verified = bool(
         envelope.integrity_state == "VERIFIED"
-        and envelope.terminal_status == "completed"
-        and verification.get("verified_real_invocation") is True
         and verification.get("outcome") == "succeeded"
-        and verification_requested_accepted is True
         and envelope.verification_verdict == "PASS"
+        and (
+            (
+                verification.get("verified_real_invocation") is True
+                and verification_requested_accepted is True
+            )
+            or (
+                verification.get("verified_local_process") is True
+                and verification.get("mode") == "local_command"
+                and verification.get("model_provider_invoked") is False
+            )
+        )
     )
     if not actual_verified:
         actual = ""
@@ -3931,10 +4123,12 @@ def result_envelope_out(
         coding_evidence,
         verification_evidence,
     ) = _sealed_envelope_execution_truth(envelope)
+    verification_required = envelope.verification_assignment_id is not None
+    result_available = envelope.integrity_state == "VERIFIED"
     execution_successful = bool(
         envelope.terminal_status == "completed"
         and coding_verified
-        and verification_verified
+        and (verification_verified or not verification_required)
     )
     timed_out = envelope.terminal_status == "timed_out"
     canonical_terminal_state = {
@@ -3955,7 +4149,7 @@ def result_envelope_out(
         "canonical_terminal_state": canonical_terminal_state,
         "completion_classification": envelope.completion_classification,
         "outcome_label": "Run timed out" if timed_out else canonical_terminal_state.replace("_", " ").title(),
-        "result_available": True,
+        "result_available": result_available,
         "execution_successful": execution_successful,
         "requested_model": envelope.requested_model_identifier,
         "requested_model_accepted": coding_verified,
@@ -3970,6 +4164,7 @@ def result_envelope_out(
         ),
         "coding_result": coding_evidence,
         "verification_result": {
+            "required": verification_required,
             "verdict": envelope.verification_verdict,
             "evidence": verification_evidence,
         },
@@ -3986,7 +4181,9 @@ def result_envelope_out(
         "integrity_state": envelope.integrity_state,
         "integrity_is_not_execution_success": True,
         "accepted_source_result": False,
-        "source_result_eligible_for_owner_review": execution_successful,
+        "source_result_eligible_for_owner_review": (
+            envelope.integrity_state == "VERIFIED"
+        ),
         "handoff_reconciliation": "PASS" if execution_successful else "BLOCKED",
         "final_response": envelope.final_response,
         "structured_handoff_status": envelope.structured_handoff_status,

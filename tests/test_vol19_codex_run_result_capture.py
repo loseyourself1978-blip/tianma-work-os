@@ -2026,7 +2026,7 @@ def test_verification_cancellation_preserves_completed_coding_truth(
         assert terminal["result"]["coding_process"]["cancelled"] is False
         assert terminal["verification_target"]["cancelled"] is True
         assert terminal["result"]["verification_process"]["status"] == "cancelled"
-        assert envelope["completion_classification"] == "cancelled"
+        assert envelope["completion_classification"] == "succeeded_with_changes"
         process_evidence = envelope["advanced"]["process_evidence"]
         assert process_evidence["cancelled"] is True
         assert process_evidence["coding_cancelled"] is False

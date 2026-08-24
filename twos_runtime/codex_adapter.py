@@ -8,6 +8,7 @@ import re
 import selectors
 import signal
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -66,6 +67,40 @@ from .self_hosting import (
 OUTPUT_TRUNCATION_SUFFIX = "\n[output truncated by TWOS]"
 BRIDGE_PREPARATION_GRACE_SECONDS = 5.0
 CODING_HANDOFF_SCHEMA = "twos.coding_handoff.v1"
+LOCAL_VERIFICATION_FINAL_MESSAGE_PREFIX = "local-verification-final-"
+LOCAL_VERIFICATION_ENVIRONMENT_KEYS = (
+    "PATH",
+    "HOME",
+    "TMPDIR",
+    "LANG",
+    "LC_ALL",
+    "LC_CTYPE",
+    "SSL_CERT_FILE",
+    "SSL_CERT_DIR",
+    "NO_COLOR",
+    "GIT_TERMINAL_PROMPT",
+    "GIT_ALLOW_PROTOCOL",
+)
+
+
+def _file_content_identity(path: Path) -> str:
+    try:
+        details = path.stat()
+        if not stat.S_ISREG(details.st_mode):
+            return ""
+        digest = hashlib.sha256()
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return canonical_sha256(
+            {
+                "sha256": digest.hexdigest(),
+                "size": details.st_size,
+                "mode": stat.S_IMODE(details.st_mode),
+            }
+        )
+    except OSError:
+        return ""
 
 
 def _valid_coding_handoff_contract(value: str) -> bool:
@@ -96,6 +131,22 @@ class _BridgeRuntimeHandoff(Exception):
 _MODEL_REROUTE = re.compile(
     r"^model rerouted: ([A-Za-z0-9][A-Za-z0-9._:/-]{0,239}) -> "
     r"([A-Za-z0-9][A-Za-z0-9._:/-]{0,239})(?: \([^\r\n]{0,500}\))?$"
+)
+_PROHIBITED_GIT_OPERATION = re.compile(
+    r"(?<![A-Za-z0-9_.-])git\s+"
+    r"(?:(?:-[A-Za-z]\s+\S+|--[A-Za-z][A-Za-z-]*(?:=\S+)?)\s+)*"
+    r"(add|rm|mv|commit-tree|commit|push|reset|clean|checkout|switch|restore|"
+    r"rebase|merge|tag|remote|config|update-index|write-tree|update-ref)\b",
+    re.IGNORECASE,
+)
+_SHELL_COMMAND_BOUNDARY = r"(?=\s*(?:$|&&|\|\||[;|\n)]|['\"]))"
+_READ_ONLY_GIT_REMOTE_ARGUMENTS = re.compile(
+    rf"\s+(?:-v|--verbose){_SHELL_COMMAND_BOUNDARY}",
+    re.IGNORECASE,
+)
+_READ_ONLY_GIT_CONFIG_ARGUMENTS = re.compile(
+    rf"\s+--local\s+(?:--list|-l){_SHELL_COMMAND_BOUNDARY}",
+    re.IGNORECASE,
 )
 _SENSITIVE_OUTPUT_KEY = re.compile(
     r"(?:^|_)(?:password|passphrase|secret|credential|token|api_key|authorization|auth|"
@@ -755,16 +806,18 @@ class _CodexJsonlEvidenceCollector:
             command = " ".join(str(part) for part in raw_command)
         else:
             command = str(raw_command or "")
-        prohibited_match = re.search(
-            r"(?<![A-Za-z0-9_.-])git\s+"
-            r"(?:(?:-[A-Za-z]\s+\S+|--[A-Za-z][A-Za-z-]*(?:=\S+)?)\s+)*"
-            r"(add|rm|mv|commit|push|reset|clean|checkout|switch|restore|rebase|"
-            r"merge|tag|remote|config|update-index|write-tree|commit-tree|update-ref)\b",
-            command,
-            re.IGNORECASE,
-        )
-        if prohibited_match:
-            operation = prohibited_match.group(1).upper().replace("-", "_")
+        for prohibited_match in _PROHIBITED_GIT_OPERATION.finditer(command):
+            operation = prohibited_match.group(1).casefold()
+            remaining_command = command[prohibited_match.end() :]
+            if operation == "remote" and _READ_ONLY_GIT_REMOTE_ARGUMENTS.match(
+                remaining_command
+            ):
+                continue
+            if operation == "config" and _READ_ONLY_GIT_CONFIG_ARGUMENTS.match(
+                remaining_command
+            ):
+                continue
+            operation = operation.upper().replace("-", "_")
             code = f"GIT_{operation}_ATTEMPTED"
             if code not in self.prohibited_git_attempts:
                 self.prohibited_git_attempts.append(code)
@@ -2070,6 +2123,7 @@ class CodexExecutionManager:
         phase: str,
         worktree: Path,
         executable: str,
+        executable_fingerprint: str | None = None,
     ) -> codex_exec_bridge.ExecutionIdentity:
         if (
             run.pack is None
@@ -2169,8 +2223,9 @@ class CodexExecutionManager:
             source_snapshot_identity=run.source_snapshot_digest,
             connectivity_evidence_identity=connectivity_identity,
             requested_model_identifier=requested_model,
-            executable_fingerprint=self._executable_identity_fingerprint(
-                executable
+            executable_fingerprint=(
+                executable_fingerprint
+                or self._executable_identity_fingerprint(executable)
             ),
             execution_location_identity=execution_location_identity,
             source_remote_fingerprint=source_remote_fingerprint,
@@ -2191,6 +2246,11 @@ class CodexExecutionManager:
         prompt: str,
         model_identifier: str,
         sandbox_mode: str,
+        exact_argv: tuple[str, ...] | None = None,
+        child_environment: dict[str, str] | None = None,
+        execution_fingerprint: str | None = None,
+        timeout_seconds: int | None = None,
+        output_limit_bytes: int | None = None,
     ) -> codex_exec_bridge.ExecutionHandle:
         if not detection.executable:
             raise codex_exec_bridge.CodexExecBridgeError(
@@ -2201,12 +2261,27 @@ class CodexExecutionManager:
         # Bind Codex's sidecar to this exact immutable Run/phase attempt.  A
         # generic filename makes stale-artifact forensics needlessly
         # ambiguous even when the containing phase directory is unique.
-        final_message_name = f"final-message-{phase_key}.txt"
-        command = self.adapter.command_for(
-            detection,
-            prompt,
-            model_identifier,
-            sandbox_mode=sandbox_mode,
+        local_verification = exact_argv is not None
+        final_message_name = (
+            f"{LOCAL_VERIFICATION_FINAL_MESSAGE_PREFIX}{phase_key}.txt"
+            if local_verification
+            else f"final-message-{phase_key}.txt"
+        )
+        command = (
+            exact_argv
+            if exact_argv is not None
+            else self.adapter.command_for(
+                detection,
+                prompt,
+                model_identifier,
+                sandbox_mode=sandbox_mode,
+            )
+        )
+        stdin_payload = b"" if local_verification else prompt.encode("utf-8")
+        environment_keys = (
+            LOCAL_VERIFICATION_ENVIRONMENT_KEYS
+            if local_verification
+            else CHILD_ENV_ALLOWLIST
         )
         handle = codex_exec_bridge.prepare_execution(
             self._bridge_root,
@@ -2217,13 +2292,28 @@ class CodexExecutionManager:
                 phase=phase,
                 worktree=worktree,
                 executable=detection.executable,
+                executable_fingerprint=execution_fingerprint,
             ),
             argv=command,
-            stdin_payload=prompt.encode("utf-8"),
+            stdin_payload=stdin_payload,
             working_directory=worktree,
-            environment_keys=CHILD_ENV_ALLOWLIST,
-            output_limit_bytes=max(0, int(self.settings.codex_output_limit)),
-            timeout_seconds=max(1, int(self.settings.codex_timeout_seconds)),
+            environment_keys=environment_keys,
+            output_limit_bytes=max(
+                0,
+                int(
+                    self.settings.codex_output_limit
+                    if output_limit_bytes is None
+                    else output_limit_bytes
+                ),
+            ),
+            timeout_seconds=max(
+                1,
+                int(
+                    self.settings.codex_timeout_seconds
+                    if timeout_seconds is None
+                    else timeout_seconds
+                ),
+            ),
             heartbeat_interval_seconds=min(
                 1.0,
                 max(0.05, float(self.settings.scheduler_poll_seconds)),
@@ -2553,6 +2643,11 @@ class CodexExecutionManager:
         prompt: str,
         model_identifier: str,
         sandbox_mode: str,
+        exact_argv: tuple[str, ...] | None = None,
+        child_environment: dict[str, str] | None = None,
+        execution_fingerprint: str | None = None,
+        timeout_seconds: int | None = None,
+        output_limit_bytes: int | None = None,
     ) -> dict[str, object]:
         if not detection.executable:
             raise codex_exec_bridge.CodexExecBridgeError(
@@ -2577,6 +2672,11 @@ class CodexExecutionManager:
                     prompt=prompt,
                     model_identifier=model_identifier,
                     sandbox_mode=sandbox_mode,
+                    exact_argv=exact_argv,
+                    child_environment=child_environment,
+                    execution_fingerprint=execution_fingerprint,
+                    timeout_seconds=timeout_seconds,
+                    output_limit_bytes=output_limit_bytes,
                 )
                 ticket = codex_exec_bridge.load_ticket(handle)
             else:
@@ -2628,7 +2728,11 @@ class CodexExecutionManager:
                 else codex_exec_bridge.launch_sidecar(
                     handle,
                     python_executable=sys.executable,
-                    child_environment=self._child_environment(),
+                    child_environment=(
+                        child_environment
+                        if child_environment is not None
+                        else self._child_environment()
+                    ),
                 )
             )
         if cancel_before_launch:
@@ -2682,7 +2786,12 @@ class CodexExecutionManager:
         assert launch is not None
         deadline = time.monotonic() + max(
             30.0,
-            float(self.settings.codex_timeout_seconds) + 30.0,
+            float(
+                self.settings.codex_timeout_seconds
+                if timeout_seconds is None
+                else timeout_seconds
+            )
+            + 30.0,
         )
         bound_child: tuple[int, str] | None = None
         receipt: dict[str, object] | None = None
@@ -3811,6 +3920,31 @@ class CodexExecutionManager:
         result["verification_verdict"] = dict(verification.get("verdict", {}))
 
     @staticmethod
+    def _local_verification_evidence_verified(
+        verification: dict[str, object],
+    ) -> bool:
+        invocation = verification.get("invocation")
+        verdict = verification.get("verdict")
+        return bool(
+            verification.get("mode") == "local_command"
+            and verification.get("status") == "completed"
+            and isinstance(invocation, dict)
+            and invocation.get("mode") == "local_command"
+            and invocation.get("model_provider_invoked") is False
+            and invocation.get("process_execution_verified") is True
+            and all(
+                re.fullmatch(r"[0-9a-f]{64}", str(invocation.get(key) or ""))
+                for key in (
+                    "ticket_digest",
+                    "command_digest",
+                    "executable_fingerprint",
+                )
+            )
+            and isinstance(verdict, dict)
+            and verdict.get("status") == "passed"
+        )
+
+    @staticmethod
     def _reconcile_recovered_task_acceptance(
         result: dict[str, object],
     ) -> None:
@@ -4045,28 +4179,33 @@ class CodexExecutionManager:
                     )
             verification_verified: bool | None = None
             if verification is not None and run.verification_process_spawned:
-                try:
-                    with session.begin_nested():
-                        verification_verified = (
-                            self._record_verification_invocation_evidence(
-                                session,
-                                run,
-                                verification,
+                if verification.get("mode") == "local_command":
+                    verification_verified = (
+                        self._local_verification_evidence_verified(verification)
+                    )
+                else:
+                    try:
+                        with session.begin_nested():
+                            verification_verified = (
+                                self._record_verification_invocation_evidence(
+                                    session,
+                                    run,
+                                    verification,
+                                )
+                            )
+                    except Exception as exc:
+                        verification_verified = False
+                        session.add(
+                            AuditEvent(
+                                action="verification_invocation_evidence_persistence_failed",
+                                entity_type="codex_run",
+                                entity_id=run.id,
+                                details=(
+                                    f"failure_type={type(exc).__name__}; "
+                                    "context=bridge_recovery_finalization"
+                                ),
                             )
                         )
-                except Exception as exc:
-                    verification_verified = False
-                    session.add(
-                        AuditEvent(
-                            action="verification_invocation_evidence_persistence_failed",
-                            entity_type="codex_run",
-                            entity_id=run.id,
-                            details=(
-                                f"failure_type={type(exc).__name__}; "
-                                "context=bridge_recovery_finalization"
-                            ),
-                        )
-                    )
             if run.status == "completed" and (
                 invocation_verified is False or verification_verified is False
             ):
@@ -4380,27 +4519,42 @@ class CodexExecutionManager:
     def _bridge_recovery_allowed(self, run: CodexRun) -> bool:
         if run.status in {"queued", "starting", "running", "verifying"}:
             return True
-        if run.status not in {"settling", "blocked"} or run.stdout or run.stderr:
+        if run.status not in {"settling", "blocked"}:
             return False
+        terminal_states = {
+            "COMPLETED",
+            "FAILED",
+            "CANCELLED",
+            "TIMED_OUT",
+            "RESULT_INTEGRITY_BLOCKED",
+        }
         try:
+            verification_handle = self._existing_bridge_handle(
+                int(run.id), "verification"
+            )
+            verification_receipt = (
+                codex_exec_bridge.load_terminal_receipt(verification_handle)
+                if verification_handle is not None
+                else None
+            )
+            if (
+                isinstance(verification_receipt, dict)
+                and verification_receipt.get("terminal_state") in terminal_states
+            ):
+                return True
+            if run.stdout or run.stderr:
+                return False
             handle = self._existing_bridge_handle(int(run.id), "coding")
             receipt = (
                 codex_exec_bridge.load_terminal_receipt(handle)
                 if handle is not None
                 else None
             )
-        except codex_exec_bridge.CodexExecBridgeError:
+        except (codex_exec_bridge.CodexExecBridgeError, RuntimeError):
             return False
         return bool(
             isinstance(receipt, dict)
-            and receipt.get("terminal_state")
-            in {
-                "COMPLETED",
-                "FAILED",
-                "CANCELLED",
-                "TIMED_OUT",
-                "RESULT_INTEGRITY_BLOCKED",
-            }
+            and receipt.get("terminal_state") in terminal_states
         )
 
     def _start_worker(self, run_id: int, *, recover_bridge: bool) -> bool:
@@ -5264,23 +5418,28 @@ class CodexExecutionManager:
                         )
             verification_verified: bool | None = None
             if verification is not None and run.verification_process_spawned:
-                try:
-                    with session.begin_nested():
-                        verification_verified = self._record_verification_invocation_evidence(
-                            session,
-                            run,
-                            verification,
-                        )
-                except Exception as exc:
-                    verification_verified = False
-                    session.add(
-                        AuditEvent(
-                            action="verification_invocation_evidence_persistence_failed",
-                            entity_type="codex_run",
-                            entity_id=run.id,
-                            details=f"failure_type={type(exc).__name__}; context=run_finalization",
-                        )
+                if verification.get("mode") == "local_command":
+                    verification_verified = (
+                        self._local_verification_evidence_verified(verification)
                     )
+                else:
+                    try:
+                        with session.begin_nested():
+                            verification_verified = self._record_verification_invocation_evidence(
+                                session,
+                                run,
+                                verification,
+                            )
+                    except Exception as exc:
+                        verification_verified = False
+                        session.add(
+                            AuditEvent(
+                                action="verification_invocation_evidence_persistence_failed",
+                                entity_type="codex_run",
+                                entity_id=run.id,
+                                details=f"failure_type={type(exc).__name__}; context=run_finalization",
+                            )
+                        )
             if invocation_verified is False and run.status == "completed":
                 run.status = "failed"
                 run.owner_summary = (
@@ -5364,6 +5523,703 @@ class CodexExecutionManager:
                 )
                 session.commit()
 
+    @staticmethod
+    def _local_verification_environment(
+        evidence_directory: Path,
+    ) -> dict[str, str]:
+        """Build a secret-free environment for the deterministic verifier."""
+        evidence_directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+        if evidence_directory.is_symlink() or not evidence_directory.is_dir():
+            raise RuntimeError("The local Verification runtime directory is unsafe.")
+        verifier_home = evidence_directory / "home"
+        verifier_tmp = evidence_directory / "tmp"
+        verifier_home.mkdir(mode=0o700, exist_ok=True)
+        verifier_tmp.mkdir(mode=0o700, exist_ok=True)
+        environment = {
+            key: os.environ[key]
+            for key in (
+                "PATH",
+                "LANG",
+                "LC_ALL",
+                "LC_CTYPE",
+                "SSL_CERT_FILE",
+                "SSL_CERT_DIR",
+            )
+            if key in os.environ
+        }
+        environment.update(
+            {
+                "HOME": str(verifier_home),
+                "TMPDIR": str(verifier_tmp),
+                "NO_COLOR": "1",
+                "GIT_TERMINAL_PROMPT": "0",
+                "GIT_ALLOW_PROTOCOL": "",
+            }
+        )
+        return environment
+
+    def _local_verification_command(
+        self,
+        worktree: Path,
+        configured_command: tuple[str, ...] | None = None,
+    ) -> tuple[tuple[str, ...], str, Path]:
+        configured = tuple(
+            self.settings.local_verification_command
+            if configured_command is None
+            else configured_command
+        )
+        if not configured:
+            raise RuntimeError("A deterministic local Verification command is not configured.")
+        if not 1 <= self.settings.local_verification_timeout_seconds <= 600:
+            raise RuntimeError("The local Verification timeout is outside the safe range.")
+        if not 1024 <= self.settings.local_verification_output_limit <= 1_000_000:
+            raise RuntimeError("The local Verification output limit is outside the safe range.")
+        executable = Path(configured[0])
+        if not executable.is_absolute():
+            raise RuntimeError("The local Verification executable must be an absolute path.")
+        try:
+            resolved_executable = executable.resolve(strict=True)
+            executable_details = resolved_executable.stat()
+        except OSError as exc:
+            raise RuntimeError("The local Verification executable is unavailable.") from exc
+        if (
+            not stat.S_ISREG(executable_details.st_mode)
+            or not os.access(resolved_executable, os.X_OK)
+        ):
+            raise RuntimeError("The local Verification executable is not executable.")
+        resolved_worktree = worktree.resolve(strict=True)
+        resolved_worktree_root = self.settings.worktree_root.resolve(strict=True)
+        if (
+            worktree.is_symlink()
+            or not resolved_worktree.is_dir()
+            or not resolved_worktree.is_relative_to(resolved_worktree_root)
+        ):
+            raise RuntimeError("The local Verification workspace is outside the authorized root.")
+        resolved_source = self.settings.source_repo.resolve(strict=True)
+        resolved_spool = self._bridge_root.resolve(strict=False)
+        forbidden_roots = (resolved_worktree, resolved_source, resolved_spool)
+        if any(
+            resolved_executable.is_relative_to(root) for root in forbidden_roots
+        ):
+            raise RuntimeError(
+                "The local Verification executable must be outside mutable source workspaces."
+            )
+        normalized_arguments: list[str] = []
+        referenced_identities: list[dict[str, str]] = []
+        for argument in configured[1:]:
+            if not argument or "\0" in argument or len(argument.encode("utf-8")) > 4096:
+                raise RuntimeError("A local Verification command argument is malformed.")
+            argument_path = Path(argument)
+            if not argument_path.is_absolute():
+                relative_candidate = resolved_worktree / argument_path
+                if relative_candidate.exists() or relative_candidate.is_symlink():
+                    raise RuntimeError(
+                        "Local Verification command files must use absolute canonical paths outside mutable source workspaces."
+                    )
+                normalized_arguments.append(argument)
+                continue
+            if not argument_path.exists() and not argument_path.is_symlink():
+                normalized_arguments.append(argument)
+                continue
+            try:
+                resolved_argument = argument_path.resolve(strict=True)
+                argument_details = resolved_argument.stat()
+            except OSError as exc:
+                raise RuntimeError(
+                    "A local Verification command argument is unavailable."
+                ) from exc
+            if any(resolved_argument.is_relative_to(root) for root in forbidden_roots):
+                raise RuntimeError(
+                    "Local Verification command files must be outside mutable source workspaces."
+                )
+            normalized_arguments.append(str(resolved_argument))
+            referenced_identity = _file_content_identity(resolved_argument)
+            if referenced_identity:
+                referenced_identities.append(
+                    {"path": str(resolved_argument), "identity": referenced_identity}
+                )
+            elif stat.S_ISDIR(argument_details.st_mode):
+                referenced_identities.append(
+                    {
+                        "path": str(resolved_argument),
+                        "identity": canonical_sha256(
+                            {
+                                "device": argument_details.st_dev,
+                                "inode": argument_details.st_ino,
+                                "mode": stat.S_IMODE(argument_details.st_mode),
+                            }
+                        ),
+                    }
+                )
+        executable_identity = _file_content_identity(resolved_executable)
+        if not executable_identity:
+            raise RuntimeError("The local Verification executable identity is unavailable.")
+        normalized_command = (
+            str(resolved_executable),
+            *normalized_arguments,
+        )
+        command_digest = canonical_sha256(
+            {
+                "backend": "deterministic_local_verification_v1",
+                "argv": list(normalized_command),
+                "executable_identity": executable_identity,
+                "referenced_files": referenced_identities,
+            }
+        )
+        return (
+            normalized_command,
+            command_digest,
+            resolved_worktree,
+        )
+
+    @staticmethod
+    def _bridge_ticket_is_local_verification(
+        ticket: dict[str, object],
+    ) -> bool:
+        final_message = ticket.get("final_message")
+        stdin_binding = ticket.get("stdin")
+        environment_keys = ticket.get("environment_keys")
+        return bool(
+            ticket.get("phase") == "verification"
+            and isinstance(final_message, dict)
+            and str(final_message.get("relative_path") or "").startswith(
+                LOCAL_VERIFICATION_FINAL_MESSAGE_PREFIX
+            )
+            and final_message.get("capture_mode") == "jsonl_only"
+            and isinstance(stdin_binding, dict)
+            and stdin_binding.get("size") == 0
+            and environment_keys == list(LOCAL_VERIFICATION_ENVIRONMENT_KEYS)
+        )
+
+    @staticmethod
+    def _standard_local_verification_contract(
+        value: object,
+        expected_changed_files: list[str],
+    ) -> tuple[dict[str, object] | None, str]:
+        required_keys = {
+            "schema",
+            "verdict",
+            "changed_files_checked",
+            "unexpected_files",
+            "exact_content",
+            "tests",
+            "git_boundary",
+            "remote_boundary",
+        }
+        if not isinstance(value, dict) or set(value) != required_keys:
+            return None, "The local verifier result schema is incomplete or malformed."
+        changed_files = value.get("changed_files_checked")
+        unexpected_files = value.get("unexpected_files")
+        if not (
+            value.get("schema") == "twos.verification.v1"
+            and value.get("verdict") in {"pass", "fail"}
+            and isinstance(changed_files, list)
+            and all(isinstance(path, str) for path in changed_files)
+            and sorted(changed_files) == sorted(expected_changed_files)
+            and isinstance(unexpected_files, list)
+            and all(isinstance(path, str) for path in unexpected_files)
+            and value.get("exact_content") in {"pass", "fail"}
+            and value.get("tests") in {"pass", "fail", "not_applicable"}
+            and value.get("git_boundary") in {"pass", "fail"}
+            and value.get("remote_boundary") in {"pass", "fail"}
+        ):
+            return None, "The local verifier result failed its immutable output contract."
+        return value, ""
+
+    def _execute_local_verification(
+        self,
+        run_id: int,
+        worktree: Path,
+        coding_result: dict[str, object],
+    ) -> dict[str, object]:
+        """Run deterministic Verification through the sealed execution bridge."""
+        started_at = utc_now()
+        started_monotonic = time.monotonic()
+        expected_changed_files = sorted(
+            path
+            for path in coding_result.get("changed_files", [])
+            if isinstance(path, str)
+        )
+        bridge_result: dict[str, object] | None = None
+        command: tuple[str, ...] = ()
+        command_digest = ""
+        executable_fingerprint = ""
+        resolved_worktree = worktree
+        pre_snapshot_digest = ""
+        source_git_before = ("", False)
+        remote_before = ("", 0, False)
+        launch_failure = ""
+        recovering = self._existing_bridge_handle(run_id, "verification") is not None
+        try:
+            sealed_ticket: dict[str, object] | None = None
+            if recovering:
+                with self.factory() as session:
+                    run = session.get(CodexRun, run_id)
+                    if run is None:
+                        raise RuntimeError("The persisted Run no longer exists.")
+                    _, sealed_ticket = self._validated_bridge_ticket(
+                        run,
+                        phase="verification",
+                        worktree=worktree,
+                    )
+                if not self._bridge_ticket_is_local_verification(sealed_ticket):
+                    raise RuntimeError(
+                        "The sealed Verification backend does not match deterministic local Verification."
+                    )
+                sealed_argv = sealed_ticket.get("argv")
+                if not isinstance(sealed_argv, list) or not all(
+                    isinstance(item, str) for item in sealed_argv
+                ):
+                    raise RuntimeError("The sealed local Verification command is malformed.")
+                command, command_digest, resolved_worktree = (
+                    self._local_verification_command(
+                        worktree,
+                        tuple(sealed_argv),
+                    )
+                )
+                identity = sealed_ticket.get("identity")
+                if not isinstance(identity, dict) or identity.get(
+                    "executable_fingerprint"
+                ) != command_digest:
+                    raise RuntimeError(
+                        "The sealed local Verification command identity changed."
+                    )
+                pre_snapshot_digest = str(
+                    identity.get("pre_verification_workspace_digest") or ""
+                )
+                source_git_before = (
+                    str(identity.get("git_boundary_fingerprint") or ""),
+                    True,
+                )
+                remote_before = (
+                    str(identity.get("source_remote_fingerprint") or ""),
+                    0,
+                    True,
+                )
+            else:
+                command, command_digest, resolved_worktree = (
+                    self._local_verification_command(worktree)
+                )
+                pre_snapshot_digest = str(
+                    capture_source_snapshot(
+                        resolved_worktree,
+                        hardened_read_only=True,
+                    ).get("digest")
+                    or ""
+                )
+                source_git_before = self._git_boundary_fingerprint(
+                    self.settings.source_repo
+                )
+                remote_before = self._remote_state_fingerprint(
+                    self.settings.source_repo
+                )
+            executable_fingerprint = self._executable_identity_fingerprint(command[0])
+            if not re.fullmatch(r"[0-9a-f]{64}", executable_fingerprint):
+                raise RuntimeError("The local Verification executable identity is unavailable.")
+
+            scratch_directory = (
+                self.settings.worktree_root
+                / ".twos-local-verification-runtime"
+                / f"run-{int(run_id)}"
+            )
+            child_environment = self._local_verification_environment(
+                scratch_directory
+            )
+            with self.factory() as session:
+                run = session.get(CodexRun, run_id)
+                if run is None or run.pack is None or run.pack.approved_by_user_id is None:
+                    raise RuntimeError("The local Verification Run binding is unavailable.")
+                run.status = "verifying"
+                run.owner_summary = (
+                    "Coding is terminal; deterministic independent Verification is preparing."
+                )
+                run.verification_status = "starting"
+                run.verification_summary = (
+                    "Deterministic independent Verification is crossing its sealed launch boundary."
+                )
+                run.task.status = "verifying"
+                self._sync_result_monitor(session, run)
+                from .run_lifecycle import reconcile_execution_attempt
+
+                monitor = ensure_run_monitor(
+                    session,
+                    int(run.pack.approved_by_user_id),
+                    run,
+                )
+                reconcile_execution_attempt(
+                    session,
+                    int(run.pack.approved_by_user_id),
+                    run,
+                    monitor,
+                )
+                session.commit()
+                model_identifier = run.verification_model_identifier
+
+            bridge_result = self._run_bridge_phase(
+                run_id,
+                phase="verification",
+                detection=CodexDetection(
+                    status="configured",
+                    found=True,
+                    executable=command[0],
+                    version=None,
+                    supported_command="local-verification",
+                    reason="Deterministic local Verification is configured.",
+                    next_action="Run the exact sealed verifier command.",
+                ),
+                worktree=resolved_worktree,
+                prompt="",
+                model_identifier=model_identifier,
+                sandbox_mode="read-only",
+                exact_argv=command,
+                child_environment=child_environment,
+                execution_fingerprint=command_digest,
+                timeout_seconds=self.settings.local_verification_timeout_seconds,
+                output_limit_bytes=self.settings.local_verification_output_limit,
+            )
+        except (
+            OSError,
+            RuntimeError,
+            ValueError,
+            codex_exec_bridge.CodexExecBridgeError,
+        ) as exc:
+            if self._bridge_phase_has_launch_evidence(run_id, "verification"):
+                raise
+            launch_failure = self._sanitize_process_output(str(exc)[:2000])
+
+        post_snapshot_digest = ""
+        try:
+            post_snapshot_digest = str(
+                capture_source_snapshot(
+                    resolved_worktree,
+                    hardened_read_only=True,
+                ).get("digest")
+                or ""
+            )
+        except RuntimeError:
+            pass
+        source_git_after = self._git_boundary_fingerprint(self.settings.source_repo)
+        remote_after = self._remote_state_fingerprint(self.settings.source_repo)
+        workspace_unchanged = bool(
+            pre_snapshot_digest and post_snapshot_digest == pre_snapshot_digest
+        )
+        git_boundary_unchanged = bool(
+            source_git_before[1]
+            and source_git_after[1]
+            and source_git_before[0] == source_git_after[0]
+        )
+        remote_boundary_unchanged = bool(
+            remote_before[2]
+            and remote_after[2]
+            and remote_before[0] == remote_after[0]
+        )
+        collector = (
+            bridge_result.get("collector")
+            if isinstance(bridge_result, dict)
+            else None
+        )
+        contract, contract_failure = self._standard_local_verification_contract(
+            collector.verification_result
+            if isinstance(collector, _CodexJsonlEvidenceCollector)
+            else None,
+            expected_changed_files,
+        )
+        completed_at = utc_now()
+        duration_ms = max(0, int((time.monotonic() - started_monotonic) * 1000))
+        handle = (
+            bridge_result.get("handle")
+            if isinstance(bridge_result, dict)
+            else None
+        )
+        return self._local_verification_result(
+            expected_changed_files=expected_changed_files,
+            process_spawned=bool(bridge_result and bridge_result.get("process_spawned")),
+            process_id=(
+                bridge_result.get("process_id")
+                if isinstance(bridge_result, dict)
+                and type(bridge_result.get("process_id")) is int
+                else None
+            ),
+            process_start_identity=str(
+                bridge_result.get("process_start_identity")
+                if isinstance(bridge_result, dict)
+                else ""
+            ),
+            exit_code=(
+                bridge_result.get("exit_code")
+                if isinstance(bridge_result, dict)
+                and type(bridge_result.get("exit_code")) is int
+                else None
+            ),
+            stdout=str(bridge_result.get("stdout") or "") if bridge_result else "",
+            stderr=(
+                str(bridge_result.get("stderr") or "")
+                if bridge_result
+                else launch_failure
+            ),
+            output_truncated=bool(
+                bridge_result and bridge_result.get("retention_truncated")
+            ),
+            bridge_integrity_blocked=bool(
+                bridge_result and bridge_result.get("integrity_blocked")
+            ),
+            timed_out=bool(bridge_result and bridge_result.get("timed_out")),
+            cancelled=bool(bridge_result and bridge_result.get("cancelled")),
+            runtime_interrupted=bool(
+                bridge_result and bridge_result.get("runtime_interrupted")
+            ),
+            workspace_unchanged=workspace_unchanged,
+            git_boundary_unchanged=git_boundary_unchanged,
+            remote_boundary_unchanged=remote_boundary_unchanged,
+            contract=contract,
+            contract_failure=contract_failure,
+            duration_ms=duration_ms,
+            ticket_digest=(
+                handle.ticket_digest
+                if isinstance(handle, codex_exec_bridge.ExecutionHandle)
+                else ""
+            ),
+            executable_fingerprint=executable_fingerprint,
+            command_digest=command_digest,
+            started_at=started_at,
+            completed_at=completed_at,
+        )
+
+    @staticmethod
+    def _local_verification_result(
+        *,
+        expected_changed_files: list[str],
+        process_spawned: bool,
+        process_id: int | None,
+        process_start_identity: str,
+        exit_code: int | None,
+        stdout: str,
+        stderr: str,
+        output_truncated: bool,
+        bridge_integrity_blocked: bool,
+        timed_out: bool,
+        cancelled: bool,
+        runtime_interrupted: bool,
+        workspace_unchanged: bool,
+        git_boundary_unchanged: bool,
+        remote_boundary_unchanged: bool,
+        contract: dict[str, object] | None,
+        contract_failure: str,
+        duration_ms: int,
+        ticket_digest: str,
+        executable_fingerprint: str,
+        command_digest: str,
+        started_at,
+        completed_at,
+    ) -> dict[str, object]:
+        contract_passed = bool(
+            contract is not None
+            and contract.get("verdict") == "pass"
+            and contract.get("unexpected_files") == []
+            and contract.get("exact_content") == "pass"
+            and contract.get("tests") in {"pass", "not_applicable"}
+            and contract.get("git_boundary") == "pass"
+            and contract.get("remote_boundary") == "pass"
+        )
+        passed_checks: list[str] = []
+        failed_checks: list[str] = []
+        checks = {
+            "process_exit_zero": exit_code == 0,
+            "output_contract": contract is not None,
+            "structured_verdict": contract_passed,
+            "unexpected_files_checked": bool(
+                contract is not None and contract.get("unexpected_files") == []
+            ),
+            "exact_content_checked": bool(
+                contract is not None and contract.get("exact_content") == "pass"
+            ),
+            "test_evidence_checked": bool(
+                contract is not None
+                and contract.get("tests") in {"pass", "not_applicable"}
+            ),
+            "workspace_unchanged": workspace_unchanged,
+            "git_boundary_unchanged": git_boundary_unchanged,
+            "remote_boundary_unchanged": remote_boundary_unchanged,
+        }
+        for name, passed in checks.items():
+            (passed_checks if passed else failed_checks).append(name)
+        if bridge_integrity_blocked:
+            status = "integrity_blocked"
+            failure_classification = "result_integrity_blocked"
+            failure = "Deterministic Verification failed its sealed result integrity checks."
+        elif runtime_interrupted:
+            status = "failed"
+            failure_classification = "runtime_interrupted"
+            failure = "Runtime restart interrupted deterministic independent Verification."
+        elif cancelled:
+            status = "cancelled"
+            failure_classification = "owner_cancelled"
+            failure = "Deterministic independent Verification was cancelled by the Owner."
+        elif timed_out:
+            status = "timed_out"
+            failure_classification = "process_timeout"
+            failure = "Deterministic independent Verification timed out."
+        elif not process_spawned:
+            status = "failed"
+            failure_classification = "process_launch_failure"
+            failure = stderr or "Deterministic independent Verification could not launch."
+        elif exit_code != 0:
+            status = "failed"
+            failure_classification = "process_nonzero_exit"
+            failure = f"Deterministic independent Verification exited with code {exit_code}."
+        elif output_truncated:
+            status = "integrity_blocked"
+            failure_classification = "verification_output_incomplete"
+            failure = "Deterministic Verification output exceeded its bounded evidence limit."
+        elif contract is None:
+            status = "failed"
+            failure_classification = "output_parser_failure"
+            failure = contract_failure
+        elif not workspace_unchanged or not git_boundary_unchanged or not remote_boundary_unchanged:
+            status = "failed"
+            failure_classification = "verification_workspace_mutation"
+            failure = "Deterministic Verification changed protected workspace or Git evidence."
+        else:
+            status = "completed"
+            failure_classification = ""
+            failure = ""
+        verdict_status = (
+            "passed"
+            if status == "completed" and contract_passed and not failed_checks
+            else "failed"
+            if status == "completed" or contract is not None
+            else "not_reached"
+        )
+        summary = (
+            "Deterministic independent Verification completed and passed one local test."
+            if status == "completed" and verdict_status == "passed"
+            else "Deterministic independent Verification completed, but its verdict failed."
+            if status == "completed"
+            else failure
+        )
+        return {
+            "mode": "local_command",
+            "status": status,
+            "summary": summary,
+            "process_spawned": process_spawned,
+            "stdout": stdout,
+            "stderr": stderr,
+            "exit_code": exit_code,
+            "duration_ms": duration_ms,
+            "timed_out": timed_out,
+            "cancelled": cancelled,
+            "runtime_interrupted": runtime_interrupted,
+            "integrity_blocked": status == "integrity_blocked",
+            "output_truncated": output_truncated,
+            "presentation_evidence_truncated": output_truncated,
+            "started_at": started_at.isoformat() + "Z",
+            "completed_at": completed_at.isoformat() + "Z",
+            "delivery_complete": contract is not None and not output_truncated,
+            "checks": checks,
+            "semantic_verification_passed": verdict_status == "passed",
+            "failure_classification": failure_classification,
+            "failure": failure,
+            "process": {
+                "status": status,
+                "mode": "local_command",
+                "process_started": process_spawned,
+                "process_exit": exit_code,
+                "sidecar_state": (
+                    "missing" if ticket_digest and process_spawned else "not_observed"
+                ),
+                "result_transport": "codex_exec_bridge_jsonl",
+                "terminal_receipt_verified": bool(ticket_digest and process_spawned),
+                "failure_classification": failure_classification,
+                "failure": failure,
+            },
+            "invocation": {
+                "mode": "local_command",
+                "process_execution_verified": bool(
+                    process_spawned
+                    and process_start_identity
+                    and exit_code is not None
+                    and not timed_out
+                    and not cancelled
+                    and not runtime_interrupted
+                ),
+                "codex_turn_verified": False,
+                "model_provider_invoked": False,
+                "requested_model": "",
+                "actual_resolved_model": None,
+                "actual_model_identity_verified": False,
+                "ticket_digest": ticket_digest,
+                "command_digest": command_digest,
+                "executable_fingerprint": executable_fingerprint,
+                "failure": failure,
+            },
+            "verdict": {
+                "status": verdict_status,
+                "passed_checks": passed_checks,
+                "failed_checks": failed_checks,
+            },
+            "tests": (
+                [
+                    {
+                        "name": "deterministic verification contract",
+                        "status": "passed" if contract_passed else "failed",
+                        "summary": (
+                            "Structured local Verification checks passed."
+                            if contract_passed
+                            else "Structured local Verification checks failed."
+                        ),
+                    }
+                ]
+                if contract is not None
+                else []
+            ),
+            "expected_changed_files": expected_changed_files,
+            "unexpected_files": (
+                list(contract.get("unexpected_files", [])) if contract else []
+            ),
+        }
+
+    def _local_verification_backend_selected(
+        self,
+        run_id: int,
+        worktree: Path,
+    ) -> bool:
+        """Honor one sealed backend and reject runtime configuration drift."""
+        persisted_handle = self._existing_bridge_handle(run_id, "verification")
+        if persisted_handle is None:
+            return bool(self.settings.local_verification_command)
+        persisted_ticket = codex_exec_bridge.load_ticket(persisted_handle)
+        persisted_local = self._bridge_ticket_is_local_verification(
+            persisted_ticket
+        )
+        configured_local = bool(self.settings.local_verification_command)
+        if not persisted_local:
+            if configured_local:
+                raise codex_exec_bridge.CodexExecBridgeError(
+                    "VERIFICATION_BACKEND_CONFIGURATION_DRIFT",
+                    "The configured Verification backend conflicts with its sealed attempt.",
+                )
+            return False
+        if not configured_local:
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "VERIFICATION_BACKEND_CONFIGURATION_DRIFT",
+                "The configured local Verification backend is unavailable for its sealed attempt.",
+            )
+        configured_command, configured_digest, _ = self._local_verification_command(
+            worktree
+        )
+        persisted_argv = persisted_ticket.get("argv")
+        persisted_identity = persisted_ticket.get("identity")
+        if (
+            persisted_argv != list(configured_command)
+            or not isinstance(persisted_identity, dict)
+            or persisted_identity.get("executable_fingerprint") != configured_digest
+        ):
+            raise codex_exec_bridge.CodexExecBridgeError(
+                "VERIFICATION_BACKEND_CONFIGURATION_DRIFT",
+                "The configured local Verification command changed after its attempt was sealed.",
+            )
+        return True
+
     def _execute_verification(
         self,
         run_id: int,
@@ -5373,6 +6229,12 @@ class CodexExecutionManager:
         coding_result: dict[str, object],
     ) -> dict[str, object]:
         """Run a second, read-only Codex process for independent Verification."""
+        if self._local_verification_backend_selected(run_id, worktree):
+            return self._execute_local_verification(
+                run_id,
+                worktree,
+                coding_result,
+            )
         started_at = utc_now()
         started_monotonic = time.monotonic()
         expected_changed_files = sorted(
@@ -6904,8 +7766,14 @@ class CodexExecutionManager:
         self,
         run_id: int,
         process: subprocess.Popen[bytes],
+        *,
+        timeout_seconds: int | None = None,
     ) -> tuple[int | None, bool, bool, bool]:
-        deadline = time.monotonic() + self.settings.codex_timeout_seconds
+        deadline = time.monotonic() + (
+            self.settings.codex_timeout_seconds
+            if timeout_seconds is None
+            else timeout_seconds
+        )
         while process.poll() is None:
             stop_reason = self._stop_reason(run_id)
             if stop_reason is not None:

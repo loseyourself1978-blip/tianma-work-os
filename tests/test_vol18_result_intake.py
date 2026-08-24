@@ -47,6 +47,7 @@ from twos_runtime.models import (
     utc_now,
 )
 from twos_runtime import codex_exec_bridge
+from twos_runtime import result_intake as result_intake_module
 from twos_runtime.codex_adapter import CodexExecutionManager
 from twos_runtime.codex_exec_bridge import (
     handle_from_ticket_path,
@@ -1966,6 +1967,95 @@ def test_stale_result_cannot_replace_immutable_envelope_and_duplicate_reads_are_
             ) == 1
 
 
+def test_prior_verification_coupled_result_digest_replays_without_conflict(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with result_intake_fixture(
+        tmp_path,
+        run_status="completed",
+        verification_verdict="failed",
+    ) as fixture:
+        factory = fixture.client.app.state.session_factory
+        with factory() as session:
+            payload = valid_result_payload(session, fixture)
+            payload["structured_handoff"] = {
+                "schema": "twos.coding_handoff.v1",
+                "status": "completed",
+                "summary": "Coding completed before independent Verification failed.",
+            }
+            payload["workspace_evidence"] = {
+                "schema": "twos.codex_workspace_evidence.v1",
+                "status": "captured",
+                "boundary_violations": [],
+            }
+            run = _run(session, fixture)
+            monitor = ensure_run_monitor(session, fixture.owner_id, run)
+            material = result_intake_module._result_material(
+                session,
+                run,
+                monitor,
+                payload,
+            )
+            assert material["completion_classification"].startswith("succeeded")
+            assert material["prior_policy_result_digest"] != material["result_digest"]
+            real_result_material = result_intake_module._result_material
+
+            def prior_policy_material(*args, **kwargs):
+                prior = real_result_material(*args, **kwargs)
+                prior["result_digest"] = prior["prior_policy_result_digest"]
+                prior["completion_classification"] = "failed"
+                return prior
+
+            with monkeypatch.context() as context:
+                context.setattr(
+                    result_intake_module,
+                    "_result_material",
+                    prior_policy_material,
+                )
+                envelope = import_codex_result(
+                    session,
+                    fixture.owner_id,
+                    fixture.run_id,
+                    payload,
+                )
+            session.commit()
+
+        with factory() as session:
+            replayed = import_codex_result(
+                session,
+                fixture.owner_id,
+                fixture.run_id,
+                payload,
+            )
+            assert replayed.result_digest == material["prior_policy_result_digest"]
+            assert replayed.completion_classification == "failed"
+
+
+def test_result_material_rejects_conflicting_persisted_and_structured_exit_codes(
+    tmp_path: Path,
+) -> None:
+    with result_intake_fixture(tmp_path, run_status="failed") as fixture:
+        with fixture.client.app.state.session_factory() as session:
+            run = _run(session, fixture)
+            run.exit_code = 9
+            payload = valid_result_payload(session, fixture)
+            payload["coding_process"] = {
+                "status": "completed",
+                "exit_code": 0,
+            }
+            monitor = ensure_run_monitor(session, fixture.owner_id, run)
+
+            material = result_intake_module._result_material(
+                session,
+                run,
+                monitor,
+                payload,
+            )
+
+            assert material["completion_classification"] == "failed"
+
+
 def test_oversized_output_is_rejected_and_secrets_and_absolute_paths_are_redacted(
     tmp_path: Path,
 ) -> None:
@@ -2213,7 +2303,7 @@ def test_verification_launch_failure_surfaces_exact_safe_blocker(
             )
             public_result = result_envelope_out(envelope)
             assert envelope.verification_verdict == "UNAVAILABLE"
-            assert envelope.completion_classification == "failed"
+            assert envelope.completion_classification == "result_incomplete"
             assert public_result["verification_result"]["evidence"][
                 "safe_summary"
             ] == exact_blocker
@@ -2228,6 +2318,78 @@ def test_verification_launch_failure_surfaces_exact_safe_blocker(
                 exact_blocker in item
                 for item in public_review["unresolved_blockers"]
             )
+
+
+def test_optional_verification_does_not_block_verified_coding_result_truth(
+    tmp_path: Path,
+) -> None:
+    with result_intake_fixture(tmp_path) as fixture:
+        with fixture.client.app.state.session_factory() as session:
+            envelope = import_codex_result(
+                session,
+                fixture.owner_id,
+                fixture.run_id,
+                valid_result_payload(session, fixture),
+            )
+            session.expunge(envelope)
+            envelope.verification_assignment_id = None
+            envelope.verification_verdict = "UNAVAILABLE"
+            envelope.verification_evidence_json = json.dumps(
+                {
+                    "outcome": "unavailable",
+                    "safe_summary": "Independent Verification was not required.",
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            public_result = result_envelope_out(envelope)
+            assert public_result["verification_result"]["required"] is False
+            assert public_result["execution_successful"] is True
+            assert public_result["source_result_eligible_for_owner_review"] is True
+
+
+def test_local_verification_summary_requires_sealed_attempt_evidence(
+    tmp_path: Path,
+) -> None:
+    with result_intake_fixture(tmp_path) as fixture:
+        with fixture.client.app.state.session_factory() as session:
+            run = _run(session, fixture)
+            session.query(AIModelInvocationEvidence).filter(
+                AIModelInvocationEvidence.codex_run_id == run.id,
+                AIModelInvocationEvidence.capability == "verification",
+            ).delete(synchronize_session=False)
+            run.structured_result = json.dumps(
+                {
+                    "verification": {
+                        "status": "completed",
+                        "summary": "Unsealed local Verification claim.",
+                    },
+                    "verification_invocation": {
+                        "mode": "local_command",
+                        "model_provider_invoked": False,
+                        "process_execution_verified": True,
+                        "ticket_digest": "a" * 64,
+                        "command_digest": "b" * 64,
+                        "executable_fingerprint": "c" * 64,
+                    },
+                    "verification_verdict": {"status": "passed"},
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            session.flush()
+
+            summary = result_intake_module._evidence_summary(
+                session,
+                run,
+                "verification",
+            )
+
+            assert summary["available"] is False
+            assert summary["verified_local_process"] is False
+            assert summary["identity"] == ""
+            assert summary["ticket_digest"] == ""
+            assert summary["digest"] == ""
 
 
 def test_reconnect_resumes_exact_process_or_reports_loss_without_rerun(
