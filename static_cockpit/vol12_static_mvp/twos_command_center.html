@@ -362,20 +362,31 @@
                   <h3 id="push-delivery-title">Push + Delivery Result</h3>
                   <p>Push the one approved local commit to origin/main through one live preflight and one separate Owner confirmation.</p>
                 </div>
-                <div class="button-row push-delivery-controls">
+                <div class="button-row push-delivery-controls canonical-push-delivery-controls" hidden>
+                  <button id="review-push-plan" class="button button-primary" type="button" hidden disabled>Review Push Plan</button>
+                  <button id="approve-push-plan" class="button button-secondary" type="button" hidden disabled>Approve Push Plan</button>
+                  <button id="confirm-owner-push" class="button button-danger" type="button" hidden disabled>Confirm Push</button>
+                </div>
+                <div class="button-row push-delivery-controls legacy-push-delivery-controls">
                   <button id="push-to-origin-main" class="button button-danger" type="button" hidden disabled>Push to origin/main</button>
                   <button id="view-delivery-result" class="button button-secondary" type="button" hidden disabled>View Delivery Result</button>
                 </div>
               </div>
-              <p class="push-delivery-boundary-note">No Push occurs on page load, refresh, preflight review, or Delivery Result review. Confirm Push to origin/main authorizes one standard fast-forward attempt only.</p>
+              <p class="push-delivery-boundary-note"><strong>Push does not create a release, tag, merge, or deployment.</strong> No Push occurs on page load, refresh, preflight review, Push Plan review, approval, or Delivery Result review. Confirm Push authorizes one standard fast-forward attempt only.</p>
               <dl class="fact-list result-facts push-delivery-facts">
                 <div><dt>Local commit</dt><dd id="push-local-commit">Not ready</dd></div>
                 <div><dt>Commit subject</dt><dd id="push-commit-subject">Not available</dd></div>
                 <div><dt>Push readiness</dt><dd id="push-gate-status" class="candidate-inline-status">Not evaluated</dd></div>
+                <div><dt>Push Plan approval</dt><dd id="push-plan-approval" class="candidate-inline-status">Not reviewed</dd></div>
                 <div><dt>Destination</dt><dd id="push-destination">origin/main</dd></div>
                 <div><dt>Expected remote base</dt><dd id="push-remote-base">Not evaluated</dd></div>
+                <div><dt>Proposed remote SHA</dt><dd id="push-proposed-new-sha">Not evaluated</dd></div>
+                <div><dt>Fast-forward readiness</dt><dd id="push-fast-forward-readiness">Not evaluated</dd></div>
                 <div><dt>Ahead / behind</dt><dd id="push-ahead-behind">Not evaluated</dd></div>
                 <div><dt>Worktree and index</dt><dd id="push-cleanliness">Not evaluated</dd></div>
+                <div><dt>Push progress</dt><dd id="push-progress">Not started</dd></div>
+                <div><dt>Verified remote SHA</dt><dd id="push-final-remote-sha">Not delivered</dd></div>
+                <div><dt>Delivery receipt</dt><dd id="push-receipt-summary">Not available</dd></div>
                 <div><dt>Exact next action</dt><dd id="push-next-action">Review the local Commit result.</dd></div>
               </dl>
               <h4>Push blockers</h4>
@@ -714,7 +725,7 @@
                   <button id="revert-applied-changes" class="button button-secondary" type="button" hidden disabled>Revert Applied Changes</button>
                 </div>
               </div>
-              <p class="apply-session-boundary-note">Only INCLUDED Apply Plan paths are eligible. Apply and Revert do not stage, commit, or push.</p>
+              <p id="apply-session-boundary-note" class="apply-session-boundary-note">Only INCLUDED Apply Plan paths are eligible. Apply and Revert do not stage, commit, or push.</p>
               <dl class="fact-list result-facts apply-session-facts">
                 <div><dt>Owner approval</dt><dd id="apply-session-approval" class="candidate-inline-status">Awaiting confirmation</dd></div>
                 <div><dt>Apply readiness</dt><dd id="apply-session-readiness" class="candidate-inline-status">Review an Apply Plan</dd></div>
@@ -790,16 +801,32 @@
             <section id="commit-builder-section" class="result-section commit-builder-section" aria-labelledby="commit-builder-title" hidden>
               <div class="commit-builder-heading">
                 <div>
-                  <h3 id="commit-builder-title">Stage + Local Commit</h3>
-                  <p>Review one exact Commit Plan, stage only its approved files, then create one local commit through separate Owner actions.</p>
+                  <h3 id="commit-builder-title">Owner Commit</h3>
+                  <p>Review the exact applied delivery, approve one immutable Commit proposal, then separately confirm one local commit.</p>
                 </div>
-                <div class="button-row commit-builder-controls">
+                <div class="button-row commit-builder-controls canonical-commit-builder-controls" hidden>
+                  <button id="review-owner-commit" class="button button-primary" type="button" hidden disabled>Review Commit</button>
+                  <button id="approve-commit-proposal" class="button button-secondary" type="button" hidden disabled>Approve Commit</button>
+                  <button id="confirm-owner-local-commit" class="button button-danger" type="button" hidden disabled>Confirm Local Commit</button>
+                </div>
+                <div class="button-row commit-builder-controls legacy-commit-builder-controls">
                   <button id="review-commit-plan" class="button button-primary" type="button" hidden disabled>Review Commit Plan</button>
                   <button id="stage-approved-files" class="button button-secondary" type="button" hidden disabled>Stage Approved Files</button>
                   <button id="create-local-commit" class="button button-danger" type="button" hidden disabled>Create Local Commit</button>
                 </div>
               </div>
-              <p class="commit-builder-boundary-note">Each step requires an explicit Owner action. A local commit never pushes, merges, rebases, tags, or changes remotes.</p>
+              <p class="commit-builder-boundary-note"><strong>Local Commit does not Push.</strong> Review and approval are read-only. Only the separate final confirmation may create one exact local commit.</p>
+              <ol id="owner-delivery-sequence" class="owner-delivery-sequence" aria-label="Owner Commit and Push delivery sequence">
+                <li data-delivery-step="applied">Applied</li>
+                <li data-delivery-step="commit_review">Review Commit</li>
+                <li data-delivery-step="commit_approval">Approve Commit</li>
+                <li data-delivery-step="commit_confirmation">Confirm Local Commit</li>
+                <li data-delivery-step="committed">Local Commit Created</li>
+                <li data-delivery-step="push_review">Review Push Plan</li>
+                <li data-delivery-step="push_approval">Approve Push Plan</li>
+                <li data-delivery-step="push_confirmation">Confirm Push</li>
+                <li data-delivery-step="delivered">Delivered</li>
+              </ol>
               <ol class="commit-builder-steps" aria-label="Stage and local Commit sequence">
                 <li>Step 1 — Review Commit Plan</li>
                 <li>Step 2 — Stage Approved Files</li>
@@ -817,16 +844,24 @@
                 </div>
               </div>
               <dl class="fact-list result-facts commit-builder-facts">
+                <div><dt>Apply state</dt><dd id="owner-commit-apply-state">Not applied</dd></div>
+                <div><dt>Post-Apply validation</dt><dd id="owner-commit-post-apply-validation">Not verified</dd></div>
                 <div><dt>Commit readiness</dt><dd id="commit-builder-status" class="candidate-inline-status">Not ready</dd></div>
                 <div><dt>Commit Plan</dt><dd id="commit-plan-summary">Not reviewed</dd></div>
+                <div><dt>Commit approval</dt><dd id="commit-proposal-approval" class="candidate-inline-status">Not reviewed</dd></div>
                 <div><dt>Approved files</dt><dd id="commit-approved-summary">Not reviewed</dd></div>
+                <div><dt>Included-file count</dt><dd id="commit-included-count">0</dd></div>
                 <div><dt>Excluded files</dt><dd id="commit-excluded-summary">Not reviewed</dd></div>
+                <div><dt>Unrelated changes</dt><dd id="commit-unrelated-warning">Not evaluated</dd></div>
                 <div><dt>Branch</dt><dd id="commit-builder-branch">Not reviewed</dd></div>
                 <div><dt>HEAD</dt><dd id="commit-builder-head">Not reviewed</dd></div>
+                <div><dt>Expected parent</dt><dd id="commit-expected-parent">Not reviewed</dd></div>
                 <div><dt>Commit subject</dt><dd id="commit-builder-subject">Not reviewed</dd></div>
+                <div><dt>Author readiness</dt><dd id="commit-author-readiness">Not evaluated</dd></div>
                 <div><dt>Validation</dt><dd id="commit-builder-validation">Not reviewed</dd></div>
                 <div><dt>Staging</dt><dd id="commit-stage-summary">Not started</dd></div>
                 <div><dt>Commit Result</dt><dd id="local-commit-summary">Not created</dd></div>
+                <div><dt>Local Commit SHA</dt><dd id="owner-commit-result-oid">Not created</dd></div>
                 <div><dt>Exact next action</dt><dd id="commit-builder-next-action">Pass Post-Apply Verification first.</dd></div>
               </dl>
               <h4>Approved files</h4>
@@ -1157,9 +1192,12 @@
             </section>
 
             <section id="commit-builder-advanced-card" class="advanced-card" aria-labelledby="advanced-commit-builder-title" hidden>
-              <h2 id="advanced-commit-builder-title">Stage + Local Commit evidence</h2>
+              <h2 id="advanced-commit-builder-title">Commit proposal + Local Commit evidence</h2>
               <dl class="fact-list compact-facts">
                 <div><dt>Commit Plan record</dt><dd id="commit-plan-record-id">None</dd></div>
+                <div><dt>Proposal version</dt><dd id="commit-proposal-version">None</dd></div>
+                <div><dt>Proposal approval</dt><dd id="commit-proposal-approval-record">None</dd></div>
+                <div><dt>Approval digest</dt><dd id="commit-proposal-approval-digest">None</dd></div>
                 <div><dt>Policy version</dt><dd id="commit-plan-policy-version">None</dd></div>
                 <div><dt>Commit Plan digest</dt><dd id="commit-plan-digest">None</dd></div>
                 <div><dt>Post-Apply Verification</dt><dd id="commit-plan-verification-binding">None</dd></div>
@@ -1174,7 +1212,12 @@
                 <div><dt>Commit record</dt><dd id="local-commit-record-id">None</dd></div>
                 <div><dt>Local commit SHA</dt><dd id="local-commit-sha">None</dd></div>
                 <div><dt>Parent SHA</dt><dd id="local-commit-parent-sha">None</dd></div>
+                <div><dt>Tree SHA</dt><dd id="local-commit-tree-sha">None</dd></div>
                 <div><dt>Message digest</dt><dd id="local-commit-message-digest">None</dd></div>
+                <div><dt>Full reviewed message body</dt><dd id="commit-proposal-message-body">None</dd></div>
+                <div><dt>Sanitized author</dt><dd id="commit-proposal-author">None</dd></div>
+                <div><dt>Exact Git argv</dt><dd id="local-commit-argv">None</dd></div>
+                <div><dt>Process identity</dt><dd id="local-commit-process-identity">None</dd></div>
                 <div><dt>Created</dt><dd id="commit-builder-created-at">Not recorded</dd></div>
               </dl>
               <h3>Approved and staged path identities</h3>
@@ -1189,6 +1232,11 @@
               <h2 id="advanced-push-delivery-title">Push + Delivery evidence</h2>
               <dl class="fact-list compact-facts">
                 <div><dt>Local Commit binding</dt><dd id="push-commit-binding">None</dd></div>
+                <div><dt>Push Plan record</dt><dd id="push-plan-record-id">None</dd></div>
+                <div><dt>Push Plan version</dt><dd id="push-plan-version">None</dd></div>
+                <div><dt>Push Plan digest</dt><dd id="push-plan-digest">None</dd></div>
+                <div><dt>Push Plan approval</dt><dd id="push-plan-approval-record">None</dd></div>
+                <div><dt>Push approval digest</dt><dd id="push-plan-approval-digest">None</dd></div>
                 <div><dt>Delivery Candidate binding</dt><dd id="push-candidate-binding">None</dd></div>
                 <div><dt>Apply Plan binding</dt><dd id="push-apply-plan-binding">None</dd></div>
                 <div><dt>Verification binding</dt><dd id="push-verification-binding">None</dd></div>
@@ -1199,6 +1247,10 @@
                 <div><dt>Exact refspec</dt><dd id="push-exact-refspec">None</dd></div>
                 <div><dt>Remote fingerprint</dt><dd id="push-remote-fingerprint">None</dd></div>
                 <div><dt>Repository fingerprint</dt><dd id="push-repository-fingerprint">None</dd></div>
+                <div><dt>Sanitized remote descriptor</dt><dd id="push-remote-descriptor">None</dd></div>
+                <div><dt>Exact Git argv</dt><dd id="push-execution-argv">None</dd></div>
+                <div><dt>Process identity</dt><dd id="push-process-identity">None</dd></div>
+                <div><dt>Remote receipt</dt><dd id="push-remote-receipt">None</dd></div>
               </dl>
               <h3>Sanitized Push diagnostics</h3>
               <p id="push-sanitized-diagnostics" class="candidate-diagnostics">No Push diagnostics are available.</p>
@@ -1390,6 +1442,33 @@
           </div>
         </form>
       </dialog>
+      <dialog id="owner-local-commit-confirmation-dialog" class="confirmation-dialog" aria-labelledby="owner-local-commit-confirmation-title">
+        <form method="dialog" class="confirmation-surface">
+          <div class="confirmation-heading">
+            <span class="confirmation-eyebrow">Approved local Git history mutation</span>
+            <h2 id="owner-local-commit-confirmation-title">Confirm Local Commit</h2>
+            <p>Create exactly one local commit from this approved immutable proposal. Review and approval have not changed Git state.</p>
+          </div>
+          <dl class="fact-list compact-facts confirmation-facts">
+            <div><dt>Commit proposal</dt><dd id="owner-commit-confirmation-proposal">None</dd></div>
+            <div><dt>Approved paths</dt><dd id="owner-commit-confirmation-paths">None</dd></div>
+            <div><dt>Commit subject</dt><dd id="owner-commit-confirmation-subject">None</dd></div>
+            <div><dt>Commit body</dt><dd id="owner-commit-confirmation-body">None</dd></div>
+            <div><dt>Author</dt><dd id="owner-commit-confirmation-author">Not evaluated</dd></div>
+            <div><dt>Branch</dt><dd id="owner-commit-confirmation-branch">Not evaluated</dd></div>
+            <div><dt>Expected parent</dt><dd id="owner-commit-confirmation-parent">Not evaluated</dd></div>
+          </dl>
+          <ul class="result-check-list confirmation-boundaries">
+            <li>Only the approved ApplySession-owned paths may enter this commit.</li>
+            <li>Unrelated modified, untracked, and staged content remains excluded and preserved.</li>
+            <li>Local Commit does not Push.</li>
+          </ul>
+          <div class="button-row confirmation-actions">
+            <button id="confirm-approved-local-commit" class="button button-danger" type="button">Confirm Local Commit</button>
+            <button id="cancel-approved-local-commit" class="button button-secondary" type="button">Cancel</button>
+          </div>
+        </form>
+      </dialog>
       <dialog id="push-confirmation-dialog" class="confirmation-dialog" aria-labelledby="push-confirmation-title">
         <form method="dialog" class="confirmation-surface">
           <div class="confirmation-heading">
@@ -1416,6 +1495,32 @@
           <div class="button-row confirmation-actions">
             <button id="confirm-push-to-origin-main" class="button button-danger" type="button">Confirm Push to origin/main</button>
             <button id="cancel-push-to-origin-main" class="button button-secondary" type="button">Cancel</button>
+          </div>
+        </form>
+      </dialog>
+      <dialog id="owner-push-confirmation-dialog" class="confirmation-dialog" aria-labelledby="owner-push-confirmation-title">
+        <form method="dialog" class="confirmation-surface">
+          <div class="confirmation-heading">
+            <span class="confirmation-eyebrow">Approved remote branch mutation</span>
+            <h2 id="owner-push-confirmation-title">Confirm Push</h2>
+            <p>Authorize one standard fast-forward Push of the exact approved local commit to the exact approved remote branch.</p>
+          </div>
+          <dl class="fact-list compact-facts confirmation-facts">
+            <div><dt>Push Plan</dt><dd id="owner-push-confirmation-plan">None</dd></div>
+            <div><dt>Remote</dt><dd id="owner-push-confirmation-remote">Not evaluated</dd></div>
+            <div><dt>Target branch</dt><dd id="owner-push-confirmation-branch">Not evaluated</dd></div>
+            <div><dt>Current remote SHA</dt><dd id="owner-push-confirmation-old-sha">Not evaluated</dd></div>
+            <div><dt>Exact new commit SHA</dt><dd id="owner-push-confirmation-new-sha">Not evaluated</dd></div>
+            <div><dt>Fast-forward</dt><dd id="owner-push-confirmation-fast-forward">Not evaluated</dd></div>
+          </dl>
+          <ul class="result-check-list confirmation-boundaries">
+            <li>No force, force-with-lease, tag, wildcard, deletion, or other branch is authorized.</li>
+            <li>No Fetch, Pull, Merge, Rebase, or automatic retry occurs.</li>
+            <li>Push does not create a release, tag, merge, or deployment.</li>
+          </ul>
+          <div class="button-row confirmation-actions">
+            <button id="confirm-approved-push" class="button button-danger" type="button">Confirm Push</button>
+            <button id="cancel-approved-push" class="button button-secondary" type="button">Cancel</button>
           </div>
         </form>
       </dialog>

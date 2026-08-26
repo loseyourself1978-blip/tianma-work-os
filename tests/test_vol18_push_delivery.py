@@ -848,6 +848,10 @@ def test_failed_push_is_terminal_redacted_viewable_and_never_retried(
         assert payload["actions"]["can_view_delivery_result"] is True
         assert payload["delivery_result"]["complete"] is False
         assert payload["delivery_result"]["status"] == "NOT_DELIVERED"
+        command_output = payload["push_execution"]["advanced"]["command_output"]
+        assert command_output["timed_out"] is False
+        assert command_output["stdout"]
+        assert command_output["stderr"]
         serialized = json.dumps(payload)
         assert "secret-token" not in serialized
         assert "owner:" not in serialized
@@ -864,7 +868,7 @@ def test_failed_push_is_terminal_redacted_viewable_and_never_retried(
         assert _bare_ref(fixture.origin) == fixture.initial_remote_sha
 
 
-def test_timeout_remains_pushing_and_explicit_recovery_never_retries(
+def test_timeout_is_terminal_redacted_and_never_retries(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -879,6 +883,9 @@ def test_timeout_remains_pushing_and_explicit_recovery_never_retries(
             raise push_delivery_service.PushDeliveryError(
                 "REMOTE_TIMEOUT",
                 "The remote Git operation timed out.",
+                stdout=b"Authorization: Bearer timeout-secret-value",
+                stderr=b"token=timeout-secret-value",
+                timed_out=True,
             )
 
         monkeypatch.setattr(
@@ -892,27 +899,30 @@ def test_timeout_remains_pushing_and_explicit_recovery_never_retries(
         )
         assert response.status_code == 200, response.text
         payload = response.json()
-        assert payload["action_state"] == "PUSHING"
+        assert payload["action_state"] == "PUSH_FAILED"
+        assert payload["push_execution"]["state"] == "PUSH_FAILED"
         assert payload["push_execution"]["command_attempt_count"] == 1
-        assert payload["actions"]["can_confirm_push"] is True
-        assert payload["delivery_result"]["next_action"] == (
-            "Review Push reconciliation before any new action."
+        assert payload["push_execution"]["advanced"]["failure_category"] == (
+            "REMOTE_TIMEOUT"
         )
+        command_output = payload["push_execution"]["advanced"]["command_output"]
+        assert command_output["timed_out"] is True
+        assert "timeout-secret-value" not in json.dumps(command_output)
+        assert payload["actions"]["can_confirm_push"] is False
         recovered = fixture.client.post(
             _confirm_url(str(preflight["id"])),
             json=_confirm_payload(preflight),
         )
         assert recovered.status_code == 200, recovered.text
-        assert recovered.json()["action_state"] == "PUSHING"
-        assert len(calls) == 1
-        same_preflight = fixture.client.post(_preflight_url(fixture))
-        assert same_preflight.status_code == 200, same_preflight.text
-        assert same_preflight.json()["push_execution"]["id"] == preflight["id"]
+        assert recovered.json()["action_state"] == "PUSH_FAILED"
         assert len(calls) == 1
         with fixture.factory() as session:
             rows = list(session.scalars(select(PushExecution)).all())
             assert len(rows) == 1
-            assert rows[0].state == "PUSHING"
+            assert rows[0].state == "PUSH_FAILED"
+            assert rows[0].failure_category == "REMOTE_TIMEOUT"
+            assert rows[0].command_finished_at is not None
+            assert rows[0].finished_at is not None
             assert rows[0].command_attempt_count == 1
 
 
@@ -1055,7 +1065,7 @@ def test_ready_confirmation_is_disabled_when_fresh_local_blocker_appears(
         assert payload["actions"]["can_confirm_push"] is False
         assert payload["readiness"]["status"] == "PUSH_BLOCKED"
         assert payload["delivery_result"]["next_action"] == (
-            "The working tree is not clean."
+            "An exact delivery path changed after the approved local Commit."
         )
         confirmed = fixture.client.post(
             _confirm_url(str(preflight["id"])),
@@ -1235,6 +1245,39 @@ def test_local_push_blockers_are_detected_before_any_live_remote_contact(
         assert expected_code in codes
         assert live_calls == []
         assert _bare_ref(fixture.origin) == fixture.initial_remote_sha
+
+
+def test_url_scoped_credential_helper_blocks_before_remote_contact(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with push_ready_fixture(tmp_path) as fixture:
+        run_command(
+            fixture.source_repo,
+            "git",
+            "config",
+            "credential.https://example.test.helper",
+            "!blocked-helper",
+        )
+
+        def forbidden_live_remote(_root: Path) -> str:
+            raise AssertionError("A scoped credential helper must block before contact")
+
+        monkeypatch.setattr(
+            push_delivery_service,
+            "_live_origin_main",
+            forbidden_live_remote,
+        )
+        response = fixture.client.post(_preflight_url(fixture))
+        assert response.status_code == 409, response.text
+        assert response.json()["error"]["details"] == {
+            "code": "REMOTE_CONFIG_UNSAFE",
+            "message": "The configured credential helper is unsupported.",
+        }
+        with fixture.factory() as session:
+            assert session.scalar(
+                select(func.count()).select_from(PushExecution)
+            ) == 0
 
 
 @pytest.mark.parametrize("url_kind", ["fetch", "push"])
@@ -1542,7 +1585,7 @@ def test_reconciliation_blocked_record_recovers_with_set_once_evidence_only(
             assert row.receipt_digest
 
 
-def test_exit_zero_push_persists_receipt_while_live_reconciliation_is_pending(
+def test_exit_zero_push_needs_review_until_live_remote_sha_is_verified(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1574,15 +1617,16 @@ def test_exit_zero_push_persists_receipt_while_live_reconciliation_is_pending(
         )
         assert response.status_code == 200, response.text
         payload = response.json()
-        assert payload["push_execution"]["state"] == "PUSHED"
+        # Process exit zero is transport evidence, not remote-delivery truth.
+        assert payload["push_execution"]["state"] == "RECONCILIATION_BLOCKED"
         assert payload["action_state"] == "RECONCILIATION_BLOCKED"
         assert payload["delivery_result"]["complete"] is False
         with fixture.factory() as session:
             row = session.scalar(select(PushExecution))
             assert row is not None
-            assert row.state == "PUSHED"
+            assert row.state == "RECONCILIATION_BLOCKED"
             assert row.command_exit_code == 0
-            assert row.receipt_digest
+            assert row.receipt_digest is None
 
         monkeypatch.setattr(
             push_delivery_service,
@@ -1591,8 +1635,23 @@ def test_exit_zero_push_persists_receipt_while_live_reconciliation_is_pending(
         )
         reconciled = fixture.client.get(_review_url(fixture))
         assert reconciled.status_code == 200, reconciled.text
-        assert reconciled.json()["action_state"] == "PUSHED"
-        assert reconciled.json()["delivery_result"]["complete"] is True
+        assert reconciled.json()["action_state"] == "RECONCILIATION_BLOCKED"
+        assert reconciled.json()["delivery_result"]["complete"] is False
+
+        # A second explicit confirmation may reconcile the already-used
+        # one-shot attempt, but must not invoke transport again.
+        recovered = fixture.client.post(
+            _confirm_url(str(preflight["id"])),
+            json=_confirm_payload(preflight),
+        )
+        assert recovered.status_code == 200, recovered.text
+        assert recovered.json()["push_execution"]["state"] == "PUSHED"
+        assert recovered.json()["delivery_result"]["complete"] is True
+        with fixture.factory() as session:
+            row = session.scalar(select(PushExecution))
+            assert row is not None
+            assert row.command_attempt_count == 1
+            assert row.receipt_digest
 
 
 def test_delivery_review_does_not_contact_changed_remote_configuration(

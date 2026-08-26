@@ -2487,6 +2487,62 @@ button:disabled,
   margin-bottom: 14px;
 }
 
+#result-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+#result-card > .push-delivery-section {
+  order: 99;
+}
+
+.commit-builder-section[data-owner-delivery="canonical"] .commit-builder-steps,
+.commit-builder-section[data-owner-delivery="canonical"] .commit-builder-commit-hint {
+  display: none;
+}
+
+.owner-delivery-sequence {
+  display: grid;
+  min-width: 0;
+  margin: 0 0 18px;
+  padding: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  counter-reset: delivery-step;
+  list-style: none;
+}
+
+.owner-delivery-sequence li {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 720;
+  overflow-wrap: anywhere;
+  counter-increment: delivery-step;
+}
+
+.owner-delivery-sequence li::before {
+  content: counter(delivery-step) ". ";
+}
+
+.owner-delivery-sequence li[data-state="complete"] {
+  border-color: #b9d8cc;
+  background: #eef8f3;
+  color: #205d4c;
+}
+
+.owner-delivery-sequence li[data-state="current"] {
+  border-color: #d7cbe7;
+  background: #f8f5fc;
+  color: #513d70;
+  box-shadow: inset 3px 0 0 #76569c;
+}
+
 .commit-builder-heading > div:first-child {
   min-width: 0;
 }
@@ -2535,6 +2591,15 @@ button:disabled,
 .commit-message-fields textarea {
   width: 100%;
   min-width: 0;
+}
+
+.commit-builder-facts dd,
+.push-delivery-facts dd,
+#owner-local-commit-confirmation-dialog dd,
+#owner-push-confirmation-dialog dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .commit-builder-section h4 {
@@ -3066,6 +3131,10 @@ button:disabled,
   .commit-builder-file-list,
   .commit-builder-evidence-grid,
   .delivery-result-evidence-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .owner-delivery-sequence {
     grid-template-columns: minmax(0, 1fr);
   }
 

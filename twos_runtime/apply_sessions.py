@@ -42,7 +42,9 @@ from .models import (
     ApplySessionAudit,
     ApplySessionEntry,
     CodexRun,
+    CommitPlan,
     DeliveryCandidate,
+    LocalCommitExecution,
     SourceDriftEvaluation,
     utc_now,
 )
@@ -127,6 +129,33 @@ _SECRET_MATERIAL_PATTERNS = (
 )
 
 FaultInjector = Callable[[str, ApplySessionEntry], None]
+
+
+def successful_local_commit_for_apply_session(
+    session: Session,
+    *,
+    owner_id: int,
+    apply_session_id: int,
+) -> LocalCommitExecution | None:
+    """Return the exact successful delivery Commit that closes working-tree Revert.
+
+    Once an Apply-owned change is part of local history, restoring its old bytes
+    is no longer the same operation as reverting the working-tree Apply.  The
+    later recovery boundary must be history-preserving, so both the service and
+    every Owner projection use this one persisted gate.
+    """
+    return session.scalar(
+        select(LocalCommitExecution)
+        .join(CommitPlan, LocalCommitExecution.commit_plan_id == CommitPlan.id)
+        .where(
+            LocalCommitExecution.owner_id == owner_id,
+            LocalCommitExecution.state == "COMMITTED",
+            CommitPlan.owner_id == owner_id,
+            CommitPlan.apply_session_id == apply_session_id,
+        )
+        .order_by(LocalCommitExecution.id.desc())
+        .limit(1)
+    )
 
 
 class ApplySessionError(ValueError):
@@ -4387,6 +4416,19 @@ def _revert_applied_changes_locked(
             "REVERT_NOT_AVAILABLE",
             "Only one exact successful Apply session may be reverted.",
         )
+    if successful_local_commit_for_apply_session(
+        session,
+        owner_id=owner_id,
+        apply_session_id=apply_session.id,
+    ) is not None:
+        raise ApplySessionError(
+            "REVERT_AFTER_COMMIT_BLOCKED",
+            (
+                "This delivery has a local Commit. The original working-tree "
+                "Revert cannot rewrite committed history; use a later "
+                "history-preserving recovery flow."
+            ),
+        )
     run = session.get(CodexRun, apply_session.run_id)
     plan = session.get(ApplyPlan, apply_session.apply_plan_id)
     candidate = session.get(
@@ -4980,6 +5022,21 @@ def revert_confirmation_out(
                 "message": "Only an exact successful Apply session can be reverted.",
             }
         )
+    elif successful_local_commit_for_apply_session(
+        session,
+        owner_id=owner_id,
+        apply_session_id=apply_session.id,
+    ) is not None:
+        blockers.append(
+            {
+                "code": "REVERT_AFTER_COMMIT_BLOCKED",
+                "message": (
+                    "This delivery has a local Commit. Working-tree Revert is "
+                    "disabled because it cannot rewrite committed history; "
+                    "history-preserving recovery is a later flow."
+                ),
+            }
+        )
     elif run is None:
         blockers.append(
             {
@@ -5116,6 +5173,11 @@ def apply_session_out(
     apply_session: ApplySession,
 ) -> dict[str, Any]:
     entries = apply_session_entries(session, apply_session)
+    local_commit = successful_local_commit_for_apply_session(
+        session,
+        owner_id=apply_session.owner_id,
+        apply_session_id=apply_session.id,
+    )
     audits = list(
         session.scalars(
             select(ApplySessionAudit)
@@ -5176,11 +5238,33 @@ def apply_session_out(
             "staged_path_count": before_index.get("staged_path_count"),
             "index_changed_by_apply": False,
         },
-        "revert_available": apply_session.state == "APPLIED",
+        "revert_available": (
+            apply_session.state == "APPLIED" and local_commit is None
+        ),
+        "working_tree_revert_boundary": (
+            {
+                "state": "BLOCKED_AFTER_LOCAL_COMMIT",
+                "local_commit_execution_id": local_commit.commit_execution_id,
+                "message": (
+                    "The original working-tree Revert cannot rewrite committed "
+                    "history. History-preserving recovery is a later flow."
+                ),
+            }
+            if local_commit is not None
+            else {"state": "AVAILABLE_BEFORE_LOCAL_COMMIT"}
+        ),
         "blockers": failures,
-        "next_action": _next_action(apply_session.state),
+        "next_action": (
+            "Review the local Commit and its separate Push boundary."
+            if apply_session.state == "APPLIED" and local_commit is not None
+            else _next_action(apply_session.state)
+        ),
         "boundaries": [
-            "No Stage, Commit, or Push occurred.",
+            (
+                "A separate Owner-confirmed local Commit exists; no Push is implied."
+                if local_commit is not None
+                else "No Stage, Commit, or Push occurred."
+            ),
             "Post-Apply Verification requires a separate explicit Owner action.",
             "No Provider was invoked.",
         ],

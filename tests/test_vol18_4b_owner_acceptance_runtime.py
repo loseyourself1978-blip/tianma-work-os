@@ -352,11 +352,14 @@ def test_fixture_owner_journey_starts_at_local_commit_and_pushes_once(
             "approved_commit_sha": approved,
             "ahead": 0,
             "behind": 0,
-            "worktree_clean": True,
-            "index_clean": True,
-            "staged_path_count": 0,
-            "blockers": [],
-        }
+                "worktree_clean": True,
+                "index_clean": True,
+                "staged_path_count": 0,
+                "owned_staged_path_count": 0,
+                "unrelated_change_count": 0,
+                "unrelated_evidence_preserved": True,
+                "blockers": [],
+            }
         assert _run_bare(origin, "rev-parse", "refs/heads/main") == approved
 
         repeated = client.post(

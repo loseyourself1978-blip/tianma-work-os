@@ -48,15 +48,35 @@ MAX_COMMIT_SUBJECT_BYTES = 200
 MAX_COMMIT_BODY_BYTES = 4_000
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 _BRANCH_REF = re.compile(r"refs/heads/[A-Za-z0-9][A-Za-z0-9._/-]{0,299}")
+_SENSITIVE_TEXT_REDACTIONS = (
+    (
+        re.compile(r"([a-z][a-z0-9+.-]*://)[^/\s:@]+:[^/\s@]+@", re.I),
+        r"\1<redacted>@",
+    ),
+    (
+        re.compile(r"\b(?:gh[pousr]_|sk-)[A-Za-z0-9_-]{12,}\b"),
+        "<redacted-token>",
+    ),
+    (
+        re.compile(
+            r"(\bauthorization\s*[:=]\s*bearer\s+)[^\s,;]+",
+            re.I,
+        ),
+        r"\1<redacted>",
+    ),
+    (
+        re.compile(
+            r"((?<![A-Za-z0-9_-])"
+            r"(?:api[_-]?key|access[_-]?token|password|client[_-]?secret|token)"
+            r"\s*[:=]\s*)[^\s,;]+",
+            re.I,
+        ),
+        r"\1<redacted>",
+    ),
+)
 _SECRET_PATTERNS = (
     re.compile(r"-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----", re.I),
-    re.compile(r"\b(?:gh[pousr]_|sk-)[A-Za-z0-9_-]{20,}\b"),
-    re.compile(r"[a-z][a-z0-9+.-]*://[^/\s:@]+:[^/\s@]+@", re.I),
-    re.compile(
-        r"(?:api[_-]?key|access[_-]?token|password|client[_-]?secret)"
-        r"\s*[:=]\s*[^\s]{12,}",
-        re.I,
-    ),
+    *(pattern for pattern, _replacement in _SENSITIVE_TEXT_REDACTIONS),
 )
 
 
@@ -93,6 +113,13 @@ def _sha256_bytes(payload: bytes) -> str:
 
 def _failure(code: str, message: str) -> CommitBuilderError:
     return CommitBuilderError(code, message)
+
+
+def _redact_sensitive_text(value: str) -> str:
+    redacted = value
+    for pattern, replacement in _SENSITIVE_TEXT_REDACTIONS:
+        redacted = pattern.sub(replacement, redacted)
+    return redacted
 
 
 def _safe_message(subject: object, body: object) -> tuple[str, str]:

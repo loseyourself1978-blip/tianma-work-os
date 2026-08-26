@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import secrets
+import stat
 import subprocess
 from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import timedelta
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit, urlunsplit
@@ -18,6 +21,7 @@ from .apply_sessions import apply_session_out
 from .commit_builder import (
     COMMIT_BUILDER_POLICY_VERSION,
     CommitBuilderError,
+    _assert_targets_match,
     _bound_verification,
     _commit_builder_repository_lock,
     _commit_message,
@@ -27,6 +31,7 @@ from .commit_builder import (
     _decoded_object,
     _git_environment,
     _git_text,
+    _index_entries,
     _post_commit_paths,
     _refs_fingerprint_excluding,
     _run_git,
@@ -44,11 +49,15 @@ from .delivery_candidates import (
 from .models import (
     ApplySession,
     CodexResultEnvelope,
+    CommitProposal,
+    CommitProposalApproval,
     CommitPlan,
     DeliveryCandidate,
     LocalCommitExecution,
     PostApplyVerification,
     PushExecution,
+    PushPlan,
+    PushPlanApproval,
     SourceDriftEvaluation,
     StageExecution,
     utc_now,
@@ -64,13 +73,66 @@ from .apply_sessions import _global_evidence_after_mutation
 
 PUSH_DELIVERY_POLICY_VERSION = "twos.push_delivery.vol18.009.v1"
 PUSH_CONFIRMATION = "PUSH_TO_ORIGIN_MAIN"
+PUSH_PLAN_APPROVAL_CONFIRMATION = "APPROVE_PUSH_PLAN"
 PUSH_REMOTE = "origin"
 PUSH_BRANCH = "main"
 PUSH_BRANCH_REF = "refs/heads/main"
 PUSH_TRACKING_REF = "refs/remotes/origin/main"
 PUSH_TRACKING_HEAD_REF = "refs/remotes/origin/HEAD"
+MAX_PUSH_COMMAND_OUTPUT_BYTES = 16_384
+MAX_CREDENTIAL_HELPER_CONFIG_BYTES = 65_536
+MAX_CREDENTIAL_HELPER_CONFIG_ENTRIES = 64
 _OID = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
 _SHA256 = re.compile(r"[0-9a-f]{64}")
+_SAFE_REMOTE_SCHEMES = frozenset({"file", "https", "ssh"})
+_DANGEROUS_REMOTE_CONFIG = re.compile(
+    r"^(core\.sshcommand|remote\.origin\.(receivepack|uploadpack)|"
+    r"protocol\.ext\.allow|core\.(gitproxy|askpass)|"
+    r"http(\..*)?\.(extraheader|cookiefile)|"
+    r"url\..*\.(insteadof|pushinsteadof))$",
+    re.IGNORECASE,
+)
+_SAFE_CREDENTIAL_HELPERS = frozenset(
+    {
+        "cache",
+        "libsecret",
+        "manager",
+        "manager-core",
+        "osxkeychain",
+        "store",
+        "wincred",
+    }
+)
+_OUTPUT_SECRET_PATTERNS = (
+    re.compile(r"([a-z][a-z0-9+.-]*://)[^/\s:@]+:[^/\s@]+@", re.I),
+    re.compile(r"\b(?:gh[pousr]_|sk-)[A-Za-z0-9_-]{12,}\b"),
+    re.compile(r"(\bAuthorization\s*:\s*Bearer\s+)[^\s]+", re.I),
+    re.compile(
+        r"((?:api[_-]?key|access[_-]?token|token|password|client[_-]?secret|secret)"
+        r"\s*[:=]\s*)[^\s]+",
+        re.I,
+    ),
+    re.compile(
+        r"\b(?:secret[-_]?token|access[-_]?token)"
+        r"(?:\s*[:=]\s*[^\s]+)?",
+        re.I,
+    ),
+    re.compile(r"(?<![A-Za-z0-9:])/(?:Users|private|tmp|var|home)/[^\s\r\n]+"),
+)
+_TRANSPORT_ENV_ALLOWLIST = frozenset(
+    {
+        "PATH",
+        "HOME",
+        "TMPDIR",
+        "LANG",
+        "LC_ALL",
+        "LC_CTYPE",
+        "USER",
+        "LOGNAME",
+        "SSH_AUTH_SOCK",
+        "SYSTEMROOT",
+    }
+)
 _TERMINAL_STATES = frozenset(
     {
         "PUSHED",
@@ -83,10 +145,21 @@ _TERMINAL_STATES = frozenset(
 
 
 class PushDeliveryError(ValueError):
-    def __init__(self, code: str, message: str) -> None:
+    def __init__(
+        self,
+        code: str,
+        message: str,
+        *,
+        stdout: bytes = b"",
+        stderr: bytes = b"",
+        timed_out: bool = False,
+    ) -> None:
         super().__init__(message)
         self.code = code
         self.message = message
+        self.stdout = stdout
+        self.stderr = stderr
+        self.timed_out = timed_out
 
 
 def _failure(code: str, message: str) -> PushDeliveryError:
@@ -176,6 +249,34 @@ def find_owned_push_execution(
     )
 
 
+def find_owned_push_plan(
+    session: Session,
+    *,
+    owner_id: int,
+    push_plan_id: str,
+) -> PushPlan | None:
+    return session.scalar(
+        select(PushPlan).where(
+            PushPlan.owner_id == owner_id,
+            PushPlan.push_plan_id == push_plan_id,
+        )
+    )
+
+
+def find_owned_push_plan_approval(
+    session: Session,
+    *,
+    owner_id: int,
+    approval_id: str,
+) -> PushPlanApproval | None:
+    return session.scalar(
+        select(PushPlanApproval).where(
+            PushPlanApproval.owner_id == owner_id,
+            PushPlanApproval.approval_id == approval_id,
+        )
+    )
+
+
 def _bound_push_context(
     session: Session,
     *,
@@ -199,6 +300,10 @@ def _bound_push_context(
         )
     stage = session.get(StageExecution, local_commit.stage_execution_id)
     plan = session.get(CommitPlan, local_commit.commit_plan_id)
+    canonical_owner_commit = bool(
+        local_commit.commit_proposal_id is not None
+        and local_commit.commit_proposal_approval_id is not None
+    )
     if (
         stage is None
         or plan is None
@@ -208,7 +313,10 @@ def _bound_push_context(
         or stage.commit_plan_id != plan.id
         or local_commit.commit_plan_id != plan.id
         or stage.state != "STAGED"
-        or plan.status_at_creation != "READY"
+        or (
+            not canonical_owner_commit
+            and plan.status_at_creation != "READY"
+        )
         or plan.policy_version != COMMIT_BUILDER_POLICY_VERSION
         or local_commit.commit_plan_digest != plan.plan_digest
         or local_commit.stage_digest != stage.stage_digest
@@ -297,28 +405,122 @@ def _bound_push_context(
         ),
         key=lambda value: value.encode("utf-8"),
     )
-    receipt = {
-        "schema": "twos.local_commit_receipt.v1",
-        "commit_execution_id": local_commit.commit_execution_id,
-        "commit_plan_digest": plan.plan_digest,
-        "stage_digest": local_commit.stage_digest,
-        "parent_oid": plan.base_head,
-        "commit_oid": local_commit.commit_oid,
-        "tree_oid": commit["tree"],
-        "message_digest": commit["message_digest"],
-        "changed_path_identities": sorted(
-            _sha256_bytes(path.encode("utf-8")) for path in expected_paths
-        ),
-        "post_commit": _decoded_object(local_commit.post_commit_evidence_json),
-    }
+    expected_message = _commit_message(plan)
+    receipt_valid = False
+    canonical_lineage_valid = True
+    if canonical_owner_commit:
+        proposal, proposal_approval = _bound_commit_proposal(
+            session,
+            owner_id=owner_id,
+            local_commit=local_commit,
+        )
+        planned_rows = [
+            {
+                "path": str(item.get("path") or ""),
+                "path_identity": str(item.get("path_identity") or ""),
+                "operation": str(item.get("operation") or ""),
+            }
+            for item in _decoded_list(local_commit.staged_entries_json)
+            if isinstance(item, dict)
+        ]
+        expected_message = (
+            proposal.subject
+            + (("\n\n" + proposal.body) if proposal.body else "")
+            + "\n"
+        ).encode("utf-8")
+        hooks = _decoded_object(local_commit.hooks_evidence_json)
+        hooks_digest = canonical_sha256(hooks) if hooks else ""
+        canonical_lineage_valid = bool(
+            proposal.post_apply_verification_id == verification.id
+            and proposal.apply_session_id == apply_session.id
+            and proposal.apply_plan_id == plan.apply_plan_id
+            and proposal.delivery_candidate_id == candidate.id
+            and proposal.run_id == run.id
+            and proposal.task_id == run.task_id
+            and proposal.pack_id == pack.id
+            and proposal.verification_public_id == verification.verification_id
+            and proposal.verification_digest == verification.verification_digest
+            and proposal.apply_session_public_id == apply_session.session_id
+            and proposal.journal_digest == apply_session.journal_digest
+            and proposal.candidate_public_id == candidate.candidate_id
+            and proposal.candidate_version == candidate.candidate_version
+            and proposal.candidate_digest == candidate.candidate_digest
+            and proposal.repository_locator_fingerprint
+            == plan.repository_locator_fingerprint
+            and proposal.sanitized_repository_identity
+            == plan.sanitized_repository_identity
+            and proposal.branch == plan.branch
+            and proposal.branch_ref == plan.branch_ref
+            and proposal.base_head == plan.base_head
+            and proposal.source_snapshot_identity
+            == apply_session.source_snapshot_identity
+            and proposal.source_workspace_identity
+            == apply_session.source_workspace_identity
+            and proposal.run_workspace_identity
+            == apply_session.run_workspace_identity
+            and proposal.subject == plan.subject
+            and proposal.body == plan.body
+            and proposal.subject_digest == local_commit.subject_digest
+            and proposal.body_digest == local_commit.body_digest
+            and proposal.message_digest == local_commit.message_digest
+            and proposal.planned_paths_digest == canonical_sha256(planned_rows)
+            and proposal_approval.message_digest == proposal.message_digest
+            and local_commit.author_identity_digest
+            == proposal.author_identity_digest
+            and local_commit.author_identity_sanitized
+            == proposal.author_identity_sanitized
+            and hooks_digest
+            and local_commit.hooks_evidence_digest == hooks_digest
+        )
+        receipt = {
+            "schema": "twos.owner_local_commit_receipt.v1",
+            "commit_execution_id": local_commit.commit_execution_id,
+            "proposal_digest": proposal.proposal_digest,
+            "approval_digest": proposal_approval.approval_digest,
+            "confirmation_digest": local_commit.owner_commit_confirmation_digest,
+            "commit_plan_digest": local_commit.commit_plan_digest,
+            "stage_digest": local_commit.stage_digest,
+            "parent_oid": proposal.base_head,
+            "commit_oid": local_commit.commit_oid,
+            "tree_oid": commit["tree"],
+            "message_digest": proposal.message_digest,
+            "changed_path_identities": sorted(
+                _sha256_bytes(path.encode("utf-8")) for path in expected_paths
+            ),
+            "author_identity_digest": proposal.author_identity_digest,
+            "hooks_evidence_digest": local_commit.hooks_evidence_digest,
+            "post_commit": _decoded_object(local_commit.post_commit_evidence_json),
+        }
+        recovered_receipt = {**receipt, "recovered": True}
+        receipt_valid = local_commit.receipt_digest in {
+            canonical_sha256(receipt),
+            canonical_sha256(recovered_receipt),
+        }
+    else:
+        receipt = {
+            "schema": "twos.local_commit_receipt.v1",
+            "commit_execution_id": local_commit.commit_execution_id,
+            "commit_plan_digest": plan.plan_digest,
+            "stage_digest": local_commit.stage_digest,
+            "parent_oid": plan.base_head,
+            "commit_oid": local_commit.commit_oid,
+            "tree_oid": commit["tree"],
+            "message_digest": commit["message_digest"],
+            "changed_path_identities": sorted(
+                _sha256_bytes(path.encode("utf-8")) for path in expected_paths
+            ),
+            "post_commit": _decoded_object(local_commit.post_commit_evidence_json),
+        }
+        receipt_valid = canonical_sha256(receipt) == local_commit.receipt_digest
     if (
-        commit["parents"] != [plan.base_head]
-        or commit["message"] != _commit_message(plan)
+        not canonical_lineage_valid
+        or commit["parents"] != [plan.base_head]
+        or commit["message"] != expected_message
         or commit["message_digest"] != local_commit.message_digest
         or commit["tree"] != local_commit.tree_oid
         or _post_commit_paths(root, plan.base_head, local_commit.commit_oid)
         != expected_paths
-        or canonical_sha256(receipt) != local_commit.receipt_digest
+        or not receipt_valid
     ):
         raise _failure(
             "LOCAL_COMMIT_INTEGRITY_BLOCKED",
@@ -336,6 +538,81 @@ def _bound_push_context(
         entries=entries,
         root=root,
     )
+
+
+def _bound_commit_proposal(
+    session: Session,
+    *,
+    owner_id: int,
+    local_commit: LocalCommitExecution,
+) -> tuple[CommitProposal, CommitProposalApproval]:
+    proposal = (
+        session.get(CommitProposal, local_commit.commit_proposal_id)
+        if local_commit.commit_proposal_id is not None
+        else None
+    )
+    approval = (
+        session.get(
+            CommitProposalApproval,
+            local_commit.commit_proposal_approval_id,
+        )
+        if local_commit.commit_proposal_approval_id is not None
+        else None
+    )
+    expected_confirmation_digest = (
+        canonical_sha256(
+            {
+                "schema": "twos.commit_proposal_owner_approval.v1",
+                "owner_id": owner_id,
+                "proposal_id": proposal.proposal_id,
+                "proposal_version": proposal.version,
+                "proposal_digest": proposal.proposal_digest,
+                "message_digest": proposal.message_digest,
+                "confirmed": True,
+            }
+        )
+        if proposal is not None
+        else ""
+    )
+    expected_approval_digest = (
+        canonical_sha256(
+            {
+                "schema": "twos.commit_proposal_approval.v1",
+                "confirmation_digest": expected_confirmation_digest,
+                "proposal_digest": proposal.proposal_digest,
+                "approved_by_user_id": owner_id,
+            }
+        )
+        if proposal is not None
+        else ""
+    )
+    if (
+        proposal is None
+        or approval is None
+        or proposal.owner_id != owner_id
+        or approval.owner_id != owner_id
+        or approval.commit_proposal_id != proposal.id
+        or proposal.proposal_id != local_commit.proposal_public_id
+        or proposal.proposal_digest != local_commit.proposal_digest
+        or approval.approval_id != local_commit.proposal_approval_public_id
+        or approval.approval_digest != local_commit.proposal_approval_digest
+        or approval.proposal_public_id != proposal.proposal_id
+        or approval.proposal_version != proposal.version
+        or approval.proposal_digest != proposal.proposal_digest
+        or approval.message_digest != proposal.message_digest
+        or approval.approved_by_user_id != owner_id
+        or approval.confirmation_digest != expected_confirmation_digest
+        or approval.approval_digest != expected_approval_digest
+        or approval.state != "APPROVED"
+        or proposal.status_at_creation != "READY"
+        or local_commit.commit_oid is None
+        or local_commit.receipt_digest is None
+    ):
+        raise _failure(
+            "LOCAL_COMMIT_APPROVAL_INVALID",
+            "The local Commit is not bound to an exact approved Commit proposal.",
+        )
+    return proposal, approval
 
 
 def _one_remote_url(root: Path, *, push: bool) -> bytes:
@@ -384,6 +661,246 @@ def _safe_remote_display(raw: bytes) -> str:
     return f"origin (redacted:{digest})"
 
 
+def _dangerous_remote_configuration(root: Path) -> bool:
+    """Reject command-bearing Git configuration before any remote contact."""
+    result = _run_git(
+        root,
+        "config",
+        "--get-regexp",
+        _DANGEROUS_REMOTE_CONFIG.pattern,
+        check=False,
+    )
+    if result.returncode not in {0, 1}:
+        raise _failure(
+            "REMOTE_CONFIG_UNAVAILABLE",
+            "The origin transport configuration cannot be inspected safely.",
+        )
+    return result.returncode == 0 and bool(result.stdout.strip())
+
+
+def _credential_helper_fingerprint(root: Path) -> str:
+    helpers = _run_git(
+        root,
+        "config",
+        "--null",
+        "--get-regexp",
+        r"^credential(\..*)?\.helper$",
+        check=False,
+    )
+    if helpers.returncode not in {0, 1}:
+        raise _failure(
+            "REMOTE_CONFIG_UNAVAILABLE",
+            "The origin transport configuration cannot be inspected safely.",
+        )
+    if len(helpers.stdout) > MAX_CREDENTIAL_HELPER_CONFIG_BYTES:
+        raise _failure(
+            "REMOTE_CONFIG_UNSAFE",
+            "The configured credential-helper boundary is too large.",
+        )
+    raw_entries = [entry for entry in helpers.stdout.split(b"\0") if entry]
+    if len(raw_entries) > MAX_CREDENTIAL_HELPER_CONFIG_ENTRIES:
+        raise _failure(
+            "REMOTE_CONFIG_UNSAFE",
+            "The configured credential-helper boundary has too many entries.",
+        )
+    bounded_entries: list[dict[str, str]] = []
+    try:
+        for raw_entry in raw_entries:
+            raw_key, separator, raw_value = raw_entry.partition(b"\n")
+            if not separator or not raw_key:
+                raise ValueError("malformed credential helper entry")
+            key = raw_key.decode("ascii").casefold()
+            value = raw_value.decode("ascii").strip()
+            if key != "credential.helper":
+                # URL/context-scoped helpers participate in Git credential
+                # resolution but are not returned by `--get-all
+                # credential.helper`. Reject them instead of attempting to
+                # reproduce Git's matching rules or permitting a shell helper.
+                raise ValueError("scoped credential helper")
+            if value and value.casefold() not in _SAFE_CREDENTIAL_HELPERS:
+                raise ValueError("unsupported credential helper")
+            bounded_entries.append(
+                {
+                    "key_digest": _sha256_bytes(raw_key),
+                    "value_digest": _sha256_bytes(raw_value),
+                }
+            )
+    except (UnicodeDecodeError, ValueError) as exc:
+        raise _failure(
+            "REMOTE_CONFIG_UNSAFE",
+            "The configured credential helper is unsupported.",
+        ) from exc
+    return canonical_sha256(
+        {
+            "schema": "twos.credential_helper_boundary.v1",
+            "helpers": bounded_entries,
+        }
+    )
+
+
+def _sanitize_transport_output(material: bytes, *, root: Path) -> str:
+    text = material[:MAX_PUSH_COMMAND_OUTPUT_BYTES].decode(
+        "utf-8", errors="replace"
+    )
+    root_text = str(root)
+    if root_text:
+        text = text.replace(root_text, "<repository>")
+    text = _OUTPUT_SECRET_PATTERNS[0].sub(r"\1<redacted>@", text)
+    text = _OUTPUT_SECRET_PATTERNS[1].sub("<redacted-token>", text)
+    text = _OUTPUT_SECRET_PATTERNS[2].sub(r"\1<redacted>", text)
+    text = _OUTPUT_SECRET_PATTERNS[3].sub(r"\1<redacted>", text)
+    text = _OUTPUT_SECRET_PATTERNS[4].sub("<redacted-token>", text)
+    text = _OUTPUT_SECRET_PATTERNS[5].sub("<local-path>", text)
+    return "".join(
+        character
+        for character in text
+        if character in "\n\t" or ord(character) >= 32
+    )
+
+
+def _transport_output_evidence(
+    *,
+    root: Path,
+    result: subprocess.CompletedProcess[bytes] | None,
+    error: PushDeliveryError | None,
+) -> dict[str, Any]:
+    stdout = result.stdout if result is not None else (error.stdout if error else b"")
+    stderr = result.stderr if result is not None else (error.stderr if error else b"")
+    return {
+        "schema": "twos.push_command_output.v1",
+        "stdout": _sanitize_transport_output(stdout, root=root),
+        "stderr": _sanitize_transport_output(stderr, root=root),
+        "truncated": (
+            len(stdout) > MAX_PUSH_COMMAND_OUTPUT_BYTES
+            or len(stderr) > MAX_PUSH_COMMAND_OUTPUT_BYTES
+        ),
+        "timed_out": bool(error is not None and error.timed_out),
+    }
+
+
+def _local_remote_identity(root: Path, value: str) -> dict[str, Any]:
+    if value.startswith("file://"):
+        parsed = urlsplit(value)
+        if parsed.username or parsed.password or parsed.query or parsed.fragment:
+            raise _failure(
+                "REMOTE_URL_UNSAFE",
+                "The origin URL contains unsupported credential or query material.",
+            )
+        if parsed.netloc not in {"", "localhost"}:
+            raise _failure("REMOTE_URL_UNSAFE", "The origin file URL is unsupported.")
+        candidate = Path(parsed.path)
+    else:
+        candidate = Path(value)
+        if not candidate.is_absolute():
+            candidate = root / candidate
+    try:
+        unresolved = candidate.lstat()
+        if stat.S_ISLNK(unresolved.st_mode):
+            raise OSError("symlink remote")
+        resolved = candidate.resolve(strict=True)
+        details = resolved.stat()
+    except OSError as exc:
+        raise _failure(
+            "REMOTE_URL_UNSAFE",
+            "The local origin repository cannot be identified safely.",
+        ) from exc
+    if not stat.S_ISDIR(details.st_mode):
+        raise _failure(
+            "REMOTE_URL_UNSAFE",
+            "The local origin repository is unsupported.",
+        )
+    identity = canonical_sha256(
+        {
+            "schema": "twos.local_remote_identity.v1",
+            "resolved_path_digest": _sha256_bytes(os.fsencode(resolved)),
+            "device": details.st_dev,
+            "inode": details.st_ino,
+            "mode": stat.S_IMODE(details.st_mode),
+        }
+    )
+    return {
+        "kind": "local",
+        "scheme": "file",
+        "descriptor": f"local origin (identity:{identity[:12]})",
+        "identity": identity,
+    }
+
+
+def _validated_remote_descriptor(root: Path, raw: bytes) -> dict[str, Any]:
+    """Classify one bounded remote without persisting its raw URL."""
+    try:
+        value = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise _failure("REMOTE_URL_UNSAFE", "The origin URL is unsupported.") from exc
+    if (
+        not value
+        or any(ord(character) < 32 or ord(character) == 127 for character in value)
+        or re.match(r"^[A-Za-z][A-Za-z0-9+.-]*::", value)
+    ):
+        raise _failure("REMOTE_URL_UNSAFE", "The origin URL is unsupported.")
+    if value.startswith(("/", "./", "../", "file://")):
+        return _local_remote_identity(root, value)
+    if "://" in value:
+        try:
+            parsed = urlsplit(value)
+            scheme = parsed.scheme.casefold()
+            username = parsed.username
+            password = parsed.password
+            port = parsed.port
+        except ValueError as exc:
+            raise _failure("REMOTE_URL_UNSAFE", "The origin URL is unsupported.") from exc
+        if (
+            scheme not in _SAFE_REMOTE_SCHEMES
+            or not parsed.hostname
+            or password is not None
+            or parsed.query
+            or parsed.fragment
+            or (scheme == "https" and username is not None)
+        ):
+            raise _failure(
+                "REMOTE_URL_UNSAFE",
+                "The origin URL contains unsupported credential or transport material.",
+            )
+        if scheme == "file":
+            return _local_remote_identity(root, value)
+        host = parsed.hostname.casefold()
+        descriptor = (
+            f"{scheme}://{host}{':' + str(port) if port else ''}/[redacted path]"
+        )
+        return {
+            "kind": "network",
+            "scheme": scheme,
+            "descriptor": descriptor[:240],
+            "identity": canonical_sha256(
+                {
+                    "schema": "twos.network_remote_descriptor.v1",
+                    "scheme": scheme,
+                    "host": host,
+                    "port": port,
+                    "url_digest": _sha256_bytes(raw),
+                }
+            ),
+        }
+    scp_like = re.fullmatch(r"(?:([^@/\s:]+)@)?([^:/\s]+):(.+)", value)
+    if scp_like:
+        host = scp_like.group(2).casefold()
+        return {
+            "kind": "network",
+            "scheme": "ssh",
+            "descriptor": f"{host}:[redacted path]",
+            "identity": canonical_sha256(
+                {
+                    "schema": "twos.network_remote_descriptor.v1",
+                    "scheme": "ssh",
+                    "host": host,
+                    "port": None,
+                    "url_digest": _sha256_bytes(raw),
+                }
+            ),
+        }
+    return _local_remote_identity(root, value)
+
+
 def _transport_command(*args: str) -> list[str]:
     return [
         "git",
@@ -403,8 +920,25 @@ def _transport_command(*args: str) -> list[str]:
         "push.negotiate=false",
         "-c",
         "push.useForceIfIncludes=false",
+        "-c",
+        "protocol.allow=never",
+        "-c",
+        "protocol.file.allow=always",
+        "-c",
+        "protocol.https.allow=always",
+        "-c",
+        "protocol.ssh.allow=always",
         *args,
     ]
+
+
+def _transport_environment() -> dict[str, str]:
+    inherited = _git_environment()
+    return {
+        key: value
+        for key, value in inherited.items()
+        if key in _TRANSPORT_ENV_ALLOWLIST or key.startswith("GIT_")
+    }
 
 
 def _run_transport(
@@ -418,13 +952,16 @@ def _run_transport(
             cwd=root,
             capture_output=True,
             timeout=timeout,
-            env=_git_environment(),
+            env=_transport_environment(),
             check=False,
         )
     except subprocess.TimeoutExpired as exc:
-        raise _failure(
+        raise PushDeliveryError(
             "REMOTE_TIMEOUT",
             "The remote Git operation timed out.",
+            stdout=bytes(exc.stdout or b""),
+            stderr=bytes(exc.stderr or b""),
+            timed_out=True,
         ) from exc
     except OSError as exc:
         raise _failure(
@@ -470,6 +1007,12 @@ def _live_origin_main(root: Path) -> str:
 
 
 def _remote_evidence(context: BoundPushContext) -> dict[str, Any]:
+    if _dangerous_remote_configuration(context.root):
+        raise _failure(
+            "REMOTE_CONFIG_UNSAFE",
+            "The origin transport contains unsupported command configuration.",
+        )
+    credential_helper_fingerprint = _credential_helper_fingerprint(context.root)
     fetch_url = _one_remote_url(context.root, push=False)
     push_url = _one_remote_url(context.root, push=True)
     fetch_url_digest = _sha256_bytes(fetch_url)
@@ -479,10 +1022,15 @@ def _remote_evidence(context: BoundPushContext) -> dict[str, Any]:
             "REMOTE_DESTINATION_MISMATCH",
             "origin fetch and Push destinations do not match exactly.",
         )
+    descriptor = _validated_remote_descriptor(context.root, push_url)
     return {
         "fetch_url_digest": fetch_url_digest,
         "push_url_digest": push_url_digest,
-        "display": _safe_remote_display(push_url),
+        "display": descriptor["descriptor"],
+        "remote_descriptor_identity": descriptor["identity"],
+        "transport_kind": descriptor["kind"],
+        "transport_scheme": descriptor["scheme"],
+        "remote_credential_helper_fingerprint": credential_helper_fingerprint,
     }
 
 
@@ -540,6 +1088,23 @@ def _delivery_refs_evidence(root: Path) -> dict[str, Any]:
 
 def _local_observation(context: BoundPushContext) -> dict[str, Any]:
     root = context.root
+    target_blocker: dict[str, str] | None = None
+    try:
+        _assert_targets_match(root, context.entries)
+    except CommitBuilderError as exc:
+        code = str(getattr(exc, "code", "DELIVERY_PATH_CHANGED"))
+        if code not in {
+            "APPLIED_PATH_CHANGED",
+            "TARGET_CONTENT_CHANGED",
+            "POST_APPLY_TARGET_CHANGED",
+            "PATH_BOUNDARY_BLOCKED",
+            "WORKSPACE_ESCAPE",
+        }:
+            code = "DELIVERY_PATH_CHANGED"
+        target_blocker = _safe_failure(
+            code,
+            "An exact delivery path changed after the approved local Commit.",
+        )
     head = _git_text(root, "rev-parse", "HEAD")
     branch_ref = _git_text(root, "symbolic-ref", "--quiet", "HEAD")
     status = _run_git(
@@ -550,6 +1115,28 @@ def _local_observation(context: BoundPushContext) -> dict[str, Any]:
         "--untracked-files=all",
     ).stdout
     staged_paths = _staged_path_set(root, head)
+    owned_paths = {
+        str(item.get("path"))
+        for item in _decoded_list(context.local_commit.staged_entries_json)
+        if isinstance(item, dict) and item.get("path")
+    }
+    owned_staged_paths = sorted(
+        owned_paths.intersection(staged_paths),
+        key=lambda value: value.encode("utf-8"),
+    )
+    unmerged = _run_git(root, "ls-files", "--unmerged", "-z").stdout
+    index_entries = _index_entries(root)
+    index_semantic_rows = [
+        {
+            "path_identity": _sha256_bytes(path.encode("utf-8")),
+            "mode": entry.get("mode"),
+            "blob_oid": entry.get("blob_oid"),
+            "stage": entry.get("stage"),
+        }
+        for path, entry in sorted(
+            index_entries.items(), key=lambda item: item[0].encode("utf-8")
+        )
+    ]
     baseline = _decoded_object(
         _decoded_object(context.apply_session.after_evidence_json).get("global")
     )
@@ -570,6 +1157,21 @@ def _local_observation(context: BoundPushContext) -> dict[str, Any]:
         "index_clean": not staged_paths,
         "staged_path_count": len(staged_paths),
         "staged_paths": staged_paths,
+        "owned_staged_path_count": len(owned_staged_paths),
+        "owned_staged_path_identities": [
+            _sha256_bytes(path.encode("utf-8")) for path in owned_staged_paths
+        ],
+        "unmerged_path_count": len([item for item in unmerged.split(b"\0") if item]),
+        "target_blocker": target_blocker,
+        "worktree_status_digest": _sha256_bytes(status),
+        "index_semantic_digest": canonical_sha256(index_semantic_rows),
+        "unrelated_change_count": len(
+            [item for item in status.split(b"\0") if item]
+        ),
+        "unrelated_worktree_fingerprint": global_evidence.get(
+            "worktree_fingerprint"
+        ),
+        "unrelated_source_digest": global_evidence.get("source_digest"),
         "remote_config_fingerprint": global_evidence.get("remote_fingerprint"),
         "local_config_fingerprint": global_evidence.get("local_config_fingerprint"),
         "repository_locator_fingerprint": global_evidence.get(
@@ -634,6 +1236,14 @@ def _preflight_observation(context: BoundPushContext) -> dict[str, Any]:
     remote = _remote_evidence(context)
     post_commit = _decoded_object(context.local_commit.post_commit_evidence_json)
     blockers: list[dict[str, str]] = []
+    if isinstance(local.get("target_blocker"), dict):
+        blockers.append(dict(local["target_blocker"]))
+        blockers.append(
+            _safe_failure(
+                "WORKTREE_DIRTY",
+                "An exact delivery path is modified in the working tree.",
+            )
+        )
     if context.plan.branch != PUSH_BRANCH or context.local_commit.branch != PUSH_BRANCH:
         blockers.append(_safe_failure("WRONG_BRANCH", "Push is limited to branch main."))
     if local["branch_ref"] != PUSH_BRANCH_REF:
@@ -647,10 +1257,26 @@ def _preflight_observation(context: BoundPushContext) -> dict[str, Any]:
                 "The approved Commit parent does not match the expected base.",
             )
         )
-    if not local["worktree_clean"]:
-        blockers.append(_safe_failure("WORKTREE_DIRTY", "The working tree is not clean."))
-    if not local["index_clean"] or local["staged_path_count"] != 0:
-        blockers.append(_safe_failure("INDEX_DIRTY", "The Git index is not clean."))
+    if local["owned_staged_path_count"]:
+        blockers.append(
+            _safe_failure(
+                "DELIVERY_PATH_STAGED",
+                "An exact delivery path changed in the Git index after Commit.",
+            )
+        )
+        blockers.append(
+            _safe_failure(
+                "INDEX_DIRTY",
+                "An exact delivery path is modified in the Git index.",
+            )
+        )
+    if local["unmerged_path_count"]:
+        blockers.append(
+            _safe_failure(
+                "INDEX_CONFLICT",
+                "The Git index contains an unresolved conflict.",
+            )
+        )
     if (
         local["repository_locator_fingerprint"]
         != context.local_commit.repository_locator_fingerprint
@@ -698,7 +1324,12 @@ def _preflight_observation(context: BoundPushContext) -> dict[str, Any]:
     # matches the approved Local Commit receipt. This prevents a changed URL
     # or config rewrite from redirecting the live preflight.
     live_remote = None if blockers else _live_origin_main(context.root)
-    if live_remote is not None and live_remote != context.local_commit.parent_oid:
+    already_delivered = live_remote == context.local_commit.commit_oid
+    if (
+        live_remote is not None
+        and not already_delivered
+        and live_remote != context.local_commit.parent_oid
+    ):
         blockers.append(
             _safe_failure(
                 "REMOTE_MOVED",
@@ -717,20 +1348,46 @@ def _preflight_observation(context: BoundPushContext) -> dict[str, Any]:
         "expected_remote_base_sha": context.local_commit.parent_oid,
         "observed_remote_base_sha": live_remote,
         "destination": "origin/main",
-        "ahead": 1 if live_remote == context.local_commit.parent_oid else None,
-        "behind": 0 if live_remote == context.local_commit.parent_oid else None,
+        "ahead": (
+            0
+            if already_delivered
+            else 1
+            if live_remote == context.local_commit.parent_oid
+            else None
+        ),
+        "behind": (
+            0
+            if already_delivered or live_remote == context.local_commit.parent_oid
+            else None
+        ),
         "worktree_clean": local["worktree_clean"],
         "index_clean": local["index_clean"],
         "staged_path_count": local["staged_path_count"],
+        "owned_staged_path_count": local["owned_staged_path_count"],
+        "unmerged_path_count": local["unmerged_path_count"],
+        "unrelated_change_count": local["unrelated_change_count"],
+        "unrelated_worktree_fingerprint": local[
+            "unrelated_worktree_fingerprint"
+        ],
+        "unrelated_source_digest": local["unrelated_source_digest"],
+        "worktree_status_digest": local["worktree_status_digest"],
+        "index_semantic_digest": local["index_semantic_digest"],
         "remote_fetch_url_digest": remote["fetch_url_digest"],
         "remote_push_url_digest": remote["push_url_digest"],
         "remote_display": remote["display"],
+        "remote_descriptor_identity": remote["remote_descriptor_identity"],
+        "remote_transport_kind": remote["transport_kind"],
+        "remote_transport_scheme": remote["transport_scheme"],
+        "remote_credential_helper_fingerprint": remote[
+            "remote_credential_helper_fingerprint"
+        ],
         "remote_config_fingerprint": local["remote_config_fingerprint"],
         "delivery_refs_fingerprint": local["delivery_refs_fingerprint"],
         "origin_main_tracking_oid": local["origin_main_tracking_oid"],
         "origin_head_target": local["origin_head_target"],
         "other_ref_count": local["other_ref_count"],
         "command": command,
+        "already_delivered": already_delivered,
         "blockers": blockers,
     }
 
@@ -807,11 +1464,25 @@ def _execution_out(row: PushExecution | None) -> dict[str, Any] | None:
     blockers = (
         [] if row.state == "PUSHED" else _decoded_list(row.failure_evidence_json)
     )
+    canonical_state = (
+        "ALREADY_DELIVERED"
+        if row.state == "PUSHED" and row.failure_category == "ALREADY_DELIVERED"
+        else "NEEDS_REVIEW"
+        if row.state == "RECONCILIATION_BLOCKED"
+        else row.state
+    )
     return {
         "id": row.push_execution_id,
         "state": row.state,
         "status": row.state,
         "status_label": _status_label(row.state),
+        "canonical_state": canonical_state,
+        "needs_review": canonical_state == "NEEDS_REVIEW",
+        "already_delivered": canonical_state == "ALREADY_DELIVERED",
+        "transport_attempted": row.command_attempt_count == 1,
+        "remote_receipt_verified": bool(
+            row.state == "PUSHED" and row.receipt_digest
+        ),
         "confirmation_digest": row.confirmation_digest,
         "repository": row.sanitized_repository_identity,
         "branch": row.branch,
@@ -824,6 +1495,10 @@ def _execution_out(row: PushExecution | None) -> dict[str, Any] | None:
         "worktree_clean": preflight.get("worktree_clean"),
         "index_clean": preflight.get("index_clean"),
         "staged_path_count": preflight.get("staged_path_count"),
+        "unrelated_change_count": preflight.get("unrelated_change_count"),
+        "unrelated_evidence_preserved": (
+            post.get("unrelated_evidence_preserved") if post else None
+        ),
         "refspec": row.refspec,
         "command_attempt_count": row.command_attempt_count,
         "post_push": post,
@@ -857,6 +1532,7 @@ def _execution_out(row: PushExecution | None) -> dict[str, Any] | None:
             "remote_push_url_digest": row.remote_push_url_digest,
             "remote_config_fingerprint": row.remote_config_fingerprint,
             "command_evidence": _decoded_object(row.command_evidence_json),
+            "command_output": _decoded_object(row.command_output_json),
             "failure_category": row.failure_category or None,
             "command_exit_code": row.command_exit_code,
         },
@@ -955,14 +1631,23 @@ def _reconciliation_locked(
         }
     post_commit = _decoded_object(context.local_commit.post_commit_evidence_json)
     preflight = _decoded_object(row.preflight_evidence_json)
+    if isinstance(local.get("target_blocker"), dict):
+        blockers.append(dict(local["target_blocker"]))
     if local["head"] != row.approved_commit_oid:
         blockers.append(_safe_failure("HEAD_CHANGED", "Local HEAD changed."))
     if local["branch_ref"] != PUSH_BRANCH_REF:
         blockers.append(_safe_failure("WRONG_BRANCH", "The current branch is not main."))
-    if not local["worktree_clean"]:
-        blockers.append(_safe_failure("WORKTREE_DIRTY", "The working tree is not clean."))
-    if not local["index_clean"] or local["staged_path_count"] != 0:
-        blockers.append(_safe_failure("INDEX_DIRTY", "The Git index is not clean."))
+    if local["owned_staged_path_count"]:
+        blockers.append(
+            _safe_failure(
+                "DELIVERY_PATH_STAGED",
+                "An exact delivery path changed in the Git index.",
+            )
+        )
+    if local["unmerged_path_count"]:
+        blockers.append(
+            _safe_failure("INDEX_CONFLICT", "The Git index contains a conflict.")
+        )
     if remote["fetch_url_digest"] != row.remote_fetch_url_digest or remote[
         "push_url_digest"
     ] != row.remote_push_url_digest:
@@ -971,6 +1656,46 @@ def _reconciliation_locked(
         blockers.append(
             _safe_failure("REMOTE_URL_CHANGED", "The origin configuration changed.")
         )
+    for observed, key, code, message in (
+        (
+            local,
+            "worktree_status_digest",
+            "WORKTREE_CHANGED_DURING_PUSH",
+            "Unrelated working-tree evidence changed during Push.",
+        ),
+        (
+            local,
+            "index_semantic_digest",
+            "INDEX_CHANGED_DURING_PUSH",
+            "The Git index changed during Push.",
+        ),
+        (
+            local,
+            "unrelated_worktree_fingerprint",
+            "WORKTREE_CHANGED_DURING_PUSH",
+            "Unrelated file content changed during Push.",
+        ),
+        (
+            local,
+            "unrelated_source_digest",
+            "WORKTREE_CHANGED_DURING_PUSH",
+            "Unrelated source evidence changed during Push.",
+        ),
+        (
+            remote,
+            "remote_descriptor_identity",
+            "REMOTE_URL_CHANGED",
+            "The origin destination identity changed during Push.",
+        ),
+        (
+            remote,
+            "remote_credential_helper_fingerprint",
+            "REMOTE_CONFIG_CHANGED",
+            "The credential-helper boundary changed during Push.",
+        ),
+    ):
+        if observed.get(key) != preflight.get(key):
+            blockers.append(_safe_failure(code, message))
     if local["local_config_fingerprint"] != post_commit.get(
         "local_config_fingerprint"
     ):
@@ -1056,6 +1781,13 @@ def _reconciliation_locked(
         "worktree_clean": local["worktree_clean"],
         "index_clean": local["index_clean"],
         "staged_path_count": local["staged_path_count"],
+        "owned_staged_path_count": local["owned_staged_path_count"],
+        "unrelated_change_count": local["unrelated_change_count"],
+        "unrelated_evidence_preserved": not any(
+            item.get("code")
+            in {"WORKTREE_CHANGED_DURING_PUSH", "INDEX_CHANGED_DURING_PUSH"}
+            for item in blockers
+        ),
         "blockers": blockers,
     }
 
@@ -1212,6 +1944,1205 @@ def _delivery_result(
     }
 
 
+def _push_plan_out(
+    plan: PushPlan | None,
+    approval: PushPlanApproval | None = None,
+    execution: PushExecution | None = None,
+) -> dict[str, Any] | None:
+    if plan is None:
+        return None
+    expired = plan.expires_at is not None and utc_now() >= plan.expires_at
+    effective_status = "EXPIRED" if expired and plan.status_at_creation == "READY" else plan.status_at_creation
+    preflight = _decoded_object(plan.preflight_evidence_json)
+    return {
+        "id": plan.push_plan_id,
+        "version": plan.version,
+        "status": effective_status,
+        "status_label": effective_status.replace("_", " "),
+        "approval_state": (
+            "APPROVED"
+            if approval is not None
+            else "NOT_REQUIRED"
+            if plan.status_at_creation == "ALREADY_DELIVERED"
+            else "PENDING"
+        ),
+        "local_commit_sha": plan.approved_commit_oid,
+        "local_branch": plan.branch,
+        "remote": plan.remote_name,
+        "remote_display": preflight.get("remote_display"),
+        "target_ref": plan.destination_ref,
+        "remote_old_sha": plan.observed_remote_base_oid or None,
+        "remote_new_sha": plan.expected_remote_oid,
+        "remote_exists": plan.remote_exists,
+        "fast_forward": bool(
+            plan.status_at_creation in {"READY", "ALREADY_DELIVERED"}
+        ),
+        "refspec": plan.refspec,
+        "no_force": True,
+        "no_tags": True,
+        "reversible": False,
+        "final_confirmation_text": PUSH_CONFIRMATION,
+        "blockers": _decoded_list(plan.blocker_codes_json),
+        "created_at": plan.created_at.isoformat() + "Z",
+        "expires_at": plan.expires_at.isoformat() + "Z" if plan.expires_at else None,
+        "approval": (
+            {
+                "id": approval.approval_id,
+                "state": approval.state,
+                "approved_at": approval.approved_at.isoformat() + "Z",
+            }
+            if approval is not None
+            else None
+        ),
+        "execution": _execution_out(execution),
+        "advanced": {
+            "policy_version": plan.policy_version,
+            "plan_digest": plan.plan_digest,
+            "binding_digest": plan.binding_digest,
+            "preflight_evidence_digest": plan.preflight_evidence_digest,
+            "remote_fetch_url_digest": plan.remote_fetch_url_digest,
+            "remote_push_url_digest": plan.remote_push_url_digest,
+            "remote_config_fingerprint": plan.remote_config_fingerprint,
+            "commit_proposal_id": plan.commit_proposal_public_id or None,
+            "commit_proposal_digest": plan.commit_proposal_digest or None,
+            "commit_proposal_approval_id": (
+                plan.commit_proposal_approval_public_id or None
+            ),
+        },
+    }
+
+
+def _push_approval_out(
+    approval: PushPlanApproval | None,
+) -> dict[str, Any] | None:
+    if approval is None:
+        return None
+    return {
+        "id": approval.approval_id,
+        "state": approval.state,
+        "approved_at": approval.approved_at.isoformat() + "Z",
+        "confirmation_text": PUSH_PLAN_APPROVAL_CONFIRMATION,
+        "advanced": {
+            "approval_digest": approval.approval_digest,
+            "confirmation_digest": approval.confirmation_digest,
+            "push_plan_id": approval.push_plan_public_id,
+            "push_plan_version": approval.push_plan_version,
+            "push_plan_digest": approval.push_plan_digest,
+            "approved_commit_oid": approval.approved_commit_oid,
+            "expected_remote_oid": approval.expected_remote_oid,
+            "remote_config_fingerprint": approval.remote_config_fingerprint,
+        },
+    }
+
+
+def _latest_push_plan(
+    session: Session,
+    *,
+    owner_id: int,
+    local_commit_id: int,
+) -> PushPlan | None:
+    return session.scalar(
+        select(PushPlan)
+        .where(
+            PushPlan.owner_id == owner_id,
+            PushPlan.local_commit_execution_id == local_commit_id,
+        )
+        .order_by(PushPlan.version.desc(), PushPlan.id.desc())
+        .limit(1)
+    )
+
+
+def _approval_for_push_plan(
+    session: Session,
+    *,
+    owner_id: int,
+    plan_id: int,
+) -> PushPlanApproval | None:
+    return session.scalar(
+        select(PushPlanApproval).where(
+            PushPlanApproval.owner_id == owner_id,
+            PushPlanApproval.push_plan_id == plan_id,
+        )
+    )
+
+
+def _execution_for_push_plan(
+    session: Session,
+    *,
+    owner_id: int,
+    plan_id: int,
+) -> PushExecution | None:
+    return session.scalar(
+        select(PushExecution)
+        .where(
+            PushExecution.owner_id == owner_id,
+            PushExecution.push_plan_id == plan_id,
+        )
+        .order_by(PushExecution.id.desc())
+        .limit(1)
+    )
+
+
+def _push_plan_current_blockers(
+    plan: PushPlan,
+    observation: dict[str, Any],
+) -> list[dict[str, str]]:
+    blockers = [
+        dict(item)
+        for item in observation.get("blockers", [])
+        if isinstance(item, dict)
+    ]
+    preflight = _decoded_object(plan.preflight_evidence_json)
+    comparisons = (
+        ("local_commit_sha", plan.approved_commit_oid, "HEAD_CHANGED"),
+        (
+            "observed_remote_base_sha",
+            plan.observed_remote_base_oid,
+            "REMOTE_MOVED",
+        ),
+        (
+            "remote_fetch_url_digest",
+            plan.remote_fetch_url_digest,
+            "REMOTE_URL_CHANGED",
+        ),
+        (
+            "remote_push_url_digest",
+            plan.remote_push_url_digest,
+            "REMOTE_URL_CHANGED",
+        ),
+        (
+            "remote_config_fingerprint",
+            plan.remote_config_fingerprint,
+            "REMOTE_URL_CHANGED",
+        ),
+        (
+            "worktree_status_digest",
+            preflight.get("worktree_status_digest"),
+            "WORKTREE_CHANGED",
+        ),
+        (
+            "index_semantic_digest",
+            preflight.get("index_semantic_digest"),
+            "INDEX_CHANGED",
+        ),
+        (
+            "unrelated_worktree_fingerprint",
+            preflight.get("unrelated_worktree_fingerprint"),
+            "WORKTREE_CHANGED",
+        ),
+        (
+            "unrelated_source_digest",
+            preflight.get("unrelated_source_digest"),
+            "WORKTREE_CHANGED",
+        ),
+        (
+            "remote_descriptor_identity",
+            preflight.get("remote_descriptor_identity"),
+            "REMOTE_URL_CHANGED",
+        ),
+        (
+            "remote_credential_helper_fingerprint",
+            preflight.get("remote_credential_helper_fingerprint"),
+            "REMOTE_CONFIG_CHANGED",
+        ),
+        (
+            "delivery_refs_fingerprint",
+            preflight.get("delivery_refs_fingerprint"),
+            "REFS_CHANGED",
+        ),
+        (
+            "origin_main_tracking_oid",
+            preflight.get("origin_main_tracking_oid"),
+            "REFS_CHANGED",
+        ),
+        (
+            "origin_head_target",
+            preflight.get("origin_head_target"),
+            "REFS_CHANGED",
+        ),
+    )
+    messages = {
+        "HEAD_CHANGED": "Local HEAD changed after Push Plan review.",
+        "REMOTE_MOVED": "Live origin/main changed after Push Plan review.",
+        "REMOTE_URL_CHANGED": "The origin destination changed after Push Plan review.",
+        "REMOTE_CONFIG_CHANGED": "The credential-helper boundary changed after Push Plan review.",
+        "WORKTREE_CHANGED": "Working-tree evidence changed after Push Plan review.",
+        "INDEX_CHANGED": "The Git index changed after Push Plan review.",
+        "REFS_CHANGED": "Local Git refs changed after Push Plan review.",
+    }
+    for key, expected, code in comparisons:
+        if observation.get(key) != expected:
+            blockers.append(_safe_failure(code, messages[code]))
+    deduplicated: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for item in blockers:
+        code = str(item.get("code") or "PUSH_PLAN_CHANGED")
+        if code in seen:
+            continue
+        seen.add(code)
+        deduplicated.append(
+            _safe_failure(code, str(item.get("message") or "Push Plan changed."))
+        )
+    return deduplicated
+
+
+def _validate_push_plan_binding(
+    plan: PushPlan,
+    *,
+    owner_id: int,
+    context: BoundPushContext,
+    proposal: CommitProposal,
+    proposal_approval: CommitProposalApproval,
+) -> None:
+    preflight = _decoded_object(plan.preflight_evidence_json)
+    blockers = _decoded_list(plan.blocker_codes_json)
+    expected_preflight_digest = canonical_sha256(preflight)
+    expected_binding_digest = canonical_sha256(
+        {
+            "schema": "twos.push_plan_binding.v1",
+            "owner_id": owner_id,
+            "local_commit_execution_id": context.local_commit.commit_execution_id,
+            "local_commit_receipt_digest": context.local_commit.receipt_digest,
+            "commit_proposal_id": proposal.proposal_id,
+            "commit_proposal_digest": proposal.proposal_digest,
+            "commit_proposal_approval_id": proposal_approval.approval_id,
+            "commit_proposal_approval_digest": proposal_approval.approval_digest,
+            "run_id": context.run.id,
+            "task_id": context.run.task_id,
+            "repository_locator_fingerprint": context.plan.repository_locator_fingerprint,
+            "branch_ref": PUSH_BRANCH_REF,
+            "remote": PUSH_REMOTE,
+            "destination_ref": PUSH_BRANCH_REF,
+            "approved_commit_oid": context.local_commit.commit_oid,
+            "observed_remote_base_oid": preflight.get(
+                "observed_remote_base_sha"
+            ),
+            "remote_config_fingerprint": preflight.get(
+                "remote_config_fingerprint"
+            ),
+        }
+    )
+    command = _decoded_object(preflight.get("command"))
+    expected_plan_digest = canonical_sha256(
+        {
+            "schema": "twos.push_plan.v1",
+            "policy_version": PUSH_DELIVERY_POLICY_VERSION,
+            "version": plan.version,
+            "binding_digest": expected_binding_digest,
+            "preflight_evidence_digest": expected_preflight_digest,
+            "refspec": command.get("refspec"),
+            "blockers": blockers,
+            "status_at_creation": plan.status_at_creation,
+            "expires_at": plan.expires_at.isoformat() if plan.expires_at else None,
+        }
+    )
+    if (
+        plan.owner_id != owner_id
+        or plan.local_commit_execution_id != context.local_commit.id
+        or plan.commit_proposal_id != proposal.id
+        or plan.commit_proposal_approval_id != proposal_approval.id
+        or plan.run_id != context.run.id
+        or plan.task_id != context.run.task_id
+        or plan.local_commit_public_id
+        != context.local_commit.commit_execution_id
+        or plan.local_commit_receipt_digest != context.local_commit.receipt_digest
+        or plan.commit_proposal_public_id != proposal.proposal_id
+        or plan.commit_proposal_digest != proposal.proposal_digest
+        or plan.commit_proposal_approval_public_id != proposal_approval.approval_id
+        or plan.commit_proposal_approval_digest
+        != proposal_approval.approval_digest
+        or plan.repository_locator_fingerprint
+        != context.plan.repository_locator_fingerprint
+        or plan.sanitized_repository_identity
+        != context.plan.sanitized_repository_identity
+        or plan.branch != PUSH_BRANCH
+        or plan.branch_ref != PUSH_BRANCH_REF
+        or plan.remote_name != PUSH_REMOTE
+        or plan.destination_ref != PUSH_BRANCH_REF
+        or plan.approved_commit_oid != context.local_commit.commit_oid
+        or plan.expected_parent_oid != context.local_commit.parent_oid
+        or plan.observed_remote_base_oid
+        != str(preflight.get("observed_remote_base_sha") or "")
+        or plan.expected_remote_oid != context.local_commit.commit_oid
+        or plan.subject != proposal.subject
+        or plan.subject_digest
+        != _sha256_bytes(proposal.subject.encode("utf-8"))
+        or plan.remote_fetch_url_digest
+        != str(preflight.get("remote_fetch_url_digest") or "")
+        or plan.remote_push_url_digest
+        != str(preflight.get("remote_push_url_digest") or "")
+        or plan.remote_config_fingerprint
+        != str(preflight.get("remote_config_fingerprint") or "")
+        or plan.refspec != str(command.get("refspec") or "")
+        or plan.preflight_evidence_digest != expected_preflight_digest
+        or plan.binding_digest != expected_binding_digest
+        or plan.plan_digest != expected_plan_digest
+        or plan.policy_version != PUSH_DELIVERY_POLICY_VERSION
+    ):
+        raise _failure(
+            "PUSH_PLAN_BINDING_INVALID",
+            "The Push Plan no longer matches its immutable delivery evidence.",
+        )
+
+
+def _validate_push_plan_approval(
+    plan: PushPlan,
+    approval: PushPlanApproval,
+    *,
+    owner_id: int,
+    expected_approval_digest: str,
+) -> None:
+    expected_confirmation_digest = canonical_sha256(
+        {
+            "schema": "twos.push_plan_owner_approval.v1",
+            "owner_id": owner_id,
+            "push_plan_id": plan.push_plan_id,
+            "push_plan_version": plan.version,
+            "push_plan_digest": plan.plan_digest,
+            "confirmation": PUSH_PLAN_APPROVAL_CONFIRMATION,
+        }
+    )
+    expected_digest = canonical_sha256(
+        {
+            "schema": "twos.push_plan_approval.v1",
+            "owner_id": owner_id,
+            "push_plan_id": plan.push_plan_id,
+            "push_plan_version": plan.version,
+            "push_plan_digest": plan.plan_digest,
+            "approved_commit_oid": plan.approved_commit_oid,
+            "expected_remote_oid": plan.expected_remote_oid,
+            "remote_config_fingerprint": plan.remote_config_fingerprint,
+            "confirmation_digest": expected_confirmation_digest,
+        }
+    )
+    if (
+        approval.owner_id != owner_id
+        or approval.push_plan_id != plan.id
+        or approval.push_plan_public_id != plan.push_plan_id
+        or approval.push_plan_version != plan.version
+        or approval.push_plan_digest != plan.plan_digest
+        or approval.approved_commit_oid != plan.approved_commit_oid
+        or approval.expected_remote_oid != plan.expected_remote_oid
+        or approval.remote_config_fingerprint != plan.remote_config_fingerprint
+        or approval.approved_by_user_id != owner_id
+        or approval.state != "APPROVED"
+        or approval.confirmation_digest != expected_confirmation_digest
+        or approval.approval_digest != expected_digest
+        or expected_approval_digest != approval.approval_digest
+    ):
+        raise _failure(
+            "PUSH_APPROVAL_BINDING_INVALID",
+            "The exact approved Push Plan binding changed.",
+        )
+
+
+def get_or_create_push_plan(
+    session: Session,
+    *,
+    owner_id: int,
+    local_commit: LocalCommitExecution,
+    source_repo: Path,
+    expires_in_seconds: int = 900,
+) -> tuple[PushPlan, bool]:
+    if not 60 <= expires_in_seconds <= 86_400:
+        raise _failure("PUSH_PLAN_EXPIRY_INVALID", "The Push Plan expiry is invalid.")
+    context = _bound_push_context(
+        session,
+        owner_id=owner_id,
+        local_commit=local_commit,
+        source_repo=source_repo,
+    )
+    proposal, proposal_approval = _bound_commit_proposal(
+        session,
+        owner_id=owner_id,
+        local_commit=local_commit,
+    )
+    latest = _latest_push_plan(
+        session,
+        owner_id=owner_id,
+        local_commit_id=local_commit.id,
+    )
+    if latest is not None:
+        existing_approval = _approval_for_push_plan(
+            session,
+            owner_id=owner_id,
+            plan_id=latest.id,
+        )
+        if (
+            latest.status_at_creation == "ALREADY_DELIVERED"
+            or existing_approval is not None
+        ):
+            return latest, False
+    with _push_repository_lock(local_commit.repository_locator_fingerprint):
+        session.expire_all()
+        local_commit = session.get(LocalCommitExecution, local_commit.id)
+        if local_commit is None or local_commit.owner_id != owner_id:
+            raise _failure("LOCAL_COMMIT_NOT_FOUND", "Local Commit result not found.")
+        context = _bound_push_context(
+            session,
+            owner_id=owner_id,
+            local_commit=local_commit,
+            source_repo=source_repo,
+        )
+        proposal, proposal_approval = _bound_commit_proposal(
+            session,
+            owner_id=owner_id,
+            local_commit=local_commit,
+        )
+        latest = _latest_push_plan(
+            session,
+            owner_id=owner_id,
+            local_commit_id=local_commit.id,
+        )
+        existing_approval = (
+            _approval_for_push_plan(
+                session,
+                owner_id=owner_id,
+                plan_id=latest.id,
+            )
+            if latest is not None
+            else None
+        )
+        if latest is not None and (
+            latest.status_at_creation == "ALREADY_DELIVERED"
+            or existing_approval is not None
+        ):
+            return latest, False
+        observation = _safe_preflight_observation(context)
+        if (
+            latest is not None
+            and latest.status_at_creation == "READY"
+            and latest.expires_at is not None
+            and utc_now() < latest.expires_at
+            and not _push_plan_current_blockers(latest, observation)
+        ):
+            return latest, False
+        blockers = list(observation.get("blockers") or [])
+        status = (
+            "BLOCKED"
+            if blockers
+            else "ALREADY_DELIVERED"
+            if observation.get("already_delivered") is True
+            else "READY"
+        )
+        version = (latest.version + 1) if latest is not None else 1
+        created_at = utc_now()
+        expires_at = created_at + timedelta(seconds=expires_in_seconds)
+        preflight_material = {
+            **observation,
+            "schema": "twos.push_plan_preflight.v1",
+            "policy_version": PUSH_DELIVERY_POLICY_VERSION,
+            "owner_id": owner_id,
+            "local_commit_execution_id": local_commit.commit_execution_id,
+            "local_commit_receipt_digest": local_commit.receipt_digest,
+        }
+        preflight_digest = canonical_sha256(preflight_material)
+        binding_material = {
+            "schema": "twos.push_plan_binding.v1",
+            "owner_id": owner_id,
+            "local_commit_execution_id": local_commit.commit_execution_id,
+            "local_commit_receipt_digest": local_commit.receipt_digest,
+            "commit_proposal_id": proposal.proposal_id,
+            "commit_proposal_digest": proposal.proposal_digest,
+            "commit_proposal_approval_id": proposal_approval.approval_id,
+            "commit_proposal_approval_digest": proposal_approval.approval_digest,
+            "run_id": context.run.id,
+            "task_id": context.run.task_id,
+            "repository_locator_fingerprint": context.plan.repository_locator_fingerprint,
+            "branch_ref": PUSH_BRANCH_REF,
+            "remote": PUSH_REMOTE,
+            "destination_ref": PUSH_BRANCH_REF,
+            "approved_commit_oid": local_commit.commit_oid,
+            "observed_remote_base_oid": observation.get("observed_remote_base_sha"),
+            "remote_config_fingerprint": observation.get(
+                "remote_config_fingerprint"
+            ),
+        }
+        binding_digest = canonical_sha256(binding_material)
+        command = _decoded_object(observation.get("command"))
+        plan_material = {
+            "schema": "twos.push_plan.v1",
+            "policy_version": PUSH_DELIVERY_POLICY_VERSION,
+            "version": version,
+            "binding_digest": binding_digest,
+            "preflight_evidence_digest": preflight_digest,
+            "refspec": command.get("refspec"),
+            "blockers": blockers,
+            "status_at_creation": status,
+            "expires_at": expires_at.isoformat(),
+        }
+        plan_digest = canonical_sha256(plan_material)
+        row = PushPlan(
+            push_plan_id="pushplan_" + plan_digest[:40],
+            owner_id=owner_id,
+            local_commit_execution_id=local_commit.id,
+            commit_proposal_id=proposal.id,
+            commit_proposal_approval_id=proposal_approval.id,
+            run_id=context.run.id,
+            task_id=context.run.task_id,
+            version=version,
+            supersedes_push_plan_id=latest.id if latest is not None else None,
+            local_commit_public_id=local_commit.commit_execution_id,
+            local_commit_receipt_digest=str(local_commit.receipt_digest),
+            commit_proposal_public_id=proposal.proposal_id,
+            commit_proposal_digest=proposal.proposal_digest,
+            commit_proposal_approval_public_id=proposal_approval.approval_id,
+            commit_proposal_approval_digest=proposal_approval.approval_digest,
+            repository_locator_fingerprint=context.plan.repository_locator_fingerprint,
+            sanitized_repository_identity=context.plan.sanitized_repository_identity,
+            branch=PUSH_BRANCH,
+            branch_ref=PUSH_BRANCH_REF,
+            remote_name=PUSH_REMOTE,
+            destination_ref=PUSH_BRANCH_REF,
+            approved_commit_oid=str(local_commit.commit_oid),
+            expected_parent_oid=str(local_commit.parent_oid),
+            observed_remote_base_oid=str(
+                observation.get("observed_remote_base_sha") or ""
+            ),
+            expected_remote_oid=str(local_commit.commit_oid),
+            remote_exists=bool(observation.get("observed_remote_base_sha")),
+            subject=proposal.subject,
+            subject_digest=_sha256_bytes(proposal.subject.encode("utf-8")),
+            remote_fetch_url_digest=str(
+                observation.get("remote_fetch_url_digest") or ""
+            ),
+            remote_push_url_digest=str(
+                observation.get("remote_push_url_digest") or ""
+            ),
+            remote_config_fingerprint=str(
+                observation.get("remote_config_fingerprint") or ""
+            ),
+            refspec=str(command.get("refspec") or ""),
+            preflight_evidence_json=canonical_json(preflight_material),
+            preflight_evidence_digest=preflight_digest,
+            blocker_codes_json=canonical_json(blockers),
+            binding_digest=binding_digest,
+            plan_digest=plan_digest,
+            policy_version=PUSH_DELIVERY_POLICY_VERSION,
+            status_at_creation=status,
+            expires_at=expires_at,
+            created_at=created_at,
+        )
+        session.add(row)
+        session.flush()
+        if status == "ALREADY_DELIVERED":
+            _create_push_execution_for_plan(
+                session,
+                context=context,
+                plan=row,
+                approval=None,
+                already_delivered=True,
+            )
+        return row, True
+
+
+def approve_push_plan(
+    session: Session,
+    *,
+    owner_id: int,
+    push_plan: PushPlan,
+    source_repo: Path,
+    expected_plan_digest: str,
+) -> tuple[PushPlanApproval, bool]:
+    if push_plan.owner_id != owner_id:
+        raise _failure("PUSH_PLAN_NOT_FOUND", "Push Plan not found.")
+    existing = _approval_for_push_plan(
+        session,
+        owner_id=owner_id,
+        plan_id=push_plan.id,
+    )
+    if existing is not None:
+        if expected_plan_digest != push_plan.plan_digest:
+            raise _failure(
+                "PUSH_PLAN_CHANGED",
+                "The reviewed Push Plan digest changed.",
+            )
+        return existing, False
+    if (
+        push_plan.status_at_creation != "READY"
+        or push_plan.plan_digest != expected_plan_digest
+        or push_plan.policy_version != PUSH_DELIVERY_POLICY_VERSION
+        or (push_plan.expires_at is not None and utc_now() >= push_plan.expires_at)
+    ):
+        raise _failure("PUSH_PLAN_EXPIRED", "The exact Push Plan is not approvable.")
+    local_commit = session.get(
+        LocalCommitExecution, push_plan.local_commit_execution_id
+    )
+    if local_commit is None or local_commit.owner_id != owner_id:
+        raise _failure("PUSH_PLAN_NOT_FOUND", "Push Plan not found.")
+    with _push_repository_lock(push_plan.repository_locator_fingerprint):
+        session.expire_all()
+        push_plan = session.get(PushPlan, push_plan.id)
+        local_commit = session.get(LocalCommitExecution, local_commit.id)
+        if (
+            push_plan is None
+            or local_commit is None
+            or push_plan.owner_id != owner_id
+            or local_commit.owner_id != owner_id
+        ):
+            raise _failure("PUSH_PLAN_NOT_FOUND", "Push Plan not found.")
+        existing = _approval_for_push_plan(
+            session,
+            owner_id=owner_id,
+            plan_id=push_plan.id,
+        )
+        if existing is not None:
+            if expected_plan_digest != push_plan.plan_digest:
+                raise _failure(
+                    "PUSH_PLAN_CHANGED",
+                    "The reviewed Push Plan digest changed.",
+                )
+            return existing, False
+        if (
+            push_plan.status_at_creation != "READY"
+            or push_plan.plan_digest != expected_plan_digest
+            or push_plan.expires_at is None
+            or utc_now() >= push_plan.expires_at
+        ):
+            raise _failure("PUSH_PLAN_EXPIRED", "The exact Push Plan is not approvable.")
+        context = _bound_push_context(
+            session,
+            owner_id=owner_id,
+            local_commit=local_commit,
+            source_repo=source_repo,
+        )
+        proposal, proposal_approval = _bound_commit_proposal(
+            session,
+            owner_id=owner_id,
+            local_commit=local_commit,
+        )
+        _validate_push_plan_binding(
+            push_plan,
+            owner_id=owner_id,
+            context=context,
+            proposal=proposal,
+            proposal_approval=proposal_approval,
+        )
+        observation = _safe_preflight_observation(context)
+        blockers = _push_plan_current_blockers(push_plan, observation)
+        if blockers:
+            raise _failure(
+                str(blockers[0]["code"]),
+                str(blockers[0]["message"]),
+            )
+        confirmation_digest = canonical_sha256(
+            {
+                "schema": "twos.push_plan_owner_approval.v1",
+                "owner_id": owner_id,
+                "push_plan_id": push_plan.push_plan_id,
+                "push_plan_version": push_plan.version,
+                "push_plan_digest": push_plan.plan_digest,
+                "confirmation": PUSH_PLAN_APPROVAL_CONFIRMATION,
+            }
+        )
+        approval_material = {
+            "schema": "twos.push_plan_approval.v1",
+            "owner_id": owner_id,
+            "push_plan_id": push_plan.push_plan_id,
+            "push_plan_version": push_plan.version,
+            "push_plan_digest": push_plan.plan_digest,
+            "approved_commit_oid": push_plan.approved_commit_oid,
+            "expected_remote_oid": push_plan.expected_remote_oid,
+            "remote_config_fingerprint": push_plan.remote_config_fingerprint,
+            "confirmation_digest": confirmation_digest,
+        }
+        approval_digest = canonical_sha256(approval_material)
+        row = PushPlanApproval(
+            approval_id="pushapproval_" + approval_digest[:40],
+            owner_id=owner_id,
+            push_plan_id=push_plan.id,
+            push_plan_public_id=push_plan.push_plan_id,
+            push_plan_version=push_plan.version,
+            push_plan_digest=push_plan.plan_digest,
+            approved_commit_oid=push_plan.approved_commit_oid,
+            expected_remote_oid=push_plan.expected_remote_oid,
+            remote_config_fingerprint=push_plan.remote_config_fingerprint,
+            approved_by_user_id=owner_id,
+            approved_at=utc_now(),
+            confirmation_digest=confirmation_digest,
+            approval_digest=approval_digest,
+            state="APPROVED",
+        )
+        session.add(row)
+        session.flush()
+        return row, True
+
+
+def _create_push_execution_for_plan(
+    session: Session,
+    *,
+    context: BoundPushContext,
+    plan: PushPlan,
+    approval: PushPlanApproval | None,
+    already_delivered: bool,
+) -> tuple[PushExecution, bool]:
+    existing = _execution_for_push_plan(
+        session,
+        owner_id=plan.owner_id,
+        plan_id=plan.id,
+    )
+    if existing is not None:
+        return existing, False
+    preflight = _decoded_object(plan.preflight_evidence_json)
+    command = _decoded_object(preflight.get("command"))
+    command_digest = canonical_sha256(command)
+    confirmation_digest = (
+        canonical_sha256(
+            {
+                "schema": "twos.push_plan_final_confirmation.v1",
+                "owner_id": plan.owner_id,
+                "push_plan_id": plan.push_plan_id,
+                "push_plan_digest": plan.plan_digest,
+                "push_plan_approval_id": approval.approval_id,
+                "push_plan_approval_digest": approval.approval_digest,
+                "confirmation": PUSH_CONFIRMATION,
+            }
+        )
+        if approval is not None
+        else canonical_sha256(
+            {
+                "schema": "twos.push_already_delivered.v1",
+                "push_plan_id": plan.push_plan_id,
+                "push_plan_digest": plan.plan_digest,
+                "approved_commit_oid": plan.approved_commit_oid,
+            }
+        )
+    )
+    row = PushExecution(
+        push_execution_id="push_"
+        + canonical_sha256(
+            {
+                "schema": "twos.approved_push_execution.v1",
+                "push_plan_digest": plan.plan_digest,
+                "push_plan_approval_digest": (
+                    approval.approval_digest if approval is not None else None
+                ),
+                "confirmation_digest": confirmation_digest,
+            }
+        )[:40],
+        owner_id=plan.owner_id,
+        push_plan_id=plan.id,
+        push_plan_approval_id=approval.id if approval is not None else None,
+        local_commit_execution_id=context.local_commit.id,
+        stage_execution_id=context.stage.id,
+        commit_plan_id=context.plan.id,
+        post_apply_verification_id=context.verification.id,
+        apply_session_id=context.apply_session.id,
+        delivery_candidate_id=context.candidate.id,
+        run_id=context.run.id,
+        task_id=context.run.task_id,
+        push_plan_public_id=plan.push_plan_id,
+        push_plan_digest=plan.plan_digest,
+        push_plan_approval_public_id=(
+            approval.approval_id if approval is not None else ""
+        ),
+        push_plan_approval_digest=(
+            approval.approval_digest if approval is not None else ""
+        ),
+        local_commit_public_id=context.local_commit.commit_execution_id,
+        local_commit_receipt_digest=str(context.local_commit.receipt_digest),
+        commit_plan_digest=context.plan.plan_digest,
+        stage_digest=str(context.stage.stage_digest),
+        verification_digest=context.verification.verification_digest,
+        candidate_digest=context.candidate.candidate_digest,
+        journal_digest=context.apply_session.journal_digest,
+        repository_locator_fingerprint=plan.repository_locator_fingerprint,
+        sanitized_repository_identity=plan.sanitized_repository_identity,
+        branch=PUSH_BRANCH,
+        branch_ref=PUSH_BRANCH_REF,
+        remote_name=PUSH_REMOTE,
+        destination_ref=PUSH_BRANCH_REF,
+        approved_commit_oid=plan.approved_commit_oid,
+        expected_parent_oid=plan.expected_parent_oid,
+        subject=plan.subject,
+        subject_digest=plan.subject_digest,
+        remote_fetch_url_digest=plan.remote_fetch_url_digest,
+        remote_push_url_digest=plan.remote_push_url_digest,
+        remote_config_fingerprint=plan.remote_config_fingerprint,
+        observed_remote_base_oid=plan.observed_remote_base_oid,
+        preflight_evidence_json=plan.preflight_evidence_json,
+        preflight_evidence_digest=plan.preflight_evidence_digest,
+        confirmation_digest=confirmation_digest,
+        refspec=plan.refspec,
+        command_evidence_json=canonical_json(command),
+        command_evidence_digest=command_digest,
+        state="PUSHED" if already_delivered else "READY_TO_PUSH",
+        failure_category="ALREADY_DELIVERED" if already_delivered else "",
+        failure_evidence_json="[]",
+        finished_at=utc_now() if already_delivered else None,
+    )
+    if already_delivered:
+        reconciliation = {
+            "status": "RECONCILED",
+            "complete": True,
+            "local_head": plan.approved_commit_oid,
+            "origin_main_sha": plan.approved_commit_oid,
+            "approved_commit_sha": plan.approved_commit_oid,
+            "ahead": 0,
+            "behind": 0,
+            "worktree_clean": preflight.get("worktree_clean"),
+            "index_clean": preflight.get("index_clean"),
+            "staged_path_count": preflight.get("staged_path_count"),
+            "owned_staged_path_count": preflight.get("owned_staged_path_count"),
+            "unrelated_change_count": preflight.get("unrelated_change_count"),
+            "unrelated_evidence_preserved": True,
+            "transport_attempted": False,
+            "settlement": "ALREADY_DELIVERED",
+            "blockers": [],
+        }
+        row.post_push_evidence_json = canonical_json(reconciliation)
+        row.receipt_digest = _push_receipt_digest(row, reconciliation)
+    session.add(row)
+    session.flush()
+    return row, True
+
+
+def _validate_push_execution_plan_binding(
+    execution: PushExecution,
+    *,
+    plan: PushPlan,
+    approval: PushPlanApproval,
+) -> None:
+    expected_final_confirmation_digest = canonical_sha256(
+        {
+            "schema": "twos.push_plan_final_confirmation.v1",
+            "owner_id": plan.owner_id,
+            "push_plan_id": plan.push_plan_id,
+            "push_plan_digest": plan.plan_digest,
+            "push_plan_approval_id": approval.approval_id,
+            "push_plan_approval_digest": approval.approval_digest,
+            "confirmation": PUSH_CONFIRMATION,
+        }
+    )
+    if (
+        execution.owner_id != plan.owner_id
+        or execution.push_plan_id != plan.id
+        or execution.push_plan_approval_id != approval.id
+        or execution.push_plan_public_id != plan.push_plan_id
+        or execution.push_plan_digest != plan.plan_digest
+        or execution.push_plan_approval_public_id != approval.approval_id
+        or execution.push_plan_approval_digest != approval.approval_digest
+        or execution.local_commit_execution_id != plan.local_commit_execution_id
+        or execution.local_commit_public_id != plan.local_commit_public_id
+        or execution.local_commit_receipt_digest != plan.local_commit_receipt_digest
+        or execution.repository_locator_fingerprint
+        != plan.repository_locator_fingerprint
+        or execution.approved_commit_oid != plan.approved_commit_oid
+        or execution.expected_parent_oid != plan.expected_parent_oid
+        or execution.remote_fetch_url_digest != plan.remote_fetch_url_digest
+        or execution.remote_push_url_digest != plan.remote_push_url_digest
+        or execution.remote_config_fingerprint != plan.remote_config_fingerprint
+        or execution.refspec != plan.refspec
+        or execution.preflight_evidence_digest != plan.preflight_evidence_digest
+        or execution.confirmation_digest != expected_final_confirmation_digest
+    ):
+        raise _failure(
+            "PUSH_BINDING_INVALID",
+            "The durable Push execution no longer matches the approved Push Plan.",
+        )
+
+
+def confirm_approved_push_plan(
+    session: Session,
+    *,
+    owner_id: int,
+    push_plan: PushPlan,
+    approval: PushPlanApproval,
+    local_commit: LocalCommitExecution,
+    source_repo: Path,
+    confirmation: str,
+    expected_approval_digest: str,
+) -> tuple[PushExecution, bool]:
+    """Confirm one exact approved plan; the bool reports transport attempted."""
+    if confirmation != PUSH_CONFIRMATION:
+        raise _failure(
+            "PUSH_CONFIRMATION_CHANGED",
+            "The exact Push confirmation text is required.",
+        )
+    if (
+        push_plan.owner_id != owner_id
+        or approval.owner_id != owner_id
+        or local_commit.owner_id != owner_id
+        or push_plan.local_commit_execution_id != local_commit.id
+    ):
+        raise _failure("PUSH_PLAN_NOT_FOUND", "Push Plan not found.")
+    with _push_repository_lock(push_plan.repository_locator_fingerprint):
+        session.expire_all()
+        plan = session.get(PushPlan, push_plan.id)
+        approval = session.get(PushPlanApproval, approval.id)
+        local_commit = session.get(LocalCommitExecution, local_commit.id)
+        if (
+            plan is None
+            or approval is None
+            or local_commit is None
+            or plan.owner_id != owner_id
+            or approval.owner_id != owner_id
+            or local_commit.owner_id != owner_id
+        ):
+            raise _failure("PUSH_PLAN_NOT_FOUND", "Push Plan not found.")
+        context = _bound_push_context(
+            session,
+            owner_id=owner_id,
+            local_commit=local_commit,
+            source_repo=source_repo,
+        )
+        proposal, proposal_approval = _bound_commit_proposal(
+            session,
+            owner_id=owner_id,
+            local_commit=local_commit,
+        )
+        _validate_push_plan_binding(
+            plan,
+            owner_id=owner_id,
+            context=context,
+            proposal=proposal,
+            proposal_approval=proposal_approval,
+        )
+        _validate_push_plan_approval(
+            plan,
+            approval,
+            owner_id=owner_id,
+            expected_approval_digest=expected_approval_digest,
+        )
+        existing = _execution_for_push_plan(
+            session,
+            owner_id=owner_id,
+            plan_id=plan.id,
+        )
+        if existing is not None:
+            _validate_push_execution_plan_binding(
+                existing,
+                plan=plan,
+                approval=approval,
+            )
+            execution = existing
+        else:
+            if (
+                plan.status_at_creation != "READY"
+                or plan.expires_at is None
+                or utc_now() >= plan.expires_at
+            ):
+                raise _failure(
+                    "PUSH_PLAN_EXPIRED",
+                    "The exact approved Push Plan is no longer current.",
+                )
+            observation = _safe_preflight_observation(context)
+            already_delivered = bool(observation.get("already_delivered")) and not list(
+                observation.get("blockers") or []
+            )
+            if not already_delivered:
+                # Persist the exact reviewed attempt surface even when current
+                # evidence is blocked. The existing final-confirmation path
+                # rechecks it and records the blocker without transport.
+                execution, _ = _create_push_execution_for_plan(
+                    session,
+                    context=context,
+                    plan=plan,
+                    approval=approval,
+                    already_delivered=False,
+                )
+            else:
+                execution, _ = _create_push_execution_for_plan(
+                    session,
+                    context=context,
+                    plan=plan,
+                    approval=approval,
+                    already_delivered=True,
+                )
+                session.commit()
+                return execution, False
+    return confirm_push_to_origin_main(
+        session,
+        owner_id=owner_id,
+        push_execution=execution,
+        source_repo=source_repo,
+        confirmation=confirmation,
+        expected_confirmation_digest=execution.confirmation_digest,
+    )
+
+
+def push_plan_review(
+    session: Session,
+    *,
+    owner_id: int,
+    local_commit: LocalCommitExecution,
+    source_repo: Path,
+) -> dict[str, Any]:
+    """Return the canonical Owner projection without creating or approving a plan."""
+    context = _bound_push_context(
+        session,
+        owner_id=owner_id,
+        local_commit=local_commit,
+        source_repo=source_repo,
+    )
+    proposal, proposal_approval = _bound_commit_proposal(
+        session,
+        owner_id=owner_id,
+        local_commit=local_commit,
+    )
+    plan = _latest_push_plan(
+        session,
+        owner_id=owner_id,
+        local_commit_id=local_commit.id,
+    )
+    approval = (
+        _approval_for_push_plan(session, owner_id=owner_id, plan_id=plan.id)
+        if plan is not None
+        else None
+    )
+    execution = (
+        _execution_for_push_plan(session, owner_id=owner_id, plan_id=plan.id)
+        if plan is not None
+        else None
+    )
+    observation: dict[str, Any] | None = None
+    blockers: list[dict[str, str]] = []
+    reconciliation: dict[str, Any] | None = None
+    expired = bool(
+        plan is not None
+        and plan.status_at_creation == "READY"
+        and plan.expires_at is not None
+        and utc_now() >= plan.expires_at
+    )
+    if plan is not None:
+        try:
+            _validate_push_plan_binding(
+                plan,
+                owner_id=owner_id,
+                context=context,
+                proposal=proposal,
+                proposal_approval=proposal_approval,
+            )
+            if approval is not None:
+                _validate_push_plan_approval(
+                    plan,
+                    approval,
+                    owner_id=owner_id,
+                    expected_approval_digest=approval.approval_digest,
+                )
+            if execution is not None and approval is not None:
+                _validate_push_execution_plan_binding(
+                    execution,
+                    plan=plan,
+                    approval=approval,
+                )
+        except PushDeliveryError as exc:
+            blockers.append(_safe_failure(exc.code, exc.message))
+        if expired and execution is None:
+            blockers.append(
+                _safe_failure(
+                    "PUSH_PLAN_EXPIRED",
+                    "The Push Plan expired and must be reviewed again.",
+                )
+            )
+        elif plan.status_at_creation == "BLOCKED":
+            blockers.extend(
+                item
+                for item in _decoded_list(plan.blocker_codes_json)
+                if isinstance(item, dict)
+            )
+        elif not blockers:
+            with _push_repository_lock(plan.repository_locator_fingerprint):
+                try:
+                    observation = _safe_preflight_observation(context)
+                    if execution is None:
+                        blockers.extend(
+                            _push_plan_current_blockers(plan, observation)
+                        )
+                    elif execution.state != "READY_TO_PUSH":
+                        reconciliation = _reconciliation_locked(
+                            context,
+                            execution,
+                        )
+                except PushDeliveryError as exc:
+                    blockers.append(_safe_failure(exc.code, exc.message))
+    plan_output = _push_plan_out(plan, approval, execution)
+    readiness_observation = observation or (
+        _decoded_object(plan.preflight_evidence_json) if plan is not None else None
+    )
+    readiness = _readiness_out(
+        readiness_observation,
+        blockers=blockers,
+        fallback_context=context,
+    )
+    if execution is not None:
+        canonical_execution_state = str(
+            (_execution_out(execution) or {}).get("canonical_state")
+            or execution.state
+        )
+        action_state = canonical_execution_state
+    elif plan is None:
+        action_state = "READY_TO_REVIEW_PUSH_PLAN"
+    elif plan.status_at_creation == "ALREADY_DELIVERED":
+        action_state = "ALREADY_DELIVERED"
+    elif expired:
+        action_state = "PUSH_PLAN_EXPIRED"
+    elif blockers or plan.status_at_creation == "BLOCKED":
+        action_state = "PUSH_BLOCKED"
+    elif approval is None:
+        action_state = "AWAITING_PUSH_APPROVAL"
+    else:
+        action_state = "READY_TO_CONFIRM_PUSH"
+    can_review = bool(
+        execution is None
+        and approval is None
+        and (
+            plan is None
+            or expired
+            or plan.status_at_creation == "BLOCKED"
+            or bool(blockers)
+        )
+    )
+    can_approve = bool(
+        plan is not None
+        and plan.status_at_creation == "READY"
+        and not expired
+        and not blockers
+        and approval is None
+        and execution is None
+    )
+    can_confirm = bool(
+        plan is not None
+        and approval is not None
+        and (
+            (
+                execution is None
+                and not expired
+                and not blockers
+            )
+            or (
+                execution is not None
+                and execution.state in {"PUSHING", "RECONCILIATION_BLOCKED"}
+                and execution.command_attempt_count == 1
+            )
+        )
+    )
+    delivery = _delivery_result(
+        session,
+        context=context,
+        push_execution=execution,
+        reconciliation=reconciliation,
+        readiness_blockers=blockers,
+    )
+    return {
+        "local_commit_execution_id": local_commit.commit_execution_id,
+        "action_state": action_state,
+        "readiness": readiness,
+        "push_plan": plan_output,
+        "push_approval": _push_approval_out(approval),
+        "push_execution": _execution_out(execution),
+        "delivery_result": delivery,
+        "actions": {
+            "can_review_push_plan": can_review,
+            "can_approve_push_plan": can_approve,
+            "can_confirm_push": can_confirm,
+            "can_view_delivery_result": bool(
+                execution is not None and execution.state in _TERMINAL_STATES
+            ),
+        },
+    }
+
+
 def push_delivery_review(
     session: Session,
     *,
@@ -1219,6 +3150,13 @@ def push_delivery_review(
     local_commit: LocalCommitExecution,
     source_repo: Path,
 ) -> dict[str, Any]:
+    if local_commit.commit_proposal_id is not None:
+        return push_plan_review(
+            session,
+            owner_id=owner_id,
+            local_commit=local_commit,
+            source_repo=source_repo,
+        )
     context = _bound_push_context(
         session,
         owner_id=owner_id,
@@ -1349,6 +3287,11 @@ def create_push_preflight(
     local_commit: LocalCommitExecution,
     source_repo: Path,
 ) -> tuple[PushExecution, bool]:
+    if local_commit.commit_proposal_id is not None:
+        raise _failure(
+            "PUSH_PLAN_REQUIRED",
+            "Review and separately approve an immutable Push Plan first.",
+        )
     existing_success = _successful_push_execution(
         session,
         owner_id=owner_id,
@@ -1396,7 +3339,8 @@ def create_push_preflight(
         )
         observation = _safe_preflight_observation(context)
         blockers = list(observation.get("blockers") or [])
-        state = "READY_TO_PUSH"
+        already_delivered = bool(observation.get("already_delivered")) and not blockers
+        state = "PUSHED" if already_delivered else "READY_TO_PUSH"
         if blockers:
             state = (
                 "REMOTE_MOVED"
@@ -1471,11 +3415,40 @@ def create_push_preflight(
             command_evidence_json=canonical_json(command),
             command_evidence_digest=command_digest,
             state=state,
-            failure_category=(str(blockers[0].get("code")) if blockers else ""),
+            failure_category=(
+                str(blockers[0].get("code"))
+                if blockers
+                else "ALREADY_DELIVERED"
+                if already_delivered
+                else ""
+            ),
             failure_evidence_json=canonical_json(blockers),
-            finished_at=utc_now() if blockers else None,
+            finished_at=utc_now() if blockers or already_delivered else None,
         )
         session.add(row)
+        if already_delivered:
+            reconciliation = {
+                "status": "RECONCILED",
+                "complete": True,
+                "local_head": local_commit.commit_oid,
+                "origin_main_sha": local_commit.commit_oid,
+                "approved_commit_sha": local_commit.commit_oid,
+                "ahead": 0,
+                "behind": 0,
+                "worktree_clean": observation.get("worktree_clean"),
+                "index_clean": observation.get("index_clean"),
+                "staged_path_count": observation.get("staged_path_count"),
+                "owned_staged_path_count": observation.get(
+                    "owned_staged_path_count"
+                ),
+                "unrelated_change_count": observation.get(
+                    "unrelated_change_count"
+                ),
+                "unrelated_evidence_preserved": True,
+                "blockers": [],
+            }
+            row.post_push_evidence_json = canonical_json(reconciliation)
+            row.receipt_digest = _push_receipt_digest(row, reconciliation)
         session.flush()
         return row, True
 
@@ -1500,6 +3473,40 @@ def _pre_execution_blockers(
         blockers.append(
             _safe_failure("REMOTE_URL_CHANGED", "The origin configuration changed.")
         )
+    for key, code, message in (
+        (
+            "worktree_status_digest",
+            "WORKTREE_CHANGED",
+            "Unrelated working-tree evidence changed after Push review.",
+        ),
+        (
+            "index_semantic_digest",
+            "INDEX_CHANGED",
+            "The Git index changed after Push review.",
+        ),
+        (
+            "unrelated_worktree_fingerprint",
+            "WORKTREE_CHANGED",
+            "Unrelated file content changed after Push review.",
+        ),
+        (
+            "unrelated_source_digest",
+            "WORKTREE_CHANGED",
+            "Unrelated source evidence changed after Push review.",
+        ),
+        (
+            "remote_descriptor_identity",
+            "REMOTE_URL_CHANGED",
+            "The origin destination identity changed after Push review.",
+        ),
+        (
+            "remote_credential_helper_fingerprint",
+            "REMOTE_CONFIG_CHANGED",
+            "The credential-helper boundary changed after Push review.",
+        ),
+    ):
+        if observation.get(key) != preflight.get(key):
+            blockers.append(_safe_failure(code, message))
     if observation.get("delivery_refs_fingerprint") != preflight.get(
         "delivery_refs_fingerprint"
     ) or observation.get("origin_main_tracking_oid") != preflight.get(
@@ -1670,6 +3677,17 @@ def confirm_push_to_origin_main(
     )
     if local_commit is None or local_commit.owner_id != owner_id:
         raise _failure("PUSH_NOT_FOUND", "Push workflow not found.")
+    if (
+        local_commit.commit_proposal_id is not None
+        and (
+            push_execution.push_plan_id is None
+            or push_execution.push_plan_approval_id is None
+        )
+    ):
+        raise _failure(
+            "PUSH_APPROVAL_REQUIRED",
+            "The canonical Owner Push requires an exact approved Push Plan.",
+        )
     with _push_repository_lock(
         push_execution.repository_locator_fingerprint
     ):
@@ -1768,6 +3786,11 @@ def confirm_push_to_origin_main(
                 "PUSH_BINDING_INVALID",
                 "The durable Push execution changed during the attempt.",
             )
+        command_output = _transport_output_evidence(
+            root=context.root,
+            result=result,
+            error=transport_error,
+        )
         terminal_state: str | None = None
         if reconciliation.get("complete") is True:
             terminal_state = "PUSHED"
@@ -1797,28 +3820,26 @@ def confirm_push_to_origin_main(
                 ]
             )
         elif result is not None and result.returncode == 0:
-            # The exact standard Push process completed successfully. Persist
-            # that immutable Push receipt even if a subsequent read-only live
-            # reconciliation is temporarily unavailable; Delivery completion
-            # remains false until a GET observes exact local/remote equality.
-            terminal_state = "PUSHED"
-            row.failure_category = "RECONCILIATION_PENDING"
+            # Process exit zero is not remote-delivery truth. Preserve the
+            # single attempt as Needs Review until read-only remote evidence
+            # proves the exact approved SHA at the exact destination ref.
+            terminal_state = "RECONCILIATION_BLOCKED"
+            row.failure_category = "REMOTE_VERIFICATION_UNAVAILABLE"
             row.failure_evidence_json = canonical_json(
                 list(reconciliation.get("blockers") or [])
                 or [
                     _safe_failure(
-                        "RECONCILIATION_PENDING",
-                        "The standard Push succeeded; live delivery reconciliation is pending.",
+                        "REMOTE_VERIFICATION_UNAVAILABLE",
+                        "The Push process exited successfully, but the exact remote SHA is not yet verified.",
                     )
                 ]
             )
         elif transport_error is not None:
-            if transport_error.code != "REMOTE_TIMEOUT":
-                terminal_state = "PUSH_FAILED"
-                row.failure_category = transport_error.code
-                row.failure_evidence_json = canonical_json(
-                    [_safe_failure(transport_error.code, transport_error.message)]
-                )
+            terminal_state = "PUSH_FAILED"
+            row.failure_category = transport_error.code
+            row.failure_evidence_json = canonical_json(
+                [_safe_failure(transport_error.code, transport_error.message)]
+            )
         elif result is not None and result.returncode != 0:
             category = _classify_push_failure(result)
             terminal_state = "PUSH_FAILED"
@@ -1832,12 +3853,13 @@ def confirm_push_to_origin_main(
                 ]
             )
         if terminal_state is None:
-            # Timeout/unknown transport remains a durable one-shot uncertainty.
+            # An unclassified transport outcome retains one-shot uncertainty.
             # Only a future explicit confirmation may reconcile it, and that
             # recovery path never invokes transport again.
             return row, True
         row.command_finished_at = utc_now()
         row.command_exit_code = result.returncode if result is not None else None
+        row.command_output_json = canonical_json(command_output)
         row.post_push_evidence_json = canonical_json(reconciliation)
         row.finished_at = utc_now()
         row.state = terminal_state

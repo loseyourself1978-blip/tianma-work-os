@@ -38,6 +38,7 @@ VOL18_LOCAL_COMMIT_BUILDER_SCHEMA_VERSION = "vol18.008"
 VOL18_PUSH_DELIVERY_SCHEMA_VERSION = "vol18.009"
 VOL19_CODEX_RUN_RESULT_SCHEMA_VERSION = "vol19.001"
 VOL19_RESULT_DELIVERY_LOOP_SCHEMA_VERSION = "vol19.002"
+VOL19_OWNER_COMMIT_PUSH_SCHEMA_VERSION = "vol19.003"
 
 
 DEFAULT_PROJECTS = [
@@ -262,7 +263,48 @@ COLUMN_MIGRATIONS = {
         ("run_workspace_baseline_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
         ("run_workspace_post_state_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
     ],
+    "local_commit_executions": [
+        ("commit_proposal_id", "INTEGER REFERENCES commit_proposals(id)"),
+        (
+            "commit_proposal_approval_id",
+            "INTEGER REFERENCES commit_proposal_approvals(id)",
+        ),
+        ("proposal_public_id", "VARCHAR(80) NOT NULL DEFAULT ''"),
+        ("proposal_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("proposal_approval_public_id", "VARCHAR(80) NOT NULL DEFAULT ''"),
+        ("proposal_approval_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("owner_commit_confirmation_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("owner_commit_confirmed_at", "DATETIME"),
+        ("result_envelope_id", "INTEGER REFERENCES codex_result_envelopes(id)"),
+        ("result_envelope_public_id", "VARCHAR(80) NOT NULL DEFAULT ''"),
+        ("result_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("owner_acceptance_id", "INTEGER REFERENCES owner_acceptance_sessions(id)"),
+        ("result_review_decision_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("candidate_version", "INTEGER"),
+        ("apply_plan_approval_id", "INTEGER REFERENCES apply_plan_approvals(id)"),
+        ("apply_plan_approval_public_id", "VARCHAR(80) NOT NULL DEFAULT ''"),
+        ("apply_plan_approval_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("source_workspace_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("run_workspace_identity", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("author_identity_sanitized", "VARCHAR(240) NOT NULL DEFAULT ''"),
+        ("author_identity_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("command_started_at", "DATETIME"),
+        ("command_finished_at", "DATETIME"),
+        ("command_exit_code", "INTEGER"),
+        ("command_output_json", "TEXT NOT NULL DEFAULT '{}'"),
+        ("command_evidence_json", "TEXT NOT NULL DEFAULT '{}'"),
+        ("command_evidence_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("hooks_evidence_json", "TEXT NOT NULL DEFAULT '{}'"),
+        ("hooks_evidence_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+    ],
     "push_executions": [
+        ("push_plan_id", "INTEGER REFERENCES push_plans(id)"),
+        ("push_plan_approval_id", "INTEGER REFERENCES push_plan_approvals(id)"),
+        ("push_plan_public_id", "VARCHAR(80) NOT NULL DEFAULT ''"),
+        ("push_plan_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("push_plan_approval_public_id", "VARCHAR(80) NOT NULL DEFAULT ''"),
+        ("push_plan_approval_digest", "VARCHAR(64) NOT NULL DEFAULT ''"),
+        ("command_output_json", "TEXT NOT NULL DEFAULT '{}'"),
         ("recovery_reconciliation_json", "TEXT NOT NULL DEFAULT '{}'"),
         ("recovery_reconciliation_digest", "VARCHAR(64)"),
         ("recovered_at", "DATETIME"),
@@ -396,6 +438,14 @@ def initialize_database(engine: Engine) -> None:
         ):
             session.add(
                 SchemaVersion(version=VOL19_RESULT_DELIVERY_LOOP_SCHEMA_VERSION)
+            )
+        if not session.scalar(
+            select(SchemaVersion).where(
+                SchemaVersion.version == VOL19_OWNER_COMMIT_PUSH_SCHEMA_VERSION
+            )
+        ):
+            session.add(
+                SchemaVersion(version=VOL19_OWNER_COMMIT_PUSH_SCHEMA_VERSION)
             )
         seed_projects(session)
         seed_registry(session)
@@ -731,6 +781,37 @@ def _ensure_vol19_result_delivery_indexes(engine: Engine) -> None:
                 False,
             ),
         ),
+        "local_commit_executions": (
+            (
+                "ix_local_commit_executions_commit_proposal_id",
+                ("commit_proposal_id",),
+                False,
+            ),
+            (
+                "ux_local_commit_executions_commit_proposal_approval_id",
+                ("commit_proposal_approval_id",),
+                True,
+            ),
+            (
+                "ix_local_commit_executions_proposal_digest",
+                ("proposal_digest",),
+                False,
+            ),
+            (
+                "ix_local_commit_executions_proposal_approval_digest",
+                ("proposal_approval_digest",),
+                False,
+            ),
+        ),
+        "push_executions": (
+            ("ix_push_executions_push_plan_id", ("push_plan_id",), False),
+            (
+                "ix_push_executions_push_plan_approval_id",
+                ("push_plan_approval_id",),
+                False,
+            ),
+            ("ix_push_executions_push_plan_digest", ("push_plan_digest",), False),
+        ),
     }
     with engine.begin() as connection:
         for table_name, table_specs in specifications.items():
@@ -768,6 +849,15 @@ def _ensure_vol19_result_delivery_indexes(engine: Engine) -> None:
                     )
                 )
                 existing_indexes.add((indexed_columns, unique))
+        if "local_commit_executions" in tables:
+            connection.execute(
+                text(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS "
+                    "ux_local_commit_owner_confirmation "
+                    "ON local_commit_executions (owner_commit_confirmation_digest) "
+                    "WHERE owner_commit_confirmation_digest != ''"
+                )
+            )
 
 
 def _ensure_vol18_immutable_triggers(engine: Engine) -> None:
@@ -890,6 +980,30 @@ def _ensure_vol18_immutable_triggers(engine: Engine) -> None:
             "Commit Plan records are immutable.",
         ),
         (
+            "trg_commit_proposals_no_update",
+            "commit_proposals",
+            "UPDATE",
+            "Commit Proposal records are immutable.",
+        ),
+        (
+            "trg_commit_proposals_no_delete",
+            "commit_proposals",
+            "DELETE",
+            "Commit Proposal records are immutable.",
+        ),
+        (
+            "trg_commit_proposal_approvals_no_update",
+            "commit_proposal_approvals",
+            "UPDATE",
+            "Commit Proposal approvals are immutable.",
+        ),
+        (
+            "trg_commit_proposal_approvals_no_delete",
+            "commit_proposal_approvals",
+            "DELETE",
+            "Commit Proposal approvals are immutable.",
+        ),
+        (
             "trg_stage_executions_no_delete",
             "stage_executions",
             "DELETE",
@@ -906,6 +1020,30 @@ def _ensure_vol18_immutable_triggers(engine: Engine) -> None:
             "push_executions",
             "DELETE",
             "Push execution records cannot be deleted.",
+        ),
+        (
+            "trg_push_plans_no_update",
+            "push_plans",
+            "UPDATE",
+            "Push Plan records are immutable.",
+        ),
+        (
+            "trg_push_plans_no_delete",
+            "push_plans",
+            "DELETE",
+            "Push Plan records are immutable.",
+        ),
+        (
+            "trg_push_plan_approvals_no_update",
+            "push_plan_approvals",
+            "UPDATE",
+            "Push Plan approvals are immutable.",
+        ),
+        (
+            "trg_push_plan_approvals_no_delete",
+            "push_plan_approvals",
+            "DELETE",
+            "Push Plan approvals are immutable.",
         ),
         (
             "trg_codex_run_monitors_no_delete",
@@ -976,6 +1114,9 @@ def _ensure_vol18_immutable_triggers(engine: Engine) -> None:
             "trg_apply_sessions_core_no_update",
             "trg_owner_acceptance_sessions_set_once",
             "trg_owner_acceptance_sessions_terminal_no_update",
+            "trg_local_commit_executions_core_no_update",
+            "trg_local_commit_executions_set_once",
+            "trg_push_executions_core_no_update",
             "trg_push_executions_set_once",
             "trg_push_executions_terminal_no_update",
             "trg_push_executions_state_transition",
@@ -1122,6 +1263,8 @@ def _ensure_vol18_immutable_triggers(engine: Engine) -> None:
         local_commit_execution_core_columns = (
             "commit_execution_id",
             "owner_id",
+            "commit_proposal_id",
+            "commit_proposal_approval_id",
             "commit_plan_id",
             "stage_execution_id",
             "commit_plan_public_id",
@@ -1140,12 +1283,33 @@ def _ensure_vol18_immutable_triggers(engine: Engine) -> None:
             "intent_digest",
             "pre_commit_evidence_json",
             "pre_commit_evidence_digest",
+            "proposal_public_id",
+            "proposal_digest",
+            "proposal_approval_public_id",
+            "proposal_approval_digest",
+            "owner_commit_confirmation_digest",
+            "owner_commit_confirmed_at",
+            "result_envelope_id",
+            "result_envelope_public_id",
+            "result_digest",
+            "owner_acceptance_id",
+            "result_review_decision_digest",
+            "candidate_version",
+            "apply_plan_approval_id",
+            "apply_plan_approval_public_id",
+            "apply_plan_approval_digest",
+            "source_workspace_identity",
+            "run_workspace_identity",
+            "author_identity_sanitized",
+            "author_identity_digest",
             "created_at",
             "started_at",
         )
         push_execution_core_columns = (
             "push_execution_id",
             "owner_id",
+            "push_plan_id",
+            "push_plan_approval_id",
             "local_commit_execution_id",
             "stage_execution_id",
             "commit_plan_id",
@@ -1154,6 +1318,10 @@ def _ensure_vol18_immutable_triggers(engine: Engine) -> None:
             "delivery_candidate_id",
             "run_id",
             "task_id",
+            "push_plan_public_id",
+            "push_plan_digest",
+            "push_plan_approval_public_id",
+            "push_plan_approval_digest",
             "local_commit_public_id",
             "local_commit_receipt_digest",
             "commit_plan_digest",
@@ -1365,6 +1533,14 @@ def _ensure_vol18_immutable_triggers(engine: Engine) -> None:
                     "parent_oid",
                     "post_commit_evidence_json",
                     "receipt_digest",
+                    "command_started_at",
+                    "command_finished_at",
+                    "command_exit_code",
+                    "command_output_json",
+                    "command_evidence_json",
+                    "command_evidence_digest",
+                    "hooks_evidence_json",
+                    "hooks_evidence_digest",
                     "finished_at",
                 ),
                 "Local Commit transition evidence may be set only once.",
@@ -1377,6 +1553,7 @@ def _ensure_vol18_immutable_triggers(engine: Engine) -> None:
                     "command_finished_at",
                     "execution_remote_base_oid",
                     "command_exit_code",
+                    "command_output_json",
                     "failure_category",
                     "failure_evidence_json",
                     "post_push_evidence_json",

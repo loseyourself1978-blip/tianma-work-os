@@ -104,6 +104,33 @@
     PUSH_FAILED: "PUSH FAILED",
     RECONCILIATION_BLOCKED: "RECONCILIATION BLOCKED"
   });
+  const OWNER_COMMIT_STATE_LABELS = Object.freeze({
+    COMMIT_REVIEW_REQUIRED: "READY TO REVIEW",
+    COMMIT_APPROVAL_REQUIRED: "AWAITING COMMIT APPROVAL",
+    COMMIT_CONFIRMATION_REQUIRED: "READY TO COMMIT",
+    COMMITTING: "LOCAL COMMIT IN PROGRESS",
+    LOCAL_COMMIT_CREATED: "LOCAL COMMIT CREATED",
+    COMMITTED: "LOCAL COMMIT CREATED",
+    NEEDS_SETUP: "NEEDS SETUP",
+    BLOCKED: "COMMIT BLOCKED",
+    FAILED: "COMMIT FAILED",
+    INTEGRITY_BLOCKED: "COMMIT INTEGRITY BLOCKED",
+    NEEDS_REVIEW: "COMMIT NEEDS REVIEW"
+  });
+  const OWNER_PUSH_STATE_LABELS = Object.freeze({
+    PUSH_REVIEW_REQUIRED: "READY TO REVIEW PUSH PLAN",
+    PUSH_APPROVAL_REQUIRED: "AWAITING PUSH PLAN APPROVAL",
+    PUSH_CONFIRMATION_REQUIRED: "READY TO PUSH",
+    PUSHING: "PUSHING",
+    DELIVERED: "DELIVERED",
+    SUCCEEDED: "DELIVERED",
+    ALREADY_DELIVERED: "ALREADY DELIVERED",
+    NEEDS_SETUP: "PUSH NEEDS SETUP",
+    BLOCKED: "PUSH BLOCKED",
+    FAILED: "PUSH FAILED",
+    TIMED_OUT: "PUSH TIMED OUT",
+    NEEDS_REVIEW: "PUSH NEEDS REVIEW"
+  });
   const RUN_BLOCKER_STATUS = Object.freeze({
     TASK_MISSING: "Task required",
     PACK_MISSING: "Pack required",
@@ -521,6 +548,7 @@
     applyPlanExpiryReasons: byId("apply-plan-expiry-reasons"),
     applyPlanDiagnostics: byId("apply-plan-diagnostics"),
     applySessionSection: byId("apply-session-section"),
+    applySessionBoundaryNote: byId("apply-session-boundary-note"),
     applyAcceptedChanges: byId("apply-accepted-changes"),
     revertAppliedChanges: byId("revert-applied-changes"),
     applySessionApproval: byId("apply-session-approval"),
@@ -592,6 +620,11 @@
     postApplyVerificationObservedPaths: byId("post-apply-verification-observed-paths"),
     postApplyVerificationDiagnostics: byId("post-apply-verification-diagnostics"),
     commitBuilderSection: byId("commit-builder-section"),
+    canonicalCommitBuilderControls: document.querySelector(".canonical-commit-builder-controls"),
+    legacyCommitBuilderControls: document.querySelector(".legacy-commit-builder-controls"),
+    reviewOwnerCommit: byId("review-owner-commit"),
+    approveCommitProposal: byId("approve-commit-proposal"),
+    confirmOwnerLocalCommit: byId("confirm-owner-local-commit"),
     reviewCommitPlan: byId("review-commit-plan"),
     stageApprovedFiles: byId("stage-approved-files"),
     createLocalCommit: byId("create-local-commit"),
@@ -599,15 +632,23 @@
     commitPlanSubject: byId("commit-plan-subject"),
     commitPlanBody: byId("commit-plan-body"),
     commitBuilderStatus: byId("commit-builder-status"),
+    ownerCommitApplyState: byId("owner-commit-apply-state"),
+    ownerCommitPostApplyValidation: byId("owner-commit-post-apply-validation"),
     commitPlanSummary: byId("commit-plan-summary"),
+    commitProposalApproval: byId("commit-proposal-approval"),
     commitApprovedSummary: byId("commit-approved-summary"),
+    commitIncludedCount: byId("commit-included-count"),
     commitExcludedSummary: byId("commit-excluded-summary"),
+    commitUnrelatedWarning: byId("commit-unrelated-warning"),
     commitBuilderBranch: byId("commit-builder-branch"),
     commitBuilderHead: byId("commit-builder-head"),
+    commitExpectedParent: byId("commit-expected-parent"),
     commitBuilderSubject: byId("commit-builder-subject"),
+    commitAuthorReadiness: byId("commit-author-readiness"),
     commitBuilderValidation: byId("commit-builder-validation"),
     commitStageSummary: byId("commit-stage-summary"),
     localCommitSummary: byId("local-commit-summary"),
+    ownerLocalCommitSha: byId("owner-commit-result-oid"),
     commitBuilderNextAction: byId("commit-builder-next-action"),
     commitApprovedFiles: byId("commit-approved-files"),
     commitExcludedFiles: byId("commit-excluded-files"),
@@ -615,6 +656,9 @@
     commitBuilderBlockers: byId("commit-builder-blockers"),
     commitBuilderAdvancedCard: byId("commit-builder-advanced-card"),
     commitPlanRecordId: byId("commit-plan-record-id"),
+    commitProposalVersion: byId("commit-proposal-version"),
+    commitProposalApprovalRecord: byId("commit-proposal-approval-record"),
+    commitProposalApprovalDigest: byId("commit-proposal-approval-digest"),
     commitPlanPolicyVersion: byId("commit-plan-policy-version"),
     commitPlanDigest: byId("commit-plan-digest"),
     commitPlanVerificationBinding: byId("commit-plan-verification-binding"),
@@ -629,20 +673,36 @@
     localCommitRecordId: byId("local-commit-record-id"),
     localCommitSha: byId("local-commit-sha"),
     localCommitParentSha: byId("local-commit-parent-sha"),
+    localCommitTreeSha: byId("local-commit-tree-sha"),
     localCommitMessageDigest: byId("local-commit-message-digest"),
+    commitProposalMessageBody: byId("commit-proposal-message-body"),
+    commitProposalAuthor: byId("commit-proposal-author"),
+    localCommitArgv: byId("local-commit-argv"),
+    localCommitProcessIdentity: byId("local-commit-process-identity"),
     commitBuilderCreatedAt: byId("commit-builder-created-at"),
     commitBuilderPathEvidence: byId("commit-builder-path-evidence"),
     commitBuilderDiagnostics: byId("commit-builder-diagnostics"),
     pushDeliverySection: byId("push-delivery-section"),
+    canonicalPushDeliveryControls: document.querySelector(".canonical-push-delivery-controls"),
+    legacyPushDeliveryControls: document.querySelector(".legacy-push-delivery-controls"),
+    reviewPushPlan: byId("review-push-plan"),
+    approvePushPlan: byId("approve-push-plan"),
+    confirmOwnerPush: byId("confirm-owner-push"),
     pushToOriginMain: byId("push-to-origin-main"),
     viewDeliveryResult: byId("view-delivery-result"),
     pushGateStatus: byId("push-gate-status"),
+    pushPlanApproval: byId("push-plan-approval"),
     pushLocalCommit: byId("push-local-commit"),
     pushCommitSubject: byId("push-commit-subject"),
     pushDestination: byId("push-destination"),
     pushRemoteBase: byId("push-remote-base"),
+    pushProposedNewSha: byId("push-proposed-new-sha"),
+    pushFastForwardReadiness: byId("push-fast-forward-readiness"),
     pushAheadBehind: byId("push-ahead-behind"),
     pushCleanliness: byId("push-cleanliness"),
+    pushProgress: byId("push-progress"),
+    pushFinalRemoteSha: byId("push-final-remote-sha"),
+    pushReceiptSummary: byId("push-receipt-summary"),
     pushNextAction: byId("push-next-action"),
     pushBlockers: byId("push-blockers"),
     deliveryResult: byId("delivery-result"),
@@ -668,6 +728,11 @@
     deliveryNextAction: byId("delivery-next-action"),
     pushDeliveryAdvancedCard: byId("push-delivery-advanced-card"),
     pushCommitBinding: byId("push-commit-binding"),
+    pushPlanRecordId: byId("push-plan-record-id"),
+    pushPlanVersion: byId("push-plan-version"),
+    pushPlanDigest: byId("push-plan-digest"),
+    pushPlanApprovalRecord: byId("push-plan-approval-record"),
+    pushPlanApprovalDigest: byId("push-plan-approval-digest"),
     pushCandidateBinding: byId("push-candidate-binding"),
     pushApplyPlanBinding: byId("push-apply-plan-binding"),
     pushVerificationBinding: byId("push-verification-binding"),
@@ -678,6 +743,10 @@
     pushExactRefspec: byId("push-exact-refspec"),
     pushRemoteFingerprint: byId("push-remote-fingerprint"),
     pushRepositoryFingerprint: byId("push-repository-fingerprint"),
+    pushRemoteDescriptor: byId("push-remote-descriptor"),
+    pushExecutionArgv: byId("push-execution-argv"),
+    pushProcessIdentity: byId("push-process-identity"),
+    pushRemoteReceipt: byId("push-remote-receipt"),
     pushSanitizedDiagnostics: byId("push-sanitized-diagnostics"),
     applyConfirmationDialog: byId("apply-confirmation-dialog"),
     applyConfirmationPlan: byId("apply-confirmation-plan"),
@@ -729,6 +798,25 @@
     pushConfirmationFastForward: byId("push-confirmation-fast-forward"),
     confirmPushToOriginMain: byId("confirm-push-to-origin-main"),
     cancelPushToOriginMain: byId("cancel-push-to-origin-main"),
+    ownerLocalCommitConfirmationDialog: byId("owner-local-commit-confirmation-dialog"),
+    ownerCommitConfirmationProposal: byId("owner-commit-confirmation-proposal"),
+    ownerCommitConfirmationPaths: byId("owner-commit-confirmation-paths"),
+    ownerCommitConfirmationSubject: byId("owner-commit-confirmation-subject"),
+    ownerCommitConfirmationBody: byId("owner-commit-confirmation-body"),
+    ownerCommitConfirmationAuthor: byId("owner-commit-confirmation-author"),
+    ownerCommitConfirmationBranch: byId("owner-commit-confirmation-branch"),
+    ownerCommitConfirmationParent: byId("owner-commit-confirmation-parent"),
+    confirmApprovedLocalCommit: byId("confirm-approved-local-commit"),
+    cancelApprovedLocalCommit: byId("cancel-approved-local-commit"),
+    ownerPushConfirmationDialog: byId("owner-push-confirmation-dialog"),
+    ownerPushConfirmationPlan: byId("owner-push-confirmation-plan"),
+    ownerPushConfirmationRemote: byId("owner-push-confirmation-remote"),
+    ownerPushConfirmationBranch: byId("owner-push-confirmation-branch"),
+    ownerPushConfirmationOldSha: byId("owner-push-confirmation-old-sha"),
+    ownerPushConfirmationNewSha: byId("owner-push-confirmation-new-sha"),
+    ownerPushConfirmationFastForward: byId("owner-push-confirmation-fast-forward"),
+    confirmApprovedPush: byId("confirm-approved-push"),
+    cancelApprovedPush: byId("cancel-approved-push"),
     assignmentTechnicalDetails: byId("assignment-technical-details"),
     packRoutingDetails: byId("pack-routing-details"),
     modelInvocationDetails: byId("model-invocation-details"),
@@ -857,12 +945,17 @@
     pushDeliveryReviewLoads: new Set(),
     pushDeliveryRequestSequences: Object.create(null),
     pushDeliveryResultVisible: new Set(),
+    ownerDeliveryProjections: Object.create(null),
+    ownerDeliveryProjectionLoads: new Set(),
+    ownerDeliveryRequestSequences: Object.create(null),
     runConfirmationContext: null,
     applyConfirmationContext: null,
     revertConfirmationContext: null,
     stageConfirmationContext: null,
     localCommitConfirmationContext: null,
     pushConfirmationContext: null,
+    ownerCommitConfirmationContext: null,
+    ownerPushConfirmationContext: null,
     selectedTaskId: null,
     selectedPackId: null,
     selectedScheduleId: null,
@@ -1382,18 +1475,25 @@
     state.pushDeliveryReviewLoads = new Set();
     state.pushDeliveryRequestSequences = Object.create(null);
     state.pushDeliveryResultVisible = new Set();
+    state.ownerDeliveryProjections = Object.create(null);
+    state.ownerDeliveryProjectionLoads = new Set();
+    state.ownerDeliveryRequestSequences = Object.create(null);
     state.runConfirmationContext = null;
     state.applyConfirmationContext = null;
     state.revertConfirmationContext = null;
     state.stageConfirmationContext = null;
     state.localCommitConfirmationContext = null;
     state.pushConfirmationContext = null;
+    state.ownerCommitConfirmationContext = null;
+    state.ownerPushConfirmationContext = null;
     if (elements.startCodexConfirmationDialog.open) elements.startCodexConfirmationDialog.close();
     if (elements.applyConfirmationDialog.open) elements.applyConfirmationDialog.close();
     if (elements.revertConfirmationDialog.open) elements.revertConfirmationDialog.close();
     if (elements.stageConfirmationDialog.open) elements.stageConfirmationDialog.close();
     if (elements.localCommitConfirmationDialog.open) elements.localCommitConfirmationDialog.close();
     if (elements.pushConfirmationDialog.open) elements.pushConfirmationDialog.close();
+    if (elements.ownerLocalCommitConfirmationDialog.open) elements.ownerLocalCommitConfirmationDialog.close();
+    if (elements.ownerPushConfirmationDialog.open) elements.ownerPushConfirmationDialog.close();
     state.selectedTaskId = null;
     state.selectedPackId = null;
     state.selectedScheduleId = null;
@@ -2041,6 +2141,60 @@
     }
   }
 
+  function ownerDeliveryProjectionForRun(run) {
+    if (!run || run.id === null || run.id === undefined) return null;
+    return state.ownerDeliveryProjections[String(run.id)] || null;
+  }
+
+  function canonicalOwnerDeliveryAvailable(run) {
+    const projection = objectRecord(ownerDeliveryProjectionForRun(run));
+    return Boolean(
+      projection.commit_delivery
+      || projection.push_delivery
+      || projection.delivery_contract === "VOL19_19_1D"
+      || projection.contract_version === "19.1D"
+    );
+  }
+
+  async function loadOwnerDelivery(run, force) {
+    if (!run || run.id === null || run.id === undefined) return;
+    const key = String(run.id);
+    if (!force && state.ownerDeliveryProjectionLoads.has(key)) return;
+    state.ownerDeliveryProjectionLoads.add(key);
+    const requestEpoch = state.taskSelectionEpoch;
+    const requestSequence = (state.ownerDeliveryRequestSequences[key] || 0) + 1;
+    state.ownerDeliveryRequestSequences[key] = requestSequence;
+    try {
+      const projection = await api(
+        "/api/codex-runs/" + encodeURIComponent(key) + "/delivery"
+      );
+      if (requestEpoch !== state.taskSelectionEpoch
+          || state.ownerDeliveryRequestSequences[key] !== requestSequence
+          || String(objectRecord(currentCodexRun()).id || "") !== key) return;
+      if (!projection || String(projection.run_id || "") !== key) {
+        throw new ApiError(
+          200,
+          "OWNER_DELIVERY_BINDING_MISMATCH",
+          "Owner delivery status did not match the selected Run.",
+          {},
+          "product"
+        );
+      }
+      state.ownerDeliveryProjections[key] = projection;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) throw error;
+      if (requestEpoch !== state.taskSelectionEpoch
+          || state.ownerDeliveryRequestSequences[key] !== requestSequence) return;
+      state.ownerDeliveryProjections[key] = {
+        run_id: run.id,
+        load_error: {
+          code: error instanceof ApiError ? error.code : "OWNER_DELIVERY_LOAD_FAILED",
+          message: productActionMessage(error)
+        }
+      };
+    }
+  }
+
   function currentLegacyRun() {
     const task = selectedTask();
     if (!task) return null;
@@ -2067,6 +2221,10 @@
     if (elements.startCodexConfirmationDialog.open) elements.startCodexConfirmationDialog.close();
     state.pushConfirmationContext = null;
     if (elements.pushConfirmationDialog.open) elements.pushConfirmationDialog.close();
+    state.ownerCommitConfirmationContext = null;
+    state.ownerPushConfirmationContext = null;
+    if (elements.ownerLocalCommitConfirmationDialog.open) elements.ownerLocalCommitConfirmationDialog.close();
+    if (elements.ownerPushConfirmationDialog.open) elements.ownerPushConfirmationDialog.close();
     state.aiPlan = null;
     state.acceptance = null;
     state.packs = [];
@@ -2273,6 +2431,7 @@
         await loadPostApplyVerification(currentCodexRun(), true);
         await loadCommitBuilder(currentCodexRun(), true);
         await loadPushDelivery(currentCodexRun(), true);
+        await loadOwnerDelivery(currentCodexRun(), true);
         if (
           requestSelectionEpoch !== state.taskSelectionEpoch
           || String(state.selectedTaskId) !== String(requestedTaskId)
@@ -7613,6 +7772,569 @@
     renderPushDeliveryAdvanced(parts);
   }
 
+  function ownerDeliveryRecordId(value) {
+    const record = objectRecord(value);
+    return record.id || record.proposal_id || record.plan_id || record.execution_id
+      || record.commit_execution_id || record.push_execution_id || null;
+  }
+
+  function ownerDeliveryDigest(value) {
+    const record = objectRecord(value);
+    const advanced = objectRecord(record.advanced);
+    return record.digest || record.verification_digest || record.proposal_digest || record.plan_digest
+      || record.approval_digest || record.receipt_digest
+      || advanced.verification_digest || advanced.proposal_digest || advanced.plan_digest
+      || advanced.approval_digest || advanced.receipt_digest || "";
+  }
+
+  function ownerDeliveryParts(run) {
+    const projection = objectRecord(ownerDeliveryProjectionForRun(run));
+    const commitDelivery = objectRecord(projection.commit_delivery);
+    const pushDelivery = objectRecord(projection.push_delivery);
+    const applyReview = objectRecord(projection.apply_session);
+    const applySession = objectRecord(applyReview.session || applyReview);
+    const postApply = objectRecord(
+      projection.post_apply_verification
+      || commitDelivery.post_apply_verification
+    );
+    const proposal = objectRecord(
+      commitDelivery.proposal || commitDelivery.commit_proposal
+      || commitDelivery.plan || commitDelivery.commit_plan
+    );
+    const commitApproval = objectRecord(
+      commitDelivery.approval || commitDelivery.commit_approval
+      || proposal.approval
+    );
+    const commitExecution = objectRecord(
+      commitDelivery.execution || commitDelivery.local_commit
+      || commitDelivery.commit_execution || proposal.commit
+    );
+    const pushPlan = objectRecord(
+      pushDelivery.plan || pushDelivery.push_plan
+    );
+    const pushApproval = objectRecord(
+      pushDelivery.approval || pushDelivery.push_approval
+      || pushPlan.approval
+    );
+    const pushExecution = objectRecord(
+      pushDelivery.execution || pushDelivery.push_execution || pushPlan.execution
+    );
+    const receipt = objectRecord(
+      pushDelivery.receipt || pushDelivery.delivery_receipt
+      || pushDelivery.delivery_result || pushExecution.receipt
+    );
+    return {
+      projection: projection,
+      applyReview: applyReview,
+      applySession: applySession,
+      postApply: postApply,
+      commitDelivery: commitDelivery,
+      proposal: proposal,
+      commitApproval: commitApproval,
+      commitExecution: commitExecution,
+      commitActions: Object.assign(
+        {},
+        objectRecord(proposal.actions),
+        objectRecord(commitDelivery.actions)
+      ),
+      pushDelivery: pushDelivery,
+      pushPlan: pushPlan,
+      pushApproval: pushApproval,
+      pushExecution: pushExecution,
+      receipt: receipt,
+      pushActions: Object.assign(
+        {},
+        objectRecord(pushPlan.actions),
+        objectRecord(pushDelivery.actions)
+      )
+    };
+  }
+
+  function canonicalCommitState(parts) {
+    const executionState = String(
+      parts.commitExecution.state || parts.commitExecution.status || ""
+    ).toUpperCase();
+    if (["COMMITTED", "LOCAL_COMMIT_CREATED", "SUCCEEDED"].indexOf(executionState) !== -1) {
+      return "LOCAL_COMMIT_CREATED";
+    }
+    if (executionState === "COMMITTING" || executionState === "RUNNING") return "COMMITTING";
+    if (["FAILED", "BLOCKED", "INTEGRITY_BLOCKED", "NEEDS_SETUP", "NEEDS_REVIEW"].indexOf(executionState) !== -1) {
+      return executionState;
+    }
+    const proposalReady = Boolean(ownerDeliveryRecordId(parts.proposal));
+    const approvalState = canonicalApprovalState(parts.commitApproval, "PENDING");
+    if (proposalReady && approvalState !== "APPROVED"
+        && (parts.commitActions.can_approve === true
+          || parts.commitActions.can_approve_commit === true
+          || parts.commitActions.can_approve_commit_proposal === true)) {
+      return "COMMIT_APPROVAL_REQUIRED";
+    }
+    if (proposalReady && approvalState === "APPROVED"
+        && (parts.commitActions.can_commit === true
+          || parts.commitActions.can_confirm_commit === true
+          || parts.commitActions.can_create_local_commit === true)) {
+      return "COMMIT_CONFIRMATION_REQUIRED";
+    }
+    const stateValue = String(
+      parts.commitDelivery.action_state || parts.commitDelivery.state
+      || parts.commitDelivery.status || "COMMIT_REVIEW_REQUIRED"
+    ).toUpperCase();
+    return Object.prototype.hasOwnProperty.call(OWNER_COMMIT_STATE_LABELS, stateValue)
+      ? stateValue
+      : "COMMIT_REVIEW_REQUIRED";
+  }
+
+  function canonicalPushState(parts) {
+    const receiptState = String(
+      parts.receipt.state || parts.receipt.status || parts.receipt.classification || ""
+    ).toUpperCase();
+    if (["DELIVERED", "SUCCEEDED", "PUSHED"].indexOf(receiptState) !== -1) return "DELIVERED";
+    if (receiptState === "ALREADY_DELIVERED") return "ALREADY_DELIVERED";
+    const executionState = String(
+      parts.pushExecution.state || parts.pushExecution.status || ""
+    ).toUpperCase();
+    if (["DELIVERED", "SUCCEEDED", "PUSHED"].indexOf(executionState) !== -1) return "DELIVERED";
+    if (executionState === "ALREADY_DELIVERED") return "ALREADY_DELIVERED";
+    if (executionState === "PUSHING" || executionState === "RUNNING") return "PUSHING";
+    if (["FAILED", "BLOCKED", "TIMED_OUT", "NEEDS_SETUP", "NEEDS_REVIEW"].indexOf(executionState) !== -1) {
+      return executionState;
+    }
+    const planReady = Boolean(ownerDeliveryRecordId(parts.pushPlan));
+    const approvalState = canonicalApprovalState(parts.pushApproval, "PENDING");
+    if (planReady && approvalState !== "APPROVED"
+        && (parts.pushActions.can_approve === true
+          || parts.pushActions.can_approve_push_plan === true)) {
+      return "PUSH_APPROVAL_REQUIRED";
+    }
+    if (planReady && approvalState === "APPROVED"
+        && (parts.pushActions.can_push === true
+          || parts.pushActions.can_confirm_push === true)) {
+      return "PUSH_CONFIRMATION_REQUIRED";
+    }
+    const stateValue = String(
+      parts.pushDelivery.action_state || parts.pushDelivery.state
+      || parts.pushDelivery.status || "PUSH_REVIEW_REQUIRED"
+    ).toUpperCase();
+    return Object.prototype.hasOwnProperty.call(OWNER_PUSH_STATE_LABELS, stateValue)
+      ? stateValue
+      : "PUSH_REVIEW_REQUIRED";
+  }
+
+  function canonicalApprovalState(approval, fallback) {
+    const record = objectRecord(approval);
+    return String(record.state || record.status || record.approval_state || fallback).toUpperCase();
+  }
+
+  function ownerDeliveryPathEntries(record, included) {
+    const value = objectRecord(record);
+    const direct = included
+      ? value.included_paths || value.included_files || value.approved_files
+        || value.exact_paths || value.paths || value.files
+      : value.excluded_paths || value.excluded_files || value.unrelated_paths;
+    return Array.isArray(direct) ? direct : [];
+  }
+
+  function renderOwnerDeliverySequence(parts, commitState, pushState) {
+    const proposalReady = Boolean(ownerDeliveryRecordId(parts.proposal));
+    const commitApproved = canonicalApprovalState(parts.commitApproval, "PENDING") === "APPROVED";
+    const committed = commitState === "LOCAL_COMMIT_CREATED";
+    const pushPlanReady = Boolean(ownerDeliveryRecordId(parts.pushPlan));
+    const pushApproved = canonicalApprovalState(parts.pushApproval, "PENDING") === "APPROVED";
+    const pushStarted = Boolean(ownerDeliveryRecordId(parts.pushExecution));
+    const delivered = ["DELIVERED", "ALREADY_DELIVERED"].indexOf(pushState) !== -1;
+    const complete = {
+      applied: true,
+      commit_review: proposalReady,
+      commit_approval: commitApproved,
+      commit_confirmation: committed,
+      committed: committed,
+      push_review: pushPlanReady,
+      push_approval: pushApproved,
+      push_confirmation: pushStarted,
+      delivered: delivered
+    };
+    let currentAssigned = false;
+    document.querySelectorAll("#owner-delivery-sequence [data-delivery-step]").forEach(function (item) {
+      const key = item.dataset.deliveryStep;
+      item.dataset.state = complete[key] ? "complete" : "pending";
+      item.removeAttribute("aria-current");
+      if (!complete[key] && !currentAssigned) {
+        item.dataset.state = "current";
+        item.setAttribute("aria-current", "step");
+        currentAssigned = true;
+      }
+    });
+  }
+
+  function renderCanonicalCommitAdvanced(parts) {
+    const proposalAdvanced = objectRecord(parts.proposal.advanced);
+    const approvalAdvanced = objectRecord(parts.commitApproval.advanced);
+    const executionAdvanced = objectRecord(parts.commitExecution.advanced);
+    elements.commitBuilderAdvancedCard.hidden = !ownerDeliveryRecordId(parts.proposal);
+    if (elements.commitBuilderAdvancedCard.hidden) return;
+    elements.commitPlanRecordId.textContent = boundedText(ownerDeliveryRecordId(parts.proposal), "None", 240);
+    elements.commitProposalVersion.textContent = boundedText(
+      parts.proposal.version || parts.proposal.proposal_version,
+      "None",
+      80
+    );
+    elements.commitProposalApprovalRecord.textContent = boundedText(
+      ownerDeliveryRecordId(parts.commitApproval),
+      "None",
+      240
+    );
+    elements.commitProposalApprovalDigest.textContent = boundedText(
+      ownerDeliveryDigest(parts.commitApproval),
+      "None",
+      500
+    );
+    elements.commitPlanDigest.textContent = boundedText(ownerDeliveryDigest(parts.proposal), "None", 500);
+    elements.localCommitTreeSha.textContent = boundedText(
+      parts.commitExecution.tree_sha || parts.commitExecution.tree_oid || executionAdvanced.tree_sha
+        || executionAdvanced.tree_oid,
+      "None",
+      500
+    );
+    elements.commitProposalMessageBody.textContent = sanitizedApplyPlanText(
+      parts.proposal.body || proposalAdvanced.body,
+      "None",
+      4000
+    );
+    elements.commitProposalAuthor.textContent = sanitizedApplyPlanText(
+      parts.proposal.author || parts.proposal.author_identity || proposalAdvanced.author,
+      "None",
+      500
+    );
+    elements.localCommitArgv.textContent = sanitizedApplyPlanText(
+      executionAdvanced.argv || executionAdvanced.command_argv,
+      "None",
+      1200
+    );
+    elements.localCommitProcessIdentity.textContent = boundedText(
+      executionAdvanced.process_identity || parts.commitExecution.process_identity,
+      "None",
+      500
+    );
+    if (approvalAdvanced.approval_digest && !ownerDeliveryDigest(parts.commitApproval)) {
+      elements.commitProposalApprovalDigest.textContent = boundedText(
+        approvalAdvanced.approval_digest,
+        "None",
+        500
+      );
+    }
+  }
+
+  function renderCanonicalPushAdvanced(parts) {
+    const planAdvanced = objectRecord(parts.pushPlan.advanced);
+    const approvalAdvanced = objectRecord(parts.pushApproval.advanced);
+    const executionAdvanced = objectRecord(parts.pushExecution.advanced);
+    const receiptAdvanced = objectRecord(parts.receipt.advanced);
+    elements.pushDeliveryAdvancedCard.hidden = !ownerDeliveryRecordId(parts.pushPlan)
+      && !ownerDeliveryRecordId(parts.pushExecution);
+    if (elements.pushDeliveryAdvancedCard.hidden) return;
+    elements.pushPlanRecordId.textContent = boundedText(ownerDeliveryRecordId(parts.pushPlan), "None", 240);
+    elements.pushPlanVersion.textContent = boundedText(
+      parts.pushPlan.version || parts.pushPlan.plan_version,
+      "None",
+      80
+    );
+    elements.pushPlanDigest.textContent = boundedText(ownerDeliveryDigest(parts.pushPlan), "None", 500);
+    elements.pushPlanApprovalRecord.textContent = boundedText(ownerDeliveryRecordId(parts.pushApproval), "None", 240);
+    elements.pushPlanApprovalDigest.textContent = boundedText(
+      ownerDeliveryDigest(parts.pushApproval) || approvalAdvanced.approval_digest,
+      "None",
+      500
+    );
+    elements.pushRemoteDescriptor.textContent = sanitizedApplyPlanText(
+      parts.pushPlan.remote_descriptor || planAdvanced.remote_descriptor,
+      "None",
+      800
+    );
+    elements.pushExecutionArgv.textContent = sanitizedApplyPlanText(
+      executionAdvanced.argv || executionAdvanced.command_argv,
+      "None",
+      1200
+    );
+    elements.pushProcessIdentity.textContent = boundedText(
+      executionAdvanced.process_identity || parts.pushExecution.process_identity,
+      "None",
+      500
+    );
+    elements.pushRemoteReceipt.textContent = sanitizedApplyPlanText(
+      parts.receipt.receipt || parts.receipt.summary || receiptAdvanced.receipt,
+      "None",
+      1600
+    );
+  }
+
+  function renderOwnerCommitPushDelivery(run) {
+    const canonical = canonicalOwnerDeliveryAvailable(run);
+    elements.commitBuilderSection.dataset.ownerDelivery = canonical ? "canonical" : "legacy";
+    elements.pushDeliverySection.dataset.ownerDelivery = canonical ? "canonical" : "legacy";
+    elements.canonicalCommitBuilderControls.hidden = !canonical;
+    elements.legacyCommitBuilderControls.hidden = canonical;
+    elements.canonicalPushDeliveryControls.hidden = !canonical;
+    elements.legacyPushDeliveryControls.hidden = canonical;
+    if (!canonical) return;
+    const parts = ownerDeliveryParts(run);
+    const commitState = canonicalCommitState(parts);
+    const pushState = canonicalPushState(parts);
+    const proposalId = ownerDeliveryRecordId(parts.proposal);
+    const commitId = ownerDeliveryRecordId(parts.commitExecution);
+    const committed = commitState === "LOCAL_COMMIT_CREATED";
+    const pushPlanId = ownerDeliveryRecordId(parts.pushPlan);
+    const approved = ownerDeliveryPathEntries(parts.proposal, true);
+    const excluded = ownerDeliveryPathEntries(parts.proposal, false);
+    const commitBlockers = applyPlanTextList(parts.commitDelivery.blockers, "")
+      .concat(applyPlanTextList(parts.proposal.blockers, ""))
+      .concat(applyPlanTextList(parts.commitExecution.blockers, ""));
+    const pushBlockers = applyPlanTextList(parts.pushDelivery.blockers, "")
+      .concat(applyPlanTextList(parts.pushPlan.blockers, ""))
+      .concat(applyPlanTextList(parts.pushExecution.blockers, ""));
+    const commitApprovalState = canonicalApprovalState(parts.commitApproval, "PENDING");
+    const pushApprovalState = canonicalApprovalState(parts.pushApproval, "PENDING");
+    const proposalAdvanced = objectRecord(parts.proposal.advanced);
+    const pushPlanAdvanced = objectRecord(parts.pushPlan.advanced);
+    const commitAdvanced = objectRecord(parts.commitExecution.advanced);
+    const pushAdvanced = objectRecord(parts.pushExecution.advanced);
+    const authorReadiness = objectRecord(parts.commitDelivery.author_readiness);
+
+    if (state.ownerCommitConfirmationContext) {
+      const current = state.ownerCommitConfirmationContext;
+      const stillCurrent = String(current.run_id) === String(run.id)
+        && String(current.proposal_id) === String(proposalId || "")
+        && String(current.proposal_digest) === String(ownerDeliveryDigest(parts.proposal))
+        && String(current.approval_digest) === String(ownerDeliveryDigest(parts.commitApproval))
+        && (parts.commitActions.can_confirm_commit === true
+          || parts.commitActions.can_create_local_commit === true
+          || parts.commitActions.can_commit === true);
+      if (!stillCurrent) {
+        state.ownerCommitConfirmationContext = null;
+        if (elements.ownerLocalCommitConfirmationDialog.open) {
+          elements.ownerLocalCommitConfirmationDialog.close();
+        }
+      }
+    }
+    if (state.ownerPushConfirmationContext) {
+      const current = state.ownerPushConfirmationContext;
+      const stillCurrent = String(current.run_id) === String(run.id)
+        && String(current.plan_id) === String(pushPlanId || "")
+        && String(current.plan_digest) === String(ownerDeliveryDigest(parts.pushPlan))
+        && String(current.approval_digest) === String(ownerDeliveryDigest(parts.pushApproval))
+        && (parts.pushActions.can_confirm_push === true
+          || parts.pushActions.can_push === true);
+      if (!stillCurrent) {
+        state.ownerPushConfirmationContext = null;
+        if (elements.ownerPushConfirmationDialog.open) {
+          elements.ownerPushConfirmationDialog.close();
+        }
+      }
+    }
+
+    elements.commitBuilderSection.hidden = false;
+    elements.pushDeliverySection.hidden = !committed;
+    elements.ownerCommitApplyState.textContent = humanStatus(
+      parts.applySession.apply_state || parts.applySession.state || "APPLIED"
+    );
+    elements.ownerCommitPostApplyValidation.textContent = humanStatus(
+      parts.postApply.status || parts.postApply.validation_result || "PASSED"
+    );
+    elements.commitBuilderStatus.textContent = OWNER_COMMIT_STATE_LABELS[commitState];
+    setStatusLabel(elements.commitBuilderStatus, elements.commitBuilderStatus.textContent);
+    elements.commitPlanSummary.textContent = proposalId
+      ? "Proposal v" + String(parts.proposal.version || parts.proposal.proposal_version || "1")
+      : "Not reviewed";
+    elements.commitProposalApproval.textContent = humanStatus(commitApprovalState);
+    setStatusLabel(elements.commitProposalApproval, elements.commitProposalApproval.textContent);
+    elements.commitApprovedSummary.textContent = proposalId
+      ? String(approved.length) + " approved path" + (approved.length === 1 ? "" : "s")
+      : "Not reviewed";
+    elements.commitIncludedCount.textContent = String(approved.length);
+    elements.commitExcludedSummary.textContent = proposalId
+      ? excluded.length
+        ? String(excluded.length) + " excluded path" + (excluded.length === 1 ? "" : "s")
+        : "None"
+      : "Not reviewed";
+    elements.commitUnrelatedWarning.textContent = excluded.length
+      ? "Warning — " + String(excluded.length) + " unrelated path"
+        + (excluded.length === 1 ? " is" : "s are") + " excluded and preserved."
+      : "No unrelated path is included.";
+    elements.commitBuilderBranch.textContent = sanitizedApplyPlanText(
+      parts.proposal.branch || proposalAdvanced.branch,
+      "Not reviewed",
+      240
+    );
+    const parentSha = parts.proposal.expected_parent_sha || parts.proposal.parent_sha
+      || parts.proposal.base_head || proposalAdvanced.expected_parent_sha
+      || proposalAdvanced.base_head;
+    elements.commitBuilderHead.textContent = boundedText(parentSha, "Not reviewed", 500);
+    elements.commitExpectedParent.textContent = boundedText(parentSha, "Not reviewed", 500);
+    elements.commitBuilderSubject.textContent = sanitizedApplyPlanText(
+      parts.proposal.subject,
+      "Not reviewed",
+      200
+    );
+    elements.commitAuthorReadiness.textContent = humanStatus(
+      parts.proposal.author_readiness || authorReadiness.status_label || authorReadiness.status
+      || "not evaluated"
+    );
+    elements.commitBuilderValidation.textContent = pushDeliverySummary(
+      parts.proposal.validation || parts.commitDelivery.validation,
+      "Not reviewed",
+      700
+    );
+    elements.commitStageSummary.textContent = proposalId
+      ? "Internal exact-path staging occurs only after final Commit confirmation."
+      : "Not started";
+    const commitSha = parts.commitExecution.commit_sha || parts.commitExecution.commit_oid
+      || commitAdvanced.commit_sha || commitAdvanced.commit_oid;
+    elements.localCommitSummary.textContent = commitId
+      ? OWNER_COMMIT_STATE_LABELS[commitState] + (commitSha ? " · " + boundedText(commitSha, "", 200) : "")
+      : "Not created";
+    elements.ownerLocalCommitSha.textContent = boundedText(commitSha, "Not created", 500);
+    const projectionNext = objectRecord(parts.projection.next_action);
+    elements.commitBuilderNextAction.textContent = sanitizedApplyPlanText(
+      parts.commitDelivery.next_action || (committed ? "Review Push Plan." : projectionNext.message),
+      commitState === "COMMIT_REVIEW_REQUIRED"
+        ? "Select Review Commit."
+        : commitState === "COMMIT_APPROVAL_REQUIRED"
+          ? "Select Approve Commit."
+          : commitState === "COMMIT_CONFIRMATION_REQUIRED"
+            ? "Select Confirm Local Commit."
+            : committed ? "Review Push Plan." : "Review Commit blockers.",
+      700
+    );
+    renderCommitBuilderFiles(elements.commitApprovedFiles, approved, false);
+    renderCommitBuilderFiles(elements.commitExcludedFiles, excluded, true);
+    appendTextList(elements.commitBuilderBlockers, commitBlockers, "No Commit blocker is reported.");
+
+    if (!proposalId && !elements.commitPlanSubject.value.trim()) {
+      const task = selectedTask();
+      const taskName = task ? task.title || task.development_task : "approved changes";
+      elements.commitPlanSubject.value = "Apply " + String(taskName || "approved changes");
+    }
+    if (proposalId) {
+      elements.commitPlanSubject.value = boundedText(parts.proposal.subject, elements.commitPlanSubject.value, 200);
+      elements.commitPlanBody.value = boundedText(parts.proposal.body, elements.commitPlanBody.value, 4000);
+    }
+    const canRevise = parts.commitActions.can_create_proposal === true
+      || parts.commitActions.can_edit === true
+      || parts.commitActions.can_review_commit === true
+      || parts.commitActions.can_review_commit_proposal === true;
+    elements.commitMessageFields.hidden = commitApprovalState === "APPROVED" || Boolean(commitId);
+    elements.commitPlanSubject.disabled = !canRevise;
+    elements.commitPlanBody.disabled = !canRevise;
+    elements.reviewOwnerCommit.hidden = false;
+    elements.reviewOwnerCommit.disabled = !canRevise || state.pending.has("review-owner-commit");
+    elements.approveCommitProposal.hidden = false;
+    elements.approveCommitProposal.disabled = !(
+      parts.commitActions.can_approve_commit === true
+      || parts.commitActions.can_approve_commit_proposal === true
+      || parts.commitActions.can_approve === true
+    ) || state.pending.has("approve-commit-proposal");
+    elements.confirmOwnerLocalCommit.hidden = false;
+    elements.confirmOwnerLocalCommit.disabled = !(
+      parts.commitActions.can_confirm_commit === true
+      || parts.commitActions.can_create_local_commit === true
+      || parts.commitActions.can_commit === true
+    ) || state.pending.has("confirm-owner-local-commit");
+    renderCanonicalCommitAdvanced(parts);
+
+    if (committed) {
+      elements.pushGateStatus.textContent = OWNER_PUSH_STATE_LABELS[pushState];
+      setStatusLabel(elements.pushGateStatus, elements.pushGateStatus.textContent);
+      elements.pushLocalCommit.textContent = boundedText(
+        parts.pushPlan.local_commit_sha || parts.pushPlan.expected_new_sha || commitSha,
+        "Not available",
+        500
+      );
+      elements.pushCommitSubject.textContent = sanitizedApplyPlanText(
+        parts.pushPlan.commit_subject || parts.proposal.subject,
+        "Not available",
+        300
+      );
+      elements.pushPlanApproval.textContent = humanStatus(pushApprovalState);
+      setStatusLabel(elements.pushPlanApproval, elements.pushPlanApproval.textContent);
+      elements.pushDestination.textContent = sanitizedApplyPlanText(
+        parts.pushPlan.destination || parts.pushPlan.target_ref || pushPlanAdvanced.target_ref,
+        "origin/main",
+        300
+      );
+      const remoteOldSha = parts.pushPlan.remote_old_sha || parts.pushPlan.expected_remote_old_sha
+        || parts.pushPlan.expected_remote_base_sha || pushPlanAdvanced.remote_old_sha;
+      const remoteNewSha = parts.pushPlan.remote_new_sha || parts.pushPlan.expected_new_sha
+        || parts.pushPlan.local_commit_sha || commitSha;
+      elements.pushRemoteBase.textContent = boundedText(remoteOldSha, "Not evaluated", 500);
+      elements.pushProposedNewSha.textContent = boundedText(remoteNewSha, "Not evaluated", 500);
+      elements.pushFastForwardReadiness.textContent = humanStatus(
+        parts.pushPlan.fast_forward_status || parts.pushPlan.fast_forward
+        || parts.pushDelivery.fast_forward_status || "not evaluated"
+      );
+      elements.pushProgress.textContent = OWNER_PUSH_STATE_LABELS[pushState];
+      const verifiedRemoteSha = parts.receipt.verified_remote_sha
+        || parts.receipt.remote_new_sha || parts.receipt.origin_main_sha
+        || pushAdvanced.verified_remote_sha;
+      elements.pushFinalRemoteSha.textContent = boundedText(
+        verifiedRemoteSha,
+        ["DELIVERED", "ALREADY_DELIVERED"].indexOf(pushState) !== -1
+          ? "Receipt unavailable"
+          : "Not delivered",
+        500
+      );
+      elements.pushReceiptSummary.textContent = sanitizedApplyPlanText(
+        parts.receipt.summary || parts.receipt.classification || parts.receipt.status_label,
+        ["DELIVERED", "ALREADY_DELIVERED"].indexOf(pushState) !== -1
+          ? "Remote SHA verified."
+          : "Not available",
+        1000
+      );
+      elements.pushNextAction.textContent = sanitizedApplyPlanText(
+        parts.pushDelivery.next_action || projectionNext.message,
+        pushState === "PUSH_REVIEW_REQUIRED"
+          ? "Select Review Push Plan."
+          : pushState === "PUSH_APPROVAL_REQUIRED"
+            ? "Select Approve Push Plan."
+            : pushState === "PUSH_CONFIRMATION_REQUIRED"
+              ? "Select Confirm Push."
+              : pushState === "DELIVERED" ? "Delivery is complete." : "Review Push blockers.",
+        700
+      );
+      appendTextList(elements.pushBlockers, pushBlockers, "No Push blocker is reported.");
+      elements.reviewPushPlan.hidden = false;
+      elements.reviewPushPlan.disabled = !(
+        parts.pushActions.can_review_push_plan === true
+        || parts.pushActions.can_create_plan === true
+      )
+        || state.pending.has("review-push-plan");
+      elements.approvePushPlan.hidden = false;
+      elements.approvePushPlan.disabled = !(
+        parts.pushActions.can_approve_push_plan === true
+        || parts.pushActions.can_approve === true
+      )
+        || state.pending.has("approve-push-plan");
+      elements.confirmOwnerPush.hidden = false;
+      elements.confirmOwnerPush.disabled = !(
+        parts.pushActions.can_confirm_push === true
+        || parts.pushActions.can_push === true
+      )
+        || state.pending.has("confirm-owner-push");
+      renderCanonicalPushAdvanced(parts);
+    }
+
+    if (committed) {
+      elements.revertAppliedChanges.hidden = true;
+      elements.revertAppliedChanges.disabled = true;
+      elements.revertAppliedChanges.title = "Working-tree Revert is unavailable after Local Commit.";
+      elements.applySessionRevertAvailability.textContent = "Unavailable after Local Commit";
+      elements.applySessionRecovery.textContent = "Committed history is preserved";
+      elements.applySessionNextAction.textContent = "Review Push Plan. History-preserving Commit recovery belongs to a later flow.";
+      elements.applySessionBoundaryNote.textContent = "The original working-tree Revert cannot erase or rewrite a local commit. No reset, amend, force, or branch rewrite is offered.";
+    } else {
+      elements.applySessionBoundaryNote.textContent = "Only INCLUDED Apply Plan paths are eligible. Apply and Revert do not stage, commit, or push.";
+    }
+    renderOwnerDeliverySequence(parts, commitState, pushState);
+  }
+
   function confirmationListText(value, fallback) {
     const paths = applySessionPathsFrom(value);
     return paths.length ? paths.join(", ") : fallback;
@@ -8470,6 +9192,7 @@
     renderPostApplyVerification(run);
     renderCommitBuilder(run);
     renderPushDelivery(run);
+    renderOwnerCommitPushDelivery(run);
     renderRunModelEvidence(run);
     setStatusLabel(elements.resultStatus, elements.resultStatus.textContent);
   }
@@ -8725,6 +9448,41 @@
       || !commitStageId
       || !(commitActions.can_create_local_commit === true || commitActions.can_commit === true)
       || state.pending.has("create-local-commit");
+    if (canonicalOwnerDeliveryAvailable(codexRun)) {
+      const ownerDelivery = ownerDeliveryParts(codexRun);
+      const canonicalCommitActions = objectRecord(ownerDelivery.commitActions);
+      const canonicalPushActions = objectRecord(ownerDelivery.pushActions);
+      const committed = canonicalCommitState(ownerDelivery) === "LOCAL_COMMIT_CREATED";
+      elements.reviewOwnerCommit.disabled = !authenticated
+        || !(canonicalCommitActions.can_create_proposal === true
+          || canonicalCommitActions.can_edit === true
+          || canonicalCommitActions.can_review_commit === true
+          || canonicalCommitActions.can_review_commit_proposal === true)
+        || state.pending.has("review-owner-commit");
+      elements.approveCommitProposal.disabled = !authenticated
+        || !(canonicalCommitActions.can_approve_commit === true
+          || canonicalCommitActions.can_approve_commit_proposal === true
+          || canonicalCommitActions.can_approve === true)
+        || state.pending.has("approve-commit-proposal");
+      elements.confirmOwnerLocalCommit.disabled = !authenticated
+        || !(canonicalCommitActions.can_confirm_commit === true
+          || canonicalCommitActions.can_create_local_commit === true
+          || canonicalCommitActions.can_commit === true)
+        || state.pending.has("confirm-owner-local-commit");
+      elements.reviewPushPlan.disabled = !authenticated
+        || !(canonicalPushActions.can_review_push_plan === true
+          || canonicalPushActions.can_create_plan === true)
+        || state.pending.has("review-push-plan");
+      elements.approvePushPlan.disabled = !authenticated
+        || !(canonicalPushActions.can_approve_push_plan === true
+          || canonicalPushActions.can_approve === true)
+        || state.pending.has("approve-push-plan");
+      elements.confirmOwnerPush.disabled = !authenticated
+        || !(canonicalPushActions.can_confirm_push === true
+          || canonicalPushActions.can_push === true)
+        || state.pending.has("confirm-owner-push");
+      if (committed) elements.revertAppliedChanges.disabled = true;
+    }
     const decisionPending = state.pending.has("acceptance-decision");
     elements.acceptResult.disabled = !acceptance || !acceptance.can_accept || acceptance.status !== "owner_review" || decisionPending;
     elements.rejectResult.disabled = !acceptance
@@ -9441,6 +10199,334 @@
     state.pushDeliveryReviewLoads.add(key);
   }
 
+  function ownerDeliveryActionContext() {
+    const run = currentCodexRun();
+    if (!run || !canonicalOwnerDeliveryAvailable(run)) {
+      throw new ApiError(
+        409,
+        "OWNER_DELIVERY_NOT_READY",
+        "The Owner delivery workflow is not ready for this Run.",
+        {},
+        "product"
+      );
+    }
+    return { run: run, parts: ownerDeliveryParts(run), epoch: state.taskSelectionEpoch };
+  }
+
+  function assertOwnerDeliveryActionCurrent(context) {
+    if (context.epoch !== state.taskSelectionEpoch
+        || String(objectRecord(currentCodexRun()).id || "") !== String(context.run.id)) {
+      throw new ApiError(
+        409,
+        "STALE_OWNER_DELIVERY_RESPONSE",
+        "The delivery response no longer matches the selected Task and Run.",
+        {},
+        "product"
+      );
+    }
+  }
+
+  async function reviewOwnerCommit() {
+    await performAction(
+      "review-owner-commit",
+      elements.reviewOwnerCommit,
+      "Reviewing…",
+      async function () {
+        const context = ownerDeliveryActionContext();
+        const subject = elements.commitPlanSubject.value;
+        const body = elements.commitPlanBody.value;
+        if (!validCommitSubject(subject)) {
+          elements.commitPlanSubject.focus();
+          throw new ApiError(
+            422,
+            "COMMIT_SUBJECT_INVALID",
+            "Enter one nonempty Commit subject line of at most 200 UTF-8 bytes.",
+            {},
+            "product"
+          );
+        }
+        if (!validCommitBody(body)) {
+          elements.commitPlanBody.focus();
+          throw new ApiError(
+            422,
+            "COMMIT_BODY_INVALID",
+            "Commit body must be at most 4000 UTF-8 bytes of plain text.",
+            {},
+            "product"
+          );
+        }
+        const verificationId = ownerDeliveryRecordId(context.parts.postApply);
+        const verificationDigest = context.parts.postApply.verification_digest
+          || ownerDeliveryDigest(context.parts.postApply);
+        if (!verificationId || !verificationDigest) {
+          throw new ApiError(
+            409,
+            "PASSED_VERIFICATION_REQUIRED",
+            "Review Commit requires the exact passed Post-Apply Verification.",
+            {},
+            "product"
+          );
+        }
+        await api(
+          "/api/post-apply-verifications/" + encodeURIComponent(verificationId)
+            + "/commit-proposals",
+          {
+            method: "POST",
+            body: {
+              expected_verification_digest: verificationDigest,
+              subject: subject,
+              body: body
+            }
+          }
+        );
+        assertOwnerDeliveryActionCurrent(context);
+        return "Commit proposal reviewed. Approval remains a separate explicit Owner action.";
+      }
+    );
+  }
+
+  async function approveOwnerCommitProposal() {
+    await performAction(
+      "approve-commit-proposal",
+      elements.approveCommitProposal,
+      "Approving…",
+      async function () {
+        const context = ownerDeliveryActionContext();
+        const proposalId = ownerDeliveryRecordId(context.parts.proposal);
+        const proposalDigest = ownerDeliveryDigest(context.parts.proposal);
+        const proposalVersion = Number(
+          context.parts.proposal.version || context.parts.proposal.proposal_version
+        );
+        if (!proposalId || !proposalDigest || !Number.isInteger(proposalVersion)) {
+          throw new ApiError(
+            409,
+            "COMMIT_PROPOSAL_NOT_READY",
+            "Review the current immutable Commit proposal before approval.",
+            {},
+            "product"
+          );
+        }
+        await api(
+          "/api/commit-proposals/" + encodeURIComponent(proposalId) + "/approvals",
+          {
+            method: "POST",
+            body: {
+              confirmation: "APPROVE_COMMIT_PROPOSAL",
+              expected_proposal_digest: proposalDigest,
+              expected_proposal_version: proposalVersion
+            }
+          }
+        );
+        assertOwnerDeliveryActionCurrent(context);
+        return "Commit proposal approved. Local Commit still requires a separate final confirmation.";
+      }
+    );
+  }
+
+  function openOwnerLocalCommitConfirmation() {
+    const context = ownerDeliveryActionContext();
+    if (!(context.parts.commitActions.can_confirm_commit === true
+        || context.parts.commitActions.can_create_local_commit === true
+        || context.parts.commitActions.can_commit === true)) return;
+    const proposalId = ownerDeliveryRecordId(context.parts.proposal);
+    const proposalDigest = ownerDeliveryDigest(context.parts.proposal);
+    const approvalDigest = ownerDeliveryDigest(context.parts.commitApproval);
+    if (!proposalId || !proposalDigest || !approvalDigest) return;
+    const approved = ownerDeliveryPathEntries(context.parts.proposal, true);
+    const advanced = objectRecord(context.parts.proposal.advanced);
+    state.ownerCommitConfirmationContext = {
+      run_id: String(context.run.id),
+      proposal_id: String(proposalId),
+      proposal_digest: String(proposalDigest),
+      approval_digest: String(approvalDigest),
+      task_selection_epoch: context.epoch
+    };
+    elements.ownerCommitConfirmationProposal.textContent = "Proposal " + String(proposalId)
+      + " · v" + String(context.parts.proposal.version || context.parts.proposal.proposal_version || "?");
+    elements.ownerCommitConfirmationPaths.textContent = approved.length
+      ? approved.map(commitBuilderPath).join(", ")
+      : "None";
+    elements.ownerCommitConfirmationSubject.textContent = sanitizedApplyPlanText(
+      context.parts.proposal.subject,
+      "None",
+      200
+    );
+    elements.ownerCommitConfirmationBody.textContent = sanitizedApplyPlanText(
+      context.parts.proposal.body,
+      "None",
+      1200
+    );
+    elements.ownerCommitConfirmationAuthor.textContent = sanitizedApplyPlanText(
+      context.parts.proposal.author || context.parts.proposal.author_identity || advanced.author,
+      "Not evaluated",
+      500
+    );
+    elements.ownerCommitConfirmationBranch.textContent = sanitizedApplyPlanText(
+      context.parts.proposal.branch || advanced.branch,
+      "Not evaluated",
+      240
+    );
+    elements.ownerCommitConfirmationParent.textContent = boundedText(
+      context.parts.proposal.expected_parent_sha || context.parts.proposal.base_head
+        || advanced.expected_parent_sha || advanced.base_head,
+      "Not evaluated",
+      500
+    );
+    elements.ownerLocalCommitConfirmationDialog.showModal();
+    window.setTimeout(function () { elements.cancelApprovedLocalCommit.focus(); }, 0);
+  }
+
+  async function confirmApprovedLocalCommit() {
+    const context = state.ownerCommitConfirmationContext;
+    if (!context) return;
+    await performAction(
+      "confirm-owner-local-commit",
+      elements.confirmApprovedLocalCommit,
+      "Creating…",
+      async function () {
+        if (context.task_selection_epoch !== state.taskSelectionEpoch
+            || String(objectRecord(currentCodexRun()).id || "") !== context.run_id) {
+          throw new ApiError(
+            409,
+            "STALE_COMMIT_CONFIRMATION",
+            "Commit confirmation no longer matches the selected Task and Run.",
+            {},
+            "product"
+          );
+        }
+        await api(
+          "/api/commit-proposals/" + encodeURIComponent(context.proposal_id)
+            + "/local-commits",
+          {
+            method: "POST",
+            body: {
+              confirmation: "CREATE_LOCAL_COMMIT",
+              expected_proposal_digest: context.proposal_digest,
+              expected_approval_digest: context.approval_digest
+            }
+          }
+        );
+        state.ownerCommitConfirmationContext = null;
+        elements.ownerLocalCommitConfirmationDialog.close();
+        return "Local Commit created. Local Commit does not Push; review a separate Push Plan next.";
+      }
+    );
+  }
+
+  async function reviewOwnerPushPlan() {
+    await performAction(
+      "review-push-plan",
+      elements.reviewPushPlan,
+      "Reviewing…",
+      async function () {
+        const context = ownerDeliveryActionContext();
+        const commitId = ownerDeliveryRecordId(context.parts.commitExecution);
+        if (!commitId) {
+          throw new ApiError(
+            409,
+            "LOCAL_COMMIT_REQUIRED",
+            "Review Push Plan requires the exact successful local Commit.",
+            {},
+            "product"
+          );
+        }
+        await api(
+          "/api/local-commits/" + encodeURIComponent(commitId) + "/push-plans",
+          { method: "POST" }
+        );
+        assertOwnerDeliveryActionCurrent(context);
+        return "Push Plan reviewed. Push approval remains a separate explicit Owner action.";
+      }
+    );
+  }
+
+  async function approveOwnerPushPlan() {
+    await performAction(
+      "approve-push-plan",
+      elements.approvePushPlan,
+      "Approving…",
+      async function () {
+        const context = ownerDeliveryActionContext();
+        const planId = ownerDeliveryRecordId(context.parts.pushPlan);
+        const planDigest = ownerDeliveryDigest(context.parts.pushPlan);
+        const planVersion = Number(
+          context.parts.pushPlan.version || context.parts.pushPlan.plan_version
+        );
+        if (!planId || !planDigest || !Number.isInteger(planVersion)) {
+          throw new ApiError(
+            409,
+            "PUSH_PLAN_NOT_READY",
+            "Review the current immutable Push Plan before approval.",
+            {},
+            "product"
+          );
+        }
+        await api(
+          "/api/push-plans/" + encodeURIComponent(planId) + "/approvals",
+          {
+            method: "POST",
+            body: {
+              confirmation: "APPROVE_PUSH_PLAN",
+              expected_plan_digest: planDigest,
+              expected_plan_version: planVersion
+            }
+          }
+        );
+        assertOwnerDeliveryActionCurrent(context);
+        return "Push Plan approved. Push still requires a separate final confirmation.";
+      }
+    );
+  }
+
+  function openOwnerPushConfirmation() {
+    const context = ownerDeliveryActionContext();
+    if (!(context.parts.pushActions.can_confirm_push === true
+        || context.parts.pushActions.can_push === true)) return;
+    const planId = ownerDeliveryRecordId(context.parts.pushPlan);
+    const planDigest = ownerDeliveryDigest(context.parts.pushPlan);
+    const approvalDigest = ownerDeliveryDigest(context.parts.pushApproval);
+    if (!planId || !planDigest || !approvalDigest) return;
+    const advanced = objectRecord(context.parts.pushPlan.advanced);
+    state.ownerPushConfirmationContext = {
+      run_id: String(context.run.id),
+      plan_id: String(planId),
+      plan_digest: String(planDigest),
+      approval_digest: String(approvalDigest),
+      task_selection_epoch: context.epoch
+    };
+    elements.ownerPushConfirmationPlan.textContent = "Push Plan " + String(planId)
+      + " · v" + String(context.parts.pushPlan.version || context.parts.pushPlan.plan_version || "?");
+    elements.ownerPushConfirmationRemote.textContent = sanitizedApplyPlanText(
+      context.parts.pushPlan.remote_name || context.parts.pushPlan.remote || advanced.remote_name,
+      "origin",
+      200
+    );
+    elements.ownerPushConfirmationBranch.textContent = sanitizedApplyPlanText(
+      context.parts.pushPlan.target_branch || context.parts.pushPlan.target_ref
+        || advanced.target_ref,
+      "refs/heads/main",
+      320
+    );
+    elements.ownerPushConfirmationOldSha.textContent = boundedText(
+      context.parts.pushPlan.remote_old_sha || context.parts.pushPlan.expected_remote_old_sha
+        || context.parts.pushPlan.expected_remote_base_sha || advanced.remote_old_sha,
+      "Not evaluated",
+      500
+    );
+    elements.ownerPushConfirmationNewSha.textContent = boundedText(
+      context.parts.pushPlan.remote_new_sha || context.parts.pushPlan.expected_new_sha
+        || context.parts.pushPlan.local_commit_sha || advanced.expected_new_sha,
+      "Not evaluated",
+      500
+    );
+    elements.ownerPushConfirmationFastForward.textContent = humanStatus(
+      context.parts.pushPlan.fast_forward_status || context.parts.pushPlan.fast_forward
+      || "not evaluated"
+    );
+    elements.ownerPushConfirmationDialog.showModal();
+    window.setTimeout(function () { elements.cancelApprovedPush.focus(); }, 0);
+  }
+
   async function reviewCommitPlan() {
     await performAction(
       "review-commit-plan",
@@ -9892,6 +10978,42 @@
     });
   }
 
+  async function confirmApprovedPush() {
+    const context = state.ownerPushConfirmationContext;
+    if (!context) return;
+    await performAction(
+      "confirm-owner-push",
+      elements.confirmApprovedPush,
+      "Pushing…",
+      async function () {
+        if (context.task_selection_epoch !== state.taskSelectionEpoch
+            || String(objectRecord(currentCodexRun()).id || "") !== context.run_id) {
+          throw new ApiError(
+            409,
+            "STALE_PUSH_CONFIRMATION",
+            "Push confirmation no longer matches the selected Task and Run.",
+            {},
+            "product"
+          );
+        }
+        await api(
+          "/api/push-plans/" + encodeURIComponent(context.plan_id) + "/push-attempts",
+          {
+            method: "POST",
+            body: {
+              confirmation: "PUSH_TO_ORIGIN_MAIN",
+              expected_plan_digest: context.plan_digest,
+              expected_approval_digest: context.approval_digest
+            }
+          }
+        );
+        state.ownerPushConfirmationContext = null;
+        elements.ownerPushConfirmationDialog.close();
+        return "Push settled. Review the verified remote SHA and persisted delivery receipt.";
+      }
+    );
+  }
+
   async function decideAcceptance(decision) {
     const button = decision === "accept" ? elements.acceptResult : elements.rejectResult;
     const pending = decision === "accept" ? "Accepting…" : "Rejecting…";
@@ -10188,10 +11310,16 @@
     elements.applyAcceptedChanges.addEventListener("click", openApplyConfirmation);
     elements.revertAppliedChanges.addEventListener("click", openRevertConfirmation);
     elements.verifyAppliedChanges.addEventListener("click", verifyAppliedChanges);
+    elements.reviewOwnerCommit.addEventListener("click", reviewOwnerCommit);
+    elements.approveCommitProposal.addEventListener("click", approveOwnerCommitProposal);
+    elements.confirmOwnerLocalCommit.addEventListener("click", openOwnerLocalCommitConfirmation);
     elements.reviewCommitPlan.addEventListener("click", reviewCommitPlan);
     elements.stageApprovedFiles.addEventListener("click", openStageConfirmation);
     elements.createLocalCommit.addEventListener("click", openLocalCommitConfirmation);
     elements.pushToOriginMain.addEventListener("click", openPushConfirmation);
+    elements.reviewPushPlan.addEventListener("click", reviewOwnerPushPlan);
+    elements.approvePushPlan.addEventListener("click", approveOwnerPushPlan);
+    elements.confirmOwnerPush.addEventListener("click", openOwnerPushConfirmation);
     elements.viewDeliveryResult.addEventListener("click", viewDeliveryResult);
     elements.confirmApplyAcceptedChanges.addEventListener("click", confirmApplyAcceptedChanges);
     elements.cancelApplyAcceptedChanges.addEventListener("click", function () {
@@ -10232,6 +11360,22 @@
     });
     elements.pushConfirmationDialog.addEventListener("cancel", function () {
       state.pushConfirmationContext = null;
+    });
+    elements.confirmApprovedLocalCommit.addEventListener("click", confirmApprovedLocalCommit);
+    elements.cancelApprovedLocalCommit.addEventListener("click", function () {
+      state.ownerCommitConfirmationContext = null;
+      elements.ownerLocalCommitConfirmationDialog.close();
+    });
+    elements.ownerLocalCommitConfirmationDialog.addEventListener("cancel", function () {
+      state.ownerCommitConfirmationContext = null;
+    });
+    elements.confirmApprovedPush.addEventListener("click", confirmApprovedPush);
+    elements.cancelApprovedPush.addEventListener("click", function () {
+      state.ownerPushConfirmationContext = null;
+      elements.ownerPushConfirmationDialog.close();
+    });
+    elements.ownerPushConfirmationDialog.addEventListener("cancel", function () {
+      state.ownerPushConfirmationContext = null;
     });
     elements.cancelCodex.addEventListener("click", cancelCodex);
     elements.acceptResult.addEventListener("click", function () { decideAcceptance("accept"); });

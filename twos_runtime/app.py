@@ -83,13 +83,25 @@ from .commit_builder import (
     get_or_create_commit_plan,
     stage_commit_plan,
 )
+from .owner_commit_delivery import (
+    approve_commit_proposal,
+    confirm_local_commit,
+    create_commit_proposal,
+    find_owned_commit_proposal,
+    owner_commit_review,
+)
 from .push_delivery import (
     PushDeliveryError,
+    approve_push_plan,
+    confirm_approved_push_plan,
     confirm_push_to_origin_main,
     create_push_preflight,
     find_owned_local_commit_execution,
+    find_owned_push_plan,
     find_owned_push_execution,
+    get_or_create_push_plan,
     push_delivery_review,
+    push_plan_review,
 )
 from .result_intake import (
     ResultIntakeError,
@@ -125,6 +137,8 @@ from .models import (
     ApplyPlan,
     ApplySession,
     CommitPlan,
+    CommitProposal,
+    CommitProposalApproval,
     PostApplyVerification,
     StageExecution,
     LocalCommitExecution,
@@ -134,6 +148,7 @@ from .models import (
     HandoffReview,
     OwnerAcceptanceItem,
     OwnerAcceptanceSession,
+    PushPlanApproval,
     Project,
     Provider,
     RoutingDecision,
@@ -373,6 +388,34 @@ class ReviewCommitPlanIn(BaseModel):
         return value
 
 
+class ReviewCommitProposalIn(ReviewCommitPlanIn):
+    """Versioned, read-only Commit proposal review for the canonical 19.1D path."""
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class ApproveCommitProposalIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    confirmation: Literal["APPROVE_COMMIT_PROPOSAL"]
+    expected_proposal_digest: str = Field(
+        min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$"
+    )
+    expected_proposal_version: int = Field(ge=1)
+
+
+class ConfirmApprovedLocalCommitIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    confirmation: Literal["CREATE_LOCAL_COMMIT"]
+    expected_proposal_digest: str = Field(
+        min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$"
+    )
+    expected_approval_digest: str = Field(
+        min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$"
+    )
+
+
 class StageApprovedFilesIn(BaseModel):
     confirmation: Literal["STAGE_APPROVED_FILES"]
     expected_plan_digest: str = Field(
@@ -408,6 +451,28 @@ class ConfirmPushToOriginMainIn(BaseModel):
         min_length=64,
         max_length=64,
         pattern=r"^[0-9a-f]{64}$",
+    )
+
+
+class ApprovePushPlanIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    confirmation: Literal["APPROVE_PUSH_PLAN"]
+    expected_plan_digest: str = Field(
+        min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$"
+    )
+    expected_plan_version: int = Field(ge=1)
+
+
+class ConfirmApprovedPushIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    confirmation: Literal["PUSH_TO_ORIGIN_MAIN"]
+    expected_plan_digest: str = Field(
+        min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$"
+    )
+    expected_approval_digest: str = Field(
+        min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$"
     )
 
 
@@ -5483,6 +5548,71 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             if plan is not None
             else None
         )
+        apply_row = (
+            session.scalar(
+                select(ApplySession).where(
+                    ApplySession.owner_id == user.id,
+                    ApplySession.apply_plan_id == plan.id,
+                )
+            )
+            if plan is not None
+            else None
+        )
+        verification = (
+            session.scalar(
+                select(PostApplyVerification)
+                .where(
+                    PostApplyVerification.owner_id == user.id,
+                    PostApplyVerification.apply_session_id == apply_row.id,
+                )
+                .order_by(PostApplyVerification.id.desc())
+                .limit(1)
+            )
+            if apply_row is not None
+            else None
+        )
+        post_apply_view = (
+            post_apply_verification_review(
+                session,
+                owner_id=user.id,
+                apply_session=apply_row,
+            )
+            if apply_row is not None
+            else None
+        )
+        commit_delivery = (
+            owner_commit_api_review(
+                session,
+                owner_id=user.id,
+                verification=verification,
+            )
+            if verification is not None and verification.status == "PASSED"
+            else None
+        )
+        commit_execution_view = (
+            ((commit_delivery.get("proposal") or {}).get("commit"))
+            if isinstance(commit_delivery, dict)
+            else None
+        )
+        local_commit = (
+            find_owned_local_commit_execution(
+                session,
+                owner_id=user.id,
+                commit_execution_id=str(commit_execution_view.get("id") or ""),
+            )
+            if isinstance(commit_execution_view, dict)
+            and str(commit_execution_view.get("state") or "") == "COMMITTED"
+            else None
+        )
+        push_delivery = (
+            push_plan_api_review(
+                session,
+                owner_id=user.id,
+                local_commit=local_commit,
+            )
+            if local_commit is not None
+            else None
+        )
         review_view = (
             owner_acceptance_out(session, acceptance)
             if acceptance is not None
@@ -5521,17 +5651,148 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             # makes a fresh Candidate-drift evaluation look plan-impacting;
             # that upstream observation must not hide an eligible Revert or
             # overwrite a persisted Reverted terminal state on refresh.
-            if (
-                persisted_apply_state == "APPLIED"
-                and (apply_view.get("actions") or {}).get("can_revert") is True
-            ):
-                primary_action = {
-                    "code": "revert_applied_changes",
-                    "label": "Revert Applied Changes",
-                }
-                next_action = (
-                    "Optionally review recovery scope and explicitly confirm Revert."
+            if persisted_apply_state == "APPLIED":
+                commit_proposal = (
+                    commit_delivery.get("proposal")
+                    if isinstance(commit_delivery, dict)
+                    else None
                 )
+                commit_actions = (
+                    commit_proposal.get("actions")
+                    if isinstance(commit_proposal, dict)
+                    else {}
+                )
+                commit_execution = (
+                    commit_proposal.get("commit")
+                    if isinstance(commit_proposal, dict)
+                    else None
+                )
+                if verification is None:
+                    # Preserve the accepted 19.1C Applied-state projection:
+                    # working-tree Revert remains the primary recovery action
+                    # until post-Apply validation exists.  Validation is the
+                    # explicit secondary step that unlocks Commit review.
+                    if (apply_view.get("actions") or {}).get("can_revert") is True:
+                        primary_action = {
+                            "code": "revert_applied_changes",
+                            "label": "Revert Applied Changes",
+                        }
+                    secondary_actions = [
+                        {
+                            "code": "verify_applied_changes",
+                            "label": "Validate Applied Changes",
+                        }
+                    ]
+                    next_action = "Run the separate Post-Apply Validation before Commit review."
+                elif verification.status != "PASSED":
+                    next_action = "Resolve the Post-Apply Validation blocker before Commit review."
+                elif commit_proposal is None:
+                    primary_action = {
+                        "code": "review_commit",
+                        "label": "Review Commit",
+                    }
+                    next_action = "Review the exact local Commit proposal."
+                elif commit_actions.get("can_approve") is True:
+                    primary_action = {
+                        "code": "approve_commit",
+                        "label": "Approve Commit",
+                    }
+                    next_action = "Approve this exact Commit proposal version."
+                elif commit_actions.get("can_commit") is True:
+                    primary_action = {
+                        "code": "confirm_local_commit",
+                        "label": "Confirm Local Commit",
+                    }
+                    next_action = "Explicitly confirm one exact local Commit. Local Commit does not Push."
+                elif isinstance(commit_execution, dict) and str(
+                    commit_execution.get("state") or ""
+                ) == "COMMITTED":
+                    push_plan = (
+                        push_delivery.get("push_plan")
+                        if isinstance(push_delivery, dict)
+                        else None
+                    )
+                    push_actions = (
+                        push_delivery.get("actions")
+                        if isinstance(push_delivery, dict)
+                        else {}
+                    )
+                    push_execution = (
+                        push_delivery.get("push_execution")
+                        if isinstance(push_delivery, dict)
+                        else None
+                    )
+                    delivery_result = (
+                        push_delivery.get("delivery_result")
+                        if isinstance(push_delivery, dict)
+                        else None
+                    )
+                    if push_plan is None:
+                        primary_action = {
+                            "code": "review_push_plan",
+                            "label": "Review Push Plan",
+                        }
+                        next_action = "Review the exact remote, branch, old SHA, and new SHA."
+                    elif push_actions.get("can_approve_push_plan") is True:
+                        primary_action = {
+                            "code": "approve_push_plan",
+                            "label": "Approve Push Plan",
+                        }
+                        next_action = "Approve this exact immutable Push Plan."
+                    elif push_actions.get("can_confirm_push") is True:
+                        primary_action = {
+                            "code": "confirm_push",
+                            "label": "Confirm Push",
+                        }
+                        next_action = "Explicitly confirm one exact non-force Push."
+                    elif (
+                        isinstance(delivery_result, dict)
+                        and str(delivery_result.get("status") or "").lower()
+                        in {"delivered", "already_delivered", "succeeded"}
+                    ):
+                        next_action = "Delivery is verified at the approved remote branch."
+                    elif isinstance(push_execution, dict):
+                        next_action = str(
+                            (delivery_result or {}).get("next_action")
+                            or "Review the persisted Push result."
+                        )
+                    else:
+                        plan_blockers = list((push_plan or {}).get("blockers") or [])
+                        next_action = str(
+                            (
+                                plan_blockers[0].get("message")
+                                if plan_blockers
+                                and isinstance(plan_blockers[0], dict)
+                                else None
+                            )
+                            or "Review Push readiness."
+                        )
+                else:
+                    commit_blockers = list(
+                        (commit_proposal or {}).get("blockers") or []
+                    )
+                    next_action = str(
+                        (
+                            commit_blockers[0].get("message")
+                            if commit_blockers
+                            and isinstance(commit_blockers[0], dict)
+                            else None
+                        )
+                        or (commit_delivery or {}).get("next_action")
+                        or "Review the persisted Commit state."
+                    )
+                if (
+                    verification is not None
+                    and
+                    not isinstance(commit_execution, dict)
+                    and (apply_view.get("actions") or {}).get("can_revert") is True
+                ):
+                    secondary_actions = [
+                        {
+                            "code": "revert_applied_changes",
+                            "label": "Revert Applied Changes",
+                        }
+                    ]
             elif persisted_apply_state == "REVERTED":
                 next_action = (
                     "Delivery is reverted; the immutable Run Result remains available."
@@ -5591,6 +5852,9 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             "candidate": candidate_review,
             "apply_plan": plan_view,
             "apply_session": apply_view,
+            "post_apply_verification": post_apply_view,
+            "commit_delivery": commit_delivery,
+            "push_delivery": push_delivery,
             "next_action": {
                 "primary": primary_action,
                 "secondary": secondary_actions,
@@ -5601,6 +5865,8 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 "Candidate materialization changes metadata only.",
                 "Result acceptance and Apply Plan approval never mutate source.",
                 "Apply and Revert require their own explicit confirmations.",
+                "Commit proposal approval and local Commit confirmation are separate.",
+                "Push Plan approval and Push confirmation are separate.",
                 "No automatic Stage, Commit, Push, Run, or connector action occurs.",
             ],
         }
@@ -5754,6 +6020,271 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         )
         return review
 
+    def owner_commit_api_review(
+        session: Session,
+        *,
+        owner_id: int,
+        verification: PostApplyVerification,
+    ) -> dict[str, Any]:
+        try:
+            review = owner_commit_review(
+                session,
+                owner_id=owner_id,
+                post_apply_verification=verification,
+                source_repo=settings.source_repo,
+            )
+        except CommitBuilderError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.code, "message": exc.message},
+            ) from exc
+        review["post_apply_verification_id"] = verification.verification_id
+        review["verification_id"] = verification.verification_id
+        return review
+
+    @app.get("/api/post-apply-verifications/{verification_id}/commit-proposals")
+    def get_owner_commit_proposal(
+        verification_id: str,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        verification = find_owned_post_apply_verification(
+            session,
+            owner_id=user.id,
+            verification_id=verification_id,
+        )
+        if verification is None:
+            raise HTTPException(status_code=404, detail="Commit delivery not found.")
+        return owner_commit_api_review(
+            session,
+            owner_id=user.id,
+            verification=verification,
+        )
+
+    @app.post("/api/post-apply-verifications/{verification_id}/commit-proposals")
+    def review_owner_commit_proposal(
+        verification_id: str,
+        payload: ReviewCommitProposalIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        verification = find_owned_post_apply_verification(
+            session,
+            owner_id=user.id,
+            verification_id=verification_id,
+        )
+        if verification is None:
+            raise HTTPException(status_code=404, detail="Commit delivery not found.")
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+            verification = find_owned_post_apply_verification(
+                session,
+                owner_id=user.id,
+                verification_id=verification_id,
+            )
+            if verification is None:
+                raise HTTPException(status_code=404, detail="Commit delivery not found.")
+        if payload.expected_verification_digest != verification.verification_digest:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "VERIFICATION_CHANGED",
+                    "message": "The Post-Apply Verification identity changed.",
+                },
+            )
+        try:
+            proposal, created = create_commit_proposal(
+                session,
+                owner_id=user.id,
+                post_apply_verification=verification,
+                source_repo=settings.source_repo,
+                subject=payload.subject,
+                body=payload.body,
+            )
+        except CommitBuilderError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.code, "message": exc.message},
+            ) from exc
+        audit(
+            session,
+            request,
+            "commit_proposal_created" if created else "commit_proposal_retrieved",
+            "commit_proposal",
+            proposal.id,
+            (
+                f"verification={verification.verification_id}; "
+                f"proposal={proposal.proposal_id}; version={proposal.version}"
+            ),
+            user,
+        )
+        session.commit()
+        return owner_commit_api_review(
+            session,
+            owner_id=user.id,
+            verification=verification,
+        )
+
+    @app.post("/api/commit-proposals/{proposal_id}/approvals")
+    def approve_owner_commit_proposal(
+        proposal_id: str,
+        payload: ApproveCommitProposalIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        proposal = find_owned_commit_proposal(
+            session,
+            owner_id=user.id,
+            proposal_id=proposal_id,
+        )
+        if proposal is None:
+            raise HTTPException(status_code=404, detail="Commit delivery not found.")
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+            proposal = find_owned_commit_proposal(
+                session,
+                owner_id=user.id,
+                proposal_id=proposal_id,
+            )
+            if proposal is None:
+                raise HTTPException(status_code=404, detail="Commit delivery not found.")
+        if payload.expected_proposal_version != proposal.version:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "COMMIT_PROPOSAL_CHANGED",
+                    "message": "The Commit proposal version changed.",
+                },
+            )
+        try:
+            approval, created = approve_commit_proposal(
+                session,
+                owner_id=user.id,
+                proposal=proposal,
+                expected_proposal_digest=payload.expected_proposal_digest,
+                confirmation=payload.confirmation,
+            )
+        except CommitBuilderError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.code, "message": exc.message},
+            ) from exc
+        verification = session.get(PostApplyVerification, proposal.post_apply_verification_id)
+        if verification is None or verification.owner_id != user.id:
+            raise HTTPException(status_code=404, detail="Commit delivery not found.")
+        audit(
+            session,
+            request,
+            "commit_proposal_approved" if created else "commit_proposal_approval_replayed",
+            "commit_proposal_approval",
+            approval.id,
+            f"proposal={proposal.proposal_id}; approval={approval.approval_id}",
+            user,
+        )
+        session.commit()
+        response = owner_commit_api_review(
+            session,
+            owner_id=user.id,
+            verification=verification,
+        )
+        response["approval_replayed"] = not created
+        response["automatic_actions"] = []
+        return response
+
+    @app.post("/api/commit-proposals/{proposal_id}/local-commits")
+    def confirm_owner_approved_local_commit(
+        proposal_id: str,
+        payload: ConfirmApprovedLocalCommitIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        proposal = find_owned_commit_proposal(
+            session,
+            owner_id=user.id,
+            proposal_id=proposal_id,
+        )
+        if proposal is None:
+            raise HTTPException(status_code=404, detail="Commit delivery not found.")
+        approval = session.scalar(
+            select(CommitProposalApproval).where(
+                CommitProposalApproval.owner_id == user.id,
+                CommitProposalApproval.commit_proposal_id == proposal.id,
+            )
+        )
+        if approval is None:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "COMMIT_APPROVAL_REQUIRED",
+                    "message": "Approve this exact Commit proposal before confirmation.",
+                },
+            )
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+            proposal = find_owned_commit_proposal(
+                session,
+                owner_id=user.id,
+                proposal_id=proposal_id,
+            )
+            approval = (
+                session.scalar(
+                    select(CommitProposalApproval).where(
+                        CommitProposalApproval.owner_id == user.id,
+                        CommitProposalApproval.commit_proposal_id == proposal.id,
+                    )
+                )
+                if proposal is not None
+                else None
+            )
+            if proposal is None or approval is None:
+                raise HTTPException(status_code=404, detail="Commit delivery not found.")
+        try:
+            execution, created = confirm_local_commit(
+                session,
+                owner_id=user.id,
+                proposal=proposal,
+                approval=approval,
+                source_repo=settings.source_repo,
+                expected_proposal_digest=payload.expected_proposal_digest,
+                expected_approval_digest=payload.expected_approval_digest,
+                confirmation=payload.confirmation,
+            )
+        except CommitBuilderError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.code, "message": exc.message},
+            ) from exc
+        verification = session.get(PostApplyVerification, proposal.post_apply_verification_id)
+        if verification is None or verification.owner_id != user.id:
+            raise HTTPException(status_code=404, detail="Commit delivery not found.")
+        audit(
+            session,
+            request,
+            "owner_local_commit_completed" if created else "owner_local_commit_retrieved",
+            "local_commit_execution",
+            execution.id,
+            (
+                f"proposal={proposal.proposal_id}; "
+                f"commit={execution.commit_execution_id}; state={execution.state}"
+            ),
+            user,
+        )
+        session.commit()
+        response = owner_commit_api_review(
+            session,
+            owner_id=user.id,
+            verification=verification,
+        )
+        response["commit_replayed"] = not created
+        response["automatic_actions"] = []
+        return response
+
     def owned_commit_plan_verification(
         session: Session,
         *,
@@ -5906,6 +6437,18 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             owner_id=user.id,
             commit_plan_id=commit_plan_id,
         )
+        bound_apply = session.get(ApplySession, plan.apply_session_id)
+        if bound_apply is not None and bound_apply.result_envelope_id is not None:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "COMMIT_PROPOSAL_APPROVAL_REQUIRED",
+                    "message": (
+                        "Result-bound delivery requires Review Commit, explicit "
+                        "proposal approval, and a separate final Commit confirmation."
+                    ),
+                },
+            )
         if session.get_bind().dialect.name == "sqlite":
             session.commit()
             session.execute(text("BEGIN IMMEDIATE"))
@@ -5974,6 +6517,18 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             owner_id=user.id,
             stage_execution_id=stage_execution_id,
         )
+        bound_apply = session.get(ApplySession, plan.apply_session_id)
+        if bound_apply is not None and bound_apply.result_envelope_id is not None:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "COMMIT_PROPOSAL_APPROVAL_REQUIRED",
+                    "message": (
+                        "Result-bound delivery requires the approved Commit "
+                        "proposal confirmation route."
+                    ),
+                },
+            )
         if session.get_bind().dialect.name == "sqlite":
             session.commit()
             session.execute(text("BEGIN IMMEDIATE"))
@@ -6044,6 +6599,278 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 detail={"code": exc.code, "message": exc.message},
             ) from exc
 
+    def push_plan_api_review(
+        session: Session,
+        *,
+        owner_id: int,
+        local_commit: LocalCommitExecution,
+    ) -> dict[str, Any]:
+        try:
+            return push_plan_review(
+                session,
+                owner_id=owner_id,
+                local_commit=local_commit,
+                source_repo=settings.source_repo,
+            )
+        except PushDeliveryError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.code, "message": exc.message},
+            ) from exc
+
+    @app.get("/api/local-commits/{commit_execution_id}/push-plans")
+    def get_owner_push_plan(
+        commit_execution_id: str,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        local_commit = find_owned_local_commit_execution(
+            session,
+            owner_id=user.id,
+            commit_execution_id=commit_execution_id,
+        )
+        if local_commit is None:
+            raise HTTPException(status_code=404, detail="Push delivery not found.")
+        return push_plan_api_review(
+            session,
+            owner_id=user.id,
+            local_commit=local_commit,
+        )
+
+    @app.post("/api/local-commits/{commit_execution_id}/push-plans")
+    def review_owner_push_plan(
+        commit_execution_id: str,
+        request: Request,
+        payload: CreatePushPreflightIn | None = None,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        del payload
+        local_commit = find_owned_local_commit_execution(
+            session,
+            owner_id=user.id,
+            commit_execution_id=commit_execution_id,
+        )
+        if local_commit is None:
+            raise HTTPException(status_code=404, detail="Push delivery not found.")
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+            local_commit = find_owned_local_commit_execution(
+                session,
+                owner_id=user.id,
+                commit_execution_id=commit_execution_id,
+            )
+            if local_commit is None:
+                raise HTTPException(status_code=404, detail="Push delivery not found.")
+        try:
+            push_plan, created = get_or_create_push_plan(
+                session,
+                owner_id=user.id,
+                local_commit=local_commit,
+                source_repo=settings.source_repo,
+            )
+        except PushDeliveryError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.code, "message": exc.message},
+            ) from exc
+        audit(
+            session,
+            request,
+            "push_plan_created" if created else "push_plan_retrieved",
+            "push_plan",
+            push_plan.id,
+            (
+                f"commit={local_commit.commit_execution_id}; "
+                f"plan={push_plan.push_plan_id}; version={push_plan.version}"
+            ),
+            user,
+        )
+        session.commit()
+        return push_plan_api_review(
+            session,
+            owner_id=user.id,
+            local_commit=local_commit,
+        )
+
+    @app.post("/api/push-plans/{push_plan_id}/approvals")
+    def approve_owner_push_plan(
+        push_plan_id: str,
+        payload: ApprovePushPlanIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        push_plan = find_owned_push_plan(
+            session,
+            owner_id=user.id,
+            push_plan_id=push_plan_id,
+        )
+        if push_plan is None:
+            raise HTTPException(status_code=404, detail="Push delivery not found.")
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+            push_plan = find_owned_push_plan(
+                session,
+                owner_id=user.id,
+                push_plan_id=push_plan_id,
+            )
+            if push_plan is None:
+                raise HTTPException(status_code=404, detail="Push delivery not found.")
+        if payload.expected_plan_version != push_plan.version:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "PUSH_PLAN_CHANGED",
+                    "message": "The Push Plan version changed.",
+                },
+            )
+        try:
+            approval, created = approve_push_plan(
+                session,
+                owner_id=user.id,
+                push_plan=push_plan,
+                source_repo=settings.source_repo,
+                expected_plan_digest=payload.expected_plan_digest,
+            )
+        except PushDeliveryError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.code, "message": exc.message},
+            ) from exc
+        local_commit = session.get(
+            LocalCommitExecution, push_plan.local_commit_execution_id
+        )
+        if local_commit is None or local_commit.owner_id != user.id:
+            raise HTTPException(status_code=404, detail="Push delivery not found.")
+        audit(
+            session,
+            request,
+            "push_plan_approved" if created else "push_plan_approval_replayed",
+            "push_plan_approval",
+            approval.id,
+            f"plan={push_plan.push_plan_id}; approval={approval.approval_id}",
+            user,
+        )
+        session.commit()
+        response = push_plan_api_review(
+            session,
+            owner_id=user.id,
+            local_commit=local_commit,
+        )
+        response["approval_replayed"] = not created
+        response["automatic_actions"] = []
+        return response
+
+    @app.post("/api/push-plans/{push_plan_id}/push-attempts")
+    def confirm_owner_approved_push(
+        push_plan_id: str,
+        payload: ConfirmApprovedPushIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        push_plan = find_owned_push_plan(
+            session,
+            owner_id=user.id,
+            push_plan_id=push_plan_id,
+        )
+        if push_plan is None:
+            raise HTTPException(status_code=404, detail="Push delivery not found.")
+        approval = session.scalar(
+            select(PushPlanApproval).where(
+                PushPlanApproval.owner_id == user.id,
+                PushPlanApproval.push_plan_id == push_plan.id,
+            )
+        )
+        local_commit = session.get(
+            LocalCommitExecution, push_plan.local_commit_execution_id
+        )
+        if approval is None:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "PUSH_APPROVAL_REQUIRED",
+                    "message": "Approve this exact Push Plan before confirmation.",
+                },
+            )
+        if local_commit is None or local_commit.owner_id != user.id:
+            raise HTTPException(status_code=404, detail="Push delivery not found.")
+        if payload.expected_plan_digest != push_plan.plan_digest:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "PUSH_PLAN_CHANGED",
+                    "message": "The Push Plan identity changed.",
+                },
+            )
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+            push_plan = find_owned_push_plan(
+                session,
+                owner_id=user.id,
+                push_plan_id=push_plan_id,
+            )
+            approval = (
+                session.scalar(
+                    select(PushPlanApproval).where(
+                        PushPlanApproval.owner_id == user.id,
+                        PushPlanApproval.push_plan_id == push_plan.id,
+                    )
+                )
+                if push_plan is not None
+                else None
+            )
+            local_commit = (
+                session.get(LocalCommitExecution, push_plan.local_commit_execution_id)
+                if push_plan is not None
+                else None
+            )
+            if (
+                push_plan is None
+                or approval is None
+                or local_commit is None
+                or local_commit.owner_id != user.id
+            ):
+                raise HTTPException(status_code=404, detail="Push delivery not found.")
+        try:
+            push_execution, attempted = confirm_approved_push_plan(
+                session,
+                owner_id=user.id,
+                push_plan=push_plan,
+                approval=approval,
+                local_commit=local_commit,
+                source_repo=settings.source_repo,
+                confirmation=payload.confirmation,
+                expected_approval_digest=payload.expected_approval_digest,
+            )
+        except PushDeliveryError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": exc.code, "message": exc.message},
+            ) from exc
+        audit(
+            session,
+            request,
+            "owner_push_attempt_completed" if attempted else "owner_push_attempt_retrieved",
+            "push_execution",
+            push_execution.id,
+            f"plan={push_plan.push_plan_id}; state={push_execution.state}",
+            user,
+        )
+        session.commit()
+        response = push_plan_api_review(
+            session,
+            owner_id=user.id,
+            local_commit=local_commit,
+        )
+        response["push_replayed"] = not attempted
+        response["automatic_actions"] = []
+        return response
+
     @app.get("/api/local-commits/{commit_execution_id}/push-delivery")
     def get_push_delivery(
         commit_execution_id: str,
@@ -6081,6 +6908,17 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         )
         if local_commit is None:
             raise HTTPException(status_code=404, detail="Push workflow not found.")
+        if local_commit.commit_proposal_id is not None:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "PUSH_PLAN_APPROVAL_REQUIRED",
+                    "message": (
+                        "Result-bound delivery requires Review Push Plan and a "
+                        "separate explicit Push Plan approval."
+                    ),
+                },
+            )
         if session.get_bind().dialect.name == "sqlite":
             session.commit()
             session.execute(text("BEGIN IMMEDIATE"))
@@ -6137,6 +6975,16 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         )
         if push_execution is None:
             raise HTTPException(status_code=404, detail="Push workflow not found.")
+        if push_execution.push_plan_id is not None:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "CANONICAL_PUSH_CONFIRMATION_REQUIRED",
+                    "message": (
+                        "Use the approval-bound Push Plan confirmation for this delivery."
+                    ),
+                },
+            )
         state_before = push_execution.state
         if session.get_bind().dialect.name == "sqlite":
             session.commit()

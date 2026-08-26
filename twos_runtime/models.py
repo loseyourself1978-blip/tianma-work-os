@@ -1391,6 +1391,125 @@ class PostApplyVerification(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 
+class CommitProposal(Base):
+    """Immutable, Owner-scoped version of an exact local Commit proposal."""
+
+    __tablename__ = "commit_proposals"
+    __table_args__ = (
+        UniqueConstraint(
+            "owner_id",
+            "post_apply_verification_id",
+            "version",
+            name="uq_commit_proposal_owner_verification_version",
+        ),
+        CheckConstraint("version >= 1", name="ck_commit_proposal_version"),
+        CheckConstraint(
+            "status_at_creation IN ('READY','BLOCKED','EXPIRED')",
+            name="ck_commit_proposal_creation_status",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    proposal_id: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    post_apply_verification_id: Mapped[int] = mapped_column(
+        ForeignKey("post_apply_verifications.id"), index=True
+    )
+    apply_session_id: Mapped[int] = mapped_column(ForeignKey("apply_sessions.id"), index=True)
+    apply_plan_id: Mapped[int] = mapped_column(ForeignKey("apply_plans.id"), index=True)
+    delivery_candidate_id: Mapped[int] = mapped_column(
+        ForeignKey("delivery_candidates.id"), index=True
+    )
+    run_id: Mapped[int] = mapped_column(ForeignKey("codex_runs.id"), index=True)
+    task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), index=True)
+    pack_id: Mapped[int] = mapped_column(
+        ForeignKey("codex_instruction_packs.id"), index=True
+    )
+    result_envelope_id: Mapped[int] = mapped_column(
+        ForeignKey("codex_result_envelopes.id"), index=True
+    )
+    owner_acceptance_id: Mapped[int] = mapped_column(
+        ForeignKey("owner_acceptance_sessions.id"), index=True
+    )
+    apply_plan_approval_id: Mapped[int] = mapped_column(
+        ForeignKey("apply_plan_approvals.id"), index=True
+    )
+    version: Mapped[int] = mapped_column(Integer)
+    supersedes_proposal_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("commit_proposals.id"), nullable=True, index=True
+    )
+    verification_public_id: Mapped[str] = mapped_column(String(80), index=True)
+    verification_digest: Mapped[str] = mapped_column(String(64), index=True)
+    apply_session_public_id: Mapped[str] = mapped_column(String(80), index=True)
+    journal_digest: Mapped[str] = mapped_column(String(64), index=True)
+    apply_plan_public_id: Mapped[str] = mapped_column(String(80), index=True)
+    apply_plan_digest: Mapped[str] = mapped_column(String(64), index=True)
+    apply_plan_approval_public_id: Mapped[str] = mapped_column(String(80), index=True)
+    apply_plan_approval_digest: Mapped[str] = mapped_column(String(64), index=True)
+    candidate_public_id: Mapped[str] = mapped_column(String(80), index=True)
+    candidate_version: Mapped[int] = mapped_column(Integer)
+    candidate_digest: Mapped[str] = mapped_column(String(64), index=True)
+    result_envelope_public_id: Mapped[str] = mapped_column(String(80), index=True)
+    result_digest: Mapped[str] = mapped_column(String(64), index=True)
+    result_review_decision_digest: Mapped[str] = mapped_column(String(64), index=True)
+    task_version: Mapped[int] = mapped_column(Integer)
+    pack_version: Mapped[int] = mapped_column(Integer)
+    repository_locator_fingerprint: Mapped[str] = mapped_column(String(64), index=True)
+    repository_fingerprint: Mapped[str] = mapped_column(String(64))
+    sanitized_repository_identity: Mapped[str] = mapped_column(String(240))
+    branch: Mapped[str] = mapped_column(String(240))
+    branch_ref: Mapped[str] = mapped_column(String(320))
+    base_head: Mapped[str] = mapped_column(String(80), index=True)
+    source_snapshot_identity: Mapped[str] = mapped_column(String(64), index=True)
+    source_workspace_identity: Mapped[str] = mapped_column(String(64), index=True)
+    run_workspace_identity: Mapped[str] = mapped_column(String(64), index=True)
+    planned_paths_json: Mapped[str] = mapped_column(Text, default="[]")
+    planned_paths_digest: Mapped[str] = mapped_column(String(64), index=True)
+    excluded_paths_json: Mapped[str] = mapped_column(Text, default="[]")
+    subject: Mapped[str] = mapped_column(Text)
+    body: Mapped[str] = mapped_column(Text, default="")
+    subject_digest: Mapped[str] = mapped_column(String(64))
+    body_digest: Mapped[str] = mapped_column(String(64))
+    message_digest: Mapped[str] = mapped_column(String(64), index=True)
+    author_identity_sanitized: Mapped[str] = mapped_column(String(240))
+    author_identity_digest: Mapped[str] = mapped_column(String(64), index=True)
+    validation_json: Mapped[str] = mapped_column(Text, default="[]")
+    blocker_codes_json: Mapped[str] = mapped_column(Text, default="[]")
+    boundary_evidence_json: Mapped[str] = mapped_column(Text, default="{}")
+    policy_version: Mapped[str] = mapped_column(String(80), index=True)
+    status_at_creation: Mapped[str] = mapped_column(String(24), index=True)
+    binding_digest: Mapped[str] = mapped_column(String(64), index=True)
+    proposal_digest: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class CommitProposalApproval(Base):
+    """Immutable approval of one exact CommitProposal version and digest."""
+
+    __tablename__ = "commit_proposal_approvals"
+    __table_args__ = (
+        UniqueConstraint("commit_proposal_id", name="uq_commit_proposal_approval"),
+        CheckConstraint("state = 'APPROVED'", name="ck_commit_proposal_approval_state"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    approval_id: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    commit_proposal_id: Mapped[int] = mapped_column(
+        ForeignKey("commit_proposals.id"), unique=True, index=True
+    )
+    proposal_public_id: Mapped[str] = mapped_column(String(80), index=True)
+    proposal_version: Mapped[int] = mapped_column(Integer)
+    proposal_digest: Mapped[str] = mapped_column(String(64), index=True)
+    message_digest: Mapped[str] = mapped_column(String(64), index=True)
+    approved_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    approved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    confirmation_digest: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    approval_digest: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    state: Mapped[str] = mapped_column(String(24), default="APPROVED", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
 class CommitPlan(Base):
     __tablename__ = "commit_plans"
     __table_args__ = (
@@ -1504,6 +1623,13 @@ class LocalCommitExecution(Base):
     __tablename__ = "local_commit_executions"
     __table_args__ = (
         UniqueConstraint("stage_execution_id", name="uq_local_commit_stage_execution"),
+        Index(
+            "ux_local_commit_owner_confirmation",
+            "owner_commit_confirmation_digest",
+            unique=True,
+            sqlite_where=text("owner_commit_confirmation_digest != ''"),
+            postgresql_where=text("owner_commit_confirmation_digest != ''"),
+        ),
         CheckConstraint(
             "state IN ('COMMITTING','COMMITTED','BLOCKED','FAILED','INTEGRITY_BLOCKED')",
             name="ck_local_commit_execution_state",
@@ -1515,6 +1641,12 @@ class LocalCommitExecution(Base):
         String(80), unique=True, index=True
     )
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    commit_proposal_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("commit_proposals.id"), nullable=True, index=True
+    )
+    commit_proposal_approval_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("commit_proposal_approvals.id"), nullable=True, unique=True, index=True
+    )
     commit_plan_id: Mapped[int] = mapped_column(
         ForeignKey("commit_plans.id"), index=True
     )
@@ -1537,6 +1669,47 @@ class LocalCommitExecution(Base):
     intent_digest: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     pre_commit_evidence_json: Mapped[str] = mapped_column(Text)
     pre_commit_evidence_digest: Mapped[str] = mapped_column(String(64), index=True)
+    proposal_public_id: Mapped[str] = mapped_column(String(80), default="", index=True)
+    proposal_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
+    proposal_approval_public_id: Mapped[str] = mapped_column(String(80), default="", index=True)
+    proposal_approval_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
+    owner_commit_confirmation_digest: Mapped[str] = mapped_column(
+        String(64), default="", index=True
+    )
+    owner_commit_confirmed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    result_envelope_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("codex_result_envelopes.id"), nullable=True, index=True
+    )
+    result_envelope_public_id: Mapped[str] = mapped_column(String(80), default="", index=True)
+    result_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
+    owner_acceptance_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("owner_acceptance_sessions.id"), nullable=True, index=True
+    )
+    result_review_decision_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
+    candidate_version: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    apply_plan_approval_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("apply_plan_approvals.id"), nullable=True, index=True
+    )
+    apply_plan_approval_public_id: Mapped[str] = mapped_column(String(80), default="", index=True)
+    apply_plan_approval_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
+    source_workspace_identity: Mapped[str] = mapped_column(String(64), default="", index=True)
+    run_workspace_identity: Mapped[str] = mapped_column(String(64), default="", index=True)
+    author_identity_sanitized: Mapped[str] = mapped_column(String(240), default="")
+    author_identity_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
+    command_started_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    command_finished_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    command_exit_code: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    command_output_json: Mapped[str] = mapped_column(Text, default="{}")
+    command_evidence_json: Mapped[str] = mapped_column(Text, default="{}")
+    command_evidence_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
+    hooks_evidence_json: Mapped[str] = mapped_column(Text, default="{}")
+    hooks_evidence_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
     tree_oid: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
     commit_oid: Mapped[Optional[str]] = mapped_column(
         String(80), unique=True, nullable=True, index=True
@@ -1556,6 +1729,101 @@ class LocalCommitExecution(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now, onupdate=utc_now
     )
+
+
+class PushPlan(Base):
+    """Immutable, versioned approval surface for one exact non-force Push."""
+
+    __tablename__ = "push_plans"
+    __table_args__ = (
+        UniqueConstraint(
+            "owner_id", "local_commit_execution_id", "version",
+            name="uq_push_plan_owner_commit_version",
+        ),
+        CheckConstraint("version >= 1", name="ck_push_plan_version"),
+        CheckConstraint(
+            "status_at_creation IN ('READY','BLOCKED','EXPIRED','ALREADY_DELIVERED')",
+            name="ck_push_plan_creation_status",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    push_plan_id: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    local_commit_execution_id: Mapped[int] = mapped_column(
+        ForeignKey("local_commit_executions.id"), index=True
+    )
+    commit_proposal_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("commit_proposals.id"), nullable=True, index=True
+    )
+    commit_proposal_approval_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("commit_proposal_approvals.id"), nullable=True, index=True
+    )
+    run_id: Mapped[int] = mapped_column(ForeignKey("codex_runs.id"), index=True)
+    task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), index=True)
+    version: Mapped[int] = mapped_column(Integer)
+    supersedes_push_plan_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("push_plans.id"), nullable=True, index=True
+    )
+    local_commit_public_id: Mapped[str] = mapped_column(String(80), index=True)
+    local_commit_receipt_digest: Mapped[str] = mapped_column(String(64), index=True)
+    commit_proposal_public_id: Mapped[str] = mapped_column(String(80), default="", index=True)
+    commit_proposal_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
+    commit_proposal_approval_public_id: Mapped[str] = mapped_column(String(80), default="", index=True)
+    commit_proposal_approval_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
+    repository_locator_fingerprint: Mapped[str] = mapped_column(String(64), index=True)
+    sanitized_repository_identity: Mapped[str] = mapped_column(String(240))
+    branch: Mapped[str] = mapped_column(String(240), default="main")
+    branch_ref: Mapped[str] = mapped_column(String(320), default="refs/heads/main")
+    remote_name: Mapped[str] = mapped_column(String(80), default="origin")
+    destination_ref: Mapped[str] = mapped_column(String(320), default="refs/heads/main")
+    approved_commit_oid: Mapped[str] = mapped_column(String(80), index=True)
+    expected_parent_oid: Mapped[str] = mapped_column(String(80), index=True)
+    observed_remote_base_oid: Mapped[str] = mapped_column(String(80), default="")
+    expected_remote_oid: Mapped[str] = mapped_column(String(80), default="")
+    remote_exists: Mapped[bool] = mapped_column(Boolean, default=False)
+    subject: Mapped[str] = mapped_column(Text)
+    subject_digest: Mapped[str] = mapped_column(String(64))
+    remote_fetch_url_digest: Mapped[str] = mapped_column(String(64))
+    remote_push_url_digest: Mapped[str] = mapped_column(String(64))
+    remote_config_fingerprint: Mapped[str] = mapped_column(String(64), index=True)
+    refspec: Mapped[str] = mapped_column(Text)
+    preflight_evidence_json: Mapped[str] = mapped_column(Text, default="{}")
+    preflight_evidence_digest: Mapped[str] = mapped_column(String(64), index=True)
+    blocker_codes_json: Mapped[str] = mapped_column(Text, default="[]")
+    binding_digest: Mapped[str] = mapped_column(String(64), index=True)
+    plan_digest: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    policy_version: Mapped[str] = mapped_column(String(80), index=True)
+    status_at_creation: Mapped[str] = mapped_column(String(32), index=True)
+    expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class PushPlanApproval(Base):
+    """Immutable Owner approval for one exact PushPlan version and digest."""
+
+    __tablename__ = "push_plan_approvals"
+    __table_args__ = (
+        UniqueConstraint("push_plan_id", name="uq_push_plan_approval"),
+        CheckConstraint("state = 'APPROVED'", name="ck_push_plan_approval_state"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    approval_id: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    push_plan_id: Mapped[int] = mapped_column(ForeignKey("push_plans.id"), unique=True, index=True)
+    push_plan_public_id: Mapped[str] = mapped_column(String(80), index=True)
+    push_plan_version: Mapped[int] = mapped_column(Integer)
+    push_plan_digest: Mapped[str] = mapped_column(String(64), index=True)
+    approved_commit_oid: Mapped[str] = mapped_column(String(80), index=True)
+    expected_remote_oid: Mapped[str] = mapped_column(String(80), default="")
+    remote_config_fingerprint: Mapped[str] = mapped_column(String(64), index=True)
+    approved_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    approved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    confirmation_digest: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    approval_digest: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    state: Mapped[str] = mapped_column(String(24), default="APPROVED", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 
 class PushExecution(Base):
@@ -1603,6 +1871,12 @@ class PushExecution(Base):
         String(80), unique=True, index=True
     )
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    push_plan_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("push_plans.id"), nullable=True, index=True
+    )
+    push_plan_approval_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("push_plan_approvals.id"), nullable=True, index=True
+    )
     local_commit_execution_id: Mapped[int] = mapped_column(
         ForeignKey("local_commit_executions.id"), index=True
     )
@@ -1623,6 +1897,10 @@ class PushExecution(Base):
     )
     run_id: Mapped[int] = mapped_column(ForeignKey("codex_runs.id"), index=True)
     task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), index=True)
+    push_plan_public_id: Mapped[str] = mapped_column(String(80), default="", index=True)
+    push_plan_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
+    push_plan_approval_public_id: Mapped[str] = mapped_column(String(80), default="", index=True)
+    push_plan_approval_digest: Mapped[str] = mapped_column(String(64), default="", index=True)
     local_commit_public_id: Mapped[str] = mapped_column(String(80), index=True)
     local_commit_receipt_digest: Mapped[str] = mapped_column(String(64), index=True)
     commit_plan_digest: Mapped[str] = mapped_column(String(64), index=True)
@@ -1654,6 +1932,7 @@ class PushExecution(Base):
     refspec: Mapped[str] = mapped_column(Text)
     command_evidence_json: Mapped[str] = mapped_column(Text, default="{}")
     command_evidence_digest: Mapped[str] = mapped_column(String(64), index=True)
+    command_output_json: Mapped[str] = mapped_column(Text, default="{}")
     state: Mapped[str] = mapped_column(String(32), index=True)
     command_attempt_count: Mapped[int] = mapped_column(Integer, default=0)
     command_started_at: Mapped[Optional[datetime]] = mapped_column(
@@ -2303,7 +2582,11 @@ for _immutable_delivery_model in (
     ApplyPlanApproval,
     ApplySessionAudit,
     PostApplyVerification,
+    CommitProposal,
+    CommitProposalApproval,
     CommitPlan,
+    PushPlan,
+    PushPlanApproval,
     CodexResultEnvelope,
     CodexResultArtifact,
     HandoffReview,
@@ -2695,6 +2978,8 @@ _LOCAL_COMMIT_EXECUTION_IMMUTABLE_FIELDS = frozenset(
     {
         "commit_execution_id",
         "owner_id",
+        "commit_proposal_id",
+        "commit_proposal_approval_id",
         "commit_plan_id",
         "stage_execution_id",
         "commit_plan_public_id",
@@ -2713,6 +2998,25 @@ _LOCAL_COMMIT_EXECUTION_IMMUTABLE_FIELDS = frozenset(
         "intent_digest",
         "pre_commit_evidence_json",
         "pre_commit_evidence_digest",
+        "proposal_public_id",
+        "proposal_digest",
+        "proposal_approval_public_id",
+        "proposal_approval_digest",
+        "owner_commit_confirmation_digest",
+        "owner_commit_confirmed_at",
+        "result_envelope_id",
+        "result_envelope_public_id",
+        "result_digest",
+        "owner_acceptance_id",
+        "result_review_decision_digest",
+        "candidate_version",
+        "apply_plan_approval_id",
+        "apply_plan_approval_public_id",
+        "apply_plan_approval_digest",
+        "source_workspace_identity",
+        "run_workspace_identity",
+        "author_identity_sanitized",
+        "author_identity_digest",
         "created_at",
         "started_at",
     }
@@ -2724,6 +3028,14 @@ _LOCAL_COMMIT_EXECUTION_SET_ONCE_FIELDS = frozenset(
         "parent_oid",
         "post_commit_evidence_json",
         "receipt_digest",
+        "command_started_at",
+        "command_finished_at",
+        "command_exit_code",
+        "command_output_json",
+        "command_evidence_json",
+        "command_evidence_digest",
+        "hooks_evidence_json",
+        "hooks_evidence_digest",
         "finished_at",
     }
 )
@@ -2782,6 +3094,8 @@ _PUSH_EXECUTION_IMMUTABLE_FIELDS = frozenset(
     {
         "push_execution_id",
         "owner_id",
+        "push_plan_id",
+        "push_plan_approval_id",
         "local_commit_execution_id",
         "stage_execution_id",
         "commit_plan_id",
@@ -2790,6 +3104,10 @@ _PUSH_EXECUTION_IMMUTABLE_FIELDS = frozenset(
         "delivery_candidate_id",
         "run_id",
         "task_id",
+        "push_plan_public_id",
+        "push_plan_digest",
+        "push_plan_approval_public_id",
+        "push_plan_approval_digest",
         "local_commit_public_id",
         "local_commit_receipt_digest",
         "commit_plan_digest",
@@ -2826,6 +3144,7 @@ _PUSH_EXECUTION_SET_ONCE_FIELDS = frozenset(
         "command_finished_at",
         "execution_remote_base_oid",
         "command_exit_code",
+        "command_output_json",
         "failure_category",
         "failure_evidence_json",
         "post_push_evidence_json",
