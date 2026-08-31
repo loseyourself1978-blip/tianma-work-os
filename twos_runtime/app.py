@@ -148,6 +148,7 @@ from .models import (
     HandoffReview,
     OwnerAcceptanceItem,
     OwnerAcceptanceSession,
+    PushExecution,
     PushPlanApproval,
     Project,
     Provider,
@@ -473,6 +474,12 @@ class ConfirmApprovedPushIn(BaseModel):
     )
     expected_approval_digest: str = Field(
         min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$"
+    )
+    request_identity: str | None = Field(
+        default=None,
+        min_length=64,
+        max_length=64,
+        pattern=r"^[0-9a-f]{64}$",
     )
 
 
@@ -5771,6 +5778,15 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                             "label": "Review Push Plan",
                         }
                         next_action = "Review the exact remote, branch, old SHA, and new SHA."
+                    elif push_actions.get("can_review_push_plan") is True:
+                        primary_action = {
+                            "code": "review_push_plan",
+                            "label": "Review Push Plan",
+                        }
+                        next_action = (
+                            "Review a fresh Push Plan; the previous approved Plan "
+                            "expired without an execution."
+                        )
                     elif push_actions.get("can_approve_push_plan") is True:
                         primary_action = {
                             "code": "approve_push_plan",
@@ -6844,36 +6860,8 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                     "message": "The Push Plan identity changed.",
                 },
             )
-        if session.get_bind().dialect.name == "sqlite":
-            session.commit()
-            session.execute(text("BEGIN IMMEDIATE"))
-            push_plan = find_owned_push_plan(
-                session,
-                owner_id=user.id,
-                push_plan_id=push_plan_id,
-            )
-            approval = (
-                session.scalar(
-                    select(PushPlanApproval).where(
-                        PushPlanApproval.owner_id == user.id,
-                        PushPlanApproval.push_plan_id == push_plan.id,
-                    )
-                )
-                if push_plan is not None
-                else None
-            )
-            local_commit = (
-                session.get(LocalCommitExecution, push_plan.local_commit_execution_id)
-                if push_plan is not None
-                else None
-            )
-            if (
-                push_plan is None
-                or approval is None
-                or local_commit is None
-                or local_commit.owner_id != user.id
-            ):
-                raise HTTPException(status_code=404, detail="Push delivery not found.")
+        plan_database_id = int(push_plan.id)
+        plan_public_id = str(push_plan.push_plan_id)
         try:
             push_execution, attempted = confirm_approved_push_plan(
                 session,
@@ -6884,11 +6872,52 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 source_repo=settings.source_repo,
                 confirmation=payload.confirmation,
                 expected_approval_digest=payload.expected_approval_digest,
+                request_identity=payload.request_identity,
             )
         except PushDeliveryError as exc:
+            # Discard any uncommitted READY_TO_PUSH admission before deciding
+            # whether the server durably accepted this request. A durable
+            # PUSHING row is committed immediately before transport begins.
+            session.rollback()
+            existing_execution = session.scalar(
+                select(PushExecution).where(
+                    PushExecution.owner_id == user.id,
+                    PushExecution.push_plan_id == plan_database_id,
+                )
+            )
+            transient_pre_effect = bool(
+                existing_execution is None
+                and exc.code
+                in {"REPOSITORY_MUTATION_ACTIVE", "REPOSITORY_LOCK_UNAVAILABLE"}
+            )
+            if existing_execution is None:
+                # This is an audited pre-effect rejection, not a failed Push.
+                # A PushExecution always precedes transport, so the absence of
+                # that durable row proves no Git process or remote effect began.
+                audit(
+                    session,
+                    request,
+                    "owner_push_attempt_rejected_pre_effect",
+                    "push_plan",
+                    plan_database_id,
+                    (
+                        f"plan={plan_public_id}; code={exc.code}; "
+                        "request_accepted=false; remote_effect=none"
+                    ),
+                    user,
+                )
+                session.commit()
             raise HTTPException(
                 status_code=409,
-                detail={"code": exc.code, "message": exc.message},
+                detail={
+                    "code": exc.code,
+                    "message": exc.message,
+                    "request_accepted": existing_execution is not None,
+                    "remote_effect": (
+                        "none" if existing_execution is None else "needs_review"
+                    ),
+                    "retry_safe": transient_pre_effect,
+                },
             ) from exc
         audit(
             session,

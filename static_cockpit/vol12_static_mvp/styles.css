@@ -2602,6 +2602,51 @@ button:disabled,
   word-break: break-word;
 }
 
+.owner-push-confirmation-status {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  margin: 14px 0 4px;
+  padding: 12px 14px;
+  border: 1px solid #c8d5c2;
+  border-radius: 12px;
+  background: #f4f8f1;
+  color: #294523;
+  overflow-wrap: anywhere;
+}
+
+.owner-push-confirmation-status strong {
+  font-size: 13px;
+}
+
+.owner-push-confirmation-status span {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.owner-push-confirmation-status[data-state="submitting"],
+.owner-push-confirmation-status[data-state="running"] {
+  border-color: #d6c89d;
+  background: #fbf8ec;
+  color: #594916;
+}
+
+.owner-push-confirmation-status[data-state="blocked"],
+.owner-push-confirmation-status[data-state="failed"],
+.owner-push-confirmation-status[data-state="timed_out"],
+.owner-push-confirmation-status[data-state="needs_review"] {
+  border-color: #e0b9b4;
+  background: #fff4f2;
+  color: #6f2922;
+}
+
+.owner-push-confirmation-status[data-state="succeeded"],
+.owner-push-confirmation-status[data-state="already_delivered"] {
+  border-color: #afd1bd;
+  background: #eff9f3;
+  color: #205c39;
+}
+
 .commit-builder-section h4 {
   margin: 18px 0 9px;
   font-size: 13px;

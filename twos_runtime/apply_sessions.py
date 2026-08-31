@@ -7,6 +7,7 @@ import re
 import secrets
 import stat
 import tempfile
+import time
 from contextlib import contextmanager
 import fcntl
 from pathlib import Path, PurePosixPath
@@ -172,11 +173,10 @@ class ApplySessionError(ValueError):
         self.details = details or {}
 
 
-@contextmanager
-def _repository_mutation_lock(
+def _open_repository_lock(
     repository_locator_fingerprint: str,
-) -> Iterator[None]:
-    """Serialize source mutation across workers without touching the repository."""
+) -> int:
+    """Open the hardened cross-process lock shared by readers and mutators."""
     if not SHA256_PATTERN.fullmatch(repository_locator_fingerprint or ""):
         raise ApplySessionError(
             "REPOSITORY_IDENTITY_MISMATCH",
@@ -218,14 +218,53 @@ def _repository_mutation_lock(
             "The repository mutation lock is unavailable.",
         ) from exc
     os.close(directory_fd)
+    return lock_fd
+
+
+@contextmanager
+def _repository_observation_lock(
+    repository_locator_fingerprint: str,
+) -> Iterator[None]:
+    """Share read-only repository observations without excluding other readers."""
+    lock_fd = _open_repository_lock(repository_locator_fingerprint)
     try:
         try:
-            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            fcntl.flock(lock_fd, fcntl.LOCK_SH | fcntl.LOCK_NB)
         except BlockingIOError as exc:
             raise ApplySessionError(
                 "CONCURRENT_APPLY",
                 "Another Apply or Revert session is active for this repository.",
             ) from exc
+        yield
+    finally:
+        try:
+            fcntl.flock(lock_fd, fcntl.LOCK_UN)
+        finally:
+            os.close(lock_fd)
+
+
+@contextmanager
+def _repository_mutation_lock(
+    repository_locator_fingerprint: str,
+    *,
+    wait_timeout_seconds: float = 0.0,
+) -> Iterator[None]:
+    """Serialize source mutation, preserving nonblocking Apply by default."""
+    lock_fd = _open_repository_lock(repository_locator_fingerprint)
+    wait_timeout = max(0.0, float(wait_timeout_seconds))
+    deadline = time.monotonic() + wait_timeout
+    try:
+        while True:
+            try:
+                fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError as exc:
+                if wait_timeout == 0.0 or time.monotonic() >= deadline:
+                    raise ApplySessionError(
+                        "CONCURRENT_APPLY",
+                        "Another Apply or Revert session is active for this repository.",
+                    ) from exc
+                time.sleep(min(0.01, max(0.0, deadline - time.monotonic())))
         yield
     finally:
         try:

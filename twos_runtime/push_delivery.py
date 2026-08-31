@@ -7,7 +7,7 @@ import re
 import secrets
 import stat
 import subprocess
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
@@ -24,6 +24,7 @@ from .commit_builder import (
     _assert_targets_match,
     _bound_verification,
     _commit_builder_repository_lock,
+    _commit_builder_repository_observation_lock,
     _commit_message,
     _commit_object,
     _commit_out,
@@ -48,6 +49,7 @@ from .delivery_candidates import (
 )
 from .models import (
     ApplySession,
+    AuditEvent,
     CodexResultEnvelope,
     CommitProposal,
     CommitProposalApproval,
@@ -82,6 +84,7 @@ PUSH_TRACKING_HEAD_REF = "refs/remotes/origin/HEAD"
 MAX_PUSH_COMMAND_OUTPUT_BYTES = 16_384
 MAX_CREDENTIAL_HELPER_CONFIG_BYTES = 65_536
 MAX_CREDENTIAL_HELPER_CONFIG_ENTRIES = 64
+PUSH_FINAL_LOCK_WAIT_SECONDS = 5.0
 _OID = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 _SAFE_REMOTE_SCHEMES = frozenset({"file", "https", "ssh"})
@@ -187,9 +190,27 @@ def _status_label(state: str) -> str:
 
 
 @contextmanager
-def _push_repository_lock(repository_locator_fingerprint: str):
+def _push_repository_lock(
+    repository_locator_fingerprint: str,
+    *,
+    observation: bool = False,
+    wait_timeout_seconds: float = 0.0,
+):
     try:
-        with _commit_builder_repository_lock(repository_locator_fingerprint):
+        if observation:
+            lock = _commit_builder_repository_observation_lock(
+                repository_locator_fingerprint
+            )
+        elif wait_timeout_seconds <= 0:
+            lock = _commit_builder_repository_lock(
+                repository_locator_fingerprint
+            )
+        else:
+            lock = _commit_builder_repository_lock(
+                repository_locator_fingerprint,
+                wait_timeout_seconds=wait_timeout_seconds,
+            )
+        with lock:
             yield
     except CommitBuilderError as exc:
         code = getattr(exc, "code", "REPOSITORY_LOCK_UNAVAILABLE")
@@ -1539,6 +1560,81 @@ def _execution_out(row: PushExecution | None) -> dict[str, Any] | None:
     }
 
 
+def _confirmation_state(
+    *,
+    plan: PushPlan | None,
+    approval: PushPlanApproval | None,
+    execution: PushExecution | None,
+    can_confirm: bool,
+    blockers: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Project one authoritative Owner state for the final confirmation."""
+    if execution is None:
+        state = "ready_for_confirmation" if can_confirm else "blocked"
+    elif execution.state == "READY_TO_PUSH":
+        state = "ready_for_confirmation" if can_confirm else "blocked"
+    elif execution.state == "PUSHING":
+        state = "running"
+    elif execution.state == "PUSHED":
+        state = (
+            "already_delivered"
+            if execution.failure_category == "ALREADY_DELIVERED"
+            else "succeeded"
+        )
+    elif execution.state == "PUSH_FAILED":
+        output = _decoded_object(execution.command_output_json)
+        state = (
+            "timed_out"
+            if execution.failure_category == "REMOTE_TIMEOUT"
+            or output.get("timed_out") is True
+            else "failed"
+        )
+    elif execution.state in {"REMOTE_MOVED", "RECONCILIATION_BLOCKED"}:
+        state = "needs_review"
+    else:
+        state = "blocked"
+    reason = None
+    if blockers:
+        reason = str(blockers[0].get("message") or "Push is blocked.")
+    elif plan is not None and approval is None and execution is None:
+        reason = "Approve this exact Push Plan before final confirmation."
+    elif execution is not None:
+        failures = _decoded_list(execution.failure_evidence_json)
+        if failures and isinstance(failures[0], dict):
+            reason = str(failures[0].get("message") or "") or None
+    request_identity = (
+        execution.confirmation_digest
+        if execution is not None
+        else _push_plan_final_confirmation_digest(plan, approval)
+        if plan is not None and approval is not None
+        else None
+    )
+    progress = {
+        "ready_for_confirmation": "Ready for explicit Owner confirmation.",
+        "submitting": "Push request accepted; preparing the exact attempt.",
+        "running": "Push execution is running independently of this dialog.",
+        "succeeded": "Push completed and the exact remote SHA was verified.",
+        "already_delivered": "The exact approved Commit is already delivered.",
+        "blocked": reason or "Push confirmation is blocked.",
+        "failed": reason or "Push failed before verified delivery.",
+        "timed_out": reason or "Push timed out; review remote evidence before retry.",
+        "needs_review": reason or "Remote effect needs review; automatic retry is blocked.",
+    }[state]
+    return {
+        "state": state,
+        "in_progress": state in {"submitting", "running"},
+        "can_confirm": state == "ready_for_confirmation",
+        "request_accepted": execution is not None and plan is not None,
+        "reason": reason,
+        "progress": progress,
+        "plan_id": plan.push_plan_id if plan is not None else None,
+        "request_identity": request_identity,
+        "execution_id": (
+            execution.push_execution_id if execution is not None else None
+        ),
+    }
+
+
 def _readiness_out(
     observation: dict[str, Any] | None,
     *,
@@ -2083,6 +2179,29 @@ def _execution_for_push_plan(
     )
 
 
+def _push_plan_is_expired(plan: PushPlan) -> bool:
+    return bool(plan.expires_at is not None and utc_now() >= plan.expires_at)
+
+
+def _pre_effect_execution_allows_plan_renewal(
+    execution: PushExecution | None,
+    observation: dict[str, Any] | None = None,
+) -> bool:
+    """Permit re-review only when a terminal attempt provably had no effect."""
+    if (
+        execution is None
+        or execution.command_attempt_count != 0
+        or execution.state not in {"PUSH_BLOCKED", "REMOTE_MOVED"}
+    ):
+        return False
+    if observation is None:
+        return True
+    return (
+        observation.get("observed_remote_base_sha")
+        == execution.observed_remote_base_oid
+    )
+
+
 def _push_plan_current_blockers(
     plan: PushPlan,
     observation: dict[str, Any],
@@ -2336,6 +2455,24 @@ def _validate_push_plan_approval(
         )
 
 
+def _push_plan_final_confirmation_digest(
+    plan: PushPlan,
+    approval: PushPlanApproval,
+) -> str:
+    """Return the stable server identity for one approved final confirmation."""
+    return canonical_sha256(
+        {
+            "schema": "twos.push_plan_final_confirmation.v1",
+            "owner_id": plan.owner_id,
+            "push_plan_id": plan.push_plan_id,
+            "push_plan_digest": plan.plan_digest,
+            "push_plan_approval_id": approval.approval_id,
+            "push_plan_approval_digest": approval.approval_digest,
+            "confirmation": PUSH_CONFIRMATION,
+        }
+    )
+
+
 def get_or_create_push_plan(
     session: Session,
     *,
@@ -2368,12 +2505,28 @@ def get_or_create_push_plan(
             owner_id=owner_id,
             plan_id=latest.id,
         )
+        existing_execution = _execution_for_push_plan(
+            session,
+            owner_id=owner_id,
+            plan_id=latest.id,
+        )
+        renewable_execution = _pre_effect_execution_allows_plan_renewal(
+            existing_execution
+        )
         if (
             latest.status_at_creation == "ALREADY_DELIVERED"
-            or existing_approval is not None
+            or (existing_execution is not None and not renewable_execution)
+            or (
+                existing_approval is not None
+                and not _push_plan_is_expired(latest)
+                and not renewable_execution
+            )
         ):
             return latest, False
-    with _push_repository_lock(local_commit.repository_locator_fingerprint):
+    with _push_repository_lock(
+        local_commit.repository_locator_fingerprint,
+        observation=True,
+    ):
         session.expire_all()
         local_commit = session.get(LocalCommitExecution, local_commit.id)
         if local_commit is None or local_commit.owner_id != owner_id:
@@ -2403,12 +2556,41 @@ def get_or_create_push_plan(
             if latest is not None
             else None
         )
-        if latest is not None and (
-            latest.status_at_creation == "ALREADY_DELIVERED"
-            or existing_approval is not None
+        existing_execution = (
+            _execution_for_push_plan(
+                session,
+                owner_id=owner_id,
+                plan_id=latest.id,
+            )
+            if latest is not None
+            else None
+        )
+        if latest is not None:
+            renewable_execution = _pre_effect_execution_allows_plan_renewal(
+                existing_execution
+            )
+            if (
+                latest.status_at_creation == "ALREADY_DELIVERED"
+                or (
+                    existing_execution is not None
+                    and not renewable_execution
+                )
+                or (
+                    existing_approval is not None
+                    and not _push_plan_is_expired(latest)
+                    and not renewable_execution
+                )
+            ):
+                return latest, False
+        observation = _safe_preflight_observation(context)
+        if (
+            existing_execution is not None
+            and not _pre_effect_execution_allows_plan_renewal(
+                existing_execution,
+                observation,
+            )
         ):
             return latest, False
-        observation = _safe_preflight_observation(context)
         if (
             latest is not None
             and latest.status_at_creation == "READY"
@@ -2570,7 +2752,10 @@ def approve_push_plan(
     )
     if local_commit is None or local_commit.owner_id != owner_id:
         raise _failure("PUSH_PLAN_NOT_FOUND", "Push Plan not found.")
-    with _push_repository_lock(push_plan.repository_locator_fingerprint):
+    with _push_repository_lock(
+        push_plan.repository_locator_fingerprint,
+        observation=True,
+    ):
         session.expire_all()
         push_plan = session.get(PushPlan, push_plan.id)
         local_commit = session.get(LocalCommitExecution, local_commit.id)
@@ -2687,17 +2872,7 @@ def _create_push_execution_for_plan(
     command = _decoded_object(preflight.get("command"))
     command_digest = canonical_sha256(command)
     confirmation_digest = (
-        canonical_sha256(
-            {
-                "schema": "twos.push_plan_final_confirmation.v1",
-                "owner_id": plan.owner_id,
-                "push_plan_id": plan.push_plan_id,
-                "push_plan_digest": plan.plan_digest,
-                "push_plan_approval_id": approval.approval_id,
-                "push_plan_approval_digest": approval.approval_digest,
-                "confirmation": PUSH_CONFIRMATION,
-            }
-        )
+        _push_plan_final_confirmation_digest(plan, approval)
         if approval is not None
         else canonical_sha256(
             {
@@ -2803,16 +2978,9 @@ def _validate_push_execution_plan_binding(
     plan: PushPlan,
     approval: PushPlanApproval,
 ) -> None:
-    expected_final_confirmation_digest = canonical_sha256(
-        {
-            "schema": "twos.push_plan_final_confirmation.v1",
-            "owner_id": plan.owner_id,
-            "push_plan_id": plan.push_plan_id,
-            "push_plan_digest": plan.plan_digest,
-            "push_plan_approval_id": approval.approval_id,
-            "push_plan_approval_digest": approval.approval_digest,
-            "confirmation": PUSH_CONFIRMATION,
-        }
+    expected_final_confirmation_digest = _push_plan_final_confirmation_digest(
+        plan,
+        approval,
     )
     if (
         execution.owner_id != plan.owner_id
@@ -2852,6 +3020,7 @@ def confirm_approved_push_plan(
     source_repo: Path,
     confirmation: str,
     expected_approval_digest: str,
+    request_identity: str | None = None,
 ) -> tuple[PushExecution, bool]:
     """Confirm one exact approved plan; the bool reports transport attempted."""
     if confirmation != PUSH_CONFIRMATION:
@@ -2866,11 +3035,31 @@ def confirm_approved_push_plan(
         or push_plan.local_commit_execution_id != local_commit.id
     ):
         raise _failure("PUSH_PLAN_NOT_FOUND", "Push Plan not found.")
-    with _push_repository_lock(push_plan.repository_locator_fingerprint):
-        session.expire_all()
-        plan = session.get(PushPlan, push_plan.id)
-        approval = session.get(PushPlanApproval, approval.id)
-        local_commit = session.get(LocalCommitExecution, local_commit.id)
+    push_plan_database_id = int(push_plan.id)
+    approval_database_id = int(approval.id)
+    local_commit_database_id = int(local_commit.id)
+    repository_locator_fingerprint = str(
+        push_plan.repository_locator_fingerprint
+    )
+    # The HTTP ownership/binding lookups above establish an implicit SQLAlchemy
+    # transaction. End it before waiting for the cross-process repository lock
+    # so an admission waiter holds neither a SQLite transaction nor a checked-
+    # out connection. Only primitive immutable identities cross this boundary;
+    # every bound row is loaded and validated again under the acquired lock.
+    session.rollback()
+    with _push_repository_lock(
+        repository_locator_fingerprint,
+        wait_timeout_seconds=PUSH_FINAL_LOCK_WAIT_SECONDS,
+    ):
+        # Final confirmation uses one lock order everywhere: repository first,
+        # then a fresh database transaction. This prevents a concurrent POST
+        # from holding SQLite's writer lock while waiting for the repository.
+        plan = session.get(PushPlan, push_plan_database_id)
+        approval = session.get(PushPlanApproval, approval_database_id)
+        local_commit = session.get(
+            LocalCommitExecution,
+            local_commit_database_id,
+        )
         if (
             plan is None
             or approval is None
@@ -2904,6 +3093,18 @@ def confirm_approved_push_plan(
             owner_id=owner_id,
             expected_approval_digest=expected_approval_digest,
         )
+        expected_request_identity = _push_plan_final_confirmation_digest(
+            plan,
+            approval,
+        )
+        if (
+            request_identity is not None
+            and request_identity != expected_request_identity
+        ):
+            raise _failure(
+                "PUSH_REQUEST_IDENTITY_CHANGED",
+                "The final Push request identity changed; refresh the approved Plan.",
+            )
         existing = _execution_for_push_plan(
             session,
             owner_id=owner_id,
@@ -2951,14 +3152,15 @@ def confirm_approved_push_plan(
                 )
                 session.commit()
                 return execution, False
-    return confirm_push_to_origin_main(
-        session,
-        owner_id=owner_id,
-        push_execution=execution,
-        source_repo=source_repo,
-        confirmation=confirmation,
-        expected_confirmation_digest=execution.confirmation_digest,
-    )
+        return confirm_push_to_origin_main(
+            session,
+            owner_id=owner_id,
+            push_execution=execution,
+            source_repo=source_repo,
+            confirmation=confirmation,
+            expected_confirmation_digest=execution.confirmation_digest,
+            _repository_lock_held=True,
+        )
 
 
 def push_plan_review(
@@ -3042,19 +3244,60 @@ def push_plan_review(
                 if isinstance(item, dict)
             )
         elif not blockers:
-            with _push_repository_lock(plan.repository_locator_fingerprint):
-                try:
+            try:
+                with _push_repository_lock(
+                    plan.repository_locator_fingerprint,
+                    observation=True,
+                ):
                     observation = _safe_preflight_observation(context)
                     if execution is None:
                         blockers.extend(
                             _push_plan_current_blockers(plan, observation)
+                        )
+                    elif execution.state == "PUSHING":
+                        execution = _recover_uncertain_push(
+                            session,
+                            row=execution,
+                            context=context,
+                            settle_incomplete=True,
+                        )
+                        reconciliation = _decoded_object(
+                            execution.recovery_reconciliation_json
+                            or execution.post_push_evidence_json
+                        )
+                    elif execution.state == "READY_TO_PUSH":
+                        _blocked_state, fresh_blockers = _pre_execution_blockers(
+                            execution,
+                            observation,
+                        )
+                        blockers.extend(fresh_blockers)
+                    elif execution.state == "RECONCILIATION_BLOCKED":
+                        execution = _recover_blocked_reconciliation(
+                            session,
+                            row=execution,
+                            context=context,
+                        )
+                        reconciliation = (
+                            _decoded_object(execution.recovery_reconciliation_json)
+                            if execution.state == "PUSHED"
+                            else _reconciliation_locked(context, execution)
                         )
                     elif execution.state != "READY_TO_PUSH":
                         reconciliation = _reconciliation_locked(
                             context,
                             execution,
                         )
-                except PushDeliveryError as exc:
+            except PushDeliveryError as exc:
+                if (
+                    execution is not None
+                    and execution.state == "PUSHING"
+                    and exc.code == "REPOSITORY_MUTATION_ACTIVE"
+                ):
+                    # The accepted Push owns the exclusive repository lock.
+                    # Refresh must expose its durable running state rather
+                    # than turn expected lock ownership into a false blocker.
+                    observation = _decoded_object(plan.preflight_evidence_json)
+                else:
                     blockers.append(_safe_failure(exc.code, exc.message))
     plan_output = _push_plan_out(plan, approval, execution)
     readiness_observation = observation or (
@@ -3084,13 +3327,20 @@ def push_plan_review(
     else:
         action_state = "READY_TO_CONFIRM_PUSH"
     can_review = bool(
-        execution is None
-        and approval is None
-        and (
-            plan is None
-            or expired
-            or plan.status_at_creation == "BLOCKED"
-            or bool(blockers)
+        _pre_effect_execution_allows_plan_renewal(execution, observation)
+        or (
+            execution is None
+            and (
+                plan is None
+                or expired
+                or (
+                    approval is None
+                    and (
+                        plan.status_at_creation == "BLOCKED"
+                        or bool(blockers)
+                    )
+                )
+            )
         )
     )
     can_approve = bool(
@@ -3104,16 +3354,13 @@ def push_plan_review(
     can_confirm = bool(
         plan is not None
         and approval is not None
+        and not expired
+        and not blockers
         and (
-            (
-                execution is None
-                and not expired
-                and not blockers
-            )
+            execution is None
             or (
-                execution is not None
-                and execution.state in {"PUSHING", "RECONCILIATION_BLOCKED"}
-                and execution.command_attempt_count == 1
+                execution.state == "READY_TO_PUSH"
+                and execution.command_attempt_count == 0
             )
         )
     )
@@ -3124,6 +3371,13 @@ def push_plan_review(
         reconciliation=reconciliation,
         readiness_blockers=blockers,
     )
+    confirmation = _confirmation_state(
+        plan=plan,
+        approval=approval,
+        execution=execution,
+        can_confirm=can_confirm,
+        blockers=blockers,
+    )
     return {
         "local_commit_execution_id": local_commit.commit_execution_id,
         "action_state": action_state,
@@ -3131,6 +3385,7 @@ def push_plan_review(
         "push_plan": plan_output,
         "push_approval": _push_approval_out(approval),
         "push_execution": _execution_out(execution),
+        "confirmation": confirmation,
         "delivery_result": delivery,
         "actions": {
             "can_review_push_plan": can_review,
@@ -3176,15 +3431,25 @@ def push_delivery_review(
     observation: dict[str, Any] | None = None
     blockers: list[dict[str, Any]] = []
     reconciliation: dict[str, Any] | None = None
-    with _push_repository_lock(local_commit.repository_locator_fingerprint):
-        if latest is not None and latest.state != "READY_TO_PUSH":
-            reconciliation = _reconciliation_locked(context, latest)
-        if successful is None:
-            try:
+    try:
+        with _push_repository_lock(
+            local_commit.repository_locator_fingerprint,
+            observation=True,
+        ):
+            if latest is not None and latest.state != "READY_TO_PUSH":
+                reconciliation = _reconciliation_locked(context, latest)
+            if successful is None:
                 observation = _safe_preflight_observation(context)
                 blockers = list(observation.get("blockers") or [])
-            except PushDeliveryError as exc:
-                blockers = [_safe_failure(exc.code, exc.message)]
+    except PushDeliveryError as exc:
+        if (
+            latest is not None
+            and latest.state == "PUSHING"
+            and exc.code == "REPOSITORY_MUTATION_ACTIVE"
+        ):
+            observation = _decoded_object(latest.preflight_evidence_json)
+        else:
+            blockers = [_safe_failure(exc.code, exc.message)]
     active = latest is not None and latest.state in {
         "READY_TO_PUSH",
         "PUSHING",
@@ -3263,11 +3528,19 @@ def push_delivery_review(
         reconciliation=reconciliation,
         readiness_blockers=blockers,
     )
+    confirmation = _confirmation_state(
+        plan=None,
+        approval=None,
+        execution=successful or latest,
+        can_confirm=can_confirm,
+        blockers=blockers,
+    )
     return {
         "local_commit_execution_id": local_commit.commit_execution_id,
         "action_state": action_state,
         "readiness": readiness,
         "push_execution": _execution_out(successful or latest),
+        "confirmation": confirmation,
         "delivery_result": delivery,
         "actions": {
             "can_push_to_origin_main": can_push,
@@ -3312,7 +3585,10 @@ def create_push_preflight(
         local_commit=local_commit,
         source_repo=source_repo,
     )
-    with _push_repository_lock(local_commit.repository_locator_fingerprint):
+    with _push_repository_lock(
+        local_commit.repository_locator_fingerprint,
+        observation=True,
+    ):
         session.expire_all()
         local_commit = session.get(LocalCommitExecution, local_commit.id)
         if local_commit is None or local_commit.owner_id != owner_id:
@@ -3596,18 +3872,68 @@ def _recover_uncertain_push(
     *,
     row: PushExecution,
     context: BoundPushContext,
+    settle_incomplete: bool = False,
 ) -> PushExecution:
     """Reconcile a durable one-shot attempt without invoking transport again."""
     reconciliation = _reconciliation_locked(context, row)
     if reconciliation.get("complete") is not True:
-        # Preserve PUSHING as the durable uncertainty state. A later explicit
-        # confirmation may reconcile again, but never invokes Push transport.
+        if not settle_incomplete:
+            return row
+        blockers = list(reconciliation.get("blockers") or []) or [
+            _safe_failure(
+                "REMOTE_EFFECT_UNCONFIRMED",
+                "The interrupted Push could not be verified at origin/main.",
+            )
+        ]
+        remote_oid = reconciliation.get("origin_main_sha")
+        row.state = (
+            "REMOTE_MOVED"
+            if remote_oid
+            not in {None, row.execution_remote_base_oid, row.approved_commit_oid}
+            else "RECONCILIATION_BLOCKED"
+        )
+        row.failure_category = str(
+            blockers[0].get("code") or "REMOTE_EFFECT_UNCONFIRMED"
+        )
+        row.failure_evidence_json = canonical_json(blockers)
+        row.post_push_evidence_json = canonical_json(reconciliation)
+        row.finished_at = utc_now()
+        session.add(
+            AuditEvent(
+                actor_user_id=row.owner_id,
+                action="push_execution_recovery_needs_review",
+                entity_type="push_execution",
+                entity_id=row.id,
+                details=(
+                    f"execution={row.push_execution_id}; prior_state=PUSHING; "
+                    f"state={row.state}; remote_effect=unconfirmed; "
+                    "transport_retried=false"
+                ),
+            )
+        )
+        session.commit()
         return row
+    recovery_json = canonical_json(reconciliation)
+    row.recovery_reconciliation_json = recovery_json
+    row.recovery_reconciliation_digest = canonical_sha256(reconciliation)
+    row.recovered_at = utc_now()
     row.command_finished_at = utc_now()
-    row.post_push_evidence_json = canonical_json(reconciliation)
+    row.post_push_evidence_json = recovery_json
     row.finished_at = utc_now()
     row.state = "PUSHED"
     row.receipt_digest = _push_receipt_digest(row, reconciliation)
+    session.add(
+        AuditEvent(
+            actor_user_id=row.owner_id,
+            action="push_execution_recovered_delivered",
+            entity_type="push_execution",
+            entity_id=row.id,
+            details=(
+                f"execution={row.push_execution_id}; prior_state=PUSHING; "
+                "state=PUSHED; remote_effect=verified; transport_retried=false"
+            ),
+        )
+    )
     session.commit()
     return row
 
@@ -3625,8 +3951,25 @@ def _recover_blocked_reconciliation(
     row.recovery_reconciliation_json = recovery_json
     row.recovery_reconciliation_digest = canonical_sha256(reconciliation)
     row.recovered_at = utc_now()
+    if row.command_finished_at is None:
+        row.command_finished_at = utc_now()
+    if row.finished_at is None:
+        row.finished_at = utc_now()
     row.state = "PUSHED"
     row.receipt_digest = _push_receipt_digest(row, reconciliation)
+    session.add(
+        AuditEvent(
+            actor_user_id=row.owner_id,
+            action="push_execution_recovered_delivered",
+            entity_type="push_execution",
+            entity_id=row.id,
+            details=(
+                f"execution={row.push_execution_id}; "
+                "prior_state=RECONCILIATION_BLOCKED; state=PUSHED; "
+                "remote_effect=verified; transport_retried=false"
+            ),
+        )
+    )
     session.commit()
     return row
 
@@ -3639,6 +3982,7 @@ def confirm_push_to_origin_main(
     source_repo: Path,
     confirmation: str,
     expected_confirmation_digest: str,
+    _repository_lock_held: bool = False,
 ) -> tuple[PushExecution, bool]:
     if push_execution.owner_id != owner_id:
         raise _failure("PUSH_NOT_FOUND", "Push workflow not found.")
@@ -3688,9 +4032,19 @@ def confirm_push_to_origin_main(
             "PUSH_APPROVAL_REQUIRED",
             "The canonical Owner Push requires an exact approved Push Plan.",
         )
-    with _push_repository_lock(
-        push_execution.repository_locator_fingerprint
-    ):
+    repository_lock = (
+        nullcontext()
+        if _repository_lock_held
+        # The legacy preflight endpoint enters here with SQLite's historical
+        # BEGIN IMMEDIATE admission already active. It must never wait for the
+        # repository lock while retaining that database-writer boundary. The
+        # canonical approved-Plan path acquires its bounded repository-first
+        # lock in confirm_approved_push_plan and passes _repository_lock_held.
+        else _push_repository_lock(
+            push_execution.repository_locator_fingerprint,
+        )
+    )
+    with repository_lock:
         session.expire_all()
         row = session.get(PushExecution, push_execution.id)
         local_commit = session.get(LocalCommitExecution, local_commit.id)
@@ -3816,6 +4170,21 @@ def confirm_push_to_origin_main(
                     _safe_failure(
                         "REMOTE_MOVED",
                         "Live origin/main moved during the standard Push attempt; no force was used.",
+                    )
+                ]
+            )
+        elif reconciliation.get("origin_main_sha") is None and (
+            result is not None
+            or (transport_error is not None and transport_error.timed_out)
+        ):
+            terminal_state = "RECONCILIATION_BLOCKED"
+            row.failure_category = "REMOTE_EFFECT_UNCONFIRMED"
+            row.failure_evidence_json = canonical_json(
+                list(reconciliation.get("blockers") or [])
+                or [
+                    _safe_failure(
+                        "REMOTE_EFFECT_UNCONFIRMED",
+                        "The Push process ended without exact remote-SHA evidence; automatic retry is blocked.",
                     )
                 ]
             )

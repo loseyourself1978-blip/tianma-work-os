@@ -131,6 +131,21 @@
     TIMED_OUT: "PUSH TIMED OUT",
     NEEDS_REVIEW: "PUSH NEEDS REVIEW"
   });
+  const OWNER_PUSH_CONFIRMATION_LABELS = Object.freeze({
+    ready_for_confirmation: "Ready for confirmation",
+    submitting: "Submitting Push request",
+    running: "Push in progress",
+    succeeded: "Push delivered",
+    already_delivered: "Already delivered",
+    blocked: "Push blocked",
+    failed: "Push failed",
+    timed_out: "Push timed out",
+    needs_review: "Push needs review"
+  });
+  const OWNER_PUSH_RESPONSE_TIMEOUT_MS = 45 * 1000;
+  const OWNER_PUSH_REFRESH_WAIT_MS = 15 * 1000;
+  const OWNER_PUSH_RECONCILIATION_POLL_MS = 2 * 1000;
+  const OWNER_PUSH_RECONCILIATION_MAX_POLLS = 60;
   const RUN_BLOCKER_STATUS = Object.freeze({
     TASK_MISSING: "Task required",
     PACK_MISSING: "Pack required",
@@ -150,13 +165,14 @@
   const RUN_LOCAL_MODEL_NOT_EXPOSED = "Not exposed by the current Codex CLI protocol.";
 
   class ApiError extends Error {
-    constructor(status, code, message, fields, category) {
+    constructor(status, code, message, fields, category, details) {
       super(message);
       this.name = "ApiError";
       this.status = status;
       this.code = code || "UNEXPECTED_RESPONSE";
       this.fields = fields && typeof fields === "object" ? fields : {};
       this.category = category || "api";
+      this.details = details && typeof details === "object" ? details : {};
     }
   }
 
@@ -815,6 +831,9 @@
     ownerPushConfirmationOldSha: byId("owner-push-confirmation-old-sha"),
     ownerPushConfirmationNewSha: byId("owner-push-confirmation-new-sha"),
     ownerPushConfirmationFastForward: byId("owner-push-confirmation-fast-forward"),
+    ownerPushConfirmationStatus: byId("owner-push-confirmation-status"),
+    ownerPushConfirmationStatusLabel: byId("owner-push-confirmation-status-label"),
+    ownerPushConfirmationStatusMessage: byId("owner-push-confirmation-status-message"),
     confirmApprovedPush: byId("confirm-approved-push"),
     cancelApprovedPush: byId("cancel-approved-push"),
     assignmentTechnicalDetails: byId("assignment-technical-details"),
@@ -956,6 +975,12 @@
     pushConfirmationContext: null,
     ownerCommitConfirmationContext: null,
     ownerPushConfirmationContext: null,
+    ownerPushConfirmationState: {
+      phase: "ready_for_confirmation",
+      message: "The approved Push Plan is ready for one explicit confirmation.",
+      request_identity: ""
+    },
+    ownerPushConfirmationUncertainty: null,
     selectedTaskId: null,
     selectedPackId: null,
     selectedScheduleId: null,
@@ -973,19 +998,40 @@
       credentials: "same-origin",
       headers: { "Accept": "application/json" }
     }, options || {});
+    const timeoutMs = Number(request.timeoutMs || 0);
+    delete request.timeoutMs;
+    let timeoutId = null;
+    let timeoutController = null;
+    if (Number.isFinite(timeoutMs) && timeoutMs > 0 && typeof AbortController === "function") {
+      timeoutController = new AbortController();
+      request.signal = timeoutController.signal;
+      timeoutId = window.setTimeout(function () { timeoutController.abort(); }, timeoutMs);
+    }
     if (request.body && typeof request.body !== "string") {
       request.headers = Object.assign({}, request.headers, { "Content-Type": "application/json" });
       request.body = JSON.stringify(request.body);
     }
 
     let response;
+    let responseText;
     try {
       response = await fetch(path, request);
+      responseText = await response.text();
     } catch (error) {
+      if (timeoutController && timeoutController.signal.aborted) {
+        throw new ApiError(
+          0,
+          "REQUEST_TIMEOUT",
+          "The request timed out. TWOS will reconcile persisted evidence before another action is available.",
+          {},
+          "network"
+        );
+      }
       throw new ApiError(0, "NETWORK_ERROR", "Unable to connect. Try again.", {}, "network");
+    } finally {
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
     }
 
-    const responseText = await response.text();
     let data = {};
     if (responseText) {
       try {
@@ -997,6 +1043,9 @@
 
     if (!response.ok) {
       const legacy = data && data.error && typeof data.error === "object" ? data.error : {};
+      const legacyDetails = legacy.details && typeof legacy.details === "object"
+        ? legacy.details
+        : {};
       const trustedLegacyEnvelope = Boolean(
         data
         && Object.keys(data).length === 1
@@ -1006,16 +1055,33 @@
         && typeof legacy.request_id === "string"
         && Object.prototype.hasOwnProperty.call(legacy, "details")
       );
-      const code = typeof data.code === "string" ? data.code : typeof legacy.code === "string" ? legacy.code : "HTTP_ERROR";
+      const code = typeof data.code === "string"
+        ? data.code
+        : typeof legacyDetails.code === "string"
+          ? legacyDetails.code
+          : typeof legacy.code === "string" ? legacy.code : "HTTP_ERROR";
       const message = typeof data.message === "string"
         ? data.message
-        : typeof legacy.message === "string"
-          ? legacy.message
+        : typeof legacyDetails.message === "string"
+          ? legacyDetails.message
+          : typeof legacy.message === "string"
+            ? legacy.message
           : typeof data.detail === "string"
             ? data.detail
             : "Something went wrong. Try again.";
-      const fields = data.fields && typeof data.fields === "object" ? data.fields : {};
-      throw new ApiError(response.status, code, message, fields, trustedLegacyEnvelope ? "twos" : "api");
+      const fields = data.fields && typeof data.fields === "object"
+        ? data.fields
+        : legacyDetails.fields && typeof legacyDetails.fields === "object"
+          ? legacyDetails.fields
+          : {};
+      throw new ApiError(
+        response.status,
+        code,
+        message,
+        fields,
+        trustedLegacyEnvelope ? "twos" : "api",
+        legacyDetails
+      );
     }
 
     return data;
@@ -1486,6 +1552,12 @@
     state.pushConfirmationContext = null;
     state.ownerCommitConfirmationContext = null;
     state.ownerPushConfirmationContext = null;
+    state.ownerPushConfirmationState = {
+      phase: "ready_for_confirmation",
+      message: "The approved Push Plan is ready for one explicit confirmation.",
+      request_identity: ""
+    };
+    state.ownerPushConfirmationUncertainty = null;
     if (elements.startCodexConfirmationDialog.open) elements.startCodexConfirmationDialog.close();
     if (elements.applyConfirmationDialog.open) elements.applyConfirmationDialog.close();
     if (elements.revertConfirmationDialog.open) elements.revertConfirmationDialog.close();
@@ -1522,7 +1594,7 @@
     if (error.category === "product") return error.message;
     const message = typeof error.message === "string" ? error.message : "";
     const looksInternal = /traceback|sqlalchemy|validationerror|\/users\/|\\users\\|\.sqlite|stack trace/i.test(message);
-    if (error.category === "twos" && error.code === "http_error" && !looksInternal && message && message.length <= 220) {
+    if (error.category === "twos" && !looksInternal && message && message.length <= 220) {
       return message;
     }
     return "Something went wrong. Try again.";
@@ -2181,6 +2253,7 @@
         );
       }
       state.ownerDeliveryProjections[key] = projection;
+      resolveOwnerPushConfirmationUncertainty(key, projection, requestSequence);
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) throw error;
       if (requestEpoch !== state.taskSelectionEpoch
@@ -2223,6 +2296,7 @@
     if (elements.pushConfirmationDialog.open) elements.pushConfirmationDialog.close();
     state.ownerCommitConfirmationContext = null;
     state.ownerPushConfirmationContext = null;
+    state.ownerPushConfirmationUncertainty = null;
     if (elements.ownerLocalCommitConfirmationDialog.open) elements.ownerLocalCommitConfirmationDialog.close();
     if (elements.ownerPushConfirmationDialog.open) elements.ownerPushConfirmationDialog.close();
     state.aiPlan = null;
@@ -7819,6 +7893,7 @@
     const pushExecution = objectRecord(
       pushDelivery.execution || pushDelivery.push_execution || pushPlan.execution
     );
+    const pushConfirmation = objectRecord(pushDelivery.confirmation);
     const receipt = objectRecord(
       pushDelivery.receipt || pushDelivery.delivery_receipt
       || pushDelivery.delivery_result || pushExecution.receipt
@@ -7841,6 +7916,7 @@
       pushPlan: pushPlan,
       pushApproval: pushApproval,
       pushExecution: pushExecution,
+      pushConfirmation: pushConfirmation,
       receipt: receipt,
       pushActions: Object.assign(
         {},
@@ -7884,7 +7960,167 @@
       : "COMMIT_REVIEW_REQUIRED";
   }
 
+  function ownerPushConfirmationProjectionRelevant(parts) {
+    const confirmation = objectRecord(parts.pushConfirmation);
+    return Boolean(
+      confirmation.plan_id || confirmation.execution_id
+      || ownerDeliveryRecordId(parts.pushPlan) || ownerDeliveryRecordId(parts.pushExecution)
+    );
+  }
+
+  function ownerPushConfirmationProjectionIsCanonical(projection) {
+    const pushDelivery = objectRecord(objectRecord(projection).push_delivery);
+    const confirmation = objectRecord(pushDelivery.confirmation);
+    return Object.prototype.hasOwnProperty.call(
+      OWNER_PUSH_CONFIRMATION_LABELS,
+      String(confirmation.state || "").toLowerCase()
+    );
+  }
+
+  function ownerPushConfirmationLocalRequestState(parts) {
+    const uncertainty = objectRecord(state.ownerPushConfirmationUncertainty);
+    if (!uncertainty.status) return "";
+    const run = currentCodexRun();
+    if (String(objectRecord(run).id || "") !== String(uncertainty.run_id || "")) {
+      return "";
+    }
+    const planId = ownerDeliveryRecordId(objectRecord(parts).pushPlan);
+    return (
+      !planId || !uncertainty.plan_id
+      || String(planId) === String(uncertainty.plan_id)
+    ) ? String(uncertainty.status) : "";
+  }
+
+  function ownerPushConfirmationUncertaintyActive(parts) {
+    return ownerPushConfirmationLocalRequestState(parts) === "uncertain";
+  }
+
+  function ownerPushConfirmationRequestInFlight(parts) {
+    return ownerPushConfirmationLocalRequestState(parts) === "request_dispatched";
+  }
+
+  function beginOwnerPushConfirmationReconciliation(context) {
+    const runId = String(context.run_id || "");
+    state.ownerPushConfirmationUncertainty = {
+      status: "request_dispatched",
+      run_id: runId,
+      plan_id: String(context.plan_id || ""),
+      request_identity: String(context.request_identity || ""),
+      minimum_projection_sequence:
+        Number(state.ownerDeliveryRequestSequences[runId] || 0) + 1,
+      message: ""
+    };
+  }
+
+  function ownerPushRejectionProvesNoEffect(error) {
+    const details = objectRecord(error instanceof ApiError ? error.details : null);
+    return error instanceof ApiError
+      && error.status === 409
+      && details.request_accepted === false
+      && details.remote_effect === "none";
+  }
+
+  function ownerPushRejectionProvesSafeRetry(error) {
+    const details = objectRecord(error instanceof ApiError ? error.details : null);
+    return ownerPushRejectionProvesNoEffect(error) && details.retry_safe === true;
+  }
+
+  function markOwnerPushConfirmationUncertain(context, reconciliationEvidence) {
+    const current = objectRecord(state.ownerPushConfirmationUncertainty);
+    const evidence = objectRecord(reconciliationEvidence);
+    state.ownerPushConfirmationUncertainty = {
+      status: "uncertain",
+      run_id: String(context.run_id || current.run_id || ""),
+      plan_id: String(context.plan_id || current.plan_id || ""),
+      request_identity: String(
+        context.request_identity || current.request_identity || ""
+      ),
+      minimum_projection_sequence: Number(
+        current.minimum_projection_sequence
+        || state.ownerDeliveryRequestSequences[String(context.run_id || "")]
+        || 0
+      ),
+      allow_no_execution_reconciliation:
+        evidence.allow_no_execution_reconciliation === true
+        || current.allow_no_execution_reconciliation === true,
+      allow_ready_reconciliation: evidence.allow_ready_reconciliation === true
+        || current.allow_ready_reconciliation === true,
+      message: "The Push response could not be reconciled safely. No automatic retry is available until TWOS successfully reloads canonical execution and remote evidence."
+    };
+  }
+
+  function resolveOwnerPushConfirmationUncertainty(runId, projection, requestSequence) {
+    const current = objectRecord(state.ownerPushConfirmationUncertainty);
+    if (!current.status || String(current.run_id || "") !== String(runId || "")) {
+      return false;
+    }
+    if (!ownerPushConfirmationProjectionIsCanonical(projection)) return false;
+    const pushDelivery = objectRecord(objectRecord(projection).push_delivery);
+    const confirmation = objectRecord(pushDelivery.confirmation);
+    const durableExecutionObserved = confirmation.request_accepted === true
+      && Boolean(confirmation.execution_id);
+    if (current.allow_ready_reconciliation !== true
+        && String(confirmation.state || "").toLowerCase() === "ready_for_confirmation") {
+      return false;
+    }
+    if (!durableExecutionObserved
+        && current.allow_no_execution_reconciliation !== true) {
+      return false;
+    }
+    if (requestSequence !== null && requestSequence !== undefined
+        && Number(requestSequence) < Number(current.minimum_projection_sequence || 0)) {
+      return false;
+    }
+    state.ownerPushConfirmationUncertainty = null;
+    return true;
+  }
+
+  function ownerPushConfirmationCanConfirm(parts) {
+    if (ownerPushConfirmationUncertaintyActive(parts)
+        || ownerPushConfirmationRequestInFlight(parts)) return false;
+    const confirmation = objectRecord(parts.pushConfirmation);
+    const confirmationState = String(confirmation.state || "").toLowerCase();
+    if (ownerPushConfirmationProjectionRelevant(parts)
+        && Object.prototype.hasOwnProperty.call(
+          OWNER_PUSH_CONFIRMATION_LABELS,
+          confirmationState
+        )) {
+      return confirmationState === "ready_for_confirmation"
+        && confirmation.can_confirm === true
+        && /^[0-9a-f]{64}$/.test(String(confirmation.request_identity || ""));
+    }
+    if (ownerPushConfirmationProjectionRelevant(parts)) return false;
+    return parts.pushActions.can_confirm_push === true
+      || parts.pushActions.can_push === true;
+  }
+
   function canonicalPushState(parts) {
+    const localPhase = String(state.ownerPushConfirmationState.phase || "");
+    if (state.pending.has("confirm-owner-push")
+        && ["submitting", "running"].indexOf(localPhase) !== -1) {
+      return "PUSHING";
+    }
+    if (ownerPushConfirmationRequestInFlight(parts)) return "PUSHING";
+    if (ownerPushConfirmationUncertaintyActive(parts)) return "NEEDS_REVIEW";
+    const confirmation = objectRecord(parts.pushConfirmation);
+    const confirmationState = String(confirmation.state || "").toLowerCase();
+    if (ownerPushConfirmationProjectionRelevant(parts)) {
+      const confirmationStates = {
+        ready_for_confirmation: "PUSH_CONFIRMATION_REQUIRED",
+        submitting: "PUSHING",
+        running: "PUSHING",
+        succeeded: "DELIVERED",
+        already_delivered: "ALREADY_DELIVERED",
+        blocked: "BLOCKED",
+        failed: "FAILED",
+        timed_out: "TIMED_OUT",
+        needs_review: "NEEDS_REVIEW"
+      };
+      if (Object.prototype.hasOwnProperty.call(confirmationStates, confirmationState)) {
+        return confirmationStates[confirmationState];
+      }
+      return "NEEDS_REVIEW";
+    }
     const receiptState = String(
       parts.receipt.state || parts.receipt.status || parts.receipt.classification || ""
     ).toUpperCase();
@@ -8091,6 +8327,12 @@
     const pushBlockers = applyPlanTextList(parts.pushDelivery.blockers, "")
       .concat(applyPlanTextList(parts.pushPlan.blockers, ""))
       .concat(applyPlanTextList(parts.pushExecution.blockers, ""));
+    const pushConfirmationPhase = ownerPushConfirmationPhaseFor(parts);
+    if (["blocked", "failed", "timed_out", "needs_review"].indexOf(pushConfirmationPhase) !== -1) {
+      pushBlockers.unshift(
+        ownerPushConfirmationReason(parts, "Push confirmation is blocked.")
+      );
+    }
     const commitApprovalState = canonicalApprovalState(parts.commitApproval, "PENDING");
     const pushApprovalState = canonicalApprovalState(parts.pushApproval, "PENDING");
     const proposalAdvanced = objectRecord(parts.proposal.advanced);
@@ -8120,13 +8362,26 @@
       const stillCurrent = String(current.run_id) === String(run.id)
         && String(current.plan_id) === String(pushPlanId || "")
         && String(current.plan_digest) === String(ownerDeliveryDigest(parts.pushPlan))
-        && String(current.approval_digest) === String(ownerDeliveryDigest(parts.pushApproval))
-        && (parts.pushActions.can_confirm_push === true
-          || parts.pushActions.can_push === true);
+        && String(current.approval_digest) === String(ownerDeliveryDigest(parts.pushApproval));
       if (!stillCurrent) {
         state.ownerPushConfirmationContext = null;
         if (elements.ownerPushConfirmationDialog.open) {
           elements.ownerPushConfirmationDialog.close();
+        }
+      } else {
+        const persistedPhase = ownerPushConfirmationPhaseFor(parts);
+        const localRequestPending = state.pending.has("confirm-owner-push");
+        if (!localRequestPending || persistedPhase !== "ready_for_confirmation") {
+          setOwnerPushConfirmationPhase(
+            persistedPhase,
+            ownerPushConfirmationReason(
+              parts,
+              persistedPhase === "ready_for_confirmation"
+                ? "The approved Push Plan is ready for one explicit confirmation."
+                : "Review the current persisted Push confirmation state."
+            ),
+            { request_identity: current.request_identity }
+          );
         }
       }
     }
@@ -8289,7 +8544,10 @@
         1000
       );
       elements.pushNextAction.textContent = sanitizedApplyPlanText(
-        parts.pushDelivery.next_action || projectionNext.message,
+        (ownerPushConfirmationProjectionRelevant(parts)
+          || ownerPushConfirmationUncertaintyActive(parts))
+          ? ownerPushConfirmationReason(parts, "Review the current Push confirmation state.")
+          : parts.pushDelivery.next_action || projectionNext.message,
         pushState === "PUSH_REVIEW_REQUIRED"
           ? "Select Review Push Plan."
           : pushState === "PUSH_APPROVAL_REQUIRED"
@@ -8313,11 +8571,11 @@
       )
         || state.pending.has("approve-push-plan");
       elements.confirmOwnerPush.hidden = false;
-      elements.confirmOwnerPush.disabled = !(
-        parts.pushActions.can_confirm_push === true
-        || parts.pushActions.can_push === true
-      )
+      elements.confirmOwnerPush.disabled = !ownerPushConfirmationCanConfirm(parts)
         || state.pending.has("confirm-owner-push");
+      elements.confirmOwnerPush.title = elements.confirmOwnerPush.disabled
+        ? ownerPushConfirmationReason(parts, "Push confirmation is not currently eligible.")
+        : "";
       renderCanonicalPushAdvanced(parts);
     }
 
@@ -9478,8 +9736,7 @@
           || canonicalPushActions.can_approve === true)
         || state.pending.has("approve-push-plan");
       elements.confirmOwnerPush.disabled = !authenticated
-        || !(canonicalPushActions.can_confirm_push === true
-          || canonicalPushActions.can_push === true)
+        || !ownerPushConfirmationCanConfirm(ownerDelivery)
         || state.pending.has("confirm-owner-push");
       if (committed) elements.revertAppliedChanges.disabled = true;
     }
@@ -10478,20 +10735,293 @@
     );
   }
 
+  function ownerPushConfirmationBusy() {
+    const phase = String(state.ownerPushConfirmationState.phase || "");
+    return state.pending.has("confirm-owner-push")
+      || phase === "submitting"
+      || phase === "running";
+  }
+
+  function setOwnerPushConfirmationPhase(phase, message, options) {
+    const config = options || {};
+    const normalized = Object.prototype.hasOwnProperty.call(
+      OWNER_PUSH_CONFIRMATION_LABELS,
+      phase
+    ) ? phase : "needs_review";
+    const safeMessage = sanitizedApplyPlanText(
+      message,
+      normalized === "ready_for_confirmation"
+        ? "The approved Push Plan is ready for one explicit confirmation."
+        : "Review the current persisted Push evidence before another action.",
+      1000
+    );
+    state.ownerPushConfirmationState = {
+      phase: normalized,
+      message: safeMessage,
+      request_identity: String(
+        config.request_identity
+        || state.ownerPushConfirmationState.request_identity
+        || ""
+      )
+    };
+    elements.ownerPushConfirmationStatus.dataset.state = normalized;
+    elements.ownerPushConfirmationStatusLabel.textContent =
+      OWNER_PUSH_CONFIRMATION_LABELS[normalized];
+    elements.ownerPushConfirmationStatusMessage.textContent = safeMessage;
+    const busy = normalized === "submitting" || normalized === "running";
+    elements.confirmApprovedPush.disabled = normalized !== "ready_for_confirmation";
+    elements.confirmApprovedPush.textContent = normalized === "submitting"
+      ? "Submitting…"
+      : normalized === "running"
+        ? "Pushing…"
+        : "Confirm Push";
+    if (busy) {
+      elements.confirmApprovedPush.setAttribute("aria-busy", "true");
+    } else {
+      elements.confirmApprovedPush.removeAttribute("aria-busy");
+    }
+    elements.cancelApprovedPush.textContent = busy ? "Hide" : normalized === "ready_for_confirmation" ? "Cancel" : "Close";
+  }
+
+  async function waitForOwnerPushRefresh() {
+    let remainingWaits = Math.ceil(OWNER_PUSH_REFRESH_WAIT_MS / 50);
+    while (state.refreshing && remainingWaits > 0) {
+      await new Promise(function (resolve) { window.setTimeout(resolve, 50); });
+      remainingWaits -= 1;
+    }
+    if (state.refreshing) {
+      throw new ApiError(
+        409,
+        "WORKSPACE_REFRESH_ACTIVE",
+        "TWOS is still reconciling read-only workspace evidence. No Push request was sent; wait for refresh to finish, then retry once.",
+        {},
+        "product"
+      );
+    }
+  }
+
+  function ownerPushConfirmationPhaseFor(parts) {
+    if (ownerPushConfirmationRequestInFlight(parts)) return "running";
+    if (ownerPushConfirmationUncertaintyActive(parts)) return "needs_review";
+    const confirmation = objectRecord(parts.pushConfirmation);
+    const projectedState = String(confirmation.state || "").toLowerCase();
+    if (ownerPushConfirmationProjectionRelevant(parts)
+        && Object.prototype.hasOwnProperty.call(
+          OWNER_PUSH_CONFIRMATION_LABELS,
+          projectedState
+        )) {
+      if (projectedState === "ready_for_confirmation"
+          && !ownerPushConfirmationCanConfirm(parts)) {
+        return "blocked";
+      }
+      return projectedState;
+    }
+    const stateValue = canonicalPushState(parts);
+    if (stateValue === "DELIVERED") return "succeeded";
+    if (stateValue === "ALREADY_DELIVERED") return "already_delivered";
+    if (stateValue === "PUSHING") return "running";
+    if (stateValue === "FAILED") return "failed";
+    if (stateValue === "TIMED_OUT") return "timed_out";
+    if (stateValue === "NEEDS_REVIEW") return "needs_review";
+    if (stateValue === "BLOCKED" || stateValue === "NEEDS_SETUP") return "blocked";
+    if (parts.pushActions.can_confirm_push === true || parts.pushActions.can_push === true) {
+      return "ready_for_confirmation";
+    }
+    return "blocked";
+  }
+
+  function ownerPushConfirmationReason(parts, fallback) {
+    if (ownerPushConfirmationRequestInFlight(parts)) {
+      return "The Push request was sent and is awaiting canonical execution and remote evidence. Hiding this dialog does not cancel it.";
+    }
+    if (ownerPushConfirmationUncertaintyActive(parts)) {
+      return sanitizedApplyPlanText(
+        objectRecord(state.ownerPushConfirmationUncertainty).message,
+        fallback,
+        900
+      );
+    }
+    const confirmation = objectRecord(parts.pushConfirmation);
+    const projectedState = String(confirmation.state || "").toLowerCase();
+    const localPhase = String(state.ownerPushConfirmationState.phase || "");
+    if (state.pending.has("confirm-owner-push")
+        && ["submitting", "running"].indexOf(localPhase) !== -1
+        && [
+          "succeeded",
+          "already_delivered",
+          "blocked",
+          "failed",
+          "timed_out",
+          "needs_review"
+        ].indexOf(projectedState) === -1) {
+      return sanitizedApplyPlanText(
+        state.ownerPushConfirmationState.message,
+        localPhase === "submitting"
+          ? "Submitting one bound Push request."
+          : "The accepted Push request is running independently of this dialog.",
+        900
+      );
+    }
+    if (ownerPushConfirmationProjectionRelevant(parts)
+        && projectedState === "ready_for_confirmation"
+        && !ownerPushConfirmationCanConfirm(parts)) {
+      if (confirmation.reason) {
+        return sanitizedApplyPlanText(confirmation.reason, fallback, 900);
+      }
+      if (!/^[0-9a-f]{64}$/.test(String(confirmation.request_identity || ""))) {
+        return "Push confirmation is blocked because its stable request identity is unavailable or malformed. Refresh the delivery state and review the approved Push Plan.";
+      }
+      if (confirmation.can_confirm !== true) {
+        return "Push confirmation is blocked because the ready projection does not admit final confirmation. Refresh the delivery state and review the approved Push Plan.";
+      }
+      return sanitizedApplyPlanText(
+        fallback,
+        "Push confirmation is blocked by inconsistent persisted eligibility evidence.",
+        900
+      );
+    }
+    const canonicalReason = confirmation.reason || confirmation.progress;
+    if (ownerPushConfirmationProjectionRelevant(parts) && canonicalReason) {
+      return sanitizedApplyPlanText(canonicalReason, fallback, 900);
+    }
+    const blockers = applyPlanTextList(parts.pushDelivery.blockers, "")
+      .concat(applyPlanTextList(parts.pushPlan.blockers, ""))
+      .concat(applyPlanTextList(parts.pushExecution.blockers, ""));
+    const projectionNext = objectRecord(parts.projection.next_action);
+    return blockers[0]
+      || sanitizedApplyPlanText(
+        parts.pushDelivery.next_action || projectionNext.message,
+        fallback,
+        900
+      );
+  }
+
+  async function reconcileOwnerPushConfirmation(context, requestError) {
+    const allowNoExecutionReconciliation = ownerPushRejectionProvesNoEffect(requestError);
+    const allowReadyReconciliation = ownerPushRejectionProvesSafeRetry(requestError);
+    const reconciliationEvidence = {
+      allow_no_execution_reconciliation: allowNoExecutionReconciliation,
+      allow_ready_reconciliation: allowReadyReconciliation
+    };
+    markOwnerPushConfirmationUncertain(context, reconciliationEvidence);
+    let pollCount = 0;
+    try {
+      while (true) {
+        const projection = await api(
+          "/api/codex-runs/" + encodeURIComponent(context.run_id) + "/delivery",
+          { timeoutMs: 15 * 1000 }
+        );
+        if (context.task_selection_epoch !== state.taskSelectionEpoch
+            || String(objectRecord(currentCodexRun()).id || "") !== context.run_id
+            || !projection || String(projection.run_id || "") !== context.run_id) {
+          throw new ApiError(
+            409,
+            "STALE_PUSH_RECONCILIATION",
+            "Push reconciliation no longer matches the selected Task and Run.",
+            {},
+            "product"
+          );
+        }
+        state.ownerDeliveryProjections[context.run_id] = projection;
+        const localFence = objectRecord(state.ownerPushConfirmationUncertainty);
+        if (!ownerPushConfirmationProjectionIsCanonical(projection)
+            || (localFence.status
+              && !resolveOwnerPushConfirmationUncertainty(
+                context.run_id,
+                projection,
+                null
+              ))) {
+          throw new ApiError(
+            200,
+            "PUSH_CONFIRMATION_PROJECTION_MISSING",
+            "Canonical Push confirmation evidence was not available after the request.",
+            {},
+            "product"
+          );
+        }
+        const parts = ownerDeliveryParts(currentCodexRun());
+        const phase = ownerPushConfirmationPhaseFor(parts);
+        if (phase === "succeeded" || phase === "already_delivered") {
+          setOwnerPushConfirmationPhase(
+            phase,
+            phase === "already_delivered"
+              ? "The approved Commit was already present at the exact remote ref. No second Push was issued."
+              : "The exact remote SHA is verified and the delivery receipt is persisted.",
+            { request_identity: context.request_identity }
+          );
+          state.ownerPushConfirmationContext = null;
+          if (elements.ownerPushConfirmationDialog.open) elements.ownerPushConfirmationDialog.close();
+          setFeedback("Push delivery reconciled from persisted execution and remote evidence.", "success");
+          return phase;
+        }
+        if (phase === "ready_for_confirmation") {
+          const reason = productActionMessage(requestError);
+          setOwnerPushConfirmationPhase(
+            "ready_for_confirmation",
+            reason + " Live evidence now shows the exact approved Plan is eligible for one explicit retry or idempotent settlement; TWOS did not retry automatically.",
+            { request_identity: context.request_identity }
+          );
+          return phase;
+        }
+        setOwnerPushConfirmationPhase(
+          phase,
+          ownerPushConfirmationReason(
+            parts,
+            productActionMessage(requestError) + " Review persisted Push evidence before another action."
+          ),
+          { request_identity: context.request_identity }
+        );
+        if (["submitting", "running"].indexOf(phase) === -1) return phase;
+        if (pollCount >= OWNER_PUSH_RECONCILIATION_MAX_POLLS) {
+          setOwnerPushConfirmationPhase(
+            phase,
+            "Push execution is still in progress after bounded reconciliation. No retry was issued. Use Refresh Run Status to load the eventual persisted receipt.",
+            { request_identity: context.request_identity }
+          );
+          return phase;
+        }
+        pollCount += 1;
+        await new Promise(function (resolve) {
+          window.setTimeout(resolve, OWNER_PUSH_RECONCILIATION_POLL_MS);
+        });
+      }
+    } catch (reconciliationError) {
+      markOwnerPushConfirmationUncertain(context, reconciliationEvidence);
+      setOwnerPushConfirmationPhase(
+        "needs_review",
+        "The Push response could not be reconciled safely. No automatic retry will occur. Refresh the delivery view and review the persisted execution and remote SHA.",
+        { request_identity: context.request_identity }
+      );
+      return "needs_review";
+    }
+  }
+
   function openOwnerPushConfirmation() {
     const context = ownerDeliveryActionContext();
-    if (!(context.parts.pushActions.can_confirm_push === true
-        || context.parts.pushActions.can_push === true)) return;
+    const initialPhase = ownerPushConfirmationPhaseFor(context.parts);
+    const canConfirm = ownerPushConfirmationCanConfirm(context.parts);
     const planId = ownerDeliveryRecordId(context.parts.pushPlan);
     const planDigest = ownerDeliveryDigest(context.parts.pushPlan);
     const approvalDigest = ownerDeliveryDigest(context.parts.pushApproval);
-    if (!planId || !planDigest || !approvalDigest) return;
+    const requestIdentity = String(context.parts.pushConfirmation.request_identity || "");
+    if (!planId || !planDigest || !approvalDigest
+        || !/^[0-9a-f]{64}$/.test(requestIdentity)) {
+      setFeedback(
+        ownerPushConfirmationReason(
+          context.parts,
+          "Push confirmation is blocked because its approved Plan or request identity binding is unavailable."
+        ),
+        "error"
+      );
+      return;
+    }
     const advanced = objectRecord(context.parts.pushPlan.advanced);
     state.ownerPushConfirmationContext = {
       run_id: String(context.run.id),
       plan_id: String(planId),
       plan_digest: String(planDigest),
       approval_digest: String(approvalDigest),
+      request_identity: requestIdentity,
       task_selection_epoch: context.epoch
     };
     elements.ownerPushConfirmationPlan.textContent = "Push Plan " + String(planId)
@@ -10522,6 +11052,16 @@
     elements.ownerPushConfirmationFastForward.textContent = humanStatus(
       context.parts.pushPlan.fast_forward_status || context.parts.pushPlan.fast_forward
       || "not evaluated"
+    );
+    setOwnerPushConfirmationPhase(
+      canConfirm ? "ready_for_confirmation" : initialPhase,
+      canConfirm
+        ? "The approved Push Plan is current. Confirm Push authorizes one exact non-force attempt; no tag, other branch, or automatic retry is included."
+        : ownerPushConfirmationReason(
+          context.parts,
+          "Push confirmation is blocked by the current persisted delivery state."
+        ),
+      { request_identity: state.ownerPushConfirmationContext.request_identity }
     );
     elements.ownerPushConfirmationDialog.showModal();
     window.setTimeout(function () { elements.cancelApprovedPush.focus(); }, 0);
@@ -10980,38 +11520,172 @@
 
   async function confirmApprovedPush() {
     const context = state.ownerPushConfirmationContext;
-    if (!context) return;
-    await performAction(
-      "confirm-owner-push",
-      elements.confirmApprovedPush,
-      "Pushing…",
-      async function () {
-        if (context.task_selection_epoch !== state.taskSelectionEpoch
-            || String(objectRecord(currentCodexRun()).id || "") !== context.run_id) {
-          throw new ApiError(
-            409,
-            "STALE_PUSH_CONFIRMATION",
-            "Push confirmation no longer matches the selected Task and Run.",
+    if (!context) {
+      setOwnerPushConfirmationPhase(
+        "blocked",
+        "Push confirmation is not bound to a current approved Push Plan. Close this dialog and review the current delivery state."
+      );
+      return;
+    }
+    if (state.pending.has("confirm-owner-push")) return;
+    const currentParts = ownerDeliveryParts(currentCodexRun());
+    const currentRequestIdentity = String(
+      objectRecord(currentParts.pushConfirmation).request_identity || ""
+    );
+    const bindingsCurrent = String(ownerDeliveryRecordId(currentParts.pushPlan) || "")
+        === String(context.plan_id)
+      && String(ownerDeliveryDigest(currentParts.pushPlan)) === String(context.plan_digest)
+      && String(ownerDeliveryDigest(currentParts.pushApproval)) === String(context.approval_digest)
+      && currentRequestIdentity === String(context.request_identity);
+    if (!bindingsCurrent) {
+      setOwnerPushConfirmationPhase(
+        "blocked",
+        "The approved Push Plan or request identity changed. Close this dialog and review the current Push Plan before any new confirmation.",
+        { request_identity: context.request_identity }
+      );
+      return;
+    }
+    if (!ownerPushConfirmationCanConfirm(currentParts)) {
+      const persistedPhase = ownerPushConfirmationPhaseFor(currentParts);
+      setOwnerPushConfirmationPhase(
+        persistedPhase,
+        ownerPushConfirmationReason(
+          currentParts,
+          "Push confirmation is no longer eligible. Review the current persisted delivery state."
+        ),
+        { request_identity: context.request_identity }
+      );
+      return;
+    }
+    state.pending.add("confirm-owner-push");
+    setOwnerPushConfirmationPhase(
+      "submitting",
+      state.refreshing
+        ? "Waiting for the current read-only evidence refresh to finish before sending one Push request. Hide does not cancel an accepted request."
+        : "Submitting one bound Push request. Hide does not cancel it if the server accepts execution.",
+      { request_identity: context.request_identity }
+    );
+    let requestDispatched = false;
+    try {
+      if (context.task_selection_epoch !== state.taskSelectionEpoch
+          || String(objectRecord(currentCodexRun()).id || "") !== context.run_id) {
+        throw new ApiError(
+          409,
+          "STALE_PUSH_CONFIRMATION",
+          "Push confirmation no longer matches the selected Task and Run.",
+          {},
+          "product"
+        );
+      }
+      await waitForOwnerPushRefresh();
+      setOwnerPushConfirmationPhase(
+        "running",
+        "The server is processing the one approved Push request. Hiding this dialog does not cancel execution; refresh reconciles persisted execution and remote evidence.",
+        { request_identity: context.request_identity }
+      );
+      requestDispatched = true;
+      beginOwnerPushConfirmationReconciliation(context);
+      const response = await api(
+        "/api/push-plans/" + encodeURIComponent(context.plan_id) + "/push-attempts",
+        {
+          method: "POST",
+          timeoutMs: OWNER_PUSH_RESPONSE_TIMEOUT_MS,
+          body: {
+            confirmation: "PUSH_TO_ORIGIN_MAIN",
+            expected_plan_digest: context.plan_digest,
+            expected_approval_digest: context.approval_digest,
+            request_identity: context.request_identity
+          }
+        }
+      );
+      const execution = objectRecord(response.push_execution);
+      const executionState = String(
+        execution.canonical_state || execution.state || ""
+      ).toUpperCase();
+      const deliveryResult = objectRecord(response.delivery_result);
+      const deliveryState = String(
+        deliveryResult.status || deliveryResult.state || ""
+      ).toUpperCase();
+      if (["PUSHED", "SUCCEEDED", "DELIVERED", "ALREADY_DELIVERED"].indexOf(executionState) === -1
+          && ["DELIVERED", "ALREADY_DELIVERED"].indexOf(deliveryState) === -1) {
+        await reconcileOwnerPushConfirmation(
+          context,
+          new ApiError(
+            200,
+            "PUSH_NOT_TERMINAL",
+            "The accepted Push request has not reached a verified delivery receipt yet.",
             {},
             "product"
-          );
-        }
-        await api(
-          "/api/push-plans/" + encodeURIComponent(context.plan_id) + "/push-attempts",
-          {
-            method: "POST",
-            body: {
-              confirmation: "PUSH_TO_ORIGIN_MAIN",
-              expected_plan_digest: context.plan_digest,
-              expected_approval_digest: context.approval_digest
-            }
-          }
+          )
         );
-        state.ownerPushConfirmationContext = null;
-        elements.ownerPushConfirmationDialog.close();
-        return "Push settled. Review the verified remote SHA and persisted delivery receipt.";
+        return;
       }
-    );
+      const alreadyDelivered = executionState === "ALREADY_DELIVERED"
+        || deliveryState === "ALREADY_DELIVERED";
+      setOwnerPushConfirmationPhase(
+        alreadyDelivered ? "already_delivered" : "succeeded",
+        alreadyDelivered
+          ? "The exact Commit was already present at the approved remote ref. No second Push was issued."
+          : "The exact remote SHA was verified and the delivery receipt was persisted.",
+        { request_identity: context.request_identity }
+      );
+      state.ownerPushConfirmationUncertainty = null;
+      state.ownerPushConfirmationContext = null;
+      if (elements.ownerPushConfirmationDialog.open) elements.ownerPushConfirmationDialog.close();
+      await refreshWorkspace({ force: true });
+      setFeedback(
+        alreadyDelivered
+          ? "The exact Commit was already delivered. No second Push was issued."
+          : "Push delivered once. Review the verified remote SHA and persisted receipt.",
+        "success"
+      );
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        handleExpiredSession();
+        return;
+      }
+      if (!requestDispatched) {
+        const safeToRetry = error instanceof ApiError
+          && error.code === "WORKSPACE_REFRESH_ACTIVE";
+        setOwnerPushConfirmationPhase(
+          safeToRetry ? "ready_for_confirmation" : "blocked",
+          productActionMessage(error),
+          { request_identity: context.request_identity }
+        );
+        setFeedback(productActionMessage(error), safeToRetry ? "neutral" : "error");
+        return;
+      }
+      const phase = await reconcileOwnerPushConfirmation(context, error);
+      setFeedback(
+        phase === "ready_for_confirmation"
+          ? productActionMessage(error) + " No automatic retry occurred."
+          : "Push did not settle as delivered. Review the visible confirmation state and persisted evidence.",
+        phase === "ready_for_confirmation" ? "neutral" : "error"
+      );
+    } finally {
+      state.pending.delete("confirm-owner-push");
+      if (state.auth === AUTH_STATES.SIGNED_IN
+          && !elements.ownerPushConfirmationDialog.open) {
+        renderWorkspace();
+      }
+    }
+  }
+
+  function closeOrHideOwnerPushConfirmation() {
+    const hidingAcceptedRequest = ownerPushConfirmationBusy();
+    if (!hidingAcceptedRequest) {
+      state.ownerPushConfirmationContext = null;
+    }
+    if (elements.ownerPushConfirmationDialog.open) {
+      elements.ownerPushConfirmationDialog.close();
+    }
+    if (hidingAcceptedRequest) {
+      renderWorkspace();
+      setFeedback(
+        "Push submission remains active. Hiding the confirmation does not cancel an accepted request; refresh reconciles persisted execution and remote evidence.",
+        "neutral"
+      );
+    }
   }
 
   async function decideAcceptance(decision) {
@@ -11370,12 +12044,10 @@
       state.ownerCommitConfirmationContext = null;
     });
     elements.confirmApprovedPush.addEventListener("click", confirmApprovedPush);
-    elements.cancelApprovedPush.addEventListener("click", function () {
-      state.ownerPushConfirmationContext = null;
-      elements.ownerPushConfirmationDialog.close();
-    });
-    elements.ownerPushConfirmationDialog.addEventListener("cancel", function () {
-      state.ownerPushConfirmationContext = null;
+    elements.cancelApprovedPush.addEventListener("click", closeOrHideOwnerPushConfirmation);
+    elements.ownerPushConfirmationDialog.addEventListener("cancel", function (event) {
+      event.preventDefault();
+      closeOrHideOwnerPushConfirmation();
     });
     elements.cancelCodex.addEventListener("click", cancelCodex);
     elements.acceptResult.addEventListener("click", function () { decideAcceptance("accept"); });

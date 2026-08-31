@@ -1518,6 +1518,10 @@
             <li>No Fetch, Pull, Merge, Rebase, or automatic retry occurs.</li>
             <li>Push does not create a release, tag, merge, or deployment.</li>
           </ul>
+          <div id="owner-push-confirmation-status" class="owner-push-confirmation-status" data-state="ready_for_confirmation" role="status" aria-live="polite">
+            <strong id="owner-push-confirmation-status-label">Ready for confirmation</strong>
+            <span id="owner-push-confirmation-status-message">The approved Push Plan is ready for one explicit confirmation.</span>
+          </div>
           <div class="button-row confirmation-actions">
             <button id="confirm-approved-push" class="button button-danger" type="button">Confirm Push</button>
             <button id="cancel-approved-push" class="button button-secondary" type="button">Cancel</button>

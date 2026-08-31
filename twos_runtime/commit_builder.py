@@ -19,6 +19,7 @@ from .apply_sessions import (
     _global_evidence_after_mutation,
     _repository_mutation_blocker,
     _repository_mutation_lock,
+    _repository_observation_lock,
     _verified_repository_root,
     apply_session_entries,
     validate_apply_session_journal,
@@ -192,17 +193,56 @@ def _assert_unredirected_git_context() -> None:
 @contextmanager
 def _commit_builder_repository_lock(
     repository_locator_fingerprint: str,
+    *,
+    wait_timeout_seconds: float = 0.0,
 ):
     """Translate lock-acquisition failures without changing lock semantics."""
     acquired = False
     try:
-        with _repository_mutation_lock(repository_locator_fingerprint):
+        lock = (
+            _repository_mutation_lock(repository_locator_fingerprint)
+            if wait_timeout_seconds <= 0
+            else _repository_mutation_lock(
+                repository_locator_fingerprint,
+                wait_timeout_seconds=wait_timeout_seconds,
+            )
+        )
+        with lock:
             acquired = True
             yield
     except ApplySessionError as exc:
         # ApplySessionError raised by work inside the acquired lock retains its
         # existing handling.  Only lock-acquisition failures cross the public
         # Commit Builder boundary as sanitized CommitBuilderError values.
+        if acquired:
+            raise
+        if exc.code == "CONCURRENT_APPLY":
+            raise _failure(
+                "REPOSITORY_MUTATION_ACTIVE",
+                "Another repository mutation is active.",
+            ) from exc
+        if exc.code == "REPOSITORY_LOCK_UNAVAILABLE":
+            raise _failure(
+                "REPOSITORY_LOCK_UNAVAILABLE",
+                "The repository mutation lock is unavailable.",
+            ) from exc
+        raise _failure(
+            "REPOSITORY_IDENTITY_MISMATCH",
+            "The repository identity cannot be locked safely.",
+        ) from exc
+
+
+@contextmanager
+def _commit_builder_repository_observation_lock(
+    repository_locator_fingerprint: str,
+):
+    """Translate the shared read-only repository lock at the Commit boundary."""
+    acquired = False
+    try:
+        with _repository_observation_lock(repository_locator_fingerprint):
+            acquired = True
+            yield
+    except ApplySessionError as exc:
         if acquired:
             raise
         if exc.code == "CONCURRENT_APPLY":
