@@ -37,6 +37,7 @@ from .models import (
 )
 from .run_lifecycle import (
     LifecycleReconciliationError,
+    _reconciliation_lock,
     reconcile_execution_attempt,
     settle_reconciliation_error,
 )
@@ -137,8 +138,6 @@ TERMINAL_RUN_STATES = frozenset(
 SOURCE_SNAPSHOT_UNAVAILABLE = "SOURCE_SNAPSHOT_UNAVAILABLE"
 
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
-_MONITOR_RECONCILIATION_LOCKS_GUARD = threading.Lock()
-_MONITOR_RECONCILIATION_LOCKS: dict[int, threading.RLock] = {}
 _SENSITIVE_KEY_RE = re.compile(
     r"(?:password|passwd|secret|token|credential|authorization|cookie|"
     r"api[_-]?key|private[_-]?key|environment|env(?:iron)?(?:ment)?_?variables?)",
@@ -3481,25 +3480,35 @@ def reconcile_run_monitors(
 ) -> list[dict[str, object]]:
     requested = set(run_ids) if run_ids is not None else None
     with factory() as session:
-        statement = select(CodexRunMonitor.id).where(
+        statement = select(CodexRunMonitor.id, CodexRunMonitor.run_id).where(
             CodexRunMonitor.monitor_state != "RESULT_AVAILABLE"
         )
         if requested is not None:
             statement = statement.where(CodexRunMonitor.run_id.in_(requested))
-        monitor_ids = list(
-            session.scalars(statement.order_by(CodexRunMonitor.id)).all()
-        )
+        monitor_bindings = [
+            (int(monitor_id), int(run_id))
+            for monitor_id, run_id in session.execute(
+                statement.order_by(CodexRunMonitor.id)
+            ).all()
+        ]
     results: list[dict[str, object]] = []
     recovery_run_ids: list[int] = []
     # One transaction per Run isolates a damaged historical attempt from all
     # other active monitors and gives the lifecycle CAS columns a clear commit
     # boundary.
-    for monitor_id in monitor_ids:
-        with _MONITOR_RECONCILIATION_LOCKS_GUARD:
-            monitor_lock = _MONITOR_RECONCILIATION_LOCKS.setdefault(
-                int(monitor_id), threading.RLock()
-            )
-        with monitor_lock:
+    for monitor_id, run_id in monitor_bindings:
+        # Database-scoped keyed locks coordinate concurrent app instances but
+        # self-evict when the final holder/waiter exits, so disposed temporary
+        # runtimes cannot serialize an unrelated database that reuses row id 1.
+        with factory() as lock_scope_session, _reconciliation_lock(
+            lock_scope_session,
+            "monitor",
+            int(monitor_id),
+        ), _reconciliation_lock(
+            lock_scope_session,
+            "run",
+            int(run_id),
+        ):
             result: dict[str, object] | None = None
             fallback_run_id = 0
             fallback_state = "RESULT_UNAVAILABLE"

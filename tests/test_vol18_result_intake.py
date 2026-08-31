@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import threading
 import time
 from contextlib import contextmanager
 from datetime import timedelta
@@ -82,6 +83,10 @@ from twos_runtime.result_intake import (
     reconcile_run_monitors,
     reconnect_run_monitor,
     result_envelope_out,
+)
+from twos_runtime.run_lifecycle import (
+    _reconciliation_lock,
+    _reconciliation_lock_registry_size,
 )
 from twos_runtime.security import hash_password, hash_token
 
@@ -1480,11 +1485,12 @@ def test_recovered_invalid_handoff_persists_real_exit_output_and_evidence(
 
 def test_valid_transport_with_invalid_coding_handoff_never_starts_verification(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     source_repo = make_source_repo(tmp_path)
     fake_codex = _make_restart_recovery_codex(
         tmp_path,
-        coding_delay=0.05,
+        coding_delay=0.0,
         coding_contract_invalid=True,
     )
 
@@ -1504,28 +1510,142 @@ def test_valid_transport_with_invalid_coding_handoff_never_starts_verification(
         )
         pack = generate_pack(client, headers, task_id)
         approve_pack(client, headers, task_id, pack["id"])
+
+        # Stop the worker at the last in-memory classification boundary. At
+        # this point all sealed process receipt reconciliation is complete,
+        # but the terminal Run transaction has not started.
+        finalizer_ready = threading.Event()
+        release_finalizer = threading.Event()
+        manager = client.app.state.codex_manager
+        original_acceptance_reconciliation = (
+            manager._reconcile_recovered_task_acceptance
+        )
+        original_ingest_result_payload = result_intake_module.ingest_result_payload
+        target_run_ids: list[int] = []
+        ingest_post_flush_ready = threading.Event()
+        release_post_flush_ingest = threading.Event()
+        ingest_transaction_states: list[bool] = []
+
+        def pause_before_terminal_commit(result: dict[str, object]) -> None:
+            original_acceptance_reconciliation(result)
+            finalizer_ready.set()
+            if not release_finalizer.wait(8):
+                raise RuntimeError("Test did not release terminal Run finalization.")
+
+        def pause_after_result_flush(*args, **kwargs):
+            envelope = original_ingest_result_payload(*args, **kwargs)
+            ingest_session = args[0]
+            ingested_run = args[2]
+            if target_run_ids and int(ingested_run.id) == target_run_ids[0]:
+                ingest_transaction_states.append(ingest_session.in_transaction())
+                ingest_post_flush_ready.set()
+                if not release_post_flush_ingest.wait(8):
+                    raise RuntimeError("Test did not release Result Intake flush.")
+            return envelope
+
+        monkeypatch.setattr(
+            manager,
+            "_reconcile_recovered_task_acceptance",
+            pause_before_terminal_commit,
+        )
+        monkeypatch.setattr(
+            result_intake_module,
+            "ingest_result_payload",
+            pause_after_result_flush,
+        )
         started = start_codex_run(client, headers, task_id, pack)
         assert started.status_code == 200, started.text
         run_id = started.json()["id"]
-        terminal = wait_for_run(client, headers, run_id, {"failed"}, timeout=15)
-        # Run finalization commits before taking the per-Run lifecycle lock so
-        # it cannot deadlock the independent monitor's SQLite writer.  Bound
-        # the intentionally tiny projection window and prove convergence.
-        projection_deadline = time.monotonic() + 5
-        while time.monotonic() < projection_deadline:
-            with client.app.state.session_factory() as projection_session:
+        target_run_ids.append(run_id)
+        factory = client.app.state.session_factory
+        poll_wait = threading.Event()
+        assert finalizer_ready.wait(8), (
+            "The controlled Coding worker never reached terminal finalization."
+        )
+
+        # Hold the exact lock used by lifecycle settlement while allowing the
+        # controlled Coding subprocess to finish. The execution manager must
+        # still commit terminal process truth; only attempt/envelope/snapshot
+        # projection is allowed to wait for this lock.
+        terminal_committed = False
+        with factory() as lock_scope_session, _reconciliation_lock(
+            lock_scope_session,
+            "run",
+            run_id,
+        ):
+            release_finalizer.set()
+            deadline = time.monotonic() + 4
+            while time.monotonic() < deadline:
+                with factory() as projection_session:
+                    projected_run = projection_session.get(CodexRun, run_id)
+                    terminal_committed = bool(
+                        projected_run is not None
+                        and projected_run.status == "failed"
+                        and projected_run.exit_code == 0
+                        and projected_run.finished_at is not None
+                    )
+                if terminal_committed:
+                    break
+                poll_wait.wait(0.01)
+        assert terminal_committed, (
+            "Terminal Run truth did not commit while lifecycle settlement "
+            "was deliberately holding the per-Run reconciliation lock."
+        )
+
+        # Result ingestion flushes the immutable envelope before its enclosing
+        # transaction commits. At that exact writer boundary the reconciler
+        # must still own both the monitor and Run locks, so no manager or second
+        # intake pass can take the Run lock and then wait on this SQLite writer.
+        try:
+            assert ingest_post_flush_ready.wait(8), (
+                "Result Intake never reached the controlled post-flush boundary."
+            )
+            assert ingest_transaction_states == [True]
+            assert _reconciliation_lock_registry_size() == 2
+        finally:
+            release_post_flush_ingest.set()
+
+        # Once the lock is released, one atomic intake transaction must
+        # converge the final attempt, immutable envelope, and lifecycle
+        # snapshot. Do not accept the Run's terminal state alone.
+        converged = False
+        deadline = time.monotonic() + 4
+        while time.monotonic() < deadline:
+            with factory() as projection_session:
                 projected_attempt = projection_session.scalar(
                     select(CodexExecutionAttempt).where(
                         CodexExecutionAttempt.run_id == run_id,
                         CodexExecutionAttempt.phase == "CODING",
                     )
                 )
-                if (
+                projected_envelope = projection_session.scalar(
+                    select(CodexResultEnvelope).where(
+                        CodexResultEnvelope.run_id == run_id
+                    )
+                )
+                projected_snapshot = projection_session.scalar(
+                    select(CodexLifecycleSnapshot).where(
+                        CodexLifecycleSnapshot.run_id == run_id
+                    )
+                )
+                converged = bool(
                     projected_attempt is not None
                     and projected_attempt.attempt_state == "COMPLETED"
-                ):
-                    break
-            time.sleep(0.02)
+                    and projected_envelope is not None
+                    and projected_envelope.integrity_state == "VERIFIED"
+                    and projected_snapshot is not None
+                    and projected_snapshot.lifecycle_state == "RESULT_AVAILABLE"
+                    and projected_snapshot.result_integrity_state == "VERIFIED"
+                )
+            if converged:
+                break
+            poll_wait.wait(0.01)
+        assert converged, (
+            "The terminal attempt, Result envelope, and lifecycle snapshot "
+            "did not converge after releasing the reconciliation lock."
+        )
+
+        terminal = wait_for_run(client, headers, run_id, {"failed"}, timeout=5)
         with client.app.state.session_factory() as session:
             run = session.get(CodexRun, run_id)
             assert run is not None
@@ -1575,6 +1695,116 @@ def test_valid_transport_with_invalid_coding_handoff_never_starts_verification(
     assert not fake_codex.with_name(
         fake_codex.name + ".verification-count"
     ).exists()
+
+
+def test_multiple_app_disposal_reaps_lifecycle_workers_locks_and_database_handles(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    assert _reconciliation_lock_registry_size() == 0
+    poll_wait = threading.Event()
+
+    for runtime_number in range(2):
+        runtime_root = tmp_path / f"disposed-runtime-{runtime_number}"
+        runtime_root.mkdir()
+        source_repo = make_source_repo(runtime_root)
+        fake_codex = _make_restart_recovery_codex(
+            runtime_root,
+            coding_delay=0.0,
+            coding_contract_invalid=True,
+        )
+        client = make_client(
+            runtime_root,
+            source_repo,
+            fake_codex,
+            database_path=runtime_root / "twos.sqlite3",
+            timeout=15,
+        )
+        engine = client.app.state.engine
+        manager = client.app.state.codex_manager
+        monitor = client.app.state.result_intake_monitor
+        monitor_thread = None
+        manager_worker = None
+
+        with client:
+            monitor_thread = monitor._thread
+            assert monitor_thread is not None
+            assert monitor_thread.is_alive()
+
+            headers = init_and_login(client)
+            configure_test_model_registry(client)
+            task_id = create_development_task(
+                client,
+                headers,
+                marker=f"DISPOSAL_LIFECYCLE_{runtime_number}",
+            )
+            pack = generate_pack(client, headers, task_id)
+            approve_pack(client, headers, task_id, pack["id"])
+
+            worker_at_finalizer = threading.Event()
+            release_worker = threading.Event()
+            original_acceptance_reconciliation = (
+                manager._reconcile_recovered_task_acceptance
+            )
+
+            def pause_disposed_worker(
+                result: dict[str, object],
+                *,
+                original=original_acceptance_reconciliation,
+            ) -> None:
+                original(result)
+                worker_at_finalizer.set()
+                if not release_worker.wait(8):
+                    raise RuntimeError("Test did not release the disposable worker.")
+
+            monkeypatch.setattr(
+                manager,
+                "_reconcile_recovered_task_acceptance",
+                pause_disposed_worker,
+            )
+            started = start_codex_run(client, headers, task_id, pack)
+            assert started.status_code == 200, started.text
+            run_id = started.json()["id"]
+            assert worker_at_finalizer.wait(8)
+            with manager._lock:
+                manager_worker = manager._workers.get(run_id)
+            assert manager_worker is not None
+            assert manager_worker.is_alive()
+            release_worker.set()
+            wait_for_run(client, headers, run_id, {"failed"}, timeout=10)
+            _wait_for_envelope(client.app.state.session_factory, run_id, timeout=4)
+
+            manager_idle = False
+            deadline = time.monotonic() + 4
+            while time.monotonic() < deadline:
+                with manager._lock:
+                    manager_idle = not manager._workers and not manager._processes
+                if manager_idle and _reconciliation_lock_registry_size() == 0:
+                    break
+                poll_wait.wait(0.01)
+            assert manager_idle
+            assert _reconciliation_lock_registry_size() == 0
+
+            # Reusing entity id 1 in separate databases must neither reuse nor
+            # retain a prior app's keyed reconciliation lock.
+            with client.app.state.session_factory() as session:
+                with _reconciliation_lock(session, "disposal-test", 1):
+                    assert _reconciliation_lock_registry_size() == 1
+            assert _reconciliation_lock_registry_size() == 0
+
+        assert monitor_thread is not None
+        assert not monitor_thread.is_alive()
+        assert monitor._thread is None
+        assert manager_worker is not None
+        assert not manager_worker.is_alive()
+        with manager._lock:
+            assert manager._workers == {}
+            assert manager._processes == {}
+        assert engine.pool.checkedout() == 0
+        checked_in = getattr(engine.pool, "checkedin", None)
+        if callable(checked_in):
+            assert checked_in() == 0
+        assert _reconciliation_lock_registry_size() == 0
 
 
 def test_browser_session_is_not_the_monitor_and_terminal_result_is_automatic(

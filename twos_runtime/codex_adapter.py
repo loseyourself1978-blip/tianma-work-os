@@ -5542,42 +5542,15 @@ class CodexExecutionManager:
             create_owner_acceptance(session, run.task, run)
             if run.status != "completed":
                 run.task.status = "needs_review" if run.status in {"failed", "timed_out"} else run.status
-            # Do not expose a terminal Run before its already sealed phase
-            # receipts have reached the same persisted terminal truth. The
-            # background watcher remains the recovery path, but ordinary
-            # finalization must close this projection window in one
-            # transaction so a completed response cannot momentarily render
-            # Verification as unverified.
+            # Persist terminal process truth without taking the lifecycle
+            # lock while this transaction owns SQLite's writer boundary. The
+            # worker-finally Result Intake pass publishes attempt, envelope,
+            # snapshot and notification together after this commit.
             monitor = ensure_run_monitor(
                 session,
                 int(run.pack.approved_by_user_id),
                 run,
             )
-            if (
-                monitor.result_source == "codex_exec_jsonl_spool"
-                and monitor.protected_result_locator
-            ):
-                from .run_lifecycle import (
-                    LifecycleReconciliationError,
-                    reconcile_execution_attempt,
-                    settle_reconciliation_error,
-                )
-
-                try:
-                    reconcile_execution_attempt(
-                        session,
-                        int(run.pack.approved_by_user_id),
-                        run,
-                        monitor,
-                    )
-                except LifecycleReconciliationError as exc:
-                    settle_reconciliation_error(
-                        session,
-                        int(run.pack.approved_by_user_id),
-                        run,
-                        monitor,
-                        exc,
-                    )
             session.add(
                 AuditEvent(
                     action="codex_run_completed",
@@ -5945,19 +5918,24 @@ class CodexExecutionManager:
                 self._sync_result_monitor(session, run)
                 from .run_lifecycle import reconcile_execution_attempt
 
+                owner_id = int(run.pack.approved_by_user_id)
+                model_identifier = run.verification_model_identifier
                 monitor = ensure_run_monitor(
                     session,
-                    int(run.pack.approved_by_user_id),
+                    owner_id,
                     run,
                 )
+                # Publish the Coding-to-Verification transition before taking
+                # the per-Run lifecycle lock. This keeps the database/lifecycle
+                # lock order identical to Result Intake.
+                session.commit()
                 reconcile_execution_attempt(
                     session,
-                    int(run.pack.approved_by_user_id),
+                    owner_id,
                     run,
                     monitor,
                 )
                 session.commit()
-                model_identifier = run.verification_model_identifier
 
             bridge_result = self._run_bridge_phase(
                 run_id,
@@ -5991,31 +5969,14 @@ class CodexExecutionManager:
                 raise
             launch_failure = self._sanitize_process_output(str(exc)[:2000])
 
-        post_snapshot_digest = ""
-        try:
-            post_snapshot_digest = str(
-                capture_source_snapshot(
-                    resolved_worktree,
-                    hardened_read_only=True,
-                ).get("digest")
-                or ""
+        boundary_evidence, _post_snapshot_digest = (
+            self._capture_post_verification_boundaries(
+                resolved_worktree,
+                pre_snapshot_digest=pre_snapshot_digest,
+                source_git_before=source_git_before,
+                remote_before=remote_before,
+                hardened_read_only=True,
             )
-        except RuntimeError:
-            pass
-        source_git_after = self._git_boundary_fingerprint(self.settings.source_repo)
-        remote_after = self._remote_state_fingerprint(self.settings.source_repo)
-        workspace_unchanged = bool(
-            pre_snapshot_digest and post_snapshot_digest == pre_snapshot_digest
-        )
-        git_boundary_unchanged = bool(
-            source_git_before[1]
-            and source_git_after[1]
-            and source_git_before[0] == source_git_after[0]
-        )
-        remote_boundary_unchanged = bool(
-            remote_before[2]
-            and remote_after[2]
-            and remote_before[0] == remote_after[0]
         )
         collector = (
             bridge_result.get("collector")
@@ -6072,9 +6033,7 @@ class CodexExecutionManager:
             runtime_interrupted=bool(
                 bridge_result and bridge_result.get("runtime_interrupted")
             ),
-            workspace_unchanged=workspace_unchanged,
-            git_boundary_unchanged=git_boundary_unchanged,
-            remote_boundary_unchanged=remote_boundary_unchanged,
+            boundary_evidence=boundary_evidence,
             contract=contract,
             contract_failure=contract_failure,
             duration_ms=duration_ms,
@@ -6088,6 +6047,115 @@ class CodexExecutionManager:
             started_at=started_at,
             completed_at=completed_at,
         )
+
+    def _capture_post_verification_boundaries(
+        self,
+        worktree: Path,
+        *,
+        pre_snapshot_digest: str,
+        source_git_before: tuple[str, bool],
+        remote_before: tuple[str, int, bool],
+        hardened_read_only: bool,
+    ) -> tuple[dict[str, object], str]:
+        """Capture tri-state post-Verification evidence without masking conflict.
+
+        A complete mismatch is authoritative on the first observation and is
+        never retried.  Only an incomplete read receives one immediate
+        recapture, which handles a transient Git observation failure without
+        turning missing evidence into either success or a false mutation.
+        """
+        pre_evidence_complete = bool(
+            pre_snapshot_digest
+            and source_git_before[0]
+            and source_git_before[1]
+            and remote_before[0]
+            and remote_before[2]
+        )
+        maximum_attempts = 2 if pre_evidence_complete else 1
+        evidence: dict[str, object] = {
+            "state": "incomplete",
+            "observation_attempts": 0,
+            "workspace_complete": False,
+            "workspace_unchanged": False,
+            "git_boundary_complete": False,
+            "git_boundary_unchanged": False,
+            "remote_boundary_complete": False,
+            "remote_boundary_unchanged": False,
+        }
+        for attempt in range(1, maximum_attempts + 1):
+            post_snapshot_digest = ""
+            try:
+                post_snapshot_digest = str(
+                    capture_source_snapshot(
+                        worktree,
+                        hardened_read_only=hardened_read_only,
+                    ).get("digest")
+                    or ""
+                )
+            except RuntimeError:
+                pass
+            source_git_after = self._git_boundary_fingerprint(
+                self.settings.source_repo
+            )
+            remote_after = self._remote_state_fingerprint(
+                self.settings.source_repo
+            )
+            workspace_complete = bool(
+                pre_snapshot_digest and post_snapshot_digest
+            )
+            git_boundary_complete = bool(
+                source_git_before[0]
+                and source_git_before[1]
+                and source_git_after[0]
+                and source_git_after[1]
+            )
+            remote_boundary_complete = bool(
+                remote_before[0]
+                and remote_before[2]
+                and remote_after[0]
+                and remote_after[2]
+            )
+            workspace_unchanged = bool(
+                workspace_complete
+                and post_snapshot_digest == pre_snapshot_digest
+            )
+            git_boundary_unchanged = bool(
+                git_boundary_complete
+                and source_git_before[0] == source_git_after[0]
+            )
+            remote_boundary_unchanged = bool(
+                remote_boundary_complete
+                and remote_before[0] == remote_after[0]
+            )
+            evidence_complete = bool(
+                workspace_complete
+                and git_boundary_complete
+                and remote_boundary_complete
+            )
+            evidence_conflict = bool(
+                (workspace_complete and not workspace_unchanged)
+                or (git_boundary_complete and not git_boundary_unchanged)
+                or (remote_boundary_complete and not remote_boundary_unchanged)
+            )
+            evidence = {
+                "state": (
+                    "conflict"
+                    if evidence_conflict
+                    else "captured"
+                    if evidence_complete
+                    else "incomplete"
+                ),
+                "observation_attempts": attempt,
+                "workspace_complete": workspace_complete,
+                "workspace_unchanged": workspace_unchanged,
+                "git_boundary_complete": git_boundary_complete,
+                "git_boundary_unchanged": git_boundary_unchanged,
+                "remote_boundary_complete": remote_boundary_complete,
+                "remote_boundary_unchanged": remote_boundary_unchanged,
+            }
+            if evidence["state"] != "incomplete":
+                break
+        return evidence, post_snapshot_digest
 
     @staticmethod
     def _local_verification_result(
@@ -6104,9 +6172,7 @@ class CodexExecutionManager:
         timed_out: bool,
         cancelled: bool,
         runtime_interrupted: bool,
-        workspace_unchanged: bool,
-        git_boundary_unchanged: bool,
-        remote_boundary_unchanged: bool,
+        boundary_evidence: dict[str, object],
         contract: dict[str, object] | None,
         contract_failure: str,
         duration_ms: int,
@@ -6116,6 +6182,16 @@ class CodexExecutionManager:
         started_at,
         completed_at,
     ) -> dict[str, object]:
+        workspace_unchanged = boundary_evidence.get("workspace_unchanged") is True
+        git_boundary_unchanged = (
+            boundary_evidence.get("git_boundary_unchanged") is True
+        )
+        remote_boundary_unchanged = (
+            boundary_evidence.get("remote_boundary_unchanged") is True
+        )
+        boundary_evidence_state = str(
+            boundary_evidence.get("state") or "incomplete"
+        )
         contract_passed = bool(
             contract is not None
             and contract.get("verdict") == "pass"
@@ -6179,7 +6255,14 @@ class CodexExecutionManager:
             status = "failed"
             failure_classification = "output_parser_failure"
             failure = contract_failure
-        elif not workspace_unchanged or not git_boundary_unchanged or not remote_boundary_unchanged:
+        elif boundary_evidence_state == "incomplete":
+            status = "integrity_blocked"
+            failure_classification = "verification_boundary_evidence_incomplete"
+            failure = (
+                "Verification exited, but TWOS could not complete the "
+                "post-Verification workspace and Git boundary inspection."
+            )
+        elif boundary_evidence_state == "conflict":
             status = "failed"
             failure_classification = "verification_workspace_mutation"
             failure = "Deterministic Verification changed protected workspace or Git evidence."
@@ -6223,6 +6306,7 @@ class CodexExecutionManager:
             "semantic_verification_passed": verdict_status == "passed",
             "failure_classification": failure_classification,
             "failure": failure,
+            "boundary_evidence": boundary_evidence,
             "process": {
                 "status": status,
                 "mode": "local_command",
@@ -6488,14 +6572,18 @@ class CodexExecutionManager:
                 # timing and restart races.
                 from .run_lifecycle import reconcile_execution_attempt
 
+                owner_id = int(run.pack.approved_by_user_id)
                 monitor = ensure_run_monitor(
                     session,
-                    int(run.pack.approved_by_user_id),
+                    owner_id,
                     run,
                 )
+                # Commit the phase transition before lifecycle reconciliation
+                # so no SQLite writer waits behind the per-Run lock.
+                session.commit()
                 reconcile_execution_attempt(
                     session,
-                    int(run.pack.approved_by_user_id),
+                    owner_id,
                     run,
                     monitor,
                 )
@@ -6560,28 +6648,21 @@ class CodexExecutionManager:
             )
         elif collector is not None:
             collector.clear_verified_model_identity()
-        try:
-            verification_snapshot_after = capture_source_snapshot(worktree)
-            verification_snapshot_after_digest = str(
-                verification_snapshot_after.get("digest", "")
+        boundary_evidence, verification_snapshot_after_digest = (
+            self._capture_post_verification_boundaries(
+                worktree,
+                pre_snapshot_digest=verification_snapshot_before_digest,
+                source_git_before=git_boundary_before,
+                remote_before=remote_boundary_before,
+                hardened_read_only=False,
             )
-        except RuntimeError:
-            verification_snapshot_after_digest = ""
-        git_boundary_after = self._git_boundary_fingerprint(self.settings.source_repo)
-        remote_boundary_after = self._remote_state_fingerprint(self.settings.source_repo)
-        workspace_unchanged = bool(
-            verification_snapshot_before_digest
-            and verification_snapshot_after_digest == verification_snapshot_before_digest
         )
-        git_boundary_unchanged = bool(
-            git_boundary_before[1]
-            and git_boundary_after[1]
-            and git_boundary_before[0] == git_boundary_after[0]
+        workspace_unchanged = boundary_evidence.get("workspace_unchanged") is True
+        git_boundary_unchanged = (
+            boundary_evidence.get("git_boundary_unchanged") is True
         )
-        remote_boundary_unchanged = bool(
-            remote_boundary_before[2]
-            and remote_boundary_after[2]
-            and remote_boundary_before[0] == remote_boundary_after[0]
+        remote_boundary_unchanged = (
+            boundary_evidence.get("remote_boundary_unchanged") is True
         )
         contract = collector.verification_result if collector is not None else None
         contract_keys = {
@@ -6679,6 +6760,17 @@ class CodexExecutionManager:
             process_status = "failed"
             failure_classification = "output_parser_failure"
             failure = "Independent Verification did not expose a complete terminal Codex turn."
+        elif boundary_evidence.get("state") == "incomplete":
+            process_status = "integrity_blocked"
+            failure_classification = "verification_boundary_evidence_incomplete"
+            failure = (
+                "Verification exited, but TWOS could not complete the "
+                "post-Verification workspace and Git boundary inspection."
+            )
+        elif boundary_evidence.get("state") == "conflict":
+            process_status = "completed"
+            failure_classification = "verification_workspace_mutation"
+            failure = "Independent Verification changed protected workspace or Git evidence."
         else:
             process_status = "completed"
             failure_classification = ""
@@ -6709,7 +6801,7 @@ class CodexExecutionManager:
             "timed_out": timed_out,
             "cancelled": cancelled,
             "runtime_interrupted": runtime_interrupted,
-            "integrity_blocked": integrity_blocked,
+            "integrity_blocked": process_status == "integrity_blocked",
             "output_truncated": output_truncated,
             "presentation_evidence_truncated": presentation_output_truncated,
             "started_at": started_at.isoformat() + "Z",
@@ -6721,6 +6813,7 @@ class CodexExecutionManager:
             "semantic_verification_passed": semantic_verification_passed,
             "failure_classification": failure_classification,
             "failure": failure,
+            "boundary_evidence": boundary_evidence,
             "process": {
                 "status": process_status,
                 "assigned_model": model_identifier,

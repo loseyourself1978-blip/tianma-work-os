@@ -38,6 +38,7 @@ from twos_runtime.models import (
     ApplyPlan,
     ApplySession,
     CodexInstructionPack,
+    CodexLifecycleSnapshot,
     CodexRun,
     CodexRunMonitor,
     CodexResultEnvelope,
@@ -768,17 +769,63 @@ def test_settling_child_identity_is_never_exposed_as_running(
             monitor = session.scalar(
                 select(CodexRunMonitor).where(CodexRunMonitor.run_id == run_id)
             )
-            assert run is not None and monitor is not None
-            run.status = "running"
+            snapshot = session.scalar(
+                select(CodexLifecycleSnapshot).where(
+                    CodexLifecycleSnapshot.run_id == run_id
+                )
+            )
+            assert run is not None
+            assert monitor is not None
+            if snapshot is None:
+                snapshot = CodexLifecycleSnapshot(
+                    owner_id=monitor.owner_id,
+                    task_id=run.task_id,
+                    run_id=run.id,
+                    monitor_id=monitor.id,
+                    lifecycle_state="SETTLING",
+                    phase="CODING",
+                    current_activity="Settling terminal Run evidence",
+                    next_owner_action=(
+                        "Wait for TWOS to settle the durable Run evidence."
+                    ),
+                    process_live=False,
+                    monitor_attached=True,
+                    terminal_evidence_observed=True,
+                )
+                session.add(snapshot)
+            # Reproduce the narrow post-process/pre-settlement window: the
+            # coding Run is terminal, while the receipt-bound lifecycle is
+            # still authoritatively settling.
+            run.status = "completed"
             run.process_spawned = True
+            run.exit_code = 0
+            run.finished_at = utc_now()
             monitor.monitor_state = "RESULT_PENDING"
             monitor.process_id = current_pid
             monitor.process_start_identity = current_identity
+            snapshot.lifecycle_state = "SETTLING"
+            snapshot.current_activity = "Settling terminal Run evidence"
+            snapshot.process_live = False
+            snapshot.process_exited = True
+            snapshot.terminal_evidence_observed = True
             session.commit()
         settling = client.get(
             f"/api/codex-runs/{run_id}", headers=headers
         ).json()
         assert settling["canonical_status"] == "starting"
+        assert settling["lifecycle"]["state"] == "settling"
+        assert settling["terminal_truth"]["primary_status"] == "settling"
+        assert settling["terminal_truth"]["primary_status"] != "needs_review"
+        activity = next(
+            item
+            for item in client.get(
+                "/api/run-activity", headers=headers
+            ).json()["runs"]
+            if item["run_id"] == run_id
+        )
+        assert activity["run_status"] == "settling"
+        assert activity["terminal_truth"]["primary_status"] == "settling"
+        assert activity["terminal_truth"]["primary_status"] != "needs_review"
 
 
 def test_fast_terminal_receipt_never_regresses_through_running(
@@ -2218,3 +2265,20 @@ def test_active_run_blocks_second_task_in_same_authorized_workspace(
             f"/api/codex-runs/{first.json()['id']}/cancel", headers=headers
         )
         assert cancelled.status_code == 200, cancelled.text
+        terminal = wait_for_run(
+            client,
+            headers,
+            first.json()["id"],
+            {"cancelled"},
+            timeout=10,
+        )
+        assert terminal["status"] == "cancelled"
+        assert terminal["canonical_status"] == "cancelled"
+        assert terminal["cancelled"] is True
+        assert terminal["cancellation_requested_at"] is not None
+        with client.app.state.session_factory() as session:
+            persisted = session.get(CodexRun, first.json()["id"])
+            assert persisted is not None
+            assert persisted.status == "cancelled"
+            assert persisted.finished_at is not None
+            assert persisted.task.status == "cancelled"

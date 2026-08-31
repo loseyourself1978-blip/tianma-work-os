@@ -3,12 +3,14 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
 import pytest
 from sqlalchemy import select
 
+import twos_runtime.codex_adapter as codex_adapter_module
 from tests.test_self_hosting import (
     approve_pack,
     create_executable_task,
@@ -31,6 +33,7 @@ from twos_runtime.models import (
     LocalCommitExecution,
     PushExecution,
 )
+from twos_runtime.result_intake import reconcile_run_monitors
 
 
 def make_local_verifier(
@@ -90,6 +93,327 @@ def _result_envelope(client, headers: dict[str, str], run_id: int) -> dict:
         assert response.status_code == 404, response.text
         time.sleep(0.05)
     raise AssertionError(f"Run {run_id} did not publish a Result envelope")
+
+
+def _instrument_post_verification_capture(
+    client,
+    monkeypatch: pytest.MonkeyPatch,
+    source_repo: Path,
+    *,
+    outcome: str,
+) -> tuple[list[int], list[Path], object]:
+    """Inject one precise post-Verification observation outcome.
+
+    The bridge wrapper marks the instant the real deterministic Verification
+    subprocess has returned.  Snapshot failures therefore affect only the
+    post-Verification boundary check, never Coding or its immutable prelaunch
+    evidence.
+    """
+    assert outcome in {"transient_incomplete", "persistent_incomplete", "conflict"}
+    manager = client.app.state.codex_manager
+    real_bridge_phase = manager._run_bridge_phase
+    real_capture = codex_adapter_module.capture_source_snapshot
+    verification_finished = threading.Event()
+    verification_invocations: list[int] = []
+    post_capture_attempts: list[Path] = []
+    source_root = source_repo.resolve()
+
+    def observed_bridge_phase(*args, **kwargs):
+        result = real_bridge_phase(*args, **kwargs)
+        if kwargs.get("phase") == "verification":
+            verification_invocations.append(1)
+            verification_finished.set()
+        return result
+
+    def observed_capture(repo: Path, *args, **kwargs):
+        resolved = Path(repo).resolve()
+        is_post_verification_worktree = bool(
+            verification_finished.is_set()
+            and resolved != source_root
+            and kwargs.get("hardened_read_only") is True
+        )
+        if not is_post_verification_worktree:
+            return real_capture(repo, *args, **kwargs)
+        post_capture_attempts.append(resolved)
+        if outcome == "persistent_incomplete" or (
+            outcome == "transient_incomplete" and len(post_capture_attempts) == 1
+        ):
+            raise RuntimeError("simulated post-Verification observation gap")
+        snapshot = real_capture(repo, *args, **kwargs)
+        if outcome == "conflict":
+            snapshot = dict(snapshot)
+            digest = str(snapshot["digest"])
+            snapshot["digest"] = ("0" if digest[0] != "0" else "1") + digest[1:]
+        return snapshot
+
+    monkeypatch.setattr(manager, "_run_bridge_phase", observed_bridge_phase)
+    monkeypatch.setattr(
+        codex_adapter_module,
+        "capture_source_snapshot",
+        observed_capture,
+    )
+    return verification_invocations, post_capture_attempts, real_capture
+
+
+def _start_boundary_evidence_run(client) -> tuple[dict[str, str], dict]:
+    headers = init_and_login(client)
+    task_id = create_executable_task(client, headers, marker="FAKE_TEST_COMMAND")
+    pack = generate_pack(client, headers, task_id)
+    approve_pack(client, headers, task_id, pack["id"])
+    started = start_codex_run(client, headers, task_id, pack)
+    assert started.status_code == 200, started.text
+    return headers, started.json()
+
+
+def _wait_for_verification_attempt_state(
+    client,
+    headers: dict[str, str],
+    run_id: int,
+    expected_state: str,
+) -> list[CodexExecutionAttempt]:
+    deadline = time.monotonic() + 5
+    poll_wait = threading.Event()
+    attempts: list[CodexExecutionAttempt] = []
+    while time.monotonic() < deadline:
+        reconcile_run_monitors(
+            client.app.state.session_factory,
+            run_ids=[run_id],
+        )
+        refreshed = client.get(f"/api/codex-runs/{run_id}", headers=headers)
+        assert refreshed.status_code == 200, refreshed.text
+        with client.app.state.session_factory() as session:
+            attempts = list(
+                session.scalars(
+                    select(CodexExecutionAttempt).where(
+                        CodexExecutionAttempt.run_id == run_id,
+                        CodexExecutionAttempt.phase == "VERIFICATION",
+                    )
+                ).all()
+            )
+            if len(attempts) == 1 and attempts[0].attempt_state == expected_state:
+                return attempts
+        poll_wait.wait(0.01)
+    raise AssertionError(
+        f"Verification attempt did not converge to {expected_state}: "
+        f"{[attempt.attempt_state for attempt in attempts]}"
+    )
+
+
+def test_transient_post_verification_capture_recovers_without_rerunning_verification(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    fake_codex = make_fake_codex(tmp_path)
+    command = make_local_verifier(tmp_path)
+    with make_client(
+        tmp_path,
+        source_repo,
+        fake_codex,
+        timeout=20,
+        local_verification_command=command,
+    ) as client:
+        verification_invocations, post_capture_attempts, _ = (
+            _instrument_post_verification_capture(
+                client,
+                monkeypatch,
+                source_repo,
+                outcome="transient_incomplete",
+            )
+        )
+        headers, started = _start_boundary_evidence_run(client)
+        terminal = wait_for_run(
+            client,
+            headers,
+            started["id"],
+            {"completed"},
+            timeout=20,
+        )
+
+        verification = terminal["result"]["verification"]
+        assert verification_invocations == [1]
+        assert len(post_capture_attempts) == 2
+        assert post_capture_attempts[0] == post_capture_attempts[1]
+        assert verification["status"] == "completed"
+        assert verification["failure_classification"] == ""
+        assert verification["semantic_verification_passed"] is True
+        assert verification["boundary_evidence"] == {
+            "state": "captured",
+            "observation_attempts": 2,
+            "workspace_complete": True,
+            "workspace_unchanged": True,
+            "git_boundary_complete": True,
+            "git_boundary_unchanged": True,
+            "remote_boundary_complete": True,
+            "remote_boundary_unchanged": True,
+        }
+        attempts = _wait_for_verification_attempt_state(
+            client,
+            headers,
+            terminal["id"],
+            "COMPLETED",
+        )
+        assert len(attempts) == 1
+
+
+def test_persistent_post_verification_capture_is_integrity_blocked_not_mutation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    fake_codex = make_fake_codex(tmp_path)
+    database_path = tmp_path / "persistent-boundary-gap.sqlite3"
+    command = make_local_verifier(tmp_path)
+    verification_invocations: list[int]
+    post_capture_attempts: list[Path]
+    real_capture: object
+    with make_client(
+        tmp_path,
+        source_repo,
+        fake_codex,
+        database_path=database_path,
+        timeout=20,
+        local_verification_command=command,
+    ) as client:
+        verification_invocations, post_capture_attempts, real_capture = (
+            _instrument_post_verification_capture(
+                client,
+                monkeypatch,
+                source_repo,
+                outcome="persistent_incomplete",
+            )
+        )
+        headers, started = _start_boundary_evidence_run(client)
+        terminal = wait_for_run(
+            client,
+            headers,
+            started["id"],
+            {"blocked"},
+            timeout=20,
+        )
+        run_id = terminal["id"]
+        verification = terminal["result"]["verification"]
+
+        assert verification_invocations == [1]
+        assert len(post_capture_attempts) == 2
+        assert verification["status"] == "integrity_blocked"
+        assert verification["integrity_blocked"] is True
+        assert verification["semantic_verification_passed"] is False
+        assert verification["failure_classification"] == (
+            "verification_boundary_evidence_incomplete"
+        )
+        assert verification["failure_classification"] != (
+            "verification_workspace_mutation"
+        )
+        assert "could not complete" in verification["failure"]
+        assert verification["boundary_evidence"]["state"] == "incomplete"
+        assert verification["boundary_evidence"]["observation_attempts"] == 2
+        assert verification["boundary_evidence"]["workspace_complete"] is False
+        assert terminal["verification_target"]["process_spawned"] is True
+        assert terminal["verification_target"]["exit_code"] == 0
+        assert terminal["result"]["verification_process"][
+            "failure_classification"
+        ] == "verification_boundary_evidence_incomplete"
+        assert terminal["result"]["verification_verdict"]["status"] != "passed"
+        attempts = _wait_for_verification_attempt_state(
+            client,
+            headers,
+            run_id,
+            "RESULT_INTEGRITY_BLOCKED",
+        )
+        assert len(attempts) == 1
+
+    monkeypatch.setattr(
+        codex_adapter_module,
+        "capture_source_snapshot",
+        real_capture,
+    )
+    with make_client(
+        tmp_path,
+        source_repo,
+        fake_codex,
+        database_path=database_path,
+        timeout=20,
+        local_verification_command=command,
+    ) as restarted:
+        headers = init_and_login(restarted)
+        persisted = restarted.get(
+            f"/api/codex-runs/{run_id}", headers=headers
+        ).json()
+        assert persisted["status"] == "blocked"
+        assert persisted["result"]["verification"]["failure_classification"] == (
+            "verification_boundary_evidence_incomplete"
+        )
+        assert persisted["result"]["verification"]["boundary_evidence"][
+            "state"
+        ] == "incomplete"
+        with restarted.app.state.session_factory() as session:
+            assert len(
+                list(
+                    session.scalars(
+                        select(CodexExecutionAttempt).where(
+                            CodexExecutionAttempt.run_id == run_id,
+                            CodexExecutionAttempt.phase == "VERIFICATION",
+                        )
+                    ).all()
+                )
+            ) == 1
+
+
+def test_complete_post_verification_mismatch_remains_mutation_without_retry(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_repo = make_source_repo(tmp_path)
+    fake_codex = make_fake_codex(tmp_path)
+    command = make_local_verifier(tmp_path)
+    with make_client(
+        tmp_path,
+        source_repo,
+        fake_codex,
+        timeout=20,
+        local_verification_command=command,
+    ) as client:
+        verification_invocations, post_capture_attempts, _ = (
+            _instrument_post_verification_capture(
+                client,
+                monkeypatch,
+                source_repo,
+                outcome="conflict",
+            )
+        )
+        headers, started = _start_boundary_evidence_run(client)
+        terminal = wait_for_run(
+            client,
+            headers,
+            started["id"],
+            {"failed"},
+            timeout=20,
+        )
+        verification = terminal["result"]["verification"]
+
+        assert verification_invocations == [1]
+        assert len(post_capture_attempts) == 1
+        assert verification["status"] == "failed"
+        assert verification["integrity_blocked"] is False
+        assert verification["semantic_verification_passed"] is False
+        assert verification["failure_classification"] == (
+            "verification_workspace_mutation"
+        )
+        assert verification["boundary_evidence"]["state"] == "conflict"
+        assert verification["boundary_evidence"]["observation_attempts"] == 1
+        assert verification["boundary_evidence"]["workspace_complete"] is True
+        assert verification["boundary_evidence"]["workspace_unchanged"] is False
+        assert terminal["result"]["verification_process"][
+            "failure_classification"
+        ] == "verification_workspace_mutation"
+        attempts = _wait_for_verification_attempt_state(
+            client,
+            headers,
+            terminal["id"],
+            "COMPLETED",
+        )
+        assert len(attempts) == 1
 
 
 def test_real_coding_then_deterministic_verification_persists_one_terminal_truth(

@@ -1415,6 +1415,21 @@ def codex_run_out(
             run,
             advanced=include_raw,
         )
+        lifecycle_state = str(output["lifecycle"].get("state") or "").upper()
+        if (
+            str(run.status or "").lower()
+            in {"completed", "failed", "blocked", "cancelled", "timed_out"}
+            and lifecycle_state
+            in {"QUEUED", "STARTING", "RUNNING", "VERIFYING", "SETTLING"}
+        ):
+            # The execution manager can persist process outcome just before
+            # the lifecycle transaction publishes the receipt-bound phase
+            # attempt. Do not expose a terminal Run during that narrow window:
+            # local Verification proof and every primary status must become
+            # terminal together from the canonical lifecycle projection.
+            output["status"] = "settling"
+            output["canonical_status"] = "starting"
+            output["completion_classification"] = "pending"
         output["terminal_truth"] = terminal_truth_out(
             run,
             output["lifecycle"],
@@ -1730,7 +1745,24 @@ def terminal_truth_out(
         if workspace_evidence_available
         else "incomplete"
     )
-    if coding_status in {"failed", "cancelled", "timed_out", "interrupted"}:
+    active_lifecycle_states = {
+        "queued",
+        "starting",
+        "running",
+        "coding",
+        "verifying",
+        "verification_eligible",
+        "settling",
+        "result_pending",
+    }
+    if state in active_lifecycle_states:
+        # The process row can become terminal just before the lifecycle
+        # transaction publishes its receipt-bound attempt, envelope, and
+        # snapshot. During that narrow settlement window the authoritative
+        # lifecycle remains active; do not let partial terminal dimensions
+        # relabel the primary Owner status as Needs Review.
+        primary_status = state
+    elif coding_status in {"failed", "cancelled", "timed_out", "interrupted"}:
         primary_status = coding_status
     elif coding_status == "succeeded" and (
         verification_status
@@ -1935,7 +1967,12 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         try:
             yield
         finally:
+            await app.state.runtime_scheduler.stop()
             codex_manager.shutdown()
+            # Stop and join the background intake loop before the final
+            # synchronous pass. Running both reconcilers during teardown can
+            # invert the lifecycle and SQLite writer locks.
+            result_intake_monitor.shutdown()
             try:
                 result_intake_monitor.reconcile_now()
             except Exception as exc:
@@ -1944,8 +1981,9 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                     type(exc).__name__,
                 )
             finally:
-                result_intake_monitor.shutdown()
-            await app.state.runtime_scheduler.stop()
+                # TestClient/app disposal is also the database-handle boundary;
+                # do not retain pooled SQLite connections across app instances.
+                engine.dispose()
 
     app = FastAPI(title="TWOS 1.0 Runtime", version=__version__, lifespan=lifespan)
     app.state.settings = settings

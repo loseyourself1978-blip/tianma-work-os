@@ -7,9 +7,10 @@ import re
 import stat
 import threading
 from collections import Counter, defaultdict
+from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path, PurePosixPath
-from typing import Iterable, Mapping
+from typing import Iterable, Iterator, Mapping
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -66,7 +67,19 @@ _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _SAFE_IDENTIFIER = re.compile(r"^[A-Za-z0-9._:-]{1,160}$")
 _DELTA_TOKEN = re.compile(r"(?:delta|chunk|progress)", re.IGNORECASE)
 _RECONCILIATION_LOCKS_GUARD = threading.Lock()
-_RECONCILIATION_LOCKS: dict[int, threading.RLock] = {}
+
+
+class _ReconciliationLockEntry:
+    __slots__ = ("lock", "users")
+
+    def __init__(self) -> None:
+        self.lock = threading.RLock()
+        self.users = 0
+
+
+_RECONCILIATION_LOCKS: dict[
+    tuple[str, str, int], _ReconciliationLockEntry
+] = {}
 
 
 class LifecycleReconciliationError(RuntimeError):
@@ -110,11 +123,24 @@ def _manager_phase_integrity_blocker(
     SETTLING after the Run itself is terminal.
     """
 
-    if phase != "CODING" or not run.structured_result:
+    if not run.structured_result:
         return ""
     try:
         result = json.loads(run.structured_result)
     except (json.JSONDecodeError, TypeError):
+        return ""
+    if not isinstance(result, dict):
+        return ""
+    if phase == "VERIFICATION":
+        verification_process = result.get("verification_process")
+        if not (
+            isinstance(verification_process, dict)
+            and verification_process.get("status") == "integrity_blocked"
+        ):
+            return ""
+        code = str(verification_process.get("failure_classification") or "")
+        return code if _SAFE_IDENTIFIER.fullmatch(code) else ""
+    if phase != "CODING":
         return ""
     bridge = result.get("exec_bridge") if isinstance(result, dict) else None
     if not isinstance(bridge, dict) or bridge.get("integrity_state") != "blocked":
@@ -1990,9 +2016,50 @@ def _ensure_notification(
     )
 
 
-def _reconciliation_lock(run_id: int) -> threading.RLock:
+def _database_reconciliation_scope(session: Session) -> str:
+    """Return a secret-free identity shared by sessions for one database."""
+    bind = session.get_bind()
+    engine = getattr(bind, "engine", bind)
+    url = getattr(engine, "url", None)
+    rendered = (
+        url.render_as_string(hide_password=True)
+        if url is not None and hasattr(url, "render_as_string")
+        else type(engine).__name__
+    )
+    if (
+        url is not None
+        and getattr(url, "get_backend_name", lambda: "")() == "sqlite"
+        and getattr(url, "database", None) in {None, "", ":memory:"}
+    ):
+        rendered = f"{rendered}\0engine={id(engine)}"
+    return hashlib.sha256(rendered.encode("utf-8")).hexdigest()
+
+
+@contextmanager
+def _reconciliation_lock(
+    session: Session,
+    namespace: str,
+    entity_id: int,
+) -> Iterator[None]:
+    """Serialize one database-local entity and evict the lock after all users."""
+    key = (_database_reconciliation_scope(session), namespace, int(entity_id))
     with _RECONCILIATION_LOCKS_GUARD:
-        return _RECONCILIATION_LOCKS.setdefault(int(run_id), threading.RLock())
+        entry = _RECONCILIATION_LOCKS.setdefault(key, _ReconciliationLockEntry())
+        entry.users += 1
+    try:
+        with entry.lock:
+            yield
+    finally:
+        with _RECONCILIATION_LOCKS_GUARD:
+            entry.users -= 1
+            if entry.users == 0 and _RECONCILIATION_LOCKS.get(key) is entry:
+                _RECONCILIATION_LOCKS.pop(key, None)
+
+
+def _reconciliation_lock_registry_size() -> int:
+    """Expose only a count for deterministic shutdown/leak regression checks."""
+    with _RECONCILIATION_LOCKS_GUARD:
+        return len(_RECONCILIATION_LOCKS)
 
 
 def reconcile_execution_attempt(
@@ -2009,7 +2076,7 @@ def reconcile_execution_attempt(
     plus optimistic version columns remain the durable cross-transaction
     boundary.
     """
-    with _reconciliation_lock(int(run.id)):
+    with _reconciliation_lock(session, "run", int(run.id)):
         return _reconcile_execution_attempt_locked(
             session,
             owner_id,
@@ -2067,6 +2134,45 @@ def _reconcile_execution_attempt_locked(
             session, owner_id, run, monitor, evidence, phase
         )
         _apply_attempt_evidence(session, attempt, evidence, handle)
+        phase_process_spawned = bool(
+            run.process_spawned
+            if phase == "CODING"
+            else run.verification_process_spawned
+        )
+        if (
+            run.status == "cancelled"
+            and run.cancellation_requested_at is not None
+            and attempt.attempt_state in ACTIVE_ATTEMPT_STATES
+            and not phase_process_spawned
+            and attempt.process_id is None
+            and not attempt.process_live
+            and not attempt.process_exit_known
+            and not attempt.terminal_event_observed
+        ):
+            # A sealed launch ticket can exist before any child crosses the
+            # process boundary. Once the manager persists an Owner cancellation
+            # at that boundary, terminalize the ticket-bound attempt instead of
+            # leaving the canonical lifecycle indefinitely STARTING.
+            attempt.attempt_state = "CANCELLED"
+            attempt.verification_eligible = False
+            attempt.blocker_code = "CODEX_EXECUTION_CANCELLED"
+            attempt.safe_summary = (
+                "The Owner cancelled before the Codex process started."
+            )
+            attempt.process_live = False
+            attempt.terminal_at = attempt.terminal_at or run.finished_at or utc_now()
+            _record_event(
+                session,
+                attempt,
+                category="BLOCKER",
+                event_type="settlement.prelaunch_cancelled",
+                status="BLOCKED",
+                summary=attempt.safe_summary,
+                event_at=attempt.terminal_at,
+                source="execution_manager_validation",
+                source_sequence=max(1, attempt.event_count + 2),
+                evidence_reference=attempt.ticket_digest,
+            )
         manager_integrity_blocker = _manager_phase_integrity_blocker(run, phase)
         if (
             manager_integrity_blocker
