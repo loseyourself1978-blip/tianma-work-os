@@ -804,6 +804,29 @@ def test_owner_push_confirmation_has_modal_local_truth_and_responsive_copy() -> 
     assert mobile_dialog_px < mobile_viewport_px
 
 
+def test_delivered_owner_card_resolves_exact_verified_remote_sha() -> None:
+    script = _source(SCRIPT)
+    helper = _slice(
+        script,
+        "function ownerVerifiedRemoteSha",
+        "function canonicalCommitState",
+    )
+    rendering = _slice(
+        script,
+        "function renderOwnerCommitPushDelivery",
+        "function confirmationListText",
+    )
+    assert "receipt.verified_remote_sha" in helper
+    assert "receipt.reconciliation" not in helper
+    assert "pushExecution.post_push" not in helper
+    assert "pushExecution.advanced" not in helper
+    assert "ownerVerifiedRemoteSha(parts)" in rendering
+    assert '"Receipt unavailable"' not in rendering
+    assert "Verified receipt requires review" in rendering
+    styles = _source(STYLES)
+    assert "overflow-wrap: anywhere" in styles
+
+
 def test_owner_push_confirmation_waits_for_refresh_and_has_bounded_reconciliation() -> None:
     script = _source(SCRIPT)
     confirmation = _slice(

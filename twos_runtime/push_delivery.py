@@ -1476,18 +1476,55 @@ def _active_push_execution(
     )
 
 
+def _verified_push_receipt(
+    row: PushExecution,
+) -> dict[str, Any] | None:
+    """Return only an exact, immutable remote-verification receipt."""
+    recovery = _decoded_object(row.recovery_reconciliation_json)
+    if recovery and (
+        not row.recovery_reconciliation_digest
+        or canonical_sha256(recovery) != row.recovery_reconciliation_digest
+    ):
+        return None
+    receipt = recovery or _decoded_object(row.post_push_evidence_json)
+    digest = str(row.receipt_digest or "")
+    if (
+        row.state != "PUSHED"
+        or not _SHA256.fullmatch(digest)
+        or receipt.get("complete") is not True
+        or receipt.get("local_head") != row.approved_commit_oid
+        or receipt.get("origin_main_sha") != row.approved_commit_oid
+        or receipt.get("approved_commit_sha") != row.approved_commit_oid
+        or receipt.get("ahead") != 0
+        or receipt.get("behind") != 0
+        or bool(receipt.get("blockers"))
+    ):
+        return None
+    expected_digest = _push_receipt_digest(row, receipt)
+    if not secrets.compare_digest(digest, expected_digest):
+        return None
+    return receipt
+
+
 def _execution_out(row: PushExecution | None) -> dict[str, Any] | None:
     if row is None:
         return None
     preflight = _decoded_object(row.preflight_evidence_json)
     recovery = _decoded_object(row.recovery_reconciliation_json)
     post = recovery or _decoded_object(row.post_push_evidence_json)
+    verified_receipt = _verified_push_receipt(row)
     blockers = (
         [] if row.state == "PUSHED" else _decoded_list(row.failure_evidence_json)
     )
     canonical_state = (
         "ALREADY_DELIVERED"
-        if row.state == "PUSHED" and row.failure_category == "ALREADY_DELIVERED"
+        if (
+            row.state == "PUSHED"
+            and verified_receipt is not None
+            and row.failure_category == "ALREADY_DELIVERED"
+        )
+        else "NEEDS_REVIEW"
+        if row.state == "PUSHED" and verified_receipt is None
         else "NEEDS_REVIEW"
         if row.state == "RECONCILIATION_BLOCKED"
         else row.state
@@ -1501,8 +1538,11 @@ def _execution_out(row: PushExecution | None) -> dict[str, Any] | None:
         "needs_review": canonical_state == "NEEDS_REVIEW",
         "already_delivered": canonical_state == "ALREADY_DELIVERED",
         "transport_attempted": row.command_attempt_count == 1,
-        "remote_receipt_verified": bool(
-            row.state == "PUSHED" and row.receipt_digest
+        "remote_receipt_verified": verified_receipt is not None,
+        "verified_remote_sha": (
+            verified_receipt.get("origin_main_sha")
+            if verified_receipt is not None
+            else None
         ),
         "confirmation_digest": row.confirmation_digest,
         "repository": row.sanitized_repository_identity,
@@ -1545,6 +1585,11 @@ def _execution_out(row: PushExecution | None) -> dict[str, Any] | None:
             "preflight_evidence_digest": row.preflight_evidence_digest,
             "command_evidence_digest": row.command_evidence_digest,
             "receipt_digest": row.receipt_digest,
+            "verified_remote_sha": (
+                verified_receipt.get("origin_main_sha")
+                if verified_receipt is not None
+                else None
+            ),
             "recovery_reconciliation_digest": row.recovery_reconciliation_digest,
             "recovered_at": (
                 row.recovered_at.isoformat() + "Z" if row.recovered_at else None
@@ -1567,6 +1612,7 @@ def _confirmation_state(
     execution: PushExecution | None,
     can_confirm: bool,
     blockers: list[dict[str, Any]],
+    delivery_complete: bool | None = None,
 ) -> dict[str, Any]:
     """Project one authoritative Owner state for the final confirmation."""
     if execution is None:
@@ -1576,8 +1622,11 @@ def _confirmation_state(
     elif execution.state == "PUSHING":
         state = "running"
     elif execution.state == "PUSHED":
+        verified_receipt = _verified_push_receipt(execution)
         state = (
-            "already_delivered"
+            "needs_review"
+            if verified_receipt is None or delivery_complete is False
+            else "already_delivered"
             if execution.failure_category == "ALREADY_DELIVERED"
             else "succeeded"
         )
@@ -1598,6 +1647,15 @@ def _confirmation_state(
         reason = str(blockers[0].get("message") or "Push is blocked.")
     elif plan is not None and approval is None and execution is None:
         reason = "Approve this exact Push Plan before final confirmation."
+    elif (
+        execution is not None
+        and execution.state == "PUSHED"
+        and _verified_push_receipt(execution) is None
+    ):
+        reason = (
+            "The exact verified remote receipt is unavailable or invalid; "
+            "Owner review is required."
+        )
     elif execution is not None:
         failures = _decoded_list(execution.failure_evidence_json)
         if failures and isinstance(failures[0], dict):
@@ -1926,9 +1984,15 @@ def _delivery_result(
         "staged_path_count": 0,
         "blockers": [],
     }
+    verified_receipt = (
+        _verified_push_receipt(push_execution)
+        if push_execution is not None
+        else None
+    )
     complete = bool(
         push_execution is not None
         and push_execution.state == "PUSHED"
+        and verified_receipt is not None
         and reconciliation_value.get("complete") is True
         and reconciliation_value.get("local_head")
         == context.local_commit.commit_oid
@@ -1939,6 +2003,17 @@ def _delivery_result(
     )
     blockers = list(reconciliation_value.get("blockers") or [])
     blockers.extend(readiness_blockers or [])
+    if (
+        push_execution is not None
+        and push_execution.state == "PUSHED"
+        and verified_receipt is None
+    ):
+        blockers.append(
+            _safe_failure(
+                "PUSH_RECEIPT_UNAVAILABLE",
+                "The exact verified remote receipt is unavailable or invalid.",
+            )
+        )
     if push_execution is not None and push_execution.state != "PUSHED":
         blockers.extend(_decoded_list(push_execution.failure_evidence_json))
     warnings: list[dict[str, str]] = []
@@ -1983,6 +2058,8 @@ def _delivery_result(
         )
     elif push_execution is None:
         next_action = "Push to origin/main."
+    elif push_execution.state == "PUSHED" and verified_receipt is None:
+        next_action = "Review the missing or invalid verified remote receipt."
     elif push_execution.state == "PUSHED":
         next_action = "Review live local/remote reconciliation."
     else:
@@ -1993,6 +2070,9 @@ def _delivery_result(
         "status": "DELIVERED" if complete else "NOT_DELIVERED",
         "status_label": "DELIVERED" if complete else "NOT DELIVERED",
         "complete": complete,
+        "verified_remote_sha": (
+            reconciliation_value.get("origin_main_sha") if complete else None
+        ),
         "run_result": run_result,
         "independent_verification": (
             run_result.get("verification_result")
@@ -3297,6 +3377,19 @@ def push_plan_review(
                     # Refresh must expose its durable running state rather
                     # than turn expected lock ownership into a false blocker.
                     observation = _decoded_object(plan.preflight_evidence_json)
+                elif (
+                    execution is not None
+                    and execution.state == "PUSHED"
+                    and exc.code == "REPOSITORY_MUTATION_ACTIVE"
+                    and (verified_receipt := _verified_push_receipt(execution))
+                    is not None
+                ):
+                    # A concurrent idempotent replay may briefly own the same
+                    # repository lock after this one-shot Push has already
+                    # persisted its exact receipt. Preserve that immutable
+                    # receipt in the response; the next unlocked refresh still
+                    # performs live remote-drift reconciliation.
+                    reconciliation = verified_receipt
                 else:
                     blockers.append(_safe_failure(exc.code, exc.message))
     plan_output = _push_plan_out(plan, approval, execution)
@@ -3371,12 +3464,22 @@ def push_plan_review(
         reconciliation=reconciliation,
         readiness_blockers=blockers,
     )
+    if (
+        execution is not None
+        and execution.state == "PUSHED"
+        and not delivery["complete"]
+    ):
+        action_state = "NEEDS_REVIEW"
+    confirmation_blockers = blockers + (
+        list(delivery.get("blockers") or []) if not delivery["complete"] else []
+    )
     confirmation = _confirmation_state(
         plan=plan,
         approval=approval,
         execution=execution,
         can_confirm=can_confirm,
-        blockers=blockers,
+        blockers=confirmation_blockers,
+        delivery_complete=bool(delivery["complete"]),
     )
     return {
         "local_commit_execution_id": local_commit.commit_execution_id,
@@ -3528,12 +3631,16 @@ def push_delivery_review(
         reconciliation=reconciliation,
         readiness_blockers=blockers,
     )
+    confirmation_blockers = blockers + (
+        list(delivery.get("blockers") or []) if not delivery["complete"] else []
+    )
     confirmation = _confirmation_state(
         plan=None,
         approval=None,
         execution=successful or latest,
         can_confirm=can_confirm,
-        blockers=blockers,
+        blockers=confirmation_blockers,
+        delivery_complete=bool(delivery["complete"]),
     )
     return {
         "local_commit_execution_id": local_commit.commit_execution_id,

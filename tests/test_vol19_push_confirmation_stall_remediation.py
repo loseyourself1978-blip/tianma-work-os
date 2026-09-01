@@ -782,6 +782,159 @@ def test_durable_admission_and_stranded_pushing_reconcile_without_transport_retr
             assert "transport_retried=false" in recovered.details
 
 
+def test_successful_transport_with_invalid_receipt_needs_review_and_never_replays(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with _canonical_applied_delivery(tmp_path) as fixture:
+        _proposal, _approval, commit = _commit_delivery(fixture)
+        plan, approval = _review_and_approve_push(fixture, commit)
+        delivery_commit = str(commit["commit_oid"])
+        original_push = push_delivery_service._run_standard_push
+        original_receipt_digest = push_delivery_service._push_receipt_digest
+        transport_calls: list[str] = []
+        receipt_digest_calls = 0
+
+        def counted_push(root: Path, refspec: str):
+            transport_calls.append(refspec)
+            return original_push(root, refspec)
+
+        monkeypatch.setattr(
+            push_delivery_service,
+            "_run_standard_push",
+            counted_push,
+        )
+
+        def mismatched_receipt_digest(row: PushExecution, reconciliation: dict) -> str:
+            nonlocal receipt_digest_calls
+            receipt_digest_calls += 1
+            if receipt_digest_calls == 1:
+                return "0" * 64
+            return original_receipt_digest(row, reconciliation)
+
+        monkeypatch.setattr(
+            push_delivery_service,
+            "_push_receipt_digest",
+            mismatched_receipt_digest,
+        )
+        pushed = fixture.client.post(
+            f"/api/push-plans/{plan['id']}/push-attempts",
+            headers=fixture.headers,
+            json=_confirm_payload(plan, approval),
+        )
+        assert pushed.status_code == 200, pushed.text
+        payload = pushed.json()
+        assert payload["push_execution"]["state"] == "PUSHED"
+        assert payload["push_execution"]["canonical_state"] == "NEEDS_REVIEW"
+        assert payload["push_execution"]["remote_receipt_verified"] is False
+        assert payload["push_execution"]["verified_remote_sha"] is None
+        assert payload["confirmation"]["state"] == "needs_review"
+        assert payload["action_state"] == "NEEDS_REVIEW"
+        assert payload["delivery_result"]["status"] == "NOT_DELIVERED"
+        assert payload["delivery_result"]["complete"] is False
+        assert payload["delivery_result"]["verified_remote_sha"] is None
+        assert "PUSH_RECEIPT_UNAVAILABLE" in {
+            item["code"] for item in payload["delivery_result"]["blockers"]
+        }
+        assert _bare_ref(fixture.origin) == delivery_commit
+
+        with fixture.factory() as session:
+            row = session.scalar(select(PushExecution))
+            assert row is not None
+            assert row.receipt_digest == "0" * 64
+            recovery = push_delivery_service._decoded_object(
+                row.post_push_evidence_json
+            )
+            session.expunge(row)
+            row.receipt_digest = original_receipt_digest(row, recovery)
+            row.recovery_reconciliation_json = row.post_push_evidence_json
+            row.recovery_reconciliation_digest = "0" * 64
+            assert push_delivery_service._verified_push_receipt(row) is None
+
+        replayed = fixture.client.post(
+            f"/api/push-plans/{plan['id']}/push-attempts",
+            headers=fixture.headers,
+            json=_confirm_payload(plan, approval),
+        )
+        assert replayed.status_code == 200, replayed.text
+        assert replayed.json()["push_replayed"] is True
+        assert replayed.json()["confirmation"]["state"] == "needs_review"
+        assert replayed.json()["delivery_result"]["complete"] is False
+        assert transport_calls == [f"{delivery_commit}:refs/heads/main"]
+        with fixture.factory() as session:
+            rows = list(session.scalars(select(PushExecution)))
+            assert len(rows) == 1
+            assert rows[0].command_attempt_count == 1
+            assert rows[0].receipt_digest == "0" * 64
+
+
+def test_delivered_receipt_with_later_remote_drift_projects_needs_review(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with _canonical_applied_delivery(tmp_path) as fixture:
+        _proposal, _approval, commit = _commit_delivery(fixture)
+        plan, approval = _review_and_approve_push(fixture, commit)
+        delivery_commit = str(commit["commit_oid"])
+        original_push = push_delivery_service._run_standard_push
+        transport_calls: list[str] = []
+
+        def counted_push(root: Path, refspec: str):
+            transport_calls.append(refspec)
+            return original_push(root, refspec)
+
+        monkeypatch.setattr(
+            push_delivery_service,
+            "_run_standard_push",
+            counted_push,
+        )
+        pushed = fixture.client.post(
+            f"/api/push-plans/{plan['id']}/push-attempts",
+            headers=fixture.headers,
+            json=_confirm_payload(plan, approval),
+        )
+        assert pushed.status_code == 200, pushed.text
+        assert pushed.json()["confirmation"]["state"] == "succeeded"
+        assert (
+            pushed.json()["delivery_result"]["verified_remote_sha"]
+            == delivery_commit
+        )
+
+        _git(
+            fixture.origin,
+            "update-ref",
+            "refs/heads/main",
+            fixture.baseline_head,
+            delivery_commit,
+        )
+        drifted = fixture.client.get(
+            f"/api/local-commits/{commit['id']}/push-plans",
+            headers=fixture.headers,
+        )
+        assert drifted.status_code == 200, drifted.text
+        payload = drifted.json()
+        assert payload["push_execution"]["state"] == "PUSHED"
+        assert payload["push_execution"]["remote_receipt_verified"] is True
+        assert payload["action_state"] == "NEEDS_REVIEW"
+        assert payload["confirmation"]["state"] == "needs_review"
+        assert "Live origin/main does not equal" in payload["confirmation"]["reason"]
+        assert payload["delivery_result"]["status"] == "NOT_DELIVERED"
+        assert payload["delivery_result"]["verified_remote_sha"] is None
+        assert _bare_ref(fixture.origin) == fixture.baseline_head
+
+        replayed = fixture.client.post(
+            f"/api/push-plans/{plan['id']}/push-attempts",
+            headers=fixture.headers,
+            json=_confirm_payload(plan, approval),
+        )
+        assert replayed.status_code == 200, replayed.text
+        assert replayed.json()["confirmation"]["state"] == "needs_review"
+        assert transport_calls == [f"{delivery_commit}:refs/heads/main"]
+        assert _bare_refs(fixture.origin) == [
+            f"refs/heads/main {fixture.baseline_head}"
+        ]
+
+
 @pytest.mark.parametrize("transport_outcome", ["timeout", "nonzero"])
 def test_attempted_push_without_remote_sha_needs_review_and_never_auto_retries(
     tmp_path: Path,

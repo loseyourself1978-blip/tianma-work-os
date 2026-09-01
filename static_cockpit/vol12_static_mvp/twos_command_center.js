@@ -7926,6 +7926,11 @@
     };
   }
 
+  function ownerVerifiedRemoteSha(parts) {
+    const receipt = objectRecord(parts.receipt);
+    return receipt.verified_remote_sha || "";
+  }
+
   function canonicalCommitState(parts) {
     const executionState = String(
       parts.commitExecution.state || parts.commitExecution.status || ""
@@ -8526,13 +8531,11 @@
         || parts.pushDelivery.fast_forward_status || "not evaluated"
       );
       elements.pushProgress.textContent = OWNER_PUSH_STATE_LABELS[pushState];
-      const verifiedRemoteSha = parts.receipt.verified_remote_sha
-        || parts.receipt.remote_new_sha || parts.receipt.origin_main_sha
-        || pushAdvanced.verified_remote_sha;
+      const verifiedRemoteSha = ownerVerifiedRemoteSha(parts);
       elements.pushFinalRemoteSha.textContent = boundedText(
         verifiedRemoteSha,
         ["DELIVERED", "ALREADY_DELIVERED"].indexOf(pushState) !== -1
-          ? "Receipt unavailable"
+          ? "Verified receipt requires review"
           : "Not delivered",
         500
       );

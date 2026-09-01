@@ -46,6 +46,8 @@ import twos_runtime.push_delivery as push_delivery_service
 
 COMMIT_SUBJECT = "feat: deliver the accepted Owner result"
 COMMIT_BODY = "Commit only the exact file owned by the applied delivery."
+ROOT = Path(__file__).resolve().parents[1]
+OWNER_UI = ROOT / "static_cockpit" / "vol12_static_mvp" / "twos_command_center.js"
 
 
 @pytest.fixture(autouse=True)
@@ -80,6 +82,33 @@ def _bare_refs(origin: Path) -> list[str]:
         "--format=%(refname) %(objectname)",
     ).stdout
     return sorted(line for line in output.splitlines() if line)
+
+
+def _owner_ui_verified_remote_sha(push_delivery: dict) -> str:
+    source = OWNER_UI.read_text(encoding="utf-8")
+    helper = "function ownerVerifiedRemoteSha" + source.split(
+        "function ownerVerifiedRemoteSha", 1
+    )[1].split("function canonicalCommitState", 1)[0]
+    parts = {
+        "receipt": push_delivery["delivery_result"],
+        "pushExecution": push_delivery["push_execution"],
+    }
+    harness = f"""
+function objectRecord(value) {{
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {{}};
+}}
+{helper}
+const parts = {json.dumps(parts, sort_keys=True)};
+process.stdout.write(String(ownerVerifiedRemoteSha(parts)));
+"""
+    completed = subprocess.run(
+        ["node", "-e", harness],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return completed.stdout
 
 
 def _error_code(response) -> str:
@@ -517,8 +546,23 @@ def test_owner_commit_and_push_real_end_to_end_preserves_unrelated_index_and_is_
         assert pushed.status_code == 200, pushed.text
         assert pushed.json()["push_execution"]["state"] == "PUSHED"
         assert pushed.json()["push_execution"]["remote_receipt_verified"] is True
+        assert pushed.json()["push_execution"]["verified_remote_sha"] == delivery_commit
         assert pushed.json()["delivery_result"]["status"] == "DELIVERED"
         assert pushed.json()["delivery_result"]["complete"] is True
+        assert pushed.json()["delivery_result"]["verified_remote_sha"] == delivery_commit
+        assert _owner_ui_verified_remote_sha(pushed.json()) == delivery_commit
+        assert _owner_ui_verified_remote_sha(
+            {
+                "delivery_result": {
+                    "status": "DELIVERED",
+                    "reconciliation": {"origin_main_sha": delivery_commit},
+                },
+                "push_execution": {
+                    "post_push": {"origin_main_sha": delivery_commit},
+                    "advanced": {"verified_remote_sha": delivery_commit},
+                },
+            }
+        ) == ""
         assert observed_refspecs == [f"{delivery_commit}:refs/heads/main"]
         assert _bare_ref(fixture.origin) == delivery_commit
         assert _bare_refs(fixture.origin) == [f"refs/heads/main {delivery_commit}"]
@@ -541,6 +585,7 @@ def test_owner_commit_and_push_real_end_to_end_preserves_unrelated_index_and_is_
         assert replayed_push.status_code == 200, replayed_push.text
         assert replayed_push.json()["push_replayed"] is True
         assert replayed_push.json()["push_execution"]["state"] == "PUSHED"
+        assert replayed_push.json()["delivery_result"]["verified_remote_sha"] == delivery_commit
         assert observed_refspecs == [f"{delivery_commit}:refs/heads/main"]
 
         commit_refresh = fixture.client.get(
@@ -556,6 +601,7 @@ def test_owner_commit_and_push_real_end_to_end_preserves_unrelated_index_and_is_
         assert commit_refresh.status_code == push_refresh.status_code == 200
         assert commit_refresh.json()["proposal"]["commit"]["commit_oid"] == delivery_commit
         assert push_refresh.json()["push_execution"]["state"] == "PUSHED"
+        assert push_refresh.json()["delivery_result"]["verified_remote_sha"] == delivery_commit
         assert delivery_refresh.status_code == 200, delivery_refresh.text
         assert delivery_refresh.json()["commit_delivery"]["proposal"]["commit"][
             "commit_oid"
@@ -563,6 +609,9 @@ def test_owner_commit_and_push_real_end_to_end_preserves_unrelated_index_and_is_
         assert delivery_refresh.json()["push_delivery"]["push_execution"][
             "state"
         ] == "PUSHED"
+        assert delivery_refresh.json()["push_delivery"]["delivery_result"][
+            "verified_remote_sha"
+        ] == delivery_commit
 
         with fixture.factory() as session:
             assert session.scalar(select(func.count()).select_from(CommitProposal)) == 2
