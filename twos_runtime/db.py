@@ -39,6 +39,7 @@ VOL18_PUSH_DELIVERY_SCHEMA_VERSION = "vol18.009"
 VOL19_CODEX_RUN_RESULT_SCHEMA_VERSION = "vol19.001"
 VOL19_RESULT_DELIVERY_LOOP_SCHEMA_VERSION = "vol19.002"
 VOL19_OWNER_COMMIT_PUSH_SCHEMA_VERSION = "vol19.003"
+VOL19_FRESH_INSTALL_SCHEMA_VERSION = "vol19.004"
 
 
 DEFAULT_PROJECTS = [
@@ -321,7 +322,7 @@ def make_session_factory(engine: Engine) -> sessionmaker[Session]:
     return sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False, future=True)
 
 
-def initialize_database(engine: Engine) -> None:
+def initialize_database(engine: Engine, *, seed_default_projects: bool = True) -> None:
     # Reconcile the one SQLite shape that requires a table rebuild before
     # creating any new Vol.19 tables.  This keeps an unsafe legacy schema from
     # being partially advanced merely by ``create_all``.
@@ -447,7 +448,16 @@ def initialize_database(engine: Engine) -> None:
             session.add(
                 SchemaVersion(version=VOL19_OWNER_COMMIT_PUSH_SCHEMA_VERSION)
             )
-        seed_projects(session)
+        if not session.scalar(
+            select(SchemaVersion).where(
+                SchemaVersion.version == VOL19_FRESH_INSTALL_SCHEMA_VERSION
+            )
+        ):
+            session.add(
+                SchemaVersion(version=VOL19_FRESH_INSTALL_SCHEMA_VERSION)
+            )
+        if seed_default_projects:
+            seed_projects(session)
         seed_registry(session)
         session.flush()
         seed_ai_registry(session)

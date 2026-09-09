@@ -7,6 +7,7 @@ import re
 import uuid
 from contextlib import asynccontextmanager
 from datetime import timedelta
+from pathlib import Path
 from typing import Any, Callable, Iterator, Literal, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
@@ -38,7 +39,30 @@ from .codex_connectivity import (
     verify_codex_connection,
 )
 from .config import Settings, get_settings
-from .db import initialize_database, make_engine, make_session_factory, seed_ai_registry, seed_registry
+from .db import (
+    VOL19_FRESH_INSTALL_SCHEMA_VERSION,
+    initialize_database,
+    make_engine,
+    make_session_factory,
+    seed_ai_registry,
+    seed_registry,
+)
+from .first_run import (
+    FirstRunError,
+    active_installation,
+    authorize_workspace,
+    consume_setup_authorization_file,
+    create_first_owner,
+    finish_first_run,
+    first_run_status,
+    initialize_fresh_installation,
+    normal_api_available,
+    persist_setup_failure,
+    review_optional_tools,
+    start_first_run,
+    sync_installation_configuration,
+    validate_fresh_database_before_initialization,
+)
 from .delivery_candidates import (
     delivery_candidate_eligibility,
     delivery_candidate_out,
@@ -146,6 +170,7 @@ from .models import (
     CodexRunMonitor,
     HandoffInstructionDraft,
     HandoffReview,
+    Installation,
     OwnerAcceptanceItem,
     OwnerAcceptanceSession,
     PushExecution,
@@ -214,6 +239,7 @@ AUTH_REQUEST_PATHS = frozenset(
         "/api/auth/logout",
         # Temporary compatibility endpoints use the same product-safe handling.
         "/api/auth/init",
+        "/api/setup/owner",
     }
 )
 
@@ -270,6 +296,48 @@ class LoginIn(BaseModel):
         if not normalize_username(value):
             raise ValueError("Username is required.")
         return value
+
+
+class StartFirstRunIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    confirmation: Literal["START_FIRST_RUN", "CONFIRM_INSTALLATION"]
+
+
+class CreateFirstOwnerIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    username: str = Field(min_length=1, max_length=80)
+    password: str = Field(min_length=8, max_length=200)
+    password_confirmation: str = Field(min_length=8, max_length=200)
+    setup_authorization: str = Field(min_length=16, max_length=256)
+    request_id: str = Field(pattern=r"^[A-Za-z0-9_-]{16,80}$")
+
+    @field_validator("username")
+    @classmethod
+    def first_owner_username_must_have_content(cls, value: str) -> str:
+        if not normalize_username(value):
+            raise ValueError("Username is required.")
+        return value
+
+
+class AuthorizeWorkspaceIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    path: str = Field(min_length=1, max_length=4096)
+    create_if_missing: bool = False
+
+
+class ReviewOptionalToolsIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    decision: Literal["review", "skip"]
+
+
+class FinishFirstRunIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    confirmation: Literal["FINISH_FIRST_RUN"]
 
 
 class ApplyAcceptedChangesIn(BaseModel):
@@ -2042,6 +2110,12 @@ def auth_validation_fields(exc: RequestValidationError) -> dict[str, str]:
             else:
                 message = "Enter a valid password."
             fields.setdefault("password", message)
+        elif field == "password_confirmation":
+            fields.setdefault(field, "Confirm the password using 8 to 200 characters.")
+        elif field == "setup_authorization":
+            fields.setdefault(field, "Enter the one-time setup code supplied by the local launcher.")
+        elif field == "request_id":
+            fields.setdefault(field, "Refresh First Run before submitting this step again.")
         else:
             fields.setdefault("request", "Enter a valid request.")
     return fields or {"request": "Enter a valid request."}
@@ -2061,9 +2135,18 @@ def validation_error_details(exc: RequestValidationError) -> list[dict[str, Any]
 
 def create_app(settings: Settings | None = None, start_scheduler: bool = True) -> FastAPI:
     settings = settings or get_settings()
+    if settings.fresh_install:
+        validate_fresh_database_before_initialization(settings)
     engine = make_engine(settings.database_url)
-    initialize_database(engine)
-    factory = make_session_factory(engine)
+    try:
+        initialize_database(engine, seed_default_projects=not settings.fresh_install)
+        factory = make_session_factory(engine)
+        initialize_fresh_installation(settings, factory)
+    except Exception:
+        # A blocked First Run can fail before the application lifespan exists.
+        # Release its database pool here rather than relying on garbage collection.
+        engine.dispose()
+        raise
     with factory() as recovery_session:
         reconcile_incomplete_apply_sessions(
             recovery_session,
@@ -2126,6 +2209,25 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             response.headers["X-Request-ID"] = request_id
             response.headers["Cache-Control"] = "no-store"
             return response
+        if (
+            settings.fresh_install
+            and request.url.path.startswith("/api/")
+            and request.url.path
+            not in {"/api/health", "/api/version", "/api/capabilities"}
+            and not request.url.path.startswith("/api/auth/")
+            and not request.url.path.startswith("/api/setup/")
+        ):
+            with factory() as setup_session:
+                setup_ready = normal_api_available(setup_session, settings)
+            if not setup_ready:
+                response = error_response(
+                    428,
+                    "first_run_incomplete",
+                    "Finish First Run before opening the Owner workbench.",
+                    request_id,
+                )
+                response.headers["Cache-Control"] = "no-store"
+                return response
         try:
             response = await call_next(request)
         except Exception as exc:
@@ -2147,6 +2249,15 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             exc.code,
             exc.message,
             fields=exc.fields,
+        )
+
+    @app.exception_handler(FirstRunError)
+    async def first_run_exception_handler(request: Request, exc: FirstRunError):
+        return error_response(
+            exc.status_code,
+            exc.code,
+            exc.message,
+            getattr(request.state, "request_id", None),
         )
 
     @app.exception_handler(HTTPException)
@@ -2172,6 +2283,12 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        if request.url.path == "/api/setup/owner":
+            fields = auth_validation_fields(exc)
+            return error_response(
+                400, "VALIDATION_ERROR", " ".join(dict.fromkeys(fields.values())),
+                getattr(request.state, "request_id", None), {"fields": fields},
+            )
         if request.url.path in AUTH_REQUEST_PATHS:
             return auth_error_response(
                 400,
@@ -2203,7 +2320,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         auth = request.headers.get("authorization", "")
         if auth.lower().startswith("bearer "):
             raw_token = auth.split(" ", 1)[1].strip()
-        raw_token = raw_token or request.cookies.get(SESSION_COOKIE)
+        raw_token = raw_token or request.cookies.get(settings.session_cookie_name)
         if not raw_token:
             raise HTTPException(status_code=401, detail="Authentication required.")
         user = user_for_token(session, raw_token)
@@ -2264,14 +2381,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             raise AuthAPIError(500, "AUTH_SERVICE_ERROR", AUTH_SERVICE_MESSAGE) from exc
 
     def session_user(request: Request, session: Session) -> User | None:
-        raw_token = request.cookies.get(SESSION_COOKIE)
+        raw_token = request.cookies.get(settings.session_cookie_name)
         if not raw_token:
             return None
         return user_for_token(session, raw_token)
 
     def set_session_cookie(response: Response, request: Request, raw_token: str) -> None:
         response.set_cookie(
-            SESSION_COOKIE,
+            settings.session_cookie_name,
             raw_token,
             httponly=True,
             secure=request.url.scheme == "https",
@@ -2282,7 +2399,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
 
     def clear_session_cookie(response: Response, request: Request) -> None:
         response.delete_cookie(
-            SESSION_COOKIE,
+            settings.session_cookie_name,
             httponly=True,
             secure=request.url.scheme == "https",
             samesite="strict",
@@ -2417,7 +2534,18 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     @app.get("/api/health")
     def health(session: Session = Depends(get_db)) -> dict[str, Any]:
         session.execute(text("select 1")).scalar_one()
-        return {"status": "healthy", "database": "ok", "version": __version__}
+        payload: dict[str, Any] = {
+            "status": "healthy",
+            "database": "ok",
+            "version": __version__,
+            "schema": VOL19_FRESH_INSTALL_SCHEMA_VERSION,
+        }
+        if settings.fresh_install:
+            installation = active_installation(session)
+            payload["first_run"] = installation.first_run_state
+            payload["bind_host"] = settings.bind_host
+            payload["installation_id"] = installation.public_id
+        return payload
 
     @app.get("/api/version")
     def version() -> dict[str, Any]:
@@ -2432,6 +2560,175 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             "safe_worker_actions": ["compact_sync"],
             "hard_denials": ["live_trade", "live_bet", "broker_order", "betting_order"],
         }
+
+    @app.get("/api/setup/status")
+    def setup_status(request: Request, session: Session = Depends(get_db)) -> dict[str, Any]:
+        user = session_user(request, session)
+        return first_run_status(session, settings, authenticated_user=user)
+
+    @app.post("/api/setup/start")
+    def begin_first_run(
+        payload: StartFirstRunIn,
+        request: Request,
+        session: Session = Depends(get_db),
+    ) -> dict[str, Any]:
+        if not settings.fresh_install:
+            raise FirstRunError("FIRST_RUN_DISABLED", "This installation is already managed.", 404)
+        if session.get_bind().dialect.name == "sqlite":
+            session.execute(text("BEGIN IMMEDIATE"))
+        installation = start_first_run(
+            session, settings, confirmation=payload.confirmation
+        )
+        audit(
+            session,
+            request,
+            "first_run_started",
+            "installation",
+            installation.id,
+            "Owner explicitly started First Run; no external action occurred.",
+        )
+        session.commit()
+        sync_installation_configuration(settings, installation)
+        return first_run_status(session, settings)
+
+    @app.post("/api/setup/owner", status_code=201)
+    def setup_first_owner(
+        payload: CreateFirstOwnerIn,
+        response: Response,
+        request: Request,
+        session: Session = Depends(get_db),
+    ) -> dict[str, Any]:
+        if not settings.fresh_install:
+            raise FirstRunError("FIRST_RUN_DISABLED", "First Owner setup is unavailable.", 404)
+        if session.get_bind().dialect.name == "sqlite":
+            session.execute(text("BEGIN IMMEDIATE"))
+        user, raw_token, created = create_first_owner(
+            session,
+            settings,
+            username=payload.username,
+            password=payload.password,
+            password_confirmation=payload.password_confirmation,
+            setup_authorization=payload.setup_authorization,
+            request_id=payload.request_id,
+        )
+        installation = active_installation(session)
+        if created:
+            audit(
+                session, request, "first_owner_created", "user", user.id,
+                "First Owner created through the one-time local setup boundary.", user,
+            )
+        session.commit()
+        consume_setup_authorization_file(settings)
+        sync_installation_configuration(settings, installation)
+        authenticated_owner = user if created else session_user(request, session)
+        if raw_token is not None:
+            set_session_cookie(response, request, raw_token)
+        payload_out = first_run_status(session, settings, authenticated_user=authenticated_owner)
+        payload_out.update(
+            {
+                "authenticated": authenticated_owner is not None,
+                "user": {"username": user.username} if authenticated_owner else None,
+                "owner_created": created,
+            }
+        )
+        return payload_out
+
+    @app.post("/api/setup/workspace")
+    def setup_workspace(
+        payload: AuthorizeWorkspaceIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        if not settings.fresh_install:
+            raise FirstRunError("FIRST_RUN_DISABLED", "Workspace setup is unavailable.", 404)
+        if session.get_bind().dialect.name == "sqlite":
+            session.execute(text("BEGIN IMMEDIATE"))
+        try:
+            workspace = authorize_workspace(
+                session, settings, owner=user, path=payload.path,
+                create_if_missing=payload.create_if_missing,
+            )
+        except FirstRunError as exc:
+            session.rollback()
+            persist_setup_failure(session, settings, exc)
+            raise
+        installation = active_installation(session)
+        audit(
+            session,
+            request,
+            "workspace_authorized",
+            "authorized_workspace",
+            workspace.id,
+            f"Workspace identity authorized; identity={workspace.identity_digest[:16]}; files_modified=false.",
+            user,
+        )
+        session.commit()
+        # Activate the workspace only after its immutable authorization and
+        # audit record have committed, and before any fallible configuration
+        # projection. All managers share this Settings instance and normal
+        # API admission also verifies this exact binding.
+        object.__setattr__(settings, "source_repo", Path(workspace.canonical_path))
+        sync_installation_configuration(settings, installation)
+        return first_run_status(session, settings, authenticated_user=user)
+
+    @app.post("/api/setup/optional-tools")
+    def setup_optional_tools(
+        payload: ReviewOptionalToolsIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        if not settings.fresh_install:
+            raise FirstRunError("FIRST_RUN_DISABLED", "Optional tool setup is unavailable.", 404)
+        try:
+            installation = review_optional_tools(
+                session, settings, owner=user, decision=payload.decision
+            )
+        except FirstRunError as exc:
+            session.rollback()
+            persist_setup_failure(session, settings, exc)
+            raise
+        audit(
+            session,
+            request,
+            "optional_tools_reviewed",
+            "installation",
+            installation.id,
+            f"Optional tool readiness recorded as {payload.decision}; provider_contacted=false.",
+            user,
+        )
+        session.commit()
+        sync_installation_configuration(settings, installation)
+        return first_run_status(session, settings, authenticated_user=user)
+
+    @app.post("/api/setup/finish")
+    def complete_first_run(
+        payload: FinishFirstRunIn,
+        request: Request,
+        session: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ) -> dict[str, Any]:
+        if not settings.fresh_install:
+            raise FirstRunError("FIRST_RUN_DISABLED", "First Run completion is unavailable.", 404)
+        try:
+            installation = finish_first_run(session, settings, owner=user)
+        except FirstRunError as exc:
+            session.rollback()
+            persist_setup_failure(session, settings, exc)
+            raise
+        audit(
+            session,
+            request,
+            "first_run_completed",
+            "installation",
+            installation.id,
+            "Owner explicitly finished First Run; Run, Pack, Apply, Commit, Push, and connector actions remained absent.",
+            user,
+        )
+        session.commit()
+        sync_installation_configuration(settings, installation)
+        return first_run_status(session, settings, authenticated_user=user)
 
     @app.get("/api/auth/session")
     def auth_session(request: Request, session: Session = Depends(get_db)) -> dict[str, Any]:
@@ -2456,6 +2753,12 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         request: Request,
         session: Session = Depends(get_db),
     ) -> dict[str, Any]:
+        if settings.fresh_install:
+            raise AuthAPIError(
+                409,
+                "FIRST_RUN_REQUIRED",
+                "Use First Run with the one-time local setup authorization.",
+            )
         user, raw_token = perform_signup(payload, request, session)
         set_session_cookie(response, request, raw_token)
         return {"authenticated": True, "user": {"username": user.username}}
@@ -2466,7 +2769,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             owner = session.scalar(select(User).order_by(User.id))
             issue = owner_record_issue(owner)
             valid_owner = owner if owner is not None and issue is None else None
-            raw_token = request.cookies.get(SESSION_COOKIE)
+            raw_token = request.cookies.get(settings.session_cookie_name)
             authenticated = user_for_token(session, raw_token) if raw_token and valid_owner else None
         except SQLAlchemyError as exc:
             logger.error(
@@ -2493,6 +2796,11 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 if authenticated
                 else {"username": normalize_username(valid_owner.username)} if valid_owner else None
             ),
+            "first_run": (
+                first_run_status(session, settings, authenticated_user=authenticated)
+                if settings.fresh_install
+                else {"enabled": False, "state": "ready"}
+            ),
         }
 
     @app.post("/api/auth/init")
@@ -2503,6 +2811,12 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
     ) -> dict[str, Any]:
         """Temporary compatibility route; canonical clients use /api/auth/signup."""
+        if settings.fresh_install:
+            raise AuthAPIError(
+                409,
+                "FIRST_RUN_REQUIRED",
+                "Use First Run with the one-time local setup authorization.",
+            )
         user, raw_token = perform_signup(
             payload,
             request,
@@ -2532,7 +2846,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             if authorization.lower().startswith("bearer ")
             else None
         )
-        raw_token = request.cookies.get(SESSION_COOKIE) or bearer_token
+        raw_token = request.cookies.get(settings.session_cookie_name) or bearer_token
         try:
             user = user_for_token(session, raw_token) if raw_token else None
             if raw_token:
@@ -2636,7 +2950,11 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             implementation_scope_provenance=implementation_scope_provenance,
             repository_identity=str(source_state.get("identity", "")),
             source_baseline_commit=str(source_state.get("commit", "")),
-            status="draft" if effective_workflow == "product_development" else "queued",
+            status=(
+                "draft"
+                if effective_workflow == "product_development" or settings.fresh_install
+                else "queued"
+            ),
         )
         session.add(task)
         session.flush()
@@ -3538,6 +3856,56 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        if settings.fresh_install:
+            setup = first_run_status(session, settings, authenticated_user=user)
+            tools = setup.get("optional_tools") or []
+            codex_setup = next(
+                (item for item in tools if item.get("name") == "Codex"),
+                {"status": "not_checked"},
+            )
+            readiness = str(codex_setup.get("status") or "not_checked")
+            return {
+                "status": "unconfigured",
+                "found": False,
+                "version": None,
+                "supported_command": None,
+                "reason": (
+                    "Optional Codex setup was skipped."
+                    if readiness == "skipped"
+                    else "Codex readiness has not been checked by the Owner."
+                    if readiness == "not_checked"
+                    else "Codex requires explicit Owner setup and a separate readiness check."
+                ),
+                "next_action": "Check Codex Setup",
+                "readiness_state": (
+                    "Skipped" if readiness == "skipped" else "Not checked"
+                    if readiness == "not_checked" else "Needs setup"
+                ),
+                "authentication_ready": False,
+                "model_binding_ready": False,
+                "execution_ready": False,
+                "configuration_status": "needs_setup",
+                "availability_status": "unavailable",
+                "run_timeout_seconds": settings.codex_timeout_seconds,
+                "configured_run_timeout_seconds": settings.codex_timeout_seconds,
+                "connectivity_timeout_seconds": settings.codex_connectivity_timeout_seconds,
+                "authorized_workspace": str(settings.source_repo.resolve(strict=False)),
+                "isolated_worktree_root": str(settings.worktree_root.resolve(strict=False)),
+                "readiness_reason": "No CLI or provider probe runs during automatic workbench refresh.",
+                "readiness_evidence": None,
+                "connectivity": {
+                    "readiness_state": "AUTHENTICATED_CONNECTIVITY_NOT_VERIFIED",
+                    "ready_for_real_run": False,
+                    "authentication": {"authenticated": False, "method": "not_checked"},
+                },
+                "source": {
+                    "identity": "Authorized local workspace",
+                    "branch": None,
+                    "commit": None,
+                    "clean": None,
+                },
+                "passive": True,
+            }
         configured = local_codex_model(session)
         detection = codex_manager.adapter.detect()
         connectivity = connectivity_status(
@@ -3671,6 +4039,18 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         task = session.get(Task, task_id)
         if task is None:
             raise HTTPException(status_code=404, detail="Task not found.")
+        if settings.fresh_install:
+            # Automatic workbench refresh is passive after First Run. An
+            # explicit Owner readiness check remains the only path allowed to
+            # inspect or launch the optional Codex CLI.
+            return run_eligibility(
+                session,
+                task,
+                settings.source_repo,
+                owner_id=user.id,
+                codex_executable=None,
+                child_environment={},
+            )
         detection = codex_manager.adapter.detect()
         return run_eligibility(
             session,

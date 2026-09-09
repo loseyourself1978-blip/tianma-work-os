@@ -16,6 +16,16 @@
     LOGIN: "/api/auth/login",
     LOGOUT: "/api/auth/logout"
   });
+  const SETUP_ROUTES = Object.freeze({
+    STATUS: "/api/setup/status",
+    START: "/api/setup/start",
+    OWNER: "/api/setup/owner",
+    WORKSPACE: "/api/setup/workspace",
+    OPTIONAL_TOOLS: "/api/setup/optional-tools",
+    FINISH: "/api/setup/finish"
+  });
+  const FIRST_RUN_ACTION_TIMEOUT_MS = 15000;
+  const FIRST_RUN_RECONCILE_TIMEOUT_MS = 5000;
 
   const DEFAULT_BOUNDARY = "No automatic merge, push, live trading, live betting, or unrestricted command execution.";
   const UI_VERSION = "0.17.0";
@@ -190,6 +200,49 @@
     sessionErrorView: byId("session-error-view"),
     sessionErrorMessage: byId("session-error-message"),
     retrySession: byId("retry-session"),
+    firstRunView: byId("first-run-view"),
+    firstRunState: byId("first-run-state"),
+    firstRunProgress: byId("first-run-progress"),
+    firstRunMessage: byId("first-run-message"),
+    firstRunCurrentStep: byId("first-run-current-step"),
+    firstRunNextAction: byId("first-run-next-action"),
+    firstRunBlockingReason: byId("first-run-blocking-reason"),
+    firstRunAuthorizationState: byId("first-run-authorization-state"),
+    firstRunWelcome: byId("first-run-welcome"),
+    firstRunInstallation: byId("first-run-installation"),
+    firstRunOwner: byId("first-run-owner"),
+    firstRunWorkspace: byId("first-run-workspace"),
+    firstRunTools: byId("first-run-tools"),
+    firstRunFinish: byId("first-run-finish"),
+    firstRunBlocked: byId("first-run-blocked"),
+    firstRunSourceVersion: byId("first-run-source-version"),
+    firstRunDataRoot: byId("first-run-data-root"),
+    firstRunBindAddress: byId("first-run-bind-address"),
+    firstRunDatabaseState: byId("first-run-database-state"),
+    firstRunRuntimeState: byId("first-run-runtime-state"),
+    firstRunLocalAddress: byId("first-run-local-address"),
+    firstRunStart: byId("first-run-start"),
+    firstRunConfirmInstallation: byId("first-run-confirm-installation"),
+    firstRunOwnerForm: byId("first-run-owner-form"),
+    firstRunSetupAuthorization: byId("first-run-setup-authorization"),
+    firstRunOwnerUsername: byId("first-run-owner-username"),
+    firstRunOwnerPassword: byId("first-run-owner-password"),
+    firstRunOwnerPasswordConfirmation: byId("first-run-owner-password-confirmation"),
+    firstRunCreateOwner: byId("first-run-create-owner"),
+    firstRunWorkspaceForm: byId("first-run-workspace-form"),
+    firstRunWorkspacePath: byId("first-run-workspace-path"),
+    firstRunCreateWorkspace: byId("first-run-create-workspace"),
+    firstRunAuthorizeWorkspace: byId("first-run-authorize-workspace"),
+    firstRunCodexState: byId("first-run-codex-state"),
+    firstRunReviewTools: byId("first-run-review-tools"),
+    firstRunSkipTools: byId("first-run-skip-tools"),
+    firstRunSummaryOwner: byId("first-run-summary-owner"),
+    firstRunSummaryDataRoot: byId("first-run-summary-data-root"),
+    firstRunSummaryWorkspace: byId("first-run-summary-workspace"),
+    firstRunSummaryTools: byId("first-run-summary-tools"),
+    firstRunSummaryAddress: byId("first-run-summary-address"),
+    firstRunFinishSetup: byId("first-run-finish-setup"),
+    firstRunRefreshStatus: byId("first-run-refresh-status"),
     publicView: byId("public-view"),
     landingView: byId("landing-view"),
     signupView: byId("signup-view"),
@@ -236,6 +289,12 @@
     selectedTaskName: byId("selected-task-name"),
     selectedTaskLoadState: byId("selected-task-load-state"),
     taskForm: byId("task-form"),
+    firstRunFirstTaskBanner: byId("first-run-first-task-banner"),
+    firstRunFirstTaskNextAction: byId("first-run-first-task-next-action"),
+    taskNameField: byId("task-name-field"),
+    taskName: byId("task-name"),
+    taskTitleLabel: byId("task-title-label"),
+    developmentTaskHelp: byId("development-task-help"),
     taskProject: byId("task-project"),
     taskWorkflow: byId("task-workflow"),
     taskTitle: byId("task-title"),
@@ -916,6 +975,8 @@
     authView: "landing",
     errorScope: null,
     user: null,
+    firstRun: null,
+    firstOwnerRequestId: null,
     pending: new Set(),
     refreshing: false,
     refreshQueued: false,
@@ -1173,22 +1234,147 @@
     }
   }
 
+  function firstRunIsIncomplete() {
+    return Boolean(
+      state.firstRun
+      && state.firstRun.enabled === true
+      && state.firstRun.state !== "ready"
+    );
+  }
+
+  function firstRunFirstTaskPending() {
+    return Boolean(
+      state.firstRun
+      && state.firstRun.enabled === true
+      && state.firstRun.state === "ready"
+      && state.firstRun.first_task_created !== true
+      && state.tasks.length === 0
+    );
+  }
+
+  function firstRunToolStatus() {
+    const tools = state.firstRun && Array.isArray(state.firstRun.optional_tools)
+      ? state.firstRun.optional_tools
+      : [];
+    const codex = tools.find(function (item) { return item && item.name === "Codex"; });
+    return codex ? String(codex.status || "not_checked") : "not_checked";
+  }
+
+  function setFirstRunMessage(message, tone) {
+    elements.firstRunMessage.textContent = message || "";
+    elements.firstRunMessage.hidden = !message;
+    elements.firstRunMessage.dataset.tone = tone || "error";
+  }
+
+  function firstRunAuthorizationSummary(setup) {
+    const authorization = setup && setup.setup_authorization && typeof setup.setup_authorization === "object"
+      ? setup.setup_authorization
+      : {};
+    if (authorization.required !== true) return "Consumed after first Owner creation";
+    if (authorization.expired === true) {
+      return "Expired · restart the local launcher to issue a replacement";
+    }
+    if (authorization.available === true) return "Available · single-use local code";
+    return "Unavailable · restart the local launcher before Owner creation";
+  }
+
+  function renderFirstRun() {
+    const setup = state.firstRun || {};
+    const installation = setup.installation || {};
+    const current = String(setup.current_step || "welcome");
+    const completed = Array.isArray(setup.completed_steps) ? setup.completed_steps : [];
+    elements.firstRunState.textContent = humanStatus(setup.state || "uninitialized");
+    setStatusLabel(elements.firstRunState, elements.firstRunState.textContent);
+    Array.from(elements.firstRunProgress.querySelectorAll("[data-setup-step]")).forEach(function (item) {
+      const step = item.dataset.setupStep;
+      item.dataset.state = step === current
+        ? "current"
+        : completed.indexOf(step) !== -1 ? "complete" : "pending";
+    });
+    elements.firstRunCurrentStep.textContent = current === "failed" ? "Blocked" : humanStatus(current);
+    replaceText(elements.firstRunNextAction, setup.next_action, "Refresh First Run status.");
+    replaceText(elements.firstRunBlockingReason, setup.blocking_reason, "None");
+    elements.firstRunAuthorizationState.textContent = firstRunAuthorizationSummary(setup);
+    setVisible(elements.firstRunWelcome, current === "welcome");
+    setVisible(elements.firstRunInstallation, current === "installation");
+    setVisible(elements.firstRunOwner, current === "owner");
+    setVisible(elements.firstRunWorkspace, current === "workspace");
+    setVisible(elements.firstRunTools, current === "optional_tools");
+    setVisible(elements.firstRunFinish, current === "finish");
+    setVisible(elements.firstRunBlocked, current === "failed");
+    replaceText(elements.firstRunSourceVersion, installation.source_version, "Not available");
+    replaceText(elements.firstRunDataRoot, installation.data_root_summary, "Private data root");
+    elements.firstRunBindAddress.textContent = installation.localhost_only === true
+      ? "127.0.0.1 only"
+      : "Blocked: localhost boundary unavailable";
+    elements.firstRunDatabaseState.textContent = installation.database_initialized === true
+      ? "Initialized"
+      : "Not initialized";
+    elements.firstRunRuntimeState.textContent = installation.isolated_runtime === true
+      ? "Isolated"
+      : "Isolation unavailable";
+    const address = installation.bind_host && installation.port
+      ? installation.bind_host + ":" + installation.port
+      : "Local address unavailable";
+    elements.firstRunLocalAddress.textContent = address;
+    elements.firstRunCodexState.textContent = humanStatus(firstRunToolStatus());
+    setStatusLabel(elements.firstRunCodexState, elements.firstRunCodexState.textContent);
+    elements.firstRunSummaryOwner.textContent = setup.owner_exists ? "Created" : "Not created";
+    replaceText(elements.firstRunSummaryDataRoot, installation.data_root_summary, "Not available");
+    replaceText(elements.firstRunSummaryWorkspace, installation.workspace_summary, "Not authorized");
+    elements.firstRunSummaryTools.textContent = humanStatus(firstRunToolStatus());
+    elements.firstRunSummaryAddress.textContent = address;
+    if (setup.state === "failed") {
+      setFirstRunMessage(setup.blocking_reason || "First Run is blocked. Review the local runtime log.", "error");
+    }
+    const busy = state.pending.has("first-run-action");
+    [
+      elements.firstRunStart,
+      elements.firstRunConfirmInstallation,
+      elements.firstRunCreateOwner,
+      elements.firstRunAuthorizeWorkspace,
+      elements.firstRunReviewTools,
+      elements.firstRunSkipTools,
+      elements.firstRunFinishSetup,
+      elements.firstRunRefreshStatus
+    ].forEach(function (button) { button.disabled = busy; });
+  }
+
   function renderAuthShell() {
     elements.body.dataset.authState = state.auth;
     const isLoading = state.auth === AUTH_STATES.LOADING;
     const sessionError = state.auth === AUTH_STATES.ERROR && state.errorScope === "session";
     const isSignedIn = state.auth === AUTH_STATES.SIGNED_IN;
-    const showPublic = !isLoading && !sessionError && !isSignedIn;
+    const firstRunIncomplete = firstRunIsIncomplete();
+    const firstRunNeedsLogin = firstRunIncomplete
+      && state.firstRun.owner_exists === true
+      && !isSignedIn;
+    const showFirstRun = !isLoading && !sessionError && firstRunIncomplete && !firstRunNeedsLogin;
+    const showPublic = !isLoading && !sessionError && !showFirstRun && (!isSignedIn || firstRunNeedsLogin);
 
     setVisible(elements.loadingView, isLoading);
     setVisible(elements.sessionErrorView, sessionError);
+    setVisible(elements.firstRunView, showFirstRun);
     setVisible(elements.publicView, showPublic);
-    setVisible(elements.appView, isSignedIn);
+    setVisible(elements.appView, isSignedIn && !firstRunIncomplete);
+
+    if (showFirstRun) renderFirstRun();
 
     if (showPublic) {
+      if (firstRunNeedsLogin) state.authView = "login";
       setVisible(elements.landingView, state.authView === "landing");
       setVisible(elements.signupView, state.authView === "signup");
       setVisible(elements.loginView, state.authView === "login");
+      const signupAvailable = !state.firstRun || state.firstRun.enabled !== true;
+      setVisible(elements.headerSignup, signupAvailable);
+      setVisible(elements.landingSignup, signupAvailable);
+      setVisible(elements.loginToSignup, signupAvailable);
+      if (
+        firstRunNeedsLogin
+        && (!elements.loginFormError.textContent || elements.loginFormError.hidden)
+      ) {
+        setAuthFormError("login", "Log in as the first Owner to resume First Run.");
+      }
     }
 
     const signingUp = state.auth === AUTH_STATES.SIGNING_UP;
@@ -1337,13 +1523,29 @@
     state.errorScope = null;
     resetProtectedState();
     renderAuthShell();
-    setFeedback("Loading your workbench…", "neutral");
-    try {
-      await refreshWorkspace({ force: true });
-    } catch (error) {
-      setFeedback("Signed in. Workspace data could not be refreshed. Try again.", "error");
+    if (firstRunIsIncomplete()) {
+      setFirstRunMessage("Signed in. Refreshing the persisted First Run step…", "neutral");
+    } else {
+      setFeedback("Signed in. Refreshing setup and workspace state…", "neutral");
     }
-    if (state.auth === AUTH_STATES.SIGNED_IN) elements.workbenchMain.focus();
+    try {
+      state.firstRun = await api(SETUP_ROUTES.STATUS, {
+        timeoutMs: FIRST_RUN_RECONCILE_TIMEOUT_MS
+      });
+      renderAuthShell();
+      if (!firstRunIsIncomplete()) {
+        setFeedback("Loading your workbench…", "neutral");
+        await refreshWorkspace({ force: true });
+      }
+    } catch (error) {
+      renderAuthShell();
+      if (!firstRunIsIncomplete()) {
+        setFeedback("Signed in, but setup state could not be refreshed. Reload this page to retry the read-only setup check before continuing.", "error");
+      } else {
+        setFirstRunMessage("Signed in, but setup state could not be refreshed. No setup action was started; try Check Setup Status.", "error");
+      }
+    }
+    if (state.auth === AUTH_STATES.SIGNED_IN && !firstRunIsIncomplete()) elements.workbenchMain.focus();
   }
 
   function renderAuthSubmissionFailure(mode, fields, error) {
@@ -1424,6 +1626,9 @@
     state.errorScope = null;
     renderAuthShell();
     try {
+      state.firstRun = await api(SETUP_ROUTES.STATUS, {
+        timeoutMs: FIRST_RUN_RECONCILE_TIMEOUT_MS
+      });
       const data = await api(AUTH_ROUTES.SESSION);
       if (!data || typeof data.authenticated !== "boolean") {
         throw new ApiError(200, "UNEXPECTED_RESPONSE", "Something went wrong. Try again.", {}, "payload");
@@ -1436,12 +1641,14 @@
         state.auth = AUTH_STATES.SIGNED_IN;
         resetProtectedState();
         renderAuthShell();
-        setFeedback("Loading your workbench…", "neutral");
-        await refreshWorkspace({ force: true });
+        if (!firstRunIsIncomplete()) {
+          setFeedback("Loading your workbench…", "neutral");
+          await refreshWorkspace({ force: true });
+        }
       } else {
         state.user = null;
         state.auth = AUTH_STATES.SIGNED_OUT;
-        state.authView = "landing";
+        state.authView = state.firstRun && state.firstRun.owner_exists ? "login" : "landing";
         renderAuthShell();
       }
     } catch (error) {
@@ -1451,6 +1658,281 @@
         ? "Unable to connect. Try again."
         : "Something went wrong. Try again.";
       renderAuthShell();
+    }
+  }
+
+  function setupStepCompleted(setup, step) {
+    return Boolean(
+      setup
+      && Array.isArray(setup.completed_steps)
+      && setup.completed_steps.indexOf(step) !== -1
+    );
+  }
+
+  function adoptFirstRunSession(setup) {
+    const identity = setup && setup.user && typeof setup.user.username === "string"
+      ? setup.user
+      : setup && setup.owner && typeof setup.owner.username === "string"
+        ? setup.owner
+        : null;
+    if (setup && setup.authenticated === true && identity) {
+      state.user = { username: identity.username };
+      state.auth = AUTH_STATES.SIGNED_IN;
+      state.errorScope = null;
+      return true;
+    }
+    return false;
+  }
+
+  async function reconcileFirstRunStatus(options) {
+    const config = options || {};
+    const setup = await api(SETUP_ROUTES.STATUS, {
+      timeoutMs: FIRST_RUN_RECONCILE_TIMEOUT_MS
+    });
+    if (!setup || setup.enabled !== true) {
+      throw new ApiError(409, "SETUP_STATE_INVALID", "First Run state could not be confirmed.", {}, "payload");
+    }
+    state.firstRun = setup;
+    adoptFirstRunSession(setup);
+    if (config.checkSession === true && setup.owner_exists === true && state.auth !== AUTH_STATES.SIGNED_IN) {
+      let session;
+      try {
+        session = await api(AUTH_ROUTES.SESSION, {
+          timeoutMs: FIRST_RUN_RECONCILE_TIMEOUT_MS
+        });
+      } catch (error) {
+        state.user = null;
+        state.auth = AUTH_STATES.SIGNED_OUT;
+        state.errorScope = "form";
+        state.authView = "login";
+        renderAuthShell();
+        throw error;
+      }
+      if (authenticatedUserFromPayload(session)) {
+        state.user = authenticatedUserFromPayload(session);
+        state.auth = AUTH_STATES.SIGNED_IN;
+        state.errorScope = null;
+        state.firstRun.authenticated = true;
+        state.firstRun.owner = { username: state.user.username };
+      } else {
+        state.user = null;
+        state.auth = AUTH_STATES.SIGNED_OUT;
+        state.errorScope = "form";
+        state.authView = "login";
+      }
+    }
+    renderAuthShell();
+    return setup;
+  }
+
+  async function runFirstRunAction(button, pendingLabel, request, options) {
+    const config = options || {};
+    if (state.pending.has("first-run-action")) return;
+    state.pending.add("first-run-action");
+    const originalLabel = button.textContent;
+    setFirstRunMessage("", "neutral");
+    button.textContent = pendingLabel;
+    button.setAttribute("aria-busy", "true");
+    renderFirstRun();
+    try {
+      const response = await request();
+      if (!response || response.enabled !== true) {
+        throw new ApiError(409, "SETUP_STATE_INVALID", "First Run state could not be confirmed.", {}, "payload");
+      }
+      state.firstRun = response;
+      adoptFirstRunSession(response);
+      renderAuthShell();
+      return response;
+    } catch (error) {
+      setFirstRunMessage("The request did not settle visibly. TWOS is checking persisted setup state before another action is available…", "neutral");
+      renderFirstRun();
+      let reconciled = null;
+      try {
+        reconciled = await reconcileFirstRunStatus({
+          checkSession: config.checkSession === true
+        });
+      } catch (reconcileError) {
+        reconciled = null;
+      }
+      if (reconciled && typeof config.settled === "function" && config.settled(reconciled)) {
+        if (firstRunIsIncomplete()) {
+          setFirstRunMessage("The persisted setup state confirms that the action completed. No duplicate action was sent.", "success");
+        }
+        return reconciled;
+      }
+      const message = error instanceof ApiError
+        ? error.message
+        : "First Run could not continue. Review the local runtime log and try again.";
+      const currentSetup = reconciled || state.firstRun;
+      if (currentSetup && currentSetup.owner_exists === true && state.auth !== AUTH_STATES.SIGNED_IN) {
+        clearAuthErrors("login");
+        setAuthFormError("login", "The first Owner exists. Log in to resume First Run; no duplicate Owner request was sent automatically.");
+        renderAuthShell();
+      } else {
+        setFirstRunMessage(
+          reconciled
+            ? message + " Persisted setup state was refreshed; retry only the visible current step."
+            : message + " Setup status also could not be refreshed. No automatic retry occurred.",
+          "error"
+        );
+        if (firstRunIsIncomplete()) renderFirstRun();
+      }
+      return null;
+    } finally {
+      state.pending.delete("first-run-action");
+      button.textContent = originalLabel;
+      button.removeAttribute("aria-busy");
+      if (firstRunIsIncomplete()) renderFirstRun();
+    }
+  }
+
+  async function startFirstRun() {
+    await runFirstRunAction(elements.firstRunStart, "Starting…", function () {
+      return api(SETUP_ROUTES.START, {
+        method: "POST",
+        timeoutMs: FIRST_RUN_ACTION_TIMEOUT_MS,
+        body: { confirmation: "START_FIRST_RUN" }
+      });
+    }, {
+      settled: function (setup) { return setupStepCompleted(setup, "welcome"); }
+    });
+  }
+
+  async function confirmFirstRunInstallation() {
+    await runFirstRunAction(elements.firstRunConfirmInstallation, "Confirming…", function () {
+      return api(SETUP_ROUTES.START, {
+        method: "POST",
+        timeoutMs: FIRST_RUN_ACTION_TIMEOUT_MS,
+        body: { confirmation: "CONFIRM_INSTALLATION" }
+      });
+    }, {
+      settled: function (setup) { return setupStepCompleted(setup, "installation"); }
+    });
+  }
+
+  async function createFirstRunOwner() {
+    if (state.pending.has("first-run-action")) return;
+    if (!elements.firstRunOwnerForm.checkValidity()) {
+      elements.firstRunOwnerForm.reportValidity();
+      return;
+    }
+    if (elements.firstRunOwnerPassword.value !== elements.firstRunOwnerPasswordConfirmation.value) {
+      setFirstRunMessage("The password confirmation does not match.", "error");
+      elements.firstRunOwnerPasswordConfirmation.focus();
+      return;
+    }
+    if (!state.firstOwnerRequestId) {
+      try {
+        state.firstOwnerRequestId = secureRequestIdentity("");
+      } catch (error) {
+        setFirstRunMessage(
+          "This browser cannot create a secure First Owner request identity. No Owner request was sent.",
+          "error"
+        );
+        return;
+      }
+    }
+    const response = await runFirstRunAction(elements.firstRunCreateOwner, "Creating Owner…", function () {
+      return api(SETUP_ROUTES.OWNER, {
+        method: "POST",
+        timeoutMs: FIRST_RUN_ACTION_TIMEOUT_MS,
+        body: {
+          username: elements.firstRunOwnerUsername.value.trim(),
+          password: elements.firstRunOwnerPassword.value,
+          password_confirmation: elements.firstRunOwnerPasswordConfirmation.value,
+          setup_authorization: elements.firstRunSetupAuthorization.value,
+          request_id: state.firstOwnerRequestId
+        }
+      });
+    }, {
+      checkSession: true,
+      settled: function (setup) { return setup.owner_exists === true; }
+    });
+    if (response && response.owner_exists === true) {
+      elements.firstRunOwnerPassword.value = "";
+      elements.firstRunOwnerPasswordConfirmation.value = "";
+      elements.firstRunSetupAuthorization.value = "";
+      state.firstOwnerRequestId = null;
+      if (adoptFirstRunSession(response)) {
+        renderAuthShell();
+      } else if (state.auth !== AUTH_STATES.SIGNED_IN) {
+        clearAuthErrors("login");
+        setAuthFormError("login", "The first Owner was created. Log in to resume First Run.");
+        state.authView = "login";
+        renderAuthShell();
+      }
+    }
+  }
+
+  async function authorizeFirstRunWorkspace() {
+    if (!elements.firstRunWorkspaceForm.checkValidity()) {
+      elements.firstRunWorkspaceForm.reportValidity();
+      return;
+    }
+    await runFirstRunAction(elements.firstRunAuthorizeWorkspace, "Authorizing…", function () {
+      return api(SETUP_ROUTES.WORKSPACE, {
+        method: "POST",
+        timeoutMs: FIRST_RUN_ACTION_TIMEOUT_MS,
+        body: {
+          path: elements.firstRunWorkspacePath.value,
+          create_if_missing: elements.firstRunCreateWorkspace.checked
+        }
+      });
+    }, {
+      settled: function (setup) { return setupStepCompleted(setup, "workspace"); }
+    });
+  }
+
+  async function completeOptionalToolReview(decision, button) {
+    await runFirstRunAction(button, decision === "skip" ? "Skipping…" : "Reviewing…", function () {
+      return api(SETUP_ROUTES.OPTIONAL_TOOLS, {
+        method: "POST",
+        timeoutMs: FIRST_RUN_ACTION_TIMEOUT_MS,
+        body: { decision: decision }
+      });
+    }, {
+      settled: function (setup) { return setupStepCompleted(setup, "optional_tools"); }
+    });
+  }
+
+  async function finishFirstRunSetup() {
+    const response = await runFirstRunAction(elements.firstRunFinishSetup, "Finishing…", function () {
+      return api(SETUP_ROUTES.FINISH, {
+        method: "POST",
+        timeoutMs: FIRST_RUN_ACTION_TIMEOUT_MS,
+        body: { confirmation: "FINISH_FIRST_RUN" }
+      });
+    }, {
+      settled: function (setup) { return setup.state === "ready"; }
+    });
+    if (!response || response.state !== "ready") return;
+    resetProtectedState();
+    state.creatingTask = false;
+    renderAuthShell();
+    setFeedback("Setup complete. Create your first task; no Run or provider action starts automatically.", "success");
+    await refreshWorkspace({ force: true });
+    elements.newTask.focus();
+  }
+
+  async function refreshFirstRunStatus() {
+    if (state.pending.has("first-run-action")) return;
+    state.pending.add("first-run-action");
+    const originalLabel = elements.firstRunRefreshStatus.textContent;
+    elements.firstRunRefreshStatus.textContent = "Checking…";
+    elements.firstRunRefreshStatus.setAttribute("aria-busy", "true");
+    renderFirstRun();
+    try {
+      await reconcileFirstRunStatus({ checkSession: true });
+      if (firstRunIsIncomplete()) {
+        setFirstRunMessage("Setup status refreshed. No setup or external action was started.", "success");
+      }
+    } catch (error) {
+      setFirstRunMessage("Setup status could not be refreshed. No setup or external action was started.", "error");
+    } finally {
+      state.pending.delete("first-run-action");
+      elements.firstRunRefreshStatus.textContent = originalLabel;
+      elements.firstRunRefreshStatus.removeAttribute("aria-busy");
+      if (firstRunIsIncomplete()) renderFirstRun();
     }
   }
 
@@ -2337,7 +2819,10 @@
   }
 
   function initializeNewTaskForm() {
-    elements.taskWorkflow.value = "product_development";
+    elements.taskWorkflow.value = firstRunFirstTaskPending()
+      ? "general"
+      : "product_development";
+    elements.taskName.value = "";
     elements.taskTitle.value = "";
     initializeTaskDetailDefaults();
     elements.taskDetails.open = false;
@@ -2358,17 +2843,42 @@
     state.selectedActivityRunId = null;
     state.taskSelectionEpoch += 1;
     state.taskLoadState = "empty";
-    state.taskLoadMessage = "Enter a Development task, then save it.";
+    state.taskLoadMessage = firstRunFirstTaskPending()
+      ? "Enter a task title and goal, then save the first task."
+      : "Enter a Development task, then save it.";
     state.renderedTaskId = null;
     resetTaskDetails();
     initializeNewTaskForm();
     renderWorkspace();
     closeTaskDrawer();
-    setFeedback("New task ready. Development task is the only required Owner input.", "neutral");
-    if (shouldFocus) elements.taskTitle.focus();
+    setFeedback(
+      firstRunFirstTaskPending()
+        ? "Step 7 of 7: create the first task. Saving will not start a Run or contact a provider."
+        : "New task ready. Development task is the only required Owner input.",
+      "neutral"
+    );
+    if (shouldFocus) {
+      if (firstRunFirstTaskPending()) elements.taskName.focus();
+      else elements.taskTitle.focus();
+    }
   }
 
   function syncTaskRequirements() {
+    const firstTask = firstRunFirstTaskPending() && state.creatingTask;
+    elements.taskName.required = firstTask;
+    setVisible(elements.taskNameField, firstTask);
+    setVisible(elements.firstRunFirstTaskBanner, firstTask);
+    elements.taskTitleLabel.textContent = firstTask ? "Goal or objective" : "Development task";
+    elements.developmentTaskHelp.textContent = firstTask
+      ? "Describe what you want to accomplish. Saving creates only this Task and its internal AI Team plan; it does not create a Pack, start a Run, or contact a provider."
+      : "Describe the complete development task. TWOS preserves this text and derives the execution details deterministically.";
+    if (firstTask) {
+      replaceText(
+        elements.firstRunFirstTaskNextAction,
+        state.firstRun && state.firstRun.next_action,
+        "Create and save the first task. Saving does not start a Run or contact a provider."
+      );
+    }
     elements.taskTitle.required = true;
     elements.taskProject.required = false;
     TASK_DETAIL_FIELDS.forEach(function (field) { field.input.required = false; });
@@ -2445,7 +2955,9 @@
         state.creatingTask = true;
         state.taskSelectionEpoch += 1;
         state.taskLoadState = "empty";
-        state.taskLoadMessage = "Create your first Development task.";
+        state.taskLoadMessage = firstRunFirstTaskPending()
+          ? "Step 7 of 7: create and save the first task."
+          : "Create your first Development task.";
         initializeNewTaskForm();
       }
 
@@ -2519,7 +3031,9 @@
         resetTaskDetails();
         state.taskLoadState = "empty";
         state.taskLoadMessage = state.creatingTask
-          ? "Enter a Development task, then save it."
+          ? firstRunFirstTaskPending()
+            ? "Step 7 of 7: enter a task title and goal, then save it."
+            : "Enter a Development task, then save it."
           : "Select a saved Task.";
       }
 
@@ -2639,7 +3153,9 @@
     if (state.creatingTask) {
       name = "New task";
       stateValue = "empty";
-      message = "Enter a Development task, then save it.";
+      message = firstRunFirstTaskPending()
+        ? "Step 7 of 7: enter a task title and goal, then save it."
+        : "Enter a Development task, then save it.";
     } else if (!task) {
       name = state.workspaceLoaded ? "No Task selected" : "Loading task…";
       stateValue = state.workspaceLoaded ? "empty" : "loading";
@@ -2655,6 +3171,7 @@
   }
 
   function renderTaskList() {
+    elements.newTask.textContent = firstRunFirstTaskPending() ? "Create First Task" : "New task";
     clearChildren(elements.taskList);
     if (!state.tasks.length) {
       const empty = document.createElement("li");
@@ -2703,6 +3220,7 @@
     if (!task || state.renderedTaskId === task.id) return;
     elements.taskProject.value = String(task.project_id);
     elements.taskWorkflow.value = task.workflow_type || "general";
+    elements.taskName.value = task.title || "";
     elements.taskTitle.value = task.development_task || task.title || "";
     state.taskDetailProvenance = {};
     TASK_DETAIL_FIELDS.forEach(function (field) {
@@ -9759,8 +10277,10 @@
   }
 
   function taskPayload() {
+    const firstTask = firstRunFirstTaskPending() && state.creatingTask;
     const payload = {
       project_id: Number(elements.taskProject.value),
+      title: firstTask ? elements.taskName.value : undefined,
       development_task: elements.taskTitle.value,
       action: elements.taskAction.value,
       workflow_type: elements.taskWorkflow.value,
@@ -9773,6 +10293,7 @@
         payload[field.key] = field.input.value;
       }
     });
+    if (firstTask) payload.objective = elements.taskTitle.value;
     return payload;
   }
 
@@ -9802,6 +10323,7 @@
       elements.taskForm.reportValidity();
       return;
     }
+    const savingFirstRunFirstTask = firstRunFirstTaskPending() && state.creatingTask;
     await performAction("save-task", elements.saveTask, "Saving…", async function () {
       if (!elements.taskProject.value) throw new ApiError(400, "NO_PROJECT", "No project is available.", {}, "product");
       const task = await persistTask(selectedTask());
@@ -9814,7 +10336,9 @@
       state.taskLoadMessage = "Loading the saved Task.";
       state.renderedTaskId = null;
       await composeTeam(task);
-      return "Task saved. AI Team composed and routing evaluated.";
+      return savingFirstRunFirstTask
+        ? "Task saved. No Run, Pack, or provider action started."
+        : "Task saved. AI Team composed and routing evaluated.";
     });
   }
 
@@ -9857,19 +10381,24 @@
     });
   }
 
-  function codexRunIdempotencyKey(task, pack) {
-    const prefix = "twos-run-" + task.id + "-" + pack.id + "-";
+  function secureRequestIdentity(prefix) {
+    const identityPrefix = String(prefix || "");
     if (window.crypto && typeof window.crypto.randomUUID === "function") {
-      return prefix + window.crypto.randomUUID();
+      return identityPrefix + window.crypto.randomUUID();
     }
     const bytes = new Uint8Array(16);
     if (window.crypto && typeof window.crypto.getRandomValues === "function") {
       window.crypto.getRandomValues(bytes);
-      return prefix + Array.from(bytes).map(function (value) {
+      return identityPrefix + Array.from(bytes).map(function (value) {
         return value.toString(16).padStart(2, "0");
       }).join("");
     }
     throw new Error("Secure browser request identity generation is unavailable.");
+  }
+
+  function codexRunIdempotencyKey(task, pack) {
+    const prefix = "twos-run-" + task.id + "-" + pack.id + "-";
+    return secureRequestIdentity(prefix);
   }
 
   function openCodexRunConfirmation() {
@@ -11831,6 +12360,24 @@
   }
 
   function bindEvents() {
+    elements.firstRunStart.addEventListener("click", startFirstRun);
+    elements.firstRunConfirmInstallation.addEventListener("click", confirmFirstRunInstallation);
+    elements.firstRunOwnerForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+      createFirstRunOwner();
+    });
+    elements.firstRunWorkspaceForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+      authorizeFirstRunWorkspace();
+    });
+    elements.firstRunReviewTools.addEventListener("click", function () {
+      completeOptionalToolReview("review", elements.firstRunReviewTools);
+    });
+    elements.firstRunSkipTools.addEventListener("click", function () {
+      completeOptionalToolReview("skip", elements.firstRunSkipTools);
+    });
+    elements.firstRunFinishSetup.addEventListener("click", finishFirstRunSetup);
+    elements.firstRunRefreshStatus.addEventListener("click", refreshFirstRunStatus);
     elements.headerSignup.addEventListener("click", function () { openAuthView("signup"); });
     elements.landingSignup.addEventListener("click", function () { openAuthView("signup"); });
     elements.loginToSignup.addEventListener("click", function () { openAuthView("signup"); });

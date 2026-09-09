@@ -65,6 +65,76 @@ class SchemaVersion(Base):
     applied_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 
+class Installation(Base):
+    """One persisted, data-root-scoped First Run installation."""
+
+    __tablename__ = "installations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    public_id: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    source_version: Mapped[str] = mapped_column(String(40))
+    data_root: Mapped[str] = mapped_column(Text)
+    database_path: Mapped[str] = mapped_column(Text)
+    runtime_environment: Mapped[str] = mapped_column(Text, default="")
+    log_directory: Mapped[str] = mapped_column(Text)
+    bind_host: Mapped[str] = mapped_column(String(80), default="127.0.0.1")
+    bind_port: Mapped[int] = mapped_column(Integer)
+    first_run_state: Mapped[str] = mapped_column(
+        String(80), default="uninitialized", index=True
+    )
+    setup_token_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    setup_token_issued_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    setup_token_expires_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    setup_token_used_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    owner_setup_request_id: Mapped[Optional[str]] = mapped_column(
+        String(80), nullable=True, unique=True
+    )
+    owner_setup_request_digest: Mapped[Optional[str]] = mapped_column(
+        String(64), nullable=True
+    )
+    owner_user_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("users.id"), nullable=True, unique=True
+    )
+    optional_tools_state: Mapped[str] = mapped_column(Text, default='{"codex":"not_checked"}')
+    completed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    failure_code: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    failure_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    resume_state: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now
+    )
+
+
+class AuthorizedWorkspace(Base):
+    """The exact local directory explicitly authorized by the first Owner."""
+
+    __tablename__ = "authorized_workspaces"
+    __table_args__ = (
+        UniqueConstraint("installation_id", "canonical_path", name="uq_installation_workspace_path"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    installation_id: Mapped[int] = mapped_column(
+        ForeignKey("installations.id"), unique=True, index=True
+    )
+    owner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), unique=True)
+    canonical_path: Mapped[str] = mapped_column(Text)
+    device_id: Mapped[int] = mapped_column(Integer)
+    inode: Mapped[int] = mapped_column(Integer)
+    identity_digest: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    authorized_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
 class Project(Base):
     __tablename__ = "projects"
 

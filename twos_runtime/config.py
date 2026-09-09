@@ -37,6 +37,30 @@ class Settings:
     local_verification_command: tuple[str, ...] = ()
     local_verification_timeout_seconds: int = 60
     local_verification_output_limit: int = 20_000
+    # The canonical 19.2A launcher sets these fields explicitly.  Their
+    # defaults preserve the developer/test runtime that predates First Run.
+    fresh_install: bool = False
+    installation_id: str | None = None
+    data_root: Path | None = None
+    runtime_environment: Path | None = None
+    log_directory: Path | None = None
+    installation_config_path: Path | None = None
+    setup_authorization_path: Path | None = None
+    bind_host: str = "127.0.0.1"
+    bind_port: int | None = None
+    session_cookie_name: str = "twos_session"
+
+
+def _environment_flag(name: str, default: bool = False) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().casefold() in {"1", "true", "yes", "on"}
+
+
+def _optional_path(name: str) -> Path | None:
+    value = os.environ.get(name, "").strip()
+    return Path(value).expanduser() if value else None
 
 
 def _local_verification_command() -> tuple[str, ...]:
@@ -104,4 +128,18 @@ def get_settings() -> Settings:
         local_verification_output_limit=int(
             os.environ.get("TWOS_LOCAL_VERIFICATION_OUTPUT_LIMIT", "20000")
         ),
+        fresh_install=_environment_flag("TWOS_FRESH_INSTALL"),
+        installation_id=os.environ.get("TWOS_INSTALLATION_ID") or None,
+        data_root=_optional_path("TWOS_DATA_ROOT"),
+        runtime_environment=_optional_path("TWOS_RUNTIME_ENVIRONMENT"),
+        log_directory=_optional_path("TWOS_LOG_DIRECTORY"),
+        installation_config_path=_optional_path("TWOS_INSTALLATION_CONFIG"),
+        setup_authorization_path=_optional_path("TWOS_SETUP_AUTHORIZATION_PATH"),
+        bind_host=os.environ.get("TWOS_BIND_HOST", "127.0.0.1"),
+        bind_port=(
+            int(os.environ["TWOS_BIND_PORT"])
+            if os.environ.get("TWOS_BIND_PORT")
+            else None
+        ),
+        session_cookie_name=os.environ.get("TWOS_SESSION_COOKIE_NAME", "twos_session"),
     )

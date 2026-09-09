@@ -1662,12 +1662,12 @@ class CodexExecutionManager:
         self._workers: dict[int, threading.Thread] = {}
         self._cancel_requested: set[int] = set()
         self._stopping = False
-        instance_identity = hashlib.sha256(
-            (
-                f"{settings.database_url}\0"
-                f"{settings.source_repo.resolve(strict=False)}"
-            ).encode("utf-8")
-        ).hexdigest()[:24]
+        identity_material = (
+            settings.installation_id
+            if settings.fresh_install and settings.installation_id
+            else f"{settings.database_url}\0{settings.source_repo.resolve(strict=False)}"
+        )
+        instance_identity = hashlib.sha256(identity_material.encode("utf-8")).hexdigest()[:24]
         bridge_base = codex_exec_bridge.prepare_spool_root(
             settings.codex_spool_root.resolve(strict=False),
             forbidden_roots=(settings.source_repo,),

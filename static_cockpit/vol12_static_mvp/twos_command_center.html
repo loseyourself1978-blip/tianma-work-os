@@ -25,6 +25,169 @@
     </div>
   </section>
 
+  <section id="first-run-view" class="first-run-shell" hidden aria-labelledby="first-run-title">
+    <header class="first-run-header">
+      <a class="wordmark" href="/twos">Tianma Work OS</a>
+      <span class="first-run-local-badge">Localhost only</span>
+    </header>
+    <main class="first-run-main">
+      <section class="first-run-card">
+        <div class="first-run-heading">
+          <div>
+            <span class="eyebrow">Fresh Install · First Run</span>
+            <h1 id="first-run-title">Set up your local Owner workspace</h1>
+          </div>
+          <strong id="first-run-state" class="status-label">Loading setup</strong>
+        </div>
+
+        <ol id="first-run-progress" class="first-run-progress" aria-label="First Run progress">
+          <li data-setup-step="welcome"><span>1</span>Welcome</li>
+          <li data-setup-step="installation"><span>2</span>Installation</li>
+          <li data-setup-step="owner"><span>3</span>Owner</li>
+          <li data-setup-step="workspace"><span>4</span>Workspace</li>
+          <li data-setup-step="optional_tools"><span>5</span>Optional tools</li>
+          <li data-setup-step="finish"><span>6</span>Finish</li>
+          <li data-setup-step="first_task"><span>7</span>Create First Task</li>
+        </ol>
+
+        <dl class="first-run-status-summary" aria-label="Current First Run status" aria-live="polite">
+          <div>
+            <dt>Current step</dt>
+            <dd id="first-run-current-step">Loading</dd>
+          </div>
+          <div>
+            <dt>Exact next Owner action</dt>
+            <dd id="first-run-next-action">Loading setup state</dd>
+          </div>
+          <div>
+            <dt>Blocking condition</dt>
+            <dd id="first-run-blocking-reason">None</dd>
+          </div>
+          <div>
+            <dt>Setup authorization</dt>
+            <dd id="first-run-authorization-state">Checking local authorization</dd>
+          </div>
+        </dl>
+        <div class="first-run-status-actions">
+          <button id="first-run-refresh-status" class="button button-quiet" type="button">Check Setup Status</button>
+        </div>
+
+        <div id="first-run-message" class="form-message" role="alert" aria-live="assertive" hidden></div>
+
+        <section id="first-run-welcome" class="first-run-step" aria-labelledby="first-run-welcome-title">
+          <span class="step-label">01</span>
+          <h2 id="first-run-welcome-title">Welcome to a new TWOS installation</h2>
+          <p>No Owner account exists and no old TWOS data was imported. Setup remains local and each consequential step requires your action.</p>
+          <dl class="first-run-facts">
+            <div><dt>Source version</dt><dd id="first-run-source-version">Loading</dd></div>
+            <div><dt>Data root</dt><dd id="first-run-data-root">Loading</dd></div>
+            <div><dt>Network boundary</dt><dd id="first-run-bind-address">127.0.0.1 only</dd></div>
+            <div><dt>External action</dt><dd>None</dd></div>
+          </dl>
+          <button id="first-run-start" class="button button-primary" type="button">Start Setup</button>
+        </section>
+
+        <section id="first-run-installation" class="first-run-step" hidden aria-labelledby="first-run-installation-title">
+          <span class="step-label">02</span>
+          <h2 id="first-run-installation-title">Confirm this local installation</h2>
+          <p>TWOS created an isolated runtime and a private data root outside the source distribution. Nothing from an older installation was imported.</p>
+          <dl class="first-run-facts">
+            <div><dt>Database</dt><dd id="first-run-database-state">Initialized</dd></div>
+            <div><dt>Runtime</dt><dd id="first-run-runtime-state">Isolated</dd></div>
+            <div><dt>Address</dt><dd id="first-run-local-address">Loading</dd></div>
+            <div><dt>Next side effect</dt><dd>Advance to explicit Owner creation only</dd></div>
+          </dl>
+          <details class="first-run-advanced">
+            <summary>Advanced</summary>
+            <p>Dependencies are installed in an installation-scoped virtual environment. The database, runtime process state, and logs have separate local boundaries.</p>
+          </details>
+          <button id="first-run-confirm-installation" class="button button-primary" type="button">Confirm Installation</button>
+        </section>
+
+        <section id="first-run-owner" class="first-run-step" hidden aria-labelledby="first-run-owner-title">
+          <span class="step-label">03</span>
+          <h2 id="first-run-owner-title">Create the first Owner</h2>
+          <p>This one-time local authorization protects first-account creation. It is invalidated after the Owner is created.</p>
+          <form id="first-run-owner-form" novalidate>
+            <div class="field-group">
+              <label for="first-run-setup-authorization">One-time setup authorization</label>
+              <input id="first-run-setup-authorization" type="password" autocomplete="off" spellcheck="false" required>
+              <p class="field-hint">Enter the code provided by the local launcher.</p>
+            </div>
+            <div class="field-group">
+              <label for="first-run-owner-username">Username</label>
+              <input id="first-run-owner-username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required maxlength="80">
+            </div>
+            <div class="field-grid">
+              <div class="field-group">
+                <label for="first-run-owner-password">Password</label>
+                <input id="first-run-owner-password" type="password" autocomplete="new-password" required minlength="8" maxlength="200">
+              </div>
+              <div class="field-group">
+                <label for="first-run-owner-password-confirmation">Confirm password</label>
+                <input id="first-run-owner-password-confirmation" type="password" autocomplete="new-password" required minlength="8" maxlength="200">
+              </div>
+            </div>
+            <button id="first-run-create-owner" class="button button-primary" type="submit">Create First Owner</button>
+          </form>
+        </section>
+
+        <section id="first-run-workspace" class="first-run-step" hidden aria-labelledby="first-run-workspace-title">
+          <span class="step-label">04</span>
+          <h2 id="first-run-workspace-title">Authorize one workspace</h2>
+          <p>Only this exact local directory becomes the Owner workspace. Authorization does not inspect, create, or modify project files.</p>
+          <form id="first-run-workspace-form" novalidate>
+            <div class="field-group">
+              <label for="first-run-workspace-path">Absolute workspace path</label>
+              <input id="first-run-workspace-path" type="text" autocomplete="off" spellcheck="false" required>
+              <p class="field-hint">Choose a dedicated directory outside the TWOS source, data root, and your home-directory root.</p>
+            </div>
+            <label class="first-run-checkbox" for="first-run-create-workspace">
+              <input id="first-run-create-workspace" type="checkbox">
+              Create this directory if it does not exist
+            </label>
+            <button id="first-run-authorize-workspace" class="button button-primary" type="submit">Authorize Workspace</button>
+          </form>
+        </section>
+
+        <section id="first-run-tools" class="first-run-step" hidden aria-labelledby="first-run-tools-title">
+          <span class="step-label">05</span>
+          <h2 id="first-run-tools-title">Record optional tool readiness</h2>
+          <p>This is a passive local choice. TWOS does not inspect Codex, contact a provider, or start a Run here. You may record Codex as Needs Setup or skip this optional step.</p>
+          <article class="first-run-tool-row">
+            <div><strong>Codex</strong><p>Optional coding tool</p></div>
+            <span id="first-run-codex-state" class="status-label">Not checked</span>
+          </article>
+          <div class="button-row">
+            <button id="first-run-review-tools" class="button button-secondary" type="button">Record Codex Needs Setup</button>
+            <button id="first-run-skip-tools" class="button button-primary" type="button">Skip Optional Setup</button>
+          </div>
+        </section>
+
+        <section id="first-run-finish" class="first-run-step" hidden aria-labelledby="first-run-finish-title">
+          <span class="step-label">06</span>
+          <h2 id="first-run-finish-title">Review and finish setup</h2>
+          <dl class="first-run-facts">
+            <div><dt>Owner</dt><dd id="first-run-summary-owner">Created</dd></div>
+            <div><dt>Data root</dt><dd id="first-run-summary-data-root">Loading</dd></div>
+            <div><dt>Workspace</dt><dd id="first-run-summary-workspace">Loading</dd></div>
+            <div><dt>Optional Codex</dt><dd id="first-run-summary-tools">Loading</dd></div>
+            <div><dt>Local address</dt><dd id="first-run-summary-address">Loading</dd></div>
+            <div><dt>Automatic external actions</dt><dd>None</dd></div>
+          </dl>
+          <p>Finish Setup will not start Codex, generate a Pack, run a task, Apply, Commit, Push, send email, or create a calendar event.</p>
+          <button id="first-run-finish-setup" class="button button-primary" type="button">Finish Setup</button>
+        </section>
+
+        <section id="first-run-blocked" class="first-run-step" hidden aria-labelledby="first-run-blocked-title">
+          <span class="step-label">Blocked</span>
+          <h2 id="first-run-blocked-title">First Run needs local review</h2>
+          <p>The exact blocking condition and next Owner action are shown above. Checking status is read-only and starts no external action.</p>
+        </section>
+      </section>
+    </main>
+  </section>
+
   <div id="public-view" class="public-shell" hidden>
     <header class="public-header">
       <a class="wordmark" href="/twos" aria-label="Tianma Work OS home">Tianma Work OS</a>
@@ -169,8 +332,17 @@
               <strong id="task-status" class="status-label">No task selected</strong>
             </div>
             <form id="task-form" class="task-form">
+              <aside id="first-run-first-task-banner" class="first-run-first-task-banner" aria-live="polite" hidden>
+                <span class="step-label">Step 07 of 07</span>
+                <strong>Create First Task</strong>
+                <p id="first-run-first-task-next-action">Create and save the first task. Saving does not start a Run or contact a provider.</p>
+              </aside>
+              <div id="task-name-field" class="field-group task-name-field" hidden>
+                <label for="task-name">Task title</label>
+                <input id="task-name" type="text" maxlength="240" placeholder="Name this task">
+              </div>
               <div class="field-group development-task-field">
-                <label for="task-title">Development task</label>
+                <label id="task-title-label" for="task-title">Development task</label>
                 <textarea id="task-title" rows="5" required aria-describedby="development-task-help"></textarea>
                 <p id="development-task-help" class="field-help">Describe the complete development task. TWOS preserves this text and derives the execution details deterministically.</p>
               </div>

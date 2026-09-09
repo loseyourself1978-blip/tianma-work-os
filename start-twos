@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+
+TWOS_SOURCE_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+for TWOS_BOOTSTRAP_PYTHON in python3 python3.13 python3.12 python3.11; do
+    if command -v "$TWOS_BOOTSTRAP_PYTHON" >/dev/null 2>&1; then
+        exec "$TWOS_BOOTSTRAP_PYTHON" \
+            "$TWOS_SOURCE_ROOT/scripts/twos_bootstrap.py" \
+            --source-root "$TWOS_SOURCE_ROOT" \
+            "$@"
+    fi
+done
+
+printf '%s\n' \
+    'BLOCKED: Python 3 is unavailable. Install Python 3.11, 3.12, or 3.13 and run ./start-twos again.' \
+    >&2
+exit 2
