@@ -17,6 +17,8 @@ from sqlalchemy.orm import Session
 
 from . import codex_exec_bridge
 from .models import (
+    AIModelInvocationEvidence,
+    AuditEvent,
     CodexActivityAggregate,
     CodexActivityEvent,
     CodexExecutionAttempt,
@@ -512,6 +514,8 @@ def _bridge_evidence(
         "ticket_digest": handle.ticket_digest,
         "receipt_digest": receipt_digest,
         "receipt_present": receipt is not None,
+        "state_present": state is not None,
+        "launch_present": launch is not None,
         "process_id": process_id,
         "process_start_identity": process_identity if isinstance(process_identity, str) else "",
         "sidecar_process_id": sidecar_process_id,
@@ -1083,7 +1087,9 @@ def _read_activity_events(
     latest_type = attempt.last_event_type
     latest_at = attempt.last_event_at
     try:
-        with os.fdopen(descriptor, "rb", closefd=True) as stream:
+        # The outer finally owns the raw descriptor, including fdopen failure.
+        # Closing it twice can close a different thread's newly reused FD.
+        with os.fdopen(descriptor, "rb", closefd=False) as stream:
             stream.seek(attempt.stdout_offset)
             while True:
                 line_start = stream.tell()
@@ -1238,12 +1244,7 @@ def _read_activity_events(
                     repository_path=repository_path,
                 )
     finally:
-        # ``os.fdopen`` owns and closes the descriptor. This guard covers the
-        # rare exception before ownership is transferred.
-        try:
-            os.close(descriptor)
-        except OSError:
-            pass
+        os.close(descriptor)
     attempt.stdout_offset = consumed_offset
     attempt.stdout_spool_bytes = details.st_size
     if latest_type:
@@ -1610,6 +1611,92 @@ def _monitor_terminal_state(attempt_state: str) -> tuple[str, str]:
     return "RESULT_INTEGRITY_BLOCKED", "INTEGRITY_BLOCKED"
 
 
+def coding_timeout_receipt_persisted(session: Session, run: CodexRun) -> bool:
+    """Read the receipt-bound process/invocation fact, not optional Result truth."""
+    if not (
+        run.status == "timed_out"
+        and run.timed_out
+        and not run.cancelled
+        and run.process_spawned
+        and type(run.exit_code) is int
+        and run.started_at is not None
+        and run.finished_at is not None
+        and run.pack is not None
+        and run.pack.approved_by_user_id is not None
+    ):
+        return False
+    monitor = session.scalar(
+        select(CodexRunMonitor).where(CodexRunMonitor.run_id == run.id)
+    )
+    if monitor is None or monitor.owner_id != run.pack.approved_by_user_id:
+        return False
+    attempts = list(session.scalars(
+        select(CodexExecutionAttempt).where(
+            CodexExecutionAttempt.run_id == run.id,
+            CodexExecutionAttempt.phase == "CODING",
+        )
+    ))
+    if len(attempts) != 1:
+        return False
+    attempt = attempts[0]
+    if not (
+        attempt.owner_id == monitor.owner_id
+        and attempt.monitor_id == monitor.id
+        and attempt.attempt_number == 1
+        and attempt.attempt_state == "TIMED_OUT"
+        and attempt.process_exit_known
+        and not attempt.process_live
+        and attempt.process_exit_code == run.exit_code == monitor.process_exit_code
+        and type(attempt.process_id) is int
+        and attempt.process_id > 0
+        and attempt.process_id == monitor.process_id
+        and _SHA256.fullmatch(attempt.process_start_identity or "")
+        and attempt.process_start_identity == monitor.process_start_identity
+        and _SHA256.fullmatch(attempt.ticket_digest or "")
+        and _SHA256.fullmatch(attempt.receipt_digest or "")
+        and attempt.terminal_at is not None
+    ):
+        return False
+    invocations = list(session.scalars(
+        select(AIModelInvocationEvidence).where(
+            AIModelInvocationEvidence.codex_run_id == run.id,
+            AIModelInvocationEvidence.capability == "coding",
+        )
+    ))
+    if len(invocations) != 1:
+        return False
+    invocation = invocations[0]
+    try:
+        process = json.loads(invocation.process_evidence or "{}")
+    except (TypeError, json.JSONDecodeError):
+        return False
+    return bool(
+        invocation.invocation_ref == f"codex-run-{run.id}-coding"
+        and invocation.task_id == run.task_id
+        and invocation.assignment_id == run.execution_assignment_id
+        and invocation.assignment_version == run.assignment_version
+        and invocation.configured_model_id == run.execution_model_id
+        and invocation.request_fingerprint == run.approved_instruction_digest
+        and invocation.invocation_mode == "real"
+        and invocation.outcome == "timed_out"
+        and invocation.timed_out
+        and not invocation.cancelled
+        and invocation.completed_at is not None
+        and isinstance(process, dict)
+        and process.get("process_observed") is True
+        and type(process.get("exit_code")) is int
+        and process["exit_code"] == run.exit_code
+        and process.get("runtime_interrupted") is False
+    )
+
+def timeout_evidence_settlement_failed(session: Session, run_id: int) -> bool:
+    return session.scalar(select(AuditEvent.id).where(
+        AuditEvent.entity_type == "codex_run",
+        AuditEvent.entity_id == run_id,
+        AuditEvent.action == "codex_timeout_evidence_settlement_failed",
+    )) is not None
+
+
 def _settle_terminal_failure(
     session: Session,
     run: CodexRun,
@@ -1617,6 +1704,18 @@ def _settle_terminal_failure(
     attempt: CodexExecutionAttempt,
 ) -> None:
     timeout_proved = attempt.attempt_state == "TIMED_OUT"
+    prelaunch_blocked = (
+        attempt.blocker_code == "CODEX_EXECUTION_BLOCKED_PRELAUNCH"
+    )
+    timeout_result_unavailable = bool(
+        timeout_proved and attempt.phase == "CODING"
+        and timeout_evidence_settlement_failed(session, run.id)
+    )
+    safe_summary = (
+        "Coding timed out; optional result evidence could not be settled. "
+        "Review the recorded evidence limitation."
+        if timeout_result_unavailable else attempt.safe_summary
+    )
     try:
         terminal_receipt_stat = os.lstat(
             Path(attempt.protected_spool_locator) / "terminal.json"
@@ -1660,6 +1759,8 @@ def _settle_terminal_failure(
         else "blocked"
     )
     monitor_state, recovery_state = _monitor_terminal_state(attempt.attempt_state)
+    if prelaunch_blocked or timeout_result_unavailable:
+        monitor_state, recovery_state = "RESULT_UNAVAILABLE", "RESULT_UNAVAILABLE"
     terminal_at = attempt.terminal_at or utc_now()
     verification_phase = attempt.phase == "VERIFICATION"
     monitor_before = (
@@ -1692,20 +1793,26 @@ def _settle_terminal_failure(
         and run.status == "cancelled"
         and run.owner_summary
     ):
-        run.owner_summary = attempt.safe_summary
+        run.owner_summary = safe_summary
     if run.started_at is not None:
         run.duration_ms = max(
             0, int((terminal_at - run.started_at).total_seconds() * 1000)
         )
     task = session.get(Task, run.task_id)
     if task is not None:
-        task.status = "cancelled" if run_state == "cancelled" else "needs_review"
+        task.status = (
+            "blocked" if prelaunch_blocked else
+            "cancelled" if run_state == "cancelled" else "needs_review"
+        )
         task.acceptance_state = "needs_review"
     monitor.monitor_state = monitor_state
     monitor.recovery_state = recovery_state
     monitor.process_exit_code = attempt.process_exit_code
-    monitor.failure_code = attempt.blocker_code[:80]
-    monitor.safe_summary = attempt.safe_summary
+    monitor.failure_code = (
+        "CODEX_TIMEOUT_RESULT_UNAVAILABLE"
+        if timeout_result_unavailable else attempt.blocker_code[:80]
+    )
+    monitor.safe_summary = safe_summary
     monitor.terminal_at = terminal_at
     monitor.last_observed_at = terminal_at
     monitor.last_heartbeat_at = terminal_at
@@ -2173,6 +2280,51 @@ def _reconcile_execution_attempt_locked(
                 source_sequence=max(1, attempt.event_count + 2),
                 evidence_reference=attempt.ticket_digest,
             )
+        if (
+            phase == "CODING"
+            and run.status == "blocked"
+            and run.finished_at is not None
+            and run.started_at is None
+            and run.exit_code is None
+            and not run.process_spawned
+            and not run.verification_process_spawned
+            and monitor.process_id is None
+            and not monitor.process_start_identity
+            and attempt.attempt_state in ACTIVE_ATTEMPT_STATES | {"RESULT_UNAVAILABLE"}
+            and attempt.process_id is None
+            and not attempt.process_start_identity
+            and attempt.sidecar_process_id is None
+            and not attempt.process_live
+            and not attempt.process_exit_known
+            and not attempt.terminal_event_observed
+            and not attempt.receipt_digest
+            and evidence.get("receipt_present") is False
+            and evidence.get("state_present") is False
+            and evidence.get("launch_present") is False
+            and session.scalar(
+                select(AIModelInvocationEvidence.id).where(
+                    AIModelInvocationEvidence.codex_run_id == run.id
+                ).limit(1)
+            ) is None
+        ):
+            # A manager-proven pre-spawn blocker must terminate a prepared
+            # ticket, but never override published process or receipt evidence.
+            attempt.attempt_state = "RESULT_UNAVAILABLE"
+            attempt.verification_eligible = False
+            attempt.blocker_code = "CODEX_EXECUTION_BLOCKED_PRELAUNCH"
+            attempt.safe_summary = (
+                run.owner_summary
+                or "Coding was blocked before any process started."
+            )
+            attempt.started_at = None
+            attempt.terminal_at = run.finished_at
+            _record_event(
+                session, attempt, category="BLOCKER",
+                event_type="settlement.prelaunch_blocked", status="BLOCKED",
+                summary=attempt.safe_summary, event_at=attempt.terminal_at,
+                source="execution_manager_validation", source_sequence=1,
+                evidence_reference=attempt.ticket_digest,
+            )
         manager_integrity_blocker = _manager_phase_integrity_blocker(run, phase)
         if (
             manager_integrity_blocker
@@ -2341,6 +2493,17 @@ def _reconcile_execution_attempt_locked(
     _ensure_notification(session, snapshot, run, attempt)
     session.flush()
     recovery_needed = bool(
+        (
+            run.status == "timed_out"
+            and run.timed_out
+            and run.structured_result in {"", "{}"}
+            and attempt.phase == "CODING"
+            and attempt.attempt_state == "TIMED_OUT"
+            and attempt.process_exit_known
+            and bool(attempt.receipt_digest)
+            and not timeout_evidence_settlement_failed(session, run.id)
+        )
+        or
         (
             run.status
             not in {"completed", "failed", "blocked", "cancelled", "timed_out"}

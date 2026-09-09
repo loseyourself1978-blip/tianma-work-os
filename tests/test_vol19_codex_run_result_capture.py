@@ -6,6 +6,7 @@ import re
 import sqlite3
 import threading
 import time
+from contextlib import closing
 from datetime import timedelta
 from pathlib import Path
 from types import SimpleNamespace
@@ -1051,7 +1052,7 @@ def test_owner_start_bindings_are_set_once_through_orm_and_raw_sqlite(
             "start_request_digest": "f" * 64,
             "owner_start_confirmed_at": "2099-01-01 00:00:00",
         }
-        with sqlite3.connect(database_path) as connection:
+        with closing(sqlite3.connect(database_path)) as connection, connection:
             for field, replacement in raw_replacements.items():
                 with pytest.raises(sqlite3.IntegrityError, match="set only once"):
                     connection.execute(

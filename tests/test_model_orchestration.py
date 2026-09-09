@@ -54,6 +54,25 @@ TEST_MODEL_CAPABILITIES = [
 ]
 
 
+@pytest.fixture(autouse=True)
+def _dispose_test_databases(monkeypatch):
+    """The test creating an engine owns it even when an assertion fails."""
+    engines = []
+    create_engine = make_engine
+
+    def owned_engine(*args, **kwargs):
+        engine = create_engine(*args, **kwargs)
+        engines.append(engine)
+        return engine
+
+    monkeypatch.setattr(__name__ + ".make_engine", owned_engine)
+    try:
+        yield
+    finally:
+        for engine in reversed(engines):
+            engine.dispose()
+
+
 def install_test_model_registry(factory) -> None:
     """Install generic model fixtures without implying production vendor configuration."""
     with factory() as session:

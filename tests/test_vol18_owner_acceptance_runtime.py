@@ -139,23 +139,27 @@ def test_fresh_signup_receives_exact_executable_phase18_4a_task(
         assert candidate["acceptance_status"] == "accepted"
         assert repository_boundary() == boundary_before
 
-    with factory() as session:
-        assert session.scalar(select(func.count()).select_from(User)) == 1
-        assert session.scalar(select(func.count()).select_from(SessionToken)) == 1
-        assert session.scalar(select(func.count()).select_from(CodexRunMonitor)) == 1
-        assert session.scalar(select(func.count()).select_from(CodexResultEnvelope)) == 1
-        persisted_candidate = session.scalar(select(DeliveryCandidate))
-        assert persisted_candidate is not None
-        assert persisted_candidate.derivation_version == "twos.delivery_candidate.v1"
-        for model in (
-            ApplyPlan,
-            ApplySession,
-            PostApplyVerification,
-            CommitPlan,
-            StageExecution,
-            LocalCommitExecution,
-        ):
-            assert session.scalar(select(func.count()).select_from(model)) == 0
+    try:
+        with factory() as session:
+            assert session.scalar(select(func.count()).select_from(User)) == 1
+            assert session.scalar(select(func.count()).select_from(SessionToken)) == 1
+            assert session.scalar(select(func.count()).select_from(CodexRunMonitor)) == 1
+            assert session.scalar(select(func.count()).select_from(CodexResultEnvelope)) == 1
+            persisted_candidate = session.scalar(select(DeliveryCandidate))
+            assert persisted_candidate is not None
+            assert persisted_candidate.derivation_version == "twos.delivery_candidate.v1"
+            for model in (
+                ApplyPlan,
+                ApplySession,
+                PostApplyVerification,
+                CommitPlan,
+                StageExecution,
+                LocalCommitExecution,
+            ):
+                assert session.scalar(select(func.count()).select_from(model)) == 0
+    finally:
+        # The post-lifespan observation owns the pool it reopens.
+        app.state.engine.dispose()
 
 
 def test_acceptance_harness_has_no_push_execution_path() -> None:

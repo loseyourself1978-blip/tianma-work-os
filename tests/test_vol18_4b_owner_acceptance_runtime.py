@@ -200,27 +200,31 @@ def test_real_signup_only_imports_completed_history_and_never_changes_repository
         assert health["repository"]["ahead"] == 1
         assert health["repository"]["behind"] == 0
 
-    with factory() as session:
-        assert session.scalar(select(func.count()).select_from(User)) == 1
-        assert session.scalar(select(func.count()).select_from(SessionToken)) == 1
-        assert _history_counts(session) == {
-            "monitors": 1,
-            "envelopes": 1,
-            "candidates": 1,
-            "apply_plans": 1,
-            "apply_sessions": 1,
-            "verifications": 1,
-            "commit_plans": 1,
-            "stages": 1,
-            "commits": 1,
-        }
-        commit = session.scalar(select(LocalCommitExecution))
-        stage = session.scalar(select(StageExecution))
-        assert commit is not None and commit.state == "COMMITTED"
-        assert stage is not None and stage.state == "STAGED"
-        assert commit.parent_oid == before["origin_main"]
-        assert commit.commit_oid == before["head"]
-        assert _push_count(session) == 0
+    try:
+        with factory() as session:
+            assert session.scalar(select(func.count()).select_from(User)) == 1
+            assert session.scalar(select(func.count()).select_from(SessionToken)) == 1
+            assert _history_counts(session) == {
+                "monitors": 1,
+                "envelopes": 1,
+                "candidates": 1,
+                "apply_plans": 1,
+                "apply_sessions": 1,
+                "verifications": 1,
+                "commit_plans": 1,
+                "stages": 1,
+                "commits": 1,
+            }
+            commit = session.scalar(select(LocalCommitExecution))
+            stage = session.scalar(select(StageExecution))
+            assert commit is not None and commit.state == "COMMITTED"
+            assert stage is not None and stage.state == "STAGED"
+            assert commit.parent_oid == before["origin_main"]
+            assert commit.commit_oid == before["head"]
+            assert _push_count(session) == 0
+    finally:
+        # The post-lifespan observation owns the pool it reopens.
+        app.state.engine.dispose()
 
 
 def test_restart_preserves_imported_history_without_repository_repreparation(

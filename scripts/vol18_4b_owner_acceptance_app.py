@@ -5,6 +5,7 @@ import os
 import shutil
 import sqlite3
 import subprocess
+from contextlib import closing
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -331,8 +332,8 @@ def _backup_sqlite(source: Path, destination: Path) -> None:
             "The immutable acceptance history template already exists."
         )
     destination.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(source) as source_connection:
-        with sqlite3.connect(destination) as destination_connection:
+    with closing(sqlite3.connect(source)) as source_connection, source_connection:
+        with closing(sqlite3.connect(destination)) as destination_connection, destination_connection:
             source_connection.backup(destination_connection)
             integrity = destination_connection.execute(
                 "PRAGMA integrity_check"

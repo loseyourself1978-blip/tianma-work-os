@@ -15,8 +15,11 @@ import tempfile
 import threading
 import time
 import uuid
+from contextlib import contextmanager
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Iterator
 
 from sqlalchemy import or_, select, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -1973,6 +1976,40 @@ class CodexExecutionManager:
     def _bridge_phase_key(self, run_id: int, phase: str) -> str:
         return f"run-{run_id}-{phase}"
 
+    @contextmanager
+    def _terminal_publication_session(self, run_id: int) -> Iterator[Session]:
+        """Acquire the lifecycle boundary before a phase-projection DB write.
+
+        An exited Run's terminal transaction must precede this boundary; a
+        busy evidence reconciler must not delay authoritative process truth.
+        Unstarted prelaunch rejection may publish its blocker atomically here.
+        """
+        from .run_lifecycle import _reconciliation_lock
+
+        with self.factory() as session:
+            with _reconciliation_lock(session, "run", run_id):
+                yield session
+
+    @staticmethod
+    def _reconcile_terminal_phase(session: Session, run: CodexRun) -> None:
+        from .run_lifecycle import reconcile_execution_attempt
+
+        owner_id = int(run.pack.approved_by_user_id)
+        monitor = ensure_run_monitor(session, owner_id, run)
+        reconcile_execution_attempt(session, owner_id, run, monitor)
+
+    def _settle_terminal_phase(self, run_id: int) -> None:
+        """Publish sealed phase proof after Run commit, before optional intake.
+
+        The worker remains owned and joinable. Acquire the lifecycle lock
+        before opening a new SQLite writer, never inside the Run transaction.
+        """
+        with self._terminal_publication_session(run_id) as session:
+            run = session.get(CodexRun, run_id)
+            if run is not None:
+                self._reconcile_terminal_phase(session, run)
+                session.commit()
+
     def _existing_bridge_handle(
         self,
         run_id: int,
@@ -2197,27 +2234,25 @@ class CodexExecutionManager:
                 separators=(",", ":"),
             ).encode("utf-8")
         ).hexdigest()
-        source_remote_fingerprint, _, remote_complete = (
-            self._remote_state_fingerprint(self.settings.source_repo)
-        )
-        git_boundary_fingerprint, git_boundary_complete = (
-            self._git_boundary_fingerprint(self.settings.source_repo)
-        )
         try:
             approved_snapshot = json.loads(run.pack.source_snapshot_json or "{}")
             if not isinstance(approved_snapshot, dict):
                 raise RuntimeError("The approved source snapshot is invalid.")
-            workspace_snapshot_digest = str(
-                _capture_approved_source_snapshot(
-                    worktree,
-                    approved_snapshot,
-                    hardened_read_only=True,
-                    approved_source_branch=(
-                        run.source_branch if phase == "coding" else None
-                    ),
-                ).get("digest")
-                or ""
-            )
+            # These independent read-only observations all precede ticket
+            # publication. Bound and join their workers locally so subprocess
+            # waiting cannot serially consume the short timeout admission
+            # budget. No Session or mutable ORM object crosses a thread.
+            approved_branch = run.source_branch if phase == "coding" else None
+            with ThreadPoolExecutor(max_workers=3, thread_name_prefix="twos-boundary-read") as reads:
+                remote_read = reads.submit(self._remote_state_fingerprint, self.settings.source_repo)
+                git_read = reads.submit(self._git_boundary_fingerprint, self.settings.source_repo)
+                workspace_read = reads.submit(
+                    _capture_approved_source_snapshot, worktree, approved_snapshot,
+                    hardened_read_only=True, approved_source_branch=approved_branch,
+                )
+                source_remote_fingerprint, _, remote_complete = remote_read.result()
+                git_boundary_fingerprint, git_boundary_complete = git_read.result()
+                workspace_snapshot_digest = str(workspace_read.result().get("digest") or "")
         except (RuntimeError, TypeError, json.JSONDecodeError) as exc:
             raise codex_exec_bridge.CodexExecBridgeError(
                 "WORKSPACE_SNAPSHOT_UNAVAILABLE",
@@ -3420,6 +3455,36 @@ class CodexExecutionManager:
         try:
             with self.factory() as session:
                 run = session.get(CodexRun, run_id)
+                if run is not None and run.status == "timed_out":
+                    from .run_lifecycle import coding_timeout_receipt_persisted
+
+                    if not coding_timeout_receipt_persisted(session, run):
+                        return "none"
+                    # A post-timeout workspace/read failure is not a new
+                    # process failure. Preserve the exit fact and record the
+                    # evidence limitation without persisting exception text.
+                    action = (
+                        "codex_timeout_evidence_settlement_failed"
+                        if recovery_worker
+                        else "codex_timeout_evidence_settlement_deferred"
+                    )
+                    run.owner_summary = (
+                        "Coding timed out; optional result evidence could not be "
+                        "settled. Review the recorded evidence limitation."
+                    )
+                    if session.scalar(select(AuditEvent.id).where(
+                        AuditEvent.entity_type == "codex_run",
+                        AuditEvent.entity_id == run_id,
+                        AuditEvent.action == action,
+                    )) is None:
+                        session.add(AuditEvent(
+                            action=action, entity_type="codex_run", entity_id=run_id,
+                            details=("failure_type=" + re.sub(
+                                r"[^A-Za-z0-9_]", "", failure_type,
+                            )[:80] + "; process_timeout_preserved=true; replacement_process_started=false"),
+                        ))
+                    session.commit()
+                    return "preserved"
                 if (
                     run is None
                     or run.status
@@ -4068,6 +4133,173 @@ class CodexExecutionManager:
                 "Independent Verification did not reach a structured task verdict."
             )
 
+    def _persist_coding_timeout_before_settlement(
+        self,
+        run_id: int,
+        *,
+        worktree: Path,
+        bridge: dict[str, object],
+        collector: _CodexJsonlEvidenceCollector | None,
+        pack_content: str,
+    ) -> bool:
+        """Commit proven process truth before optional workspace/result reads.
+
+        No result envelope or workspace-success claim is produced here.  The
+        existing finalizer still owns full evidence settlement, and the stable
+        invocation reference makes receipt replay idempotent.
+        """
+        if bridge.get("timed_out") is not True:
+            return False
+        receipt = bridge.get("receipt")
+        facts = receipt.get("outcome_facts") if isinstance(receipt, dict) else None
+        if not (
+            isinstance(receipt, dict)
+            and receipt.get("phase") == "coding"
+            and receipt.get("terminal_state") == "TIMED_OUT"
+            and isinstance(facts, dict)
+            and facts.get("timed_out") is True
+            and facts.get("process_exit_known") is True
+            and facts.get("cancelled") is False
+            and bridge.get("process_spawned") is True
+            and bridge.get("cancelled") is not True
+            and bridge.get("runtime_interrupted") is not True
+            and type(receipt.get("process_exit_code")) is int
+            and type(bridge.get("exit_code")) is int
+            and receipt.get("process_exit_code") == bridge.get("exit_code")
+            and type(receipt.get("process_exit_elapsed_ms")) is int
+            and int(receipt["process_exit_elapsed_ms"]) >= 0
+            and type(receipt.get("child_process_id")) is int
+            and int(receipt["child_process_id"]) > 0
+            and type(bridge.get("process_id")) is int
+            and bridge.get("process_id") == receipt["child_process_id"]
+            and bridge.get("process_start_identity") == receipt.get("child_process_start_identity")
+            and re.fullmatch(
+                r"[0-9a-f]{64}", str(receipt.get("child_process_start_identity") or "")
+            )
+        ):
+            raise ResultIntakeError(
+                "TIMEOUT_RECEIPT_UNPROVEN",
+                "The Coding timeout could not be bound to an exact exited process.",
+            )
+        process_id = int(receipt["child_process_id"])
+        process_identity = str(receipt["child_process_start_identity"])
+        if codex_exec_bridge.process_identity_matches(process_id, process_identity):
+            raise ResultIntakeError(
+                "TIMEOUT_PROCESS_STILL_LIVE",
+                "Coding timeout settlement is waiting for the exact child to exit.",
+            )
+        with self.factory() as session:
+            if session.get_bind().dialect.name == "sqlite":
+                session.execute(text("BEGIN IMMEDIATE"))
+            run = session.get(CodexRun, run_id)
+            if run is None:
+                raise ResultIntakeError("RUN_UNAVAILABLE", "The Coding Run is unavailable.")
+            monitor = session.scalar(
+                select(CodexRunMonitor).where(CodexRunMonitor.run_id == run_id)
+            )
+            if (
+                monitor is None
+                or run.pack is None
+                or run.pack.content != pack_content
+                or hashlib.sha256(pack_content.encode("utf-8")).hexdigest()
+                != run.approved_instruction_digest
+                or run.status not in {"starting", "running", "settling", "timed_out"}
+                or run.cancelled
+                or run.verification_process_spawned
+            ):
+                raise ResultIntakeError(
+                    "TIMEOUT_RUN_BINDING_MISMATCH",
+                    "The timeout does not match the current Coding Run binding.",
+                )
+            # This existing validator re-reads the sealed ticket/receipt and
+            # requires the exact immutable Run, phase, attempt and process IDs.
+            if not self._bind_historical_phase_process(
+                session, run, monitor, phase="coding",
+                process_id=process_id, process_start_identity=process_identity,
+                worktree=worktree, terminal_receipt=receipt,
+            ):
+                raise ResultIntakeError(
+                    "TIMEOUT_ATTEMPT_UNAVAILABLE",
+                    "The sealed Coding timeout attempt is unavailable.",
+                )
+            attempt = session.scalar(
+                select(CodexExecutionAttempt).where(
+                    CodexExecutionAttempt.owner_id == monitor.owner_id,
+                    CodexExecutionAttempt.run_id == run_id,
+                    CodexExecutionAttempt.monitor_id == monitor.id,
+                    CodexExecutionAttempt.phase == "CODING",
+                    CodexExecutionAttempt.attempt_number == 1,
+                )
+            )
+            if not (
+                attempt is not None
+                and attempt.attempt_state == "TIMED_OUT"
+                and attempt.process_exit_known
+                and not attempt.process_live
+                and attempt.process_exit_code == receipt["process_exit_code"]
+                and attempt.terminal_at is not None
+                and attempt.started_at is not None
+                and attempt.receipt_digest == canonical_sha256(receipt)
+                and monitor.process_id == process_id
+                and monitor.process_start_identity == process_identity
+            ):
+                raise ResultIntakeError(
+                    "TIMEOUT_ATTEMPT_BINDING_MISMATCH",
+                    "The exited Coding process conflicts with its persisted timeout attempt.",
+                )
+            from .run_lifecycle import coding_timeout_receipt_persisted
+
+            if coding_timeout_receipt_persisted(session, run):
+                session.commit()
+                return True
+            run.status = "timed_out"
+            run.process_spawned = True
+            run.timed_out = True
+            run.cancelled = False
+            run.exit_code = int(receipt["process_exit_code"])
+            run.started_at = run.started_at or attempt.started_at
+            run.finished_at = attempt.terminal_at
+            run.duration_ms = max(0, int(receipt.get("process_exit_elapsed_ms") or 0))
+            run.stdout = str(bridge.get("stdout") or "")
+            run.stderr = str(bridge.get("stderr") or "")
+            run.output_truncated = bool(bridge.get("retention_truncated"))
+            run.verification_status = "not_started"
+            run.verification_summary = "Independent Verification did not start because Coding timed out."
+            run.owner_summary = "Coding timed out; workspace and result evidence are still being settled."
+            run.task.status = "needs_review"
+            # Empty structured_result is intentional: result availability must
+            # wait for real evidence. A timed-out invocation is not a verified
+            # model claim, so the recorder's False return is not an error.
+            self._record_codex_invocation_evidence(
+                session, run, collector, {}, pack_content, False,
+                bool(bridge.get("delivery_complete")),
+            )
+            session.flush()
+            if not coding_timeout_receipt_persisted(session, run):
+                raise ResultIntakeError(
+                    "TIMEOUT_INVOCATION_BINDING_MISMATCH",
+                    "The timeout and its unique Coding invocation could not be committed together.",
+                )
+            previous = session.scalar(
+                select(AuditEvent.id).where(
+                    AuditEvent.entity_type == "codex_run",
+                    AuditEvent.entity_id == run_id,
+                    AuditEvent.action == "codex_timeout_terminal_persisted",
+                )
+            )
+            if previous is None:
+                session.add(
+                    AuditEvent(
+                        action="codex_timeout_terminal_persisted",
+                        entity_type="codex_run",
+                        entity_id=run_id,
+                        details="Sealed Coding timeout and unique invocation persisted before optional evidence settlement; no result or verification success claimed.",
+                    )
+                )
+            self._sync_result_monitor(session, run)
+            session.commit()
+        return True
+
     def _finalize_recovered_bridge_run(
         self,
         run_id: int,
@@ -4353,23 +4585,9 @@ class CodexExecutionManager:
                     safe_summary=run.owner_summary,
                 )
             session.commit()
-            if coding_integrity_blocked or (
-                verification is not None and verification.get("integrity_blocked")
-            ):
-                # The Run finalization transaction is committed before taking
-                # the per-Run reconciliation lock, avoiding a SQLite
-                # writer/lock inversion with the independent monitor thread.
-                # The following transaction atomically projects attempt,
-                # snapshot, notification and Verification eligibility.
-                from .run_lifecycle import reconcile_execution_attempt
-
-                reconcile_execution_attempt(
-                    session,
-                    int(run.pack.approved_by_user_id),
-                    run,
-                    monitor,
-                )
-                session.commit()
+        # This includes the existing integrity-blocked projection, but no
+        # phase/envelope lock can hold back the already-proven terminal Run.
+        self._settle_terminal_phase(run_id)
 
     def _recover_bridge_run(self, run_id: int) -> None:
         """Replay one sealed Coding receipt and continue its normal finalizer."""
@@ -4428,6 +4646,10 @@ class CodexExecutionManager:
             )
         elif coding_collector is not None:
             coding_collector.clear_verified_model_identity()
+        self._persist_coding_timeout_before_settlement(
+            run_id, worktree=worktree, bridge=coding_bridge,
+            collector=coding_collector, pack_content=pack_content,
+        )
         result = self._derive_result(
             worktree,
             run_id,
@@ -4481,7 +4703,7 @@ class CodexExecutionManager:
                         or transition_run.status == "cancelled"
                     )
                 )
-            ) and not verification_phase_launched
+            ) and not verification_phase_launched and not timed_out
         coding_process = result.get("coding_process")
         git_evidence = result.get("git_evidence")
         coding_ready = bool(
@@ -4604,6 +4826,31 @@ class CodexExecutionManager:
         return self._start_worker(run_id, recover_bridge=True)
 
     def _bridge_recovery_allowed(self, run: CodexRun) -> bool:
+        if run.status == "timed_out":
+            if not run.timed_out or run.structured_result not in {"", "{}"}:
+                return False
+            from .run_lifecycle import timeout_evidence_settlement_failed
+
+            with self.factory() as session:
+                if timeout_evidence_settlement_failed(session, run.id):
+                    # One sealed-receipt recovery has already failed. Do not
+                    # turn an evidence limitation into an endless worker loop.
+                    return False
+            try:
+                handle = self._existing_bridge_handle(int(run.id), "coding")
+                receipt = (
+                    codex_exec_bridge.load_terminal_receipt(handle)
+                    if handle is not None else None
+                )
+            except (codex_exec_bridge.CodexExecBridgeError, RuntimeError):
+                return False
+            return bool(
+                isinstance(receipt, dict)
+                and receipt.get("phase") == "coding"
+                and receipt.get("terminal_state") == "TIMED_OUT"
+                and type(receipt.get("process_exit_code")) is int
+                and receipt.get("process_exit_code") == run.exit_code
+            )
         if run.status in {"queued", "starting", "running", "verifying"}:
             return True
         if run.status not in {"settling", "blocked"}:
@@ -4693,15 +4940,11 @@ class CodexExecutionManager:
             elif bridge_action == "retry":
                 retry_recovery = True
         finally:
-            with self._lock:
-                self._workers.pop(run_id, None)
-                self._processes.pop(run_id, None)
-                self._cancel_requested.discard(run_id)
             # Final Run/result publication and the background watcher use
             # separate transactions.  Reconcile this exact Run immediately
-            # after its worker releases ownership so a terminal structured
-            # result cannot miss the watcher's bounded settlement window and
-            # remain unpublished until process shutdown or a manual refresh.
+            # while the worker is still owned and joinable. Shutdown must not
+            # dispose the engine while an untracked final DB pass can reopen
+            # its pool. Publication still precedes releasing Run ownership.
             # This pass is intake-only: it never starts a replacement process.
             try:
                 reconcile_run_monitors(self.factory, run_ids=[run_id])
@@ -4710,6 +4953,11 @@ class CodexExecutionManager:
                 # teardown must not be converted into a false Run failure by
                 # a transient intake transaction error.
                 pass
+            finally:
+                with self._lock:
+                    self._workers.pop(run_id, None)
+                    self._processes.pop(run_id, None)
+                    self._cancel_requested.discard(run_id)
         if retry_recovery:
             self._start_worker(run_id, recover_bridge=True)
 
@@ -5192,7 +5440,7 @@ class CodexExecutionManager:
             # boundary: discard the isolated worktree, invalidate approval,
             # and make no process/exit/model-invocation claim.
             self.adapter.discard_unstarted_worktree(worktree, branch)
-            with self.factory() as blocked_session:
+            with self._terminal_publication_session(run_id) as blocked_session:
                 blocked_run = blocked_session.get(CodexRun, run_id)
                 if blocked_run is not None and not blocked_run.process_spawned:
                     blocked_run.worktree_path = ""
@@ -5204,6 +5452,7 @@ class CodexExecutionManager:
                             blocked_session,
                             blocked_run,
                             reason=str(exc),
+                            reconcile_prelaunch=True,
                         )
             return
         if (
@@ -5223,6 +5472,10 @@ class CodexExecutionManager:
             )
         elif evidence_collector is not None:
             evidence_collector.clear_verified_model_identity()
+        self._persist_coding_timeout_before_settlement(
+            run_id, worktree=worktree, bridge=bridge_result,
+            collector=evidence_collector, pack_content=pack_content,
+        )
         result = self._derive_result(
             worktree,
             run_id,
@@ -5267,6 +5520,9 @@ class CodexExecutionManager:
                     )
                 )
             )
+        if timed_out:
+            # A late Owner intent cannot reverse a sealed Coding timeout.
+            owner_cancelled_before_verification = False
         if owner_cancelled_before_verification:
             cancelled = True
         coding_process_for_gate = result.get("coding_process")
@@ -5542,10 +5798,9 @@ class CodexExecutionManager:
             create_owner_acceptance(session, run.task, run)
             if run.status != "completed":
                 run.task.status = "needs_review" if run.status in {"failed", "timed_out"} else run.status
-            # Persist terminal process truth without taking the lifecycle
-            # lock while this transaction owns SQLite's writer boundary. The
-            # worker-finally Result Intake pass publishes attempt, envelope,
-            # snapshot and notification together after this commit.
+            # Persist terminal process truth independently of lifecycle locks.
+            # Sealed phase proof and optional envelope intake have separate
+            # writer boundaries after this commit, with worker ownership kept.
             monitor = ensure_run_monitor(
                 session,
                 int(run.pack.approved_by_user_id),
@@ -5599,6 +5854,7 @@ class CodexExecutionManager:
                     safe_summary=run.owner_summary,
                 )
             session.commit()
+        self._settle_terminal_phase(run_id)
 
     @staticmethod
     def _local_verification_environment(
@@ -8829,7 +9085,10 @@ class CodexExecutionManager:
         )
         session.commit()
 
-    def _finish_pack_blocked(self, session: Session, run: CodexRun, *, reason: str) -> None:
+    def _finish_pack_blocked(
+        self, session: Session, run: CodexRun, *, reason: str,
+        reconcile_prelaunch: bool = False,
+    ) -> None:
         run.status = "blocked"
         run.finished_at = utc_now()
         run.owner_summary = "Blocked before process start: approved execution conditions are no longer satisfied."
@@ -8848,6 +9107,11 @@ class CodexExecutionManager:
                 details=f"Approved pack was no longer executable before process start: {reason[:500]}",
             )
         )
+        if reconcile_prelaunch:
+            # The caller owns the lifecycle lock before its first DB write.
+            # A sealed ticket observed before failed Popen must not leave an
+            # active snapshot after the synchronous rejection has returned.
+            self._reconcile_terminal_phase(session, run)
         session.commit()
 
     def _finish_source_snapshot_unavailable(

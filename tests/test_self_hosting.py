@@ -7,6 +7,7 @@ import sqlite3
 import subprocess
 import threading
 import time
+from contextlib import closing
 from pathlib import Path
 
 import pytest
@@ -4519,12 +4520,17 @@ def test_runtime_shutdown_hands_off_detached_run_for_restart_recovery(
             assert coding_process_identity[0] is not None
             assert coding_process_identity[1]
 
-    with factory() as session:
-        handed_off = session.get(CodexRun, run_id)
-        assert handed_off is not None
-        assert handed_off.status in {"running", "verifying"}
-        assert handed_off.cancelled is False
-        assert handed_off.finished_at is None
+    try:
+        with factory() as session:
+            handed_off = session.get(CodexRun, run_id)
+            assert handed_off is not None
+            assert handed_off.status in {"running", "verifying"}
+            assert handed_off.cancelled is False
+            assert handed_off.finished_at is None
+    finally:
+        # This post-lifespan observation reopens the already-disposed engine.
+        # The test owns that new pool, not the restarted application.
+        client.app.state.engine.dispose()
 
     with make_client(
         tmp_path,
@@ -4707,7 +4713,7 @@ def test_codex_failure_timeout_and_cancel(tmp_path: Path) -> None:
 
 def test_existing_database_migration_preserves_old_task(tmp_path: Path) -> None:
     database = tmp_path / "legacy.sqlite3"
-    with sqlite3.connect(database) as connection:
+    with closing(sqlite3.connect(database)) as connection, connection:
         connection.execute(
             """CREATE TABLE tasks (
                 id INTEGER PRIMARY KEY,
@@ -4743,7 +4749,7 @@ def test_existing_database_migration_preserves_old_task(tmp_path: Path) -> None:
     with TestClient(create_app(settings=settings, start_scheduler=False)) as client:
         assert client.get("/api/health").status_code == 200
 
-    with sqlite3.connect(database) as connection:
+    with closing(sqlite3.connect(database)) as connection, connection:
         columns = {row[1] for row in connection.execute("PRAGMA table_info(tasks)")}
         assert {
             "workflow_type",

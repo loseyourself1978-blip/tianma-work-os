@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import getpass
 import sys
+from contextlib import contextmanager
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -16,17 +17,29 @@ from .security import create_owner, normalize_username, owner_record_issue, reco
 def cmd_init_db() -> int:
     settings = get_settings()
     engine = make_engine(settings.database_url)
-    initialize_database(engine)
-    print(f"TWOS database initialized: {settings.database_url}")
-    return 0
+    try:
+        initialize_database(engine)
+        print(f"TWOS database initialized: {settings.database_url}")
+        return 0
+    finally:
+        engine.dispose()
+
+
+@contextmanager
+def _initialized_session(engine):
+    """A CLI invocation owns its database pool, including all early returns."""
+    try:
+        initialize_database(engine)
+        with make_session_factory(engine)() as session:
+            yield session
+    finally:
+        engine.dispose()
 
 
 def cmd_init_owner(username: str) -> int:
     settings = get_settings()
     engine = make_engine(settings.database_url)
-    initialize_database(engine)
-    factory = make_session_factory(engine)
-    with factory() as session:
+    with _initialized_session(engine) as session:
         existing = session.scalar(select(User).order_by(User.id))
         if existing is not None:
             message = (
@@ -65,9 +78,7 @@ def cmd_recover_owner(confirm_local_recovery: bool) -> int:
         return 2
     settings = get_settings()
     engine = make_engine(settings.database_url)
-    initialize_database(engine)
-    factory = make_session_factory(engine)
-    with factory() as session:
+    with _initialized_session(engine) as session:
         users = session.scalars(select(User).order_by(User.id).limit(2)).all()
         recovered_before = session.scalar(
             select(AuditEvent.id).where(AuditEvent.action == "owner_recovered").limit(1)

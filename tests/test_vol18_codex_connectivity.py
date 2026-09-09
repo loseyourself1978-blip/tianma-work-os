@@ -588,12 +588,13 @@ def test_vol18_005_migration_and_append_only_evidence(tmp_path: Path, monkeypatc
             assert "vol18.005" in versions
         inspector = inspect(client.app.state.engine)
         assert "codex_connectivity_evidence" in inspector.get_table_names()
-        triggers = {
-            row[0]
-            for row in client.app.state.engine.connect().execute(
-                text("SELECT name FROM sqlite_master WHERE type='trigger'")
-            )
-        }
+        with client.app.state.engine.connect() as connection:
+            triggers = {
+                row[0]
+                for row in connection.execute(
+                    text("SELECT name FROM sqlite_master WHERE type='trigger'")
+                )
+            }
         assert "trg_codex_connectivity_evidence_no_update" in triggers
         assert "trg_codex_connectivity_evidence_no_delete" in triggers
 

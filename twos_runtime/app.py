@@ -119,7 +119,7 @@ from .result_intake import (
     result_envelope_out,
     source_snapshot_unavailable_for_run,
 )
-from .run_lifecycle import lifecycle_snapshot_out
+from .run_lifecycle import coding_timeout_receipt_persisted, lifecycle_snapshot_out
 from .models import (
     AICapability,
     AIModel,
@@ -1060,12 +1060,108 @@ def codex_start_request_digest(
     return hashlib.sha256(material.encode("utf-8")).hexdigest()
 
 
+def run_result_projection(
+    run: CodexRun,
+    result: dict[str, Any],
+    *,
+    coding_state: str | None = None,
+) -> dict[str, Any]:
+    """Stable public fields, not a persisted result or proof of settlement.
+
+    Process truth can precede optional evidence collection. Never write this
+    projection back to structured_result: an empty persisted result remains the
+    recovery signal, and only actual envelope evidence establishes availability.
+    The legacy process object describes Coding, not combined phase outcomes.
+    """
+    projected = dict(result)
+    if run.timed_out:
+        coding_status, failure = "timed_out", "Coding exceeded the configured timeout."
+    elif run.cancelled:
+        coding_status, failure = "cancelled", "Coding was cancelled by the Owner."
+    elif type(run.exit_code) is int:
+        coding_status = "completed" if run.exit_code == 0 else "failed"
+        failure = "" if run.exit_code == 0 else f"Coding process exited with code {run.exit_code}."
+    else:
+        coding_status = str(run.status or "pending")
+        if coding_status not in {"starting", "running", "blocked", "failed", "interrupted"}:
+            coding_status = "pending"
+        failure = ""
+    if coding_state:
+        coding_status = "completed" if coding_state == "succeeded" else coding_state
+    if coding_status == "interrupted":
+        failure = "Coding process evidence was interrupted."
+    verification_started = bool(run.verification_process_spawned)
+    verification_status = str(run.verification_status or "not_started")
+    verification_summary = str(run.verification_summary or "")
+    if not verification_summary and not verification_started:
+        verification_summary = (
+            "Verification was not started because Coding exceeded the configured timeout."
+            if run.timed_out
+            else "Verification has not started."
+        )
+
+    def object_with_defaults(key: str, defaults: dict[str, Any]) -> None:
+        existing = projected.get(key)
+        projected[key] = {**defaults, **(existing if isinstance(existing, dict) else {})}
+
+    object_with_defaults("process", {
+        "exit_code": run.exit_code,
+        "timed_out": bool(run.timed_out),
+        "cancelled": bool(run.cancelled),
+        "runtime_interrupted": coding_status == "interrupted",
+        "stderr_present": bool(run.stderr),
+    })
+    object_with_defaults("coding_process", {
+        "status": coding_status,
+        "process_started": bool(run.process_spawned),
+        "exit_code": run.exit_code,
+        "timed_out": bool(run.timed_out),
+        "cancelled": bool(run.cancelled),
+        "failure": failure,
+    })
+    object_with_defaults("verification", {
+        "status": verification_status,
+        "summary": verification_summary,
+        "process_spawned": verification_started,
+    })
+    object_with_defaults("verification_process", {
+        "status": verification_status,
+        "process_started": verification_started,
+        "exit_code": run.verification_exit_code,
+        "timed_out": bool(run.verification_timed_out),
+        "cancelled": bool(run.verification_cancelled),
+        "failure": verification_summary if verification_status not in {"running", "completed"} else "",
+    })
+    object_with_defaults("verification_verdict", {
+        "status": "not_reached", "passed_checks": [], "failed_checks": [],
+    })
+    for key in ("changed_files", "changed_file_evidence"):
+        if not isinstance(projected.get(key), list):
+            projected[key] = []
+    return projected
+
+
 def codex_run_out(
     run: CodexRun,
     include_raw: bool = False,
     session: Session | None = None,
 ) -> dict[str, Any]:
+    # Sample lifecycle before process-proof normalization. Phase settlement may
+    # commit between reads; never combine an older unverified invocation with
+    # a newer completed lifecycle and publish that mixture as terminal truth.
+    lifecycle = (
+        lifecycle_snapshot_out(
+            session, int(run.pack.approved_by_user_id), run, advanced=include_raw,
+        )
+        if session is not None
+        and run.pack is not None
+        and run.pack.approved_by_user_id is not None
+        else None
+    )
     result = decoded_object(run.structured_result)
+    receipt_timeout = bool(
+        session is not None and coding_timeout_receipt_persisted(session, run)
+    )
     result["task_id"] = run.task_id
     result["task_version"] = run.task_version
     result["pack_version"] = run.pack.version if run.pack else None
@@ -1411,29 +1507,27 @@ def codex_run_out(
         "started_at": iso(run.started_at),
         "finished_at": iso(run.finished_at),
     }
-    if (
-        session is not None
-        and run.pack is not None
-        and run.pack.approved_by_user_id is not None
-    ):
-        output["lifecycle"] = lifecycle_snapshot_out(
-            session,
-            int(run.pack.approved_by_user_id),
-            run,
-            advanced=include_raw,
-        )
+    if lifecycle is not None:
+        output["lifecycle"] = lifecycle
         lifecycle_state = str(output["lifecycle"].get("state") or "").upper()
+        verified_completion = bool(
+            run.status == "completed"
+            and result["coding_invocation"].get("process_execution_verified") is True
+            and result["verification_invocation"].get("process_execution_verified") is True
+        )
         if (
             str(run.status or "").lower()
             in {"completed", "failed", "blocked", "cancelled", "timed_out"}
+            and not receipt_timeout
+            and not verified_completion
             and lifecycle_state
             in {"QUEUED", "STARTING", "RUNNING", "VERIFYING", "SETTLING"}
         ):
-            # The execution manager can persist process outcome just before
-            # the lifecycle transaction publishes the receipt-bound phase
-            # attempt. Do not expose a terminal Run during that narrow window:
-            # local Verification proof and every primary status must become
-            # terminal together from the canonical lifecycle projection.
+            # Legacy/recovery rows may precede receipt-bound phase publication.
+            # Do not promote unproven terminal metadata. Conversely, both
+            # verified process outcomes are terminal independently of slower
+            # envelope intake; SETTLING there describes result availability,
+            # not a reversal of already-proven Coding/Verification completion.
             output["status"] = "settling"
             output["canonical_status"] = "starting"
             output["completion_classification"] = "pending"
@@ -1445,6 +1539,7 @@ def codex_run_out(
                 if result_envelope is not None
                 else None
             ),
+            session=session,
         )
     if include_raw:
         output.update(
@@ -1466,6 +1561,12 @@ def codex_run_out(
                 "verification_jsonl_diagnostics": run.verification_stdout,
             }
         )
+    # Apply defaults only after the canonical classifications above. Empty
+    # collections mean no evidence is available yet, never a clean workspace.
+    output["result"] = run_result_projection(
+        run, result,
+        coding_state=output.get("terminal_truth", {}).get("coding", {}).get("status"),
+    )
     return output
 
 
@@ -1569,9 +1670,18 @@ def terminal_truth_out(
     run: CodexRun,
     lifecycle: dict[str, Any],
     envelope: dict[str, Any] | None,
+    *,
+    session: Session | None = None,
 ) -> dict[str, Any]:
     """Project one owner-safe terminal truth record for every Run surface."""
     state = str(lifecycle.get("state") or run.status or "queued").lower()
+    receipt_timeout = bool(
+        session is not None and coding_timeout_receipt_persisted(session, run)
+    )
+    if receipt_timeout:
+        # Optional Result/workspace settlement cannot hide an exact exited
+        # Coding timeout and its atomically persisted invocation evidence.
+        state = "timed_out"
     raw_integrity = str(
         (envelope or {}).get("integrity_state")
         or lifecycle.get("result_integrity")
@@ -1608,7 +1718,9 @@ def terminal_truth_out(
         coding_process.get("cancelled") is True or raw_coding_status == "cancelled"
     )
     coding_timed_out = bool(
-        coding_process.get("timed_out") is True or raw_coding_status == "timed_out"
+        receipt_timeout
+        or coding_process.get("timed_out") is True
+        or raw_coding_status == "timed_out"
     )
     coding_interrupted = bool(
         coding_process.get("runtime_interrupted") is True
@@ -4105,11 +4217,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         else:
             public_envelope = None
             terminal_envelope = None
+        terminal_truth = terminal_truth_out(
+            run, lifecycle, terminal_envelope, session=session
+        )
         return {
             "run_id": run.id,
             "task_id": run.task_id,
             "task_name": run.task.title or run.development_task,
-            "run_status": str(lifecycle.get("state") or run.status).lower(),
+            "run_status": terminal_truth["terminal_state"],
             "monitor_state": monitor_state,
             "requested_model": run.requested_model_identifier,
             "actual_model": (
@@ -4151,7 +4266,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             "owner_action": owner_action,
             "next_action": owner_action,
             "lifecycle": lifecycle,
-            "terminal_truth": terminal_truth_out(run, lifecycle, terminal_envelope),
+            "terminal_truth": terminal_truth,
             "actions": {
                 "next_action": owner_action,
                 "can_reconnect": monitor_state in {
@@ -4227,7 +4342,9 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             "result": public_result,
             "envelope": public_result,
             "lifecycle": lifecycle,
-            "terminal_truth": terminal_truth_out(run, lifecycle, public_result),
+            "terminal_truth": terminal_truth_out(
+                run, lifecycle, public_result, session=session
+            ),
             "monitor": (
                 monitor_out(monitor, envelope=envelope, advanced=True)
                 if monitor is not None
