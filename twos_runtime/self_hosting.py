@@ -59,7 +59,7 @@ class CodexExecutionTarget:
     model: AIModel
     requested_model_identifier: str
     fallback_selected: bool
-    connectivity_evidence_id: int
+    connectivity_evidence_id: int | None
     connectivity_evidence_digest: str
     connection_verified_model_identifier: str
 
@@ -206,6 +206,19 @@ def codex_capability_target(
         raise ValueError(f"The approved Pack does not bind exactly one {capability} model assignment.")
     assignment = rows[0]
     bound_owner_id = owner_id or pack.approved_by_user_id
+    from .guided_delivery import LOCAL_VERIFIER, pack_binding, pack_configuration_error
+    guided = pack_binding(pack)
+    if capability == "verification" and guided:
+        error = pack_configuration_error(session, pack)
+        model = assignment.assigned_model
+        if error or model is None or model.execution_adapter != "local_verification":
+            raise ValueError(error or "The approved independent local Verification target is missing.")
+        return CodexExecutionTarget(
+            assignment=assignment, model=model, requested_model_identifier=LOCAL_VERIFIER,
+            fallback_selected=False, connectivity_evidence_id=None,
+            connectivity_evidence_digest=canonical_local_verification_digest(pack),
+            connection_verified_model_identifier="",
+        )
     primary_ok, primary_reason = _eligible_codex_model(
         session,
         assignment.assigned_model,
@@ -283,6 +296,13 @@ def verification_execution_target(
     )
 
 
+def canonical_local_verification_digest(pack) -> str:
+    from .guided_delivery import pack_binding
+    from .result_intake import canonical_sha256
+    binding = pack_binding(pack)
+    return canonical_sha256(binding["snapshot"]["verification"]) if binding else ""
+
+
 def _run_bound_connectivity_remains_current(
     session: Session,
     *,
@@ -301,6 +321,8 @@ def _run_bound_connectivity_remains_current(
     execution identity instead of requiring that row to remain the newest row.
     """
 
+    if target.model.execution_adapter == "local_verification":
+        return evidence_id is None and target.connectivity_evidence_id is None
     if evidence_id is None:
         return False
     if evidence_id == target.connectivity_evidence_id:
@@ -1451,6 +1473,10 @@ def pack_routing_binding_error(
 ) -> str | None:
     if pack.task_id != task.id:
         return "The pack is bound to a different Task. Regenerate the pack."
+    from .guided_delivery import pack_configuration_error
+    configuration_error = pack_configuration_error(session, pack)
+    if configuration_error:
+        return configuration_error
     current = model_routing_snapshot(session, task.id)
     if not current["assignments"]:
         return "Recompose the AI Team before approval or execution."

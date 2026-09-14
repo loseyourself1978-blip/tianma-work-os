@@ -39,8 +39,12 @@ from .codex_connectivity import (
     verify_codex_connection,
 )
 from .config import Settings, get_settings
+from . import guided_delivery
+from .models import GuidedToolConfiguration, CodexConnectivityEvidence
+from .result_intake import canonical_sha256
 from .db import (
     VOL19_FRESH_INSTALL_SCHEMA_VERSION,
+    VOL19_GUIDED_DELIVERY_SCHEMA_VERSION,
     initialize_database,
     make_engine,
     make_session_factory,
@@ -634,6 +638,18 @@ class RouteIn(BaseModel):
 class CodexSetupIn(BaseModel):
     model_identifier: str = Field(min_length=1, max_length=240, pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,239}$")
     capability: Literal["coding", "verification"] = "coding"
+    reasoning_effort: str | None = Field(default=None, pattern=r"^[a-z][a-z0-9_]{0,31}$")
+
+
+class GuidedToolIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    model_identifier: str = Field(default="gpt-6-astra", min_length=1, max_length=160)
+    reasoning_effort: str = Field(default="xhigh", pattern=r"^[a-z][a-z0-9_]{0,31}$")
+
+
+class GuidedToolSaveIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    configuration_id: int
 
 
 class CodexAssignIn(BaseModel):
@@ -2326,7 +2342,30 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         user = user_for_token(session, raw_token)
         if not user:
             raise HTTPException(status_code=401, detail="Invalid or expired session.")
+        task_id = request.path_params.get("task_id") or request.query_params.get("task_id")
+        try:
+            parsed_task_id = int(task_id) if task_id is not None else None
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=422, detail="Task ID must be an integer.")
+        # This accepted collection filters each Run by Owner and returns an
+        # empty list for foreign Runs. Preserve its safe collection contract;
+        # Task details and all mutations still require Task ownership here.
+        owner_scoped_run_collection = (
+            request.method == "GET"
+            and getattr(request.scope.get("route"), "path", None)
+            == "/api/tasks/{task_id}/codex-runs"
+        )
+        if parsed_task_id is not None and not owner_scoped_run_collection:
+            task = session.get(Task, parsed_task_id)
+            if task is not None and task.owner_user_id is not None and task.owner_user_id != user.id:
+                raise HTTPException(status_code=404, detail="Task not found.")
         return user
+
+    def setup_owner(session, user):
+        try:
+            guided_delivery.require_setup_owner(session, user)
+        except PermissionError as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
 
     def audit(session: Session, request: Request, action: str, entity_type: str, entity_id: int | None, details: str, user: User | None = None) -> None:
         session.add(
@@ -2538,7 +2577,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             "status": "healthy",
             "database": "ok",
             "version": __version__,
-            "schema": VOL19_FRESH_INSTALL_SCHEMA_VERSION,
+            "schema": VOL19_GUIDED_DELIVERY_SCHEMA_VERSION,
         }
         if settings.fresh_install:
             installation = active_installation(session)
@@ -2884,7 +2923,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
 
     @app.get("/api/tasks")
     def list_tasks(session: Session = Depends(get_db), user: User = Depends(current_user)) -> list[dict[str, Any]]:
-        return [task_out(item) for item in session.scalars(select(Task).order_by(Task.id)).all()]
+        return [task_out(item) for item in session.scalars(select(Task).where(or_(Task.owner_user_id == user.id, Task.owner_user_id.is_(None))).order_by(Task.id)).all()]
 
     @app.post("/api/tasks")
     def create_task(payload: TaskIn, request: Request, session: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
@@ -2932,6 +2971,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         )[:240]
         task = Task(
             project_id=payload.project_id,
+            owner_user_id=user.id,
             title=display_title,
             development_task=development_task,
             task_type=action,
@@ -3080,7 +3120,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
         task = session.get(Task, payload.task_id)
-        if not task:
+        if not task or (task.owner_user_id is not None and task.owner_user_id != user.id):
             raise HTTPException(status_code=404, detail="Task not found.")
         prior_assignments = latest_model_assignments(session, task.id)
         prior_snapshot_hash = prior_assignments[0].routing_snapshot_hash if prior_assignments else None
@@ -3172,7 +3212,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
         task = session.get(Task, payload.task_id)
-        if not task:
+        if not task or (task.owner_user_id is not None and task.owner_user_id != user.id):
             raise HTTPException(status_code=404, detail="Task not found.")
         capability = session.scalar(
             select(AICapability).where(AICapability.name == payload.capability, AICapability.enabled == True)  # noqa: E712
@@ -3452,6 +3492,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        setup_owner(session, user)
         catalog_model = selected_catalog_model(payload.model_identifier)
         model, _ = ensure_local_codex_configuration(
             session,
@@ -3625,12 +3666,17 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
-        catalog_model = selected_catalog_model(payload.model_identifier)
-        model, _ = ensure_local_codex_configuration(
-            session,
-            catalog_model.canonical_model_id,
-            catalog_model.display_name,
-        )
+        setup_owner(session, user)
+        if payload.reasoning_effort is not None:
+            try:
+                guided_delivery.configuration_snapshot(guided_delivery.discovery(codex_manager.adapter),
+                    payload.model_identifier, payload.reasoning_effort, settings)
+            except ValueError as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+            model, _ = ensure_local_codex_configuration(session, payload.model_identifier, payload.model_identifier)
+        else:
+            catalog_model = selected_catalog_model(payload.model_identifier)
+            model, _ = ensure_local_codex_configuration(session, catalog_model.canonical_model_id, catalog_model.display_name)
         provider = model.provider
         material_before = (
             provider.enabled,
@@ -3646,7 +3692,11 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             owner_id=user.id,
             model=model,
             detection=detection,
-            command_for=codex_manager.adapter.command_for,
+            command_for=(
+                (lambda *args, **kwargs: codex_manager.adapter.command_for(*args,
+                    reasoning_effort=payload.reasoning_effort, **kwargs))
+                if payload.reasoning_effort is not None else codex_manager.adapter.command_for
+            ),
             timeout_seconds=settings.codex_connectivity_timeout_seconds,
         )
         ready = evidence.readiness_state == "READY_FOR_REAL_RUN"
@@ -3759,6 +3809,147 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         output["invalidated_packs"] = invalidated
         return output
 
+    @app.get("/api/guided-tool-setup")
+    def guided_tool_setup(session: Session = Depends(get_db), user: User = Depends(current_user)):
+        setup_owner(session, user)
+        return {"discovery": guided_delivery.discovery(codex_manager.adapter),
+                "configuration": guided_delivery.configuration_out(session,
+                    guided_delivery.latest_configuration(session, user.id), settings=settings),
+                "provider_request_performed": False}
+
+    @app.post("/api/guided-tool-setup/check")
+    def check_guided_tool(payload: GuidedToolIn, request: Request,
+                         session: Session = Depends(get_db), user: User = Depends(current_user)):
+        setup_owner(session, user)
+        try:
+            snapshot = guided_delivery.configuration_snapshot(guided_delivery.discovery(codex_manager.adapter),
+                payload.model_identifier, payload.reasoning_effort, settings)
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        result = verify_codex_setup_connection(CodexSetupIn(**payload.model_dump()), request, session, user)
+        model, _ = ensure_local_codex_configuration(session, payload.model_identifier)
+        evidence = session.scalar(select(CodexConnectivityEvidence).where(
+            CodexConnectivityEvidence.owner_id == user.id, CodexConnectivityEvidence.model_id == model.id
+        ).order_by(CodexConnectivityEvidence.id.desc()))
+        row = GuidedToolConfiguration(owner_id=user.id, model_id=model.id,
+            snapshot_json=json.dumps(snapshot, sort_keys=True, separators=(",", ":")),
+            configuration_digest=canonical_sha256(snapshot), connectivity_evidence_id=evidence.id)
+        session.add(row)
+        session.flush()
+        audit(session, request, "guided_codex_readiness_checked", "guided_tool_configuration", row.id,
+              "explicit_owner_action=true; credentials_stored=false", user)
+        return {"configuration": guided_delivery.configuration_out(session, row, settings=settings),
+                "readiness": result}
+
+    @app.post("/api/guided-tool-setup/save")
+    def save_guided_tool(payload: GuidedToolSaveIn, request: Request,
+                        session: Session = Depends(get_db), user: User = Depends(current_user)):
+        setup_owner(session, user)
+        row = session.get(GuidedToolConfiguration, payload.configuration_id)
+        if row is None or row.owner_id != user.id:
+            raise HTTPException(status_code=404, detail="Tool configuration not found.")
+        latest = guided_delivery.latest_configuration(session, user.id)
+        if latest.id != row.id or not guided_delivery.configuration_out(session, row, settings=settings)["ready"]:
+            raise HTTPException(status_code=409, detail="Check the exact current Codex configuration successfully before saving.")
+        row.confirmed_at = row.confirmed_at or utc_now()
+        invalidated = guided_delivery.invalidate_future_packs(session, user.id, row.configuration_digest)
+        audit(session, request, "guided_tool_setup_saved", "guided_tool_configuration", row.id,
+              f"invalidated_packs={invalidated}; execution_started=false", user)
+        return {"configuration": guided_delivery.configuration_out(session, row, settings=settings),
+                "invalidated_packs": invalidated}
+
+    @app.post("/api/tasks/{task_id}/first-delivery/prepare")
+    def prepare_first_delivery(task_id: int, request: Request,
+                               session: Session = Depends(get_db), user: User = Depends(current_user)):
+        task = session.get(Task, task_id)
+        if task is None:
+            raise HTTPException(status_code=404, detail="Task not found.")
+        if session.scalar(select(CodexRun.id).where(CodexRun.task_id == task.id,
+            CodexRun.status.in_(["queued", "starting", "running", "verifying", "settling"]))):
+            raise HTTPException(status_code=409, detail="Wait for the active Run before preparing another Pack.")
+        try:
+            pack = guided_delivery.prepare_delivery(session, task, user, settings)
+        except PermissionError as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
+        except (ValueError, RuntimeError) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        audit(session, request, "first_delivery_pack_prepared", "codex_instruction_pack", pack.id,
+              "approval_required=true; run_started=false", user)
+        return codex_pack_out(pack, include_raw=True)
+
+    @app.get("/api/tasks/{task_id}/first-delivery")
+    def first_delivery_progress(task_id: int, request: Request,
+                               session: Session = Depends(get_db), user: User = Depends(current_user)):
+        task = session.get(Task, task_id)
+        if task is None:
+            raise HTTPException(status_code=404, detail="Task not found.")
+        try:
+            guided_delivery.require_task_owner(session, task, user, settings)
+        except PermissionError as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
+        row = guided_delivery.latest_configuration(session, user.id, confirmed=True)
+        config = guided_delivery.configuration_out(session, row, settings=settings)
+        pack = session.scalar(select(CodexInstructionPack).where(CodexInstructionPack.task_id == task.id)
+                              .order_by(CodexInstructionPack.version.desc()))
+        run = session.scalar(select(CodexRun).where(CodexRun.task_id == task.id).order_by(CodexRun.id.desc()))
+        stage, action, label = 0, "tool_setup", "Open Guided Tool Setup"
+        message = "Confirm Codex explicitly before preparing your first delivery."
+        delivery = None
+        if config and config["ready"]:
+            stage, action, label = 1, "prepare", "Prepare First Delivery"
+            message = "Prepare one Instruction Pack for review. This does not start a Run."
+            if pack and guided_delivery.pack_binding(pack):
+                error = pack_routing_binding_error(session, task, pack, settings.source_repo)
+                if error or pack.status in {"invalidated", "superseded"}:
+                    message = error or "Regenerate the Instruction Pack."
+                elif pack.status == "approval_required":
+                    stage, action, label = 2, "review_pack", "Review Instruction Pack"
+                    message = "Review the exact Task, source, tool, model, Verification and execution boundary."
+                elif pack.status == "approved":
+                    stage, action, label = 3, "start_run", "Start Codex Run"
+                    message = "Start the approved Coding work in an isolated workspace after final confirmation."
+        if run and (pack is None or run.pack_id == pack.id or run.status in {
+            "queued", "starting", "running", "verifying", "settling"
+        }):
+            if run.status in {"queued", "starting", "running"}:
+                stage, action, label = 4, "view_run", "View Run Activity"
+                message = run.owner_summary
+            elif run.status in {"verifying", "settling"}:
+                stage, action, label = 5, "view_run", "View Verification"
+                message = run.owner_summary
+            else:
+                stage, action, label = 6, "review_result", "Review Run Result"
+                message = run.owner_summary
+                delivery = get_result_delivery_projection(run.id, request, session, user)
+                next_step = delivery.get("next_action") or {}
+                primary = next_step.get("primary") or {}
+                code = primary.get("code", "")
+                if code in {"review_apply_plan", "approve_apply_plan", "apply_accepted_changes"}:
+                    stage = 7
+                    action, label = {
+                        "review_apply_plan": ("review_candidate", "Review Candidate"),
+                        "approve_apply_plan": ("approve_apply_plan", "Approve Apply Plan"),
+                        "apply_accepted_changes": ("apply", "Apply"),
+                    }[code]
+                    message = next_step.get("message", message)
+                if code in {"review_commit", "approve_commit", "confirm_local_commit", "revert_applied_changes"}:
+                    stage, action, label = 8, "delivery", primary.get("label", "Review Commit")
+                    message = next_step.get("message", message)
+                    if any(item.get("code") == "verify_applied_changes" for item in next_step.get("secondary", [])):
+                        action, label = "validate_applied", "Validate Applied Changes"
+                if code in {"review_push_plan", "approve_push_plan", "confirm_push"}:
+                    stage, action, label = 9, "delivery", primary.get("label", "Review Push Plan")
+                    message = next_step.get("message", message)
+                push = delivery.get("push_delivery") or {}
+                receipt = push.get("delivery_result") or {}
+                if str(receipt.get("status") or "").lower() in {"delivered", "already_delivered", "succeeded"}:
+                    stage, action, label = 10, "delivery", "Review Delivery Receipt"
+                    message = "Delivered. The exact approved remote SHA is verified."
+        return {"task_id": task.id, "stage_index": stage, "stage": guided_delivery.GUIDE_STAGES[stage],
+                "stages": list(guided_delivery.GUIDE_STAGES), "next_action": action, "action_label": label,
+                "message": message, "pack_id": pack.id if pack else None, "run_id": run.id if run else None,
+                "configuration": config, "automatic_execution": False, "delivery": delivery}
+
     @app.post("/api/tasks/{task_id}/codex/setup/assign")
     def assign_codex_setup(
         task_id: int,
@@ -3767,6 +3958,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        setup_owner(session, user)
         task = session.get(Task, task_id)
         model = session.get(AIModel, payload.model_id)
         if not task or not model or model.execution_adapter != "codex_cli":
@@ -3856,6 +4048,23 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        guided_config = guided_delivery.latest_configuration(session, user.id, confirmed=True)
+        if settings.fresh_install and guided_config is not None:
+            config_view = guided_delivery.configuration_out(session, guided_config, settings=settings)
+            snapshot = json.loads(guided_config.snapshot_json)
+            ready = config_view["ready"]
+            return {"status": "configured" if ready else "needs_setup", "found": True,
+                "version": snapshot["cli_version"], "supported_command": "exec", "passive": True,
+                "reason": config_view["next_action"], "next_action": config_view["next_action"],
+                "readiness_state": config_view["status"], "authentication_ready": ready,
+                "model_binding_ready": ready, "execution_ready": ready,
+                "configuration_status": "configured", "availability_status": "available" if ready else "unavailable",
+                "configured_run_timeout_seconds": settings.codex_timeout_seconds,
+                "configured_connectivity_timeout_seconds": settings.codex_connectivity_timeout_seconds,
+                "run_timeout_seconds": settings.codex_timeout_seconds,
+                "authorized_workspace": snapshot["workspace"], "isolated_worktree_root": str(settings.worktree_root),
+                "connectivity": {"ready_for_real_run": ready, "readiness_state": config_view["status"]},
+                "source": {"identity": "Authorized local workspace", "branch": None, "commit": None, "clean": None}}
         if settings.fresh_install:
             setup = first_run_status(session, settings, authenticated_user=user)
             tools = setup.get("optional_tools") or []
@@ -4135,7 +4344,8 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         )
         if not current or current.id != pack.id or pack.status != "approval_required":
             raise HTTPException(status_code=409, detail="Only the current approval-required pack can be approved.")
-        binding_error = pack_routing_binding_error(session, task, pack, settings.source_repo)
+        binding_error = (guided_delivery.pack_configuration_error(session, pack, settings)
+                         or pack_routing_binding_error(session, task, pack, settings.source_repo))
         if binding_error:
             pack.status = "invalidated"
             pack.invalidated_at = utc_now()
@@ -4290,6 +4500,10 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 detail={"type": "RUN_INELIGIBLE", **eligibility},
             )
         pack = session.get(CodexInstructionPack, eligibility["pack_id"])
+        if pack is not None:
+            config_error = guided_delivery.pack_configuration_error(session, pack, settings)
+            if config_error:
+                raise HTTPException(status_code=409, detail=config_error)
         if pack is None:
             raise HTTPException(status_code=409, detail={"type": "RUN_INELIGIBLE", **eligibility})
         if pack.id != payload.pack_id or pack.version != payload.pack_version:

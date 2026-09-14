@@ -29,14 +29,15 @@ Statuses are based on executable repository evidence in the current recorded Vol
 | Email and calendar actions | DEFERRED | No live action is activated by this segment. |
 | Fresh Install | IMPLEMENTED / OWNER ACCEPTED | The canonical `./start-twos` bootstrap, isolated runtime/data/log boundaries, loopback-only startup, installation-bound health, duplicate-start admission, and clean-copy proof are Owner accepted. See `VOL19_19_2A_FRESH_INSTALL_FIRST_RUN_CLOSEOUT_v0.1.md`. |
 | First Run | IMPLEMENTED / OWNER ACCEPTED | First Owner creation, workspace authorization, passive optional tools, explicit Finish Setup, first Task, refresh and logout/login persistence, and 1280px/390px usability passed Owner acceptance. No automatic Pack, Run, provider, Apply, Commit, or Push occurred. |
-| Guided Tool Setup | PENDING / 19.2B | Explicit Codex configuration, truthful readiness, and immutable future Pack binding remain pending 19.2B. |
-| First Safe Delivery | PENDING / 19.2B | The guided first-delivery journey reusing accepted 19.1 services remains pending 19.2B. |
+| Guided Tool Setup | IMPLEMENTED / OWNER ACCEPTANCE PENDING | 19.2B adds installed-client model/reasoning selection, explicit readiness, versioned Owner confirmation and immutable future Pack binding. See `VOL19_19_2B_GUIDED_FIRST_SAFE_DELIVERY_IMPLEMENTATION_GATE_v0.1.md`. |
+| First Safe Delivery | IMPLEMENTED / OWNER ACCEPTANCE PENDING | The eleven-stage guide reuses accepted 19.1 services. The complete deterministic local-only delivery chain and final 970-test suite passed; live Owner acceptance remains pending. |
 | Backup, restore, and migration recovery acceptance | PARTIAL | Schema migrations and runtime recovery paths exist; a Vol.19 release-level backup/restore acceptance artifact is not present. |
 | Signed release packaging and TWOS 1.0 candidate metadata | MISSING / 19.4 | No signed installer, reproducible Vol.19 release package, or 1.0.0 release candidate is produced here. |
 | External release authorization | BLOCKED | Local-only Push acceptance does not authorize or accept tag, release, pull request, merge, deployment, or a live credentialed hosting-service Push. Those remain separate gates. |
 | Vol.19 19.1 overall | CLOSED / SYNCED | 19.1A, 19.1B, 19.1C, and 19.1D are PASS / OWNER ACCEPTED / CLOSED / SYNCED. The complete accepted chain is recorded in `VOL19_19_1_SIMPLIFIED_OWNER_DELIVERY_CLOSEOUT_v0.1.md`. |
 | Vol.19 19.2A | IMPLEMENTED / OWNER ACCEPTED / CLOSED | PASS / OWNER ACCEPTED / CLOSED; accepted commits and 935 passed / 0 failed / 0 skipped are recorded in `VOL19_19_2A_FRESH_INSTALL_FIRST_RUN_CLOSEOUT_v0.1.md`. |
-| Vol.19 19.2 | IN PROGRESS | 19.2A is closed. Guided Tool Setup and First Safe Delivery remain pending 19.2B; older-install migration and later gates remain open. |
+| Vol.19 19.2B | IMPLEMENTED / OWNER ACCEPTANCE PENDING | Implementation PASS with 970 passed / 0 failed / 0 skipped. Only the Owner can declare live Acceptance PASS; see the 19.2B implementation gate and browser acceptance guide. |
+| Vol.19 19.2 | IN PROGRESS | 19.2A is closed. 19.2B implementation passed; Owner acceptance and closeout remain pending. Older-install migration and later gates remain open. |
 | TWOS 1.0 RC | NOT COMPLETE | Release-level recovery acceptance, security audit, packaging, remaining delivery acceptance, and 1.0.0 metadata are not closed. |
 | TWOS version 1.0.0 | NOT RELEASED | Closing 19.1 does not create release metadata, a tag, package, deployment, or version 1.0.0. |
 

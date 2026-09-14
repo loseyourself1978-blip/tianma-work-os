@@ -1619,6 +1619,7 @@ class CodexAdapter:
         *,
         sandbox_mode: str = "workspace-write",
         output_last_message: Path | None = None,
+        reasoning_effort: str | None = None,
     ) -> list[str]:
         if detection.status != "configured" or not detection.executable or not detection.supported_command:
             raise RuntimeError("Codex CLI is not configured for execution.")
@@ -1648,6 +1649,10 @@ class CodexAdapter:
             if not output_last_message.is_absolute():
                 raise RuntimeError("The Codex final-result sidecar path must be absolute.")
             command.extend(["--output-last-message", str(output_last_message)])
+        if reasoning_effort is not None:
+            if not re.fullmatch(r"[a-z][a-z0-9_]{0,31}", reasoning_effort):
+                raise RuntimeError("The approved reasoning value is unsafe.")
+            command.extend(["-c", f'model_reasoning_effort="{reasoning_effort}"'])
         command.append("-")
         return command
 
@@ -2114,6 +2119,9 @@ class CodexExecutionManager:
         expected_connectivity = str(
             connectivity.evidence_digest if connectivity is not None else ""
         )
+        from .self_hosting import canonical_local_verification_digest
+        if phase == "verification" and run.verification_model and run.verification_model.execution_adapter == "local_verification":
+            expected_connectivity = canonical_local_verification_digest(run.pack)
         requested_model = (
             run.requested_model_identifier
             if phase == "coding"
@@ -2211,6 +2219,9 @@ class CodexExecutionManager:
         connectivity_identity = str(
             connectivity.evidence_digest if connectivity is not None else ""
         )
+        from .self_hosting import canonical_local_verification_digest
+        if phase == "verification" and run.verification_model and run.verification_model.execution_adapter == "local_verification":
+            connectivity_identity = canonical_local_verification_digest(run.pack)
         if not re.fullmatch(r"[0-9a-f]{64}", connectivity_identity):
             raise codex_exec_bridge.CodexExecBridgeError(
                 "CONNECTIVITY_BINDING_INCOMPLETE",
@@ -2332,6 +2343,10 @@ class CodexExecutionManager:
         # generic filename makes stale-artifact forensics needlessly
         # ambiguous even when the containing phase directory is unique.
         local_verification = exact_argv is not None
+        from .guided_delivery import pack_binding, snapshot_is_current
+        guided = pack_binding(run.pack)
+        if guided and not snapshot_is_current(guided["snapshot"], self.settings):
+            raise RuntimeError("Approved tool or Verification configuration changed before execution.")
         final_message_name = (
             f"{LOCAL_VERIFICATION_FINAL_MESSAGE_PREFIX}{phase_key}.txt"
             if local_verification
@@ -2345,6 +2360,7 @@ class CodexExecutionManager:
                 prompt,
                 model_identifier,
                 sandbox_mode=sandbox_mode,
+                **({"reasoning_effort": guided["snapshot"]["reasoning_effort"]} if guided else {}),
             )
         )
         stdin_payload = b"" if local_verification else prompt.encode("utf-8")

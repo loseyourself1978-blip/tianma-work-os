@@ -2839,6 +2839,9 @@ def _validated_bridge_monitor_evidence(
         expected_connectivity = str(
             connectivity.evidence_digest if connectivity is not None else ""
         )
+        if phase == "verification" and run.verification_model and run.verification_model.execution_adapter == "local_verification":
+            from .self_hosting import canonical_local_verification_digest
+            expected_connectivity = canonical_local_verification_digest(run.pack)
         expected_model = (
             run.verification_model_identifier
             if phase == "verification"

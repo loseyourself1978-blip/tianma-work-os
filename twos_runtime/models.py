@@ -166,6 +166,7 @@ class Task(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), index=True)
+    owner_user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)
     title: Mapped[str] = mapped_column(String(240))
     development_task: Mapped[str] = mapped_column(Text, default="")
     task_type: Mapped[str] = mapped_column(String(80), default="Sync Intake")
@@ -200,6 +201,21 @@ class Task(Base):
     codex_packs: Mapped[list["CodexInstructionPack"]] = relationship(back_populates="task")
     codex_runs: Mapped[list["CodexRun"]] = relationship(back_populates="task")
     owner_acceptance_sessions: Mapped[list["OwnerAcceptanceSession"]] = relationship(back_populates="task")
+
+
+class GuidedToolConfiguration(Base):
+    """One Owner-confirmed configuration; credentials always remain with Codex."""
+
+    __tablename__ = "guided_tool_configurations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    model_id: Mapped[int] = mapped_column(ForeignKey("ai_models.id"))
+    snapshot_json: Mapped[str] = mapped_column(Text)
+    configuration_digest: Mapped[str] = mapped_column(String(64))
+    connectivity_evidence_id: Mapped[Optional[int]] = mapped_column(ForeignKey("codex_connectivity_evidence.id"), nullable=True)
+    confirmed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 
 class TaskRun(Base):

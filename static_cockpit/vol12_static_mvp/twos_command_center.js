@@ -2772,6 +2772,7 @@
   }
 
   function resetTaskDetails() {
+    state.firstDeliveryGuide = null;
     state.runConfirmationContext = null;
     if (elements.startCodexConfirmationDialog.open) elements.startCodexConfirmationDialog.close();
     state.pushConfirmationContext = null;
@@ -3018,6 +3019,7 @@
         await loadCommitBuilder(currentCodexRun(), true);
         await loadPushDelivery(currentCodexRun(), true);
         await loadOwnerDelivery(currentCodexRun(), true);
+        await loadFirstDeliveryGuide(task, requestSelectionEpoch);
         if (
           requestSelectionEpoch !== state.taskSelectionEpoch
           || String(state.selectedTaskId) !== String(requestedTaskId)
@@ -3090,6 +3092,7 @@
     renderAudit();
     renderActionAvailability();
     renderHeaderStatus();
+    renderFirstDeliveryGuide();
   }
 
   function renderHeaderStatus() {
@@ -5590,6 +5593,7 @@
   }
 
   async function openCodexSetup(preferredCapability) {
+    if (state.firstRun && state.firstRun.enabled === true) return openGuidedToolSetup();
     const capability = preferredCapability === "verification" || preferredCapability === "coding"
       ? preferredCapability
       : preferredSetupCapability();
@@ -12359,7 +12363,173 @@
     return state.runActivity.map(activityView).some(activityNeedsBrowserObservation);
   }
 
+  async function loadFirstDeliveryGuide(task, epoch) {
+    state.firstDeliveryGuide = null;
+    if (!task || !state.firstRun || state.firstRun.enabled !== true) return;
+    const guide = await api("/api/tasks/" + task.id + "/first-delivery");
+    if (epoch === state.taskSelectionEpoch && String(state.selectedTaskId) === String(task.id)) state.firstDeliveryGuide = guide;
+  }
+
+  function renderFirstDeliveryGuide() {
+    const guide = state.firstDeliveryGuide;
+    const task = selectedTask();
+    const run = guide && guide.stage_index >= 4 ? currentCodexRun() : null;
+    const panel = byId("first-delivery-guide");
+    panel.hidden = !guide || !task || String(guide.task_id) !== String(task.id)
+      || guide.stage_index >= 4 && (!run || String(guide.run_id) !== String(run.id));
+    if (panel.hidden) return;
+    byId("first-delivery-title").textContent = String(guide.stage_index + 1) + ". " + guide.stage;
+    byId("first-delivery-message").textContent = guide.message;
+    byId("first-delivery-action").textContent = guide.action_label;
+    const stages = byId("first-delivery-stages");
+    stages.replaceChildren();
+    guide.stages.forEach(function (label, index) {
+      const item = document.createElement("li");
+      item.textContent = label;
+      if (index === guide.stage_index) item.setAttribute("aria-current", "step");
+      stages.appendChild(item);
+    });
+  }
+
+  function guidedToolSelectionsChanged() {
+    state.guidedToolChecked = null;
+    byId("guided-tool-save").disabled = true;
+    byId("guided-tool-check").disabled = !state.guidedToolDiscovery || state.guidedToolDiscovery.status !== "Not checked" || !byId("guided-model").value || !byId("guided-effort").value;
+    byId("guided-tool-state").textContent = "Not checked for this configuration. Select Check Codex Readiness explicitly.";
+  }
+
+  function populateGuidedEfforts(preferred) {
+    const model = (state.guidedToolDiscovery.models || []).find(function (item) { return item.model === byId("guided-model").value; });
+    const select = byId("guided-effort");
+    select.replaceChildren();
+    (model ? model.reasoning_efforts : []).forEach(function (effort) {
+      const option = document.createElement("option");
+      option.value = effort;
+      option.textContent = effort === "xhigh" ? "Extra high (xhigh)" : effort === "max" ? "Maximum (max)" : effort;
+      select.appendChild(option);
+    });
+    if (Array.from(select.options).some(function (option) { return option.value === preferred; })) select.value = preferred;
+  }
+
+  function showGuidedConfiguration(config) {
+    state.guidedToolChecked = config;
+    byId("guided-tool-state").textContent = config ? config.status + ". " + config.next_action : "Not checked. Select Check Codex Readiness explicitly.";
+    byId("guided-auth").textContent = config ? config.authentication : "Not checked";
+    byId("guided-last-check").textContent = config && config.last_successful_readiness_check || "Never";
+    byId("guided-tool-save").disabled = !(config && config.ready && config.model === byId("guided-model").value && config.reasoning_effort === byId("guided-effort").value);
+  }
+
+  async function openGuidedToolSetup() {
+    const dialog = byId("guided-tool-dialog");
+    byId("guided-tool-state").textContent = "Reading local CLI metadata…";
+    byId("guided-tool-check").disabled = true;
+    byId("guided-tool-save").disabled = true;
+    if (!dialog.open) dialog.showModal();
+    try {
+      const response = await api("/api/guided-tool-setup");
+      const found = response.discovery;
+      state.guidedToolDiscovery = found;
+      byId("guided-executable").textContent = found.executable || "Not found";
+      byId("guided-version").textContent = found.cli_version || "Unavailable";
+      byId("guided-minimum").textContent = found.minimum_supported_version;
+      byId("guided-tool-evidence").textContent = JSON.stringify({ executable_identity: found.executable_identity, catalogue_source: found.catalogue_source, provider_request_performed: false }, null, 2);
+      const select = byId("guided-model");
+      select.replaceChildren();
+      (found.models || []).forEach(function (entry) {
+        const option = document.createElement("option");
+        option.value = entry.model;
+        option.textContent = entry.model;
+        select.appendChild(option);
+      });
+      const wanted = response.configuration ? response.configuration.model : "gpt-6-astra";
+      select.value = wanted;
+      populateGuidedEfforts(response.configuration ? response.configuration.reasoning_effort : "xhigh");
+      showGuidedConfiguration(response.configuration);
+      if (found.status !== "Not checked" || !select.value) byId("guided-tool-state").textContent = found.status + ". " + found.next_action;
+      byId("guided-tool-check").disabled = found.status !== "Not checked" || !select.value || !byId("guided-effort").value;
+    } catch (error) { byId("guided-tool-state").textContent = productActionMessage(error); }
+  }
+
+  async function checkGuidedTool() {
+    const button = byId("guided-tool-check");
+    if (button.disabled) return;
+    button.disabled = true;
+    byId("guided-model").disabled = true;
+    byId("guided-effort").disabled = true;
+    byId("guided-tool-save").disabled = true;
+    byId("guided-tool-state").textContent = "Checking the exact selected Codex configuration after your explicit action…";
+    try {
+      const result = await api("/api/guided-tool-setup/check", { method: "POST", body: { model_identifier: byId("guided-model").value, reasoning_effort: byId("guided-effort").value } });
+      showGuidedConfiguration(result.configuration);
+    } catch (error) { state.guidedToolChecked = null; byId("guided-tool-state").textContent = productActionMessage(error); }
+    finally { button.disabled = false; byId("guided-model").disabled = false; byId("guided-effort").disabled = false; }
+  }
+
+  async function saveGuidedTool() {
+    const config = state.guidedToolChecked;
+    if (!config || byId("guided-tool-save").disabled) return;
+    await performAction("save-guided-tool", byId("guided-tool-save"), "Saving…", async function () {
+      await api("/api/guided-tool-setup/save", { method: "POST", body: { configuration_id: config.id } });
+      byId("guided-tool-dialog").close();
+      return "Tool Setup saved. Prepare First Delivery when you are ready.";
+    });
+  }
+
+  async function firstDeliveryAction() {
+    const guide = state.firstDeliveryGuide;
+    const task = selectedTask();
+    if (!guide || !task || String(guide.task_id) !== String(task.id)) return;
+    if (guide.stage_index >= 4) {
+      const run = currentCodexRun();
+      if (!run || String(guide.run_id) !== String(run.id)) return;
+    }
+    if (guide.next_action === "tool_setup") return openGuidedToolSetup();
+    if (guide.next_action === "prepare") {
+      return performAction("prepare-first-delivery", byId("first-delivery-action"), "Preparing…", async function () {
+        const pack = await api("/api/tasks/" + task.id + "/first-delivery/prepare", { method: "POST" });
+        state.selectedPackId = pack.id;
+        return "Instruction Pack prepared. Review and approve it explicitly; no Run has started.";
+      });
+    }
+    if (guide.next_action === "review_pack") {
+      const pack = currentPack();
+      if (!pack || String(pack.id) !== String(guide.pack_id)) return;
+      byId("guided-pack-summary").textContent = "Task: " + task.title + ". Version: " + pack.task_version + ". Model: " + guide.configuration.model + ". Reasoning: " + guide.configuration.reasoning_effort + ". Verification: independent local exact-content check. Coding may only change the isolated Run workspace; no Commit or Push is authorized.";
+      byId("guided-pack-deliverable").textContent = task.required_output || pack.acceptance_target || task.objective;
+      byId("guided-pack-workspace").textContent = guide.configuration.workspace;
+      byId("guided-pack-source").textContent = pack.source_snapshot_digest ? "Source snapshot captured and bound to this Pack. Approval and Start recheck it for changes." : "Source snapshot unavailable; preparation must be repeated.";
+      byId("guided-pack-content").textContent = (pack.content || "") + "\n\nBound source and tool evidence:\n" + JSON.stringify(pack.generation_metadata || {}, null, 2);
+      byId("guided-pack-dialog").showModal();
+      return;
+    }
+    if (guide.next_action === "start_run") return openCodexRunConfirmation();
+    if (guide.next_action === "validate_applied") return verifyAppliedChanges();
+    if (guide.next_action === "review_candidate") return reviewChangeCandidate();
+    if (guide.next_action === "approve_apply_plan") return approveApplyPlan();
+    if (guide.next_action === "apply") return openApplyConfirmation();
+    if (guide.next_action === "delivery") {
+      const code = guide.delivery && guide.delivery.next_action && guide.delivery.next_action.primary && guide.delivery.next_action.primary.code;
+      if (code === "review_commit") return reviewOwnerCommit();
+      if (code === "approve_commit") return approveOwnerCommitProposal();
+      if (code === "confirm_local_commit") return openOwnerLocalCommitConfirmation();
+      if (code === "review_push_plan") return reviewOwnerPushPlan();
+      if (code === "approve_push_plan") return approveOwnerPushPlan();
+      if (code === "confirm_push") return openOwnerPushConfirmation();
+    }
+    const target = byId(guide.next_action === "view_run" ? "run-card" : guide.stage_index >= 8 ? "commit-builder-section" : "result-card");
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   function bindEvents() {
+    byId("guided-tool-open").addEventListener("click", openGuidedToolSetup);
+    byId("first-delivery-action").addEventListener("click", firstDeliveryAction);
+    byId("guided-tool-check").addEventListener("click", checkGuidedTool);
+    byId("guided-tool-save").addEventListener("click", saveGuidedTool);
+    byId("guided-tool-close").addEventListener("click", function () { byId("guided-tool-dialog").close(); });
+    byId("guided-model").addEventListener("change", function () { populateGuidedEfforts("xhigh"); guidedToolSelectionsChanged(); });
+    byId("guided-effort").addEventListener("change", guidedToolSelectionsChanged);
+    byId("guided-pack-close").addEventListener("click", function () { byId("guided-pack-dialog").close(); });
+    byId("guided-pack-approve").addEventListener("click", async function () { await approvePack(); byId("guided-pack-dialog").close(); });
     elements.firstRunStart.addEventListener("click", startFirstRun);
     elements.firstRunConfirmInstallation.addEventListener("click", confirmFirstRunInstallation);
     elements.firstRunOwnerForm.addEventListener("submit", function (event) {

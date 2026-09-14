@@ -40,6 +40,7 @@ VOL19_CODEX_RUN_RESULT_SCHEMA_VERSION = "vol19.001"
 VOL19_RESULT_DELIVERY_LOOP_SCHEMA_VERSION = "vol19.002"
 VOL19_OWNER_COMMIT_PUSH_SCHEMA_VERSION = "vol19.003"
 VOL19_FRESH_INSTALL_SCHEMA_VERSION = "vol19.004"
+VOL19_GUIDED_DELIVERY_SCHEMA_VERSION = "vol19.005"
 
 
 DEFAULT_PROJECTS = [
@@ -78,6 +79,7 @@ DEFAULT_TOOLS = [
 
 COLUMN_MIGRATIONS = {
     "tasks": [
+        ("owner_user_id", "INTEGER REFERENCES users(id)"),
         ("development_task", "TEXT NOT NULL DEFAULT ''"),
         ("workflow_type", "VARCHAR(80) NOT NULL DEFAULT 'general'"),
         ("objective", "TEXT NOT NULL DEFAULT ''"),
@@ -456,6 +458,8 @@ def initialize_database(engine: Engine, *, seed_default_projects: bool = True) -
             session.add(
                 SchemaVersion(version=VOL19_FRESH_INSTALL_SCHEMA_VERSION)
             )
+        if not session.scalar(select(SchemaVersion).where(SchemaVersion.version == VOL19_GUIDED_DELIVERY_SCHEMA_VERSION)):
+            session.add(SchemaVersion(version=VOL19_GUIDED_DELIVERY_SCHEMA_VERSION))
         if seed_default_projects:
             seed_projects(session)
         seed_registry(session)
@@ -495,6 +499,29 @@ def ensure_runtime_columns(engine: Engine) -> None:
     if "codex_instruction_packs" in tables:
         _ensure_vol17_pack_indexes(engine)
     _ensure_vol19_result_delivery_indexes(engine)
+    if "guided_tool_configurations" in tables and engine.dialect.name == "sqlite":
+        with engine.begin() as connection:
+            immutable_fields = (
+                "id", "owner_id", "model_id", "snapshot_json", "configuration_digest",
+                "connectivity_evidence_id", "created_at",
+            )
+            changed = " OR ".join(f"NEW.{field} IS NOT OLD.{field}" for field in immutable_fields)
+            connection.execute(text(
+                "CREATE TRIGGER IF NOT EXISTS trg_guided_tool_configuration_immutable "
+                "BEFORE UPDATE ON guided_tool_configurations WHEN " + changed +
+                " OR (OLD.confirmed_at IS NOT NULL AND NEW.confirmed_at IS NOT OLD.confirmed_at) "
+                "BEGIN SELECT RAISE(ABORT, 'Guided tool configuration binding is immutable'); END"
+            ))
+            connection.execute(text(
+                "CREATE TRIGGER IF NOT EXISTS trg_guided_tool_configuration_no_delete "
+                "BEFORE DELETE ON guided_tool_configurations "
+                "BEGIN SELECT RAISE(ABORT, 'Guided tool configuration history is immutable'); END"
+            ))
+            connection.execute(text(
+                "CREATE TRIGGER IF NOT EXISTS trg_task_owner_immutable "
+                "BEFORE UPDATE ON tasks WHEN NEW.owner_user_id IS NOT OLD.owner_user_id "
+                "BEGIN SELECT RAISE(ABORT, 'Task ownership is immutable'); END"
+            ))
 
 
 def _ensure_vol19_delivery_candidate_schema(engine: Engine) -> None:

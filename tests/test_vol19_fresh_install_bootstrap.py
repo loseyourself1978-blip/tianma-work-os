@@ -993,7 +993,7 @@ def test_canonical_bootstrap_real_http_first_run_and_restart(tmp_path: Path) -> 
             assert health.status_code == 200
             assert health.json()["status"] == "healthy"
             assert health.json()["database"] == "ok"
-            assert health.json()["schema"] == "vol19.004"
+            assert health.json()["schema"] == twos_bootstrap.LATEST_SCHEMA
             assert health.json()["bind_host"] == "127.0.0.1"
             page = client.get("/twos")
             assert page.status_code == 200

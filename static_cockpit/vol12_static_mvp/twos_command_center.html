@@ -317,6 +317,16 @@
           <p>Inspect model responsibility and readiness, approve the exact routing snapshot, then verify execution evidence.</p>
         </div>
 
+        <section id="first-delivery-guide" class="workbench-card guided-delivery" aria-labelledby="first-delivery-title" hidden>
+          <span class="eyebrow">First Safe Delivery</span>
+          <h2 id="first-delivery-title">Tool Setup</h2>
+          <ol id="first-delivery-stages" aria-label="First delivery progress"></ol>
+          <p id="first-delivery-message"></p>
+          <div class="button-row"><button id="first-delivery-action" class="button button-primary" type="button">Open Guided Tool Setup</button>
+          <button id="guided-tool-open" class="button button-quiet" type="button">Guided Tool Setup</button></div>
+          <p class="boundary-note">Apply changes your source files. Commit records the reviewed changes locally. Push updates only the destination in the approved Push Plan. Each requires your own explicit confirmation.</p>
+        </section>
+
         <section id="selected-task-context" class="selected-task-context" aria-labelledby="selected-task-label" aria-live="polite" data-state="loading">
           <span id="selected-task-label">Selected Task</span>
           <strong id="selected-task-name">Loading task…</strong>
@@ -1774,5 +1784,24 @@
       </dialog>
     </div>
   </div>
+  <dialog id="guided-tool-dialog" class="guided-dialog" aria-labelledby="guided-tool-title">
+    <h2 id="guided-tool-title">Guided Tool Setup</h2>
+    <p>TWOS reuses your existing Codex login. Credentials stay with Codex. Opening this page does not contact a provider.</p>
+    <dl><dt>Detected executable</dt><dd id="guided-executable"></dd><dt>CLI version</dt><dd id="guided-version"></dd><dt>Minimum supported version</dt><dd id="guided-minimum"></dd><dt>Authentication readiness</dt><dd id="guided-auth">Not checked</dd><dt>Last successful readiness check</dt><dd id="guided-last-check">Never</dd></dl>
+    <label for="guided-model">Requested Coding model</label><select id="guided-model"></select>
+    <label for="guided-effort">Requested reasoning effort</label><select id="guided-effort"></select>
+    <p id="guided-tool-state" role="status" aria-live="polite">Not checked</p>
+    <p>Check Codex Readiness makes one bounded provider request for the exact selected model and reasoning. It does not start your delivery Task.</p>
+    <div class="button-row"><button id="guided-tool-check" class="button button-primary" type="button">Check Codex Readiness</button><button id="guided-tool-save" class="button button-secondary" type="button" disabled>Save Tool Setup</button><button id="guided-tool-close" class="button button-quiet" type="button">Close</button></div>
+    <details><summary>Advanced</summary><pre id="guided-tool-evidence"></pre></details>
+  </dialog>
+  <dialog id="guided-pack-dialog" class="guided-dialog" aria-labelledby="guided-pack-title">
+    <h2 id="guided-pack-title">Review Instruction Pack</h2>
+    <p id="guided-pack-summary"></p>
+    <dl><dt>Expected deliverable</dt><dd id="guided-pack-deliverable"></dd><dt>Workspace</dt><dd id="guided-pack-workspace"></dd><dt>Source snapshot</dt><dd id="guided-pack-source"></dd></dl>
+    <p>No Run has been started by preparation. Approval authorizes this exact Pack; Start Codex Run remains a separate action.</p>
+    <details><summary>Advanced — full Pack, source snapshot and configuration evidence</summary><pre id="guided-pack-content"></pre></details>
+    <div class="button-row"><button id="guided-pack-approve" class="button button-primary" type="button">Approve Instruction Pack</button><button id="guided-pack-close" class="button button-quiet" type="button">Close</button></div>
+  </dialog>
 </body>
 </html>

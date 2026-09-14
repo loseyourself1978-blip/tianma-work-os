@@ -37,6 +37,7 @@ from .db import (
     VOL18_REVIEW_APPLY_PLAN_SCHEMA_VERSION,
     VOL19_CODEX_RUN_RESULT_SCHEMA_VERSION,
     VOL19_FRESH_INSTALL_SCHEMA_VERSION,
+    VOL19_GUIDED_DELIVERY_SCHEMA_VERSION,
     VOL19_OWNER_COMMIT_PUSH_SCHEMA_VERSION,
     VOL19_RESULT_DELIVERY_LOOP_SCHEMA_VERSION,
 )
@@ -91,6 +92,7 @@ _CANONICAL_FRESH_SCHEMA_VERSIONS = frozenset(
         VOL19_RESULT_DELIVERY_LOOP_SCHEMA_VERSION,
         VOL19_OWNER_COMMIT_PUSH_SCHEMA_VERSION,
         VOL19_FRESH_INSTALL_SCHEMA_VERSION,
+        VOL19_GUIDED_DELIVERY_SCHEMA_VERSION,
     }
 )
 _MAX_PRIVATE_CONFIGURATION_BYTES = 64 * 1024
@@ -294,7 +296,7 @@ def validate_fresh_database_before_initialization(settings: Settings) -> Path:
             "DATABASE_INCOMPATIBLE",
             "The existing database could not be validated safely.",
         ) from exc
-    current_schema_key = _vol_schema_version_key(VOL19_FRESH_INSTALL_SCHEMA_VERSION)
+    current_schema_key = _vol_schema_version_key(VOL19_GUIDED_DELIVERY_SCHEMA_VERSION)
     assert current_schema_key is not None
     newer = sorted(
         version
@@ -307,10 +309,10 @@ def validate_fresh_database_before_initialization(settings: Settings) -> Path:
             "NEWER_SCHEMA_UNSUPPORTED",
             "This database was created by a newer TWOS schema and cannot be opened safely.",
         )
-    if VOL19_FRESH_INSTALL_SCHEMA_VERSION not in versions:
+    if VOL19_GUIDED_DELIVERY_SCHEMA_VERSION not in versions:
         raise FirstRunError(
             "OLDER_INSTALL_MIGRATION_REQUIRED",
-            "This database predates the 19.2A Fresh Install schema. Older-install migration is not part of this phase.",
+            "This database predates the current Fresh Install schema. Older-install migration is not part of this phase.",
         )
     if (
         len(version_rows) != len(_CANONICAL_FRESH_SCHEMA_VERSIONS)
