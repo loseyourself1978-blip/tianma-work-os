@@ -371,6 +371,38 @@ def test_guided_ui_uses_only_explicit_readiness_and_one_current_action():
     assert 'overflow-wrap: anywhere' in (root / 'styles.css').read_text()
 
 
+@pytest.mark.parametrize('readiness,passive,authenticated,ready,expected', [
+    ('Skipped', True, False, False, 'Codex: Skipped'),
+    ('Not checked', True, False, False, 'Codex: Not checked'),
+    ('Needs setup', True, False, False, 'Codex: Needs setup'),
+    ('Ready', False, True, True, 'Codex: Ready for real Run'),
+])
+def test_codex_header_display_states(readiness, passive, authenticated, ready, expected):
+    import subprocess
+    source = (Path(__file__).resolve().parents[1] / 'static_cockpit/vol12_static_mvp/twos_command_center.js').read_text()
+    render = 'function renderHeaderStatus()' + source.split(
+        'function renderHeaderStatus()', 1)[1].split('function renderProjectOptions()', 1)[0]
+    label = 'function connectivityStateLabel(value)' + source.split(
+        'function connectivityStateLabel(value)', 1)[1].split('function connectivityBoolean', 1)[0]
+    detection = {'readiness_state': readiness, 'passive': passive,
+                 'authentication_ready': authenticated, 'execution_ready': ready,
+                 'connectivity': {'ready_for_real_run': ready,
+                     'readiness_state': 'READY_FOR_REAL_RUN' if ready else 'AUTHENTICATED_CONNECTIVITY_NOT_VERIFIED'}}
+    harness = '''
+const state = {codexStatus: DETECTION};
+const elements = {codexHeaderStatus: {dataset: {}}, accountUsername: {}, runtimeHealth: {}};
+function objectRecord(value) { return value && typeof value === 'object' ? value : {}; }
+globalThis.fetch = () => { throw new Error('Header rendering must remain passive'); };
+'''.replace('DETECTION', json.dumps(detection)) + label + render + '''
+renderHeaderStatus();
+process.stdout.write(JSON.stringify(elements.codexHeaderStatus));
+'''
+    result = subprocess.run(['node', '-e', harness], check=True, capture_output=True, text=True)
+    header = json.loads(result.stdout)
+    assert header['textContent'] == expected
+    assert header['dataset']['status'] == ('ready' if ready else 'setup')
+
+
 def test_selecting_an_available_model_reenables_only_the_explicit_check():
     import subprocess
     source = (Path(__file__).resolve().parents[1] / 'static_cockpit/vol12_static_mvp/twos_command_center.js').read_text()

@@ -3100,7 +3100,9 @@
     const connectivity = objectRecord(objectRecord(detection).connectivity);
     const runtimeAvailable = detection && detection.execution_ready === true
       && connectivity.ready_for_real_run === true;
-    elements.codexHeaderStatus.textContent = runtimeAvailable
+    elements.codexHeaderStatus.textContent = detection && detection.passive === true && detection.authentication_ready !== true
+      ? "Codex: " + String(detection.readiness_state || "Not checked")
+      : runtimeAvailable
       ? "Codex: Ready for real Run"
       : "Codex: " + connectivityStateLabel(connectivity.readiness_state);
     elements.codexHeaderStatus.dataset.status = runtimeAvailable ? "ready" : "setup";
