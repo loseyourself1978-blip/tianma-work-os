@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TWOS — Backup &amp; Recovery</title>
+<style>
+:root{font:16px/1.5 system-ui,sans-serif;color:#18342d;background:#f3f6f4}*{box-sizing:border-box}body{margin:0}main{max-width:900px;margin:auto;padding:24px}header{display:flex;gap:16px;justify-content:space-between;align-items:center;flex-wrap:wrap}a{color:#245f4f}h1{font-size:1.8rem}section{background:white;border:1px solid #d4dfd9;border-radius:12px;padding:22px;margin:20px 0}label{display:block;margin:14px 0 5px}input,select,button{font:inherit;max-width:100%;border:1px solid #78968b;border-radius:6px;padding:10px}input,select{width:100%;background:white}button{cursor:pointer;background:#e6ece8;color:#254a3c}button.primary{background:#24694e;color:white}button:disabled{cursor:default;background:#dfe5e1;color:#5b6c64}dl{display:grid;grid-template-columns:minmax(100px,1fr) minmax(0,2fr);gap:8px}dt{font-weight:600}dd{margin:0}dd,pre,p,li,code{overflow-wrap:anywhere;word-break:break-word}pre{white-space:pre-wrap;font:13px/1.5 ui-monospace,monospace;max-width:100%}#next{font-weight:650;padding:12px;border-left:4px solid #24694e;background:#eef5f0}#error{color:#8c2720}.warning{color:#714f13;background:#fff6df;padding:12px;border-radius:6px}details{margin-top:18px}summary{cursor:pointer}ul{padding-left:20px}[hidden]{display:none!important}@media(max-width:480px){main{padding:12px}section{padding:14px}h1{font-size:1.4rem}dl{grid-template-columns:1fr}button.primary{width:100%}}
+</style></head><body><main>
+<header><h1>Backup &amp; Recovery</h1><a href="/twos">Owner workbench</a></header>
+<section id="login"><h2>Log in</h2><p>The existing Owner account is required. Maintenance does not create another Owner.</p><form id="login-form"><label for="username">Username</label><input id="username" autocomplete="username" required><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required><p><button class="primary" type="submit">Log in</button></p></form></section>
+<div id="maintenance" hidden>
+<section><h2>Current installation</h2><dl id="installation"></dl><p class="warning" id="warning"></p><p id="next" aria-live="polite"></p>
+<label for="operation">Maintenance action</label><select id="operation"><option value="backup">Create a backup</option><option value="restore">Inspect and restore a backup</option><option value="migration">Migrate an older installation</option><option value="workspace">Reauthorize workspace after recovery</option></select>
+<div id="backup-source" hidden><label for="backup-path">Exact backup bundle path</label><input id="backup-path" spellcheck="false" placeholder="Absolute path to a sealed .twos-backup directory"></div>
+<div id="workspace-source" hidden><label for="workspace-path">Exact current workspace path</label><input id="workspace-path" spellcheck="false"></div>
+<dl id="backup-summary"></dl>
+<div id="plan" hidden><h3>Review maintenance plan</h3><p id="consequences"></p><dl id="plan-summary"></dl></div>
+<div id="confirmation-area" hidden><label for="confirmation">Type the displayed confirmation to authorize activation</label><p id="confirmation-label"></p><input id="confirmation" autocomplete="off" spellcheck="false"></div>
+<p><button id="primary" class="primary" type="button">Create Backup</button></p>
+<details><summary>Advanced — paths, integrity and recovery evidence</summary><pre id="advanced"></pre></details>
+</section>
+<section><h2>Recovered logical data</h2><p>Workspace source files are separate from TWOS backups. Historical delivery evidence does not authorize another execution.</p><ul id="tasks"></ul><button id="refresh" type="button">Refresh installation and data</button></section>
+</div><p id="error" role="alert"></p>
+</main><script src="/maintenance.js"></script></body></html>

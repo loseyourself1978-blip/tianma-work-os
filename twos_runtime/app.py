@@ -2151,12 +2151,32 @@ def validation_error_details(exc: RequestValidationError) -> list[dict[str, Any]
 
 def create_app(settings: Settings | None = None, start_scheduler: bool = True) -> FastAPI:
     settings = settings or get_settings()
+    from .maintenance import Maintenance, MaintenanceError, TERMINAL_OPERATIONS
+    from .maintenance_api import install_maintenance, maintenance_app
+    try:
+        maintenance = Maintenance(settings)
+    except MaintenanceError as exc:
+        if settings.fresh_install:
+            # Preserve accepted Fresh Install path errors before maintenance
+            # can reinterpret an unsafe database location. This is read-only.
+            validate_fresh_database_before_initialization(settings)
+        if exc.code != "DATABASE_UNSUPPORTED":
+            raise
+        maintenance = None
+    if maintenance:
+        maintenance.reconcile()
+        maintenance.bind_recovered_workspace()
+        if settings.maintenance_mode or maintenance.journal()["state"] == "RECOVERY_REQUIRED" or maintenance.authority().get("workspace_status") == "REAUTHORIZATION_REQUIRED":
+            return maintenance_app(settings)
     if settings.fresh_install:
         validate_fresh_database_before_initialization(settings)
     engine = make_engine(settings.database_url)
     try:
         initialize_database(engine, seed_default_projects=not settings.fresh_install)
         factory = make_session_factory(engine)
+        if maintenance and maintenance.authority().get("workspace_status") == "REAUTHORIZATION_REQUIRED":
+            engine.dispose()
+            return maintenance_app(settings)
         initialize_fresh_installation(settings, factory)
     except Exception:
         # A blocked First Run can fail before the application lifespan exists.
@@ -2192,7 +2212,9 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             # invert the lifecycle and SQLite writer locks.
             result_intake_monitor.shutdown()
             try:
-                result_intake_monitor.reconcile_now()
+                if maintenance is None or (maintenance.journal()["state"] in TERMINAL_OPERATIONS | {"NONE"}
+                        and maintenance.authority().get("workspace_status") != "REAUTHORIZATION_REQUIRED"):
+                    result_intake_monitor.reconcile_now()
             except Exception as exc:
                 logger.warning(
                     "Final Codex result reconciliation deferred type=%s",
@@ -2210,6 +2232,8 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     app.state.runtime_scheduler = RuntimeScheduler(factory, settings.scheduler_poll_seconds)
     app.state.codex_manager = codex_manager
     app.state.result_intake_monitor = result_intake_monitor
+    if maintenance:
+        install_maintenance(app, settings)
 
     if settings.static_cockpit_dir.exists():
         app.mount("/static_cockpit", StaticFiles(directory=settings.static_cockpit_dir), name="static_cockpit")
@@ -2232,6 +2256,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             not in {"/api/health", "/api/version", "/api/capabilities"}
             and not request.url.path.startswith("/api/auth/")
             and not request.url.path.startswith("/api/setup/")
+            and not request.url.path.startswith("/api/maintenance/")
         ):
             with factory() as setup_session:
                 setup_ready = normal_api_available(setup_session, settings)
@@ -3898,6 +3923,12 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         pack = session.scalar(select(CodexInstructionPack).where(CodexInstructionPack.task_id == task.id)
                               .order_by(CodexInstructionPack.version.desc()))
         run = session.scalar(select(CodexRun).where(CodexRun.task_id == task.id).order_by(CodexRun.id.desc()))
+        if maintenance:
+            restored = maintenance.authority().get("historical_cutoffs", {})
+            if run and run.id <= restored.get("codex_runs", 0):
+                run = None
+            if pack and pack.id <= restored.get("codex_instruction_packs", 0):
+                pack = None
         stage, action, label = 0, "tool_setup", "Open Guided Tool Setup"
         message = "Confirm Codex explicitly before preparing your first delivery."
         delivery = None

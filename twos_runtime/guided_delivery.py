@@ -213,6 +213,7 @@ def verification_binding(settings) -> dict[str, Any]:
 
 
 def configuration_snapshot(detected, model: str, effort: str, settings) -> dict[str, Any]:
+    from .maintenance import recovery_epoch
     if detected["status"] != "Not checked":
         raise ValueError(detected["next_action"])
     entry = next((entry for entry in detected["models"] if entry["model"] == model), None)
@@ -220,7 +221,7 @@ def configuration_snapshot(detected, model: str, effort: str, settings) -> dict[
         raise ValueError("Requested model is unavailable in the installed client's offline catalogue. No fallback is allowed.")
     if effort not in entry["reasoning_efforts"]:
         raise ValueError("Requested reasoning is not explicitly supported by the installed client.")
-    return {"schema": "twos.guided_tool.v1", "executable": detected["executable"],
+    return {"schema": "twos.guided_tool.v1", **({"recovery_epoch": epoch} if (epoch := recovery_epoch(settings)) else {}), "executable": detected["executable"],
             "executable_identity": detected["executable_identity"], "cli_version": detected["cli_version"],
             "requested_model": model, "reasoning_effort": effort,
             "workspace": str(settings.source_repo.resolve(strict=True)),
@@ -229,7 +230,10 @@ def configuration_snapshot(detected, model: str, effort: str, settings) -> dict[
 
 
 def snapshot_is_current(snapshot: dict[str, Any], settings=None) -> bool:
+    from .maintenance import recovery_epoch
     try:
+        if settings is not None and snapshot.get("recovery_epoch", "") != recovery_epoch(settings):
+            return False
         executable = str(snapshot["executable"])
         if executable_identity(executable) != snapshot["executable_identity"]:
             return False

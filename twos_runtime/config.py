@@ -49,6 +49,7 @@ class Settings:
     bind_host: str = "127.0.0.1"
     bind_port: int | None = None
     session_cookie_name: str = "twos_session"
+    maintenance_mode: bool = False
 
 
 def _environment_flag(name: str, default: bool = False) -> bool:
@@ -142,4 +143,5 @@ def get_settings() -> Settings:
             else None
         ),
         session_cookie_name=os.environ.get("TWOS_SESSION_COOKIE_NAME", "twos_session"),
+        maintenance_mode=_environment_flag("TWOS_MAINTENANCE_MODE"),
     )

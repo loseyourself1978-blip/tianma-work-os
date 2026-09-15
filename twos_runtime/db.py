@@ -317,7 +317,11 @@ COLUMN_MIGRATIONS = {
 
 def make_engine(database_url: str) -> Engine:
     connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
-    return create_engine(database_url, connect_args=connect_args, future=True)
+    engine = create_engine(database_url, connect_args=connect_args, future=True)
+    if database_url.startswith("sqlite"):
+        from .maintenance import install_connection_barrier
+        install_connection_barrier(engine)
+    return engine
 
 
 def make_session_factory(engine: Engine) -> sessionmaker[Session]:
@@ -325,6 +329,13 @@ def make_session_factory(engine: Engine) -> sessionmaker[Session]:
 
 
 def initialize_database(engine: Engine, *, seed_default_projects: bool = True) -> None:
+    from .maintenance import protect_startup_migration
+    if protect_startup_migration(engine, seed_default_projects=seed_default_projects):
+        return
+    _initialize_database(engine, seed_default_projects=seed_default_projects)
+
+
+def _initialize_database(engine: Engine, *, seed_default_projects: bool = True) -> None:
     # Reconcile the one SQLite shape that requires a table rebuild before
     # creating any new Vol.19 tables.  This keeps an unsafe legacy schema from
     # being partially advanced merely by ``create_all``.
