@@ -21,11 +21,16 @@ installed description includes automatic delegation.
 6. Select **Check Codex Readiness** explicitly. This makes a bounded provider
    request for the selected configuration; it does not start the Task.
 7. Confirm **Ready**, or report the exact displayed blocker.
+   During the check, duplicate requests must be disabled. After success the
+   Check button must be neutral and completed, with a successful timestamp.
 8. Confirm the requested model is `gpt-6-astra`.
 9. Confirm **Extra high (xhigh)** reasoning, or explicitly review another
    supported setting and check that exact selection again.
-10. Select **Save Tool Setup**.
-11. Refresh and confirm Tool Setup persists.
+10. Select **Save Tool Setup** when this configuration has unsaved changes.
+    Readiness checks connectivity; Save confirms the selected configuration.
+    An unchanged saved configuration must not show Save as pending.
+11. Refresh and confirm Tool Setup persists and Check remains completed.
+    A material configuration change requires an explicit new check.
 12. Select **Prepare First Delivery**.
 13. Review the Task/version, workspace, source snapshot, model, reasoning,
     expected deliverable, independent Verification and execution boundary.
@@ -46,11 +51,17 @@ installed description includes automatic delegation.
 26. Approve Apply Plan explicitly.
 27. Explicitly Apply. This writes the approved changes into the authorized
     source workspace; it does not create a Commit.
-28. Confirm `first_delivery.txt` contains exactly
+28. Expand **Advanced — workspace, source and target paths** in the First
+    Safe Delivery guide. Copy the current exact target path shown by the
+    Apply journal; use the refreshed handoff's source path. Confirm that file contains exactly
     `TWOS VOL19 FIRST SAFE DELIVERY PASS` followed by one newline.
 29. Confirm no Commit occurred automatically.
-30. Select **Validate Applied Changes**, then **Review Commit**. The accepted
-    delivery path requires this explicit validation before Commit review.
+30. Select **Validate Applied Changes** as a separate action. Confirm Apply
+    is **APPLIED** and post-Apply validation is **PASSED**, then select
+    **Review Commit**. Refresh must preserve both states. Review Commit must
+    stay blocked while either prerequisite is incomplete. If a Commit
+    preflight blocker occurs, the completed Apply and validation must remain
+    visible; resolve that displayed blocker before proceeding.
 31. Approve the proposal and explicitly create the local Commit. This records
     the approved source changes in local Git history; it does not Push.
 32. Confirm no Push occurred automatically.

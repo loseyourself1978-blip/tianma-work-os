@@ -3834,6 +3834,12 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         row = GuidedToolConfiguration(owner_id=user.id, model_id=model.id,
             snapshot_json=json.dumps(snapshot, sort_keys=True, separators=(",", ":")),
             configuration_digest=canonical_sha256(snapshot), connectivity_evidence_id=evidence.id)
+        saved = guided_delivery.latest_configuration(session, user.id, confirmed=True)
+        if saved is not None and saved.configuration_digest == row.configuration_digest:
+            # A new readiness observation does not change the configuration the
+            # Owner already saved. Preserve that explicit confirmation only
+            # when every material binding is identical.
+            row.confirmed_at = saved.confirmed_at
         session.add(row)
         session.flush()
         audit(session, request, "guided_codex_readiness_checked", "guided_tool_configuration", row.id,
@@ -3940,6 +3946,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 if code in {"review_push_plan", "approve_push_plan", "confirm_push"}:
                     stage, action, label = 9, "delivery", primary.get("label", "Review Push Plan")
                     message = next_step.get("message", message)
+                applied = (delivery.get("apply_session") or {}).get("session") or {}
+                validated = (delivery.get("post_apply_verification") or {}).get("verification") or {}
+                if applied.get("state") == "APPLIED" and validated.get("status") != "PASSED":
+                    stage, action, label = 7, "validate_applied", "Validate Applied Changes"
+                    message = "Return to Apply and complete Validate Applied Changes before Review Commit."
+                elif applied.get("state") == "APPLIED" and not code:
+                    stage, action, label = 8, "delivery", "Review Commit blocker"
+                    message = next_step.get("message", message)
                 push = delivery.get("push_delivery") or {}
                 receipt = push.get("delivery_result") or {}
                 if str(receipt.get("status") or "").lower() in {"delivered", "already_delivered", "succeeded"}:
@@ -3948,7 +3962,8 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         return {"task_id": task.id, "stage_index": stage, "stage": guided_delivery.GUIDE_STAGES[stage],
                 "stages": list(guided_delivery.GUIDE_STAGES), "next_action": action, "action_label": label,
                 "message": message, "pack_id": pack.id if pack else None, "run_id": run.id if run else None,
-                "configuration": config, "automatic_execution": False, "delivery": delivery}
+                "configuration": config, "automatic_execution": False, "delivery": delivery,
+                "location": guided_delivery.delivery_location(task, settings, delivery)}
 
     @app.post("/api/tasks/{task_id}/codex/setup/assign")
     def assign_codex_setup(
@@ -6336,15 +6351,24 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             if apply_row is not None
             else None
         )
-        commit_delivery = (
-            owner_commit_api_review(
-                session,
-                owner_id=user.id,
-                verification=verification,
-            )
-            if verification is not None and verification.status == "PASSED"
-            else None
-        )
+        commit_delivery = None
+        if verification is not None and verification.status == "PASSED":
+            try:
+                commit_delivery = owner_commit_api_review(
+                    session, owner_id=user.id, verification=verification,
+                )
+            except HTTPException as exc:
+                if exc.status_code != 409 or not isinstance(exc.detail, dict):
+                    raise
+                # A downstream Commit preflight blocker must not erase the
+                # persisted Apply journal or its passed validation. Mutation
+                # endpoints retain their independent, fail-closed checks.
+                commit_delivery = {
+                    "status": "BLOCKED", "proposal": None, "actions": {},
+                    "blockers": [exc.detail],
+                    "post_apply_verification_id": verification.verification_id,
+                    "next_action": "Resolve the Commit blocker: " + exc.detail["message"],
+                }
         commit_execution_view = (
             ((commit_delivery.get("proposal") or {}).get("commit"))
             if isinstance(commit_delivery, dict)
@@ -6443,11 +6467,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 elif verification.status != "PASSED":
                     next_action = "Resolve the Post-Apply Validation blocker before Commit review."
                 elif commit_proposal is None:
-                    primary_action = {
-                        "code": "review_commit",
-                        "label": "Review Commit",
-                    }
-                    next_action = "Review the exact local Commit proposal."
+                    if (commit_delivery.get("actions") or {}).get("can_create_proposal") is True:
+                        primary_action = {
+                            "code": "review_commit",
+                            "label": "Review Commit",
+                        }
+                        next_action = "Review the exact local Commit proposal."
+                    else:
+                        next_action = commit_delivery.get("next_action") or "Resolve the Commit readiness blocker."
                 elif commit_actions.get("can_approve") is True:
                     primary_action = {
                         "code": "approve_commit",
@@ -6608,6 +6635,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             )
         return {
             "run_id": run.id,
+            "delivery_contract": "VOL19_19_1D" if envelope is not None else None,
             "result": (
                 result_envelope_out(envelope, advanced=False)
                 if envelope is not None

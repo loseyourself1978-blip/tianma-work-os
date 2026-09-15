@@ -67,6 +67,47 @@ def latest_configuration(session, owner_id: int, *, confirmed: bool = False):
     return session.scalar(query.order_by(GuidedToolConfiguration.id.desc()))
 
 
+def delivery_location(task, settings, delivery=None) -> dict[str, Any]:
+    """Owner-scoped location hints; never list or read unrelated filesystem data.
+
+    Before Apply, filenames explicitly mentioned in Task scope are requests,
+    not a claim that they were changed. After Apply the journal is authoritative.
+    The caller has already checked this Task's workspace authorization.
+    """
+    root = settings.source_repo.resolve(strict=True)
+    delivery = delivery or {}
+    applied = (delivery.get("apply_session") or {}).get("session") or {}
+    verification = (delivery.get("post_apply_verification") or {}).get("verification") or {}
+    entries = applied.get("files") or []
+    basis = "Apply journal" if entries else "Requested in Task scope; review the Candidate before Apply"
+    if not entries:
+        entries = [{"path": name} for name in re.findall(
+            r"(?<![\w./-])(?:[\w-]+/)*[\w-]+\.[\w.-]+(?![\w/-])",
+            task.implementation_scope or "",
+        )]
+    targets = []
+    for entry in entries:
+        relative = str(entry.get("path") or "")
+        path = Path(relative)
+        if (not relative or path.is_absolute() or any(part in {"..", ".git"} for part in path.parts)
+                or any(ord(char) < 32 for char in relative)):
+            continue
+        absolute = root / path
+        try:
+            if not absolute.resolve(strict=False).is_relative_to(root):
+                continue
+        except (OSError, RuntimeError):
+            continue
+        item = {"relative_path": relative, "source_target_path": str(absolute),
+                "apply_result": entry.get("apply_result")}
+        if item not in targets:
+            targets.append(item)
+    return {"authorized_workspace": str(root), "source_repository": str(root),
+            "target_basis": basis, "targets": targets,
+            "apply_state": applied.get("state") or "Not applied",
+            "post_apply_validation": verification.get("status") or "Not verified"}
+
+
 def discovery(adapter) -> dict[str, Any]:
     """Local metadata only: version/help and the installed client's bundled list."""
     configured = adapter.settings.codex_executable or shutil.which("codex")

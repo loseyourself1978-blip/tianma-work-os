@@ -411,7 +411,8 @@ def test_selecting_an_available_model_reenables_only_the_explicit_check():
     harness = '''
 const state = {guidedToolDiscovery: {status: 'Not checked'}, guidedToolChecked: {ready: true}};
 const nodes = {'guided-tool-save': {disabled: false}, 'guided-tool-check': {disabled: true},
-  'guided-model': {value: 'gpt-6-astra'}, 'guided-effort': {value: 'xhigh'}, 'guided-tool-state': {}};
+  'guided-model': {value: 'gpt-6-astra'}, 'guided-effort': {value: 'xhigh'}, 'guided-tool-state': {},
+  'guided-auth': {}, 'guided-tool-close': {}};
 function byId(id) { return nodes[id]; }
 ''' + function + '''
 guidedToolSelectionsChanged();

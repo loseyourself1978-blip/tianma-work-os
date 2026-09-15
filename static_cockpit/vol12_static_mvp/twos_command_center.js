@@ -2122,7 +2122,7 @@
                 code: error instanceof ApiError ? error.code : "COMMIT_PLAN_REQUEST_FAILED",
                 message: productActionMessage(error)
               }],
-              next_action: "Commit Plan request failed. Review the diagnostic evidence, then retry Review Commit Plan."
+              next_action: "Commit Plan request failed. Review the diagnostic evidence and resolve the blocker: " + productActionMessage(error)
             },
             plan: null,
             stage: null,
@@ -2531,7 +2531,8 @@
     const applySession = objectRecord(parts.session);
     const review = objectRecord(postApplyVerificationReviewForSession(applySession));
     const verification = objectRecord(review.verification);
-    return String(verification.status || "").toUpperCase() === "PASSED"
+    return String(applySession.state || applySession.apply_state || "").toUpperCase() === "APPLIED"
+      && String(verification.status || "").toUpperCase() === "PASSED"
       ? verification
       : null;
   }
@@ -2742,6 +2743,7 @@
           || state.ownerDeliveryRequestSequences[key] !== requestSequence) return;
       state.ownerDeliveryProjections[key] = {
         run_id: run.id,
+        delivery_contract: "VOL19_19_1D",
         load_error: {
           code: error instanceof ApiError ? error.code : "OWNER_DELIVERY_LOAD_FAILED",
           message: productActionMessage(error)
@@ -8391,10 +8393,19 @@
     const pushDelivery = objectRecord(projection.push_delivery);
     const applyReview = objectRecord(projection.apply_session);
     const applySession = objectRecord(applyReview.session || applyReview);
-    const postApply = objectRecord(
+    const postApplyReview = objectRecord(
       projection.post_apply_verification
       || commitDelivery.post_apply_verification
     );
+    const postApply = objectRecord(postApplyReview.verification || postApplyReview);
+    const prerequisites = !projection.load_error
+      && String(applySession.state || applySession.apply_state || "").toUpperCase() === "APPLIED"
+      && String(postApply.status || postApply.validation_result || "").toUpperCase() === "PASSED";
+    const prerequisiteMessage = projection.load_error
+      ? "Reload delivery status before Review Commit. " + projection.load_error.message
+      : String(applySession.state || applySession.apply_state || "").toUpperCase() !== "APPLIED"
+        ? "Return to Apply and complete Apply, then Validate Applied Changes before Review Commit."
+        : "Return to Apply and complete Validate Applied Changes before Review Commit.";
     const proposal = objectRecord(
       commitDelivery.proposal || commitDelivery.commit_proposal
       || commitDelivery.plan || commitDelivery.commit_plan
@@ -8427,15 +8438,17 @@
       applyReview: applyReview,
       applySession: applySession,
       postApply: postApply,
+      commitPrerequisitesMet: prerequisites,
+      commitPrerequisiteMessage: prerequisites ? "" : prerequisiteMessage,
       commitDelivery: commitDelivery,
       proposal: proposal,
       commitApproval: commitApproval,
       commitExecution: commitExecution,
-      commitActions: Object.assign(
+      commitActions: prerequisites ? Object.assign(
         {},
         objectRecord(proposal.actions),
         objectRecord(commitDelivery.actions)
-      ),
+      ) : {},
       pushDelivery: pushDelivery,
       pushPlan: pushPlan,
       pushApproval: pushApproval,
@@ -8456,6 +8469,7 @@
   }
 
   function canonicalCommitState(parts) {
+    if (parts.commitPrerequisitesMet === false) return "BLOCKED";
     const executionState = String(
       parts.commitExecution.state || parts.commitExecution.status || ""
     ).toUpperCase();
@@ -8918,10 +8932,10 @@
     elements.commitBuilderSection.hidden = false;
     elements.pushDeliverySection.hidden = !committed;
     elements.ownerCommitApplyState.textContent = humanStatus(
-      parts.applySession.apply_state || parts.applySession.state || "APPLIED"
+      parts.applySession.apply_state || parts.applySession.state || (parts.projection.load_error ? "Unavailable" : "Not applied")
     );
     elements.ownerCommitPostApplyValidation.textContent = humanStatus(
-      parts.postApply.status || parts.postApply.validation_result || "PASSED"
+      parts.postApply.status || parts.postApply.validation_result || (parts.projection.load_error ? "Unavailable" : "Not verified")
     );
     elements.commitBuilderStatus.textContent = OWNER_COMMIT_STATE_LABELS[commitState];
     setStatusLabel(elements.commitBuilderStatus, elements.commitBuilderStatus.textContent);
@@ -8978,7 +8992,7 @@
     elements.ownerLocalCommitSha.textContent = boundedText(commitSha, "Not created", 500);
     const projectionNext = objectRecord(parts.projection.next_action);
     elements.commitBuilderNextAction.textContent = sanitizedApplyPlanText(
-      parts.commitDelivery.next_action || (committed ? "Review Push Plan." : projectionNext.message),
+      parts.commitPrerequisiteMessage || parts.commitDelivery.next_action || (committed ? "Review Push Plan." : projectionNext.message),
       commitState === "COMMIT_REVIEW_REQUIRED"
         ? "Select Review Commit."
         : commitState === "COMMIT_APPROVAL_REQUIRED"
@@ -11030,6 +11044,12 @@
         const context = ownerDeliveryActionContext();
         const subject = elements.commitPlanSubject.value;
         const body = elements.commitPlanBody.value;
+        const actions = context.parts.commitActions;
+        if (!context.parts.commitPrerequisitesMet || !(actions.can_create_proposal === true
+            || actions.can_edit === true || actions.can_review_commit === true || actions.can_review_commit_proposal === true)) {
+          throw new ApiError(409, "COMMIT_PREREQUISITES_REQUIRED",
+            context.parts.commitPrerequisiteMessage || context.parts.commitDelivery.next_action || "Resolve the Commit readiness blocker.", {}, "product");
+        }
         if (!validCommitSubject(subject)) {
           elements.commitPlanSubject.focus();
           throw new ApiError(
@@ -12383,6 +12403,15 @@
     byId("first-delivery-title").textContent = String(guide.stage_index + 1) + ". " + guide.stage;
     byId("first-delivery-message").textContent = guide.message;
     byId("first-delivery-action").textContent = guide.action_label;
+    const location = guide.location || {};
+    byId("first-delivery-workspace").textContent = location.authorized_workspace || "Unavailable";
+    byId("first-delivery-source").textContent = location.source_repository || "Unavailable";
+    byId("first-delivery-targets").textContent = (location.targets || []).map(function (target) {
+      return target.source_target_path + (target.apply_result ? " — " + target.apply_result : "");
+    }).join("\n") || "Review the Task scope and Candidate for exact target paths.";
+    byId("first-delivery-target-basis").textContent = location.target_basis || "";
+    byId("first-delivery-applied-evidence").textContent = "Apply: " + (location.apply_state || "Not applied")
+      + ". Post-Apply validation: " + (location.post_apply_validation || "Not verified") + ".";
     const stages = byId("first-delivery-stages");
     stages.replaceChildren();
     guide.stages.forEach(function (label, index) {
@@ -12394,10 +12423,27 @@
   }
 
   function guidedToolSelectionsChanged() {
+    const config = state.guidedToolChecked;
+    if (config && config.model === byId("guided-model").value && config.reasoning_effort === byId("guided-effort").value) return;
     state.guidedToolChecked = null;
-    byId("guided-tool-save").disabled = true;
-    byId("guided-tool-check").disabled = !state.guidedToolDiscovery || state.guidedToolDiscovery.status !== "Not checked" || !byId("guided-model").value || !byId("guided-effort").value;
+    renderGuidedToolControls();
+    byId("guided-auth").textContent = "Not checked for this configuration";
     byId("guided-tool-state").textContent = "Not checked for this configuration. Select Check Codex Readiness explicitly.";
+  }
+
+  function renderGuidedToolControls() {
+    const config = state.guidedToolChecked;
+    const checking = state.guidedToolChecking === true;
+    const matches = config && config.model === byId("guided-model").value && config.reasoning_effort === byId("guided-effort").value;
+    const ready = Boolean(matches && config.ready);
+    const button = byId("guided-tool-check");
+    button.disabled = checking || ready || !state.guidedToolDiscovery || state.guidedToolDiscovery.status !== "Not checked" || !byId("guided-model").value || !byId("guided-effort").value;
+    button.className = "button " + (ready ? "button-quiet" : "button-primary");
+    button.textContent = checking ? "Checking Codex Readiness…" : ready ? "Codex Readiness checked" : "Check Codex Readiness";
+    byId("guided-tool-save").disabled = checking || !ready || config.confirmed === true;
+    byId("guided-model").disabled = checking;
+    byId("guided-effort").disabled = checking;
+    byId("guided-tool-close").disabled = checking;
   }
 
   function populateGuidedEfforts(preferred) {
@@ -12418,11 +12464,15 @@
     byId("guided-tool-state").textContent = config ? config.status + ". " + config.next_action : "Not checked. Select Check Codex Readiness explicitly.";
     byId("guided-auth").textContent = config ? config.authentication : "Not checked";
     byId("guided-last-check").textContent = config && config.last_successful_readiness_check || "Never";
-    byId("guided-tool-save").disabled = !(config && config.ready && config.model === byId("guided-model").value && config.reasoning_effort === byId("guided-effort").value);
+    renderGuidedToolControls();
   }
 
   async function openGuidedToolSetup() {
     const dialog = byId("guided-tool-dialog");
+    if (state.guidedToolChecking) return;
+    state.guidedToolChecked = null;
+    byId("guided-auth").textContent = "Not checked";
+    byId("guided-last-check").textContent = "Never";
     byId("guided-tool-state").textContent = "Reading local CLI metadata…";
     byId("guided-tool-check").disabled = true;
     byId("guided-tool-save").disabled = true;
@@ -12448,23 +12498,20 @@
       populateGuidedEfforts(response.configuration ? response.configuration.reasoning_effort : "xhigh");
       showGuidedConfiguration(response.configuration);
       if (found.status !== "Not checked" || !select.value) byId("guided-tool-state").textContent = found.status + ". " + found.next_action;
-      byId("guided-tool-check").disabled = found.status !== "Not checked" || !select.value || !byId("guided-effort").value;
     } catch (error) { byId("guided-tool-state").textContent = productActionMessage(error); }
   }
 
   async function checkGuidedTool() {
     const button = byId("guided-tool-check");
-    if (button.disabled) return;
-    button.disabled = true;
-    byId("guided-model").disabled = true;
-    byId("guided-effort").disabled = true;
-    byId("guided-tool-save").disabled = true;
+    if (button.disabled || state.guidedToolChecking) return;
+    state.guidedToolChecking = true;
+    renderGuidedToolControls();
     byId("guided-tool-state").textContent = "Checking the exact selected Codex configuration after your explicit action…";
     try {
       const result = await api("/api/guided-tool-setup/check", { method: "POST", body: { model_identifier: byId("guided-model").value, reasoning_effort: byId("guided-effort").value } });
       showGuidedConfiguration(result.configuration);
     } catch (error) { state.guidedToolChecked = null; byId("guided-tool-state").textContent = productActionMessage(error); }
-    finally { button.disabled = false; byId("guided-model").disabled = false; byId("guided-effort").disabled = false; }
+    finally { state.guidedToolChecking = false; renderGuidedToolControls(); }
   }
 
   async function saveGuidedTool() {

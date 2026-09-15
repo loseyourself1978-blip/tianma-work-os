@@ -325,6 +325,13 @@
           <div class="button-row"><button id="first-delivery-action" class="button button-primary" type="button">Open Guided Tool Setup</button>
           <button id="guided-tool-open" class="button button-quiet" type="button">Guided Tool Setup</button></div>
           <p class="boundary-note">Apply changes your source files. Commit records the reviewed changes locally. Push updates only the destination in the approved Push Plan. Each requires your own explicit confirmation.</p>
+          <p id="first-delivery-applied-evidence"></p>
+          <details class="guided-location"><summary>Advanced — workspace, source and target paths</summary>
+            <dl><dt>Authorized workspace</dt><dd id="first-delivery-workspace"></dd>
+              <dt>Source repository</dt><dd id="first-delivery-source"></dd>
+              <dt>Exact target paths (select text to copy)</dt><dd><pre id="first-delivery-targets"></pre></dd></dl>
+            <p id="first-delivery-target-basis"></p>
+          </details>
         </section>
 
         <section id="selected-task-context" class="selected-task-context" aria-labelledby="selected-task-label" aria-live="polite" data-state="loading">

@@ -4015,6 +4015,8 @@ button:disabled,
 
 /* 19.2B: current action and narrow-screen evidence containment. */
 .guided-delivery { margin: 0 0 20px; min-width: 0; }
+.guided-location dd { margin: 4px 0 12px; overflow-wrap: anywhere; user-select: text; }
+.guided-location pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
 #first-delivery-stages { display: flex; flex-wrap: wrap; gap: 8px 18px; padding-left: 22px; font-size: .8rem; color: #667085; }
 #first-delivery-stages li[aria-current="step"] { color: #174fbb; font-weight: 750; }
 .guided-delivery p, .guided-dialog, .guided-dialog dd, .guided-dialog pre { overflow-wrap: anywhere; word-break: break-word; }
