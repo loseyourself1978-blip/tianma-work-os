@@ -31,33 +31,38 @@ Statuses record explicit Owner acceptance and executable repository evidence in 
 | First Run | IMPLEMENTED / OWNER ACCEPTED | First Owner creation, workspace authorization, passive optional tools, explicit Finish Setup, first Task, refresh and logout/login persistence, and 1280px/390px usability passed Owner acceptance. No automatic Pack, Run, provider, Apply, Commit, or Push occurred. |
 | Guided Tool Setup | IMPLEMENTED / OWNER ACCEPTED | Owner acceptance passed explicit readiness, Astra (`gpt-6-astra`) / `xhigh` configuration and persistence. Versioned Owner confirmation and immutable future Pack binding reuse the existing tool path. See `VOL19_19_2B_GUIDED_FIRST_SAFE_DELIVERY_CLOSEOUT_v0.1.md`. |
 | First Safe Delivery | IMPLEMENTED / OWNER ACCEPTED | Owner acceptance passed Task → Pack, explicit Pack approval and Codex Run, independent Verification, Result acceptance, Candidate, Apply Plan, explicit Apply, post-Apply validation, explicit Commit/Push and exact local-only remote SHA verification. The guide reuses accepted 19.1 services; final complete validation is 999 passed / 0 failed / 0 skipped / 0 xfail. |
-| VOL19-19.2B-UI-01 | CLOSED / VERIFIED | Completed Review Commit becomes neutral/disabled; material invalidation requires a new review. See 19.4 gate. |
+| VOL19-19.2B-UI-01 | CLOSED / VERIFIED | The Owner accepted completed/neutral Review Commit, canonical material invalidation, successful re-review and completed-state persistence across refresh. See [19.4 closeout](VOL19_19_4_SECURITY_RELEASE_HARDENING_CLOSEOUT_v0.1.md). |
 | Backup / Restore | OWNER ACCEPTED | The Owner accepted TWOS_BACKUP_V1, explicit backup, restore inspection/planning/approval/confirmation, staged restore with atomic activation, recovery point protection and restored-state persistence. Scenario A is PASS. See `VOL19_19_3_BACKUP_RESTORE_MIGRATION_RECOVERY_CLOSEOUT_v0.1.md`. |
 | Migration | OWNER ACCEPTED | Scenario B accepted authentic vol19.004 → vol19.005 migration, MIGRATION_COMPLETE, historical Task and Pack / Run / Result / Apply / Commit / Push preservation, explicit workspace reauthorization and restart persistence. Automated authentic .003/.004 coverage remains recorded in the implementation gate. No provider request or external action replay occurred. |
 | Failure Recovery | OWNER ACCEPTED | Scenario C Inspect and Restore Plan both returned 400 / BACKUP_HASH_MISMATCH; no plan or activation occurred and healthy database/maintenance state remained unchanged. A/B restart persistence passed. The temporary restart blocker was ACCEPTANCE_HARNESS_ONLY; its helper correction preserved strict process ownership checks without changing production code or the runtime identity contract. |
-| VOL19-19.3-UX-01 | CLOSED / VERIFIED — MINIMAL_DISCOVERABILITY_IMPROVEMENT | Existing single-action dropdown retained; concise helper and Owner recovery guide explain navigation. |
-| macOS source release packaging | IMPLEMENTED / OWNER ACCEPTANCE PENDING | Exact-commit reproducible 0.17.0 RC source artifact and manifest; signed/notarized DMG is not required or established. 1.0.0 remains NOT RELEASED. |
+| VOL19-19.3-UX-01 | CLOSED / VERIFIED | MINIMAL_DISCOVERABILITY_IMPROVEMENT accepted: existing single-action dropdown retained, with concise helper text and Owner recovery documentation. |
+| macOS source release packaging | PASS / OWNER ACCEPTED | Exact-commit reproducible 0.17.0 RC source artifact, manifest, SHA and fresh-artifact installation accepted. Artifact `twos-0.17.0-rc19.4-f951e4c335db.tar.gz` remains tied to implementation `f951e4c335dbbbb1d316c54fbddc42eb93a24aea`; this documentation closeout does not rebuild it. Signed/notarized DMG remains outside the accepted RC boundary. |
 | External release authorization | BLOCKED | Local-only Push acceptance does not authorize or accept tag, release, pull request, merge, deployment, or a live credentialed hosting-service Push. Those remain separate gates. |
-| Vol.19 19.1 overall | CLOSED / SYNCED | 19.1A, 19.1B, 19.1C, and 19.1D are PASS / OWNER ACCEPTED / CLOSED / SYNCED. The complete accepted chain is recorded in `VOL19_19_1_SIMPLIFIED_OWNER_DELIVERY_CLOSEOUT_v0.1.md`. |
+| Vol.19 19.1 overall | PASS / OWNER ACCEPTED / CLOSED | 19.1A, 19.1B, 19.1C, and 19.1D are PASS / OWNER ACCEPTED / CLOSED / SYNCED. The complete accepted chain is recorded in `VOL19_19_1_SIMPLIFIED_OWNER_DELIVERY_CLOSEOUT_v0.1.md`. |
 | Vol.19 19.2A | PASS / OWNER ACCEPTED / CLOSED | Accepted commits and 935 passed / 0 failed / 0 skipped are recorded in `VOL19_19_2A_FRESH_INSTALL_FIRST_RUN_CLOSEOUT_v0.1.md`. |
 | Vol.19 19.2B | PASS / OWNER ACCEPTED / CLOSED | The Owner accepted Guided Tool Setup + First Safe Delivery, including 1280px/390px usability. Accepted implementation/correction commits, 999 passed / 0 failed / 0 skipped / 0 xfail and the non-blocking follow-up are recorded in `VOL19_19_2B_GUIDED_FIRST_SAFE_DELIVERY_CLOSEOUT_v0.1.md`. |
 | Vol.19 19.2 | PASS / OWNER ACCEPTED / CLOSED | 19.2A and 19.2B are closed. The repository's 19.2B gate required Owner acceptance and closeout for 19.2 completion; both are now recorded. The 19.2 contract excludes older-install migration and assigns backup/restore to 19.3. See the phase-scope rationale in the 19.2B closeout. |
 | Vol.19 19.3 | PASS / OWNER ACCEPTED / CLOSED | The Owner accepted Scenarios A/B/C and restart persistence. Implementation `fb84f8497a2ae3fd476d98097dcbdec19673b84a`, 1092 passed / 0 failed / 0 skipped / 0 xfail, the acceptance-harness note and non-blocking UX follow-up are recorded in `VOL19_19_3_BACKUP_RESTORE_MIGRATION_RECOVERY_CLOSEOUT_v0.1.md`. |
-| Vol.19 19.4 | IMPLEMENTED / OWNER ACCEPTANCE PENDING | Security corrections, Owner Guide, deterministic macOS source packaging and follow-up dispositions are recorded in `VOL19_19_4_SECURITY_RELEASE_HARDENING_IMPLEMENTATION_GATE_v0.1.md`. Only Owner may accept; 19.5 NOT STARTED. |
-| TWOS 1.0 RC | NOT COMPLETE | 19.4 Owner Acceptance, 19.5 End-to-End Acceptance and 19.6 release completion remain open. |
-| TWOS version 1.0.0 | NOT RELEASED | Closing 19.3 does not create release metadata, a tag, package, deployment, or version 1.0.0. |
+| Vol.19 19.4 | PASS / OWNER ACCEPTED / CLOSED | The Owner accepted security audit, Owner Guide, Maintenance discoverability, release artifact/manifest, fresh installation and Scenario B re-review. Implementation `f951e4c335dbbbb1d316c54fbddc42eb93a24aea`; accepted suite 1171 passed / 0 failed / 0 skipped / 0 xfail. See [19.4 closeout](VOL19_19_4_SECURITY_RELEASE_HARDENING_CLOSEOUT_v0.1.md). |
+| Vol.19 19.5 | NEXT | End-to-End Acceptance has NOT STARTED. This closeout does not authorize starting it. |
+| Vol.19 19.6 | PENDING | Release completion remains pending after the preceding gates. |
+| TWOS 1.0 RC | NOT COMPLETE | 19.5 End-to-End Acceptance and 19.6 release completion remain open. |
+| TWOS version 1.0.0 | NOT RELEASED | The accepted source artifact is 0.17.0 RC. Closing 19.4 does not release version 1.0.0 or authorize source Push, tag or deployment. |
 
 ## Acceptance Focus
 
 Vol.19 19.1A, 19.1B, 19.1C, 19.1D, and 19.1 overall are Owner accepted, closed, and synced. A completed Codex Run may automatically capture a Result and materialize read-only Candidate metadata, but it does not automatically accept the Result, approve a Plan, Apply, Revert, Commit, or Push. Every mutating step remains separately Owner-controlled. The accepted Push evidence is limited to an isolated local-only bare remote; no Force, tag, external Git remote or TWOS source-repository Push occurred in 19.2B acceptance.
 
 19.2A Fresh Install and First Run, 19.2B Guided Tool Setup and First Safe Delivery,
-19.2 overall and 19.3 Backup / Restore / Migration / Failure Recovery remain
-PASS / OWNER ACCEPTED / CLOSED. Prior Owner Acceptance is not reopened.
-19.4 is IMPLEMENTED / OWNER ACCEPTANCE PENDING; follow-up verification is recorded
-in its implementation gate. VOL19-19.3-UX-01 uses MINIMAL_DISCOVERABILITY_IMPROVEMENT,
-retaining the safe single-action dropdown. Current distribution is macOS source;
-signed/notarized packaging is not a requirement or established capability.
-Live credentialed external Git-host Push, 19.5 End-to-End Acceptance and 19.6
-release completion remain open. 19.5 has not started; RC is NOT COMPLETE and
-version 1.0.0 NOT RELEASED. No Push or tag is authorized by 19.4.
+19.2 overall, 19.3 Backup / Restore / Migration / Failure Recovery and 19.4
+Security / Documentation / Release Hardening are PASS / OWNER ACCEPTED / CLOSED.
+Prior Owner Acceptance is not reopened. The [19.4 closeout](VOL19_19_4_SECURITY_RELEASE_HARDENING_CLOSEOUT_v0.1.md)
+records the accepted artifact identity, security disposition and helper-only
+Scenario B correction. Both VOL19-19.2B-UI-01 and VOL19-19.3-UX-01 are
+CLOSED / VERIFIED. The latter retains the safe single-action dropdown through
+MINIMAL_DISCOVERABILITY_IMPROVEMENT. Current distribution remains macOS source;
+signed/notarized DMG is out of scope for this accepted RC boundary.
+Application 0.17.0 and schema vol19.005 are unchanged. Live credentialed external
+Git-host Push is not established. 19.5 End-to-End Acceptance is NEXT / NOT STARTED;
+19.6 release completion is PENDING. RC is NOT COMPLETE and version 1.0.0 is
+NOT RELEASED. No source Push or tag is authorized by this closeout.
