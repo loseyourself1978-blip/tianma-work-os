@@ -612,10 +612,12 @@ def run_eligibility(
 
 
 def _read_only_git_environment() -> dict[str, str]:
-    environment = os.environ.copy()
+    environment = {key: os.environ[key] for key in ("PATH", "HOME", "LANG", "LC_ALL", "LC_CTYPE", "TMPDIR", "USER", "LOGNAME") if key in os.environ}
     environment.update(
         {
             "GIT_OPTIONAL_LOCKS": "0",
+            "GIT_NO_LAZY_FETCH": "1",
+            "GIT_NO_REPLACE_OBJECTS": "1",
             "GIT_TERMINAL_PROMPT": "0",
             "GIT_PAGER": "cat",
             "PAGER": "cat",
@@ -631,10 +633,9 @@ def _git_command(
     hardened_read_only: bool,
 ) -> list[str]:
     command = ["git"]
-    if hardened_read_only:
-        command.extend(["-c", "core.fsmonitor=false"])
+    command.extend(["-c", "core.fsmonitor=false"])
     command.extend(args)
-    if hardened_read_only and args and args[0] == "diff":
+    if args and args[0] == "diff":
         diff_index = command.index("diff") + 1
         command[diff_index:diff_index] = ["--no-ext-diff", "--no-textconv"]
     return command
@@ -653,7 +654,7 @@ def run_git(
         capture_output=True,
         text=True,
         timeout=timeout,
-        env=_read_only_git_environment() if hardened_read_only else None,
+        env=_read_only_git_environment(),
     )
     if check and result.returncode != 0:
         message = result.stderr.strip() or result.stdout.strip() or "Git command failed."
@@ -1010,7 +1011,7 @@ def capture_source_snapshot(
             cwd=root,
             capture_output=True,
             timeout=60,
-            env=_read_only_git_environment() if hardened_read_only else None,
+            env=_read_only_git_environment(),
         )
         unstaged_patch_result = subprocess.run(
             _git_command(
@@ -1028,7 +1029,7 @@ def capture_source_snapshot(
             cwd=root,
             capture_output=True,
             timeout=60,
-            env=_read_only_git_environment() if hardened_read_only else None,
+            env=_read_only_git_environment(),
         )
         if staged_patch_result.returncode != 0 or unstaged_patch_result.returncode != 0:
             raise RuntimeError("Approved source snapshot patch could not be captured.")

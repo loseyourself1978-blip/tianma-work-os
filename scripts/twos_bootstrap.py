@@ -58,7 +58,7 @@ SENSITIVE_CHILD_PREFIXES = (
     "STRIPE_",
 )
 PYTHON_INJECTION_VARIABLES = frozenset(
-    {"PYTHONHOME", "PYTHONPATH", "PYTHONSTARTUP", "PYTHONINSPECT", "VIRTUAL_ENV"}
+    {"PYTHONHOME", "PYTHONPATH", "PYTHONSTARTUP", "PYTHONINSPECT", "VIRTUAL_ENV", "NODE_OPTIONS", "NODE_PATH"}
 )
 SENSITIVE_CHILD_NAMES = frozenset({"GH_TOKEN", "GH_ENTERPRISE_TOKEN"})
 
@@ -86,10 +86,13 @@ def atomic_private_json(path: Path, payload: Dict[str, Any]) -> None:
         content = (json.dumps(payload, indent=2, sort_keys=True) + "\n").encode("utf-8")
         os.write(descriptor, content)
         os.fsync(descriptor)
+        os.replace(temporary, path)
     finally:
         os.close(descriptor)
-    os.replace(temporary, path)
-    os.chmod(path, 0o600)
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
 
 
 def read_json(path: Path) -> Dict[str, Any]:
@@ -97,7 +100,7 @@ def read_json(path: Path) -> Dict[str, Any]:
         metadata = path.lstat()
     except FileNotFoundError as exc:
         raise BootstrapError("The existing installation configuration is unsafe.") from exc
-    if not stat.S_ISREG(metadata.st_mode) or metadata.st_mode & 0o077:
+    if (not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1) or metadata.st_mode & 0o077:
         raise BootstrapError("The existing installation configuration is unsafe.")
     descriptor: Optional[int] = None
     try:
@@ -109,7 +112,7 @@ def read_json(path: Path) -> Dict[str, Any]:
             | getattr(os, "O_NONBLOCK", 0),
         )
         opened = os.fstat(descriptor)
-        if not stat.S_ISREG(opened.st_mode) or opened.st_mode & 0o077:
+        if (not stat.S_ISREG(opened.st_mode) or opened.st_nlink != 1) or opened.st_mode & 0o077:
             raise BootstrapError("The existing installation configuration is unsafe.")
         encoded = os.read(descriptor, 65_537)
         if len(encoded) > 65_536:
@@ -171,6 +174,18 @@ def validate_installation_path(path: Path, source_root: Path, label: str) -> Pat
     return resolved
 
 
+def bootstrap_environment(*, package_install: bool = False) -> Dict[str, str]:
+    names = {"PATH", "HOME", "USER", "LOGNAME", "TMPDIR", "LANG", "LC_ALL", "LC_CTYPE",
+             "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "http_proxy",
+             "https_proxy", "all_proxy", "no_proxy", "SSL_CERT_FILE", "SSL_CERT_DIR",
+             "REQUESTS_CA_BUNDLE", "CURL_CA_BUNDLE", "NODE_EXTRA_CA_CERTS"}
+    if package_install:
+        names.update({"PIP_INDEX_URL", "PIP_EXTRA_INDEX_URL", "PIP_TRUSTED_HOST",
+            "PIP_CERT", "PIP_CLIENT_CERT", "PIP_CONFIG_FILE", "PIP_NO_INDEX",
+            "PIP_FIND_LINKS", "PIP_CACHE_DIR", "PIP_DISABLE_PIP_VERSION_CHECK"})
+    return {key: value for key, value in os.environ.items() if key in names}
+
+
 def python_version(executable: str) -> Optional[Tuple[int, int, int]]:
     try:
         completed = subprocess.run(
@@ -179,6 +194,7 @@ def python_version(executable: str) -> Optional[Tuple[int, int, int]]:
                 "-c",
                 "import sys; print('.'.join(str(v) for v in sys.version_info[:3]))",
             ],
+            env=bootstrap_environment(),
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
@@ -254,7 +270,7 @@ def append_log(path: Path, message: str) -> None:
     except OSError as exc:
         raise BootstrapError("The private runtime log path is unsafe.") from exc
     try:
-        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+        if not safe_control_file(os.fstat(descriptor)):
             raise BootstrapError("The private runtime log is not a regular file.")
         os.fchmod(descriptor, 0o600)
         os.write(descriptor, ("%s %s\n" % (timestamp, message)).encode("utf-8"))
@@ -312,6 +328,7 @@ def ensure_runtime_environment(
     append_log(log_path, "Creating isolated Python runtime environment.")
     created = subprocess.run(
         command,
+        env=bootstrap_environment(),
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -335,6 +352,7 @@ def ensure_runtime_environment(
             str(source_root / "requirements.txt"),
         ],
         cwd=str(source_root),
+        env=bootstrap_environment(package_install=True),
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -382,6 +400,7 @@ def runtime_environment_fingerprint(runtime_python: Path) -> Optional[str]:
         try:
             completed = subprocess.run(
                 command,
+                env=bootstrap_environment(package_install=True),
                 stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
@@ -449,7 +468,7 @@ def acquire_startup_lock(path: Path) -> int:
         metadata = path.lstat()
     except FileNotFoundError:
         metadata = None
-    if metadata is not None and not stat.S_ISREG(metadata.st_mode):
+    if metadata is not None and (not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1):
         raise BootstrapError("The startup-lock path is unsafe.")
     descriptor: Optional[int] = None
     try:
@@ -462,7 +481,7 @@ def acquire_startup_lock(path: Path) -> int:
             | getattr(os, "O_NONBLOCK", 0),
             0o600,
         )
-        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+        if not safe_control_file(os.fstat(descriptor)):
             os.close(descriptor)
             descriptor = None
             raise BootstrapError("The startup-lock path is unsafe.")
@@ -479,28 +498,29 @@ def acquire_startup_lock(path: Path) -> int:
         raise BootstrapError("The startup-lock path is unsafe.") from exc
 
 
+def safe_control_file(metadata) -> bool:
+    return stat.S_ISREG(metadata.st_mode) and metadata.st_nlink == 1
+
+
 def write_pid(path: Path, pid: int) -> None:
     try:
-        descriptor = os.open(
-            path,
-            os.O_WRONLY
-            | os.O_CREAT
-            | os.O_TRUNC
-            | getattr(os, "O_CLOEXEC", 0)
-            | getattr(os, "O_NOFOLLOW", 0)
-            | getattr(os, "O_NONBLOCK", 0),
-            0o600,
-        )
-    except OSError as exc:
-        raise BootstrapError("The runtime PID path is unsafe.") from exc
+        existing = path.lstat()
+    except FileNotFoundError:
+        existing = None
+    if existing is not None and not safe_control_file(existing):
+        raise BootstrapError("The runtime PID path is unsafe.")
+    temporary = path.with_name(".%s.%s.tmp" % (path.name, uuid.uuid4().hex))
+    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     try:
-        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
-            raise BootstrapError("The runtime PID path is not a regular file.")
-        os.fchmod(descriptor, 0o600)
         os.write(descriptor, (str(pid) + "\n").encode("ascii"))
         os.fsync(descriptor)
+        os.replace(temporary, path)
     finally:
         os.close(descriptor)
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
 
 
 def read_pid(path: Path) -> int:
@@ -508,7 +528,7 @@ def read_pid(path: Path) -> int:
         metadata = path.lstat()
     except FileNotFoundError:
         raise
-    if not stat.S_ISREG(metadata.st_mode):
+    if (not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1):
         raise BootstrapError("The runtime PID file is unsafe.")
     descriptor: Optional[int] = None
     try:
@@ -519,7 +539,7 @@ def read_pid(path: Path) -> int:
             | getattr(os, "O_NOFOLLOW", 0)
             | getattr(os, "O_NONBLOCK", 0),
         )
-        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+        if not safe_control_file(os.fstat(descriptor)):
             raise BootstrapError("The runtime PID file is unsafe.")
         raw = os.read(descriptor, 65)
         decoded = raw.decode("ascii")
@@ -553,14 +573,9 @@ def child_environment(
     log_root: Path,
     installation: Dict[str, Any],
 ) -> Dict[str, str]:
-    environment = {
-        key: value
-        for key, value in os.environ.items()
-        if not key.startswith("TWOS_")
-        and not any(key.startswith(prefix) for prefix in SENSITIVE_CHILD_PREFIXES)
-        and key not in PYTHON_INJECTION_VARIABLES
-        and key not in SENSITIVE_CHILD_NAMES
-    }
+    environment = bootstrap_environment()
+    if "SSH_AUTH_SOCK" in os.environ:
+        environment["SSH_AUTH_SOCK"] = os.environ["SSH_AUTH_SOCK"]
     installation_id = str(installation["installation_id"])
     environment.update(
         {
@@ -606,7 +621,7 @@ def read_setup_authorization(path: Path) -> str:
         metadata = path.lstat()
     except FileNotFoundError as exc:
         raise BootstrapError("The one-time setup authorization is unavailable.") from exc
-    if not stat.S_ISREG(metadata.st_mode) or metadata.st_mode & 0o077:
+    if (not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1) or metadata.st_mode & 0o077:
         raise BootstrapError("The one-time setup authorization file is unsafe.")
     try:
         descriptor = os.open(
@@ -620,7 +635,7 @@ def read_setup_authorization(path: Path) -> str:
         raise BootstrapError("The one-time setup authorization file is unsafe.") from exc
     try:
         opened = os.fstat(descriptor)
-        if not stat.S_ISREG(opened.st_mode) or opened.st_mode & 0o077:
+        if (not stat.S_ISREG(opened.st_mode) or opened.st_nlink != 1) or opened.st_mode & 0o077:
             raise BootstrapError("The one-time setup authorization file is unsafe.")
         try:
             value = os.read(descriptor, 1024).decode("utf-8").strip()
@@ -694,7 +709,7 @@ def clear_owned_pid(path: Path, pid: int) -> None:
         metadata = path.lstat()
     except FileNotFoundError:
         return
-    if not stat.S_ISREG(metadata.st_mode):
+    if (not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1):
         return
     try:
         persisted = read_pid(path)
@@ -915,7 +930,7 @@ def _main(argv: Optional[List[str]] = None) -> int:
                 | getattr(os, "O_NOFOLLOW", 0)
                 | getattr(os, "O_NONBLOCK", 0),
             )
-            if not stat.S_ISREG(os.fstat(output_descriptor).st_mode):
+            if not safe_control_file(os.fstat(output_descriptor)):
                 os.close(output_descriptor)
                 reservation.close()
                 raise BootstrapError("The private runtime log is not a regular file.")
@@ -985,6 +1000,8 @@ def _main(argv: Optional[List[str]] = None) -> int:
                 print("TWOS is ready: %s" % url)
                 print("Runtime PID: %d" % process.pid)
                 print("Data root: %s" % data_root)
+                print("Runtime environment: %s" % (runtime_root / "venv"))
+                print("Private runtime log: %s" % log_path)
                 setup_path = data_root / "setup-authorization.txt"
                 if setup_path.exists():
                     print("Setup authorization code: %s" % read_setup_authorization(setup_path))

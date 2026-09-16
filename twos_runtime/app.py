@@ -2910,7 +2910,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             if authorization.lower().startswith("bearer ")
             else None
         )
-        raw_token = request.cookies.get(settings.session_cookie_name) or bearer_token
+        raw_token = bearer_token or request.cookies.get(settings.session_cookie_name)
         try:
             user = user_for_token(session, raw_token) if raw_token else None
             if raw_token:
@@ -6506,6 +6506,9 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                         next_action = "Review the exact local Commit proposal."
                     else:
                         next_action = commit_delivery.get("next_action") or "Resolve the Commit readiness blocker."
+                elif (commit_delivery.get("actions") or {}).get("can_review_commit") is True:
+                    primary_action = {"code": "review_commit", "label": "Review Commit"}
+                    next_action = "A material dependency changed. Review a new exact Commit proposal."
                 elif commit_actions.get("can_approve") is True:
                     primary_action = {
                         "code": "approve_commit",
@@ -8185,7 +8188,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
 
     @app.get("/api/runs")
     def list_runs(session: Session = Depends(get_db), user: User = Depends(current_user)) -> list[dict[str, Any]]:
-        return [run_out(item) for item in session.scalars(select(TaskRun).order_by(TaskRun.id.desc())).all()]
+        return [run_out(item) for item in session.scalars(select(TaskRun).join(Task, TaskRun.task_id == Task.id).where((Task.owner_user_id == user.id) | Task.owner_user_id.is_(None)).order_by(TaskRun.id.desc())).all()]
 
     @app.get("/api/tasks/{task_id}/acceptance")
     def latest_acceptance(task_id: int, session: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
@@ -8227,12 +8230,13 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
 
     @app.get("/api/schedules")
     def list_schedules(session: Session = Depends(get_db), user: User = Depends(current_user)) -> list[dict[str, Any]]:
-        schedules = session.scalars(select(Schedule).order_by(Schedule.id)).all()
+        schedules = session.scalars(select(Schedule).join(Task, Schedule.task_id == Task.id).where((Task.owner_user_id == user.id) | Task.owner_user_id.is_(None)).order_by(Schedule.id)).all()
         return [schedule_out(item, schedule_run_count(session, item.id)) for item in schedules]
 
     @app.post("/api/schedules")
     def create_schedule(payload: ScheduleIn, request: Request, session: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
-        if not session.get(Task, payload.task_id):
+        task = session.get(Task, payload.task_id)
+        if task is None or task.owner_user_id not in (None, user.id):
             raise HTTPException(status_code=404, detail="Task not found.")
         schedule = Schedule(
             task_id=payload.task_id,
@@ -8249,7 +8253,8 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     @app.patch("/api/schedules/{schedule_id}")
     def patch_schedule(schedule_id: int, payload: SchedulePatchIn, request: Request, session: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
         schedule = session.get(Schedule, schedule_id)
-        if not schedule:
+        task = session.get(Task, schedule.task_id) if schedule else None
+        if task is None or task.owner_user_id not in (None, user.id):
             raise HTTPException(status_code=404, detail="Schedule not found.")
         if payload.interval_seconds is not None:
             schedule.interval_seconds = payload.interval_seconds

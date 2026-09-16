@@ -14,7 +14,8 @@ from sqlalchemy import select
 
 from .config import ROOT_DIR
 from .maintenance import Maintenance, MaintenanceError, TARGET_SCHEMA, atomic_json, inspect_database, readonly, safe_state, tables, TERMINAL_OPERATIONS, open_lock
-from .security import authenticate, hash_token
+from .security import authenticate, hash_token, owner_record_issue
+from types import SimpleNamespace
 
 
 def owner_for_request(service, request):
@@ -23,15 +24,15 @@ def owner_for_request(service, request):
     if not token:
         raise MaintenanceError("AUTH_REQUIRED", "Log in as this installation's Owner.", 401)
     with readonly(service.db) as connection:
-        row = connection.execute("SELECT u.id, u.username, u.is_active FROM users u JOIN session_tokens s ON s.user_id=u.id WHERE s.token_hash=? AND s.revoked_at IS NULL AND s.expires_at > datetime('now')", (hash_token(token),)).fetchone()
+        row = connection.execute("SELECT u.id, u.username, u.is_active, u.password_hash, u.password_salt FROM users u JOIN session_tokens s ON s.user_id=u.id WHERE s.token_hash=? AND s.revoked_at IS NULL AND s.expires_at > datetime('now')", (hash_token(token),)).fetchone()
         first = connection.execute("SELECT id FROM users ORDER BY id LIMIT 1").fetchone()
         installation = connection.execute("SELECT owner_user_id FROM installations LIMIT 1").fetchone() if "installations" in tables(connection) else None
-    if not row or not row["is_active"]:
+    if not row or owner_record_issue(SimpleNamespace(**dict(row))) is not None:
         raise MaintenanceError("AUTH_REQUIRED", "Log in again; this session is unavailable.", 401)
     owner_id = installation[0] if installation and installation[0] else first[0] if first else None
     if row["id"] != owner_id:
         raise MaintenanceError("OWNER_REQUIRED", "Only this installation's Owner can use Maintenance.", 403)
-    return dict(row)
+    return {"id": row["id"], "username": row["username"], "is_active": row["is_active"]}
 
 
 def install_maintenance(app, settings, *, standalone=False):

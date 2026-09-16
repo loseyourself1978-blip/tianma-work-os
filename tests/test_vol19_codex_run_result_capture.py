@@ -6,7 +6,7 @@ import re
 import sqlite3
 import threading
 import time
-from contextlib import closing
+from contextlib import ExitStack, closing
 from datetime import timedelta
 from pathlib import Path
 from types import SimpleNamespace
@@ -87,8 +87,10 @@ def test_owner_confirmation_and_idempotent_start_spawn_one_real_run(
     fake_codex.with_name(fake_codex.name + ".delay-second-detection").write_text(
         "delay\n"
     )
+    progress_release = fake_codex.with_name(fake_codex.name + ".progress-release")
 
-    with make_client(tmp_path, source_repo, fake_codex) as client:
+    with make_client(tmp_path, source_repo, fake_codex, timeout=25) as client, ExitStack() as cleanup:
+        cleanup.callback(progress_release.write_text, "released\n")
         headers = init_and_login(client)
         task_id = create_executable_task(
             client,
@@ -151,6 +153,7 @@ def test_owner_confirmation_and_idempotent_start_spawn_one_real_run(
                 break
             time.sleep(0.02)
 
+        progress_release.write_text("released\n")
         if "succeeded" not in observed:
             run = wait_for_run(
                 client,

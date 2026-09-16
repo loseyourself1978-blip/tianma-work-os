@@ -2801,16 +2801,17 @@ def _atomic_create_file(
     mtime_ns: int | None,
 ) -> None:
     parent_fd, target_name = _open_parent_directory(root, entry.repository_path)
-    temporary = _prepare_temporary_material(
-        parent_fd,
-        target_name,
-        payload,
-        mode,
-        atime_ns=atime_ns,
-        mtime_ns=mtime_ns,
-    )
+    temporary = None
     guard_fd: int | None = None
     try:
+        temporary = _prepare_temporary_material(
+            parent_fd,
+            target_name,
+            payload,
+            mode,
+            atime_ns=atime_ns,
+            mtime_ns=mtime_ns,
+        )
         guard_fd = _immediate_entry_guard_at(
             root,
             entry,
@@ -2837,10 +2838,13 @@ def _atomic_create_file(
         if guard_fd is not None:
             os.close(guard_fd)
         try:
-            os.unlink(temporary, dir_fd=parent_fd)
-        except FileNotFoundError:
-            pass
-        os.close(parent_fd)
+            if temporary is not None:
+                try:
+                    os.unlink(temporary, dir_fd=parent_fd)
+                except FileNotFoundError:
+                    pass
+        finally:
+            os.close(parent_fd)
 
 
 def _atomic_replace_file(
@@ -2854,16 +2858,17 @@ def _atomic_replace_file(
     expected: str,
 ) -> None:
     parent_fd, target_name = _open_parent_directory(root, entry.repository_path)
-    temporary = _prepare_temporary_material(
-        parent_fd,
-        target_name,
-        payload,
-        mode,
-        atime_ns=atime_ns,
-        mtime_ns=mtime_ns,
-    )
+    temporary = None
     guard_fd: int | None = None
     try:
+        temporary = _prepare_temporary_material(
+            parent_fd,
+            target_name,
+            payload,
+            mode,
+            atime_ns=atime_ns,
+            mtime_ns=mtime_ns,
+        )
         guard_fd = _immediate_entry_guard_at(
             root,
             entry,
@@ -2882,10 +2887,13 @@ def _atomic_replace_file(
         if guard_fd is not None:
             os.close(guard_fd)
         try:
-            os.unlink(temporary, dir_fd=parent_fd)
-        except FileNotFoundError:
-            pass
-        os.close(parent_fd)
+            if temporary is not None:
+                try:
+                    os.unlink(temporary, dir_fd=parent_fd)
+                except FileNotFoundError:
+                    pass
+        finally:
+            os.close(parent_fd)
 
 
 def _unlink_entry_file(

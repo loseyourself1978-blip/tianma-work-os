@@ -2980,15 +2980,24 @@ def run_execution(
             os.close(stderr_fd)
             raise CodexExecBridgeError("PROCESS_SPAWN_FAILED", "The exact Codex process could not be started.")
         if process.stdin is None or process.stdout is None or process.stderr is None:
-            _terminate_exact_process(process, capture_process_start_identity(process.pid))
+            cleaned = _terminate_unbound_sidecar(process)
+            for pipe in (process.stdin, process.stdout, process.stderr):
+                if pipe is not None:
+                    pipe.close()
             os.close(stdout_fd)
             os.close(stderr_fd)
+            if not cleaned:
+                raise CodexExecBridgeError("PROCESS_CLEANUP_FAILED", "The unpublished Codex process could not be reaped.")
             raise CodexExecBridgeError("PROCESS_PIPE_FAILED", "The exact Codex process pipes are unavailable.")
         child_start_identity = capture_process_start_identity(process.pid)
         if not child_start_identity:
-            _terminate_exact_process(process, child_start_identity)
+            cleaned = _terminate_unbound_sidecar(process)
+            for pipe in (process.stdin, process.stdout, process.stderr):
+                pipe.close()
             os.close(stdout_fd)
             os.close(stderr_fd)
+            if not cleaned:
+                raise CodexExecBridgeError("PROCESS_CLEANUP_FAILED", "The unpublished Codex process could not be reaped.")
             raise CodexExecBridgeError("PROCESS_IDENTITY_UNAVAILABLE", "The exact Codex process identity could not be verified.")
 
         budget = _RetentionBudget(int(limits["combined_output_bytes"]))

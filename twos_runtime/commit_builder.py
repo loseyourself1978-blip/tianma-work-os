@@ -162,7 +162,7 @@ def _git_environment(*, index_file: Path | None = None) -> dict[str, str]:
     environment = {
         key: value
         for key, value in os.environ.items()
-        if not key.startswith("GIT_")
+        if key in {"PATH", "HOME", "TMPDIR", "LANG", "LC_ALL", "LC_CTYPE", "USER", "LOGNAME", "SYSTEMROOT"}
     }
     environment.update(
         {

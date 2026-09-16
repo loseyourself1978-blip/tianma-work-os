@@ -1155,14 +1155,14 @@ class CodexAdapter:
             text=True,
             bufsize=1,
             cwd=tempfile.gettempdir(),
+            env=codex_child_environment(),
+            start_new_session=True,
         )
         if process.stdin is None or process.stdout is None:
-            process.terminate()
+            _close_catalog_process(process)
             raise ValueError("app-server stdio transport was unavailable")
-        selector = selectors.DefaultSelector()
-        stdout_fd = process.stdout.fileno()
-        os.set_blocking(stdout_fd, False)
-        selector.register(stdout_fd, selectors.EVENT_READ)
+        selector = None
+        stdout_fd = -1
         deadline = time.monotonic() + CODEX_MODEL_CATALOG_APP_SERVER_TIMEOUT_SECONDS
         observed_bytes = 0
         frame_buffer = bytearray()
@@ -1206,6 +1206,10 @@ class CodexAdapter:
 
         raw_models: list[object] = []
         try:
+            selector = selectors.DefaultSelector()
+            stdout_fd = process.stdout.fileno()
+            os.set_blocking(stdout_fd, False)
+            selector.register(stdout_fd, selectors.EVENT_READ)
             send(
                 {
                     "method": "initialize",
@@ -1244,18 +1248,9 @@ class CodexAdapter:
                 installed_cli_version=detection.version,
             )
         finally:
-            selector.close()
-            try:
-                process.stdin.close()
-            except OSError:
-                pass
-            if process.poll() is None:
-                process.terminate()
-                try:
-                    process.wait(timeout=1)
-                except subprocess.TimeoutExpired:
-                    process.kill()
-                    process.wait(timeout=1)
+            if selector is not None:
+                selector.close()
+            _close_catalog_process(process)
 
     def _versioned_compatibility_catalog(
         self,
@@ -1330,6 +1325,7 @@ class CodexAdapter:
                 try:
                     result = subprocess.run(
                         [detection.executable, "debug", "models", "--bundled"],
+                        env=codex_child_environment(),
                         capture_output=True,
                         text=True,
                         timeout=20,
@@ -1386,12 +1382,14 @@ class CodexAdapter:
         try:
             version_result = subprocess.run(
                 [executable, "--version"],
+                env=codex_child_environment(),
                 capture_output=True,
                 text=True,
                 timeout=10,
             )
             help_result = subprocess.run(
                 [executable, "exec", "--help"],
+                env=codex_child_environment(),
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -9321,3 +9319,24 @@ class CodexExecutionManager:
                     context="worker_internal_failure",
                     failure_type=type(exc).__name__,
                 )
+
+
+def _close_catalog_process(process) -> None:
+    """Close the owned local catalogue session, including descendant helpers."""
+    for stream in (process.stdin, process.stdout):
+        if stream is not None:
+            try:
+                stream.close()
+            except OSError:
+                pass
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+    except ProcessLookupError:
+        pass
+    # Reap only after killing remaining group members so the group leader's
+    # PID cannot be recycled while we still address its process group.
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    process.wait(timeout=5)

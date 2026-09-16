@@ -1,0 +1,260 @@
+[
+  {
+    "disposition": "public synthetic test/acceptance fixture; excluded",
+    "match_sha256": "ab49c2008f40761e55d9e6ac1a35153c231b18a39e56d8cd56d63fd2df3462a5",
+    "path": "scripts/vol18_4b_owner_acceptance_app.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "UI validation wording; retained",
+    "match_sha256": "0020f7eac7a05d7442a1a3b5cf466837c16a4951532d6437db404aead80cc195",
+    "path": "static_cockpit/vol12_static_mvp/twos_command_center.js",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "UI validation wording; retained",
+    "match_sha256": "b48ae25bf4fdb3bccdbaf2d72db38cac0a2f4d4dc47b64d9ce25a5fa10e42481",
+    "path": "static_cockpit/vol12_static_mvp/twos_command_center.js",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test/acceptance fixture; excluded",
+    "match_sha256": "d904510fcc3ad59b48df482600b1848fbfd2ee22fa96351fc1656b2a93af0f37",
+    "path": "tests/maintenance_historical_fixture.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test/acceptance fixture; excluded",
+    "match_sha256": "c141028928f79dd16ff29037561ecbdf693d8a5419c18fe039f1074a91d80deb",
+    "path": "tests/test_owner_auth.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test/acceptance fixture; excluded",
+    "match_sha256": "5ec670baac538dd14ab521986a85e1913dfa91a453c36753984821f80d91ba70",
+    "path": "tests/test_self_hosting.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test/acceptance fixture; excluded",
+    "match_sha256": "5ec670baac538dd14ab521986a85e1913dfa91a453c36753984821f80d91ba70",
+    "path": "tests/test_twos_runtime.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test/acceptance fixture; excluded",
+    "match_sha256": "5ec670baac538dd14ab521986a85e1913dfa91a453c36753984821f80d91ba70",
+    "path": "tests/test_vol17_end_to_end_remediation.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test/acceptance fixture; excluded",
+    "match_sha256": "6e30ca8f34a8c05b90114711bb90286b9781b2f02a9a06b70c9fac2b356caba9",
+    "path": "tests/test_vol18_codex_connectivity.py",
+    "rule": "provider-key"
+  },
+  {
+    "disposition": "public synthetic test/acceptance fixture; excluded",
+    "match_sha256": "e12942aec9688a2a46244a24b7ae2258ee7ed7e5b0bd16e78446385d6954aebe",
+    "path": "tests/test_vol18_codex_connectivity.py",
+    "rule": "provider-key"
+  },
+  {
+    "disposition": "public synthetic test/acceptance fixture; excluded",
+    "match_sha256": "1b36e420530fcca896e43d5eac2f15edc92f7873f506f3618e98ec63ef403bc9",
+    "path": "tests/test_vol18_codex_connectivity.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test/acceptance fixture; excluded",
+    "match_sha256": "7299425441990f6144029c0fddf07f0ec5ef45877515c936c509608299074ca8",
+    "path": "tests/test_vol19_codex_run_result_capture.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test/acceptance fixture; excluded",
+    "match_sha256": "63d4212a1e8fe5d4fa424600b35d803845385dd7cf675af7bb32590529f9eb0c",
+    "path": "tests/test_vol19_guided_first_delivery.py",
+    "rule": "provider-key"
+  },
+  {
+    "disposition": "public synthetic test/acceptance fixture; excluded",
+    "match_sha256": "e3277ad1c6eb6f2ddc507159506304c853ba638b296c36f8608f6ff85c958bb8",
+    "path": "tests/test_vol19_maintenance.py",
+    "rule": "provider-key"
+  },
+  {
+    "disposition": "public synthetic test/acceptance fixture; excluded",
+    "match_sha256": "db0f49566e95bf345967db2cdaaa25a5cc7f410b76ff725dd828d1338a93aedc",
+    "path": "tests/test_vol19_owner_commit_push_delivery.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test/acceptance fixture; excluded",
+    "match_sha256": "7299425441990f6144029c0fddf07f0ec5ef45877515c936c509608299074ca8",
+    "path": "tests/test_vol19_result_owner_delivery.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test fixture; excluded",
+    "match_sha256": "16510695d5a8df57cde9975403015cb0534f8411f1a304c710d91574521f0824",
+    "path": "tests/test_owner_auth.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test fixture; excluded",
+    "match_sha256": "eef8dc839248b6c070d263433aa5043e3b641a9b996298283380c9ebc43b85c1",
+    "path": "tests/test_owner_auth.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "98fc1496608c0235244097a2f6d86bbcb95d5bf29f75c35dc23a7cfcc54c32ef",
+    "path": "tests/test_owner_auth.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "39a8413a6b0dffeec3300e4fa8435849900b9685614aac73d9ed4cf45e3d8f25",
+    "path": "tests/test_owner_auth.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "32793c97b649007f5651165869b3528fe6e9284cd650b132d52948daf1f90939",
+    "path": "tests/test_self_hosting.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "ab293b8f2935c3548cb8e69316a44f3a049244aa4de14c4c1b82e24d8b4a82a7",
+    "path": "tests/test_self_hosting.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "adad784c01a89530f2851c9b6cc3a9f0b94bb5853613650fe11c1bd0de6232c1",
+    "path": "tests/test_vol17_real_evidence_remediation.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "88cd5e41d2f80954f94e8810cb001e130f2bea14b7d920c6a0efb39948a1758c",
+    "path": "tests/test_vol18_apply_revert.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "540aa0c7560090bd7002c7240c9d9ae7a20ab16e24355be44c29913db7739bee",
+    "path": "tests/test_vol18_codex_exec_bridge.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "1b4af86f5364257067b434604f7d300a537c05dce58ebfd515c3ffa792bed4fd",
+    "path": "tests/test_vol18_delivery_candidate.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "64fd54f4772f94911cd038f66fee93746e34ce43b9a1c13c4cafecb6fae19c87",
+    "path": "tests/test_vol18_delivery_candidate.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "493bcd22f52b1de972d2b91d12d6796b35a77055be3cf98e65b6dfce8bfd3379",
+    "path": "tests/test_vol18_post_apply_verification.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "9c260eae824634a4ac3fe574aa396db296626ab8f5e0bc4a948b36bed516564c",
+    "path": "tests/test_vol18_push_delivery.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "193a1e428a4396a668b239dbc3de8a1a4f81912d8d8f33760914dcfdfa15f605",
+    "path": "tests/test_vol18_result_intake.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "a4b6712668fe4fc14d6c14908afe9f51448c9fca26b2e92ab9da69cc1b92b14f",
+    "path": "tests/test_vol18_review_apply_plan.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "88fc96c9ef763a6a6ffc3073c62a4f6dc08759855b9c1d5f0c00bb130455f9b9",
+    "path": "tests/test_vol18_stage_local_commit.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "331f98264f52b294b86fa9620d2119bea859ef0c879d4d15f47fe4a9f7a94729",
+    "path": "tests/test_vol19_codex_run_result_capture.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "302ca31267177a686df9f228e9d3c0fe28dda0887a14ce9a8a4063556c3b1ec5",
+    "path": "tests/test_vol19_fresh_install_bootstrap.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "f0eaeb8125e22b766b0cdc362f71ae25b3ba44da277b6ad87a63458fb644a6f4",
+    "path": "tests/test_vol19_fresh_install_bootstrap.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "fe29a1a19f628ff7f212e6bf51ed17aede952bd0ed78a3eff72e76fc93a00051",
+    "path": "tests/test_vol19_fresh_install_first_run.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "f9ad7e5b77eb4ad4aec401fd790cd0cf61ceaa92b2d635d01b60b512902c55b2",
+    "path": "tests/test_vol19_fresh_install_first_run.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "f288db0a7d7870098359a3b48b3224ae92e2dd643a31a92a5d024c2c17829d35",
+    "path": "tests/test_vol19_fresh_install_first_run.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "6e6dcc501b29e1db09f434e590cf69523822d69f9dc41e003b1466a979948233",
+    "path": "tests/test_vol19_guided_first_delivery.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "8d39bda94835a2464e8dd1faf24f1e2091a4409170947038f602e0f92c6d2a4f",
+    "path": "tests/test_vol19_guided_first_delivery.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "ea54e6529ec857ce91596ef8abb3106da44b8d528cfc416450aac265c59a4720",
+    "path": "tests/test_vol19_maintenance.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "5dd617c94bc3ef51a6513c67605d27fa4f2c0e9912cdd8a6bae85def8dc1401e",
+    "path": "tests/test_vol19_owner_commit_push_delivery.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic test input/session fixture; excluded",
+    "match_sha256": "fae96ddfa8e614f51dc2805dc2d48006bde11d018f34455ecd5f34cf49ce6a14",
+    "path": "tests/test_vol19_result_owner_delivery.py",
+    "rule": "credential-assignment"
+  }
+]

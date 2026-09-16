@@ -9012,9 +9012,11 @@
       elements.commitPlanSubject.value = "Apply " + String(taskName || "approved changes");
     }
     if (proposalId) {
-      elements.commitPlanSubject.value = boundedText(parts.proposal.subject, elements.commitPlanSubject.value, 200);
-      elements.commitPlanBody.value = boundedText(parts.proposal.body, elements.commitPlanBody.value, 4000);
+      elements.commitPlanSubject.value = typeof parts.proposal.subject === "string" ? parts.proposal.subject.slice(0, 200) : "";
+      elements.commitPlanBody.value = typeof parts.proposal.body === "string" ? parts.proposal.body.slice(0, 4000) : "";
     }
+    const reviewCompleted = Boolean(proposalId) && parts.commitDelivery.review_required !== true
+      && (parts.commitDelivery.review_required === false || parts.proposal.status === "READY");
     const canRevise = parts.commitActions.can_create_proposal === true
       || parts.commitActions.can_edit === true
       || parts.commitActions.can_review_commit === true
@@ -9023,7 +9025,9 @@
     elements.commitPlanSubject.disabled = !canRevise;
     elements.commitPlanBody.disabled = !canRevise;
     elements.reviewOwnerCommit.hidden = false;
-    elements.reviewOwnerCommit.disabled = !canRevise || state.pending.has("review-owner-commit");
+    elements.reviewOwnerCommit.className = reviewCompleted ? "button button-quiet" : "button button-primary";
+    elements.reviewOwnerCommit.textContent = reviewCompleted ? "Review completed" : "Review Commit";
+    elements.reviewOwnerCommit.disabled = reviewCompleted || !canRevise || state.pending.has("review-owner-commit");
     elements.approveCommitProposal.hidden = false;
     elements.approveCommitProposal.disabled = !(
       parts.commitActions.can_approve_commit === true
@@ -10252,18 +10256,27 @@
       const canonicalCommitActions = objectRecord(ownerDelivery.commitActions);
       const canonicalPushActions = objectRecord(ownerDelivery.pushActions);
       const committed = canonicalCommitState(ownerDelivery) === "LOCAL_COMMIT_CREATED";
-      elements.reviewOwnerCommit.disabled = !authenticated
+      const reviewed = Boolean(ownerDeliveryRecordId(ownerDelivery.proposal))
+        && ownerDelivery.commitDelivery.review_required !== true
+        && (ownerDelivery.commitDelivery.review_required === false || ownerDelivery.proposal.status === "READY");
+      const messageChanged = elements.commitPlanSubject.value !== (ownerDelivery.proposal.subject || "")
+        || elements.commitPlanBody.value !== (ownerDelivery.proposal.body || "");
+      elements.reviewOwnerCommit.className = reviewed && !messageChanged ? "button button-quiet" : "button button-primary";
+      elements.reviewOwnerCommit.textContent = reviewed && !messageChanged ? "Review completed" : "Review Commit";
+      elements.reviewOwnerCommit.disabled = !authenticated || (reviewed && !messageChanged)
         || !(canonicalCommitActions.can_create_proposal === true
           || canonicalCommitActions.can_edit === true
           || canonicalCommitActions.can_review_commit === true
           || canonicalCommitActions.can_review_commit_proposal === true)
         || state.pending.has("review-owner-commit");
-      elements.approveCommitProposal.disabled = !authenticated
+      elements.approveCommitProposal.disabled = !authenticated || messageChanged
+        || state.pending.has("review-owner-commit")
         || !(canonicalCommitActions.can_approve_commit === true
           || canonicalCommitActions.can_approve_commit_proposal === true
           || canonicalCommitActions.can_approve === true)
         || state.pending.has("approve-commit-proposal");
-      elements.confirmOwnerLocalCommit.disabled = !authenticated
+      elements.confirmOwnerLocalCommit.disabled = !authenticated || messageChanged
+        || state.pending.has("review-owner-commit")
         || !(canonicalCommitActions.can_confirm_commit === true
           || canonicalCommitActions.can_create_local_commit === true
           || canonicalCommitActions.can_commit === true)
@@ -11045,6 +11058,8 @@
         const subject = elements.commitPlanSubject.value;
         const body = elements.commitPlanBody.value;
         const actions = context.parts.commitActions;
+        if (context.parts.commitDelivery.review_required === false
+            && subject === context.parts.proposal.subject && body === context.parts.proposal.body) return "Commit review already completed.";
         if (!context.parts.commitPrerequisitesMet || !(actions.can_create_proposal === true
             || actions.can_edit === true || actions.can_review_commit === true || actions.can_review_commit_proposal === true)) {
           throw new ApiError(409, "COMMIT_PREREQUISITES_REQUIRED",
@@ -11100,6 +11115,11 @@
     );
   }
 
+  function ownerCommitMessageChanged(parts) {
+    return elements.commitPlanSubject.value !== (parts.proposal.subject || "")
+      || elements.commitPlanBody.value !== (parts.proposal.body || "");
+  }
+
   async function approveOwnerCommitProposal() {
     await performAction(
       "approve-commit-proposal",
@@ -11107,6 +11127,10 @@
       "Approving…",
       async function () {
         const context = ownerDeliveryActionContext();
+        if (ownerCommitMessageChanged(context.parts) || state.pending.has("review-owner-commit")) {
+          throw new ApiError(409, "COMMIT_REVIEW_REQUIRED",
+            "Review the current Commit message before approval.", {}, "product");
+        }
         const proposalId = ownerDeliveryRecordId(context.parts.proposal);
         const proposalDigest = ownerDeliveryDigest(context.parts.proposal);
         const proposalVersion = Number(
@@ -11140,6 +11164,7 @@
 
   function openOwnerLocalCommitConfirmation() {
     const context = ownerDeliveryActionContext();
+    if (ownerCommitMessageChanged(context.parts) || state.pending.has("review-owner-commit")) return;
     if (!(context.parts.commitActions.can_confirm_commit === true
         || context.parts.commitActions.can_create_local_commit === true
         || context.parts.commitActions.can_commit === true)) return;
@@ -11199,6 +11224,11 @@
       elements.confirmApprovedLocalCommit,
       "Creating…",
       async function () {
+        if (ownerCommitMessageChanged(ownerDeliveryActionContext().parts)
+            || state.pending.has("review-owner-commit")) {
+          throw new ApiError(409, "COMMIT_REVIEW_REQUIRED",
+            "Review the current Commit message before Local Commit.", {}, "product");
+        }
         if (context.task_selection_epoch !== state.taskSelectionEpoch
             || String(objectRecord(currentCodexRun()).id || "") !== context.run_id) {
           throw new ApiError(
@@ -12754,6 +12784,8 @@
     elements.revertAppliedChanges.addEventListener("click", openRevertConfirmation);
     elements.verifyAppliedChanges.addEventListener("click", verifyAppliedChanges);
     elements.reviewOwnerCommit.addEventListener("click", reviewOwnerCommit);
+    elements.commitPlanSubject.addEventListener("input", renderActionAvailability);
+    elements.commitPlanBody.addEventListener("input", renderActionAvailability);
     elements.approveCommitProposal.addEventListener("click", approveOwnerCommitProposal);
     elements.confirmOwnerLocalCommit.addEventListener("click", openOwnerLocalCommitConfirmation);
     elements.reviewCommitPlan.addEventListener("click", reviewCommitPlan);

@@ -646,8 +646,6 @@ def create_commit_proposal(
                 "COMMIT_PROPOSAL_ALREADY_EXECUTED",
                 "A Commit attempt already owns the approved proposal.",
             )
-        if latest.subject == subject_value and latest.body == body_value:
-            return latest, False
     boundary = _safe_global_evidence(current_global)
     binding = _proposal_binding(
         owner_id=owner_id,
@@ -694,7 +692,7 @@ def create_commit_proposal(
     )
     if (
         latest is not None
-        and latest_approval is None
+        and latest.binding_digest == binding_digest
         and latest.subject == subject_value
         and latest.body == body_value
         and latest.author_identity_digest == author["identity_digest"]
@@ -1856,6 +1854,38 @@ def commit_proposal_out(
     }
 
 
+def _proposal_review_is_current(session, proposal, verification, source_repo) -> bool:
+    try:
+        applied, plan, candidate, run, pack, entries, result, acceptance, approval = _result_lineage(
+            session, owner_id=proposal.owner_id, verification=verification)
+        root = _verified_root(run, source_repo)
+        with _commit_builder_repository_lock(applied.repository_locator_fingerprint):
+            _status, blockers, tests, current = _current_boundary_locked(
+                run=run, pack=pack, apply_session=applied, entries=entries, source_repo=root)
+            planned = _planned_stage_entries(root, entries)
+            paths = [{"path": item["path"], "path_identity": item["path_identity"],
+                      "operation": item["operation"]} for item in planned]
+            allowed, hard, warnings, staged = _commit_boundary_decision(
+                root=root, base_head=applied.pre_apply_head,
+                planned_paths=[item["path"] for item in paths], blockers=blockers)
+            boundary = _safe_global_evidence(current)
+            boundary["non_blocking_drift_warnings"] = warnings
+            boundary["unrelated_staged_path_count"] = len(staged)
+            boundary["unrelated_staged_path_identities"] = sorted(
+                _sha256_bytes(path.encode("utf-8")) for path in staged)
+            binding = _proposal_binding(owner_id=proposal.owner_id, verification=verification,
+                apply_session=applied, apply_plan=plan, candidate=candidate, run=run,
+                pack=pack, result=result, acceptance=acceptance, approval=approval,
+                branch_ref=_branch_ref(root, applied.branch))
+            return (allowed and proposal.status_at_creation == "READY"
+                and canonical_sha256(binding) == proposal.binding_digest
+                and canonical_sha256(paths) == proposal.planned_paths_digest
+                and _author_readiness(root)["identity_digest"] == proposal.author_identity_digest
+                and canonical_json(boundary) == canonical_json(_decoded_object(proposal.boundary_evidence_json)))
+    except (CommitBuilderError, OSError):
+        return False
+
+
 def owner_commit_review(
     session: Session,
     *,
@@ -1914,7 +1944,10 @@ def owner_commit_review(
     proposal_output = (
         commit_proposal_out(session, proposal=proposal) if proposal is not None else None
     )
-    if proposal_output is not None and not author_readiness["ready"]:
+    executed = bool(proposal_output and proposal_output.get("commit"))
+    review_required = not executed and (proposal is None or not _proposal_review_is_current(
+        session, proposal, post_apply_verification, source_repo))
+    if proposal_output is not None and (not author_readiness["ready"] or review_required):
         proposal_output["actions"]["can_approve"] = False
         proposal_output["actions"]["can_commit"] = False
         proposal_output["blockers"] = [
@@ -1933,10 +1966,12 @@ def owner_commit_review(
     return {
         "status": status,
         "proposal": proposal_output,
+        "review_required": review_required,
         "author_readiness": author_readiness,
         "blockers": readiness_blockers,
         "actions": {
-            "can_create_proposal": proposal is None and author_readiness["ready"]
+            "can_create_proposal": proposal is None and author_readiness["ready"],
+            "can_review_commit": review_required and author_readiness["status"] != "NEEDS_SETUP",
         },
         "next_action": (
             "Configure a local Git user name and email for this repository."

@@ -455,7 +455,14 @@ if "FAKE_TIMEOUT" in prompt or "FAKE_CANCEL" in prompt or "FAKE_RUNTIME_SHUTDOWN
 if "FAKE_RUNTIME_HANDOFF" in prompt:
     time.sleep(1.5)
 if "FAKE_VOL19_PROGRESS" in prompt:
-    time.sleep(0.5)
+    # Keep a real live child until the lifecycle observer explicitly releases it.
+    # A short sleep can finish between HTTP polls under full-suite load.
+    progress_release = pathlib.Path(__file__).with_name(pathlib.Path(__file__).name + ".progress-release")
+    progress_deadline = time.monotonic() + 20
+    while not progress_release.exists() and time.monotonic() < progress_deadline:
+        time.sleep(0.02)
+    if not progress_release.exists():
+        raise RuntimeError("Lifecycle observer did not release the controlled child")
 if "FAKE_FAIL" in prompt:
     emit({
         "type": "turn.failed",
