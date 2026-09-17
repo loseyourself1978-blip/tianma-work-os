@@ -60,6 +60,59 @@ model and reasoning. Sign in using Codex's own supported authentication when
 required. TWOS does not copy its credential store or ask you to paste provider
 secrets into ordinary UI. Local discovery is different from provider readiness.
 
+### Configure independent Verification before Guided First Delivery
+
+Guided First Delivery requires an Owner-reviewed deterministic local verifier,
+separate from Codex Coding. It checks the resulting files against the approved
+task; Coding success alone cannot establish Verification success. First Run and
+Task creation remain available without this optional execution prerequisite.
+
+Supply the verifier when starting TWOS in Terminal. Replace both example paths
+with absolute paths to your trusted Python executable and read-only verifier:
+
+```sh
+TWOS_LOCAL_VERIFICATION_COMMAND_JSON='["/absolute/path/to/python3", "/absolute/path/to/trusted-verifiers/verify_first_delivery.py"]' ./start-twos
+```
+
+This is a JSON array of 1–32 nonempty strings, each at most 4096 UTF-8 bytes and
+containing no NUL. The first string must identify an existing executable by its
+absolute path. Use absolute paths for verifier scripts as well; keep the
+executable and scripts outside the authorized source workspace and TWOS Run/spool
+directories. Guided readiness also rejects control characters in arguments and
+binds the exact command and file identities. JSON double quotes preserve paths
+with spaces; shell expansion, pipes and redirection are not performed inside the
+array. This setting authorizes no shell fallback or automatic Run.
+
+The example assumes you already have a trusted verifier for the dedicated
+`first_delivery.txt` task. It must inspect files without modifying them and emit
+the existing TWOS JSONL Verification protocol: `thread.started`, `turn.started`,
+an `item.completed` agent message containing a `twos.verification.v1` result,
+then `turn.completed`. The result reports `verdict`, `changed_files_checked`,
+`unexpected_files`, `exact_content`, `tests`, `git_boundary` and `remote_boundary`
+truthfully. A command that merely exits zero, such as `true`, is not a verifier.
+At Verification execution TWOS runs the exact argv in the isolated Run workspace;
+it does not install or generate a verifier for you.
+
+Use the same environment assignment on every restart, including with custom
+`--data-root`, `--runtime-root` and `--log-root` options. It is not saved as an
+installation setting. After restarting, open Guided Tool Setup, choose the
+model/reasoning, explicitly **Check Codex Readiness**, then **Save Tool Setup**
+only after Ready. Checking binds the verifier but does not execute it or start
+delivery. Changing the verifier requires a new check and any required new Pack
+approval; later Owner gates remain separate.
+
+If the setting is absent or blank, readiness returns
+`Configure an independent local Verification command for First Delivery.`
+before any provider check or delivery execution. Malformed JSON, a non-array,
+an invalid argument or an invalid array length prevents startup: the launcher
+reports `BLOCKED` and the private `runtime.log` identifies
+`TWOS_LOCAL_VERIFICATION_COMMAND_JSON` and the parser error. Find this log under
+your `--log-root`, or by default at
+`~/Library/Logs/Tianma Work OS/<installation-id>/runtime.log`. Correct the value
+and explicitly relaunch. A parseable but unavailable/non-absolute executable or
+unsafe verifier binding is instead rejected by Guided readiness with its
+specific diagnostic. Neither case substitutes another command or starts delivery.
+
 ## 7. Readiness versus Save Tool Setup
 
 **Check readiness** is explicit and may contact the provider using your Codex

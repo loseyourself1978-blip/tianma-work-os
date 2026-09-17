@@ -574,6 +574,13 @@ def child_environment(
     installation: Dict[str, Any],
 ) -> Dict[str, str]:
     environment = bootstrap_environment()
+    # This operator-supplied argv is parsed by runtime config and sealed by
+    # Guided Delivery before readiness. Forward only this supported setting,
+    # and only to TWOS itself, never to Python probes or dependency installers.
+    if "TWOS_LOCAL_VERIFICATION_COMMAND_JSON" in os.environ:
+        environment["TWOS_LOCAL_VERIFICATION_COMMAND_JSON"] = os.environ[
+            "TWOS_LOCAL_VERIFICATION_COMMAND_JSON"
+        ]
     if "SSH_AUTH_SOCK" in os.environ:
         environment["SSH_AUTH_SOCK"] = os.environ["SSH_AUTH_SOCK"]
     installation_id = str(installation["installation_id"])

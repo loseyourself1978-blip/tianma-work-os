@@ -41,8 +41,9 @@ rebuild it or replace its manifest. The
 [release package manifest contract](VOL19_19_4_RELEASE_PACKAGE_MANIFEST_v0.1.md)
 describes the exact-commit build, exclusions and external hash manifest.
 Implementation-time pending-acceptance wording in that immutable package and the
-implementation records remains historical; this closeout and the
-[RC gap register](VOL19_RC_GAP_REGISTER_v0.1.md) establish the current accepted status.
+implementation records remains historical; this closeout and the repository-only
+historical record `docs/runtime/VOL19_RC_GAP_REGISTER_v0.1.md` establish the current
+accepted status. That historical record is not included in the release package.
 
 ### Scenario A — fresh artifact and First Run
 
