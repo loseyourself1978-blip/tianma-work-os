@@ -398,6 +398,7 @@
     generatePack: byId("generate-pack"),
     approvePack: byId("approve-pack"),
     reviewPack: byId("review-pack"),
+    packReviewDialog: byId("pack-review-dialog"),
     packHistory: byId("pack-history"),
     packRaw: byId("pack-raw"),
     packId: byId("pack-id"),
@@ -2775,6 +2776,7 @@
 
   function resetTaskDetails() {
     state.firstDeliveryGuide = null;
+    if (elements.packReviewDialog && elements.packReviewDialog.open) elements.packReviewDialog.close();
     state.runConfirmationContext = null;
     if (elements.startCodexConfirmationDialog.open) elements.startCodexConfirmationDialog.close();
     state.pushConfirmationContext = null;
@@ -3105,7 +3107,7 @@
     elements.codexHeaderStatus.textContent = detection && detection.passive === true && detection.authentication_ready !== true
       ? "Codex: " + String(detection.readiness_state || "Not checked")
       : runtimeAvailable
-      ? "Codex: Ready for real Run"
+      ? "Codex: Tool ready — check Task readiness below"
       : "Codex: " + connectivityStateLabel(connectivity.readiness_state);
     elements.codexHeaderStatus.dataset.status = runtimeAvailable ? "ready" : "setup";
     elements.accountUsername.textContent = state.user ? state.user.username : "Account";
@@ -4952,6 +4954,24 @@
         status = "Approval required";
         nextAction = "Approve Codex Pack";
       }
+    }
+    const guide = state.firstDeliveryGuide;
+    const prerequisite = guide && selectedTask()
+      && String(guide.task_id) === String(selectedTask().id)
+      && ["tool_setup", "prepare"].indexOf(guide.next_action) !== -1
+      && eligibility && eligibility.eligible !== true && !active && !terminal
+      ? guide : null;
+    const prerequisiteButton = byId("run-prerequisite-action");
+    if (prerequisiteButton) {
+      prerequisiteButton.hidden = !prerequisite;
+      prerequisiteButton.disabled = state.pending.has("prepare-first-delivery");
+      if (prerequisite) prerequisiteButton.textContent = prerequisite.action_label;
+    }
+    if (prerequisite) {
+      reason += prerequisite.next_action === "prepare"
+        ? " Tool Setup is saved, but this Task still needs Prepare First Delivery to bind its configuration to an Instruction Pack. Review and approve the prepared Pack before Run."
+        : " Open Guided Tool Setup, Check Codex Readiness, then Save Tool Setup for this workspace.";
+      nextAction = prerequisite.action_label;
     }
     if (!active && terminal && blockerCode === "ACTIVE_RUN_EXISTS") {
       status = "Recheck required";
@@ -10414,6 +10434,23 @@
     });
   }
 
+  function reviewCurrentPack() {
+    const task = selectedTask();
+    const pack = currentPack();
+    if (!task || !pack || String(pack.task_id) !== String(task.id)) {
+      setFeedback("Select a Task with a current Pack to review.", "error");
+      return;
+    }
+    byId("pack-review-identity").textContent = "Task #" + task.id
+      + " · Pack #" + pack.id + " · v" + pack.version + " · " + humanStatus(pack.status);
+    byId("pack-review-content").textContent = "Frozen Development task:\n"
+      + String(pack.development_task || "Unavailable") + "\n\n"
+      + String(pack.content || "Pack content unavailable")
+      + "\n\nBound source and tool evidence:\n"
+      + JSON.stringify(pack.generation_metadata || {}, null, 2);
+    byId("pack-review-dialog").showModal();
+  }
+
   function secureRequestIdentity(prefix) {
     const identityPrefix = String(prefix || "");
     if (window.crypto && typeof window.crypto.randomUUID === "function") {
@@ -12433,6 +12470,7 @@
     byId("first-delivery-title").textContent = String(guide.stage_index + 1) + ". " + guide.stage;
     byId("first-delivery-message").textContent = guide.message;
     byId("first-delivery-action").textContent = guide.action_label;
+    byId("first-delivery-action").disabled = state.pending.has("prepare-first-delivery");
     const location = guide.location || {};
     byId("first-delivery-workspace").textContent = location.authorized_workspace || "Unavailable";
     byId("first-delivery-source").textContent = location.source_repository || "Unavailable";
@@ -12600,6 +12638,12 @@
   }
 
   function bindEvents() {
+    elements.reviewPack.addEventListener("click", reviewCurrentPack);
+    byId("pack-review-close").addEventListener("click", function () { byId("pack-review-dialog").close(); });
+    byId("run-prerequisite-action").addEventListener("click", function () {
+      const guide = state.firstDeliveryGuide;
+      if (guide && ["tool_setup", "prepare"].indexOf(guide.next_action) !== -1) firstDeliveryAction();
+    });
     byId("guided-tool-open").addEventListener("click", openGuidedToolSetup);
     byId("first-delivery-action").addEventListener("click", firstDeliveryAction);
     byId("guided-tool-check").addEventListener("click", checkGuidedTool);

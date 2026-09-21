@@ -1220,8 +1220,11 @@ button:disabled,
 
 .step-label {
   display: inline-grid;
-  width: 30px;
-  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  padding: 7px 8px;
+  line-height: 16px;
+  white-space: nowrap;
   flex: 0 0 auto;
   place-items: center;
   border-radius: 8px;

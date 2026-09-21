@@ -495,7 +495,7 @@
             <div class="button-row">
               <button id="generate-pack" class="button button-primary" type="button">Generate Codex Pack</button>
               <button id="approve-pack" class="button button-secondary" type="button">Approve Codex Pack</button>
-              <a id="review-pack" class="button button-quiet" href="#pack-frozen-task" hidden>Review Pack</a>
+              <button id="review-pack" class="button button-quiet" type="button" hidden>Review Pack</button>
             </div>
           </section>
 
@@ -513,6 +513,7 @@
             <p class="boundary-note">Codex never starts automatically. Starting a Run requires explicit Owner confirmation. Completion does not automatically Apply, Stage, Commit, or Push.</p>
             <div class="button-row">
               <button id="run-codex" class="button button-primary" type="button">Start Codex Run</button>
+              <button id="run-prerequisite-action" class="button button-secondary" type="button" hidden>Resolve prerequisite</button>
               <button id="cancel-codex" class="button button-secondary" type="button" hidden>Stop Run</button>
               <a id="view-result" class="button button-quiet" href="#result-card" hidden>Review Run Result</a>
             </div>
@@ -1802,6 +1803,13 @@
     <p>Check Codex Readiness makes one bounded provider request for the exact selected model and reasoning. It does not start your delivery Task.</p>
     <div class="button-row"><button id="guided-tool-check" class="button button-primary" type="button">Check Codex Readiness</button><button id="guided-tool-save" class="button button-secondary" type="button" disabled>Save Tool Setup</button><button id="guided-tool-close" class="button button-quiet" type="button">Close</button></div>
     <details><summary>Advanced</summary><pre id="guided-tool-evidence"></pre></details>
+  </dialog>
+  <dialog id="pack-review-dialog" class="guided-dialog" aria-labelledby="pack-review-title">
+    <h2 id="pack-review-title">Review Pack</h2>
+    <p id="pack-review-identity"></p>
+    <p>Read-only review of the current Pack. This does not approve it, start a Run, or change workspace files.</p>
+    <pre id="pack-review-content" class="verbatim-task"></pre>
+    <button id="pack-review-close" class="button button-secondary" type="button">Close</button>
   </dialog>
   <dialog id="guided-pack-dialog" class="guided-dialog" aria-labelledby="guided-pack-title">
     <h2 id="guided-pack-title">Review Instruction Pack</h2>

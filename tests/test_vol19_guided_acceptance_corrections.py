@@ -248,7 +248,7 @@ def test_location_is_current_contained_and_journal_based_after_apply(tmp_path):
 
 def test_current_paths_and_applied_evidence_are_rendered_as_copyable_text():
     output = node('''
-const state = {firstDeliveryGuide: {task_id: 1, run_id: 1, stage_index: 8,
+const state = {pending: new Set(), firstDeliveryGuide: {task_id: 1, run_id: 1, stage_index: 8,
   stage: 'Commit', stages: [], message: 'Review Commit', action_label: 'Review Commit',
   location: {authorized_workspace: '/current/workspace', source_repository: '/current/source',
     targets: [{source_target_path:'/current/source/first_delivery.txt', apply_result:'APPLIED'}],

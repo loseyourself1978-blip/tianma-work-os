@@ -38,8 +38,8 @@ any Codex/provider request. Keep the initiating terminal open.
 
 ## 4. First Owner creation
 
-First Run applies only to an installation with **zero Owners**. Select Start
-First Run, confirm the installation, and create your username and unique
+First Run applies only to an installation with **zero Owners**. Select **Start
+Setup**, confirm the installation, and create your username and unique
 password (at least 8 characters). Enter the one-time setup authorization code
 printed in the initiating terminal. Keep it private. After creation, use
 **Log in** on this installation. First Run cannot replace an existing Owner.
@@ -124,20 +124,32 @@ disclosed; do not assume a different model silently fulfilled your selection.
 
 ## 8. Create Task
 
-Select Create Task. Describe the objective, context, authorized scope and files.
-Save, then reopen to verify persistence. Task creation does not start Codex.
-Guided Delivery shows the current next action.
+For the first Task, enter **Task title** and the complete task body in **Goal or
+objective**, including exact files, expected output and boundaries. The authorized
+workspace supplies Project; keep the initial **General task** Workflow. Select
+**Save Task**. The saved body is then labelled **Development task**. Task creation
+does not start Codex. Derived Task details refer to that complete body; review them
+if you need to add constraints. Guided Delivery shows the current next action.
 
 ## 9. Prepare, review and approve Pack
 
-Prepare the instruction Pack. Review objective, files, restrictions, workspace
-identity and tools. Correct the Task and prepare again if needed. Approve only
+After **Check Codex Readiness** and **Save Tool Setup**, select **Prepare First
+Delivery**. This configures the development workflow and binds the saved tools to
+this Task and Pack. Tool readiness alone does not make a Task executable, and an
+approved ordinary Pack is not a Guided configuration binding. Follow the specific
+Run blocker and its next action if preparation is still required.
+
+Select **Review Instruction Pack** to review objective, files, restrictions,
+workspace identity and tools, then explicitly **Approve Instruction Pack**.
+**Review Pack** also opens a read-only view of the current Pack; it does not approve
+or execute anything. Correct the Task and prepare again if needed. Approve only
 the exact intended Pack. An old approval cannot authorize a materially changed
 version.
 
 ## 10. Explicit Run
 
-Select Run, review the confirmation for the approved Pack, then confirm once.
+Select **Start Codex Run**, review the confirmation for the approved Pack, then
+select **Confirm Start Codex Run** once.
 Watch persisted Coding and Verification states. Pending actions block duplicate
 submission. If a page stalls, refresh and inspect recorded status before retrying.
 

@@ -375,7 +375,7 @@ def test_guided_ui_uses_only_explicit_readiness_and_one_current_action():
     ('Skipped', True, False, False, 'Codex: Skipped'),
     ('Not checked', True, False, False, 'Codex: Not checked'),
     ('Needs setup', True, False, False, 'Codex: Needs setup'),
-    ('Ready', False, True, True, 'Codex: Ready for real Run'),
+    ('Ready', False, True, True, 'Codex: Tool ready — check Task readiness below'),
 ])
 def test_codex_header_display_states(readiness, passive, authenticated, ready, expected):
     import subprocess
@@ -435,7 +435,7 @@ def test_guided_stage_and_action_never_cross_task_or_run_selection():
 let task = {id: 2};
 let run = null;
 let calls = 0;
-const state = {firstDeliveryGuide: {task_id: 1, stage_index: 1, stage: 'Task Ready',
+const state = {pending: new Set(), firstDeliveryGuide: {task_id: 1, stage_index: 1, stage: 'Task Ready',
   stages: ['Tool Setup', 'Task Ready'], next_action: 'prepare', action_label: 'Prepare First Delivery'}};
 const nodes = {};
 function byId(id) { return nodes[id] ||= {replaceChildren() {}, appendChild() {}}; }
