@@ -26,6 +26,23 @@ ROOT = Path(__file__).resolve().parents[1]
 USERNAME = "owner-first-run"
 
 
+@pytest.mark.parametrize('old_version', ['0.17.0', '99.0.0'])
+def test_incompatible_installation_version_is_rejected_without_writes(tmp_path, old_version):
+    data, runtime, logs = (tmp_path / name for name in ('data', 'runtime', 'logs'))
+    data.mkdir()
+    config, fresh = twos_bootstrap.initial_installation(data, runtime, logs, None)
+    assert fresh and config['source_version'] == '1.0.0'
+    config['source_version'] = old_version
+    (data / 'installation.json').write_text(json.dumps(config))
+    (data / 'installation.json').chmod(0o600)
+    (data / 'twos.sqlite3').write_bytes(b'preserved incompatible fixture')
+    before = source_snapshot(data)
+    with pytest.raises(twos_bootstrap.BootstrapError, match='does not match'):
+        twos_bootstrap.initial_installation(data, runtime, logs, None)
+    assert source_snapshot(data) == before
+    assert not runtime.exists() and not logs.exists()
+
+
 def available_local_port() -> int:
     probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:

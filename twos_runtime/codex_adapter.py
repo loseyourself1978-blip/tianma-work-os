@@ -33,6 +33,7 @@ from .codex_connectivity import (
     executable_identity,
     inspect_authentication,
 )
+from . import __version__
 from .models import (
     AICapability,
     AIModel,
@@ -1218,7 +1219,7 @@ class CodexAdapter:
                         "clientInfo": {
                             "name": "twos",
                             "title": "TWOS",
-                            "version": "0.17.0",
+                            "version": __version__,
                         }
                     },
                 }
@@ -9321,6 +9322,31 @@ class CodexExecutionManager:
                 )
 
 
+def _catalog_group_has_live_members(process, *, require_leader: bool = False) -> bool:
+    """Inspect only the session whose leader is still our unreaped child."""
+    observed = subprocess.run(
+        ["/bin/ps", "-axo", "pid=,pgid=,uid=,stat="],
+        check=True, capture_output=True, text=True, timeout=2,
+        env=codex_child_environment(),
+    )
+    live = False
+    leader_seen = False
+    for line in observed.stdout.splitlines():
+        fields = line.split()
+        if len(fields) != 4:
+            raise RuntimeError("Catalogue process ownership could not be read")
+        pid, pgid, uid = map(int, fields[:3])
+        if pgid != process.pid:
+            continue
+        if uid != os.getuid():
+            raise PermissionError("Catalogue process group ownership changed")
+        leader_seen = leader_seen or pid == process.pid
+        live = live or not fields[3].startswith("Z")
+    if require_leader and not leader_seen:
+        raise RuntimeError("Catalogue process does not own its process group")
+    return live
+
+
 def _close_catalog_process(process) -> None:
     """Close the owned local catalogue session, including descendant helpers."""
     for stream in (process.stdin, process.stdout):
@@ -9329,14 +9355,43 @@ def _close_catalog_process(process) -> None:
                 stream.close()
             except OSError:
                 pass
+    # The catalogue never polls/reaps this Popen before cleanup. Keeping the
+    # leader unreaped pins its PID/PGID until every managed group member exits.
+    # In particular, leader exit alone does not prove descendant cleanup.
+    if process.returncode is not None:
+        if _catalog_group_has_live_members(process):
+            raise RuntimeError("Catalogue process was reaped before group cleanup")
+        return
+    # getpgid can return ESRCH for an unreaped macOS zombie. The process table
+    # still identifies that pinned leader and any live descendants accurately.
+    _catalog_group_has_live_members(process, require_leader=True)
     try:
-        os.killpg(process.pid, signal.SIGTERM)
-    except ProcessLookupError:
-        pass
-    # Reap only after killing remaining group members so the group leader's
-    # PID cannot be recycled while we still address its process group.
-    try:
-        os.killpg(process.pid, signal.SIGKILL)
-    except ProcessLookupError:
-        pass
-    process.wait(timeout=5)
+        for stop_signal, grace in ((signal.SIGTERM, 2.0), (signal.SIGKILL, 2.0)):
+            if not _catalog_group_has_live_members(process):
+                break
+            try:
+                os.killpg(process.pid, stop_signal)
+            except ProcessLookupError:
+                pass
+            except PermissionError:
+                # macOS may report EPERM when the last live group member has
+                # exited between observation and signal. This is success only
+                # after an independent observation proves no live survivors.
+                if _catalog_group_has_live_members(process):
+                    raise
+            deadline = time.monotonic() + grace
+            while _catalog_group_has_live_members(process):
+                if time.monotonic() >= deadline:
+                    break
+                time.sleep(min(0.02, max(0.0, deadline - time.monotonic())))
+        if _catalog_group_has_live_members(process):
+            raise TimeoutError("Catalogue process group did not stop")
+        process.wait(timeout=5)
+    except BaseException:
+        # Reap an already exited parent even on refusal; do not report a live
+        # or uninspectable descendant group as successfully cleaned up.
+        try:
+            process.wait(timeout=0)
+        except subprocess.TimeoutExpired:
+            pass
+        raise

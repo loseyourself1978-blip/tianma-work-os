@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build/inspect the macOS source RC from a clean exact Git HEAD (stdlib only)."""
+"""Build/inspect the macOS source distribution from a clean exact Git HEAD (stdlib only)."""
 from __future__ import annotations
 
 import argparse
@@ -35,11 +35,12 @@ SECRET_PATTERNS = {
     "credential-assignment": re.compile(rb'''(?i)(?:api_key|access_token|refresh_token|client_secret|password|token)["']?\s*[=:]\s*["'][^"'\r\n]{8,}["']'''),
 }
 LIMITATIONS = [
-    "Source-based macOS RC; signed/notarized DMG and Windows/Linux acceptance are not established.",
+    "Source-based macOS fresh-install distribution; signed/notarized DMG and Windows/Linux acceptance are not established.",
     "Python 3.11–3.13 and dependency installation are required; dependencies are not bundled or locked.",
+    "1.0.0 supports fresh installation and same-version backup/restore only; 0.17.0 upgrades and cross-version restore are outside scope.",
     "External credentialed Git-host Push acceptance is not established.",
     "Live multi-model aggregation and email/calendar integration are not established.",
-    "LDD live broker execution is not authorized. 1.0.0 is not released; 19.5/19.6 remain open.",
+    "LDD live broker execution is not authorized. 1.0.0 is NOT RELEASED; local preparation does not authorize publication.",
 ]
 
 
@@ -103,6 +104,13 @@ def git(repo: Path, *args: str, input_bytes: bytes | None = None) -> bytes:
     return result.stdout
 
 
+def artifact_identity(version: str, sha: str) -> str:
+    if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
+        raise ReleaseError("Invalid application version.")
+    suffix = "-rc19.4" if tuple(map(int, version.split("."))) < (1, 0, 0) else ""
+    return f"twos-{version}{suffix}-{sha[:12]}"
+
+
 def read_commit(repo: Path) -> tuple[dict, dict[str, tuple[bytes, int]], list[dict]]:
     if git(repo, "status", "--porcelain", "--untracked-files=no").strip():
         raise ReleaseError("Tracked source/index must be clean before packaging.")
@@ -154,7 +162,7 @@ def read_commit(repo: Path) -> tuple[dict, dict[str, tuple[bytes, int]], list[di
     version = re.search(rb'__version__ = "([^"]+)"', files["twos_runtime/__init__.py"][0]).group(1).decode()
     schema = re.search(rb'LATEST_SCHEMA = "([^"]+)"', files["scripts/twos_bootstrap.py"][0]).group(1).decode()
     metadata = {"source_git_sha": sha, "application_version": version, "schema_version": schema,
-                "artifact_identity": f"twos-{version}-rc19.4-{sha[:12]}",
+                "artifact_identity": artifact_identity(version, sha),
                 "build_time": datetime.fromtimestamp(epoch, timezone.utc).isoformat(),
                 "build_time_basis": "source commit time (reproducible SOURCE_DATE_EPOCH)",
                 "supported_platform": "macOS source distribution; Python 3.11–3.13",
@@ -171,9 +179,11 @@ def inspect(artifact: Path, manifest_path: Path) -> dict:
     files = {}
     identity = manifest["artifact_identity"]
     sha = manifest["source_git_sha"]
-    if (not isinstance(identity, str) or not re.fullmatch(r"twos-[0-9]+\.[0-9]+\.[0-9]+-rc19\.4-[a-f0-9]{12}", identity)
+    if (not isinstance(identity, str) or not re.fullmatch(r"twos-[0-9]+\.[0-9]+\.[0-9]+(?:-rc19\.4)?-[a-f0-9]{12}", identity)
             or not isinstance(sha, str) or not re.fullmatch(r"[a-f0-9]{40}", sha)
-            or identity != f"twos-{manifest['application_version']}-rc19.4-{sha[:12]}"):
+            or identity not in {artifact_identity(manifest['application_version'], sha),
+                                f"twos-{manifest['application_version']}-rc19.4-{sha[:12]}"}
+            or artifact.name != identity + ".tar.gz"):
         raise ReleaseError("Invalid release artifact/source identity.")
     source = None
     with tarfile.open(fileobj=io.BytesIO(raw), mode="r:gz") as archive:

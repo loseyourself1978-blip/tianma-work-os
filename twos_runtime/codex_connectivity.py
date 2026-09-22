@@ -17,6 +17,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from . import __version__
 from .models import (
     AIModel,
     AIModelAvailabilityEvidence,
@@ -1924,7 +1925,7 @@ def _app_server_connectivity_probe(
                             "clientInfo": {
                                 "name": "twos",
                                 "title": "TWOS",
-                                "version": "0.17.0",
+                                "version": __version__,
                             },
                             "capabilities": {
                                 "experimentalApi": False,

@@ -173,6 +173,7 @@ if sys.argv[1:] == [
         message = json.loads(line)
         method = message.get("method")
         if method == "initialize":
+            assert message["params"]["clientInfo"]["version"] == "1.0.0"
             print(json.dumps({
                 "id": message["id"],
                 "result": {
@@ -1232,8 +1233,8 @@ def test_twos_short_url_uses_canonical_static_asset_base(tmp_path: Path) -> None
         )
         assert legacy.status_code == 307
         assert legacy.headers["location"] == "/twos"
-        assert 'href="/static_cockpit/vol12_static_mvp/styles.css?v=0.17.0"' in page.text
-        assert 'src="/static_cockpit/vol12_static_mvp/twos_command_center.js?v=0.17.0"' in page.text
+        assert 'href="/static_cockpit/vol12_static_mvp/styles.css?v=1.0.0"' in page.text
+        assert 'src="/static_cockpit/vol12_static_mvp/twos_command_center.js?v=1.0.0"' in page.text
         stylesheet = client.get("/static_cockpit/vol12_static_mvp/styles.css")
         javascript = client.get("/static_cockpit/vol12_static_mvp/twos_command_center.js")
         assert stylesheet.status_code == 200

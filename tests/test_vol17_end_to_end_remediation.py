@@ -888,8 +888,8 @@ def test_twos_is_canonical_and_legacy_html_redirects_without_exposing_legacy_loc
 
         health = client.get("/api/health")
         assert health.status_code == 200
-        assert health.json()["version"] == "0.17.0"
-        assert "v=0.17.0" in canonical.text
+        assert health.json()["version"] == "1.0.0"
+        assert "v=1.0.0" in canonical.text
 
 
 def test_minimal_development_task_derives_traceable_defaults_without_execution_side_effects(

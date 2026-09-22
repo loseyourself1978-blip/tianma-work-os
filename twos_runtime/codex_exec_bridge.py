@@ -604,6 +604,15 @@ def _safe_regular_file_stat(path: Path, *, expected_mode: int = OWNER_FILE_MODE)
             )
         if observed.st_nlink == 1:
             return observed
+        if observed.st_nlink == 0:
+            # APFS can finish lstat on the old inode while an atomic rename
+            # unlinks it. Never open/accept that observation. Only the mutable
+            # state reader may retry this replacement, with all checks anew;
+            # immutable records still fail closed.
+            raise CodexExecBridgeError(
+                "PROTECTED_FILE_REPLACED",
+                "A protected execution file was unlinked during observation.",
+            )
         if observed.st_nlink != 2:
             raise CodexExecBridgeError("HARDLINK_REJECTED", "A hard-linked protected execution file is not allowed.")
         if not _internal_publication_alias_matches(path, observed):

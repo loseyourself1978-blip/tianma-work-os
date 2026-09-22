@@ -633,6 +633,141 @@ def test_traversal_symlink_hardlink_and_replacement_are_rejected(tmp_path: Path)
     assert replaced.value.code == "STREAM_REPLACED"
 
 
+@pytest.mark.parametrize("replacement", ["safe", "hardlink", "symlink", "mode", "identity"])
+def test_state_unlinked_inode_retries_only_with_fresh_safe_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, replacement: str,
+) -> None:
+    from twos_runtime import codex_exec_bridge as bridge
+
+    handle, _, _ = _prepare(tmp_path, "pass\n")
+    path = handle.phase_directory / "state.json"
+    value = {"schema": bridge.STATE_SCHEMA, "policy": bridge.BRIDGE_POLICY,
+             "ticket_digest": handle.ticket_digest, "state": "RUNNING"}
+    bridge._atomic_replace_json(path, value)
+    original_lstat = os.lstat
+    reads = []
+
+    def replaced_stat(candidate, *args, **kwargs):
+        if Path(candidate) == path:
+            reads.append(1)
+            # The first lstat checks path components; the second obtains the
+            # file identity. Reproduce APFS returning an inode unlinked by a
+            # concurrent rename, using a real open inode rather than a fake
+            # link count. Nothing from this old inode may be read/accepted.
+            if len(reads) == 2:
+                fd = os.open(path, os.O_RDONLY)
+                try:
+                    next_path = path.with_name("next.json")
+                    next_value = {**value, "state": "TIMED_OUT"}
+                    if replacement == "identity":
+                        next_value["ticket_digest"] = "0" * 64
+                    next_path.write_text(json.dumps(next_value))
+                    next_path.chmod(0o644 if replacement == "mode" else 0o600)
+                    if replacement == "hardlink":
+                        os.link(next_path, path.with_name("external-alias"))
+                    elif replacement == "symlink":
+                        link = path.with_name("next-link")
+                        link.symlink_to(next_path)
+                        next_path = link
+                    os.replace(next_path, path)
+                    unlinked = os.fstat(fd)
+                    assert unlinked.st_nlink == 0
+                    return unlinked
+                finally:
+                    os.close(fd)
+        return original_lstat(candidate, *args, **kwargs)
+
+    monkeypatch.setattr(bridge.os, "lstat", replaced_stat)
+    if replacement == "safe":
+        assert load_execution_state(handle) == {**value, "state": "TIMED_OUT"}
+    else:
+        with pytest.raises(CodexExecBridgeError) as rejected:
+            load_execution_state(handle)
+        assert rejected.value.code == {
+            "hardlink": "HARDLINK_REJECTED", "symlink": "SYMLINK_REJECTED",
+            "mode": "PROTECTED_FILE_MODE_INVALID", "identity": "STATE_INVALID",
+        }[replacement]
+    assert 2 < len(reads) <= 6
+
+
+def test_state_replacement_retry_is_bounded_and_immutable_reads_do_not_retry(tmp_path, monkeypatch):
+    from twos_runtime import codex_exec_bridge as bridge
+
+    handle, _, _ = _prepare(tmp_path, "pass\n")
+    state = handle.phase_directory / "state.json"
+    state.write_text("{}"); state.chmod(0o600)
+    real_read = bridge._read_protected_json
+    calls = []
+
+    def unstable(path, **kwargs):
+        if path in {state, handle.ticket_path}:
+            calls.append(path)
+            raise CodexExecBridgeError("PROTECTED_FILE_REPLACED", "controlled replacement")
+        return real_read(path, **kwargs)
+
+    # Immutable ticket refusal happens once and is never treated as mutable
+    # heartbeat churn. Then exercise the separate three-attempt state bound.
+    monkeypatch.setattr(bridge, "_read_protected_json", unstable)
+    with pytest.raises(CodexExecBridgeError, match="controlled replacement"):
+        load_ticket(handle)
+    assert calls == [handle.ticket_path]
+    monkeypatch.setattr(bridge, "_load_ticket_and_seal", lambda handle: None)
+    calls.clear()
+    with pytest.raises(CodexExecBridgeError, match="controlled replacement"):
+        load_execution_state(handle)
+    assert calls == [state] * 3
+
+
+def test_state_reader_revalidates_during_controlled_concurrent_publication(tmp_path, monkeypatch):
+    from twos_runtime import codex_exec_bridge as bridge
+
+    handle, _, _ = _prepare(tmp_path, "pass\n")
+    path = handle.phase_directory / "state.json"
+    value = {"schema": bridge.STATE_SCHEMA, "policy": bridge.BRIDGE_POLICY,
+             "ticket_digest": handle.ticket_digest, "state": "RUNNING"}
+    bridge._atomic_replace_json(path, value)
+    next_value = {**value, "state": "TIMED_OUT"}
+    opened, published = threading.Event(), threading.Event()
+    errors = []
+    original_lstat = os.lstat
+    reads = []
+
+    def writer():
+        try:
+            assert opened.wait(2)
+            bridge._atomic_replace_json(path, next_value)
+        except BaseException as exc:
+            errors.append(exc)
+        finally:
+            published.set()
+
+    publisher = threading.Thread(target=writer, name="test-state-publisher")
+
+    def concurrent_stat(candidate, *args, **kwargs):
+        if Path(candidate) == path and threading.current_thread() is not publisher:
+            reads.append(1)
+            if len(reads) == 2:
+                fd = os.open(path, os.O_RDONLY)
+                try:
+                    opened.set()
+                    assert published.wait(2)
+                    observed = os.fstat(fd)
+                    assert observed.st_nlink == 0
+                    return observed
+                finally:
+                    os.close(fd)
+        return original_lstat(candidate, *args, **kwargs)
+
+    monkeypatch.setattr(bridge.os, "lstat", concurrent_stat)
+    publisher.start()
+    try:
+        assert load_execution_state(handle) == next_value
+    finally:
+        opened.set()
+        publisher.join(3)
+    assert not publisher.is_alive() and errors == []
+
+
 def test_final_message_is_owner_only_bounded_and_replacement_protected(tmp_path: Path) -> None:
     source = r'''
 import json

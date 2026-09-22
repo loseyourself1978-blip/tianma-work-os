@@ -28,7 +28,7 @@
   const FIRST_RUN_RECONCILE_TIMEOUT_MS = 5000;
 
   const DEFAULT_BOUNDARY = "No automatic merge, push, live trading, live betting, or unrestricted command execution.";
-  const UI_VERSION = "0.17.0";
+  const UI_VERSION = "1.0.0";
   const TASK_DETAIL_DEFAULTS = Object.freeze({
     objective: "Complete the Development task exactly as specified.",
     source_sync_summary: "None provided.",

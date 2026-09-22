@@ -51,9 +51,9 @@ Statuses record explicit Owner acceptance and executable repository evidence in 
 | OWNER_HANDOFF_INSTRUCTION_DEFECT | CORRECTED / OWNER ACCEPTED / CLOSED | The original handoff did not prominently provide the complete task body and spread essential setup instructions across outputs. This is a handoff defect, not Owner noncompliance. R2 supplied one complete private response with the real field/control names, full task intent and temporary setup authorization; no credential is recorded here. |
 | FIXED_WORKFLOW_UI / STABLE_ACTION_LOCATION | OWNER_FEEDBACK_ACCEPTED / NON_BLOCKING / POST_1.0_BACKLOG | The dynamic top card still makes the Owner search for actions. Record fixed overview/navigation/action locations without collapsing independent authorization. See the repository-only `GITHUB_ISSUES_BACKLOG.md`; this does not reopen 19.5 or modify the accepted candidate. |
 | Vol.19 19.5 | PASS / OWNER ACCEPTED / CLOSED | Explicit final Owner PASS on 2026-09-22, accepted implementation `94c026a2f3e1624aa991de9cc0757dfbbc633f4b`, exact RC and evidence recorded below. |
-| Vol.19 19.6 | RELEASE CONTRACT PREPARATION / NOT AUTHORIZED FOR RELEASE | The 19.5 prerequisite is closed. Define the version, artifact, validation, synchronization and publication contract before execution. |
+| Vol.19 19.6 | LOCAL PREPARATION AUTHORIZED / FINAL RELEASE PENDING | `TWOS-V19.6-LOCAL-RELEASE-PREP-V1` authorizes 1.0.0 fresh-install preparation, validation and one local preparation commit. No remote write or distribution is authorized. |
 | TWOS 1.0 RC | ACCEPTANCE CANDIDATE COMPLETE | Packaged engineering E2E and final Owner acceptance are complete; 19.6 release execution remains pending. |
-| TWOS version 1.0.0 | NOT RELEASED | The accepted artifact remains 0.17.0 / vol19.005. Owner acceptance does not authorize source Push, tag, merge, deployment or publication. |
+| TWOS version 1.0.0 | NOT RELEASED | Current preparation is 1.0.0 / vol19.005 for macOS fresh installation and same-version backup/restore. The historical accepted 0.17.0 RC stays unchanged. Old-version upgrades and cross-version restore are outside scope. |
 
 ## Acceptance Focus
 
@@ -68,11 +68,26 @@ Scenario B correction. Both VOL19-19.2B-UI-01 and VOL19-19.3-UX-01 are
 CLOSED / VERIFIED. The latter retains the safe single-action dropdown through
 MINIMAL_DISCOVERABILITY_IMPROVEMENT. Current distribution remains macOS source;
 signed/notarized DMG is out of scope for this accepted RC boundary.
-Application 0.17.0 and schema vol19.005 are unchanged. Live credentialed external
-Git-host Push is not established. 19.5 End-to-End Acceptance is now PASS /
-OWNER ACCEPTED / CLOSED. The acceptance candidate is complete; 19.6 is limited
-to release-contract preparation. Version 1.0.0 is NOT RELEASED. No source Push,
-tag or publication is authorized by this closeout.
+The historical accepted RC remains 0.17.0 / vol19.005. Current 19.6 preparation
+is 1.0.0 / vol19.005, with fresh installation and same-version backup/restore
+only. Existing installation and incompatible-backup rejection remain enforced.
+Live credentialed external Git-host Push is not established. 19.5 End-to-End
+Acceptance remains PASS / OWNER ACCEPTED / CLOSED. The Owner authorized local
+19.6 preparation separately; the historical closeout receipt below is unchanged.
+Version 1.0.0 is NOT RELEASED. Source Push, tags and publication require separate
+authorization bound to the exact final source and artifacts.
+
+The authorized `TWOS-V19.6-RUNTIME-STABILITY-R1` follow-up preserves those
+release boundaries. Timeout tests now observe actual process start before
+their unchanged terminal wait; preparation is independently bounded and is
+not part of the child's execution timeout. Catalogue cleanup verifies the
+owned process group, waits for live descendants to exit, and treats a signal
+permission error as unresolved unless a fresh observation proves the group
+has no live members. A zero-link inode observed during atomic state replacement
+is rejected as replaced; only the existing bounded mutable-state reader may
+retry with fresh identity, ownership, permissions and link checks. Immutable
+evidence and unsafe links remain fail closed. No lifecycle, schema or Owner
+authorization semantics are changed.
 
 ## 19.5 Final Owner Acceptance Receipt — 2026-09-22
 

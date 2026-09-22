@@ -178,12 +178,113 @@ def test_catalogue_cleanup_reaps_child_and_closes_pipes(tmp_path):
         assert process.stdin.closed and process.stdout.closed
         for _ in range(100):
             result = subprocess.run(['ps', '-o', 'stat=', '-p', str(child)], capture_output=True, text=True)
+            assert result.returncode in {0, 1}, result.stderr
             if not result.stdout.strip() or result.stdout.strip().startswith('Z'): break
             time.sleep(.02)
         else: pytest.fail('catalogue descendant survived')
     finally:
         if process.poll() is None:
             os.killpg(process.pid, signal.SIGKILL); process.wait()
+
+
+@pytest.mark.parametrize('leader_exits', [False, True])
+def test_catalogue_cleanup_kills_term_ignoring_descendant_after_leader_exit(tmp_path, leader_exits):
+    marker = tmp_path / 'child-ready'
+    child_script = (
+        "import os,signal,sys,time; signal.signal(signal.SIGTERM,signal.SIG_IGN); "
+        "open(sys.argv[1],'w').write(str(os.getpid())); time.sleep(90)"
+    )
+    parent_script = (
+        "import subprocess,sys,time; subprocess.Popen([sys.executable,'-c',sys.argv[1],sys.argv[2]]); "
+        + ("time.sleep(.1)" if leader_exits else "time.sleep(90)")
+    )
+    process = subprocess.Popen([sys.executable, '-c', parent_script, child_script, str(marker)],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, start_new_session=True)
+    try:
+        deadline = time.monotonic() + 5
+        while not marker.exists():
+            assert time.monotonic() < deadline
+            time.sleep(.01)
+        child = int(marker.read_text())
+        if leader_exits:
+            # Observe without poll/wait so the group leader stays unreaped.
+            while True:
+                result = subprocess.run(['/bin/ps', '-p', str(process.pid), '-o', 'stat='],
+                    check=True, capture_output=True, text=True)
+                if result.stdout.strip().startswith('Z'):
+                    break
+                assert time.monotonic() < deadline
+                time.sleep(.01)
+        codex_adapter._close_catalog_process(process)
+        assert process.returncode is not None
+        assert process.stdin.closed and process.stdout.closed
+        result = subprocess.run(['/bin/ps', '-p', str(child), '-o', 'stat='], capture_output=True, text=True)
+        assert result.returncode in {0, 1}, result.stderr
+        assert not result.stdout.strip() or result.stdout.strip().startswith('Z')
+    finally:
+        if process.returncode is None:
+            codex_adapter._close_catalog_process(process)
+
+
+def test_catalogue_cleanup_does_not_swallow_live_group_permission_denial(monkeypatch):
+    process = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(90)'],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, start_new_session=True)
+    calls = []
+    def denied(pgid, stop_signal):
+        calls.append((pgid, stop_signal))
+        raise PermissionError('controlled live-group denial')
+    try:
+        with monkeypatch.context() as changes:
+            changes.setattr(codex_adapter.os, 'killpg', denied)
+            with pytest.raises(PermissionError, match='controlled live-group denial'):
+                codex_adapter._close_catalog_process(process)
+        assert calls == [(process.pid, signal.SIGTERM)]
+        assert process.returncode is None
+        assert codex_adapter._catalog_group_has_live_members(process)
+    finally:
+        codex_adapter._close_catalog_process(process)
+    assert process.returncode is not None
+
+
+def test_catalogue_cleanup_checks_exit_after_signal_permission_race(monkeypatch):
+    process = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(90)'],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, start_new_session=True)
+    original = os.killpg
+    calls = []
+    def already_exited(pgid, stop_signal):
+        calls.append((pgid, stop_signal))
+        original(pgid, stop_signal)
+        deadline = time.monotonic() + 2
+        while codex_adapter._catalog_group_has_live_members(process):
+            assert time.monotonic() < deadline
+            time.sleep(.01)
+        raise PermissionError('macOS exited-group race')
+    try:
+        with monkeypatch.context() as changes:
+            changes.setattr(codex_adapter.os, 'killpg', already_exited)
+            codex_adapter._close_catalog_process(process)
+        assert calls == [(process.pid, signal.SIGTERM)]
+        assert process.returncode == -signal.SIGTERM
+        assert process.stdin.closed and process.stdout.closed
+        # Repeated cleanup of a reaped, absent group sends no new signal.
+        codex_adapter._close_catalog_process(process)
+    finally:
+        if process.returncode is None:
+            codex_adapter._close_catalog_process(process)
+
+
+def test_catalogue_cleanup_refuses_nonowned_process_group(monkeypatch):
+    process = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(90)'],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    try:
+        def forbidden(*args):
+            pytest.fail('must not signal the test parent process group')
+        with monkeypatch.context() as changes:
+            changes.setattr(codex_adapter.os, 'killpg', forbidden)
+            with pytest.raises(RuntimeError, match='does not own'):
+                codex_adapter._close_catalog_process(process)
+    finally:
+        process.terminate(); process.wait(timeout=5)
 
 
 def test_missing_codex_child_identity_reaps_unpublished_process(tmp_path, monkeypatch):

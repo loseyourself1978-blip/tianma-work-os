@@ -19,6 +19,7 @@ from tests.test_self_hosting import (
     make_source_repo,
     start_codex_run,
     wait_for_run,
+    wait_for_spawned_run,
 )
 from twos_runtime import codex_exec_bridge, run_lifecycle
 from twos_runtime import codex_adapter as adapter_module
@@ -65,6 +66,16 @@ def join_workers(manager) -> None:
         for worker in workers:
             worker.join(timeout=max(0, deadline - time.monotonic()))
         assert time.monotonic() < deadline, "Run evidence worker did not terminate"
+
+
+def wait_for_coding_timeout(client, headers, run_id):
+    # The one-second Coding clock starts at child launch, after independent
+    # bounded Git/auth/snapshot preflight. Observe that real boundary first;
+    # the previous five-second wait from POST included preparation and could
+    # shut down the app while a valid timeout receipt was being committed.
+    # Keep the five-second terminal budget and the <6000ms receipt assertion.
+    wait_for_spawned_run(client, headers, run_id, timeout=10)
+    return wait_for_run(client, headers, run_id, {"timed_out"}, timeout=5)
 
 
 def assert_one_timeout(factory, run_id: int, *, incomplete: bool) -> tuple[int, str]:
@@ -138,7 +149,7 @@ def test_real_timeout_truth_precedes_optional_evidence_settlement(
         headers = init_and_login(client)
         run_id = start_large_pack(client, headers, size)
         try:
-            run = wait_for_run(client, headers, run_id, {"timed_out"}, timeout=5)
+            run = wait_for_coding_timeout(client, headers, run_id)
             assert entered.wait(1)
             identity = assert_one_timeout(factory, run_id, incomplete=True)
             assert len(run["model_invocations"]) == 1
@@ -224,7 +235,7 @@ def test_restart_recovers_optional_timeout_evidence_without_relaunch(
         monkeypatch.setattr(manager, "_derive_result", gated_derive)
         run_id = start_large_pack(client, headers, 1_000_000)
         try:
-            wait_for_run(client, headers, run_id, {"timed_out"}, timeout=5)
+            wait_for_coding_timeout(client, headers, run_id)
             assert entered.wait(1)
             identity = assert_one_timeout(client.app.state.session_factory, run_id, incomplete=True)
             handle = manager._existing_bridge_handle(run_id, "coding")
@@ -368,7 +379,7 @@ def test_optional_evidence_failure_does_not_reverse_timeout_or_loop(
 
         monkeypatch.setattr(manager, "_derive_result", failing_derive)
         run_id = start_large_pack(client, headers, 1_000_000)
-        wait_for_run(client, headers, run_id, {"timed_out"}, timeout=5)
+        wait_for_coding_timeout(client, headers, run_id)
         deadline = time.monotonic() + 10
         while True:
             client.app.state.result_intake_monitor.reconcile_now([run_id])
@@ -430,7 +441,7 @@ def test_jsonl_contradiction_does_not_hide_a_real_process_timeout(tmp_path: Path
     with make_client(tmp_path, source, executable, timeout=1) as client:
         headers = init_and_login(client)
         run_id = start_large_pack(client, headers, 1_000_000)
-        run = wait_for_run(client, headers, run_id, {"timed_out"}, timeout=5)
+        run = wait_for_coding_timeout(client, headers, run_id)
         manager = client.app.state.codex_manager
         join_workers(manager)
         receipt = codex_exec_bridge.load_terminal_receipt(
@@ -498,7 +509,10 @@ def test_timeout_preflight_joins_all_independent_boundary_reads_before_launch(tm
         monkeypatch.setattr(codex_exec_bridge, 'launch_sidecar', launch)
         run_id = start_large_pack(client, headers, 1_000_000)
         expected = 'blocked' if failed_read else 'timed_out'
-        run = wait_for_run(client, headers, run_id, {expected}, timeout=5)
+        run = (
+            wait_for_run(client, headers, run_id, {expected}, timeout=5)
+            if failed_read else wait_for_coding_timeout(client, headers, run_id)
+        )
         join_workers(manager)
         assert sorted(observations) == ['git', 'remote', 'workspace']
         assert sorted(completed) == ['git', 'remote', 'workspace']

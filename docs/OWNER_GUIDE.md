@@ -1,6 +1,6 @@
 # TWOS Owner Guide
 
-Start here to operate TWOS 0.17.0, schema vol19.005. You decide whether a result
+Start here to operate TWOS 1.0.0, schema vol19.005. You decide whether a result
 is acceptable; a successful technical check is not Owner Acceptance.
 
 ## 1. What TWOS is
@@ -8,16 +8,16 @@ is acceptable; a successful technical check is not Owner Acceptance.
 TWOS helps you describe a development Task, authorize a precise instruction
 Pack, run Codex in an isolated workspace, inspect its Result, and deliver only
 the changes you approve. It records each separate decision. Research documents
-in the repository describe ambitions beyond the shipped RC.
+in the repository describe ambitions beyond this local candidate.
 
 ## 2. Supported platform and release identity
 
-This RC is a **source-based macOS distribution**, requiring Python 3.11–3.13
+This local 1.0.0 candidate is a **source-based macOS distribution**, requiring Python 3.11–3.13
 and trusted local Git for development workspaces. Codex is optional until Run.
 A signed/notarized DMG, App Store release, and Windows/Linux acceptance are not
 established. TWOS does not install system tools or accept their licenses for you.
 
-The archive name includes `0.17.0-rc19.4` and a commit prefix. The included
+The archive name includes `1.0.0` and the 12-character release-preparation commit prefix. The included
 `RELEASE_SOURCE.json` gives the full Git SHA. The adjacent `.manifest.json`
 records the SHA-256, included files, platform and limitations. Compare the
 archive hash with the Owner-approved report before extracting. A hash detects
@@ -25,9 +25,17 @@ change; it does not authenticate the publisher of an untrusted download.
 
 ## 3. Fresh installation
 
+This release supports **fresh installation only**, plus backup/restore within
+1.0.0. Do not reuse a 0.17.0 data directory or restore a 0.17.0 backup. Old-version
+upgrades and cross-version restore are outside this release scope and have not
+been validated. Existing installation-version and incompatible-backup checks
+remain enforced. Keep old installations and their data intact. If you already
+have TWOS data, supply new empty `--data-root`, `--runtime-root` and `--log-root`
+directories for this installation; never point these options at old Owner data.
+
 1. Verify the received archive and retain its adjacent manifest.
 2. Extract it with Archive Utility into a folder you own.
-3. Open Terminal in the extracted `twos-0.17.0-rc19.4-…` folder.
+3. Open Terminal in the extracted `twos-1.0.0-…` folder.
 4. Run `./start-twos`.
 5. Wait for the healthy `http://127.0.0.1:…/twos` URL and open it if the browser does not open.
 
@@ -214,13 +222,17 @@ In Maintenance action choose **Inspect and restore a backup**. Enter the exact
 sealed `.twos-backup` directory. Select Inspect Backup, then Review Restore Plan.
 Read the replacement consequences and protected prior recovery point. Approve
 the Plan, type the displayed confirmation, then Confirm Restore. Log in again
-using the restored account. Corrupt, future-format or incompatible-schema bundles
+using the restored account. Only 1.0.0 backups with the supported schema are
+eligible. Corrupt, future-format, incompatible-application-version or incompatible-schema bundles
 are rejected. Do not modify bundle members to bypass rejection. Acceptance tests
 must use isolated data, never your normal installation.
 
 ## 19. Migration
 
-Older supported databases open a Maintenance boundary. Choose **Migrate an older
+The existing schema-maintenance mechanism described here is retained; it is not
+a 0.17.0-to-1.0.0 upgrade path or a cross-version compatibility claim. This
+release supports fresh installation only. Older supported schemas within a
+compatible application installation open a Maintenance boundary. Choose **Migrate an older
 installation**. Review the plan and prior recovery point, approve, then separately
 confirm. Accepted sources are vol19.003/vol19.004 to vol19.005. Migration does not
 run or retry automatically. Future schemas stay blocked. Repeated restarts do
@@ -299,10 +311,12 @@ do not distribute database files or live runtime internals.
 
 ## 28. Known limitations
 
-TWOS 1.0.0 is NOT RELEASED. The Owner accepted and closed 19.5 on 2026-09-22;
-the acceptance candidate is complete and 19.6 awaits a release contract and
-separate release authorization. This repository closeout is not included in
-the already accepted, unchanged RC. Distribution remains macOS source; signing,
+TWOS 1.0.0 is NOT RELEASED. The Owner accepted and closed 19.5 on 2026-09-22.
+19.6 local release preparation is authorized; final release, source Push, tags,
+upload and distribution require separate authorization. The accepted 0.17.0 RC
+remains unchanged. This candidate supports fresh installation and 1.0.0
+same-version backup/restore; old-version upgrades and cross-version restore
+are outside scope. Distribution remains macOS source; signing,
 notarization and self-contained dependency packaging are not established.
 Dependencies resolve supported ranges, not a locked reproducible binary environment.
 External credentialed Git-host Push acceptance, live multi-model aggregation

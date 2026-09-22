@@ -55,8 +55,10 @@ def test_exact_head_manifest_hash_required_docs_and_deterministic_bytes(candidat
     archive, manifest_path = artifact
     manifest = json.loads(manifest_path.read_bytes())
     assert manifest['source_git_sha'] == command(candidate_repo, 'rev-parse', 'HEAD')
-    assert manifest['application_version'] == '0.17.0'
+    assert manifest['application_version'] == '1.0.0'
     assert manifest['schema_version'] == 'vol19.005'
+    assert archive.name == f"twos-1.0.0-{manifest['source_git_sha'][:12]}.tar.gz"
+    assert manifest_path.name == archive.name.removesuffix('.tar.gz') + '.manifest.json'
     assert hashlib.sha256(archive.read_bytes()).hexdigest() == manifest['sha256']
     assert release.inspect(archive, manifest_path)['verified']
     second, second_manifest = release.build(candidate_repo, tmp_path / 'repeat')
@@ -264,3 +266,51 @@ def test_release_git_projects_minimal_environment(candidate_repo, monkeypatch):
     assert not any(value == 'inherited-sentinel' for value in observed[0].values())
     assert observed[0]['GIT_NO_REPLACE_OBJECTS'] == '1'
     assert observed[0]['GIT_CONFIG_GLOBAL'] == os.devnull
+
+
+def test_current_version_surfaces_agree():
+    import ast
+    from scripts import twos_bootstrap
+    from twos_runtime import __version__, codex_adapter, codex_connectivity
+    assert __version__ == twos_bootstrap.APP_VERSION == '1.0.0'
+    for module in (codex_adapter, codex_connectivity):
+        assert module.__version__ == __version__
+        tree = ast.parse(Path(module.__file__).read_text())
+        clients = [value for node in ast.walk(tree) if isinstance(node, ast.Dict)
+                   for key, value in zip(node.keys, node.values)
+                   if isinstance(key, ast.Constant) and key.value == 'clientInfo']
+        assert len(clients) == 1
+        version = next(value for key, value in zip(clients[0].keys, clients[0].values)
+                       if isinstance(key, ast.Constant) and key.value == 'version')
+        assert isinstance(version, ast.Name) and version.id == '__version__'
+    html = (ROOT / 'static_cockpit/vol12_static_mvp/twos_command_center.html').read_text()
+    assert '<meta name="twos-version" content="1.0.0">' in html
+    assert html.count('?v=1.0.0') == 2
+    script = (ROOT / 'static_cockpit/vol12_static_mvp/twos_command_center.js').read_text()
+    assert 'const UI_VERSION = "1.0.0";' in script
+
+
+def test_historical_rc_still_builds_and_inspects(candidate_repo, tmp_path):
+    repo = tmp_path / 'historical-source'
+    subprocess.run(['git', 'clone', '--no-hardlinks', str(candidate_repo), str(repo)], check=True, capture_output=True)
+    command(repo, 'config', 'user.name', 'Historical fixture')
+    command(repo, 'config', 'user.email', 'fixture@example.invalid')
+    version = repo / 'twos_runtime/__init__.py'
+    version.write_text(version.read_text().replace('1.0.0', '0.17.0'))
+    command(repo, 'add', 'twos_runtime/__init__.py')
+    command(repo, 'commit', '-m', 'historical naming fixture')
+    archive, manifest = release.build(repo, tmp_path / 'historical-output')
+    assert archive.name == f"twos-0.17.0-rc19.4-{command(repo, 'rev-parse', 'HEAD')[:12]}.tar.gz"
+    assert release.inspect(archive, manifest)['verified']
+
+
+def test_archive_filename_must_match_internal_identity(artifact, tmp_path):
+    archive, manifest = artifact
+    renamed = tmp_path / 'unbound.tar.gz'
+    renamed.write_bytes(archive.read_bytes())
+    data = json.loads(manifest.read_text())
+    data['artifact'] = renamed.name
+    forged = tmp_path / 'manifest.json'
+    forged.write_text(json.dumps(data))
+    with pytest.raises(release.ReleaseError, match='identity'):
+        release.inspect(renamed, forged)

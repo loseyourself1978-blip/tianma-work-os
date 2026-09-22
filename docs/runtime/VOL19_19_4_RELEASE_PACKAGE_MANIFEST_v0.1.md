@@ -1,6 +1,17 @@
 # Vol.19 19.4 Release Package Manifest Contract v0.1
 
-Status: IMPLEMENTED / OWNER ACCEPTANCE PENDING.
+Status: 19.4 historical RC contract retained; 19.6 local 1.0.0 preparation
+extension authorized by `TWOS-V19.6-LOCAL-RELEASE-PREP-V1`. 1.0.0 NOT RELEASED.
+
+Current output names are `twos-1.0.0-<12-char-SHA>.tar.gz` and the matching
+`.manifest.json`, both tied to one clean, exact release-preparation commit.
+Internal directory, external manifest and embedded provenance use that same
+identity. Inspection also retains the historical RC naming contract below.
+The current application is 1.0.0, schema vol19.005; macOS source distribution
+supports fresh installation and same-version backup/restore only. Reusing
+0.17.0 data, upgrading old installations and cross-version restore are outside
+scope. Version rejection remains enforced. Local validation is not publication;
+source Push, tags, uploads and distribution require separate Owner authority.
 
 Run `python3 scripts/build_release.py --output /absolute/empty/release-folder`
 from the final clean implementation commit. No package is assembled from the
@@ -10,7 +21,7 @@ stages a selected allowlist, then writes and independently inspects a determinis
 USTAR/gzip archive. Member order, modes, owner IDs, gzip header and times are fixed.
 Build time uses the exact commit timestamp; repeated builds have identical bytes.
 
-Output names: `twos-0.17.0-rc19.4-<12-char-SHA>.tar.gz` and corresponding
+Historical 19.4 output names: `twos-0.17.0-rc19.4-<12-char-SHA>.tar.gz` and corresponding
 `.manifest.json`. Embedded `RELEASE_SOURCE.json` records the full source SHA,
 application 0.17.0, schema vol19.005, artifact identity, commit-derived build time,
 platform and limitations. The adjacent manifest additionally records final
@@ -43,4 +54,6 @@ Known limits: macOS source distribution only; no signed/notarized DMG, no Window
 Linux acceptance, dependencies are downloaded within supported ranges, external
 credentialed Git-host Push acceptance not established, no live multi-model
 aggregation or email/calendar integration, LDD broker execution unauthorized.
-TWOS 1.0.0 NOT RELEASED; RC remains open until 19.5/19.6.
+TWOS 1.0.0 NOT RELEASED. 19.1–19.5 remain OWNER ACCEPTED / CLOSED; 19.6
+final release remains pending. FIXED_WORKFLOW_UI / STABLE_ACTION_LOCATION
+remains non-blocking POST_1.0_BACKLOG.

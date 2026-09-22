@@ -145,7 +145,7 @@ def test_restore_fault_preserves_prior_healthy_state_before_teardown(installatio
     assert logical_digest(service.db) == before
 
 
-@pytest.mark.parametrize('damage', ['manifest', 'hash', 'missing_database', 'future_format', 'future_schema', 'unsafe_member', 'symlink'])
+@pytest.mark.parametrize('damage', ['manifest', 'hash', 'missing_database', 'future_format', 'future_schema', 'old_application', 'future_application', 'unsafe_member', 'symlink'])
 def test_corrupt_restore_is_rejected_without_activation(installation, tmp_path, damage):
     settings, _ = installation
     service = Maintenance(settings)
@@ -166,6 +166,8 @@ def test_corrupt_restore_is_rejected_without_activation(installation, tmp_path, 
         (corrupt / 'database.sqlite3').symlink_to(bundle / 'database.sqlite3')
     else:
         if damage == 'future_format': manifest['format'] = 'TWOS_BACKUP_V99'
+        if damage == 'old_application': manifest['application_version'] = '0.17.0'
+        if damage == 'future_application': manifest['application_version'] = '99.0.0'
         if damage == 'future_schema': manifest['schema_version'] = 'vol99.001'
         if damage == 'unsafe_member': manifest['files']['../../escape'] = {'sha256': '0'*64, 'size': 0}
         manifest['integrity'] = digest({k: v for k, v in manifest.items() if k != 'integrity'})
