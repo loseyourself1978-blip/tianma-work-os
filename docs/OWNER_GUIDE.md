@@ -299,8 +299,10 @@ do not distribute database files or live runtime internals.
 
 ## 28. Known limitations
 
-TWOS 1.0.0 is NOT RELEASED. RC is NOT COMPLETE pending 19.5/19.6; this guide does
-not authorize those phases. Distribution remains macOS source; signing,
+TWOS 1.0.0 is NOT RELEASED. The Owner accepted and closed 19.5 on 2026-09-22;
+the acceptance candidate is complete and 19.6 awaits a release contract and
+separate release authorization. This repository closeout is not included in
+the already accepted, unchanged RC. Distribution remains macOS source; signing,
 notarization and self-contained dependency packaging are not established.
 Dependencies resolve supported ranges, not a locked reproducible binary environment.
 External credentialed Git-host Push acceptance, live multi-model aggregation

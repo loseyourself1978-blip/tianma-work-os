@@ -44,10 +44,16 @@ Statuses record explicit Owner acceptance and executable repository evidence in 
 | Vol.19 19.2 | PASS / OWNER ACCEPTED / CLOSED | 19.2A and 19.2B are closed. The repository's 19.2B gate required Owner acceptance and closeout for 19.2 completion; both are now recorded. The 19.2 contract excludes older-install migration and assigns backup/restore to 19.3. See the phase-scope rationale in the 19.2B closeout. |
 | Vol.19 19.3 | PASS / OWNER ACCEPTED / CLOSED | The Owner accepted Scenarios A/B/C and restart persistence. Implementation `fb84f8497a2ae3fd476d98097dcbdec19673b84a`, 1092 passed / 0 failed / 0 skipped / 0 xfail, the acceptance-harness note and non-blocking UX follow-up are recorded in `VOL19_19_3_BACKUP_RESTORE_MIGRATION_RECOVERY_CLOSEOUT_v0.1.md`. |
 | Vol.19 19.4 | PASS / OWNER ACCEPTED / CLOSED | The Owner accepted security audit, Owner Guide, Maintenance discoverability, release artifact/manifest, fresh installation and Scenario B re-review. Implementation `f951e4c335dbbbb1d316c54fbddc42eb93a24aea`; accepted suite 1171 passed / 0 failed / 0 skipped / 0 xfail. See [19.4 closeout](VOL19_19_4_SECURITY_RELEASE_HARDENING_CLOSEOUT_v0.1.md). |
-| Vol.19 19.5 | NEXT | End-to-End Acceptance has NOT STARTED. This closeout does not authorize starting it. |
-| Vol.19 19.6 | PENDING | Release completion remains pending after the preceding gates. |
-| TWOS 1.0 RC | NOT COMPLETE | 19.5 End-to-End Acceptance and 19.6 release completion remain open. |
-| TWOS version 1.0.0 | NOT RELEASED | The accepted source artifact is 0.17.0 RC. Closing 19.4 does not release version 1.0.0 or authorize source Push, tag or deployment. |
+| E2E-19.5-01 | FIX VALIDATED / OWNER ACCEPTED / CLOSED | `abca10d649ab1aa33c6b1a48a43e944675209514` explicitly allowlists `TWOS_LOCAL_VERIFICATION_COMMAND_JSON` through the standard bootstrap and documents its use. Missing/invalid configuration stays fail-closed. Validated in source and the accepted replacement package. |
+| E2E-19.5-02 | FIX VALIDATED / OWNER ACCEPTED / CLOSED | The same remediation identifies the gap register as a repository-only historical record instead of a broken package-relative Markdown link. Package inclusion and link validation were not weakened. |
+| E2E-19.5-03 | FIX VALIDATED / OWNER ACCEPTED / CLOSED | R2 corrects the shared fixed-size step label so Step 07 of 07 stays on one line without overlapping Create First Task; original/narrow viewports and enlarged display were checked. |
+| E2E-19.5-04 | FIX VALIDATED / OWNER ACCEPTED / CLOSED | R2 exposes the safe missing Guided binding reason and Prepare First Delivery action, implements read-only actual Pack review, and restores the primary button after Prepare completes. Exact Pack approval, stale-approval invalidation, independent Verification and explicit Run/Apply boundaries remain intact. Owner completed the corrected normal Guided path. |
+| OWNER_HANDOFF_INSTRUCTION_DEFECT | CORRECTED / OWNER ACCEPTED / CLOSED | The original handoff did not prominently provide the complete task body and spread essential setup instructions across outputs. This is a handoff defect, not Owner noncompliance. R2 supplied one complete private response with the real field/control names, full task intent and temporary setup authorization; no credential is recorded here. |
+| FIXED_WORKFLOW_UI / STABLE_ACTION_LOCATION | OWNER_FEEDBACK_ACCEPTED / NON_BLOCKING / POST_1.0_BACKLOG | The dynamic top card still makes the Owner search for actions. Record fixed overview/navigation/action locations without collapsing independent authorization. See the repository-only `GITHUB_ISSUES_BACKLOG.md`; this does not reopen 19.5 or modify the accepted candidate. |
+| Vol.19 19.5 | PASS / OWNER ACCEPTED / CLOSED | Explicit final Owner PASS on 2026-09-22, accepted implementation `94c026a2f3e1624aa991de9cc0757dfbbc633f4b`, exact RC and evidence recorded below. |
+| Vol.19 19.6 | RELEASE CONTRACT PREPARATION / NOT AUTHORIZED FOR RELEASE | The 19.5 prerequisite is closed. Define the version, artifact, validation, synchronization and publication contract before execution. |
+| TWOS 1.0 RC | ACCEPTANCE CANDIDATE COMPLETE | Packaged engineering E2E and final Owner acceptance are complete; 19.6 release execution remains pending. |
+| TWOS version 1.0.0 | NOT RELEASED | The accepted artifact remains 0.17.0 / vol19.005. Owner acceptance does not authorize source Push, tag, merge, deployment or publication. |
 
 ## Acceptance Focus
 
@@ -63,6 +69,90 @@ CLOSED / VERIFIED. The latter retains the safe single-action dropdown through
 MINIMAL_DISCOVERABILITY_IMPROVEMENT. Current distribution remains macOS source;
 signed/notarized DMG is out of scope for this accepted RC boundary.
 Application 0.17.0 and schema vol19.005 are unchanged. Live credentialed external
-Git-host Push is not established. 19.5 End-to-End Acceptance is NEXT / NOT STARTED;
-19.6 release completion is PENDING. RC is NOT COMPLETE and version 1.0.0 is
-NOT RELEASED. No source Push or tag is authorized by this closeout.
+Git-host Push is not established. 19.5 End-to-End Acceptance is now PASS /
+OWNER ACCEPTED / CLOSED. The acceptance candidate is complete; 19.6 is limited
+to release-contract preparation. Version 1.0.0 is NOT RELEASED. No source Push,
+tag or publication is authorized by this closeout.
+
+## 19.5 Final Owner Acceptance Receipt — 2026-09-22
+
+Authority: `TWOS-V19.5-OWNER-PASS-CLOSEOUT`. The Owner explicitly reports
+`OWNER_TEST = PASS` and closes 19.5. This is the Owner's decision, not an
+automated test declaring human acceptance. The normal Guided journey completed
+Run, independent Verification, Result review, explicit Apply and post-Apply
+validation, stopping at Review Commit. The fixed-workflow UI feedback above
+is non-blocking and does not revoke this acceptance.
+
+### Accepted identity
+
+- Accepted implementation HEAD: `94c026a2f3e1624aa991de9cc0757dfbbc633f4b`.
+- Accepted RC: `twos-0.17.0-rc19.4-94c026a2f3e1.tar.gz`.
+- Accepted RC SHA-256: `4a58e68b155c0406cc79dee1f6de79e46be5740b53a4e813507bd00bf9e2dbe8`.
+- Application: `0.17.0`; schema: `vol19.005`.
+- Accepted regression: 1187 collected / 1187 passed / 0 failed / 0 skipped /
+  0 xfail, 3456.51 seconds. Inherited for this documentation-only closeout,
+  not rerun. R2 targeted validation: 129 passed.
+- Exact artifact inspection reconfirmed 57 files, matching manifest and source
+  identity, allowed permissions and zero forbidden content. The earlier
+  package receipt also records 14 valid packaged Markdown links.
+- Engineering packaged E2E-00 through E2E-06 passed separately from final
+  Owner acceptance. Actual browser coverage was Codex In-app Browser, with
+  headless Google Chrome layout checks; it is not labeled Safari human PASS.
+
+### Owner fixture technical readback
+
+Read-only closeout observation on 2026-09-22 UTC confirms one Task (ID 1,
+version 2), approved Pack (ID 1, version 1), completed Run (ID 1), verified
+Result envelope (ID 1), accepted Result decision (ID 1), Candidate (ID 1),
+Apply Plan (ID 1), separate Plan approval (ID 1), ApplySession (ID 1) and
+post-Apply verification (ID 1). Their Task/Pack/Run/Result/Candidate/Plan and
+approval bindings agree. The two execution attempts are one CODING and one
+VERIFICATION, both completed with exit 0; they are not two delivery Runs.
+
+Independent Verification is PASS; ApplySession is APPLIED with integrity
+PASSED; post-Apply verification is PASSED. Product local Commit and Push
+execution counts are both zero. The retained coarse Task fields remain
+`owner_review` / `needs_review`; those are not rewritten to represent this
+phase closeout. The exact Result decision is accepted and the Apply/validation
+records establish the permitted endpoint, not Delivered.
+
+The only changed fixture path is `first_delivery.txt`, matching the approved
+Candidate and Plan. It contains exactly `TWOS VOL19 FIRST SAFE DELIVERY PASS`
+followed by one LF (36 UTF-8 bytes), SHA-256
+`9f3ec4aeceb96f5daa7ebaa44a7da6bedef38604d8503cdf88dfaeb63b10ddc1`.
+There are no staged paths or unexpected delivery paths. The fixture's HEAD
+remains its separate initialization commit
+`ad6505c29ad6658fcc87518343ac789b0abbfb8a`; its local bare origin is unchanged.
+The intentional uncommitted Apply change is preserved, not reset, reverted,
+staged or committed. SQLite integrity is `ok`.
+
+Refresh/restart persistence is explicitly confirmed by the Owner. Technical
+evidence limits are recorded separately: this Owner instance still has the
+original backend PID started on 2026-09-21, and its retained runtime log shows
+one startup; no paired before/after backend-restart receipt is available for
+this instance. Current records show no duplicate Run, Result or Apply and no
+replayed CODING/VERIFICATION attempt. The separate engineering packaged E2E
+has a scoped restart and identical-record comparison, but is not substituted
+for proof that this Owner instance's backend was restarted. No new restart or
+repeat acceptance is performed by this closeout.
+
+Private technical receipts retain the linkage, content/hash, selected audit
+events and runtime observation outside the repository. No setup authorization,
+password, API credential, database or raw runtime log enters this record.
+The successful Owner fixture, original failed fixture and historical artifacts
+are preserved.
+
+### Repository closeout and next gate
+
+Pre-closeout repository: clean `main`, HEAD equal to accepted implementation,
+local `origin/main` `3cf914b6c5667059923ab209f8e9008b33a05cef`, raw behind/ahead
+`0 / 13`. The subsequent repository closeout commit contains documentation
+only and is distinct from the accepted implementation HEAD. Its exact SHA is
+reported in the closeout receipt rather than made self-referential here.
+These new repository records are not contained in the unchanged accepted RC;
+no rebuild or re-acceptance of that historical artifact is claimed.
+
+19.5 = PASS / OWNER ACCEPTED / CLOSED.
+19.6 = RELEASE CONTRACT PREPARATION; execution requires a new release decision.
+TWOS 1.0 RC = ACCEPTANCE CANDIDATE COMPLETE.
+1.0.0 = NOT RELEASED.

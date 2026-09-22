@@ -6,6 +6,30 @@ Latest baseline commit: `e3e15d7 Add Tianma Work OS product blueprint documents`
 Generated from: Tianma Work OS Vol.1 → Vol.2 handoff, LDD Sync Blocks, Signal Command Layer, Codex/GitHub execution recovery, Project-Preserving Model Switching UX discovery, Cross-Workstream Coordination, Strategy-State Risk Monitor discovery, and post-quota runtime continuity updates.
 Primary next step: Add this backlog to GitHub, update INDEX.md, then review the next backlog items. The first 8 trunk issues have been created. Do not create GitHub Projects yet.
 
+## Vol.19 Owner feedback — 2026-09-22
+
+Requirement: `FIXED_WORKFLOW_UI / STABLE_ACTION_LOCATION`.
+
+Status: `OWNER_FEEDBACK_ACCEPTED / NON_BLOCKING / POST_1.0_BACKLOG`.
+
+The Owner completed final 19.5 hands-on acceptance and explicitly decided PASS.
+The changing top workflow card still made the Owner search for the next action.
+This feedback does not reopen 19.5 or change its accepted RC.
+
+Acceptance intent for a separately authorized future UX change:
+
+- Keep a fixed task overview and workflow navigation at the top.
+- Keep stages in stable positions; update status, highlighting and specific
+  blocking reasons within those positions.
+- Keep the primary action area in a stable location and reduce duplicate
+  entrypoints and repeated navigation.
+- Ordinary state changes must not unexpectedly jump the page.
+- Preserve the separate Pack, Run, Result and Apply authorization boundaries;
+  stable navigation must not imply approval or execution.
+
+This entry records backlog only. No UI redesign, GitHub issue creation, remote
+publication, production-rule change or release authorization is performed.
+
 ---
 
 ## 1. Purpose

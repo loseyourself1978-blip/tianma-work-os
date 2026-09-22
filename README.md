@@ -15,5 +15,9 @@ Keep that terminal open. Press Control-C to stop; use the same command to restar
 The launcher prints the local URL and one-time First Run authorization code.
 It creates its private runtime and data outside the source folder.
 
-19.4 is IMPLEMENTED / OWNER ACCEPTANCE PENDING. Only the Owner can accept it.
-TWOS 1.0 RC is NOT COMPLETE and version 1.0.0 is NOT RELEASED; 19.5 has not started.
+19.1 through 19.5 are PASS / OWNER ACCEPTED / CLOSED. The Owner explicitly
+accepted the 19.5 candidate on 2026-09-22: implementation `94c026a2f3e1`,
+application 0.17.0, schema vol19.005, with 1187 passing regression tests.
+The acceptance candidate is complete; 19.6 release-contract preparation is next.
+Version 1.0.0 is NOT RELEASED. This repository documentation closeout neither
+rebuilds the accepted RC nor authorizes Push, tags or publication.
