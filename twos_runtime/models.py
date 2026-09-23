@@ -149,6 +149,37 @@ class Project(Base):
     sync_entries: Mapped[list["SyncEntry"]] = relationship(back_populates="project")
 
 
+class ProjectWorkspaceAuthorization(Base):
+    """Additional project scopes; the First Run installation binding stays intact."""
+
+    __tablename__ = "project_workspace_authorizations"
+    __table_args__ = (
+        UniqueConstraint("installation_id", "canonical_path", name="uq_project_workspace_path"),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    installation_id: Mapped[int] = mapped_column(ForeignKey("installations.id"), index=True)
+    owner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), unique=True)
+    canonical_path: Mapped[str] = mapped_column(Text)
+    device_id: Mapped[int] = mapped_column(Integer)
+    inode: Mapped[int] = mapped_column(Integer)
+    identity_digest: Mapped[str] = mapped_column(String(64), unique=True)
+    recovery_epoch: Mapped[str] = mapped_column(String(80), default="")
+    authorized_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class TaskArtifactContract(Base):
+    """Append-only, Owner-declared exact-file checks, never executable commands."""
+
+    __tablename__ = "task_artifact_contracts"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), index=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    specification_json: Mapped[str] = mapped_column(Text)
+    specification_digest: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
 class SyncEntry(Base):
     __tablename__ = "sync_entries"
 

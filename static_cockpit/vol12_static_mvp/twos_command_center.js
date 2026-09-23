@@ -2915,7 +2915,7 @@
         throw new ApiError(
           409,
           "RUNTIME_ASSET_MISMATCH",
-          "The Workbench assets and runtime version do not match. Restart the current Vol.17 runtime.",
+          "The Workbench assets and runtime version do not match. Restart the current TWOS 1.0.0 runtime.",
           {},
           "product"
         );
@@ -3079,6 +3079,7 @@
   function renderWorkspace() {
     if (state.auth !== AUTH_STATES.SIGNED_IN) return;
     renderProjectOptions();
+    renderProjectWorkspaceOptions();
     renderCapabilityOptions();
     renderTaskList();
     renderTaskForm();
@@ -12490,6 +12491,95 @@
     });
   }
 
+  function renderProjectWorkspaceOptions() {
+    const panel = byId("project-workspace-card");
+    panel.hidden = !state.firstRun || state.firstRun.enabled !== true;
+    if (panel.hidden) return;
+    const select = byId("workspace-project");
+    const current = state.workspaceProjectId || select.value;
+    select.replaceChildren();
+    state.projects.forEach(function (project) {
+      const option = document.createElement("option");
+      option.value = String(project.id);
+      option.textContent = project.name;
+      select.appendChild(option);
+    });
+    if (Array.from(select.options).some(function (option) { return option.value === String(current); })) select.value = String(current);
+    state.workspaceProjectId = select.value;
+    loadProjectWorkspace();
+  }
+
+  async function loadProjectWorkspace() {
+    const projectId = byId("workspace-project").value;
+    if (!projectId) return;
+    try {
+      const result = await api("/api/projects/" + encodeURIComponent(projectId) + "/workspace");
+      if (projectId !== byId("workspace-project").value) return;
+      byId("project-workspace-status").textContent = result.authorized
+        ? "Authorized: " + result.workspace
+        : result.blocker ? result.blocker.message : "This Project needs workspace authorization before execution.";
+    } catch (error) { byId("project-workspace-status").textContent = productActionMessage(error); }
+  }
+
+  async function createProject() {
+    return performAction("create-project", byId("create-project"), "Creating…", async function () {
+      const result = await api("/api/projects", {method: "POST", body: {
+        key: byId("new-project-key").value.trim(), name: byId("new-project-name").value.trim()
+      }});
+      state.workspaceProjectId = String(result.id);
+      return "Project created. Authorize its workspace before execution.";
+    });
+  }
+
+  async function authorizeProjectWorkspace() {
+    const projectId = byId("workspace-project").value;
+    return performAction("authorize-project", byId("authorize-project-workspace"), "Authorizing…", async function () {
+      await api("/api/projects/" + encodeURIComponent(projectId) + "/workspace", {method: "POST", body: {
+        path: byId("project-workspace-path").value.trim(),
+        create_if_missing: byId("project-create-directory").checked, confirmed: true
+      }});
+      return "Project workspace authorized. No Run, Apply, Commit, or Push started.";
+    });
+  }
+
+  async function openArtifactVerification() {
+    const task = selectedTask();
+    if (!task) { setFeedback("Save or select a Task first.", "error"); return; }
+    state.artifactVerificationTaskId = task.id;
+    byId("artifact-verification-task").textContent = task.title;
+    byId("artifact-verification-status").textContent = "Loading the saved contract…";
+    byId("artifact-path").value = "";
+    byId("artifact-expected-text").value = "";
+    byId("artifact-verification-save").disabled = true;
+    byId("artifact-verification-dialog").showModal();
+    try {
+      const result = await api("/api/tasks/" + task.id + "/artifact-verification");
+      if (state.artifactVerificationTaskId !== task.id) return;
+      const contract = result.contract || {};
+      byId("artifact-path").value = contract.path || "first_delivery.txt";
+      byId("artifact-expected-text").value = contract.expected_text || "";
+      byId("artifact-verification-status").textContent = result.builtin
+        ? "Save this declaration, then review it in the Instruction Pack."
+        : "This installation uses an operator-configured verifier. The built-in contract will not replace it.";
+      byId("artifact-verification-save").disabled = !result.builtin;
+    } catch (error) { byId("artifact-verification-status").textContent = productActionMessage(error); }
+  }
+
+  async function saveArtifactVerification() {
+    const taskId = state.artifactVerificationTaskId;
+    return performAction("save-artifact-verification", byId("artifact-verification-save"), "Saving…", async function () {
+      await api("/api/tasks/" + taskId + "/artifact-verification", {method: "POST", body: {
+        path: byId("artifact-path").value, expected_text: byId("artifact-expected-text").value
+      }});
+      byId("artifact-verification-dialog").close();
+      return "Artifact verification saved. Review a newly prepared Pack before execution.";
+    });
+  }
+
+  function guidedProjectQuery() {
+    return state.guidedToolProjectId ? "?project_id=" + encodeURIComponent(state.guidedToolProjectId) : "";
+  }
+
   function guidedToolSelectionsChanged() {
     const config = state.guidedToolChecked;
     if (config && config.model === byId("guided-model").value && config.reasoning_effort === byId("guided-effort").value) return;
@@ -12535,9 +12625,10 @@
     renderGuidedToolControls();
   }
 
-  async function openGuidedToolSetup() {
+  async function openGuidedToolSetup(projectId) {
     const dialog = byId("guided-tool-dialog");
     if (state.guidedToolChecking) return;
+    state.guidedToolProjectId = projectId || (selectedTask() ? selectedTask().project_id : byId("workspace-project").value);
     state.guidedToolChecked = null;
     byId("guided-auth").textContent = "Not checked";
     byId("guided-last-check").textContent = "Never";
@@ -12546,7 +12637,7 @@
     byId("guided-tool-save").disabled = true;
     if (!dialog.open) dialog.showModal();
     try {
-      const response = await api("/api/guided-tool-setup");
+      const response = await api("/api/guided-tool-setup" + guidedProjectQuery());
       const found = response.discovery;
       state.guidedToolDiscovery = found;
       byId("guided-executable").textContent = found.executable || "Not found";
@@ -12576,7 +12667,7 @@
     renderGuidedToolControls();
     byId("guided-tool-state").textContent = "Checking the exact selected Codex configuration after your explicit action…";
     try {
-      const result = await api("/api/guided-tool-setup/check", { method: "POST", body: { model_identifier: byId("guided-model").value, reasoning_effort: byId("guided-effort").value } });
+      const result = await api("/api/guided-tool-setup/check" + guidedProjectQuery(), { method: "POST", body: { model_identifier: byId("guided-model").value, reasoning_effort: byId("guided-effort").value } });
       showGuidedConfiguration(result.configuration);
     } catch (error) { state.guidedToolChecked = null; byId("guided-tool-state").textContent = productActionMessage(error); }
     finally { state.guidedToolChecking = false; renderGuidedToolControls(); }
@@ -12586,7 +12677,7 @@
     const config = state.guidedToolChecked;
     if (!config || byId("guided-tool-save").disabled) return;
     await performAction("save-guided-tool", byId("guided-tool-save"), "Saving…", async function () {
-      await api("/api/guided-tool-setup/save", { method: "POST", body: { configuration_id: config.id } });
+      await api("/api/guided-tool-setup/save" + guidedProjectQuery(), { method: "POST", body: { configuration_id: config.id } });
       byId("guided-tool-dialog").close();
       return "Tool Setup saved. Prepare First Delivery when you are ready.";
     });
@@ -12600,6 +12691,14 @@
       const run = currentCodexRun();
       if (!run || String(guide.run_id) !== String(run.id)) return;
     }
+    if (guide.next_action === "authorize_workspace") {
+      state.workspaceProjectId = String(task.project_id);
+      renderProjectWorkspaceOptions();
+      byId("project-workspace-card").scrollIntoView({block: "center"});
+      byId("project-workspace-path").focus();
+      return;
+    }
+    if (guide.next_action === "configure_verification") return openArtifactVerification();
     if (guide.next_action === "tool_setup") return openGuidedToolSetup();
     if (guide.next_action === "prepare") {
       return performAction("prepare-first-delivery", byId("first-delivery-action"), "Preparing…", async function () {
@@ -12638,13 +12737,23 @@
   }
 
   function bindEvents() {
+    byId("create-project").addEventListener("click", createProject);
+    byId("authorize-project-workspace").addEventListener("click", authorizeProjectWorkspace);
+    byId("workspace-project").addEventListener("change", function () {
+      state.workspaceProjectId = byId("workspace-project").value;
+      loadProjectWorkspace();
+    });
+    byId("project-tool-setup").addEventListener("click", function () { openGuidedToolSetup(byId("workspace-project").value); });
+    byId("artifact-verification-open").addEventListener("click", openArtifactVerification);
+    byId("artifact-verification-save").addEventListener("click", saveArtifactVerification);
+    byId("artifact-verification-close").addEventListener("click", function () { byId("artifact-verification-dialog").close(); });
     elements.reviewPack.addEventListener("click", reviewCurrentPack);
     byId("pack-review-close").addEventListener("click", function () { byId("pack-review-dialog").close(); });
     byId("run-prerequisite-action").addEventListener("click", function () {
       const guide = state.firstDeliveryGuide;
       if (guide && ["tool_setup", "prepare"].indexOf(guide.next_action) !== -1) firstDeliveryAction();
     });
-    byId("guided-tool-open").addEventListener("click", openGuidedToolSetup);
+    byId("guided-tool-open").addEventListener("click", function () { openGuidedToolSetup(); });
     byId("first-delivery-action").addEventListener("click", firstDeliveryAction);
     byId("guided-tool-check").addEventListener("click", checkGuidedTool);
     byId("guided-tool-save").addEventListener("click", saveGuidedTool);

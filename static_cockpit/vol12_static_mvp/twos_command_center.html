@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f6f7f4">
   <meta name="twos-version" content="1.0.0">
-  <title>Tianma Work OS Vol.17 — Multi-Model Orchestration Workbench</title>
+  <title>TWOS 1.0.0</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/static_cockpit/vol12_static_mvp/styles.css?v=1.0.0">
   <script src="/static_cockpit/vol12_static_mvp/twos_command_center.js?v=1.0.0" defer></script>
@@ -200,7 +200,7 @@
     <main class="public-main">
       <section id="landing-view" class="landing-view" aria-labelledby="landing-title">
         <div class="landing-copy">
-          <span class="eyebrow">TWOS Vol.17 Multi-Model Orchestration Workbench</span>
+          <span class="eyebrow">TWOS 1.0.0</span>
           <h1 id="landing-title">Assign, approve, run, and review TWOS work with explicit Owner control.</h1>
           <p>Move from a development task through visible model assignments to a reviewable result, with clear approval gates at every consequential step.</p>
           <div class="landing-actions">
@@ -312,7 +312,7 @@
       <main id="workbench-main" class="workbench-main" tabindex="-1">
         <div class="workspace-heading">
           <div>
-            <span class="eyebrow">Tianma Work OS Vol.17</span>
+            <span class="eyebrow">TWOS 1.0.0</span>
             <h1>Multi-Model Orchestration Workbench</h1>
           </div>
           <p>Inspect model responsibility and readiness, approve the exact routing snapshot, then verify execution evidence.</p>
@@ -344,6 +344,22 @@
         <div id="workbench-feedback" class="workbench-feedback" role="status" aria-live="polite">Loading your workbench…</div>
 
         <div class="workflow-grid">
+          <section id="project-workspace-card" class="workbench-card card-wide" aria-labelledby="project-workspace-title">
+            <h2 id="project-workspace-title">Projects and workspaces</h2>
+            <p>Create a Project, then explicitly authorize its own local directory. Other projects do not inherit this permission.</p>
+            <div class="field-grid">
+              <div class="field-group"><label for="new-project-name">New project name</label><input id="new-project-name" maxlength="160"></div>
+              <div class="field-group"><label for="new-project-key">Project ID</label><input id="new-project-key" maxlength="80" placeholder="MY_PROJECT"></div>
+            </div>
+            <button id="create-project" class="button button-secondary" type="button">Create Project</button>
+            <div class="field-group"><label for="workspace-project">Project to authorize</label><select id="workspace-project"></select></div>
+            <div class="field-group"><label for="project-workspace-path">Workspace directory</label><input id="project-workspace-path" placeholder="/absolute/path/to/project"></div>
+            <label><input id="project-create-directory" type="checkbox"> Create this directory if missing</label>
+            <p>Choose a dedicated standalone Git repository. Authorization does not edit its files, initialize Git, or approve Commit or Push.</p>
+            <button id="authorize-project-workspace" class="button button-secondary" type="button">Authorize Project Workspace</button>
+            <p id="project-workspace-status" role="status">Select a Project to inspect its authorization.</p>
+            <div class="button-row"><button id="project-tool-setup" class="button button-quiet" type="button">Tool Setup for selected Task</button><button id="artifact-verification-open" class="button button-quiet" type="button">Artifact Verification for selected Task</button></div>
+          </section>
           <section id="task-card" class="workbench-card card-wide" aria-labelledby="task-card-title">
             <div class="card-heading">
               <div><span class="step-label">01</span><h2 id="task-card-title">Task</h2></div>
@@ -1793,6 +1809,15 @@
       </dialog>
     </div>
   </div>
+  <dialog id="artifact-verification-dialog" class="guided-dialog" aria-labelledby="artifact-verification-title">
+    <h2 id="artifact-verification-title">Exact Artifact Verification</h2>
+    <p id="artifact-verification-task"></p>
+    <p>The built-in verifier checks one exact UTF-8 file, no unrelated changes, and Git boundaries. Start from a clean committed workspace. This does not judge technical or medical correctness; human approval remains required.</p>
+    <label for="artifact-path">Relative output file</label><input id="artifact-path" maxlength="200" placeholder="first_delivery.txt">
+    <label for="artifact-expected-text">Exact expected contents (include the final newline if required)</label><textarea id="artifact-expected-text" rows="8" maxlength="2800"></textarea>
+    <p id="artifact-verification-status" role="status"></p>
+    <div class="button-row"><button id="artifact-verification-save" class="button button-primary" type="button">Save Artifact Verification</button><button id="artifact-verification-close" class="button button-quiet" type="button">Close</button></div>
+  </dialog>
   <dialog id="guided-tool-dialog" class="guided-dialog" aria-labelledby="guided-tool-title">
     <h2 id="guided-tool-title">Guided Tool Setup</h2>
     <p>TWOS reuses your existing Codex login. Credentials stay with Codex. Opening this page does not contact a provider.</p>

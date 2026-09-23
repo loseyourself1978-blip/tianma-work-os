@@ -1,6 +1,6 @@
 # TWOS Owner Guide
 
-Start here to operate TWOS 1.0.0, schema vol19.005. You decide whether a result
+Start here to operate TWOS 1.0.0, schema vol20.001. You decide whether a result
 is acceptable; a successful technical check is not Owner Acceptance.
 
 ## 1. What TWOS is
@@ -8,20 +8,42 @@ is acceptable; a successful technical check is not Owner Acceptance.
 TWOS helps you describe a development Task, authorize a precise instruction
 Pack, run Codex in an isolated workspace, inspect its Result, and deliver only
 the changes you approve. It records each separate decision. Research documents
-in the repository describe ambitions beyond this local candidate.
+in the repository describe ambitions beyond this release.
 
 ## 2. Supported platform and release identity
 
-This local 1.0.0 candidate is a **source-based macOS distribution**, requiring Python 3.11–3.13
+TWOS 1.0.0 is a **source-based macOS distribution**, requiring Python 3.11–3.13
 and trusted local Git for development workspaces. Codex is optional until Run.
 A signed/notarized DMG, App Store release, and Windows/Linux acceptance are not
 established. TWOS does not install system tools or accept their licenses for you.
 
-The archive name includes `1.0.0` and the 12-character release-preparation commit prefix. The included
-`RELEASE_SOURCE.json` gives the full Git SHA. The adjacent `.manifest.json`
-records the SHA-256, included files, platform and limitations. Compare the
-archive hash with the Owner-approved report before extracting. A hash detects
-change; it does not authenticate the publisher of an untrusted download.
+### Download and Verify SHA256
+
+Open the canonical [1.0.0 Release](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.0).
+Download the `twos-1.0.0-<12-character-commit>.tar.gz` asset, its matching
+`.manifest.json`, `release-1.0.0.json` and `SHA256SUMS` into one new folder.
+The release receipt gives version, full commit, annotated `v1.0.0` tag,
+artifact, SHA-256 and release date. If the page or assets are unavailable,
+distribution is incomplete: do not treat another checkout as the release.
+GitHub's automatic source-code archives are not the supported install package.
+
+In Terminal, change to that download folder and verify **before** extraction:
+
+```sh
+shasum -a 256 -c SHA256SUMS
+```
+
+All listed files must say `OK`. Extract only the `.tar.gz` using Archive Utility.
+The included `RELEASE_SOURCE.json` must match the receipt's full commit and
+version. From the extracted folder, inspect every packaged file using the
+actual archive and manifest paths (replace the uppercase placeholders):
+
+```sh
+python3 scripts/build_release.py --inspect /PATH/TO/ARCHIVE.tar.gz --manifest /PATH/TO/ARCHIVE.manifest.json
+```
+
+Require `verified: true`. A hash detects changed bytes; verify that the download
+came from the canonical publisher account, not an unrelated copy.
 
 ## 3. Fresh installation
 
@@ -60,6 +82,16 @@ source/data/runtime, an overly broad parent folder or a symlink. Traversal,
 symlink boundaries and incompatible nested Git roots are rejected. Project
 source files are separate from the TWOS database and backups.
 
+First Run creates the initial Project/workspace binding. To create another,
+open **Projects and workspaces**, enter a unique key and name, and select
+**Create Project**. Select that Project, enter its dedicated repository path,
+review it, then select **Authorize Project Workspace**. Creating a Project alone
+does not authorize execution. Repeating authorization for the same directory is
+idempotent. Different projects cannot share or nest workspace directories or
+use linked Git worktrees. Authorization persists across normal restart;
+backup recovery requires explicit reauthorization before new execution.
+Tool Setup opened from this card applies to the Project selected on the card.
+
 ## 6. Guided Codex Tool Setup
 
 You may skip optional tools in First Run and create a Task first. Later open
@@ -68,58 +100,53 @@ model and reasoning. Sign in using Codex's own supported authentication when
 required. TWOS does not copy its credential store or ask you to paste provider
 secrets into ordinary UI. Local discovery is different from provider readiness.
 
-### Configure independent Verification before Guided First Delivery
+### Configure Artifact Verification
 
-Guided First Delivery requires an Owner-reviewed deterministic local verifier,
-separate from Codex Coding. It checks the resulting files against the approved
-task; Coding success alone cannot establish Verification success. First Run and
-Task creation remain available without this optional execution prerequisite.
+The supported first-delivery preset includes a read-only verifier shipped with
+TWOS. No hidden acceptance tool or custom script is needed. On the selected Task,
+open **Configure Artifact Verification**, enter one relative artifact path and
+its exact expected UTF-8 text, then **Save Verification**. Include any final
+newline in the expected text. Use a small, non-secret output (contract limit:
+2800 UTF-8 bytes). The verifier checks exact bytes, unexpected files (including
+ignored additions), unchanged Git HEAD/index/remotes and a clean source baseline.
+It does not run project code or decide technical, medical or Owner acceptance.
 
-Supply the verifier when starting TWOS in Terminal. Replace both example paths
-with absolute paths to your trusted Python executable and read-only verifier:
+The preset requires a clean committed Git repository. For a new dedicated
+folder, the following complete example creates an initial local baseline.
+Choose a new folder name if it already exists; do not reuse an existing project.
+The sample commit identity is local to this command and does not alter Git settings.
 
 ```sh
-TWOS_LOCAL_VERIFICATION_COMMAND_JSON='["/absolute/path/to/python3", "/absolute/path/to/trusted-verifiers/verify_first_delivery.py"]' ./start-twos
+mkdir -p "$HOME/TWOS Projects"
+mkdir "$HOME/TWOS Projects/My First Project"
+cd "$HOME/TWOS Projects/My First Project"
+git init --initial-branch=main
+printf '# My First Project\n' > README.md
+git add README.md
+git -c user.name='TWOS Owner' -c user.email='owner@localhost.invalid' commit -m 'Initialize project'
 ```
 
-This is a JSON array of 1–32 nonempty strings, each at most 4096 UTF-8 bytes and
-containing no NUL. The first string must identify an existing executable by its
-absolute path. Use absolute paths for verifier scripts as well; keep the
-executable and scripts outside the authorized source workspace and TWOS Run/spool
-directories. Guided readiness also rejects control characters in arguments and
-binds the exact command and file identities. JSON double quotes preserve paths
-with spaces; shell expansion, pipes and redirection are not performed inside the
-array. This setting authorizes no shell fallback or automatic Run.
+Authorize that exact folder in TWOS. Create a Task instructing Codex to write
+`first_delivery.txt` containing exactly `TWOS FIRST DELIVERY PASS` and a newline,
+without modifying other files. Enter the same filename and text (including its
+newline) in **Configure Artifact Verification**. After an applied delivery,
+review the separate Commit gate before preparing another exact-artifact delivery.
 
-The example assumes you already have a trusted verifier for the dedicated
-`first_delivery.txt` task. It must inspect files without modifying them and emit
-the existing TWOS JSONL Verification protocol: `thread.started`, `turn.started`,
-an `item.completed` agent message containing a `twos.verification.v1` result,
-then `turn.completed`. The result reports `verdict`, `changed_files_checked`,
-`unexpected_files`, `exact_content`, `tests`, `git_boundary` and `remote_boundary`
-truthfully. A command that merely exits zero, such as `true`, is not a verifier.
-At Verification execution TWOS runs the exact argv in the isolated Run workspace;
-it does not install or generate a verifier for you.
+Saving or changing the contract invalidates affected Pack approvals. Review the
+sealed file/text contract in the new Pack; only an explicit Run starts Coding.
+The existing advanced Generate Pack action uses this same binding in a fresh
+installation. Merely opening Tool Setup or Verification performs no provider
+request and runs no verifier.
 
-Use the same environment assignment on every restart, including with custom
-`--data-root`, `--runtime-root` and `--log-root` options. It is not saved as an
-installation setting. After restarting, open Guided Tool Setup, choose the
-model/reasoning, explicitly **Check Codex Readiness**, then **Save Tool Setup**
-only after Ready. Checking binds the verifier but does not execute it or start
-delivery. Changing the verifier requires a new check and any required new Pack
-approval; later Owner gates remain separate.
-
-If the setting is absent or blank, readiness returns
-`Configure an independent local Verification command for First Delivery.`
-before any provider check or delivery execution. Malformed JSON, a non-array,
-an invalid argument or an invalid array length prevents startup: the launcher
-reports `BLOCKED` and the private `runtime.log` identifies
-`TWOS_LOCAL_VERIFICATION_COMMAND_JSON` and the parser error. Find this log under
-your `--log-root`, or by default at
-`~/Library/Logs/Tianma Work OS/<installation-id>/runtime.log`. Correct the value
-and explicitly relaunch. A parseable but unavailable/non-absolute executable or
-unsafe verifier binding is instead rejected by Guided readiness with its
-specific diagnostic. Neither case substitutes another command or starts delivery.
+Advanced operators may explicitly configure a different trusted deterministic
+verifier using `TWOS_LOCAL_VERIFICATION_COMMAND_JSON` when launching TWOS. It is
+an argument-vector JSON array, not shell text; the absolute executable and scripts
+must live outside **all** authorized project and Run directories. Supply the
+same setting on restart. It must emit the `twos.verification.v1` JSONL protocol
+and truthfully check the approved Task. This advanced operator path is separate
+from the supported built-in preset. Malformed configuration blocks startup;
+unsafe or unavailable commands block readiness. A command that merely exits
+zero is not sufficient. Recheck and save tools after changing the verifier.
 
 ## 7. Readiness versus Save Tool Setup
 
@@ -134,7 +161,8 @@ disclosed; do not assume a different model silently fulfilled your selection.
 
 For the first Task, enter **Task title** and the complete task body in **Goal or
 objective**, including exact files, expected output and boundaries. The authorized
-workspace supplies Project; keep the initial **General task** Workflow. Select
+workspace supplies the initial Project; select the intended Project for additional
+projects and keep the initial **General task** Workflow. Select
 **Save Task**. The saved body is then labelled **Development task**. Task creation
 does not start Codex. Derived Task details refer to that complete body; review them
 if you need to add constraints. Guided Delivery shows the current next action.
@@ -234,7 +262,8 @@ a 0.17.0-to-1.0.0 upgrade path or a cross-version compatibility claim. This
 release supports fresh installation only. Older supported schemas within a
 compatible application installation open a Maintenance boundary. Choose **Migrate an older
 installation**. Review the plan and prior recovery point, approve, then separately
-confirm. Accepted sources are vol19.003/vol19.004 to vol19.005. Migration does not
+confirm. Accepted schema sources are vol19.003/vol19.004/vol19.005 to vol20.001;
+application-version compatibility is still enforced. Migration does not
 run or retry automatically. Future schemas stay blocked. Repeated restarts do
 not grant permission to force a migration.
 
@@ -311,12 +340,11 @@ do not distribute database files or live runtime internals.
 
 ## 28. Known limitations
 
-TWOS 1.0.0 is NOT RELEASED. The Owner accepted and closed 19.5 on 2026-09-22.
-19.6 local release preparation is authorized; final release, source Push, tags,
-upload and distribution require separate authorization. The accepted 0.17.0 RC
-remains unchanged. This candidate supports fresh installation and 1.0.0
-same-version backup/restore; old-version upgrades and cross-version restore
-are outside scope. Distribution remains macOS source; signing,
+The canonical Release receipt is authoritative for distribution identity.
+Historical Vol.19 closeout records retain their original dates and conclusions;
+they are not the current download instructions. Fresh installation and 1.0.0
+same-version backup/restore are supported; old-version upgrades and cross-version
+restore remain outside scope. Distribution remains macOS source; signing,
 notarization and self-contained dependency packaging are not established.
 Dependencies resolve supported ranges, not a locked reproducible binary environment.
 External credentialed Git-host Push acceptance, live multi-model aggregation

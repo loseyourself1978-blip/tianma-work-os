@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import func, or_, select, text, update
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError, OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 
 from . import __version__
@@ -31,7 +31,7 @@ from .ai_orchestration import (
     route_capability,
     verified_actual_model_identity,
 )
-from .codex_adapter import CodexExecutionManager
+from .codex_adapter import CodexExecutionManager, CodexAdapter
 from .codex_connectivity import (
     codex_child_environment,
     connectivity_evidence_out,
@@ -39,12 +39,13 @@ from .codex_connectivity import (
     verify_codex_connection,
 )
 from .config import Settings, get_settings
-from . import guided_delivery
-from .models import GuidedToolConfiguration, CodexConnectivityEvidence
+from . import guided_delivery, project_workspaces, artifact_verification
+from .models import GuidedToolConfiguration, CodexConnectivityEvidence, AuthorizedWorkspace, PushPlan
 from .result_intake import canonical_sha256
 from .db import (
     VOL19_FRESH_INSTALL_SCHEMA_VERSION,
     VOL19_GUIDED_DELIVERY_SCHEMA_VERSION,
+    VOL20_PROJECT_WORKSPACE_SCHEMA_VERSION,
     initialize_database,
     make_engine,
     make_session_factory,
@@ -568,6 +569,19 @@ class ProjectIn(BaseModel):
     key: str = Field(min_length=1, max_length=80)
     name: str = Field(min_length=1, max_length=160)
     status: str = "active"
+
+
+class ProjectWorkspaceIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    path: str = Field(min_length=1, max_length=4096)
+    create_if_missing: bool = False
+    confirmed: Literal[True]
+
+
+class ArtifactVerificationIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    path: str = Field(min_length=1, max_length=200)
+    expected_text: str = Field(min_length=1, max_length=2800)
 
 
 class TaskIn(BaseModel):
@@ -2151,6 +2165,7 @@ def validation_error_details(exc: RequestValidationError) -> list[dict[str, Any]
 
 def create_app(settings: Settings | None = None, start_scheduler: bool = True) -> FastAPI:
     settings = settings or get_settings()
+    application_settings = settings
     from .maintenance import Maintenance, MaintenanceError, TERMINAL_OPERATIONS
     from .maintenance_api import install_maintenance, maintenance_app
     try:
@@ -2184,9 +2199,16 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         engine.dispose()
         raise
     with factory() as recovery_session:
+        def recovery_source(row):
+            try:
+                return project_workspaces.record_settings(recovery_session, settings, row, row.owner_id).source_repo
+            except (FirstRunError, OSError):
+                logger.warning("Interrupted Apply requires project workspace authorization session_id=%s", row.id)
+                return None
         reconcile_incomplete_apply_sessions(
             recovery_session,
             source_repo=settings.source_repo,
+            source_resolver=recovery_source,
         )
     codex_manager = CodexExecutionManager(factory, settings)
     codex_manager.sync_local_model_registry()
@@ -2272,6 +2294,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         try:
             response = await call_next(request)
         except Exception as exc:
+            if isinstance(exc, OperationalError):
+                code = getattr(exc.orig, "sqlite_errorcode", None)
+                name = getattr(exc.orig, "sqlite_errorname", None)
+                logger.error("Database request failure sqlite_code=%s sqlite_name=%s request_id=%s", code, name, request_id)
+                if isinstance(code, int) and code & 0xff in {5, 6}:
+                    response = error_response(503, "database_busy", "Another operation is saving data. Retry this request shortly.", request_id)
+                    response.headers["Retry-After"] = "1"
+                    return response
             logger.error(
                 "Unhandled request failure type=%s request_id=%s",
                 type(exc).__name__,
@@ -2391,6 +2421,27 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             guided_delivery.require_setup_owner(session, user)
         except PermissionError as exc:
             raise HTTPException(status_code=403, detail=str(exc)) from exc
+
+    def project_scope(session, user, project_id=None):
+        if not application_settings.fresh_install:
+            return application_settings
+        if project_id is None:
+            installation = active_installation(session)
+            initial = session.scalar(select(AuthorizedWorkspace).where(AuthorizedWorkspace.installation_id == installation.id))
+            if initial is None:
+                raise HTTPException(status_code=403, detail="Authorize a workspace first.")
+            project_id = initial.project_id
+        return project_workspaces.project_settings(session, application_settings, project_id, user.id)
+
+    def task_scope(session, task_id, user):
+        return (project_workspaces.task_settings(session, application_settings, task_id, user.id)
+                if task_id is not None else application_settings)
+
+    def delivery_scope(session, user, model, identity, value):
+        if not application_settings.fresh_install:
+            return application_settings
+        row = session.scalar(select(model).where(getattr(model, identity) == value, model.owner_id == user.id))
+        return project_workspaces.record_settings(session, application_settings, row, user.id)
 
     def audit(session: Session, request: Request, action: str, entity_type: str, entity_id: int | None, details: str, user: User | None = None) -> None:
         session.add(
@@ -2602,7 +2653,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             "status": "healthy",
             "database": "ok",
             "version": __version__,
-            "schema": VOL19_GUIDED_DELIVERY_SCHEMA_VERSION,
+            "schema": VOL20_PROJECT_WORKSPACE_SCHEMA_VERSION,
         }
         if settings.fresh_install:
             installation = active_installation(session)
@@ -2938,6 +2989,11 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
 
     @app.post("/api/projects")
     def create_project(payload: ProjectIn, request: Request, session: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+        if settings.fresh_install:
+            setup_owner(session, user)
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
         if session.scalar(select(Project).where(Project.key == payload.key)):
             raise HTTPException(status_code=409, detail="Project key already exists.")
         project = Project(key=payload.key, name=payload.name, status=payload.status)
@@ -2945,6 +3001,56 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session.flush()
         audit(session, request, "project_created", "project", project.id, project.key, user)
         return project_out(project)
+
+    @app.get("/api/projects/{project_id}/workspace")
+    def project_workspace(project_id: int, session: Session = Depends(get_db), user: User = Depends(current_user)):
+        setup_owner(session, user)
+        if session.get(Project, project_id) is None:
+            raise HTTPException(status_code=404, detail="Project not found.")
+        return project_workspaces.workspace_out(session, settings, project_id, user.id)
+
+    @app.post("/api/projects/{project_id}/workspace")
+    def authorize_project_workspace(project_id: int, payload: ProjectWorkspaceIn, request: Request,
+                                    session: Session = Depends(get_db), user: User = Depends(current_user)):
+        row, created = project_workspaces.authorize_project(session, settings, user, project_id,
+            payload.path, create_if_missing=payload.create_if_missing)
+        audit(session, request, "project_workspace_authorized", "project", project_id,
+              f"identity={row.identity_digest}; created={created}; execution_started=false", user)
+        session.flush()
+        return {**project_workspaces.workspace_out(session, settings, project_id, user.id),
+                "already_authorized": not created}
+
+    @app.get("/api/tasks/{task_id}/artifact-verification")
+    def get_artifact_verification(task_id: int, session: Session = Depends(get_db), user: User = Depends(current_user)):
+        scoped = task_scope(session, task_id, user)
+        task = session.get(Task, task_id)
+        if task is None:
+            raise HTTPException(status_code=404, detail="Task not found.")
+        guided_delivery.require_task_owner(session, task, user, scoped)
+        return {"builtin": artifact_verification.uses_builtin(scoped),
+                "contract": artifact_verification.contract_out(artifact_verification.latest(session, task_id))}
+
+    @app.post("/api/tasks/{task_id}/artifact-verification")
+    def save_artifact_verification(task_id: int, payload: ArtifactVerificationIn, request: Request,
+                                   session: Session = Depends(get_db), user: User = Depends(current_user)):
+        if session.get_bind().dialect.name == "sqlite":
+            session.commit()
+            session.execute(text("BEGIN IMMEDIATE"))
+        scoped = task_scope(session, task_id, user)
+        task = session.get(Task, task_id)
+        if task is None:
+            raise HTTPException(status_code=404, detail="Task not found.")
+        guided_delivery.require_task_owner(session, task, user, scoped)
+        if session.scalar(select(CodexRun.id).where(CodexRun.task_id == task_id,
+            CodexRun.status.in_(["queued", "starting", "running", "verifying", "settling"]))):
+            raise HTTPException(status_code=409, detail="Wait for the active Run before changing verification.")
+        try:
+            row = artifact_verification.save_contract(session, task, user.id, payload.path, payload.expected_text)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        audit(session, request, "artifact_verification_saved", "task", task_id,
+              f"contract={row.specification_digest}; execution_started=false", user)
+        return {"contract": artifact_verification.contract_out(row), "task_version": task.task_version}
 
     @app.get("/api/tasks")
     def list_tasks(session: Session = Depends(get_db), user: User = Depends(current_user)) -> list[dict[str, Any]]:
@@ -2954,6 +3060,8 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     def create_task(payload: TaskIn, request: Request, session: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
         if not session.get(Project, payload.project_id):
             raise HTTPException(status_code=404, detail="Project not found.")
+        scoped = project_workspaces.project_settings(session, application_settings, payload.project_id, user.id, required=False)
+        settings = scoped or application_settings
         development_task = payload.development_task if payload.development_task is not None else payload.title
         if development_task is None or not development_task.strip():
             raise HTTPException(status_code=400, detail="Development task is required.")
@@ -2965,7 +3073,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         source_state: dict[str, object] = {}
-        if effective_workflow == "product_development":
+        if effective_workflow == "product_development" and scoped is not None:
             try:
                 source_state = git_source_state(
                     settings.source_repo,
@@ -3061,8 +3169,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             project = session.get(Project, project_id)
             if not project:
                 raise HTTPException(status_code=404, detail="Project not found.")
+            if application_settings.fresh_install and task.project_id != project_id and session.scalar(select(CodexInstructionPack.id).where(CodexInstructionPack.task_id == task.id)):
+                raise HTTPException(status_code=409, detail="A prepared Task cannot move between project workspaces. Create a new Task.")
             material_changed = material_changed or task.project_id != project_id
+            if task.project_id != project_id:
+                task.repository_identity = ""
+                task.source_baseline_commit = ""
             task.project = project
+            task.project_id = project_id
         derived_fields = {
             "objective": ("objective_provenance", DERIVED_OBJECTIVE),
             "source_sync_summary": ("source_context_provenance", DERIVED_SOURCE_CONTEXT),
@@ -3085,7 +3199,9 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 elif getattr(task, key) != value:
                     setattr(task, provenance_field, "owner-edited")
             setattr(task, key, value)
-        if task.workflow_type == "product_development":
+        scoped = project_workspaces.project_settings(session, application_settings, task.project_id, user.id, required=False)
+        settings = scoped or application_settings
+        if task.workflow_type == "product_development" and scoped is not None:
             if not task.source_baseline_commit:
                 source_state = git_source_state(
                     settings.source_repo,
@@ -3450,6 +3566,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = task_scope(session, task_id, user)
         model = None
         if task_id is not None:
             task = session.get(Task, task_id)
@@ -3711,6 +3828,8 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             model.evidence_status,
             model.evidence_source,
         )
+        # Configuration is durable but remains unverified until the bounded probe succeeds.
+        session.commit()
         detection = codex_manager.adapter.detect()
         evidence = verify_codex_connection(
             session,
@@ -3835,16 +3954,21 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         return output
 
     @app.get("/api/guided-tool-setup")
-    def guided_tool_setup(session: Session = Depends(get_db), user: User = Depends(current_user)):
+    def guided_tool_setup(project_id: int | None = None, session: Session = Depends(get_db), user: User = Depends(current_user)):
+        settings = project_scope(session, user, project_id)
         setup_owner(session, user)
         return {"discovery": guided_delivery.discovery(codex_manager.adapter),
                 "configuration": guided_delivery.configuration_out(session,
-                    guided_delivery.latest_configuration(session, user.id), settings=settings),
+                    guided_delivery.latest_configuration(session, user.id, settings=settings), settings=settings),
+                "verification": {"builtin": artifact_verification.uses_builtin(settings),
+                    "name": "Exact artifact verification" if artifact_verification.uses_builtin(settings) else "Operator-configured verifier",
+                    "next_action": "Configure the Task's artifact file and exact expected contents before Prepare."},
                 "provider_request_performed": False}
 
     @app.post("/api/guided-tool-setup/check")
-    def check_guided_tool(payload: GuidedToolIn, request: Request,
+    def check_guided_tool(payload: GuidedToolIn, request: Request, project_id: int | None = None,
                          session: Session = Depends(get_db), user: User = Depends(current_user)):
+        settings = project_scope(session, user, project_id)
         setup_owner(session, user)
         try:
             snapshot = guided_delivery.configuration_snapshot(guided_delivery.discovery(codex_manager.adapter),
@@ -3859,7 +3983,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         row = GuidedToolConfiguration(owner_id=user.id, model_id=model.id,
             snapshot_json=json.dumps(snapshot, sort_keys=True, separators=(",", ":")),
             configuration_digest=canonical_sha256(snapshot), connectivity_evidence_id=evidence.id)
-        saved = guided_delivery.latest_configuration(session, user.id, confirmed=True)
+        saved = guided_delivery.latest_configuration(session, user.id, confirmed=True, settings=settings)
         if saved is not None and saved.configuration_digest == row.configuration_digest:
             # A new readiness observation does not change the configuration the
             # Owner already saved. Preserve that explicit confirmation only
@@ -3873,17 +3997,18 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 "readiness": result}
 
     @app.post("/api/guided-tool-setup/save")
-    def save_guided_tool(payload: GuidedToolSaveIn, request: Request,
+    def save_guided_tool(payload: GuidedToolSaveIn, request: Request, project_id: int | None = None,
                         session: Session = Depends(get_db), user: User = Depends(current_user)):
+        settings = project_scope(session, user, project_id)
         setup_owner(session, user)
         row = session.get(GuidedToolConfiguration, payload.configuration_id)
         if row is None or row.owner_id != user.id:
             raise HTTPException(status_code=404, detail="Tool configuration not found.")
-        latest = guided_delivery.latest_configuration(session, user.id)
-        if latest.id != row.id or not guided_delivery.configuration_out(session, row, settings=settings)["ready"]:
+        latest = guided_delivery.latest_configuration(session, user.id, settings=settings)
+        if latest is None or latest.id != row.id or not guided_delivery.configuration_out(session, row, settings=settings)["ready"]:
             raise HTTPException(status_code=409, detail="Check the exact current Codex configuration successfully before saving.")
         row.confirmed_at = row.confirmed_at or utc_now()
-        invalidated = guided_delivery.invalidate_future_packs(session, user.id, row.configuration_digest)
+        invalidated = guided_delivery.invalidate_future_packs(session, user.id, row.configuration_digest, workspace=str(settings.source_repo.resolve()))
         audit(session, request, "guided_tool_setup_saved", "guided_tool_configuration", row.id,
               f"invalidated_packs={invalidated}; execution_started=false", user)
         return {"configuration": guided_delivery.configuration_out(session, row, settings=settings),
@@ -3892,6 +4017,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     @app.post("/api/tasks/{task_id}/first-delivery/prepare")
     def prepare_first_delivery(task_id: int, request: Request,
                                session: Session = Depends(get_db), user: User = Depends(current_user)):
+        settings = task_scope(session, task_id, user)
         task = session.get(Task, task_id)
         if task is None:
             raise HTTPException(status_code=404, detail="Task not found.")
@@ -3911,6 +4037,15 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     @app.get("/api/tasks/{task_id}/first-delivery")
     def first_delivery_progress(task_id: int, request: Request,
                                session: Session = Depends(get_db), user: User = Depends(current_user)):
+        try:
+            settings = task_scope(session, task_id, user)
+        except FirstRunError as exc:
+            if exc.status_code != 403 or exc.code == "PROJECT_OWNER_REQUIRED":
+                raise
+            return {"task_id": task_id, "stage_index": 0, "stage": "Authorize Project Workspace",
+                    "stages": ["Authorize Project Workspace", *guided_delivery.GUIDE_STAGES],
+                    "next_action": "authorize_workspace", "action_label": "Authorize Project Workspace",
+                    "message": exc.message, "configuration": None, "location": {}, "run_id": None}
         task = session.get(Task, task_id)
         if task is None:
             raise HTTPException(status_code=404, detail="Task not found.")
@@ -3918,7 +4053,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             guided_delivery.require_task_owner(session, task, user, settings)
         except PermissionError as exc:
             raise HTTPException(status_code=403, detail=str(exc)) from exc
-        row = guided_delivery.latest_configuration(session, user.id, confirmed=True)
+        row = guided_delivery.latest_configuration(session, user.id, confirmed=True, settings=settings)
         config = guided_delivery.configuration_out(session, row, settings=settings)
         pack = session.scalar(select(CodexInstructionPack).where(CodexInstructionPack.task_id == task.id)
                               .order_by(CodexInstructionPack.version.desc()))
@@ -3935,6 +4070,10 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         if config and config["ready"]:
             stage, action, label = 1, "prepare", "Prepare First Delivery"
             message = "Prepare one Instruction Pack for review. This does not start a Run."
+            if artifact_verification.uses_builtin(settings) and artifact_verification.latest(session, task.id) is None:
+                action, label = "configure_verification", "Configure Artifact Verification"
+                message = "Declare the output file and exact expected contents. This does not run project code."
+
             if pack and guided_delivery.pack_binding(pack):
                 error = pack_routing_binding_error(session, task, pack, settings.source_repo)
                 if error or pack.status in {"invalidated", "superseded"}:
@@ -4094,7 +4233,8 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
-        guided_config = guided_delivery.latest_configuration(session, user.id, confirmed=True)
+        settings = task_scope(session, task_id, user)
+        guided_config = guided_delivery.latest_configuration(session, user.id, confirmed=True, settings=settings)
         if settings.fresh_install and guided_config is not None:
             config_view = guided_delivery.configuration_out(session, guided_config, settings=settings)
             snapshot = json.loads(guided_config.snapshot_json)
@@ -4112,7 +4252,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 "connectivity": {"ready_for_real_run": ready, "readiness_state": config_view["status"]},
                 "source": {"identity": "Authorized local workspace", "branch": None, "commit": None, "clean": None}}
         if settings.fresh_install:
-            setup = first_run_status(session, settings, authenticated_user=user)
+            setup = first_run_status(session, application_settings, authenticated_user=user)
             tools = setup.get("optional_tools") or []
             codex_setup = next(
                 (item for item in tools if item.get("name") == "Codex"),
@@ -4291,6 +4431,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        try:
+            settings = task_scope(session, task_id, user)
+        except FirstRunError as exc:
+            if exc.status_code != 403 or exc.code == "PROJECT_OWNER_REQUIRED":
+                raise
+            blocker = {"code": exc.code, "message": exc.message, "next_action": "Authorize Project Workspace"}
+            return {"task_id": task_id, "eligible": False, "blockers": [blocker], "primary_blocker": blocker,
+                    "pack_id": None, "next_action": "Authorize Project Workspace"}
         task = session.get(Task, task_id)
         if task is None:
             raise HTTPException(status_code=404, detail="Task not found.")
@@ -4353,11 +4501,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = task_scope(session, task_id, user)
         task = session.get(Task, task_id)
         if not task:
             raise HTTPException(status_code=404, detail="Task not found.")
         try:
-            pack = build_instruction_pack(session, task, settings.source_repo)
+            pack = (guided_delivery.prepare_delivery(session, task, user, settings)
+                    if artifact_verification.uses_builtin(settings)
+                    else build_instruction_pack(session, task, settings.source_repo))
         except (ValueError, RuntimeError) as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         audit(
@@ -4379,6 +4530,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = task_scope(session, task_id, user)
         task = session.get(Task, task_id)
         pack = session.get(CodexInstructionPack, pack_id)
         if not task or not pack or pack.task_id != task.id:
@@ -4449,6 +4601,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = task_scope(session, task_id, user)
         if session.get_bind().dialect.name == "sqlite":
             # Authentication lookup has already opened a read transaction on
             # this request-scoped session. End it before taking the write lock.
@@ -4624,7 +4777,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 detail={"type": "RUN_INELIGIBLE", "message": str(exc), **refreshed},
             ) from exc
         try:
-            source = codex_manager.adapter.source_state()
+            source = CodexAdapter(settings).source_state()
         except RuntimeError as exc:
             raise HTTPException(
                 status_code=409,
@@ -5206,6 +5359,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         *,
         create: bool,
     ) -> dict[str, Any]:
+        settings = project_workspaces.run_settings(session, application_settings, run_id, user.id)
         run = find_owner_run(session, user.id, run_id)
         if run is None:
             # Deliberately do not distinguish an absent Run from a Run belonging
@@ -5594,6 +5748,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         *,
         create: bool,
     ) -> dict[str, Any]:
+        settings = project_workspaces.run_settings(session, application_settings, run_id, user.id)
         run = find_owner_run(session, user.id, run_id)
         if run is None:
             # Missing and cross-Owner Runs are deliberately indistinguishable.
@@ -5752,6 +5907,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = delivery_scope(session, user, ApplyPlan, "plan_id", plan_id)
         plan = session.scalar(
             select(ApplyPlan).where(
                 ApplyPlan.plan_id == plan_id,
@@ -5800,6 +5956,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = delivery_scope(session, user, ApplyPlan, "plan_id", plan_id)
         if session.get_bind().dialect.name == "sqlite":
             session.commit()
             session.execute(text("BEGIN IMMEDIATE"))
@@ -6006,6 +6163,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         plan: ApplyPlan,
         apply_session: ApplySession | None = None,
     ) -> dict[str, Any]:
+        settings = project_workspaces.record_settings(session, application_settings, plan, owner_id)
         row = apply_session or session.scalar(
             select(ApplySession).where(
                 ApplySession.owner_id == owner_id,
@@ -6193,6 +6351,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = delivery_scope(session, user, ApplyPlan, "plan_id", plan_id)
         plan = owner_apply_plan(
             session,
             owner_id=user.id,
@@ -6308,6 +6467,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = project_workspaces.run_settings(session, application_settings, run_id, user.id)
         """One refresh-safe Owner projection for the complete delivery lineage."""
         run = owner_run_or_404(session, user.id, run_id)
         envelope = session.scalar(
@@ -6725,6 +6885,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = delivery_scope(session, user, ApplySession, "session_id", session_id)
         row = find_owned_apply_session(
             session,
             owner_id=user.id,
@@ -6786,6 +6947,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         verification: PostApplyVerification,
         effective_status_override: str | None = None,
     ) -> dict[str, Any]:
+        settings = project_workspaces.record_settings(session, application_settings, verification, owner_id)
         try:
             review = commit_builder_review(
                 session,
@@ -6853,6 +7015,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         owner_id: int,
         verification: PostApplyVerification,
     ) -> dict[str, Any]:
+        settings = project_workspaces.record_settings(session, application_settings, verification, owner_id)
         try:
             review = owner_commit_review(
                 session,
@@ -6896,6 +7059,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = delivery_scope(session, user, PostApplyVerification, "verification_id", verification_id)
         verification = find_owned_post_apply_verification(
             session,
             owner_id=user.id,
@@ -7030,6 +7194,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = delivery_scope(session, user, CommitProposal, "proposal_id", proposal_id)
         proposal = find_owned_commit_proposal(
             session,
             owner_id=user.id,
@@ -7178,6 +7343,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = delivery_scope(session, user, PostApplyVerification, "verification_id", verification_id)
         verification = find_owned_post_apply_verification(
             session,
             owner_id=user.id,
@@ -7259,6 +7425,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = delivery_scope(session, user, CommitPlan, "commit_plan_id", commit_plan_id)
         plan, verification = owned_commit_plan_verification(
             session,
             owner_id=user.id,
@@ -7339,6 +7506,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = delivery_scope(session, user, StageExecution, "stage_execution_id", stage_execution_id)
         stage_execution, plan, verification = owned_stage_commit_context(
             session,
             owner_id=user.id,
@@ -7413,6 +7581,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         owner_id: int,
         local_commit: LocalCommitExecution,
     ) -> dict[str, Any]:
+        settings = project_workspaces.record_settings(session, application_settings, local_commit, owner_id)
         try:
             return push_delivery_review(
                 session,
@@ -7432,6 +7601,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         owner_id: int,
         local_commit: LocalCommitExecution,
     ) -> dict[str, Any]:
+        settings = project_workspaces.record_settings(session, application_settings, local_commit, owner_id)
         try:
             return push_plan_review(
                 session,
@@ -7472,6 +7642,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = delivery_scope(session, user, LocalCommitExecution, "commit_execution_id", commit_execution_id)
         del payload
         local_commit = find_owned_local_commit_execution(
             session,
@@ -7529,6 +7700,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = delivery_scope(session, user, PushPlan, "push_plan_id", push_plan_id)
         push_plan = find_owned_push_plan(
             session,
             owner_id=user.id,
@@ -7599,6 +7771,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = delivery_scope(session, user, PushPlan, "push_plan_id", push_plan_id)
         push_plan = find_owned_push_plan(
             session,
             owner_id=user.id,
@@ -7740,6 +7913,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     ) -> dict[str, Any]:
         # The optional empty body exists only to make FastAPI reject any
         # client-supplied commit, branch, ref, remote, or repository truth.
+        settings = delivery_scope(session, user, LocalCommitExecution, "commit_execution_id", commit_execution_id)
         del payload
         local_commit = find_owned_local_commit_execution(
             session,
@@ -7808,6 +7982,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = delivery_scope(session, user, PushExecution, "push_execution_id", push_execution_id)
         push_execution = find_owned_push_execution(
             session,
             owner_id=user.id,
@@ -7888,6 +8063,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        settings = delivery_scope(session, user, ApplySession, "session_id", session_id)
         row = find_owned_apply_session(
             session,
             owner_id=user.id,

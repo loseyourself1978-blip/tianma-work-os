@@ -1,5 +1,7 @@
 # Vol.19 19.4 Security / Documentation / Release Hardening Closeout v0.1
 
+> Historical Vol.19 record. For current download identity, installation and schema, see the [Owner Guide](../OWNER_GUIDE.md). Status statements below describe this record's original gate.
+
 | Field | Accepted value |
 | --- | --- |
 | 19.4 status | PASS / OWNER ACCEPTED / CLOSED |

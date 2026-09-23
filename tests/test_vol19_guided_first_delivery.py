@@ -361,7 +361,7 @@ def test_complete_first_safe_delivery_uses_public_actions_and_exact_local_remote
 def test_guided_ui_uses_only_explicit_readiness_and_one_current_action():
     root = Path(__file__).resolve().parents[1] / 'static_cockpit/vol12_static_mvp'
     js = (root / 'twos_command_center.js').read_text()
-    opening = js.split('async function openGuidedToolSetup()', 1)[1].split('async function checkGuidedTool()', 1)[0]
+    opening = js.split('async function openGuidedToolSetup(projectId)', 1)[1].split('async function checkGuidedTool()', 1)[0]
     assert '/api/guided-tool-setup/check' not in opening
     assert '/api/model-catalog' not in opening
     assert '/api/guided-tool-setup' in opening

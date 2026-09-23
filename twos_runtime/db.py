@@ -41,6 +41,7 @@ VOL19_RESULT_DELIVERY_LOOP_SCHEMA_VERSION = "vol19.002"
 VOL19_OWNER_COMMIT_PUSH_SCHEMA_VERSION = "vol19.003"
 VOL19_FRESH_INSTALL_SCHEMA_VERSION = "vol19.004"
 VOL19_GUIDED_DELIVERY_SCHEMA_VERSION = "vol19.005"
+VOL20_PROJECT_WORKSPACE_SCHEMA_VERSION = "vol20.001"
 
 
 DEFAULT_PROJECTS = [
@@ -471,6 +472,8 @@ def _initialize_database(engine: Engine, *, seed_default_projects: bool = True) 
             )
         if not session.scalar(select(SchemaVersion).where(SchemaVersion.version == VOL19_GUIDED_DELIVERY_SCHEMA_VERSION)):
             session.add(SchemaVersion(version=VOL19_GUIDED_DELIVERY_SCHEMA_VERSION))
+        if not session.scalar(select(SchemaVersion).where(SchemaVersion.version == VOL20_PROJECT_WORKSPACE_SCHEMA_VERSION)):
+            session.add(SchemaVersion(version=VOL20_PROJECT_WORKSPACE_SCHEMA_VERSION))
         if seed_default_projects:
             seed_projects(session)
         seed_registry(session)
@@ -510,6 +513,19 @@ def ensure_runtime_columns(engine: Engine) -> None:
     if "codex_instruction_packs" in tables:
         _ensure_vol17_pack_indexes(engine)
     _ensure_vol19_result_delivery_indexes(engine)
+    if engine.dialect.name == "sqlite":
+        with engine.begin() as connection:
+            if "project_workspace_authorizations" in tables:
+                fields = ("id", "installation_id", "owner_user_id", "project_id", "canonical_path", "device_id", "inode", "identity_digest", "authorized_at")
+                changed = " OR ".join(f"NEW.{field} IS NOT OLD.{field}" for field in fields)
+                connection.execute(text("CREATE TRIGGER IF NOT EXISTS trg_project_workspace_identity_immutable "
+                    "BEFORE UPDATE ON project_workspace_authorizations WHEN " + changed +
+                    " BEGIN SELECT RAISE(ABORT, 'Project authorization identity is immutable'); END"))
+            if "task_artifact_contracts" in tables:
+                for action in ("UPDATE", "DELETE"):
+                    connection.execute(text(f"CREATE TRIGGER IF NOT EXISTS trg_task_artifact_contract_no_{action.lower()} "
+                        f"BEFORE {action} ON task_artifact_contracts "
+                        "BEGIN SELECT RAISE(ABORT, 'Artifact contract history is immutable'); END"))
     if "guided_tool_configurations" in tables and engine.dialect.name == "sqlite":
         with engine.begin() as connection:
             immutable_fields = (

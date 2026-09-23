@@ -56,7 +56,7 @@ def test_exact_head_manifest_hash_required_docs_and_deterministic_bytes(candidat
     manifest = json.loads(manifest_path.read_bytes())
     assert manifest['source_git_sha'] == command(candidate_repo, 'rev-parse', 'HEAD')
     assert manifest['application_version'] == '1.0.0'
-    assert manifest['schema_version'] == 'vol19.005'
+    assert manifest['schema_version'] == 'vol20.001'
     assert archive.name == f"twos-1.0.0-{manifest['source_git_sha'][:12]}.tar.gz"
     assert manifest_path.name == archive.name.removesuffix('.tar.gz') + '.manifest.json'
     assert hashlib.sha256(archive.read_bytes()).hexdigest() == manifest['sha256']
@@ -150,7 +150,8 @@ def test_owner_guide_sections_and_packaged_links(artifact):
             resolved = os.path.normpath(str(Path(name).parent / link.split('#')[0]))
             assert resolved in metadata['files'], (name, link)
     assert '/Users/' not in guide
-    assert 'NOT RELEASED' in guide
+    assert 'releases/tag/v1.0.0' in guide
+    assert 'NOT RELEASED' not in guide
 
 
 def test_artifact_canonical_bootstrap_first_owner_task_restart(artifact, tmp_path, monkeypatch):
@@ -314,3 +315,30 @@ def test_archive_filename_must_match_internal_identity(artifact, tmp_path):
     forged.write_text(json.dumps(data))
     with pytest.raises(release.ReleaseError, match='identity'):
         release.inspect(renamed, forged)
+
+
+def test_formal_release_receipt_requires_annotated_exact_commit(candidate_repo, tmp_path):
+    repo = tmp_path / 'tagged'
+    subprocess.run(['git', 'clone', '--no-hardlinks', str(candidate_repo), str(repo)], check=True, capture_output=True)
+    command(repo, 'config', 'user.name', 'Release fixture')
+    command(repo, 'config', 'user.email', 'release@example.invalid')
+    archive, manifest = release.build(repo, tmp_path / 'formal')
+    command(repo, 'tag', 'v1.0.0')
+    with pytest.raises(release.ReleaseError, match='annotated'):
+        release.release_receipt(repo, archive, manifest, tag='v1.0.0', release_date='2026-09-23')
+    # This is a disposable unpublished test repository, not a product tag.
+    command(repo, 'tag', '-d', 'v1.0.0')
+    command(repo, 'tag', '-a', 'v1.0.0', '-m', 'Fixture release')
+    receipt = release.release_receipt(repo, archive, manifest, tag='v1.0.0', release_date='2026-09-23')
+    data = json.loads(receipt.read_bytes())['release']
+    assert data['commit'] == command(repo, 'rev-parse', 'HEAD')
+    assert data['sha256'] == hashlib.sha256(archive.read_bytes()).hexdigest()
+    assert data['tag'] == 'v1.0.0'
+    for line in (archive.parent/'SHA256SUMS').read_text().splitlines():
+        digest, name = line.split('  ')
+        assert hashlib.sha256((archive.parent/name).read_bytes()).hexdigest() == digest
+    with pytest.raises(release.ReleaseError, match='never overwrite'):
+        release.release_receipt(repo, archive, manifest, tag='v1.0.0', release_date='2026-09-23')
+    command(repo, 'commit', '--allow-empty', '-m', 'later fixture state')
+    with pytest.raises(release.ReleaseError, match='same commit'):
+        release.release_receipt(repo, archive, manifest, tag='v1.0.0', release_date='2026-09-23')

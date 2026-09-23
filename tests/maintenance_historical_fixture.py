@@ -11,6 +11,7 @@ import sys
 import tarfile
 
 COMMITS = {
+    'vol19.005': '8de64e9d0db340497e3f90272cd8a693488c6914',
     'vol19.003': '3cf914b6c5667059923ab209f8e9008b33a05cef',
     'vol19.004': 'e51e1c4cd092fd992749c69f83999f994f7faeb4',
 }
@@ -29,7 +30,7 @@ schema = sys.argv[2]
 password = 'fixture-19-3-local-owner-password'
 helpers.OWNER_PASSWORD = password
 settings_used = None
-if schema == 'vol19.004':
+if schema in {'vol19.004', 'vol19.005'}:
     import inspect
     # The historical helper assumes the developer seed project. First Run
     # canonically creates an authorized workspace project instead. Adapt only

@@ -21,8 +21,8 @@ from pathlib import Path
 from . import __version__
 
 FORMAT = "TWOS_BACKUP_V1"
-TARGET_SCHEMA = "vol19.005"
-SUPPORTED_SCHEMAS = ("vol19.003", "vol19.004", TARGET_SCHEMA)
+TARGET_SCHEMA = "vol20.001"
+SUPPORTED_SCHEMAS = ("vol19.003", "vol19.004", "vol19.005", TARGET_SCHEMA)
 TERMINAL_OPERATIONS = {"BACKUP_COMPLETE", "BACKUP_FAILED", "RESTORE_COMPLETE",
     "RESTORE_FAILED", "MIGRATION_COMPLETE", "MIGRATION_FAILED", "RECOVERY_COMPLETE"}
 
@@ -214,7 +214,7 @@ def inspect_database(db, *, allow_legacy=True):
                 fail("SCHEMA_UNSUPPORTED", "Unknown or future schema history. Use a compatible TWOS version.")
             latest = next((v for v in reversed(SUPPORTED_SCHEMAS) if v in versions), None)
             if latest is None or (not allow_legacy and latest != TARGET_SCHEMA):
-                fail("SCHEMA_UNSUPPORTED", "Supported migration sources are vol19.003 and vol19.004; restore requires vol19.005.")
+                fail("SCHEMA_UNSUPPORTED", "Supported migration sources are vol19.003 through vol19.005; restore requires vol20.001.")
             expected = set(_CANONICAL_FRESH_SCHEMA_VERSIONS) - {v for v in SUPPORTED_SCHEMAS if v > latest}
             if set(versions) != expected:
                 fail("SCHEMA_UNSUPPORTED", "The schema history is incomplete; restore a verified recovery point.")

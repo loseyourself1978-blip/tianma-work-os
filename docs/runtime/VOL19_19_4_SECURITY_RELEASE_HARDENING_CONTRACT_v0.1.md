@@ -1,5 +1,7 @@
 # Vol.19 19.4 Security / Docs / Release Hardening Contract v0.1
 
+> Historical Vol.19 record. For current download identity, installation and schema, see the [Owner Guide](../OWNER_GUIDE.md). Status statements below describe this record's original gate.
+
 Status: IMPLEMENTED / OWNER ACCEPTANCE PENDING. Only the Owner can accept 19.4.
 Baseline: main `749f2c5de0928af631976ac4b5e05bfe44fa9ec2`, origin/main
 `3cf914b6c5667059923ab209f8e9008b33a05cef`, clean 9 ahead / 0 behind.

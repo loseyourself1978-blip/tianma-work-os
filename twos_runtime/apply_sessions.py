@@ -4139,6 +4139,7 @@ def reconcile_incomplete_apply_sessions(
     session: Session,
     *,
     source_repo: Path,
+    source_resolver=None,
 ) -> list[ApplySession]:
     """Reconcile crash-interrupted sessions without replaying a mutation.
 
@@ -4155,12 +4156,17 @@ def reconcile_incomplete_apply_sessions(
     )
     reconciled: list[ApplySession] = []
     for row in rows:
+        scoped_source = source_resolver(row) if source_resolver else source_repo
+        if scoped_source is None:
+            # Preserve the interrupted journal until its exact authorization
+            # is available; never substitute a different project's directory.
+            continue
         try:
             reconciled.append(
                 reconcile_apply_session(
                     session,
                     apply_session=row,
-                    source_repo=source_repo,
+                    source_repo=scoped_source,
                 )
             )
         except ApplySessionError as exc:

@@ -20,6 +20,7 @@ class Settings:
     static_cockpit_dir: Path = STATIC_COCKPIT_DIR
     ui_path: Path = TWOS_UI_PATH
     source_repo: Path = ROOT_DIR
+    authorized_workspace_roots: tuple[Path, ...] = ()
     worktree_root: Path = Path(tempfile.gettempdir()) / "twos-worktrees"
     codex_spool_root: Path = Path(tempfile.gettempdir()) / "twos-codex-exec-spool"
     codex_executable: str | None = None

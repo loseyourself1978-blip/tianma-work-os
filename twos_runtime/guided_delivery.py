@@ -27,6 +27,8 @@ from .models import (
     RoutingDecision, Task, User, CodexRun, utc_now,
 )
 from .result_intake import canonical_sha256
+from . import artifact_verification
+from .project_workspaces import task_settings
 
 MINIMUM_CLI_VERSION = "0.144.4"
 DEFAULT_MODEL = "gpt-6-astra"
@@ -48,23 +50,20 @@ def require_task_owner(session, task: Task, user: User, settings) -> None:
     if task.owner_user_id != user.id:
         raise PermissionError("This Task does not belong to the authenticated Owner.")
     if settings.fresh_install:
-        workspace = session.scalar(select(AuthorizedWorkspace).where(
-            AuthorizedWorkspace.owner_user_id == user.id,
-            AuthorizedWorkspace.project_id == task.project_id,
-        ))
-        root = settings.source_repo.resolve(strict=True)
-        if workspace is None or workspace.canonical_path != str(root):
+        scoped = task_settings(session, settings, task.id, user.id)
+        if scoped.source_repo.resolve(strict=True) != settings.source_repo.resolve(strict=True):
             raise PermissionError("This Task is outside the authorized workspace.")
-        details = root.stat()
-        if (details.st_dev, details.st_ino) != (workspace.device_id, workspace.inode):
-            raise PermissionError("The authorized workspace identity changed.")
 
 
-def latest_configuration(session, owner_id: int, *, confirmed: bool = False):
+def latest_configuration(session, owner_id: int, *, confirmed: bool = False, settings=None, workspace=None):
     query = select(GuidedToolConfiguration).where(GuidedToolConfiguration.owner_id == owner_id)
     if confirmed:
         query = query.where(GuidedToolConfiguration.confirmed_at.is_not(None))
-    return session.scalar(query.order_by(GuidedToolConfiguration.id.desc()))
+    root = str(settings.source_repo.resolve(strict=True)) if settings is not None else workspace
+    for row in session.scalars(query.order_by(GuidedToolConfiguration.id.desc())):
+        if root is None or json.loads(row.snapshot_json).get("workspace") == root:
+            return row
+    return None
 
 
 def delivery_location(task, settings, delivery=None) -> dict[str, Any]:
@@ -180,14 +179,14 @@ def discovery(adapter) -> dict[str, Any]:
 
 def verification_binding(settings) -> dict[str, Any]:
     """Seal operator-configured verifier files before approval, never UI argv."""
-    command = tuple(settings.local_verification_command)
+    command = artifact_verification.effective_command(settings)
     if not command:
         raise ValueError("Configure an independent local Verification command for First Delivery.")
     executable = Path(command[0])
     if not executable.is_absolute() or not os.access(executable, os.X_OK):
         raise ValueError("The independent verifier needs an absolute executable path.")
     forbidden = tuple(Path(p).resolve(strict=False) for p in
-        (settings.source_repo, settings.worktree_root, settings.codex_spool_root))
+        (settings.source_repo, settings.worktree_root, settings.codex_spool_root, *settings.authorized_workspace_roots))
     files = []
     normalized = []
     for index, argument in enumerate(command):
@@ -262,12 +261,15 @@ def pack_binding(pack) -> dict[str, Any] | None:
 
 def pack_configuration_error(session, pack, settings=None) -> str | None:
     binding = pack_binding(pack)
+    if settings and artifact_verification.uses_builtin(settings) and (not binding or not binding.get("artifact_contract")):
+        return "Prepare First Delivery with a saved artifact verification contract before approval or Run."
     if not binding:
         return None
     row = session.get(GuidedToolConfiguration, binding.get("configuration_id"))
     if row is None or row.confirmed_at is None:
         return "Tool Setup confirmation is missing. Regenerate the Pack."
-    newest = latest_configuration(session, row.owner_id, confirmed=True)
+    newest = latest_configuration(session, row.owner_id, confirmed=True,
+                                  workspace=binding.get("snapshot", {}).get("workspace"))
     active = session.scalar(select(CodexRun.id).where(CodexRun.pack_id == pack.id,
         CodexRun.status.in_(["queued", "starting", "running", "verifying", "settling"])))
     if (row.configuration_digest != binding.get("configuration_digest")
@@ -275,6 +277,10 @@ def pack_configuration_error(session, pack, settings=None) -> str | None:
             or canonical_sha256(binding.get("snapshot")) != row.configuration_digest
             or not snapshot_is_current(binding["snapshot"], settings)):
         return "Tool configuration changed after this Pack was prepared. Regenerate and approve the Pack."
+    if "artifact_contract" in binding:
+        current = artifact_verification.latest(session, pack.task_id)
+        if current is None or current.specification_digest != binding["artifact_contract"].get("digest"):
+            return "Artifact verification changed after this Pack was prepared. Regenerate and approve the Pack."
     return None
 
 
@@ -301,12 +307,13 @@ def configuration_out(session, row, *, settings=None) -> dict[str, Any] | None:
                          "connectivity_evidence_id": row.connectivity_evidence_id}}
 
 
-def invalidate_future_packs(session, owner_id: int, digest: str) -> int:
+def invalidate_future_packs(session, owner_id: int, digest: str, *, workspace=None) -> int:
     count = 0
     for pack in session.scalars(select(CodexInstructionPack).where(
         CodexInstructionPack.status.in_(["approval_required", "approved"]))):
         binding = pack_binding(pack)
-        if binding and binding.get("owner_id") == owner_id and binding.get("configuration_digest") != digest:
+        if (binding and binding.get("owner_id") == owner_id and binding.get("configuration_digest") != digest
+            and (workspace is None or binding.get("snapshot", {}).get("workspace") == workspace)):
             if session.scalar(select(CodexRun.id).where(CodexRun.pack_id == pack.id,
                 CodexRun.status.in_(["queued", "starting", "running", "verifying", "settling"]))):
                 continue
@@ -320,7 +327,7 @@ def prepare_delivery(session, task, user, settings):
     from .ai_orchestration import compose_team, recompose_model_assignments
     from .self_hosting import build_instruction_pack
     require_task_owner(session, task, user, settings)
-    config = latest_configuration(session, user.id, confirmed=True)
+    config = latest_configuration(session, user.id, confirmed=True, settings=settings)
     if config is None or not configuration_out(session, config, settings=settings)["ready"]:
         raise ValueError("Confirm Ready and Save Tool Setup before preparing First Delivery.")
     prior = session.scalar(select(CodexInstructionPack).where(CodexInstructionPack.task_id == task.id)
@@ -331,6 +338,12 @@ def prepare_delivery(session, task, user, settings):
             return prior
     if not task.development_task.strip():
         raise ValueError("Save a complete Task objective first.")
+    artifact_contract = None
+    if artifact_verification.uses_builtin(settings):
+        artifact_contract = artifact_verification.sealed_contract(session, task)
+        from .builtin_verifier import git
+        if git(settings.source_repo, "status", "--porcelain"):
+            raise ValueError("Built-in exact artifact verification requires a clean committed workspace baseline. Preserve and review existing changes before continuing.")
     if task.workflow_type != "product_development":
         task.workflow_type = "product_development"
         task.task_version += 1
@@ -369,6 +382,8 @@ def prepare_delivery(session, task, user, settings):
     snapshot = json.loads(config.snapshot_json)
     binding = {"owner_id": user.id, "configuration_id": config.id,
                "configuration_digest": config.configuration_digest, "snapshot": snapshot}
+    if artifact_contract:
+        binding["artifact_contract"] = artifact_contract
     metadata = json.loads(pack.generation_metadata)
     metadata["guided_delivery"] = binding
     pack.generation_metadata = json.dumps(metadata, sort_keys=True, separators=(",", ":"))
@@ -380,5 +395,11 @@ def prepare_delivery(session, task, user, settings):
         f"- Execution boundary: {snapshot['execution_boundary']}\n"
         "- Do not start another agent or Verification process. TWOS runs independent Verification.\n"
         "- Leave the source repository untouched; write only inside the isolated Run workspace.\n")
+    if artifact_contract:
+        spec = artifact_contract["specification"]
+        pack.content += ("\n## Owner-declared exact artifact verification\n"
+                         + json.dumps(spec, ensure_ascii=False, indent=2)
+                         + "\nOnly the named file may change. Exact bytes are verified independently. "
+                         "This check does not establish clinical, semantic, or release acceptance.\n")
     session.flush()
     return pack

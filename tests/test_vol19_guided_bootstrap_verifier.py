@@ -127,7 +127,7 @@ def test_standard_startup_guided_verifier_boundary(tmp_path, configuration):
         code = next(line.split(":", 1)[1].strip() for line in lines
                     if line.startswith("Setup authorization code:"))
         with httpx.Client(base_url=f"http://127.0.0.1:{port}", timeout=30, trust_env=False) as client:
-            assert client.get("/api/health").json()["schema"] == "vol19.005"
+            assert client.get("/api/health").json()["schema"] == "vol20.001"
             assert client.post("/api/setup/start", json={"confirmation": "START_FIRST_RUN"}).status_code == 200
             assert client.post("/api/setup/start", json={"confirmation": "CONFIRM_INSTALLATION"}).status_code == 200
             password = "test-" + secrets.token_urlsafe(32)
@@ -148,7 +148,7 @@ def test_standard_startup_guided_verifier_boundary(tmp_path, configuration):
             assert setup["provider_request_performed"] is False
             assert not probe_marker.exists()
             checked = client.post("/api/guided-tool-setup/check", json=CHOICE)
-            if configuration == "valid":
+            if configuration in {"valid", "missing"}:
                 assert checked.status_code == 200, checked.text
                 checked_config = checked.json()["configuration"]
                 assert checked_config["ready"] is True, checked.text
@@ -159,7 +159,12 @@ def test_standard_startup_guided_verifier_boundary(tmp_path, configuration):
                         "SELECT snapshot_json FROM guided_tool_configurations WHERE id = ?",
                         (checked_config["id"],),
                     ).fetchone()[0])
-                assert snapshot["verification"]["argv"] == list(verifier)
+                if configuration == "valid":
+                    assert snapshot["verification"]["argv"] == list(verifier)
+                else:
+                    argv = snapshot["verification"]["argv"]
+                    assert argv[1:] == ["-I", str(source / "twos_runtime" / "builtin_verifier.py")]
+                    assert snapshot["verification"]["files"]
                 assert snapshot["workspace"] == str(workspace)
             else:
                 assert checked.status_code == 409, checked.text
@@ -172,7 +177,7 @@ def test_standard_startup_guided_verifier_boundary(tmp_path, configuration):
             with sqlite3.connect(data / "twos.sqlite3") as connection:
                 for table in DELIVERY_TABLES:
                     assert connection.execute("SELECT COUNT(*) FROM " + table).fetchone()[0] == 0
-                if configuration != "valid":
+                if configuration not in {"valid", "missing"}:
                     assert connection.execute("SELECT COUNT(*) FROM codex_connectivity_evidence").fetchone()[0] == 0
                     assert connection.execute("SELECT COUNT(*) FROM guided_tool_configurations").fetchone()[0] == 0
     finally:

@@ -40,7 +40,7 @@ def test_genuine_accepted_state_migrates_preserving_logical_data_and_no_authorit
         assert state['schema'] == historical['schema']
         assert state['counts']['codex_runs'] == state['counts']['push_executions'] == 1
         plan = client.post('/api/maintenance/migration-plan', json={}).json()
-        assert plan['from_schema'] == historical['schema'] and plan['to_schema'] == 'vol19.005'
+        assert plan['from_schema'] == historical['schema'] and plan['to_schema'] == 'vol20.001'
         approved = client.post('/api/maintenance/approve-plan', json={'plan_id':plan['plan_id'],'confirmation':'APPROVE_MAINTENANCE_PLAN'})
         assert approved.status_code == 200, approved.text
         result = client.post('/api/maintenance/confirm', json={'plan_id':plan['plan_id'],'confirmation':'MIGRATE_TWOS'})
@@ -50,13 +50,14 @@ def test_genuine_accepted_state_migrates_preserving_logical_data_and_no_authorit
     # migration. Compare the actual pre-migration recovery point, including it.
     verify_preserved_data(service.root/'prior.sqlite3', service.db)
     with readonly(service.db) as connection:
-        assert connection.execute('SELECT owner_user_id FROM tasks').fetchone()[0] is None
+        expected_owner = 1 if historical['schema'] == 'vol19.005' else None
+        assert connection.execute('SELECT owner_user_id FROM tasks').fetchone()[0] == expected_owner
         assert connection.execute('SELECT COUNT(*) FROM guided_tool_configurations').fetchone()[0] == 0
         assert connection.execute('SELECT status FROM codex_runs').fetchone()[0] == 'completed'
         assert connection.execute('SELECT state FROM push_executions').fetchone()[0] == 'PUSHED'
     with TestClient(create_app(settings, start_scheduler=False)) as client:
         assert client.post('/api/auth/login',json={'username':historical['username'],'password':historical['password']}).status_code == 200
-        assert client.get('/api/maintenance/status').json()['schema'] == 'vol19.005'
+        assert client.get('/api/maintenance/status').json()['schema'] == 'vol20.001'
         assert client.post('/api/maintenance/migration-plan',json={}).status_code == 409
 
 
@@ -94,7 +95,7 @@ s.execute_plan(sys.argv[3],1,'MIGRATE_TWOS')
     assert result.returncode == 74, result.stderr.decode()
     service.reconcile()
     assert service.journal()['state'] == 'RECOVERY_COMPLETE'
-    assert inspect_database(service.db)['schema'] == ('vol19.005' if activated else historical['schema'])
+    assert inspect_database(service.db)['schema'] == ('vol20.001' if activated else historical['schema'])
     assert not (service.root/'staged.sqlite3').exists()
     verify_preserved_data(Path(historical['database']),service.db)
 
@@ -277,3 +278,9 @@ def test_generic_migration_snapshot_failure_exposes_unchanged_old_database(tmp_p
         assert logical_digest(service.db)==before
     finally:
         engine.dispose()
+
+
+def test_accepted_ga_baseline_19005_migrates_without_losing_history(tmp_path):
+    historical = build_historical('vol19.005', tmp_path/'baseline')
+    destination = tmp_path/'new-schema'; destination.mkdir()
+    test_genuine_accepted_state_migrates_preserving_logical_data_and_no_authority_promotion(historical, destination)

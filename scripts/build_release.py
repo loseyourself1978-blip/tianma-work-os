@@ -40,7 +40,7 @@ LIMITATIONS = [
     "1.0.0 supports fresh installation and same-version backup/restore only; 0.17.0 upgrades and cross-version restore are outside scope.",
     "External credentialed Git-host Push acceptance is not established.",
     "Live multi-model aggregation and email/calendar integration are not established.",
-    "LDD live broker execution is not authorized. 1.0.0 is NOT RELEASED; local preparation does not authorize publication.",
+    "LDD live broker execution is not authorized. Publication identity is established by the canonical Release receipt; build success is not Owner Acceptance.",
 ]
 
 
@@ -256,19 +256,62 @@ def build(repo: Path, output: Path) -> tuple[Path, Path]:
     return artifact, manifest_path
 
 
+def release_receipt(repo: Path, artifact: Path, manifest_path: Path, *, tag: str, release_date: str) -> Path:
+    """Seal publication metadata only for an annotated tag on the packaged commit.
+
+    This prepares local assets; it neither creates a tag nor publishes anything.
+    """
+    verified = inspect(artifact, manifest_path)
+    manifest = json.loads(manifest_path.read_bytes())
+    version = manifest["application_version"]
+    if tag != "v" + version:
+        raise ReleaseError("Release tag must match the application version.")
+    ref = "refs/tags/" + tag
+    if git(repo, "cat-file", "-t", ref).strip() != b"tag":
+        raise ReleaseError("A non-force annotated release tag is required.")
+    commit = git(repo, "rev-parse", ref + "^{commit}").decode().strip()
+    if commit != verified["source_git_sha"] or commit != git(repo, "rev-parse", "HEAD").decode().strip():
+        raise ReleaseError("Release tag, artifact and HEAD must identify the same commit.")
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", release_date):
+        raise ReleaseError("Release date must be YYYY-MM-DD.")
+    datetime.strptime(release_date, "%Y-%m-%d")
+    receipt = artifact.parent / ("release-" + version + ".json")
+    checksums = artifact.parent / "SHA256SUMS"
+    if receipt.exists() or checksums.exists() or receipt.is_symlink() or checksums.is_symlink():
+        raise ReleaseError("Release receipt/checksums already exist; never overwrite release assets.")
+    payload = {"release": {"version": version, "commit": commit, "tag": tag,
+        "artifact": artifact.name, "sha256": verified["sha256"], "release_date": release_date,
+        "schema_version": manifest["schema_version"], "manifest": manifest_path.name,
+        "canonical_source": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/" + tag}}
+    with receipt.open("xb") as stream:
+        stream.write(encoded(payload))
+    with checksums.open("x") as stream:
+        for path in (artifact, manifest_path, receipt):
+            stream.write(digest(path.read_bytes()) + "  " + path.name + "\n")
+    return receipt
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--output", type=Path)
     parser.add_argument("--inspect", type=Path)
     parser.add_argument("--manifest", type=Path)
+    parser.add_argument("--tag", help="Prepare a release receipt for this existing annotated tag.")
+    parser.add_argument("--release-date", help="Explicit publication date, YYYY-MM-DD.")
     args = parser.parse_args()
     try:
         if args.inspect and args.manifest:
             print(json.dumps(inspect(args.inspect, args.manifest), sort_keys=True))
         elif args.output and not args.inspect:
             artifact, manifest = build(args.repo, args.output)
-            print(json.dumps({"artifact": str(artifact), "manifest": str(manifest)}, sort_keys=True))
+            result = {"artifact": str(artifact), "manifest": str(manifest)}
+            if args.tag or args.release_date:
+                if not args.tag or not args.release_date:
+                    raise ReleaseError("Supply --tag and --release-date together.")
+                result["release_receipt"] = str(release_receipt(args.repo, artifact, manifest,
+                    tag=args.tag, release_date=args.release_date))
+            print(json.dumps(result, sort_keys=True))
         else:
             parser.error("Use --output, or --inspect ARTIFACT --manifest MANIFEST.")
     except (ReleaseError, OSError, KeyError, tarfile.TarError, ValueError) as exc:

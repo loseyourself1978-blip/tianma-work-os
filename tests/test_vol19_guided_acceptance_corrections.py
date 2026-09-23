@@ -58,7 +58,7 @@ async function api(path) {
 }
 ''' + ''.join(function(name) for name in (
     'guidedToolSelectionsChanged', 'renderGuidedToolControls',
-    'showGuidedConfiguration', 'checkGuidedTool'))
+    'showGuidedConfiguration', 'guidedProjectQuery', 'checkGuidedTool'))
 
 
 @pytest.mark.parametrize('case', ['initial', 'checking', 'success', 'saved', 'unchanged', 'model', 'reasoning', 'identity', 'failure'])

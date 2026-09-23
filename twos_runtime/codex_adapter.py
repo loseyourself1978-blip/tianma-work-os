@@ -27,7 +27,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from .ai_orchestration import is_verified_real_invocation, record_model_invocation_evidence
 from .config import Settings
-from . import codex_exec_bridge
+from . import codex_exec_bridge, artifact_verification, project_workspaces
 from .codex_connectivity import (
     codex_child_environment,
     executable_identity,
@@ -1659,8 +1659,9 @@ class CodexAdapter:
 class CodexExecutionManager:
     def __init__(self, factory: sessionmaker[Session], settings: Settings) -> None:
         self.factory = factory
-        self.settings = settings
-        self.adapter = CodexAdapter(settings)
+        self._base_settings = settings
+        self._base_adapter = CodexAdapter(settings)
+        self._worker_context = threading.local()
         self._lock = threading.Lock()
         self._processes: dict[int, subprocess.Popen[bytes]] = {}
         self._workers: dict[int, threading.Thread] = {}
@@ -1678,6 +1679,22 @@ class CodexExecutionManager:
         )
         self._bridge_root = bridge_base / instance_identity
         self._bridge_handles: dict[tuple[int, str], codex_exec_bridge.ExecutionHandle] = {}
+
+    @property
+    def settings(self):
+        return getattr(self._worker_context, "settings", self._base_settings)
+
+    @settings.setter
+    def settings(self, value):
+        self._base_settings = value
+
+    @property
+    def adapter(self):
+        return getattr(self._worker_context, "adapter", self._base_adapter)
+
+    @adapter.setter
+    def adapter(self, value):
+        self._base_adapter = value
 
     @staticmethod
     def _invalidate_approved_model_assignments(
@@ -4936,6 +4953,13 @@ class CodexExecutionManager:
     def _run_worker(self, run_id: int, recover_bridge: bool = False) -> None:
         retry_recovery = False
         try:
+            # One shared lifecycle registry; each worker owns an immutable
+            # project scope. Revalidate persisted authorization on restart.
+            with self.factory() as scope_session:
+                scoped = project_workspaces.run_settings(scope_session, self._base_settings, run_id)
+            self._worker_context.settings = scoped
+            self._worker_context.adapter = (self._base_adapter if scoped.source_repo == self._base_settings.source_repo
+                                            else CodexAdapter(scoped))
             if recover_bridge:
                 self._recover_bridge_run(run_id)
             else:
@@ -4973,6 +4997,7 @@ class CodexExecutionManager:
                     self._workers.pop(run_id, None)
                     self._processes.pop(run_id, None)
                     self._cancel_requested.discard(run_id)
+                self._worker_context.__dict__.clear()
         if retry_recovery:
             self._start_worker(run_id, recover_bridge=True)
 
@@ -5912,7 +5937,7 @@ class CodexExecutionManager:
         configured_command: tuple[str, ...] | None = None,
     ) -> tuple[tuple[str, ...], str, Path]:
         configured = tuple(
-            self.settings.local_verification_command
+            artifact_verification.effective_command(self.settings)
             if configured_command is None
             else configured_command
         )
@@ -5945,7 +5970,7 @@ class CodexExecutionManager:
             raise RuntimeError("The local Verification workspace is outside the authorized root.")
         resolved_source = self.settings.source_repo.resolve(strict=True)
         resolved_spool = self._bridge_root.resolve(strict=False)
-        forbidden_roots = (resolved_worktree, resolved_source, resolved_spool)
+        forbidden_roots = (resolved_worktree, resolved_source, resolved_spool, *self.settings.authorized_workspace_roots)
         if any(
             resolved_executable.is_relative_to(root) for root in forbidden_roots
         ):
@@ -5954,9 +5979,17 @@ class CodexExecutionManager:
             )
         normalized_arguments: list[str] = []
         referenced_identities: list[dict[str, str]] = []
-        for argument in configured[1:]:
+        for argument_index, argument in enumerate(configured[1:], start=1):
             if not argument or "\0" in argument or len(argument.encode("utf-8")) > 4096:
                 raise RuntimeError("A local Verification command argument is malformed.")
+            builtin_prefix = (*artifact_verification.command(), "--contract")
+            if configured[:len(builtin_prefix)] == builtin_prefix and argument_index == len(builtin_prefix):
+                # This one product-owned argument is bounded encoded data,
+                # not a path. Its bytes are included in the sealed argv hash.
+                if not re.fullmatch(r"[A-Za-z0-9_=-]+", argument):
+                    raise RuntimeError("The built-in Verification contract is malformed.")
+                normalized_arguments.append(argument)
+                continue
             argument_path = Path(argument)
             if not argument_path.is_absolute():
                 relative_candidate = resolved_worktree / argument_path
@@ -6146,7 +6179,7 @@ class CodexExecutionManager:
                 )
             else:
                 command, command_digest, resolved_worktree = (
-                    self._local_verification_command(worktree)
+                    self._local_verification_command(worktree, self._configured_verification_command(run_id))
                 )
                 pre_snapshot_digest = str(
                     capture_source_snapshot(
@@ -6637,6 +6670,18 @@ class CodexExecutionManager:
             ),
         }
 
+    def _configured_verification_command(self, run_id):
+        if not artifact_verification.uses_builtin(self.settings):
+            return None
+        with self.factory() as session:
+            run = session.get(CodexRun, run_id)
+            from .guided_delivery import pack_binding
+            binding = pack_binding(run.pack) or {}
+            contract = binding.get("artifact_contract")
+            if not contract:
+                raise RuntimeError("The approved built-in artifact contract is missing.")
+            return artifact_verification.runtime_command(contract, self.settings.source_repo, run.source_commit)
+
     def _local_verification_backend_selected(
         self,
         run_id: int,
@@ -6645,12 +6690,12 @@ class CodexExecutionManager:
         """Honor one sealed backend and reject runtime configuration drift."""
         persisted_handle = self._existing_bridge_handle(run_id, "verification")
         if persisted_handle is None:
-            return bool(self.settings.local_verification_command)
+            return bool(artifact_verification.effective_command(self.settings))
         persisted_ticket = codex_exec_bridge.load_ticket(persisted_handle)
         persisted_local = self._bridge_ticket_is_local_verification(
             persisted_ticket
         )
-        configured_local = bool(self.settings.local_verification_command)
+        configured_local = bool(artifact_verification.effective_command(self.settings))
         if not persisted_local:
             if configured_local:
                 raise codex_exec_bridge.CodexExecBridgeError(
@@ -6664,7 +6709,7 @@ class CodexExecutionManager:
                 "The configured local Verification backend is unavailable for its sealed attempt.",
             )
         configured_command, configured_digest, _ = self._local_verification_command(
-            worktree
+            worktree, self._configured_verification_command(run_id)
         )
         persisted_argv = persisted_ticket.get("argv")
         persisted_identity = persisted_ticket.get("identity")
