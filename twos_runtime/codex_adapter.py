@@ -180,7 +180,15 @@ _READ_ONLY_GIT_REMOTE_ARGUMENTS = re.compile(
     re.IGNORECASE,
 )
 _READ_ONLY_GIT_CONFIG_ARGUMENTS = re.compile(
-    rf"\s+--local\s+(?:--list|-l){_SHELL_COMMAND_BOUNDARY}",
+    # Recognize bounded local reads, including the observed GA query. Do not
+    # allow extra options/values, substitutions or a write command to hide
+    # behind a read prefix. Each subsequent Git operation is still classified.
+    rf"\s+--local\s+(?:(?:--list|-l)|"
+    r"(?:--get|--get-all|--get-regexp)\s+(?:"
+    r"'[A-Za-z0-9_.^$|*?+{}:/\\\[\]-]+'|"
+    r'"[A-Za-z0-9_.^|*?+{}:/\[\]-]+"|'
+    r"[A-Za-z0-9_][A-Za-z0-9_.-]*))"
+    rf"{_SHELL_COMMAND_BOUNDARY}",
     re.IGNORECASE,
 )
 _SENSITIVE_OUTPUT_KEY = re.compile(
