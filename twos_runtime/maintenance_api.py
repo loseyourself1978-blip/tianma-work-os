@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 from contextlib import asynccontextmanager, closing
 from pathlib import Path
 import sqlite3
@@ -30,6 +31,8 @@ def owner_for_request(service, request):
     if not row or owner_record_issue(SimpleNamespace(**dict(row))) is not None:
         raise MaintenanceError("AUTH_REQUIRED", "Log in again; this session is unavailable.", 401)
     owner_id = installation[0] if installation and installation[0] else first[0] if first else None
+    if row['username'].startswith('email_user_') and (not installation or row['id'] != installation[0]):
+        raise MaintenanceError("OWNER_REQUIRED", "Email accounts do not acquire installation-wide maintenance authority.", 403)
     if row["id"] != owner_id:
         raise MaintenanceError("OWNER_REQUIRED", "Only this installation's Owner can use Maintenance.", 403)
     return {"id": row["id"], "username": row["username"], "is_active": row["is_active"]}
@@ -61,7 +64,6 @@ def install_maintenance(app, settings, *, standalone=False):
             # Historical paths and approval identities stay evidence, never an
             # authority to mutate a newly restored local filesystem.
             if authority.get("historical_cutoffs"):
-                import re
                 path = request.url.path
                 run = re.search(r"/codex-runs/(\d+)", path)
                 pack = re.search(r"/codex-packs/(\d+)", path)
@@ -114,7 +116,11 @@ def install_maintenance(app, settings, *, standalone=False):
         # this process is inspecting or reviewing it without an ORM connection.
         read_lease = None
         mutations = {"/api/maintenance/backups", "/api/maintenance/confirm", "/api/maintenance/workspace"}
-        if request.url.path.startswith("/api/") and request.url.path not in mutations:
+        # The iteration update endpoint uses this same exclusive coordinator.
+        # Giving it a shared request lease would make its own backup impossible.
+        iteration_backup = request.method == "POST" and re.fullmatch(
+            r"/api/r2/iterations/[^/]+/update/prepare", request.url.path)
+        if request.url.path.startswith("/api/") and request.url.path not in mutations and not iteration_backup:
             try:
                 read_lease = open_lock(service.db)
             except MaintenanceError as exc:
@@ -132,6 +138,16 @@ def install_maintenance(app, settings, *, standalone=False):
         if app.state.maintenance_busy or app.state.maintenance_requests > 1:
             raise MaintenanceError("INSTALLATION_BUSY", "Another request is active. Wait for it to finish before maintenance.")
         safe_state(service.db)
+        discussion = getattr(app.state, "discussion", None)
+        if discussion:
+            with discussion.lock:
+                if discussion.jobs:
+                    raise MaintenanceError("ACTIVE_OPERATION", "A discussion worker is still settling. Wait before maintenance.")
+        project_execution = getattr(app.state, "project_execution", None)
+        if project_execution:
+            with project_execution.lock:
+                if project_execution.jobs:
+                    raise MaintenanceError("ACTIVE_OPERATION", "A project worker is still settling. Wait for terminal settlement before maintenance.")
         manager = getattr(app.state, "codex_manager", None)
         if manager:
             with manager._lock:
@@ -163,6 +179,10 @@ def install_maintenance(app, settings, *, standalone=False):
                     monitor.start()
                 if scheduler_running:
                     await scheduler.start()
+
+    # Product surfaces must use this coordinator, never call an exclusive
+    # backup while their ORM/request leases and background readers are alive.
+    app.state.maintenance_mutate = mutate
 
     @app.get("/maintenance")
     def maintenance_page():

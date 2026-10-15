@@ -78,11 +78,15 @@ def test_review_freshness_reacts_and_commit_guards_remain(tmp_path, change):
             _git(fixture.source_repo, 'config', 'user.name', 'Changed Author')
             stale = review()
             assert stale['review_required'] is True
-            assert stale['actions']['can_review_commit'] is True
+            # An external config edit has no Owner identity-save receipt. The
+            # GUI must keep Review disabled until the config boundary is resolved.
+            assert stale['actions']['can_review_commit'] is False
+            assert any(item['code'] == 'CONFIG_CHANGED' for item in stale['blockers'])
             assert stale['proposal']['actions']['can_commit'] is False
             replacement = _create_proposal(fixture).json()['proposal']
             assert replacement['id'] != proposal['id']
             assert replacement['approval'] is None
+            assert replacement['status'] == 'EXPIRED'
         elif change == 'source':
             path = proposal['files'][0]['path']
             (fixture.source_repo / path).write_text('material drift\n')
@@ -181,6 +185,7 @@ function canonicalOwnerDeliveryAvailable(){return true;}
 function canonicalCommitState(){return 'READY';}
 function ownerDeliveryRecordId(v){return v.id;}
 function ownerPushConfirmationCanConfirm(){return false;}
+function ownerPushReviewAttempt(){return {};}
 const authenticated=true,codexRun={id:1};
 '''.replace('EDITED', json.dumps(edited)).replace('PENDING', json.dumps(pending))
     result = node(harness + branch + '\nprocess.stdout.write(JSON.stringify(elements));')

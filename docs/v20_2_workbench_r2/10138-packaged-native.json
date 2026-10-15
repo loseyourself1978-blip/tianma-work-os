@@ -1,0 +1,16 @@
+{
+  "build": "101.38",
+  "candidate_dmg_sha256": "fae015faf733b25d4a83a8e222b4ce246fd18449a1bc1360df8bc63496cee1f0",
+  "source_input_sha256": "9a77c35d70d4b555e6f2ac1e7c6b6bfa6b23bb5a5ed60796f4e6e1c3f322ca09",
+  "checked_at": "2026-10-15T05:35:53.841979+00:00",
+  "packaged_app": true,
+  "actual_native_window": true,
+  "pane_swap_restart_original_official_discussion": "PASS",
+  "same_isolated_codex_history_and_result_origin": "PASS",
+  "compact_command_disclosure": "PASS",
+  "production_desktop_concurrent_writer_guard": "PASS",
+  "owner_app_replaced": false,
+  "owner_acceptance": "PENDING",
+  "candidate_iteration": "F; loads persisted swapped layout and exact official discussion; connected original isolated Codex history and result origin",
+  "frozen_backend_gate": "7 PASS, 15.42s"
+}

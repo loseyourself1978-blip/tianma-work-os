@@ -3031,8 +3031,23 @@ button:disabled,
 }
 
 .push-delivery-section {
+  scroll-margin-top: 110px;
   border-color: #b9d8cc;
   background: linear-gradient(180deg, #fbfefd 0%, #f4faf7 100%);
+}
+
+.push-review-feedback {
+  padding: 14px 18px;
+  border: 2px solid var(--green, #2d6657);
+  border-radius: 8px;
+  background: #edf6f0;
+  overflow-wrap: anywhere;
+}
+
+.push-review-feedback[data-phase="failed"] {
+  color: #742d27;
+  border-color: #ab5148;
+  background: #fff1ee;
 }
 
 .push-delivery-heading {
@@ -4030,3 +4045,41 @@ button:disabled,
 .guided-dialog dd { margin: 4px 0 12px; }
 .guided-dialog .button-row { display: flex; flex-wrap: wrap; gap: 10px; position: sticky; bottom: -24px; background: white; padding: 12px 0; }
 @media (max-width: 480px) { .guided-dialog { padding: 16px; } .guided-dialog .button-row { bottom: -16px; } .guided-dialog .button-row button { flex: 1 1 100%; white-space: normal; } }
+
+/* Vol.20 consolidated workflow: persistent navigation, one current action area. */
+.flow-navigation { display:flex; gap:10px; flex-wrap:wrap; position:sticky; top:0; z-index:45; background:var(--surface); padding:12px 0; border-bottom:1px solid var(--line); }
+.flow-navigation .button { flex:1 1 210px; white-space:normal; }
+#flow-setup, #flow-work, #flow-history { min-width:0; scroll-margin-top:100px; }
+#flow-setup-cards, #flow-action-host { display:grid; gap:18px; grid-template-columns:minmax(0, 1fr); }
+#flow-action-host > section { margin:0; padding:24px; border:1px solid var(--line); border-radius:16px; background:var(--surface); }
+#flow-audit > summary, #first-delivery-stage-details > summary, .instance-details > summary { cursor:pointer; padding:12px 0; }
+#flow-audit-host > details { margin:12px 0; padding:14px; border:1px solid var(--line); border-radius:12px; }
+#flow-audit-host > details > summary { cursor:pointer; font-weight:650; }
+#first-delivery-stages { display:flex; flex-wrap:wrap; gap:10px 20px; list-style:none; padding:12px 0; }
+#first-delivery-stages li { margin:0; }
+.destination-prerequisite { padding:20px; margin:16px 0; border:2px solid var(--accent); background:var(--accent-soft, #e5f3ed); border-radius:12px; }
+.destination-prerequisite h4 { font-size:1.2rem; margin:0 0 10px; }
+.push-delivery-heading { display:block; }
+.push-delivery-heading .button-row { margin-top:16px; justify-content:flex-start; }
+#flow-navigation ~ .instance-details { font-size:.88rem; overflow-wrap:anywhere; }
+#guided-project-scope, #guided-verifier-files, #flow-destination-state, #flow-tool-reasons { overflow-wrap:anywhere; white-space:pre-wrap; }
+.guided-dialog, .confirmation-dialog { max-height:88dvh; overflow:auto; }
+#flow-work .workbench-card, #flow-history .workbench-card, #flow-setup .workbench-card { margin-bottom:18px; }
+:focus-visible { outline:3px solid #4169b1; outline-offset:4px; }
+.decorative, [data-decoration] { pointer-events:none; }
+@media(max-width:720px) {
+  .flow-navigation { gap:6px; padding:8px 0; }
+  .flow-navigation .button { flex-basis:100%; min-height:40px; padding:8px; }
+  #flow-action-host > section { padding:14px; }
+  .push-delivery-controls { flex-wrap:wrap; }
+  .push-delivery-controls .button { flex:1 1 100%; white-space:normal; }
+  .workspace-heading h1 { font-size:2rem; }
+  #flow-setup, #flow-work, #flow-history { scroll-margin-top:165px; }
+}
+
+/* Current-task feedback stays within reach while reviewing a long plan. */
+.workbench-feedback.is-error { position: sticky; top: 128px; z-index: 19; max-height: 30vh; overflow: auto; }
+#flow-setup-cards > details { border: 1px solid var(--line, #dbe3dd); border-radius: 12px; padding: 16px; background: #fff; }
+#flow-setup-cards > details > summary { cursor: pointer; font-weight: 700; }
+#flow-setup-cards > details > section { margin-top: 16px; }
+@media (max-width: 720px) { .workbench-feedback.is-error { top: 182px; } }

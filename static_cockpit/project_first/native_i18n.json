@@ -1,0 +1,654 @@
+{
+  "About Tianma Work OS": {
+    "en-US": "About Tianma Work OS",
+    "zh-CN": "关于 Tianma Work OS"
+  },
+  "Quit Tianma Work OS": {
+    "en-US": "Quit Tianma Work OS",
+    "zh-CN": "退出 Tianma Work OS"
+  },
+  "Retry": {
+    "en-US": "Retry",
+    "zh-CN": "重试"
+  },
+  "Open TWOS": {
+    "en-US": "Open TWOS",
+    "zh-CN": "打开 TWOS"
+  },
+  "Open Diagnostics": {
+    "en-US": "Open Diagnostics",
+    "zh-CN": "打开诊断"
+  },
+  "Set up Codex…": {
+    "en-US": "Set up Codex…",
+    "zh-CN": "设置 Codex…"
+  },
+  "Quit": {
+    "en-US": "Quit",
+    "zh-CN": "退出"
+  },
+  "Cancel": {
+    "en-US": "Cancel",
+    "zh-CN": "取消"
+  },
+  "Done": {
+    "en-US": "Done",
+    "zh-CN": "完成"
+  },
+  "Ready": {
+    "en-US": "Ready",
+    "zh-CN": "就绪"
+  },
+  "Keep Open": {
+    "en-US": "Keep Open",
+    "zh-CN": "保持打开"
+  },
+  "New independent local environment": {
+    "en-US": "New independent local environment",
+    "zh-CN": "新建独立本机环境"
+  },
+  "Original local environment": {
+    "en-US": "Original local environment",
+    "zh-CN": "原有本机环境"
+  },
+  "Open selected environment": {
+    "en-US": "Open selected environment",
+    "zh-CN": "打开所选环境"
+  },
+  "Choose your local environment": {
+    "en-US": "Choose your local environment",
+    "zh-CN": "选择本机环境"
+  },
+  "Create environment": {
+    "en-US": "Create environment",
+    "zh-CN": "创建环境"
+  },
+  "Preparing Tianma Work OS…": {
+    "en-US": "Preparing Tianma Work OS…",
+    "zh-CN": "正在准备 Tianma Work OS…"
+  },
+  "Checking your Mac and bundled runtime.": {
+    "en-US": "Checking your Mac and bundled runtime.",
+    "zh-CN": "正在检查 Mac 和内置运行环境。"
+  },
+  "Checking your Mac…": {
+    "en-US": "Checking your Mac…",
+    "zh-CN": "正在检查 Mac…"
+  },
+  "Initializing your local workspace…": {
+    "en-US": "Initializing your local workspace…",
+    "zh-CN": "正在初始化本机工作区…"
+  },
+  "Starting the bundled runtime and initializing your private workspace.": {
+    "en-US": "Starting the bundled runtime and initializing your private workspace.",
+    "zh-CN": "正在启动内置运行环境并初始化私有工作区。"
+  },
+  "No developer tools or packages need to be configured manually.": {
+    "en-US": "No developer tools or packages need to be configured manually.",
+    "zh-CN": "无需手动配置开发工具或依赖包。"
+  },
+  "Continue your existing account and history, or create a separate local environment. Existing data is never reset.": {
+    "en-US": "Continue your existing account and history, or create a separate local environment. Existing data is never reset.",
+    "zh-CN": "继续使用原账号和历史，或创建独立本机环境。不会重置已有数据。"
+  },
+  "Choose a name. A new account, projects and storage will be separate from your existing environment. No old data is copied or deleted.": {
+    "en-US": "Choose a name. A new account, projects and storage will be separate from your existing environment. No old data is copied or deleted.",
+    "zh-CN": "请命名。新账号、项目和存储将与原环境隔离；不会复制或删除旧数据。"
+  },
+  "Quit and reopen the app before changing environments. Saved work is retained.": {
+    "en-US": "Quit and reopen the app before changing environments. Saved work is retained.",
+    "zh-CN": "切换环境前请退出并重新打开应用。已保存的工作会保留。"
+  },
+  "Language preference could not be saved. Existing data is unchanged.": {
+    "en-US": "Language preference could not be saved. Existing data is unchanged.",
+    "zh-CN": "语言偏好未能保存。已有数据未改变。"
+  },
+  "Closing this window quits the local service. Save your work and finish active deliveries before quitting. Your saved projects remain on this Mac.": {
+    "en-US": "Closing this window quits the local service. Save your work and finish active deliveries before quitting. Your saved projects remain on this Mac.",
+    "zh-CN": "关闭此窗口将退出本机服务。退出前请保存工作并完成进行中的交付。已保存的项目仍保留在本机。"
+  },
+  "Open your workspace in the browser. Existing accounts and saved history are kept; new installations follow First Run.": {
+    "en-US": "Open your workspace in the browser. Existing accounts and saved history are kept; new installations follow First Run.",
+    "zh-CN": "在浏览器打开工作区。原账号和已保存历史会保留；新环境将进入首次引导。"
+  },
+  "Install Apple Command Line Tools…": {
+    "en-US": "Install Apple Command Line Tools…",
+    "zh-CN": "安装 Apple 命令行工具…"
+  },
+  "Apple's free Command Line Tools provide Git for your project history. Click Install, complete Apple's installer, then Retry.": {
+    "en-US": "Apple's free Command Line Tools provide Git for your project history. Click Install, complete Apple's installer, then Retry.",
+    "zh-CN": "Apple 免费命令行工具为项目历史提供 Git。点击安装，完成 Apple 安装程序后重试。"
+  },
+  "Complete Apple's installation dialog, then click Retry.": {
+    "en-US": "Complete Apple's installation dialog, then click Retry.",
+    "zh-CN": "完成 Apple 安装窗口中的操作，然后点击重试。"
+  },
+  "Apple could not open the installer. Open System Settings → General → Software Update, install available developer tools, then Retry.": {
+    "en-US": "Apple could not open the installer. Open System Settings → General → Software Update, install available developer tools, then Retry.",
+    "zh-CN": "无法打开 Apple 安装程序。请打开系统设置 → 通用 → 软件更新，安装可用的开发工具后重试。"
+  },
+  "Open Xcode…": {
+    "en-US": "Open Xcode…",
+    "zh-CN": "打开 Xcode…"
+  },
+  "Open Xcode and review Apple's license and first-launch setup. Return here and Retry after completing it.": {
+    "en-US": "Open Xcode and review Apple's license and first-launch setup. Return here and Retry after completing it.",
+    "zh-CN": "打开 Xcode，审阅 Apple 许可并完成首次设置，然后返回此处重试。"
+  },
+  "Git is unavailable. Open Xcode to finish its setup, then Retry.": {
+    "en-US": "Git is unavailable. Open Xcode to finish its setup, then Retry.",
+    "zh-CN": "Git 不可用。请打开 Xcode 完成设置，然后重试。"
+  },
+  "Open Applications": {
+    "en-US": "Open Applications",
+    "zh-CN": "打开应用程序"
+  },
+  "Drag Tianma Work OS from the installer to Applications first. Then open the installed app from Applications. No workspace has been created by this launch.": {
+    "en-US": "Drag Tianma Work OS from the installer to Applications first. Then open the installed app from Applications. No workspace has been created by this launch.",
+    "zh-CN": "请先将 Tianma Work OS 从安装器拖入“应用程序”，再从那里启动。此次启动尚未创建工作区。"
+  },
+  "Tianma Work OS needs attention": {
+    "en-US": "Tianma Work OS needs attention",
+    "zh-CN": "Tianma Work OS 需要处理"
+  },
+  "Workspace review required": {
+    "en-US": "Workspace review required",
+    "zh-CN": "需要审查工作区"
+  },
+  "Your saved account and history are available. Open TWOS, log in, and review the current workspace identity. No delivery will run during recovery.": {
+    "en-US": "Your saved account and history are available. Open TWOS, log in, and review the current workspace identity. No delivery will run during recovery.",
+    "zh-CN": "已保存的账号和历史可读取。请打开 TWOS、登录并审查当前工作区身份。恢复期间不会执行交付。"
+  },
+  "The bundled runtime is missing. Download a fresh official installer and replace the app in Applications. Saved data is kept separately.": {
+    "en-US": "The bundled runtime is missing. Download a fresh official installer and replace the app in Applications. Saved data is kept separately.",
+    "zh-CN": "内置运行环境缺失。请获取完整安装器并替换“应用程序”中的应用。已保存数据独立存放。"
+  },
+  "The app or a containing folder allows other users to change its executable files. Install a fresh official copy in Applications.": {
+    "en-US": "The app or a containing folder allows other users to change its executable files. Install a fresh official copy in Applications.",
+    "zh-CN": "应用或上级目录允许其他用户修改可执行文件。请在“应用程序”中安装完整副本。"
+  },
+  "The local service stopped before it was ready. Open Diagnostics to review the recorded startup stage and error code. Do not delete your data or repeatedly reinstall.": {
+    "en-US": "The local service stopped before it was ready. Open Diagnostics to review the recorded startup stage and error code. Do not delete your data or repeatedly reinstall.",
+    "zh-CN": "本机服务在就绪前已停止。请打开诊断查看启动阶段和错误代码，不要删除数据或反复重装。"
+  },
+  "Startup did not finish. Open Diagnostics, then Retry. Reinstall the official app if this repeats.": {
+    "en-US": "Startup did not finish. Open Diagnostics, then Retry. Reinstall the official app if this repeats.",
+    "zh-CN": "启动尚未完成。请打开诊断后重试。若持续失败，请依据诊断确认安装完整性。"
+  },
+  "Another application is using this workspace's local connection. Quit the other TWOS instance if open, then Retry. Your data was preserved.": {
+    "en-US": "Another application is using this workspace's local connection. Quit the other TWOS instance if open, then Retry. Your data was preserved.",
+    "zh-CN": "另一应用正在使用此工作区的本机连接。请确认并退出另一 TWOS 实例后重试。数据已保留。"
+  },
+  "TWOS cannot use its private storage. Check available disk space and your macOS account's folder permissions. An existing instance may already be running. Your data was preserved.": {
+    "en-US": "TWOS cannot use its private storage. Check available disk space and your macOS account's folder permissions. An existing instance may already be running. Your data was preserved.",
+    "zh-CN": "TWOS 无法使用私有存储。请检查磁盘空间与当前 macOS 账号的目录权限，也可能已有实例在运行。数据已保留。"
+  },
+  "This saved installation belongs to a different version or location. Your data was preserved. Contact support with Diagnostics before changing it.": {
+    "en-US": "This saved installation belongs to a different version or location. Your data was preserved. Contact support with Diagnostics before changing it.",
+    "zh-CN": "保存的安装身份与当前版本或位置不符。数据已保留。更改前请携带诊断联系支持。"
+  },
+  "macOS or your organization's security policy denied the local connection. Review the app's system permission prompt or contact your administrator, then Retry.": {
+    "en-US": "macOS or your organization's security policy denied the local connection. Review the app's system permission prompt or contact your administrator, then Retry.",
+    "zh-CN": "macOS 或组织安全策略拒绝本机连接。请查看应用的系统权限提示或联系管理员，然后重试。"
+  },
+  "Quit Tianma Work OS?": {
+    "en-US": "Quit Tianma Work OS?",
+    "zh-CN": "退出 Tianma Work OS？"
+  },
+  "Finish active deliveries before quitting. Saved projects remain on this Mac. Detached executions may need reconciliation when you return.": {
+    "en-US": "Finish active deliveries before quitting. Saved projects remain on this Mac. Detached executions may need reconciliation when you return.",
+    "zh-CN": "退出前请完成进行中的交付。已保存项目仍在本机；返回后可能需要核对中断的执行。"
+  },
+  "Connect your own Codex account": {
+    "en-US": "Connect your own Codex account",
+    "zh-CN": "连接你自己的 Codex 账号"
+  },
+  "Open official setup guide": {
+    "en-US": "Open official setup guide",
+    "zh-CN": "打开官方设置指南"
+  },
+  "Sign in through browser": {
+    "en-US": "Sign in through browser",
+    "zh-CN": "通过浏览器登录"
+  },
+  "Complete Codex sign-in in your browser. TWOS does not receive your password.": {
+    "en-US": "Complete Codex sign-in in your browser. TWOS does not receive your password.",
+    "zh-CN": "请在浏览器中完成 Codex 登录。TWOS 不会接收你的密码。"
+  },
+  "Codex sign-in could not start. Open the official setup guide.": {
+    "en-US": "Codex sign-in could not start. Open the official setup guide.",
+    "zh-CN": "无法开始 Codex 登录。请打开官方设置指南。"
+  },
+  "Codex sign-in did not complete. Retry Set up Codex or consult the official setup guide.": {
+    "en-US": "Codex sign-in did not complete. Retry Set up Codex or consult the official setup guide.",
+    "zh-CN": "Codex 登录未完成。请重新打开“设置 Codex”或查看官方指南。"
+  },
+  "The installed Codex executable could not be verified. Reinstall it from the official guide.": {
+    "en-US": "The installed Codex executable could not be verified. Reinstall it from the official guide.",
+    "zh-CN": "无法验证已安装的 Codex 可执行文件。请按照官方指南重新安装。"
+  },
+  "Install the official ChatGPT desktop app using the setup guide, then return here to sign in.": {
+    "en-US": "Install the official ChatGPT desktop app using the setup guide, then return here to sign in.",
+    "zh-CN": "请按照设置指南安装官方 ChatGPT 桌面应用，然后返回此处登录。"
+  },
+  "Codex sign-in completed. Open your Project’s AI team, select this tool and explicitly start an approved task.": {
+    "en-US": "Codex sign-in completed. Open your Project’s AI team, select this tool and explicitly start an approved task.",
+    "zh-CN": "Codex 登录已完成。请打开项目的 AI 团队，选择此工具，然后显式启动已批准的任务。"
+  },
+  "Install the official ChatGPT desktop app first. Sign in with the installed Codex tool through its browser authentication. Codex stores its own credentials; none are copied into TWOS. Then open your Project’s AI team and select the verified executable.": {
+    "en-US": "Install the official ChatGPT desktop app first. Sign in with the installed Codex tool through its browser authentication. Codex stores its own credentials; none are copied into TWOS. Then open your Project’s AI team and select the verified executable.",
+    "zh-CN": "请先安装官方 ChatGPT 桌面应用，通过已安装 Codex 工具的浏览器认证登录。凭据由 Codex 自行保存，不会复制到 TWOS。然后打开项目的 AI 团队，选择已验证的可执行文件。"
+  },
+  "Enter an environment name between 1 and 80 characters, then try again.": {
+    "en-US": "Enter an environment name between 1 and 80 characters, then try again.",
+    "zh-CN": "请输入 1 至 80 个字符的环境名称，然后重试。"
+  },
+  "Recover local account…": {
+    "en-US": "Recover local account…",
+    "zh-CN": "恢复本地账号…"
+  },
+  "Account recovery is open": {
+    "en-US": "Account recovery is open",
+    "zh-CN": "账号恢复窗口已打开"
+  },
+  "Finish or cancel account recovery before quitting. Do not interrupt a confirmed password change.": {
+    "en-US": "Finish or cancel account recovery before quitting. Do not interrupt a confirmed password change.",
+    "zh-CN": "请先完成或取消账号恢复再退出。请勿中断已确认的密码更改。"
+  },
+  "Return to recovery": {
+    "en-US": "Return to recovery",
+    "zh-CN": "返回恢复流程"
+  },
+  "Quit and reopen before account recovery": {
+    "en-US": "Quit and reopen before account recovery",
+    "zh-CN": "请先正常退出并重新打开 App"
+  },
+  "Finish active work, quit TWOS normally, reopen it and select the same environment. Choose Recover local account before Open selected environment. No account or saved work has changed.": {
+    "en-US": "Finish active work, quit TWOS normally, reopen it and select the same environment. Choose Recover local account before Open selected environment. No account or saved work has changed.",
+    "zh-CN": "请完成正在进行的工作，正常退出 TWOS，重新打开并选择同一环境。在“打开所选环境”之前点“恢复本地账号”。账号和已保存工作尚未改变。"
+  },
+  "Recover the selected local account": {
+    "en-US": "Recover the selected local account",
+    "zh-CN": "恢复所选环境的本地账号"
+  },
+  "Verify your macOS identity, then review the existing TWOS account. You will personally choose a new local password. The account ID, projects and delivery history stay in place; previous login sessions are revoked. No model, trade or delivery runs. You can cancel before the final confirmation.": {
+    "en-US": "Verify your macOS identity, then review the existing TWOS account. You will personally choose a new local password. The account ID, projects and delivery history stay in place; previous login sessions are revoked. No model, trade or delivery runs. You can cancel before the final confirmation.",
+    "zh-CN": "先验证 macOS 本机身份，再核对原 TWOS 账号。由您亲自设置新的本地密码；账号 ID、项目和交付历史保留，旧登录会话失效。不调用模型、不交易、不执行交付。最终确认前可取消。"
+  },
+  "Verify macOS identity": {
+    "en-US": "Verify macOS identity",
+    "zh-CN": "验证 macOS 本机身份"
+  },
+  "macOS identity verification is unavailable. Nothing was changed. Use your normal macOS account and try recovery again.": {
+    "en-US": "macOS identity verification is unavailable. Nothing was changed. Use your normal macOS account and try recovery again.",
+    "zh-CN": "macOS 本机身份验证不可用，尚未更改任何内容。请使用正常的 macOS 账号后再进入恢复。"
+  },
+  "Authorize recovery of your selected local TWOS account. Your Mac password is handled by macOS, not TWOS.": {
+    "en-US": "Authorize recovery of your selected local TWOS account. Your Mac password is handled by macOS, not TWOS.",
+    "zh-CN": "授权恢复所选的 TWOS 本地账号。Mac 密码由 macOS 系统处理，TWOS 不会接收。"
+  },
+  "macOS verification was cancelled or failed. Nothing was changed.": {
+    "en-US": "macOS verification was cancelled or failed. Nothing was changed.",
+    "zh-CN": "macOS 验证已取消或失败，尚未更改任何内容。"
+  },
+  "Account password recovered": {
+    "en-US": "Account password recovered",
+    "zh-CN": "本地账号密码已恢复"
+  },
+  "Account recovery needs attention": {
+    "en-US": "Account recovery needs attention",
+    "zh-CN": "账号恢复需要处理"
+  },
+  "The recovery runtime could not start. No password was changed.": {
+    "en-US": "The recovery runtime could not start. No password was changed.",
+    "zh-CN": "恢复程序无法启动，密码未改变。"
+  },
+  "The app signature could not be verified. No password was changed.": {
+    "en-US": "The app signature could not be verified. No password was changed.",
+    "zh-CN": "无法验证 App 签名，密码未改变。"
+  },
+  "Recovery ended without a confirmed result. Do not repeat it blindly; open Diagnostics and report this state. Saved work was not replayed.": {
+    "en-US": "Recovery ended without a confirmed result. Do not repeat it blindly; open Diagnostics and report this state. Saved work was not replayed.",
+    "zh-CN": "恢复结束，但未取得可确认的结果。请勿盲目重复操作；打开诊断并报告此状态。未重复执行已保存工作。"
+  },
+  "Checking the selected account…": {
+    "en-US": "Checking the selected account…",
+    "zh-CN": "正在核对所选账号…"
+  },
+  "Recovery timed out. If you did not confirm a password change, nothing was changed. Open Diagnostics before retrying an uncertain result.": {
+    "en-US": "Recovery timed out. If you did not confirm a password change, nothing was changed. Open Diagnostics before retrying an uncertain result.",
+    "zh-CN": "恢复超时。若尚未确认更改密码，则未发生更改。结果不确定时，请先打开诊断再决定是否重试。"
+  },
+  "Recovery returned an invalid response. Do not retry blindly; open Diagnostics.": {
+    "en-US": "Recovery returned an invalid response. Do not retry blindly; open Diagnostics.",
+    "zh-CN": "恢复程序返回无效响应。请勿盲目重试，先打开诊断。"
+  },
+  "The existing account password was changed and old login sessions were revoked. Open selected environment, then sign in with your new password. Your original projects and history remain; do not repeat previous deliveries.": {
+    "en-US": "The existing account password was changed and old login sessions were revoked. Open selected environment, then sign in with your new password. Your original projects and history remain; do not repeat previous deliveries.",
+    "zh-CN": "原账号密码已更改，旧登录会话已失效。请打开所选环境，再使用新密码登录。原项目和历史保留；不要重复原交付。"
+  },
+  "Use matching passwords with 8–200 characters. Nothing was changed; start recovery again to re-enter them.": {
+    "en-US": "Use matching passwords with 8–200 characters. Nothing was changed; start recovery again to re-enter them.",
+    "zh-CN": "两次密码须一致，长度为 8–200 个字符。尚未更改；请重新进入恢复并填写。"
+  },
+  "This installation already has a completed recovery receipt. No second reset was performed. Sign in with the recovered password or contact support.": {
+    "en-US": "This installation already has a completed recovery receipt. No second reset was performed. Sign in with the recovered password or contact support.",
+    "zh-CN": "此安装已有完成的恢复回执，未执行第二次重设。请使用恢复后的密码登录，或联系支持。"
+  },
+  "This environment has an active connection or unresolved operation. Finish or resolve that work before recovery. No password was changed.": {
+    "en-US": "This environment has an active connection or unresolved operation. Finish or resolve that work before recovery. No password was changed.",
+    "zh-CN": "此环境存在活动连接或未解决的操作。请先完成或处理该工作再恢复账号，密码未改变。"
+  },
+  "Recovery was cancelled or timed out before confirmation. No password was changed.": {
+    "en-US": "Recovery was cancelled or timed out before confirmation. No password was changed.",
+    "zh-CN": "恢复在确认前已取消或超时，密码未改变。"
+  },
+  "The account could not be safely recovered. Do not delete data or register another account. Open Diagnostics and report the error code.": {
+    "en-US": "The account could not be safely recovered. Do not delete data or register another account. Open Diagnostics and report the error code.",
+    "zh-CN": "无法安全恢复账号。请勿删除数据或注册新账号；打开诊断并报告错误码。"
+  },
+  "Set a new password for the existing account": {
+    "en-US": "Set a new password for the existing account",
+    "zh-CN": "为原账号设置新密码"
+  },
+  "Existing account": {
+    "en-US": "Existing account",
+    "zh-CN": "原账号"
+  },
+  "Only this account password changes. Projects, tasks, approvals and delivery receipts are preserved. Enter the new password twice; it is not sent to a model or stored in diagnostics.": {
+    "en-US": "Only this account password changes. Projects, tasks, approvals and delivery receipts are preserved. Enter the new password twice; it is not sent to a model or stored in diagnostics.",
+    "zh-CN": "仅更改此账号密码。项目、任务、批准和交付回执均保留。请填写两次新密码；密码不会发送给模型或写入诊断日志。"
+  },
+  "New local password (8–200 characters)": {
+    "en-US": "New local password (8–200 characters)",
+    "zh-CN": "新的本地密码（8–200 个字符）"
+  },
+  "Confirm new local password": {
+    "en-US": "Confirm new local password",
+    "zh-CN": "确认新的本地密码"
+  },
+  "Review password change": {
+    "en-US": "Review password change",
+    "zh-CN": "审查密码更改"
+  },
+  "Recovery was cancelled. No password was changed.": {
+    "en-US": "Recovery was cancelled. No password was changed.",
+    "zh-CN": "已取消恢复，密码未改变。"
+  },
+  "Confirm this account password change": {
+    "en-US": "Confirm this account password change",
+    "zh-CN": "确认更改此账号的密码"
+  },
+  "A private consistent backup is saved first. This changes the selected account password and revokes existing sessions. The account ID and saved business work remain. You must log in again. This is not product acceptance.": {
+    "en-US": "A private consistent backup is saved first. This changes the selected account password and revokes existing sessions. The account ID and saved business work remain. You must log in again. This is not product acceptance.",
+    "zh-CN": "将先保存私有一致性快照，再更改所选账号密码并撤销旧会话。账号 ID 和已保存业务内容保留。之后需重新登录。这不是产品验收。"
+  },
+  "Reset this account password": {
+    "en-US": "Reset this account password",
+    "zh-CN": "重设此账号密码"
+  },
+  "Saving account recovery…": {
+    "en-US": "Saving account recovery…",
+    "zh-CN": "正在保存账号恢复…"
+  },
+  "ChatGPT browser window": {
+    "en-US": "ChatGPT browser window",
+    "zh-CN": "ChatGPT 浏览器窗口"
+  },
+  "Back": {
+    "en-US": "Back",
+    "zh-CN": "后退"
+  },
+  "Forward": {
+    "en-US": "Forward",
+    "zh-CN": "前进"
+  },
+  "Current website": {
+    "en-US": "Current website",
+    "zh-CN": "当前网站"
+  },
+  "Open in Safari": {
+    "en-US": "Open in Safari",
+    "zh-CN": "在 Safari 中打开"
+  },
+  "Original TWOS projects": {
+    "en-US": "Original TWOS projects",
+    "zh-CN": "原有 TWOS 项目"
+  },
+  "Arrange with Codex": {
+    "en-US": "Arrange with Codex",
+    "zh-CN": "与 Codex 并排"
+  },
+  "Send selected text to Codex": {
+    "en-US": "Send selected text to Codex",
+    "zh-CN": "将所选内容交给 Codex"
+  },
+  "This browser session cannot be saved here. Use Open in Safari to keep your login.": {
+    "en-US": "This browser session cannot be saved here. Use Open in Safari to keep your login.",
+    "zh-CN": "此处无法保存浏览器会话。请点击“在 Safari 中打开”以保留登录。"
+  },
+  "The conversation address could not be saved. Your ChatGPT history remains in your account.": {
+    "en-US": "The conversation address could not be saved. Your ChatGPT history remains in your account.",
+    "zh-CN": "对话地址未能保存。ChatGPT 历史记录仍保留在你的账号中。"
+  },
+  "Select the instructions on ChatGPT first, then use this button.": {
+    "en-US": "Select the instructions on ChatGPT first, then use this button.",
+    "zh-CN": "先在 ChatGPT 中选中要交付的指令文字，再点击此按钮。"
+  },
+  "Selected text copied. Paste and send it in your existing Codex conversation.": {
+    "en-US": "Selected text copied. Paste and send it in your existing Codex conversation.",
+    "zh-CN": "所选文字已复制。请在原 Codex 会话中粘贴并发送。"
+  },
+  "Install the official Codex App, then use Arrange with Codex again.": {
+    "en-US": "Install the official Codex App, then use Arrange with Codex again.",
+    "zh-CN": "请先安装官方 Codex App，再点击“与 Codex 并排”。"
+  },
+  "Codex could not be opened. Open the existing app from Applications and try again.": {
+    "en-US": "Codex could not be opened. Open the existing app from Applications and try again.",
+    "zh-CN": "Codex 未能打开。请从“应用程序”打开已有 App 后重试。"
+  },
+  "This screen is too narrow for two readable windows. Use Codex and TWOS side by side on a wider display, or switch between them.": {
+    "en-US": "This screen is too narrow for two readable windows. Use Codex and TWOS side by side on a wider display, or switch between them.",
+    "zh-CN": "当前屏幕太窄，两个窗口并排会影响阅读。可在更宽的屏幕上并排，或在两个窗口之间切换。"
+  },
+  "To arrange windows automatically, allow Tianma Work OS in System Settings → Privacy & Security → Accessibility, then click Arrange with Codex again. You can also place the two windows manually.": {
+    "en-US": "To arrange windows automatically, allow Tianma Work OS in System Settings → Privacy & Security → Accessibility, then click Arrange with Codex again. You can also place the two windows manually.",
+    "zh-CN": "自动排列窗口需要在“系统设置 → 隐私与安全性 → 辅助功能”中允许 Tianma Work OS，然后再点“与 Codex 并排”。也可以自行摆放两个窗口。"
+  },
+  "Open the Codex conversation window, then click Arrange with Codex again.": {
+    "en-US": "Open the Codex conversation window, then click Arrange with Codex again.",
+    "zh-CN": "请打开 Codex 的对话窗口，再点击“与 Codex 并排”。"
+  },
+  "Exit full screen in Codex, then click Arrange with Codex again.": {
+    "en-US": "Exit full screen in Codex, then click Arrange with Codex again.",
+    "zh-CN": "请先退出 Codex 全屏，再点击“与 Codex 并排”。"
+  },
+  "macOS could not arrange this Codex window. Place the two windows manually or try again after leaving full screen.": {
+    "en-US": "macOS could not arrange this Codex window. Place the two windows manually or try again after leaving full screen.",
+    "zh-CN": "macOS 未能排列此 Codex 窗口。请手动摆放，或退出全屏后重试。"
+  },
+  "ChatGPT and Codex are side by side. Each keeps its original account and conversation.": {
+    "en-US": "ChatGPT and Codex are side by side. Each keeps its original account and conversation.",
+    "zh-CN": "ChatGPT 与 Codex 已并排显示，各自保留原有账号和会话。"
+  },
+  "This link cannot be opened in the ChatGPT browser. Use the original browser for this action.": {
+    "en-US": "This link cannot be opened in the ChatGPT browser. Use the original browser for this action.",
+    "zh-CN": "此链接无法在 ChatGPT 浏览器中打开。请在原浏览器中完成此操作。"
+  },
+  "ChatGPT could not finish loading. Retry with ↻, or open this page in Safari. Your saved work is retained.": {
+    "en-US": "ChatGPT could not finish loading. Retry with ↻, or open this page in Safari. Your saved work is retained.",
+    "zh-CN": "ChatGPT 页面未能加载完成。点击 ↻ 重试，或在 Safari 中打开；已保存的内容仍保留。"
+  },
+  "The browser page stopped. Reload with ↻ to return to ChatGPT.": {
+    "en-US": "The browser page stopped. Reload with ↻ to return to ChatGPT.",
+    "zh-CN": "浏览器页面已停止。点击 ↻ 重新加载 ChatGPT。"
+  },
+  "Download saved to your chosen location.": {
+    "en-US": "Download saved to your chosen location.",
+    "zh-CN": "下载已保存到你选择的位置。"
+  },
+  "The download did not finish. Retry from ChatGPT.": {
+    "en-US": "The download did not finish. Retry from ChatGPT.",
+    "zh-CN": "下载未完成，请在 ChatGPT 中重试。"
+  },
+  "OK": {
+    "en-US": "OK",
+    "zh-CN": "好"
+  },
+  "Website message": {
+    "en-US": "Website message",
+    "zh-CN": "网站消息"
+  },
+  "The draft could not be saved. Keep this window open and copy it before quitting.": {
+    "en-US": "The draft could not be saved. Keep this window open and copy it before quitting.",
+    "zh-CN": "草稿未能保存。请保持窗口打开，退出前先复制草稿。"
+  },
+  "Finish or stop the current Codex turn before handing off another request.": {
+    "en-US": "Finish or stop the current Codex turn before handing off another request.",
+    "zh-CN": "请先完成或停止当前 Codex 任务，再交付新的需求。"
+  },
+  "Review the instructions and destination conversation, then choose Send to Codex.": {
+    "en-US": "Review the instructions and destination conversation, then choose Send to Codex.",
+    "zh-CN": "核对指令和目标会话后，点击“交付 Codex 执行”。"
+  },
+  "Closing this connection before reading the saved conversation again. No request will be resent.": {
+    "en-US": "Closing this connection before reading the saved conversation again. No request will be resent.",
+    "zh-CN": "正在关闭本连接，随后重新读取已保存会话；不会重发任何请求。"
+  },
+  "The installed Codex command could not be found. Install the official Codex App first.": {
+    "en-US": "The installed Codex command could not be found. Install the official Codex App first.",
+    "zh-CN": "未找到本机 Codex 程序。请先安装官方 Codex App。"
+  },
+  "Codex could not start. Your saved conversations have not been changed.": {
+    "en-US": "Codex could not start. Your saved conversations have not been changed.",
+    "zh-CN": "Codex 未能启动，已保存会话保持不变。"
+  },
+  "Codex did not receive the request. Inspect the conversation before retrying.": {
+    "en-US": "Codex did not receive the request. Inspect the conversation before retrying.",
+    "zh-CN": "请求写入未能确认，请先检查会话再重试。"
+  },
+  "Codex has not confirmed this request. Do not resend it until the conversation has been checked.": {
+    "en-US": "Codex has not confirmed this request. Do not resend it until the conversation has been checked.",
+    "zh-CN": "Codex 尚未确认此请求。请检查会话后再决定是否重发。"
+  },
+  "A Codex event was too large to display. The saved conversation remains available.": {
+    "en-US": "A Codex event was too large to display. The saved conversation remains available.",
+    "zh-CN": "此 Codex 事件过大，未能显示。已保存会话仍可查看。"
+  },
+  "The local Codex service rejected this request. Saved work is retained.": {
+    "en-US": "The local Codex service rejected this request. Saved work is retained.",
+    "zh-CN": "本机 Codex 拒绝了此请求，已保存的工作仍保留。"
+  },
+  "The last execution has no confirmed final state. Inspect its history; TWOS will not repeat it.": {
+    "en-US": "The last execution has no confirmed final state. Inspect its history; TWOS will not repeat it.",
+    "zh-CN": "上次执行尚无确认的结束状态。请查看历史，TWOS 不会重复执行。"
+  },
+  "To continue this existing conversation here, quit the Codex App first. Its history and project stay intact; TWOS will use the same conversation ID.": {
+    "en-US": "To continue this existing conversation here, quit the Codex App first. Its history and project stay intact; TWOS will use the same conversation ID.",
+    "zh-CN": "要在这里接续此会话，请先退出 Codex App。历史和项目保持不变，TWOS 会沿用同一会话 ID。"
+  },
+  "Choose a model advertised by the connected Codex service.": {
+    "en-US": "Choose a model advertised by the connected Codex service.",
+    "zh-CN": "请选择当前 Codex 连接提供的模型。"
+  },
+  "Another TWOS connection is using this conversation. Wait for it to finish.": {
+    "en-US": "Another TWOS connection is using this conversation. Wait for it to finish.",
+    "zh-CN": "另一个 TWOS 连接正在使用此会话，请等待其结束。"
+  },
+  "Execution was not confirmed. Reconnect and inspect the conversation before trying again.": {
+    "en-US": "Execution was not confirmed. Reconnect and inspect the conversation before trying again.",
+    "zh-CN": "执行尚未确认。请重新连接并检查会话，再决定是否重试。"
+  },
+  "One workspace · two connected contexts": {
+    "en-US": "One workspace · two connected contexts",
+    "zh-CN": "一个工作台 · 两侧上下文相连"
+  },
+  "Open a website in this pane": {
+    "en-US": "Open a website in this pane",
+    "zh-CN": "在此面板打开网站"
+  },
+  "Enter an HTTPS address, or a local dashboard address. Nothing is sent to the other pane automatically.": {
+    "en-US": "Enter an HTTPS address, or a local dashboard address. Nothing is sent to the other pane automatically.",
+    "zh-CN": "填写 HTTPS 地址或本机看板地址。页面内容不会自动发送到另一侧。"
+  },
+  "Open": {
+    "en-US": "Open",
+    "zh-CN": "打开"
+  },
+  "The bundled Codex pane is unavailable.": {
+    "en-US": "The bundled Codex pane is unavailable.",
+    "zh-CN": "内置 Codex 面板暂不可用。"
+  },
+  "The original discussion is not open. Return to it in the other pane, then bring the result back.": {
+    "en-US": "The original discussion is not open. Return to it in the other pane, then bring the result back.",
+    "zh-CN": "原讨论当前未打开。请在另一侧回到原讨论，再带回结果。"
+  },
+  "The result is now in the original discussion composer. Review and send it there.": {
+    "en-US": "The result is now in the original discussion composer. Review and send it there.",
+    "zh-CN": "结果已填入原讨论的输入框，请核对后发送。"
+  },
+  "Handoff to paired pane": {
+    "en-US": "Handoff to paired pane",
+    "zh-CN": "交给另一侧"
+  },
+  "Select a destination pane before handing off instructions.": {
+    "en-US": "Select a destination pane before handing off instructions.",
+    "zh-CN": "请先选择目标面板，再交付指令。"
+  },
+  "Select the instructions on this page, then hand them to the paired pane.": {
+    "en-US": "Select the instructions on this page, then hand them to the paired pane.",
+    "zh-CN": "请在当前页面选中要交付的指令，再点击“交给另一侧”。"
+  },
+  "The source conversation changed. Review it before handing off again.": {
+    "en-US": "The source conversation changed. Review it before handing off again.",
+    "zh-CN": "来源讨论已切换，请核对后重新交付。"
+  },
+  "Return to the original conversation before bringing this result back.": {
+    "en-US": "Return to the original conversation before bringing this result back.",
+    "zh-CN": "请先回到原讨论，再带回此结果。"
+  },
+  "Result added to the original composer. Review it and send in the original interface.": {
+    "en-US": "Result added to the original composer. Review it and send in the original interface.",
+    "zh-CN": "结果已填入原讨论输入框，请核对后使用官网的发送按钮。"
+  },
+  "The website composer could not accept this result. Your result is retained in the other pane.": {
+    "en-US": "The website composer could not accept this result. Your result is retained in the other pane.",
+    "zh-CN": "未能填入官网输入框，结果仍保留在另一侧。"
+  },
+  "Codex disconnected during execution. The request will not be sent again automatically. Reconnect and inspect the saved conversation.": {
+    "en-US": "Codex disconnected during execution. The request will not be sent again automatically. Reconnect and inspect the saved conversation.",
+    "zh-CN": "Codex 执行中断开连接，请求不会自动重发。请重新连接并查看已保存会话。"
+  },
+  "Codex disconnected. Reconnect to view your saved conversations.": {
+    "en-US": "Codex disconnected. Reconnect to view your saved conversations.",
+    "zh-CN": "Codex 已断开，重新连接即可查看已保存会话。"
+  },
+  "Left service": {
+    "en-US": "Left service",
+    "zh-CN": "左侧服务"
+  },
+  "Right service": {
+    "en-US": "Right service",
+    "zh-CN": "右侧服务"
+  },
+  "Website…": {
+    "en-US": "Website…",
+    "zh-CN": "网站…"
+  },
+  "Codex is still working": {
+    "en-US": "Codex is still working",
+    "zh-CN": "Codex 仍在执行"
+  },
+  "Return to the workbench and stop or finish the turn before quitting.": {
+    "en-US": "Return to the workbench and stop or finish the turn before quitting.",
+    "zh-CN": "请返回工作台，停止或完成当前任务后再退出。"
+  },
+  "Return to workbench": {
+    "en-US": "Return to workbench",
+    "zh-CN": "返回工作台"
+  },
+  "The local Codex service stopped. Expand the details for its reported cause.": {
+    "en-US": "The local Codex service stopped. Expand the details for its reported cause.",
+    "zh-CN": "本机 Codex 服务已停止，可展开消息详情查看实际原因。"
+  }
+}

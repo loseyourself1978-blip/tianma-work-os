@@ -4966,7 +4966,7 @@ class CodexExecutionManager:
             with self.factory() as scope_session:
                 scoped = project_workspaces.run_settings(scope_session, self._base_settings, run_id)
             self._worker_context.settings = scoped
-            self._worker_context.adapter = (self._base_adapter if scoped.source_repo == self._base_settings.source_repo
+            self._worker_context.adapter = (self._base_adapter if (scoped.source_repo == self._base_settings.source_repo and scoped.codex_executable == self._base_settings.codex_executable)
                                             else CodexAdapter(scoped))
             if recover_bridge:
                 self._recover_bridge_run(run_id)

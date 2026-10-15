@@ -1,0 +1,21 @@
+{
+  "version": "1.0.1",
+  "source_commit": "0e1c2e7b80b8ce83762ad57564d7c4536a03cb1f",
+  "source_clean": false,
+  "source_identity": "development-snapshot",
+  "source_input_sha256": "9a77c35d70d4b555e6f2ac1e7c6b6bfa6b23bb5a5ed60796f4e6e1c3f322ca09",
+  "architecture": "arm64",
+  "python": "3.12.14",
+  "macos": "27.0.1",
+  "bundle_identifier": "com.tianma.workos",
+  "build_version": "101.38",
+  "public_ga": false,
+  "signing": "ad-hoc-local-validation-only",
+  "minimum_macos": "13.0",
+  "artifact": "Tianma-Work-OS-1.0.1-build-101.38.dmg",
+  "sha256": "fae015faf733b25d4a83a8e222b4ce246fd18449a1bc1360df8bc63496cee1f0",
+  "size": 25286233,
+  "notarization": "NOT_EXECUTED",
+  "owner_acceptance": "NOT_EXECUTED",
+  "official_download": null
+}

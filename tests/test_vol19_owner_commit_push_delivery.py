@@ -160,7 +160,7 @@ class AppliedDelivery:
 
 
 @contextmanager
-def _canonical_applied_delivery(tmp_path: Path, *, unrelated: bool = False):
+def _canonical_applied_delivery(tmp_path: Path, *, unrelated: bool = False, without_origin: bool = False):
     tmp_path.mkdir(parents=True, exist_ok=True)
     source_repo = make_source_repo(tmp_path)
     (source_repo / "unrelated-modified.txt").write_text("baseline modified\n")
@@ -194,6 +194,8 @@ def _canonical_applied_delivery(tmp_path: Path, *, unrelated: bool = False):
         "HEAD:refs/heads/main",
     )
     assert _bare_ref(origin) == baseline_head
+    if without_origin:
+        _git(source_repo, "remote", "remove", "origin")
 
     if unrelated:
         (source_repo / "unrelated-modified.txt").write_text("preserve modified\n")

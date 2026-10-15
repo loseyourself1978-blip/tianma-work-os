@@ -20,7 +20,8 @@ from datetime import datetime, timezone
 
 GUIDE = "docs/OWNER_GUIDE.md"
 DOC_PREFIX = "docs/runtime/VOL19_19_4_"
-REQUIRED = {"README.md", "requirements.txt", "start-twos", GUIDE,
+REQUIRED = {"README.md", "requirements.txt", "start-twos", GUIDE, "docs/ADVANCED_INSTALLATION.md",
+            "docs/VOL20_LOCAL_ACCOUNT_RECOVERY.md",
             "scripts/twos_bootstrap.py", "scripts/build_release.py", "scripts/release_scan_allowlist.json",
             "twos_runtime/app.py", "twos_runtime/db.py", "twos_runtime/__init__.py",
             "static_cockpit/vol12_static_mvp/twos_command_center.html"}
@@ -35,9 +36,9 @@ SECRET_PATTERNS = {
     "credential-assignment": re.compile(rb'''(?i)(?:api_key|access_token|refresh_token|client_secret|password|token)["']?\s*[=:]\s*["'][^"'\r\n]{8,}["']'''),
 }
 LIMITATIONS = [
-    "Source-based macOS fresh-install distribution; signed/notarized DMG and Windows/Linux acceptance are not established.",
+    "Advanced source artifact only; primary desktop distribution requires separate signing/notarization and Owner acceptance.",
     "Python 3.11–3.13 and dependency installation are required; dependencies are not bundled or locked.",
-    "1.0.0 supports fresh installation and same-version backup/restore only; 0.17.0 upgrades and cross-version restore are outside scope.",
+    "This version supports fresh installation and same-version backup/restore only; 0.17.0 upgrades and cross-version restore are outside scope.",
     "External credentialed Git-host Push acceptance is not established.",
     "Live multi-model aggregation and email/calendar integration are not established.",
     "LDD live broker execution is not authorized. Publication identity is established by the canonical Release receipt; build success is not Owner Acceptance.",

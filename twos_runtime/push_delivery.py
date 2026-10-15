@@ -240,6 +240,7 @@ class BoundPushContext:
     pack: Any
     entries: list[Any]
     root: Path
+    authorized_config_baseline: dict[str, Any] | None = None
 
 
 def find_owned_local_commit_execution(
@@ -547,6 +548,8 @@ def _bound_push_context(
             "LOCAL_COMMIT_INTEGRITY_BLOCKED",
             "The approved local Commit object or receipt changed.",
         )
+    from .local_push_destination import authorized_baseline
+    config_baseline = authorized_baseline(session, local_commit, root)
     return BoundPushContext(
         local_commit=local_commit,
         stage=stage,
@@ -558,6 +561,7 @@ def _bound_push_context(
         pack=pack,
         entries=entries,
         root=root,
+        authorized_config_baseline=config_baseline,
     )
 
 
@@ -644,7 +648,12 @@ def _one_remote_url(root: Path, *, push: bool) -> bytes:
     try:
         output = _run_git(root, *args).stdout
     except CommitBuilderError as exc:
-        raise _failure("ORIGIN_UNAVAILABLE", "The origin remote is unavailable.") from exc
+        raise _failure(
+            "ORIGIN_UNAVAILABLE",
+            "This Project has no readable origin destination. Your local Commit is safe. "
+            "For local-only testing, select Configure local test destination. "
+            "No external destination or Push is configured automatically.",
+        ) from exc
     rows = output.rstrip(b"\n").split(b"\n") if output else []
     if (
         len(rows) != 1
@@ -1255,7 +1264,7 @@ def _command_evidence(approved_commit_oid: str) -> dict[str, Any]:
 def _preflight_observation(context: BoundPushContext) -> dict[str, Any]:
     local = _local_observation(context)
     remote = _remote_evidence(context)
-    post_commit = _decoded_object(context.local_commit.post_commit_evidence_json)
+    post_commit = context.authorized_config_baseline or _decoded_object(context.local_commit.post_commit_evidence_json)
     blockers: list[dict[str, str]] = []
     if isinstance(local.get("target_blocker"), dict):
         blockers.append(dict(local["target_blocker"]))
@@ -1783,7 +1792,7 @@ def _reconciliation_locked(
             "staged_path_count": None,
             "blockers": [_safe_failure(str(code), str(message))],
         }
-    post_commit = _decoded_object(context.local_commit.post_commit_evidence_json)
+    post_commit = context.authorized_config_baseline or _decoded_object(context.local_commit.post_commit_evidence_json)
     preflight = _decoded_object(row.preflight_evidence_json)
     if isinstance(local.get("target_blocker"), dict):
         blockers.append(dict(local["target_blocker"]))
@@ -2146,6 +2155,9 @@ def _push_plan_out(
         "local_branch": plan.branch,
         "remote": plan.remote_name,
         "remote_display": preflight.get("remote_display"),
+        "checks": {key: preflight.get(key) for key in (
+            "worktree_clean", "index_clean", "ahead", "behind", "staged_path_count",
+        )},
         "target_ref": plan.destination_ref,
         "remote_old_sha": plan.observed_remote_base_oid or None,
         "remote_new_sha": plan.expected_remote_oid,
@@ -3286,6 +3298,13 @@ def push_plan_review(
         and plan.expires_at is not None
         and utc_now() >= plan.expires_at
     )
+    if plan is None:
+        # Local configuration inspection only. Page loads must never create a
+        # plan or contact a destination merely to explain missing setup.
+        try:
+            _remote_evidence(context)
+        except PushDeliveryError as exc:
+            blockers.append(_safe_failure(exc.code, exc.message))
     if plan is not None:
         try:
             _validate_push_plan_binding(
@@ -3393,6 +3412,35 @@ def push_plan_review(
                 else:
                     blockers.append(_safe_failure(exc.code, exc.message))
     plan_output = _push_plan_out(plan, approval, execution)
+    if plan_output is not None and not blockers:
+        # Authenticated Owner display only; raw paths/URLs stay out of persisted
+        # receipts and audit logs. Resolve again only after the immutable URL
+        # digest has matched. Never contact a destination in this display step.
+        try:
+            raw = _one_remote_url(context.root, push=True)
+            if _sha256_bytes(raw) == plan.remote_push_url_digest:
+                descriptor = _validated_remote_descriptor(context.root, raw)
+                value = raw.decode("utf-8")
+                if descriptor["kind"] == "local":
+                    path = Path(urlsplit(value).path) if value.startswith("file://") else Path(value)
+                    if not path.is_absolute():
+                        path = context.root / path
+                    plan_output["owner_destination"] = str(path.resolve(strict=True))
+                elif "://" in value:
+                    parsed = urlsplit(value)
+                    host = parsed.hostname or ""
+                    if ":" in host:
+                        host = "[" + host + "]"
+                    authority = host + (":" + str(parsed.port) if parsed.port else "")
+                    plan_output["owner_destination"] = urlunsplit((parsed.scheme, authority, parsed.path, "", ""))
+                else:
+                    plan_output["owner_destination"] = value.split("@", 1)[-1]
+            else:
+                blockers.append(_safe_failure("REMOTE_DESTINATION_CHANGED", "The destination changed while displaying the plan. Review again before approval."))
+        except (PushDeliveryError, OSError, ValueError):
+            # The canonical preflight/approval boundary remains authoritative.
+            # If its destination cannot be displayed, fail closed for approval.
+            blockers.append(_safe_failure("DESTINATION_DISPLAY_UNAVAILABLE", "The exact destination cannot be displayed. Review the Push Plan again."))
     readiness_observation = observation or (
         _decoded_object(plan.preflight_evidence_json) if plan is not None else None
     )
@@ -3408,7 +3456,7 @@ def push_plan_review(
         )
         action_state = canonical_execution_state
     elif plan is None:
-        action_state = "READY_TO_REVIEW_PUSH_PLAN"
+        action_state = "PUSH_BLOCKED" if blockers else "READY_TO_REVIEW_PUSH_PLAN"
     elif plan.status_at_creation == "ALREADY_DELIVERED":
         action_state = "ALREADY_DELIVERED"
     elif expired:

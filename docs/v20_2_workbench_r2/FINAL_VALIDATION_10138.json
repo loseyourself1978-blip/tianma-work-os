@@ -1,0 +1,66 @@
+{
+  "work_order": "TWOS-V20.2-CHATGPT-CODEX-WORKBENCH-R2",
+  "build": "101.38",
+  "status": "IMPLEMENTATION_PASS",
+  "owner_acceptance": "PENDING",
+  "public_ga": false,
+  "completed_at": "2026-10-15T07:20:23.245404+00:00",
+  "source_identity": "development-snapshot",
+  "source_input_sha256": "9a77c35d70d4b555e6f2ac1e7c6b6bfa6b23bb5a5ed60796f4e6e1c3f322ca09",
+  "runtime_input_count": 95,
+  "runtime_input_hashes_match_candidate": true,
+  "dmg_sha256": "fae015faf733b25d4a83a8e222b4ce246fd18449a1bc1360df8bc63496cee1f0",
+  "signing_verification": "PASS ad-hoc local only; not notarized",
+  "complete_serial_gate": {
+    "attempt": 4,
+    "exit_code": 0,
+    "collected": 1649,
+    "passed": 1648,
+    "skipped": 1,
+    "failed": 0,
+    "seconds": 4823.352,
+    "skips": [
+      {
+        "name": "test_frozen_same_path_upgrade_backup_restart_and_rollback",
+        "classname": "tests.test_vol20_commit_identity_artifact_upgrade",
+        "reason": "Requires both retained desktop artifacts"
+      }
+    ],
+    "same_collected_set": true,
+    "assertions_unchanged": true
+  },
+  "prior_attempts": [
+    {
+      "attempt": 1,
+      "status": "INTERRUPTED_NOT_PASS",
+      "passed": 736,
+      "failed": 0,
+      "reason": "Pane-move persistence repair required a fresh complete gate"
+    },
+    {
+      "attempt": 2,
+      "status": "FAILED_NOT_PASS",
+      "passed": 1626,
+      "failed": 13,
+      "skipped": 8,
+      "reason": "One process exit-signal race; 12 hidden Safari measurements timed out; artifact gate path was not provided."
+    },
+    {
+      "attempt": 3,
+      "status": "INTERRUPTED_NOT_PASS",
+      "passed": 0,
+      "failed": 3,
+      "reason": "Stopped after hidden Safari measurements; a fresh visible-frame preflight and complete gate were required."
+    }
+  ],
+  "real_chain": "PASS official ChatGPT handoff, real same-thread local Codex execution, return to original composer, official continuation, restart",
+  "packaged_ui": "PASS swapped panes/restart, exact originating discussion, same isolated Codex history, result binding, compact commands, production desktop view-only guard",
+  "browser_validation": "Actual normal Safari fixed-width iframe fixtures plus native WKWebView component and packaged checks",
+  "owner_data": "No Owner account/project migration or installed App replacement performed",
+  "limitations": [
+    "Quit official Codex App before continuing a conversation in TWOS; simultaneous independent app-server execution is not supported.",
+    "Codex pane is a protocol renderer, not the native original App UI.",
+    "Claude/DeepSeek authenticated collaboration and private LDD access not validated.",
+    "Public signed/notarized GA not established."
+  ]
+}
