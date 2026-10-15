@@ -12,7 +12,7 @@ from typing import Any, Callable, Iterator, Literal, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import func, or_, select, text, update
@@ -39,13 +39,14 @@ from .codex_connectivity import (
     verify_codex_connection,
 )
 from .config import Settings, get_settings
-from . import guided_delivery, project_workspaces, artifact_verification
+from . import guided_delivery, project_workspaces, artifact_verification, tool_recovery
+from .desktop import build_identity
 from .models import GuidedToolConfiguration, CodexConnectivityEvidence, AuthorizedWorkspace, PushPlan
 from .result_intake import canonical_sha256
 from .db import (
     VOL19_FRESH_INSTALL_SCHEMA_VERSION,
     VOL19_GUIDED_DELIVERY_SCHEMA_VERSION,
-    VOL20_PROJECT_WORKSPACE_SCHEMA_VERSION,
+    VOL20_WORKBENCH_SCHEMA_VERSION,
     initialize_database,
     make_engine,
     make_session_factory,
@@ -468,6 +469,21 @@ class ReviewCommitProposalIn(ReviewCommitPlanIn):
     model_config = ConfigDict(extra="forbid")
 
 
+class LocalPushDestinationIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    confirmation: Literal["CREATE_AND_BIND_LOCAL_TEST_DESTINATION"]
+    expected_preview_digest: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+class RepositoryGitIdentityIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    confirmation: Literal["SAVE_REPOSITORY_GIT_IDENTITY"]
+    name: str = Field(min_length=1, max_length=512)
+    email: str = Field(min_length=1, max_length=512)
+    expected_config_digest: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_repository_identity: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 class ApproveCommitProposalIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -578,6 +594,11 @@ class ProjectWorkspaceIn(BaseModel):
     confirmed: Literal[True]
 
 
+class ManagedWorkspaceIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    confirmed: Literal[True]
+
+
 class ArtifactVerificationIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     path: str = Field(min_length=1, max_length=200)
@@ -659,6 +680,9 @@ class GuidedToolIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     model_identifier: str = Field(default="gpt-6-astra", min_length=1, max_length=160)
     reasoning_effort: str = Field(default="xhigh", pattern=r"^[a-z][a-z0-9_]{0,31}$")
+    executable_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    verifier_digest: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    confirm_verifier_change: bool = False
 
 
 class GuidedToolSaveIn(BaseModel):
@@ -2093,6 +2117,14 @@ def error_response(status_code: int, code: str, message: str, request_id: str | 
     )
 
 
+def require_same_origin_json(request: Request) -> None:
+    origin = request.headers.get("origin")
+    if request.headers.get("sec-fetch-site") == "cross-site" or (origin is not None and origin != f"{request.url.scheme}://{request.url.netloc}"):
+        raise HTTPException(status_code=403, detail="Use the TWOS window that owns this session.")
+    if request.headers.get("content-type", "").split(";", 1)[0].strip().lower() != "application/json":
+        raise HTTPException(status_code=415, detail="An explicit JSON action is required.")
+
+
 def auth_error_response(
     status_code: int,
     code: str,
@@ -2227,6 +2259,12 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         try:
             yield
         finally:
+            if hasattr(app.state, "deliveries"):
+                app.state.deliveries.shutdown()
+            if hasattr(app.state, "discussion"):
+                app.state.discussion.shutdown()
+            if hasattr(app.state, "project_execution"):
+                app.state.project_execution.shutdown()
             await app.state.runtime_scheduler.stop()
             codex_manager.shutdown()
             # Stop and join the background intake loop before the final
@@ -2279,6 +2317,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             and not request.url.path.startswith("/api/auth/")
             and not request.url.path.startswith("/api/setup/")
             and not request.url.path.startswith("/api/maintenance/")
+            and not request.url.path.startswith("/api/r2/")
         ):
             with factory() as setup_session:
                 setup_ready = normal_api_available(setup_session, settings)
@@ -2397,6 +2436,16 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         user = user_for_token(session, raw_token)
         if not user:
             raise HTTPException(status_code=401, detail="Invalid or expired session.")
+        # New email accounts never acquire the historical single-Owner API
+        # surface. Project-first routes perform their own owner predicates.
+        if user.username.startswith("email_user_"):
+            path = request.url.path
+            allowed = (path.startswith("/api/auth/") or path.startswith("/api/r2/wb/")
+                       or path == "/api/r2/projects" or path.startswith("/api/r2/projects/")
+                       or path.startswith("/api/r2/work/") or path.startswith("/api/r2/iterations/")
+                       or path == "/api/r2/tools")
+            if not allowed:
+                raise HTTPException(status_code=403, detail="This account uses its own workbench.")
         task_id = request.path_params.get("task_id") or request.query_params.get("task_id")
         try:
             parsed_task_id = int(task_id) if task_id is not None else None
@@ -2414,6 +2463,8 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             task = session.get(Task, parsed_task_id)
             if task is not None and task.owner_user_id is not None and task.owner_user_id != user.id:
                 raise HTTPException(status_code=404, detail="Task not found.")
+        from .workspace_recovery import guard_mutation
+        guard_mutation(session, user.id, request.method, request.url.path)
         return user
 
     def setup_owner(session, user):
@@ -2424,7 +2475,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
 
     def project_scope(session, user, project_id=None):
         if not application_settings.fresh_install:
-            return application_settings
+            return tool_recovery.saved_settings(session, application_settings, user.id)
         if project_id is None:
             installation = active_installation(session)
             initial = session.scalar(select(AuthorizedWorkspace).where(AuthorizedWorkspace.installation_id == installation.id))
@@ -2634,17 +2685,25 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
 
     @app.get("/")
     def root() -> RedirectResponse:
-        return RedirectResponse("/twos", status_code=307)
+        return RedirectResponse("/projects", status_code=307)
 
     @app.get("/twos")
-    def twos_ui() -> FileResponse:
+    def twos_ui() -> HTMLResponse:
         if not settings.ui_path.exists():
             raise HTTPException(status_code=404, detail="TWOS UI entry not found.")
-        return FileResponse(
-            settings.ui_path,
-            media_type="text/html",
-            headers={"Cache-Control": "no-store"},
-        )
+        # Version numbers can be shared by local patch builds. Bind the entry
+        # page to the actual packaged bytes, not a reused release version URL.
+        page = settings.ui_path.read_text(encoding="utf-8")
+        for asset in ("styles.css", "twos_command_center.js"):
+            relative = "vol12_static_mvp/" + asset
+            path = settings.static_cockpit_dir / relative
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            page = re.sub(
+                re.escape("/static_cockpit/" + relative) + r'(?:\?[^"\s]*)?',
+                "/static_cockpit/" + relative + "?sha256=" + digest,
+                page,
+            )
+        return HTMLResponse(page, headers={"Cache-Control": "no-store"})
 
     @app.get("/api/health")
     def health(session: Session = Depends(get_db)) -> dict[str, Any]:
@@ -2653,7 +2712,8 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             "status": "healthy",
             "database": "ok",
             "version": __version__,
-            "schema": VOL20_PROJECT_WORKSPACE_SCHEMA_VERSION,
+            "schema": VOL20_WORKBENCH_SCHEMA_VERSION,
+            "build": build_identity(),
         }
         if settings.fresh_install:
             installation = active_installation(session)
@@ -2783,6 +2843,19 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         # audit record have committed, and before any fallible configuration
         # projection. All managers share this Settings instance and normal
         # API admission also verifies this exact binding.
+        object.__setattr__(settings, "source_repo", Path(workspace.canonical_path))
+        sync_installation_configuration(settings, installation)
+        return first_run_status(session, settings, authenticated_user=user)
+
+    @app.post("/api/setup/managed-workspace")
+    def setup_managed_workspace(payload: ManagedWorkspaceIn, request: Request,
+                                session: Session = Depends(get_db), user: User = Depends(current_user)):
+        from .managed_workspace import create_managed_workspace
+        workspace = create_managed_workspace(session, settings, user)
+        installation = active_installation(session)
+        audit(session, request, "managed_workspace_created", "authorized_workspace", workspace.id,
+              "Owner explicitly authorized a new private repository and its initial local baseline; no remote configured.", user)
+        session.commit()
         object.__setattr__(settings, "source_repo", Path(workspace.canonical_path))
         sync_installation_configuration(settings, installation)
         return first_run_status(session, settings, authenticated_user=user)
@@ -3019,6 +3092,16 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session.flush()
         return {**project_workspaces.workspace_out(session, settings, project_id, user.id),
                 "already_authorized": not created}
+
+    @app.post("/api/projects/{project_id}/managed-workspace")
+    def project_managed_workspace(project_id: int, payload: ManagedWorkspaceIn, request: Request,
+                                  session: Session = Depends(get_db), user: User = Depends(current_user)):
+        from .managed_workspace import create_managed_workspace
+        row = create_managed_workspace(session, settings, user, project_id)
+        audit(session, request, "managed_project_workspace_created", "project", project_id,
+              "Explicit Owner-managed workspace authorization; execution_started=false; remote_configured=false", user)
+        session.flush()
+        return project_workspaces.workspace_out(session, settings, project_id, user.id)
 
     @app.get("/api/tasks/{task_id}/artifact-verification")
     def get_artifact_verification(task_id: int, session: Session = Depends(get_db), user: User = Depends(current_user)):
@@ -3808,10 +3891,13 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        return verify_codex_with_adapter(payload, request, session, user, codex_manager.adapter, settings)
+
+    def verify_codex_with_adapter(payload, request, session, user, adapter, settings):
         setup_owner(session, user)
         if payload.reasoning_effort is not None:
             try:
-                guided_delivery.configuration_snapshot(guided_delivery.discovery(codex_manager.adapter),
+                guided_delivery.configuration_snapshot(guided_delivery.discovery(adapter),
                     payload.model_identifier, payload.reasoning_effort, settings)
             except ValueError as exc:
                 raise HTTPException(status_code=409, detail=str(exc)) from exc
@@ -3830,16 +3916,16 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         )
         # Configuration is durable but remains unverified until the bounded probe succeeds.
         session.commit()
-        detection = codex_manager.adapter.detect()
+        detection = adapter.detect()
         evidence = verify_codex_connection(
             session,
             owner_id=user.id,
             model=model,
             detection=detection,
             command_for=(
-                (lambda *args, **kwargs: codex_manager.adapter.command_for(*args,
+                (lambda *args, **kwargs: adapter.command_for(*args,
                     reasoning_effort=payload.reasoning_effort, **kwargs))
-                if payload.reasoning_effort is not None else codex_manager.adapter.command_for
+                if payload.reasoning_effort is not None else adapter.command_for
             ),
             timeout_seconds=settings.codex_connectivity_timeout_seconds,
         )
@@ -3908,9 +3994,18 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 ).all()
             }
             for assigned_task_id in assigned_task_ids:
-                invalidated_for_task = invalidate_approved_packs(
-                    session, assigned_task_id
-                )
+                # Executed Packs are historical authority, never rewritten by
+                # a tool recovery or a failed check for future work.
+                invalidated_for_task = 0
+                for approved in session.scalars(select(CodexInstructionPack).where(
+                    CodexInstructionPack.task_id == assigned_task_id,
+                    CodexInstructionPack.status == "approved",
+                )):
+                    if session.scalar(select(CodexRun.id).where(CodexRun.pack_id == approved.id)):
+                        continue
+                    approved.status = "invalidated"
+                    approved.invalidated_at = utc_now()
+                    invalidated_for_task += 1
                 invalidated += invalidated_for_task
                 if invalidated_for_task:
                     assigned_task = session.get(Task, assigned_task_id)
@@ -3954,12 +4049,25 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         return output
 
     @app.get("/api/guided-tool-setup")
-    def guided_tool_setup(project_id: int | None = None, session: Session = Depends(get_db), user: User = Depends(current_user)):
+    def guided_tool_setup(project_id: int | None = None, executable_id: str | None = None,
+                          session: Session = Depends(get_db), user: User = Depends(current_user)):
         settings = project_scope(session, user, project_id)
         setup_owner(session, user)
-        return {"discovery": guided_delivery.discovery(codex_manager.adapter),
-                "configuration": guided_delivery.configuration_out(session,
-                    guided_delivery.latest_configuration(session, user.id, settings=settings), settings=settings),
+        row = guided_delivery.latest_configuration(session, user.id, settings=settings)
+        saved = guided_delivery.latest_configuration(session, user.id, confirmed=True, settings=settings)
+        choices = tool_recovery.candidates(settings)
+        if executable_id:
+            try:
+                selected = tool_recovery.selected_settings(settings, executable_id)
+            except ValueError as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+        else:
+            selected = settings
+        adapter = codex_manager.adapter if selected.codex_executable == codex_manager.adapter.settings.codex_executable else CodexAdapter(selected)
+        return {"discovery": guided_delivery.discovery(adapter),
+                "configuration": guided_delivery.configuration_out(session, row, settings=settings),
+                "saved_configuration": guided_delivery.configuration_out(session, saved, settings=settings),
+                "tool_choices": choices, "diagnosis": tool_recovery.diagnosis(saved, settings),
                 "verification": {"builtin": artifact_verification.uses_builtin(settings),
                     "name": "Exact artifact verification" if artifact_verification.uses_builtin(settings) else "Operator-configured verifier",
                     "next_action": "Configure the Task's artifact file and exact expected contents before Prepare."},
@@ -3968,14 +4076,30 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     @app.post("/api/guided-tool-setup/check")
     def check_guided_tool(payload: GuidedToolIn, request: Request, project_id: int | None = None,
                          session: Session = Depends(get_db), user: User = Depends(current_user)):
+        require_same_origin_json(request)
         settings = project_scope(session, user, project_id)
         setup_owner(session, user)
+        saved = guided_delivery.latest_configuration(session, user.id, confirmed=True, settings=settings)
+        if payload.executable_id:
+            try:
+                settings = tool_recovery.selected_settings(settings, payload.executable_id)
+                diagnosis = tool_recovery.diagnosis(saved, settings)
+                if not diagnosis['verifier_available'] or payload.verifier_digest != diagnosis['verifier_digest']:
+                    raise ValueError('VERIFIER_CHANGED: Reload the current verifier before checking readiness.')
+                if diagnosis['verifier_changed'] and not payload.confirm_verifier_change:
+                    raise ValueError('Confirm the current verifier for future runs before checking readiness.')
+            except ValueError as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+        adapter = codex_manager.adapter if settings.codex_executable == codex_manager.adapter.settings.codex_executable else CodexAdapter(settings)
         try:
-            snapshot = guided_delivery.configuration_snapshot(guided_delivery.discovery(codex_manager.adapter),
+            snapshot = guided_delivery.configuration_snapshot(guided_delivery.discovery(adapter),
                 payload.model_identifier, payload.reasoning_effort, settings)
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
-        result = verify_codex_setup_connection(CodexSetupIn(**payload.model_dump()), request, session, user)
+        if payload.executable_id:
+            snapshot['explicit_executable_selection'] = True
+        result = verify_codex_with_adapter(CodexSetupIn(model_identifier=payload.model_identifier,
+            reasoning_effort=payload.reasoning_effort), request, session, user, adapter, settings)
         model, _ = ensure_local_codex_configuration(session, payload.model_identifier)
         evidence = session.scalar(select(CodexConnectivityEvidence).where(
             CodexConnectivityEvidence.owner_id == user.id, CodexConnectivityEvidence.model_id == model.id
@@ -3983,11 +4107,7 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         row = GuidedToolConfiguration(owner_id=user.id, model_id=model.id,
             snapshot_json=json.dumps(snapshot, sort_keys=True, separators=(",", ":")),
             configuration_digest=canonical_sha256(snapshot), connectivity_evidence_id=evidence.id)
-        saved = guided_delivery.latest_configuration(session, user.id, confirmed=True, settings=settings)
         if saved is not None and saved.configuration_digest == row.configuration_digest:
-            # A new readiness observation does not change the configuration the
-            # Owner already saved. Preserve that explicit confirmation only
-            # when every material binding is identical.
             row.confirmed_at = saved.confirmed_at
         session.add(row)
         session.flush()
@@ -3999,11 +4119,20 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
     @app.post("/api/guided-tool-setup/save")
     def save_guided_tool(payload: GuidedToolSaveIn, request: Request, project_id: int | None = None,
                         session: Session = Depends(get_db), user: User = Depends(current_user)):
+        require_same_origin_json(request)
         settings = project_scope(session, user, project_id)
         setup_owner(session, user)
         row = session.get(GuidedToolConfiguration, payload.configuration_id)
         if row is None or row.owner_id != user.id:
             raise HTTPException(status_code=404, detail="Tool configuration not found.")
+        snapshot = json.loads(row.snapshot_json)
+        if snapshot.get('explicit_executable_selection'):
+            # Validate the originally checked choice without accepting arbitrary paths.
+            choices = tool_recovery.candidates(settings)
+            choice = next((v for v in choices if v['path'] == snapshot['executable']), None)
+            if choice is None:
+                raise HTTPException(status_code=409, detail="The checked tool is no longer available. Choose and check again.")
+            settings = tool_recovery.selected_settings(settings, choice['id'])
         latest = guided_delivery.latest_configuration(session, user.id, settings=settings)
         if latest is None or latest.id != row.id or not guided_delivery.configuration_out(session, row, settings=settings)["ready"]:
             raise HTTPException(status_code=409, detail="Check the exact current Codex configuration successfully before saving.")
@@ -4123,6 +4252,8 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                     message = "Return to Apply and complete Validate Applied Changes before Review Commit."
                 elif applied.get("state") == "APPLIED" and not code:
                     stage, action, label = 8, "delivery", "Review Commit blocker"
+                    if (delivery.get("commit_delivery") or {}).get("author_readiness", {}).get("status") == "NEEDS_SETUP":
+                        action, label = "commit_identity", "Set Commit identity"
                     message = next_step.get("message", message)
                 push = delivery.get("push_delivery") or {}
                 receipt = push.get("delivery_result") or {}
@@ -4234,14 +4365,19 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
         settings = task_scope(session, task_id, user)
+        settings = tool_recovery.saved_settings(session, settings, user.id)
         guided_config = guided_delivery.latest_configuration(session, user.id, confirmed=True, settings=settings)
         if settings.fresh_install and guided_config is not None:
             config_view = guided_delivery.configuration_out(session, guided_config, settings=settings)
+            latest_check_view = guided_delivery.configuration_out(session,
+                guided_delivery.latest_configuration(session, user.id, settings=settings), settings=settings)
             snapshot = json.loads(guided_config.snapshot_json)
             ready = config_view["ready"]
             return {"status": "configured" if ready else "needs_setup", "found": True,
                 "version": snapshot["cli_version"], "supported_command": "exec", "passive": True,
                 "reason": config_view["next_action"], "next_action": config_view["next_action"],
+                "saved_configuration": config_view, "scope_task_id": task_id,
+                "latest_check": latest_check_view["last_readiness_check"] if latest_check_view else None,
                 "readiness_state": config_view["status"], "authentication_ready": ready,
                 "model_binding_ready": ready, "execution_ready": ready,
                 "configuration_status": "configured", "availability_status": "available" if ready else "unavailable",
@@ -4601,6 +4737,8 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         session: Session = Depends(get_db),
         user: User = Depends(current_user),
     ) -> dict[str, Any]:
+        from .workspace_recovery import guard_mutation
+        guard_mutation(session, user.id, request.method, request.url.path, pack_id=payload.pack_id)
         settings = task_scope(session, task_id, user)
         if session.get_bind().dialect.name == "sqlite":
             # Authentication lookup has already opened a read transaction on
@@ -4641,8 +4779,9 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             output = codex_run_out(existing, include_raw=True, session=session)
             output["start_request_replayed"] = True
             return output
-        detection = codex_manager.adapter.detect()
-        authenticated, authentication_reason = codex_manager.adapter.authentication_ready(detection)
+        adapter = codex_manager.adapter if settings.codex_executable == codex_manager.adapter.settings.codex_executable else CodexAdapter(settings)
+        detection = adapter.detect()
+        authenticated, authentication_reason = adapter.authentication_ready(detection)
         readiness_changed = codex_manager.reconcile_observed_local_readiness(
             session,
             detection,
@@ -6827,6 +6966,14 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
             next_action = str(
                 apply_view.get("next_action") or "Review the persisted delivery state."
             )
+        from .workspace_recovery import archived_push
+        preserved_push = archived_push(session, user.id, run.id)
+        if preserved_push:
+            push_delivery = preserved_push
+            primary_action, secondary_actions = None, []
+            next_action = preserved_push['next_action']
+            if commit_delivery:
+                commit_delivery = {**commit_delivery, 'actions': {}, 'historical_evidence_only': True}
         return {
             "run_id": run.id,
             "delivery_contract": "VOL19_19_1D" if envelope is not None else None,
@@ -7031,6 +7178,69 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         review["post_apply_verification_id"] = verification.verification_id
         review["verification_id"] = verification.verification_id
         return review
+
+    def identity_setup_context(session, user, verification_id):
+        from .commit_builder import _bound_verification, _verified_root
+        verification = find_owned_post_apply_verification(
+            session, owner_id=user.id, verification_id=verification_id)
+        if verification is None:
+            raise HTTPException(status_code=404, detail="Commit delivery not found.")
+        settings = project_workspaces.record_settings(session, application_settings, verification, user.id)
+        applied, _plan, _candidate, run, _pack, _entries = _bound_verification(
+            session, owner_id=user.id, verification=verification)
+        if applied.state != "APPLIED" or verification.status != "PASSED":
+            raise HTTPException(status_code=409, detail="Identity setup requires the passed applied delivery.")
+        root = _verified_root(run, settings.source_repo)
+        task = session.get(Task, run.task_id)
+        if task is None or task.owner_user_id != user.id:
+            raise HTTPException(status_code=404, detail="Task not found.")
+        project = session.get(Project, task.project_id)
+        return verification, applied, root, task, project
+
+    @app.get("/api/post-apply-verifications/{verification_id}/git-identity")
+    def get_repository_git_identity(verification_id: str, session: Session = Depends(get_db),
+                                    user: User = Depends(current_user)):
+        from .repository_identity import configuration_state
+        try:
+            verification, applied, root, task, project = identity_setup_context(session, user, verification_id)
+            return {**configuration_state(root), "verification_id": verification.verification_id,
+                    "repository_identity": applied.repository_locator_fingerprint,
+                    "repository": str(root), "project_id": project.id, "project_name": project.name,
+                    "task_id": task.id, "task_title": task.title}
+        except OSError as exc:
+            raise HTTPException(status_code=409, detail={"code": "GIT_CONFIG_UNAVAILABLE",
+                "message": "Repository configuration is not accessible. Check the folder permissions, then reopen Commit identity settings. No Commit was created."}) from exc
+        except CommitBuilderError as exc:
+            raise HTTPException(status_code=409, detail={"code": exc.code, "message": exc.message}) from exc
+
+    @app.post("/api/post-apply-verifications/{verification_id}/git-identity")
+    def save_repository_git_identity(verification_id: str, payload: RepositoryGitIdentityIn,
+                                     request: Request, session: Session = Depends(get_db), user: User = Depends(current_user)):
+        from .repository_identity import save_identity, configuration_state
+        origin = request.headers.get("origin")
+        if (request.headers.get("sec-fetch-site") == "cross-site"
+                or (origin is not None and origin != f"{request.url.scheme}://{request.url.netloc}")):
+            raise HTTPException(status_code=403, detail="Save Commit identity from the TWOS window that owns this session.")
+        if request.headers.get("content-type", "").split(";", 1)[0].strip().lower() != "application/json":
+            raise HTTPException(status_code=415, detail="Commit identity requires an explicit JSON save.")
+        try:
+            verification, applied, root, _task, _project = identity_setup_context(session, user, verification_id)
+            if payload.expected_repository_identity != applied.repository_locator_fingerprint:
+                raise HTTPException(status_code=409, detail="Repository identity changed. Reopen settings.")
+            def reauthorize():
+                session.expire_all()
+                current = identity_setup_context(session, user, verification_id)
+                if current[2] != root or current[1].repository_locator_fingerprint != payload.expected_repository_identity:
+                    raise HTTPException(status_code=403, detail="Repository authorization changed.")
+            changed = save_identity(session, root=root, applied=applied, name=payload.name, email=payload.email,
+                                    expected_digest=payload.expected_config_digest, reauthorize=reauthorize)
+            review = owner_commit_api_review(session, owner_id=user.id, verification=verification)
+            return {"changed": changed, "configuration": configuration_state(root), "review": review}
+        except OSError as exc:
+            raise HTTPException(status_code=409, detail={"code": "GIT_CONFIG_UNAVAILABLE",
+                "message": "Repository configuration is not accessible. Check the folder permissions, then reopen Commit identity settings. No Commit was created."}) from exc
+        except CommitBuilderError as exc:
+            raise HTTPException(status_code=409, detail={"code": exc.code, "message": exc.message}) from exc
 
     @app.get("/api/post-apply-verifications/{verification_id}/commit-proposals")
     def get_owner_commit_proposal(
@@ -7581,6 +7791,10 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         owner_id: int,
         local_commit: LocalCommitExecution,
     ) -> dict[str, Any]:
+        from .workspace_recovery import archived_push
+        preserved = archived_push(session, owner_id, session.get(CommitPlan, local_commit.commit_plan_id).run_id)
+        if preserved and preserved['local_commit_execution_id'] == local_commit.commit_execution_id:
+            return preserved
         settings = project_workspaces.record_settings(session, application_settings, local_commit, owner_id)
         try:
             return push_delivery_review(
@@ -7601,6 +7815,10 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         owner_id: int,
         local_commit: LocalCommitExecution,
     ) -> dict[str, Any]:
+        from .workspace_recovery import archived_push
+        preserved = archived_push(session, owner_id, session.get(CommitPlan, local_commit.commit_plan_id).run_id)
+        if preserved and preserved['local_commit_execution_id'] == local_commit.commit_execution_id:
+            return preserved
         settings = project_workspaces.record_settings(session, application_settings, local_commit, owner_id)
         try:
             return push_plan_review(
@@ -7614,6 +7832,43 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
                 status_code=409,
                 detail={"code": exc.code, "message": exc.message},
             ) from exc
+
+    @app.get("/api/local-commits/{commit_execution_id}/local-test-destination")
+    def review_local_test_destination(commit_execution_id: str,
+            session: Session = Depends(get_db), user: User = Depends(current_user)):
+        from . import local_push_destination
+        settings = delivery_scope(session, user, LocalCommitExecution, "commit_execution_id", commit_execution_id)
+        commit = find_owned_local_commit_execution(session, owner_id=user.id, commit_execution_id=commit_execution_id)
+        if commit is None:
+            raise HTTPException(status_code=404, detail="Local Commit not found.")
+        try:
+            return local_push_destination.preview(session, settings, commit)
+        except (PushDeliveryError, CommitBuilderError) as exc:
+            raise HTTPException(status_code=409, detail={"code": exc.code, "message": exc.message}) from exc
+
+    @app.post("/api/local-commits/{commit_execution_id}/local-test-destination")
+    def configure_local_test_destination(commit_execution_id: str, payload: LocalPushDestinationIn, request: Request,
+            session: Session = Depends(get_db), user: User = Depends(current_user)):
+        from . import local_push_destination
+        origin = request.headers.get("origin")
+        if (request.headers.get("sec-fetch-site") == "cross-site"
+                or (origin is not None and origin != f"{request.url.scheme}://{request.url.netloc}")):
+            raise HTTPException(status_code=403, detail="Configure the destination from the TWOS window that owns this session.")
+        if request.headers.get("content-type", "").split(";", 1)[0].strip().lower() != "application/json":
+            raise HTTPException(status_code=415, detail="Destination setup requires an explicit JSON confirmation.")
+        settings = delivery_scope(session, user, LocalCommitExecution, "commit_execution_id", commit_execution_id)
+        commit = find_owned_local_commit_execution(session, owner_id=user.id, commit_execution_id=commit_execution_id)
+        if commit is None:
+            raise HTTPException(status_code=404, detail="Local Commit not found.")
+        try:
+            def reauthorize_destination():
+                session.expire_all()
+                scoped = delivery_scope(session, user, LocalCommitExecution, "commit_execution_id", commit_execution_id)
+                if scoped.source_repo != settings.source_repo or scoped.data_root != settings.data_root:
+                    raise HTTPException(status_code=403, detail="Repository authorization changed; reopen destination setup.")
+            return local_push_destination.configure(session, settings, commit, payload.expected_preview_digest, reauthorize_destination)
+        except (PushDeliveryError, CommitBuilderError) as exc:
+            raise HTTPException(status_code=409, detail={"code": exc.code, "message": exc.message}) from exc
 
     @app.get("/api/local-commits/{commit_execution_id}/push-plans")
     def get_owner_push_plan(
@@ -8506,4 +8761,12 @@ def create_app(settings: Settings | None = None, start_scheduler: bool = True) -
         ).all()
         return [audit_out(item) for item in rows]
 
+    from .project_first import install as install_project_first
+    install_project_first(app, settings, get_db, current_user, factory)
+    from .email_auth import install as install_email_auth
+    install_email_auth(app, settings, get_db, current_user)
+    from .workbench import install as install_workbench
+    install_workbench(app, settings, get_db, current_user, factory)
+    from .workbench_delivery import install as install_delivery
+    install_delivery(app, settings, get_db, current_user, factory)
     return app

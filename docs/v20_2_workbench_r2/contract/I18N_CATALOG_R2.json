@@ -1,0 +1,678 @@
+{
+  "language": [
+    "Language",
+    "语言"
+  ],
+  "projects": [
+    "Projects",
+    "项目"
+  ],
+  "chat": [
+    "Conversation",
+    "对话"
+  ],
+  "codex": [
+    "Codex execution",
+    "Codex 执行"
+  ],
+  "prototype": [
+    "INTERACTIVE PROTOTYPE · No real email, sign-in, AI request or code execution.",
+    "交互原型 · 不发送真实邮件、不登录服务、不调用模型、不执行代码。"
+  ],
+  "newProject": [
+    "New project",
+    "新建项目"
+  ],
+  "importProject": [
+    "Import",
+    "导入项目"
+  ],
+  "newChat": [
+    "New chat",
+    "新建聊天"
+  ],
+  "localNote": [
+    "Local macOS workbench<br>Conversations and execution stay in context.",
+    "本机 macOS 工作台<br>对话与执行始终保持上下文。"
+  ],
+  "allProjects": [
+    "My projects",
+    "我的项目"
+  ],
+  "overview": [
+    "Overview",
+    "概览"
+  ],
+  "sources": [
+    "Sources",
+    "资料"
+  ],
+  "team": [
+    "AI team",
+    "AI 团队"
+  ],
+  "tasks": [
+    "Tasks",
+    "任务"
+  ],
+  "deliverables": [
+    "Deliverables",
+    "成果"
+  ],
+  "introTitle": [
+    "What would you like to work on?",
+    "今天想推进什么工作？"
+  ],
+  "intro": [
+    "Describe your goal here. Start a conversation now; files and project setup can be added when needed.",
+    "直接在下方描述目标，就能开始对话。资料与项目配置可以按需补充，不是开聊前置条件。"
+  ],
+  "suggest1": [
+    "Discuss an improvement before writing code",
+    "先讨论一项改进，暂时不写代码"
+  ],
+  "suggest2": [
+    "Explain a screenshot or a document",
+    "一起看看截图或文档"
+  ],
+  "suggest3": [
+    "Continue an existing project task",
+    "接着推进现有项目任务"
+  ],
+  "messagePlaceholder": [
+    "Message your AI teammate…",
+    "向 AI 团队描述你的需求…"
+  ],
+  "composerNote": [
+    "Enter to send · Shift+Enter for a new line · Sending a message does not approve code changes.",
+    "Enter 发送 · Shift+Enter 换行 · 发送聊天消息不等于批准代码修改。"
+  ],
+  "send": [
+    "Send",
+    "发送"
+  ],
+  "plugins": [
+    "Tools",
+    "工具"
+  ],
+  "route": [
+    "AI discussion",
+    "AI 对话"
+  ],
+  "noFiles": [
+    "No files required",
+    "无需先导入资料"
+  ],
+  "newChatTitle": [
+    "A new conversation",
+    "新的对话"
+  ],
+  "demo": [
+    "Demo only",
+    "仅演示"
+  ],
+  "you": [
+    "You",
+    "你"
+  ],
+  "assistant": [
+    "AI discussion",
+    "AI 对话"
+  ],
+  "reply": [
+    "I can help turn this into a clear task. Let’s confirm the desired outcome and constraints here. When the plan is ready, review the exact handoff in the execution pane. No code changes have been started.",
+    "可以。我们先在这里明确目标和约束，再整理成可执行任务。准备好后，右侧会展示准确的交接内容供你审查。当前没有启动任何代码修改。"
+  ],
+  "handoff": [
+    "Prepare a Codex handoff",
+    "准备交给 Codex"
+  ],
+  "emptyExecTitle": [
+    "Work together, in one place",
+    "在同一页，把工作接上"
+  ],
+  "emptyExec": [
+    "Keep discussing on the left while Codex works here. Scope, activity, changes and results will appear in this pane.",
+    "中间继续讨论，右侧查看 Codex 的执行过程。改动范围、活动、差异和成果都在这里。"
+  ],
+  "step1": [
+    "Discuss and clarify",
+    "讨论并澄清需求"
+  ],
+  "step2": [
+    "Review scope and approve",
+    "审查范围并明确批准"
+  ],
+  "step3": [
+    "Run, check and return results",
+    "执行、检查并回传成果"
+  ],
+  "rightFoot": [
+    "Your conversation remains available while a task runs. Approvals apply only to the reviewed task and scope.",
+    "执行中仍能继续对话。批准仅适用于已审查的具体任务与范围。"
+  ],
+  "reviewNeeded": [
+    "Review needed",
+    "等待审查"
+  ],
+  "approved": [
+    "Approved · not started",
+    "已批准 · 尚未执行"
+  ],
+  "running": [
+    "Running · demo",
+    "执行中 · 演示"
+  ],
+  "done": [
+    "Completed · demo",
+    "已完成 · 演示"
+  ],
+  "cancelled": [
+    "Stopped · demo",
+    "已停止 · 演示"
+  ],
+  "execTitle": [
+    "Refine the workbench empty state",
+    "改进工作台空状态提示"
+  ],
+  "execScope": [
+    "This prototype demonstrates a scoped task, separate approval and start, streaming activity, and a result returned to the conversation.",
+    "此原型展示范围明确的任务、独立批准与开始、执行活动以及结果回传对话。"
+  ],
+  "target": [
+    "Target",
+    "目标"
+  ],
+  "targetValue": [
+    "Isolated development workspace",
+    "隔离开发工作区"
+  ],
+  "allowed": [
+    "Scope",
+    "范围"
+  ],
+  "allowedValue": [
+    "One UI change + focused test",
+    "一项界面改进＋定向测试"
+  ],
+  "reviewer": [
+    "Reviewer",
+    "复核"
+  ],
+  "reviewValue": [
+    "Independent, read-only session",
+    "独立只读会话"
+  ],
+  "approve": [
+    "Approve this scope · demo",
+    "批准此范围 · 演示"
+  ],
+  "start": [
+    "Start Codex · demo",
+    "开始 Codex 执行 · 演示"
+  ],
+  "stop": [
+    "Stop task · demo",
+    "停止任务 · 演示"
+  ],
+  "viewChanges": [
+    "View changes",
+    "查看差异"
+  ],
+  "event0": [
+    "Execution accepted",
+    "执行已接收"
+  ],
+  "event1": [
+    "Inspecting the approved files",
+    "检查已批准的文件"
+  ],
+  "event2": [
+    "Proposing a focused change",
+    "生成限定范围的改动"
+  ],
+  "event3": [
+    "Checking the change",
+    "验证改动"
+  ],
+  "event4": [
+    "Read-only review completed",
+    "独立只读复核完成"
+  ],
+  "returned": [
+    "The demonstration task has finished. Its activity and sample diff remain in the execution pane. You can keep discussing the next change here. No actual files or model calls were involved.",
+    "演示任务已结束。右侧保留活动与示例差异，你可以继续在这里讨论下一项改进。本次没有修改实际文件，也没有调用模型。"
+  ],
+  "sampleDiff": [
+    "- Import sources before starting.\n+ Describe what you need. Sources are optional.",
+    "- 开始前请先导入资料。\n+ 直接描述你的需求，资料按需添加。"
+  ],
+  "addImage": [
+    "Add images",
+    "添加图片"
+  ],
+  "addFiles": [
+    "Add files",
+    "添加文件"
+  ],
+  "useSources": [
+    "Use project sources",
+    "引用项目资料"
+  ],
+  "previewNote": [
+    "Files are only previewed locally in this prototype. Nothing is sent or imported into TWOS.",
+    "原型仅在本页预览附件，不会发送，也不会导入真实 TWOS。"
+  ],
+  "pluginTitle": [
+    "Tools for this conversation",
+    "本次对话的工具"
+  ],
+  "pluginName": [
+    "Local project search",
+    "本机项目检索"
+  ],
+  "pluginDescription": [
+    "Selection demo only. The product must show actual tool permissions and receipts.",
+    "仅演示选择。实际产品必须展示真实权限与调用回执。"
+  ],
+  "doneButton": [
+    "Done",
+    "完成"
+  ],
+  "cancel": [
+    "Cancel",
+    "取消"
+  ],
+  "projectLabel": [
+    "Project name",
+    "项目名称"
+  ],
+  "create": [
+    "Create and open chat",
+    "创建并打开聊天"
+  ],
+  "importNote": [
+    "In the product, select an authorized project package and preview its scope. This prototype creates a demo imported project; it does not read a package.",
+    "实际产品需选择已获准项目包并预览范围。此原型只创建导入项目示例，不读取项目包。"
+  ],
+  "importCreate": [
+    "Open an imported project · demo",
+    "打开导入项目 · 演示"
+  ],
+  "back": [
+    "Back to workbench",
+    "返回工作台"
+  ],
+  "detailDescription": [
+    "Project management is a side destination. Return to the same conversation, draft and execution without losing your place.",
+    "项目管理是辅助页面。返回后仍是同一对话、草稿与执行现场，不丢失上下文。"
+  ],
+  "sourceDesc": [
+    "No source is required to start a conversation. Add sources here or attach them directly to a message.",
+    "开始对话无需资料。可以在这里添加资料，也可以直接随消息附上。"
+  ],
+  "teamDesc": [
+    "Connect the discussion model and Codex separately. Show the real connection, model identity and granted scope; never use a logo as proof of a live connection.",
+    "分别连接对话模型与 Codex，显示真实连接、模型身份及授权范围；不能用一个图标冒充真实接入。"
+  ],
+  "tasksDesc": [
+    "Execution tasks are linked to conversations. An ordinary chat message does not automatically become a coding task.",
+    "执行任务与聊天关联。普通聊天消息不会自动变成代码执行任务。"
+  ],
+  "deliverDesc": [
+    "Read outputs, compare versions and return to the conversation that produced them.",
+    "阅读成果、对比版本，并返回产生它的对话。"
+  ],
+  "overviewDesc": [
+    "Goals, recent work and pending decisions live here. The workbench is the default entry, not this overview page.",
+    "这里汇总目标、近期工作与待决定事项。默认入口是工作台，而不是这张概览页。"
+  ],
+  "connectedNotice": [
+    "Design labels only — no live provider is connected in this file.",
+    "设计标签而已：此文件没有连接任何真实模型服务。"
+  ],
+  "toastCreated": [
+    "Project created in prototype memory. No real TWOS data was changed.",
+    "项目仅创建在原型内存中，未更改真实 TWOS 数据。"
+  ],
+  "sourcesEmpty": [
+    "No demo sources yet. You can still send a text message.",
+    "暂无演示资料，仍然可以直接发送文字。"
+  ],
+  "allHidden": [
+    "Keep at least one pane open.",
+    "至少保留一栏展开。"
+  ],
+  "handoffBusy": [
+    "An execution is active. Continue discussing; revise its scope only through a new approval.",
+    "当前任务正在执行。可以继续讨论，变更执行范围需要新的明确批准。"
+  ],
+  "resumeHint": [
+    "Conversations stay scoped to each project.",
+    "聊天始终绑定各自项目。"
+  ],
+  "newImported": [
+    "Imported project",
+    "导入项目"
+  ],
+  "draftSaved": [
+    "Draft remains in this conversation.",
+    "草稿保留在当前聊天。"
+  ],
+  "screenScope": [
+    "Demonstrated state, not a live Codex transcript.",
+    "这是演示状态，不是真实 Codex 执行日志。"
+  ],
+  "screenPreview": [
+    "Preview screens",
+    "流程预览"
+  ],
+  "authPreview": [
+    "Account entry",
+    "注册 / 登录"
+  ],
+  "homePreview": [
+    "Empty home · preview",
+    "空白首页 · 预览"
+  ],
+  "workPreview": [
+    "Project workbench · sample",
+    "项目工作台 · 示例"
+  ],
+  "slogan": [
+    "Lead an AI team. Keep your projects moving forward.",
+    "让你带领一支 AI 团队，把项目持续做成。"
+  ],
+  "starter": [
+    "Enter your idea, then let AI help bring it to life.",
+    "输入你的想法，然后让AI帮你实现"
+  ],
+  "homeNote": [
+    "Start with a thought. No project or file is required.",
+    "先说出想法，无需先建项目或导入资料。"
+  ],
+  "recentChats": [
+    "Recent conversations",
+    "最近对话"
+  ],
+  "saveToProject": [
+    "Save to project",
+    "保存到项目"
+  ],
+  "homeLink": [
+    "Home",
+    "首页"
+  ],
+  "signOut": [
+    "Log out",
+    "退出登录"
+  ],
+  "accountTitle": [
+    "Your TWOS account",
+    "你的 TWOS 账号"
+  ],
+  "accountNote": [
+    "This prototype simulates a TWOS account, separately from model authorization. Nothing is sent to a mail or AI service.",
+    "这里模拟的是 TWOS 账号，与模型授权相互独立。不向邮件或 AI 服务发送任何内容。"
+  ],
+  "authWelcome": [
+    "Welcome to TWOS",
+    "欢迎使用 TWOS"
+  ],
+  "authIntro": [
+    "Your ideas. A team to make them happen.",
+    "你的想法，由 AI 团队一起实现。"
+  ],
+  "authStory": [
+    "Discuss the idea, hand over the work, and keep the result — without losing the conversation.",
+    "讨论想法、交接执行、保留成果，让每一步始终接得上。"
+  ],
+  "register": [
+    "Create account",
+    "注册账号"
+  ],
+  "login": [
+    "Log in",
+    "登录"
+  ],
+  "welcomeHint": [
+    "Create an account with your email, or return to your existing TWOS workspace.",
+    "使用邮箱创建账号，或登录并返回已有的 TWOS 工作环境。"
+  ],
+  "email": [
+    "Email address",
+    "邮箱地址"
+  ],
+  "password": [
+    "Password",
+    "密码"
+  ],
+  "newPassword": [
+    "New password",
+    "新密码"
+  ],
+  "confirmPassword": [
+    "Confirm new password",
+    "确认新密码"
+  ],
+  "continue": [
+    "Continue",
+    "继续"
+  ],
+  "backAuth": [
+    "Back",
+    "返回"
+  ],
+  "alreadyAccount": [
+    "Already have an account?",
+    "已有账号？"
+  ],
+  "noAccount": [
+    "New to TWOS?",
+    "还没有账号？"
+  ],
+  "signupTitle": [
+    "Create your account",
+    "创建你的账号"
+  ],
+  "signupEmailNote": [
+    "Use an email address you can verify. This is a TWOS account, not your ChatGPT login.",
+    "使用可以验证的邮箱。这是 TWOS 账号，不是你的 ChatGPT 登录。"
+  ],
+  "passwordTitle": [
+    "Create a password",
+    "设置密码"
+  ],
+  "passwordRule": [
+    "Use at least 12 characters. Demo password only — do not enter a real password.",
+    "至少 12 个字符。这里只使用演示密码，不要输入真实密码。"
+  ],
+  "sendCode": [
+    "Send verification code",
+    "发送验证码"
+  ],
+  "verifyTitle": [
+    "Check your email",
+    "查看你的邮箱"
+  ],
+  "verifyDesc": [
+    "Enter the six-digit code for the email shown below.",
+    "请输入发送至下方邮箱的六位验证码。"
+  ],
+  "code": [
+    "Verification code",
+    "验证码"
+  ],
+  "verifyEmail": [
+    "Verify email",
+    "验证邮箱"
+  ],
+  "resend": [
+    "Resend code",
+    "重新发送"
+  ],
+  "changeEmail": [
+    "Use a different email",
+    "更换邮箱"
+  ],
+  "codeExpiry": [
+    "The latest code expires in 10 minutes. Resending replaces the previous code.",
+    "最新验证码 10 分钟内有效；重发后旧验证码失效。"
+  ],
+  "demoInbox": [
+    "Open demo inbox",
+    "打开演示收件箱"
+  ],
+  "demoInboxNote": [
+    "SIMULATED EMAIL · This code was not delivered to a real inbox.",
+    "模拟邮件 · 此验证码没有发送至真实邮箱。"
+  ],
+  "verifiedTitle": [
+    "You’re ready to begin",
+    "现在可以开始了"
+  ],
+  "verifiedDesc": [
+    "Your email is verified in this demo. Your new workspace starts empty.",
+    "演示邮箱验证完成。你的新工作环境从空白开始。"
+  ],
+  "enterTwos": [
+    "Enter TWOS",
+    "进入 TWOS"
+  ],
+  "loginTitle": [
+    "Welcome back",
+    "欢迎回来"
+  ],
+  "loginNote": [
+    "Log in to your TWOS account. Your AI services connect separately.",
+    "登录你的 TWOS 账号。AI 服务需另行连接授权。"
+  ],
+  "loginPasswordTitle": [
+    "Enter your password",
+    "输入密码"
+  ],
+  "forgot": [
+    "Forgot password?",
+    "忘记密码？"
+  ],
+  "resetTitle": [
+    "Reset your password",
+    "重置密码"
+  ],
+  "resetNote": [
+    "Enter your email. If this account exists, we’ll send a reset code.",
+    "输入邮箱。如果账号存在，我们会发送重置验证码。"
+  ],
+  "sendReset": [
+    "Send reset code",
+    "发送重置验证码"
+  ],
+  "resetPasswordTitle": [
+    "Set a new password",
+    "设置新密码"
+  ],
+  "resetDone": [
+    "Password reset. Log in with your new password.",
+    "密码已重置，请使用新密码登录。"
+  ],
+  "savePassword": [
+    "Save new password",
+    "保存新密码"
+  ],
+  "demoSecurity": [
+    "DESIGN DEMO: use example credentials only. No real account or mail service is connected; passwords and codes are never persisted. Demo accounts exist only while this page is open.",
+    "设计演示：仅使用示例凭据。未连接真实账号或邮件服务，不持久化密码或验证码；演示账号只存在于本次页面会话。"
+  ],
+  "identityBoundary": [
+    "TWOS account ≠ ChatGPT / Codex authorization. Connecting an AI service comes after sign-in and uses its official flow.",
+    "TWOS 账号不等于 ChatGPT / Codex 授权。登录后需通过对应官方流程连接 AI 服务。"
+  ],
+  "showPassword": [
+    "Show",
+    "显示"
+  ],
+  "hidePassword": [
+    "Hide",
+    "隐藏"
+  ],
+  "invalidEmail": [
+    "Enter a valid email address.",
+    "请输入有效邮箱地址。"
+  ],
+  "passwordShort": [
+    "Use at least 12 characters for this demo password.",
+    "演示密码请使用至少 12 个字符。"
+  ],
+  "passwordMismatch": [
+    "The new passwords do not match.",
+    "两次输入的新密码不一致。"
+  ],
+  "invalidCredentials": [
+    "Email or password is incorrect.",
+    "邮箱或密码不正确。"
+  ],
+  "emailTaken": [
+    "An account cannot be created with these details. Try logging in or recovering access.",
+    "无法使用这些信息创建账号，请尝试登录或找回账号。"
+  ],
+  "invalidCode": [
+    "The code is invalid or has expired. Use the latest code.",
+    "验证码错误或已过期，请使用最新验证码。"
+  ],
+  "rateCode": [
+    "Please wait before requesting another code.",
+    "请稍候再重新发送验证码。"
+  ],
+  "resendDone": [
+    "A new demo code is available. The previous code no longer works.",
+    "已生成新的演示验证码，旧验证码已失效。"
+  ],
+  "verifyFailed": [
+    "This verification attempt has ended. Request a new code.",
+    "本次验证尝试已结束，请获取新验证码。"
+  ],
+  "noProjectHandoff": [
+    "Choose where this work belongs",
+    "选择工作的所属项目"
+  ],
+  "noProjectDesc": [
+    "Your conversation stays intact. Create a project for execution; this does not authorize code changes.",
+    "对话将完整保留。为执行建立项目，这不授予代码修改权限。"
+  ],
+  "connectTitle": [
+    "Connect AI services",
+    "连接 AI 服务"
+  ],
+  "connectDesc": [
+    "The product connects a discussion model and Codex separately through supported authorization. Plan usage may draw from shared Work / Codex allowances; this preview makes no connection.",
+    "产品通过受支持授权分别连接对话模型与 Codex。计划调用可能计入共享的 Work / Codex 额度；本预览不建立真实连接。"
+  ],
+  "connectPreview": [
+    "Continue in demo mode",
+    "继续演示"
+  ],
+  "removeAttachment": [
+    "Remove attachment",
+    "移除附件"
+  ],
+  "execLog0": [
+    "demo task accepted · scope snapshot v1",
+    "演示任务已接收 · 范围快照 v1"
+  ],
+  "execLog1": [
+    "demo workspace: isolated",
+    "演示工作区：已隔离"
+  ],
+  "execLog2": [
+    "sample diff · no real file changes",
+    "示例差异 · 未修改真实文件"
+  ],
+  "execLog3": [
+    "simulated checks · not test evidence",
+    "模拟检查 · 非真实测试证据"
+  ],
+  "execLog4": [
+    "simulated review · no live reviewer",
+    "模拟复核 · 未调用真实复核模型"
+  ]
+}

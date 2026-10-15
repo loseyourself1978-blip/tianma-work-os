@@ -40,7 +40,7 @@ def test_genuine_accepted_state_migrates_preserving_logical_data_and_no_authorit
         assert state['schema'] == historical['schema']
         assert state['counts']['codex_runs'] == state['counts']['push_executions'] == 1
         plan = client.post('/api/maintenance/migration-plan', json={}).json()
-        assert plan['from_schema'] == historical['schema'] and plan['to_schema'] == 'vol20.001'
+        assert plan['from_schema'] == historical['schema'] and plan['to_schema'] == 'vol20.002'
         approved = client.post('/api/maintenance/approve-plan', json={'plan_id':plan['plan_id'],'confirmation':'APPROVE_MAINTENANCE_PLAN'})
         assert approved.status_code == 200, approved.text
         result = client.post('/api/maintenance/confirm', json={'plan_id':plan['plan_id'],'confirmation':'MIGRATE_TWOS'})
@@ -57,7 +57,7 @@ def test_genuine_accepted_state_migrates_preserving_logical_data_and_no_authorit
         assert connection.execute('SELECT state FROM push_executions').fetchone()[0] == 'PUSHED'
     with TestClient(create_app(settings, start_scheduler=False)) as client:
         assert client.post('/api/auth/login',json={'username':historical['username'],'password':historical['password']}).status_code == 200
-        assert client.get('/api/maintenance/status').json()['schema'] == 'vol20.001'
+        assert client.get('/api/maintenance/status').json()['schema'] == 'vol20.002'
         assert client.post('/api/maintenance/migration-plan',json={}).status_code == 409
 
 
@@ -95,7 +95,7 @@ s.execute_plan(sys.argv[3],1,'MIGRATE_TWOS')
     assert result.returncode == 74, result.stderr.decode()
     service.reconcile()
     assert service.journal()['state'] == 'RECOVERY_COMPLETE'
-    assert inspect_database(service.db)['schema'] == ('vol20.001' if activated else historical['schema'])
+    assert inspect_database(service.db)['schema'] == ('vol20.002' if activated else historical['schema'])
     assert not (service.root/'staged.sqlite3').exists()
     verify_preserved_data(Path(historical['database']),service.db)
 

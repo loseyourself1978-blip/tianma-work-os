@@ -1,103 +1,71 @@
 # TWOS Owner Guide
 
-Start here to operate TWOS 1.0.0, schema vol20.001. You decide whether a result
-is acceptable; a successful technical check is not Owner Acceptance.
+Operate the Tianma Work OS **1.0.1 desktop candidate**, schema vol20.001.
+The installer requires public signing, notarization and your manual acceptance
+before GA. Technical tests do not declare Owner Acceptance.
 
 ## 1. What TWOS is
 
-TWOS helps you describe a development Task, authorize a precise instruction
-Pack, run Codex in an isolated workspace, inspect its Result, and deliver only
-the changes you approve. It records each separate decision. Research documents
-in the repository describe ambitions beyond this release.
+TWOS turns a Task into reviewed, explicitly approved work. You create a Project,
+choose a tool and model, review its proposed instructions, and inspect results.
+Apply, Commit and Push remain separate decisions.
 
 ## 2. Supported platform and release identity
 
-TWOS 1.0.0 is a **source-based macOS distribution**, requiring Python 3.11–3.13
-and trusted local Git for development workspaces. Codex is optional until Run.
-A signed/notarized DMG, App Store release, and Windows/Linux acceptance are not
-established. TWOS does not install system tools or accept their licenses for you.
+The desktop candidate targets **Apple Silicon Macs running macOS 26 or later**.
+Intel, Windows and Linux desktop installation are not accepted in this candidate.
+The primary distribution is **Tianma-Work-OS-1.0.1.dmg** containing
+**Tianma Work OS.app** with its own runtime and dependencies.
 
-### Download and Verify SHA256
-
-Open the canonical [1.0.0 Release](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.0).
-Download the `twos-1.0.0-<12-character-commit>.tar.gz` asset, its matching
-`.manifest.json`, `release-1.0.0.json` and `SHA256SUMS` into one new folder.
-The release receipt gives version, full commit, annotated `v1.0.0` tag,
-artifact, SHA-256 and release date. If the page or assets are unavailable,
-distribution is incomplete: do not treat another checkout as the release.
-GitHub's automatic source-code archives are not the supported install package.
-
-In Terminal, change to that download folder and verify **before** extraction:
-
-```sh
-shasum -a 256 -c SHA256SUMS
-```
-
-All listed files must say `OK`. Extract only the `.tar.gz` using Archive Utility.
-The included `RELEASE_SOURCE.json` must match the receipt's full commit and
-version. From the extracted folder, inspect every packaged file using the
-actual archive and manifest paths (replace the uppercase placeholders):
-
-```sh
-python3 scripts/build_release.py --inspect /PATH/TO/ARCHIVE.tar.gz --manifest /PATH/TO/ARCHIVE.manifest.json
-```
-
-Require `verified: true`. A hash detects changed bytes; verify that the download
-came from the canonical publisher account, not an unrelated copy.
+Use the publisher's [official Releases](https://github.com/loseyourself1978-blip/tianma-work-os/releases).
+**The 1.0.1 visual candidate is not yet publicly released.** Wait for its signed,
+notarized installer and release receipt; do not use an unsigned engineering copy
+or disable macOS security. The receipt identifies the version, source commit,
+architecture, installer SHA-256 and notarization. macOS checks the signed,
+notarized app on first open. Maintainer checksum verification remains available
+in [Advanced Source Installation](ADVANCED_INSTALLATION.md).
+The historical [v1.0.0 source release](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.0)
+remains immutable and is an advanced engineering distribution.
 
 ## 3. Fresh installation
 
-This release supports **fresh installation only**, plus backup/restore within
-1.0.0. Do not reuse a 0.17.0 data directory or restore a 0.17.0 backup. Old-version
-upgrades and cross-version restore are outside this release scope and have not
-been validated. Existing installation-version and incompatible-backup checks
-remain enforced. Keep old installations and their data intact. If you already
-have TWOS data, supply new empty `--data-root`, `--runtime-root` and `--log-root`
-directories for this installation; never point these options at old Owner data.
+1. Download **Tianma-Work-OS-1.0.1.dmg** from the official release once available.
+2. Double-click the downloaded installer.
+3. Drag **Tianma Work OS** to **Applications** in the installer window.
+4. Open **Applications → Tianma Work OS** (or use Launchpad).
+5. Follow the progress window and browser First Run.
 
-1. Verify the received archive and retain its adjacent manifest.
-2. Extract it with Archive Utility into a folder you own.
-3. Open Terminal in the extracted `twos-1.0.0-…` folder.
-4. Run `./start-twos`.
-5. Wait for the healthy `http://127.0.0.1:…/twos` URL and open it if the browser does not open.
-
-The first launch creates a private Python environment and installs dependencies
-from `requirements.txt`. It needs the configured Python package service; it
-never uses sudo or installs globally. Installation and First Run do not require
-any Codex/provider request. Keep the initiating terminal open.
+The app carries its runtime; no programming tools or package commands are part
+of this installation. If Git is missing, choose **Install Apple Command Line
+Tools**, complete Apple's visual installer, then **Retry**. If an Apple license
+needs acceptance, choose **Open Xcode**, review it there, then **Retry**.
+TWOS never accepts a system license for you. The desktop creates separate private
+storage and preserves existing source installations and Owner data.
 
 ## 4. First Owner creation
 
-First Run applies only to an installation with **zero Owners**. Select **Start
-Setup**, confirm the installation, and create your username and unique
-password (at least 8 characters). Enter the one-time setup authorization code
-printed in the initiating terminal. Keep it private. After creation, use
-**Log in** on this installation. First Run cannot replace an existing Owner.
+Choose **Start Setup**, confirm initialization, then choose your username and a
+unique password. The desktop supplies the one-time setup authorization privately.
+After account creation you are signed in; on later visits use **Log in** if your
+session expired. Existing Owners cannot be replaced by First Run.
 
 ## 5. Workspace authorization
 
-Choose an exact, dedicated local folder you own and review its path. For Git
-projects, authorize the repository root. Do not select your whole Home, TWOS
-source/data/runtime, an overly broad parent folder or a symlink. Traversal,
-symlink boundaries and incompatible nested Git roots are rejected. Project
-source files are separate from the TWOS database and backups.
-
-First Run creates the initial Project/workspace binding. To create another,
-open **Projects and workspaces**, enter a unique key and name, and select
-**Create Project**. Select that Project, enter its dedicated repository path,
-review it, then select **Authorize Project Workspace**. Creating a Project alone
-does not authorize execution. Repeating authorization for the same directory is
-idempotent. Different projects cannot share or nest workspace directories or
-use linked Git worktrees. Authorization persists across normal restart;
-backup recovery requires explicit reauthorization before new execution.
-Tool Setup opened from this card applies to the Project selected on the card.
+Choose **Create and Authorize My First Project**. This explicitly creates a
+private directory, initializes its local project history and authorizes that
+exact directory. No Run or remote action starts.
+For another Project, enter its name and unique Project ID, select **Create Project**,
+then **Create and Authorize Managed Workspace** for that Project. Creating a
+Project alone grants no execution permission. Repeating authorization is safe.
+Advanced users may instead authorize an existing standalone repository.
 
 ## 6. Guided Codex Tool Setup
 
 You may skip optional tools in First Run and create a Task first. Later open
-Tool Setup, select the trusted installed Codex executable, exact supported
-model and reasoning. Sign in using Codex's own supported authentication when
-required. TWOS does not copy its credential store or ask you to paste provider
+the desktop window’s **Set up Codex** button. Install the official desktop app
+if needed, then select **Sign in through browser**. In your Project, open
+**Guided Tool Setup** and select the exact supported model and reasoning.
+The desktop discovers the installed tool automatically. TWOS does not copy its credential store or ask you to paste provider
 secrets into ordinary UI. Local discovery is different from provider readiness.
 
 ### Configure Artifact Verification
@@ -111,22 +79,9 @@ newline in the expected text. Use a small, non-secret output (contract limit:
 ignored additions), unchanged Git HEAD/index/remotes and a clean source baseline.
 It does not run project code or decide technical, medical or Owner acceptance.
 
-The preset requires a clean committed Git repository. For a new dedicated
-folder, the following complete example creates an initial local baseline.
-Choose a new folder name if it already exists; do not reuse an existing project.
-The sample commit identity is local to this command and does not alter Git settings.
-
-```sh
-mkdir -p "$HOME/TWOS Projects"
-mkdir "$HOME/TWOS Projects/My First Project"
-cd "$HOME/TWOS Projects/My First Project"
-git init --initial-branch=main
-printf '# My First Project\n' > README.md
-git add README.md
-git -c user.name='TWOS Owner' -c user.email='owner@localhost.invalid' commit -m 'Initialize project'
-```
-
-Authorize that exact folder in TWOS. Create a Task instructing Codex to write
+Managed workspaces already have the required initial history baseline. Existing
+repositories must have a clean committed baseline; their maintainer can use the
+advanced installation guide. Create a Task instructing Codex to write
 `first_delivery.txt` containing exactly `TWOS FIRST DELIVERY PASS` and a newline,
 without modifying other files. Enter the same filename and text (including its
 newline) in **Configure Artifact Verification**. After an applied delivery,
@@ -138,15 +93,9 @@ The existing advanced Generate Pack action uses this same binding in a fresh
 installation. Merely opening Tool Setup or Verification performs no provider
 request and runs no verifier.
 
-Advanced operators may explicitly configure a different trusted deterministic
-verifier using `TWOS_LOCAL_VERIFICATION_COMMAND_JSON` when launching TWOS. It is
-an argument-vector JSON array, not shell text; the absolute executable and scripts
-must live outside **all** authorized project and Run directories. Supply the
-same setting on restart. It must emit the `twos.verification.v1` JSONL protocol
-and truthfully check the approved Task. This advanced operator path is separate
-from the supported built-in preset. Malformed configuration blocks startup;
-unsafe or unavailable commands block readiness. A command that merely exits
-zero is not sufficient. Recheck and save tools after changing the verifier.
+Technical operators who need a custom verifier can consult
+[Advanced Source Installation](ADVANCED_INSTALLATION.md). The desktop's supported
+built-in preset does not require custom scripts or environment settings.
 
 ## 7. Readiness versus Save Tool Setup
 
@@ -222,8 +171,15 @@ revision, author and exclusions. Successful review shows a neutral disabled
 **Review completed**. Material dependency or message changes require review
 again when prerequisites permit it; resolve Apply/Validation blockers first.
 Approve the exact proposal, then separately confirm Local Commit. Exact-path
-staging occurs only within that authorized confirmation. Configure the local
-Git author first. Configured Commit hooks run: trust your repository and hooks.
+staging occurs only within that authorized confirmation. If Commit says **NEEDS
+SETUP**, choose **Set Commit identity** beside the blocker or in **Owner Commit**.
+Check the displayed Project, Task and authorized repository, enter your own
+**Commit author name** and **Commit author email**, then choose **Save identity**.
+These fields enter commit history; they are not a login password. They apply only
+to this repository. Nothing is prefilled from another account or global settings.
+After saving, inspect any remaining blockers. Identity changes require a new
+Commit review and approval; they do not repeat Run or Apply. Configured Commit
+hooks run: trust your repository and hooks.
 Hook failure is Commit failure, never permission to Push. Local Commit does not Push.
 
 ## 16. Push
@@ -250,7 +206,7 @@ In Maintenance action choose **Inspect and restore a backup**. Enter the exact
 sealed `.twos-backup` directory. Select Inspect Backup, then Review Restore Plan.
 Read the replacement consequences and protected prior recovery point. Approve
 the Plan, type the displayed confirmation, then Confirm Restore. Log in again
-using the restored account. Only 1.0.0 backups with the supported schema are
+using the restored account. Only 1.0.1 backups with the supported schema are
 eligible. Corrupt, future-format, incompatible-application-version or incompatible-schema bundles
 are rejected. Do not modify bundle members to bypass rejection. Acceptance tests
 must use isolated data, never your normal installation.
@@ -275,6 +231,18 @@ the exact current workspace. Recheck Tool Setup as required before new work.
 Historical Run/Apply/Commit/Push records and approvals cannot authorize replay.
 
 ## 21. Failure recovery
+
+For a rejected local login, use the password for the selected environment.
+If it still fails, do not create a new account or delete data. Build101.21 adds
+**Recover local account…** in the native App window. Finish active work, normally
+quit and reopen TWOS, select the original environment, then use that entry before
+opening the environment. Complete macOS identity verification and personally
+enter/confirm a new password. The exact account and installation are shown before
+confirmation; a private consistent snapshot is required, the original account ID
+and saved work remain, and prior login sessions are revoked. Sign in again and
+read the preserved history without repeating business actions. See
+[local account recovery](VOL20_LOCAL_ACCOUNT_RECOVERY.md) for bilingual steps,
+failure handling and the existing one-time recovery limit.
 
 Read the persisted failure/blocker before acting. Refresh if needed. Unresolved
 maintenance journals prevent ordinary writes. Preserve sealed backups and the
@@ -305,31 +273,31 @@ is authorized. Legacy explicitly configured schedules perform local
 
 | Symptom | Action |
 | --- | --- |
-| Python unavailable | Install trusted Python 3.11–3.13, then relaunch. |
-| Git/Xcode license error | Resolve the system tool/license yourself; TWOS cannot accept legal terms. |
-| Dependency failure | Check private logs/connectivity; run `./start-twos --refresh-dependencies`. |
-| Already running | Open the existing URL; stop that installation before another launch. |
+| Bundled runtime unavailable | Choose Open Diagnostics. Download a fresh official installer and replace the app in Applications; keep your saved data. |
+| Git unavailable | Choose Install Apple Command Line Tools, complete Apple's visual installer, then Retry. |
+| Xcode license error | Choose Open Xcode and review Apple's license/first-launch setup yourself, then Retry. |
+| Startup failure | Read the displayed error code, choose Open Diagnostics, then Retry. Reinstall the official app if the error repeats. |
+| Already running or local connection occupied | Return to the existing TWOS window. Quit the other TWOS instance before Retry; saved data is preserved. |
 | Log in fails | Check installation/username; do not replace existing data with First Run. |
 | Readiness passed, Run blocked | Save Tool Setup, then review current Pack/blocker. |
-| Review Commit unavailable | Confirm APPLIED and PASSED; inspect drift/author blockers. |
+| Review Commit unavailable | Confirm APPLIED and PASSED. For NEEDS SETUP choose Set Commit identity, enter your name/email and Save identity; inspect remaining blockers before Review Commit. |
 | Recovery rejected | Preserve sealed input/recovery point and resolve the shown error. |
 | Browser disconnect | Reload persisted status before submitting another action. |
 
 ## 25. Stop and restart
 
-Press **Control-C in the original launcher terminal** and wait for shutdown.
-Run `./start-twos` from the same source folder to restart. Reuse custom path
-options if provided. Accounts/Tasks persist. Never delete data to fix startup.
+Finish active deliveries, then choose **Tianma Work OS → Quit** and confirm.
+Reopen **Tianma Work OS** from Applications. Owner, Project, Task, configuration
+and saved results remain. A detached execution interrupted during shutdown may
+need reconciliation on return; do not interpret closing the browser as stopping
+the app. Never delete data to repair startup.
 
 ## 26. Where data lives
 
-Default logical data is `~/Library/Application Support/Tianma Work OS`.
-The launcher prints exact data/runtime/log locations; `installation.json`
-records installation identity/port. By default the environment is under
-`~/Library/Caches/Tianma Work OS/<installation-id>/venv` and the private log is
-`~/Library/Logs/Tianma Work OS/<installation-id>/runtime.log`. Both live outside source.
-Use printed paths instead of guessing. Codex credentials remain in Codex's own
-location, outside TWOS backups.
+TWOS chooses private storage automatically. **Open Diagnostics** opens its local
+status folder. Owner data stays outside the application, so replacing the app
+never requires deleting project data. Existing source installations remain
+separate. Codex manages its own credentials; they are excluded from TWOS backups.
 
 ## 27. Protect backups
 
@@ -340,39 +308,16 @@ do not distribute database files or live runtime internals.
 
 ## 28. Known limitations
 
-The canonical Release receipt is authoritative for distribution identity.
-Historical Vol.19 closeout records retain their original dates and conclusions;
-they are not the current download instructions. Fresh installation and 1.0.0
-same-version backup/restore are supported; old-version upgrades and cross-version
-restore remain outside scope. Distribution remains macOS source; signing,
-notarization and self-contained dependency packaging are not established.
-Dependencies resolve supported ranges, not a locked reproducible binary environment.
-External credentialed Git-host Push acceptance, live multi-model aggregation
-and email/calendar integration are not established. LDD live broker execution
-is not authorized. Only the Owner can declare Owner Acceptance PASS.
+The 1.0.1 desktop candidate requires Developer ID signing, Apple notarization,
+Gatekeeper verification and Owner manual acceptance before public GA.
+Only fresh installation and same-version recovery are supported; automatic
+migration from source installations and cross-version restore are not supplied.
+Intel macOS, external credentialed Git-host Push acceptance, live multi-model
+aggregation and email/calendar integration are not established. LDD broker
+execution and medical decisions are not authorized. Owner acceptance is required.
 
-## Advanced / technical operations
+## Advanced Installation
 
-Replace the capitalized placeholders with actual paths:
-
-```sh
-shasum -a 256 ARTIFACT.tar.gz
-python3 scripts/build_release.py --inspect ARTIFACT.tar.gz --manifest MANIFEST.json
-```
-
-Maintainers with a clean Git checkout can run
-`python3 scripts/build_release.py --output /absolute/empty/release-folder`.
-It scans committed HEAD blobs, stages only approved components, rejects prohibited
-content, creates deterministic bytes, hashes them, and independently inspects the
-archive. Build time is source commit time for reproducibility.
-
-Launcher options include `--data-root`, `--runtime-root`, `--log-root`, `--port`,
-`--no-browser`, `--detach`, `--check`, `--refresh-dependencies`. Use isolated roots
-for tests. For detached runtimes, verify that the PID belongs to the printed
-installation before SIGTERM, then repeat the identical launcher command. Never
-kill an unrelated process using a stale PID.
-
-Technical records: [contract](runtime/VOL19_19_4_SECURITY_RELEASE_HARDENING_CONTRACT_v0.1.md),
-[security audit](runtime/VOL19_19_4_SECURITY_AUDIT_v0.1.md),
-[package manifest](runtime/VOL19_19_4_RELEASE_PACKAGE_MANIFEST_v0.1.md),
-[implementation gate](runtime/VOL19_19_4_SECURITY_RELEASE_HARDENING_IMPLEMENTATION_GATE_v0.1.md).
+Developers and technical operators may use [Advanced Source Installation](ADVANCED_INSTALLATION.md).
+The source launcher and source archives remain supported as an advanced path.
+They do not replace the mandatory visual installation gate.

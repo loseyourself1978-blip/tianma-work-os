@@ -5,6 +5,7 @@ import json
 import re
 import sqlite3
 import subprocess
+import sys
 import threading
 import time
 from contextlib import closing
@@ -135,7 +136,9 @@ def make_source_repo(tmp_path: Path) -> Path:
 def make_fake_codex(tmp_path: Path) -> Path:
     executable = tmp_path / "fake-codex"
     executable.write_text(
-        """#!/usr/bin/env python3
+        # The fixture must use the test interpreter, not a PATH-dependent
+        # system Python shim. This changes no product execution boundary.
+        "#!" + sys.executable + "\n" + """
 import hashlib
 import json
 import os
@@ -173,7 +176,7 @@ if sys.argv[1:] == [
         message = json.loads(line)
         method = message.get("method")
         if method == "initialize":
-            assert message["params"]["clientInfo"]["version"] == "1.0.0"
+            assert message["params"]["clientInfo"]["version"] == "1.0.1"
             print(json.dumps({
                 "id": message["id"],
                 "result": {
@@ -632,6 +635,27 @@ emit({
     return executable
 
 
+def test_fake_codex_uses_test_interpreter_despite_path_shadowing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_codex = make_fake_codex(tmp_path)
+    shadow = tmp_path / "shadow-bin"
+    shadow.mkdir()
+    marker = shadow / "unexpected-interpreter-used"
+    python_shim = shadow / "python3"
+    python_shim.write_text(
+        '#!/bin/sh\nprintf unexpected > "${0%/*}/unexpected-interpreter-used"\nexit 43\n'
+    )
+    python_shim.chmod(0o755)
+    monkeypatch.setenv("PATH", str(shadow))
+    result = subprocess.run(
+        [str(fake_codex), "--version"], capture_output=True, text=True, timeout=5,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "codex-cli 0.144.4"
+    assert not marker.exists()
+
+
 def make_detection_codex(
     tmp_path: Path,
     name: str,
@@ -823,7 +847,8 @@ def test_owner_can_check_and_assign_local_codex_without_execution_side_effects(t
     executable = make_fake_codex(tmp_path)
     with make_client(tmp_path, source_repo, executable) as client:
         headers = init_and_login(client)
-        page = client.get("/")
+        # R2 primary is /projects; the existing advanced setup remains /twos.
+        page = client.get("/twos")
         assert "Set up Codex" in page.text
         assert "Check availability" in page.text
         assert "Save and assign" in page.text
@@ -1226,15 +1251,20 @@ def test_twos_short_url_uses_canonical_static_asset_base(tmp_path: Path) -> None
         page = client.get("/twos")
         assert page.status_code == 200
         assert page.url.path == "/twos"
-        assert client.get("/").history[0].headers["location"] == "/twos"
+        assert client.get("/").history[0].headers["location"] == "/projects"
         legacy = client.get(
             "/static_cockpit/vol12_static_mvp/twos_command_center.html",
             follow_redirects=False,
         )
         assert legacy.status_code == 307
         assert legacy.headers["location"] == "/twos"
-        assert 'href="/static_cockpit/vol12_static_mvp/styles.css?v=1.0.0"' in page.text
-        assert 'src="/static_cockpit/vol12_static_mvp/twos_command_center.js?v=1.0.0"' in page.text
+        assets = re.findall(r'(?:href|src)="(/static_cockpit/[^" ]+\?sha256=[a-f0-9]{64})"', page.text)
+        assert len(assets) == 2
+        assert page.headers["cache-control"] == "no-store"
+        for asset in assets:
+            response = client.get(asset)
+            assert response.status_code == 200
+            assert hashlib.sha256(response.content).hexdigest() == asset.split("sha256=")[1]
         stylesheet = client.get("/static_cockpit/vol12_static_mvp/styles.css")
         javascript = client.get("/static_cockpit/vol12_static_mvp/twos_command_center.js")
         assert stylesheet.status_code == 200

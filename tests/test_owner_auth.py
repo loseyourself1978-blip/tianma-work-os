@@ -905,7 +905,16 @@ def test_frontend_uses_canonical_local_assets_and_product_auth_contract() -> Non
     for state in ("loading", "signed_out", "signing_up", "logging_in", "signed_in", "error"):
         assert state in javascript
     assert "alert(" not in javascript
-    assert "localStorage" not in javascript
+    # Persistent navigation is explicitly permitted; authentication is not.
+    # Only the allowlisted numeric Task/Run and view record may be written.
+    persistence = javascript.split("function saveFlowContext()", 1)[1].split("function selectFlowView", 1)[0]
+    assert "JSON.stringify({task_id: task.id" in persistence
+    assert "run_id: state.selectedActivityRunId" in persistence
+    assert 'view: state.flowView || "work"' in persistence
+    assert javascript.count("localStorage.setItem") == persistence.count("localStorage.setItem") == 2
+    for secret in ("password", "token", "cookie", "credentials", "state.user"):
+        assert secret not in persistence
+    assert "document.cookie" not in javascript
     assert "sessionStorage" not in javascript
     assert "probeAmbiguousSignupSession" in javascript
     assert "authenticatedUserFromPayload" in javascript
@@ -913,7 +922,8 @@ def test_frontend_uses_canonical_local_assets_and_product_auth_contract() -> Non
     assert '[400, 409].indexOf(error.status)' in javascript
     assert '["network", "payload"].indexOf(error.category)' in javascript
     assert 'mode === "login" && error.code === "INVALID_CREDENTIALS"' in javascript
-    assert "Multi-Model Orchestration Workbench" in visible_text
+    assert "Your workbench" in visible_text
+    assert all(label in visible_text for label in ("Task and configuration", "Processing and your decisions", "Results and history"))
     assert "Model assignments" in visible_text
     assert "Model execution evidence" in visible_text
     for column in ("Capability", "Assigned model", "Responsibility", "Readiness", "Real / Simulated"):

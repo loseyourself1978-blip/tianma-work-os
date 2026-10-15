@@ -42,6 +42,7 @@ VOL19_OWNER_COMMIT_PUSH_SCHEMA_VERSION = "vol19.003"
 VOL19_FRESH_INSTALL_SCHEMA_VERSION = "vol19.004"
 VOL19_GUIDED_DELIVERY_SCHEMA_VERSION = "vol19.005"
 VOL20_PROJECT_WORKSPACE_SCHEMA_VERSION = "vol20.001"
+VOL20_WORKBENCH_SCHEMA_VERSION = "vol20.002"
 
 
 DEFAULT_PROJECTS = [
@@ -330,6 +331,9 @@ def make_session_factory(engine: Engine) -> sessionmaker[Session]:
 
 
 def initialize_database(engine: Engine, *, seed_default_projects: bool = True) -> None:
+    # Register extensions before inspecting structure, so startup migration
+    # creates its recovery point before any new table can be added.
+    from . import project_first_models, workbench_models
     from .maintenance import protect_startup_migration
     if protect_startup_migration(engine, seed_default_projects=seed_default_projects):
         return
@@ -337,6 +341,8 @@ def initialize_database(engine: Engine, *, seed_default_projects: bool = True) -
 
 
 def _initialize_database(engine: Engine, *, seed_default_projects: bool = True) -> None:
+    from . import project_first_models  # register the additive, versioned R2 extension
+    from . import workbench_models  # account-scoped 20.2 conversations and email challenges
     # Reconcile the one SQLite shape that requires a table rebuild before
     # creating any new Vol.19 tables.  This keeps an unsafe legacy schema from
     # being partially advanced merely by ``create_all``.
@@ -474,6 +480,8 @@ def _initialize_database(engine: Engine, *, seed_default_projects: bool = True) 
             session.add(SchemaVersion(version=VOL19_GUIDED_DELIVERY_SCHEMA_VERSION))
         if not session.scalar(select(SchemaVersion).where(SchemaVersion.version == VOL20_PROJECT_WORKSPACE_SCHEMA_VERSION)):
             session.add(SchemaVersion(version=VOL20_PROJECT_WORKSPACE_SCHEMA_VERSION))
+        if not session.scalar(select(SchemaVersion).where(SchemaVersion.version == VOL20_WORKBENCH_SCHEMA_VERSION)):
+            session.add(SchemaVersion(version=VOL20_WORKBENCH_SCHEMA_VERSION))
         if seed_default_projects:
             seed_projects(session)
         seed_registry(session)

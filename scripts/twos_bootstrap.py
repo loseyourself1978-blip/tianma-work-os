@@ -31,8 +31,8 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 SUPPORTED_PYTHON_MIN = (3, 11)
 SUPPORTED_PYTHON_MAX = (3, 14)
-APP_VERSION = "1.0.0"
-LATEST_SCHEMA = "vol20.001"
+APP_VERSION = "1.0.1"
+LATEST_SCHEMA = "vol20.002"
 DEFAULT_HEALTH_TIMEOUT = 60.0
 INSTALLATION_ID_RE = re.compile(r"^install_[a-f0-9]{32}$")
 SENSITIVE_CHILD_PREFIXES = (

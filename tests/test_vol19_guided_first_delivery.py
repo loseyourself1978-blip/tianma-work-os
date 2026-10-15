@@ -105,7 +105,9 @@ def counts(client):
 
 
 @pytest.mark.parametrize('version,status', [('0.100.0', 'Needs Upgrade'), ('0.144.3', 'Needs Upgrade'),
-    ('0.144.4', 'Not checked'), ('0.153.4', 'Not checked'), ('garbage', 'Needs Setup')])
+    ('0.144.4', 'Not checked'), ('0.153.4', 'Not checked'), ('garbage', 'Needs Setup'),
+    ('0.144.4-alpha.1', 'Needs Upgrade'), ('0.155.0-alpha.16', 'Not checked'),
+    ('0.155.0-invalid!suffix', 'Needs Setup')])
 def test_cli_version_is_truthful_and_minimum_is_enforced(tmp_path, version, status):
     runner = local_runner(tmp_path, version=version)
     found = discovery(CodexAdapter(Settings(database_url='sqlite://', codex_executable=str(runner))))
@@ -412,7 +414,7 @@ def test_selecting_an_available_model_reenables_only_the_explicit_check():
 const state = {guidedToolDiscovery: {status: 'Not checked'}, guidedToolChecked: {ready: true}};
 const nodes = {'guided-tool-save': {disabled: false}, 'guided-tool-check': {disabled: true},
   'guided-model': {value: 'gpt-6-astra'}, 'guided-effort': {value: 'xhigh'}, 'guided-tool-state': {},
-  'guided-auth': {}, 'guided-tool-close': {}};
+  'guided-auth': {}, 'guided-tool-close': {}, 'guided-tool-choice': {}, 'guided-verifier-confirm': {}};
 function byId(id) { return nodes[id]; }
 ''' + function + '''
 guidedToolSelectionsChanged();
@@ -441,6 +443,8 @@ const nodes = {};
 function byId(id) { return nodes[id] ||= {replaceChildren() {}, appendChild() {}}; }
 function selectedTask() { return task; }
 function currentCodexRun() { return run; }
+function ownerDeliveryParts() { return {}; }
+function ownerPushNeedsDestination() { return false; }
 function performAction() { calls += 1; }
 function approveApplyPlan() { calls += 1; }
 const document = {createElement() { return {setAttribute() {}}; }};

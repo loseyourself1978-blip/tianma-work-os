@@ -127,7 +127,7 @@ def test_standard_startup_guided_verifier_boundary(tmp_path, configuration):
         code = next(line.split(":", 1)[1].strip() for line in lines
                     if line.startswith("Setup authorization code:"))
         with httpx.Client(base_url=f"http://127.0.0.1:{port}", timeout=30, trust_env=False) as client:
-            assert client.get("/api/health").json()["schema"] == "vol20.001"
+            assert client.get("/api/health").json()["schema"] == "vol20.002"
             assert client.post("/api/setup/start", json={"confirmation": "START_FIRST_RUN"}).status_code == 200
             assert client.post("/api/setup/start", json={"confirmation": "CONFIRM_INSTALLATION"}).status_code == 200
             password = "test-" + secrets.token_urlsafe(32)

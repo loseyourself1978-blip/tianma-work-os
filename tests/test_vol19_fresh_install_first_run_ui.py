@@ -7,6 +7,7 @@ import re
 import signal
 import shutil
 import subprocess
+import time
 from pathlib import Path
 
 
@@ -55,11 +56,11 @@ def _geometry_fixture(surface: str) -> str:
     page = _source(HTML)
     styles = _source(STYLES)
     page = page.replace(
-        '<link rel="stylesheet" href="/static_cockpit/vol12_static_mvp/styles.css?v=1.0.0">',
+        '<link rel="stylesheet" href="/static_cockpit/vol12_static_mvp/styles.css?v=1.0.1">',
         "<style>" + styles + "</style>",
     )
     page = page.replace(
-        '<script src="/static_cockpit/vol12_static_mvp/twos_command_center.js?v=1.0.0" defer></script>',
+        '<script src="/static_cockpit/vol12_static_mvp/twos_command_center.js?v=1.0.1" defer></script>',
         "",
     )
     page = page.replace(
@@ -139,6 +140,8 @@ def _geometry_fixture(surface: str) -> str:
   }).filter((item) => item.left < -tolerance || item.right > clientWidth + tolerance || item.ownScrollWidth > item.ownClientWidth + tolerance);
   const rootRect = root.getBoundingClientRect();
   const result = {
+    measuredAt: Date.now(),
+    measurementPhase: "CHILD_MEASURED",
     innerWidth: window.innerWidth,
     clientWidth,
     documentScrollWidth: document.documentElement.scrollWidth,
@@ -163,6 +166,47 @@ def _geometry_fixture(surface: str) -> str:
 
 
 def _browser_geometry(tmp_path: Path, *, surface: str, width: int) -> dict[str, object]:
+    safari = os.environ.get("TWOS_SAFARI_GEOMETRY_URL")
+    if safari and surface != 'fixture':  # synthetic process-failure tests still exercise the Chrome harness
+        import hashlib
+        import urllib.request
+        import urllib.error
+        from urllib.parse import urlparse
+        assert urlparse(safari).hostname == '127.0.0.1'
+        fixture = _geometry_fixture(surface)
+        payload = json.dumps({'html': fixture, 'width': width, 'surface': surface,
+                              'test': os.environ.get('PYTEST_CURRENT_TEST', '')}).encode()
+        prefix = tmp_path / f'safari-{surface}-{width}'
+        prefix.with_suffix('.html').write_text(fixture)
+        diagnostic = {'width': width, 'surface': surface,
+                      'test': os.environ.get('PYTEST_CURRENT_TEST', ''),
+                      'fixture_sha256': hashlib.sha256(fixture.encode()).hexdigest(),
+                      'request_sha256': hashlib.sha256(payload).hexdigest(),
+                      'state': 'REQUESTED', 'started_at': time.time()}
+        diagnostic_path = prefix.with_suffix('.transport.json')
+        diagnostic_path.write_text(json.dumps(diagnostic, indent=2))
+        request = urllib.request.Request(safari + 'measure', data=payload, headers={'Content-Type':'application/json'})
+        try:
+            with urllib.request.urlopen(request, timeout=15) as response:
+                receipt = json.load(response)
+        except Exception as exc:
+            diagnostic.update(state='FAILED', exception_type=type(exc).__name__, finished_at=time.time())
+            if isinstance(exc, urllib.error.HTTPError):
+                raw=exc.read(4096)
+                diagnostic.update(http_status=exc.code, response_sha256=hashlib.sha256(raw).hexdigest())
+                try:
+                    code=json.loads(raw).get('error')
+                    if type(code) is str and re.fullmatch('[A-Z_]{1,80}',code):diagnostic['error_code']=code
+                except (ValueError,AttributeError):pass
+            diagnostic_path.write_text(json.dumps(diagnostic, indent=2))
+            raise
+        diagnostic.update(state='RESPONDED', finished_at=time.time(), receipt_id=receipt.get('id'))
+        diagnostic_path.write_text(json.dumps(diagnostic, indent=2))
+        (tmp_path / f'safari-{surface}-{width}.json').write_text(json.dumps(receipt, indent=2))
+        assert receipt['fixture_sha256'] == hashlib.sha256(fixture.encode()).hexdigest()
+        assert receipt['width'] == width and not receipt.get('error'), receipt
+        assert receipt['method'] == 'ACTUAL_SAFARI_NATIVE_TAB_FIXED_WIDTH_IFRAME'
+        return receipt['geometry']
     browser = _headless_browser()
     page = tmp_path / f"{surface}-{width}.html"
     # macOS headless Chrome clamps its outer window to >=500 CSS pixels.
@@ -202,32 +246,90 @@ def _browser_geometry(tmp_path: Path, *, surface: str, width: int) -> dict[str, 
         "--dump-dom",
         page.as_uri(),
     ]
-    process = subprocess.Popen(
-        command,
-        cwd=ROOT,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        start_new_session=True,
-    )
+    started_at = time.time()
+    termination = "natural"
+    process = None
+    stdout = stderr = ""
+    output_drained = False
+    process_error = None
+    timeout_intervals = []
+
+    def retain_partial(exc):
+        nonlocal stdout, stderr
+        timeout_intervals.append(exc.timeout)
+        # TimeoutExpired output is bytes even with text=True. It is cumulative,
+        # not a new chunk to append. Never infer a successful run from it.
+        if exc.output is not None:
+            stdout = exc.output
+        if exc.stderr is not None:
+            stderr = exc.stderr
+
     try:
-        stdout, stderr = process.communicate(timeout=10)
-    except subprocess.TimeoutExpired:
-        # The macOS Chrome wrapper can keep its browser process alive after
-        # --dump-dom has emitted the complete document. Terminate the isolated
-        # process group and use only the DOM it already rendered.
-        os.killpg(process.pid, signal.SIGTERM)
+        process = subprocess.Popen(
+            command,
+            cwd=ROOT,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            start_new_session=True,
+        )
         try:
-            stdout, stderr = process.communicate(timeout=5)
-        except subprocess.TimeoutExpired:
-            os.killpg(process.pid, signal.SIGKILL)
-            stdout, stderr = process.communicate(timeout=5)
-    match = re.search(
-        r'<pre id="twos-geometry-output">(.*?)</pre>',
-        stdout,
-        re.DOTALL,
-    )
-    assert match is not None, stderr[-2000:]
+            stdout, stderr = process.communicate(timeout=10)
+        except subprocess.TimeoutExpired as exc:
+            retain_partial(exc)
+            termination = "communicate_10s_SIGTERM"
+            # Only our isolated process group. Signal denial remains a failure;
+            # no escalation, alternative target, or partial-DOM success fallback.
+            os.killpg(process.pid, signal.SIGTERM)
+            try:
+                stdout, stderr = process.communicate(timeout=5)
+            except subprocess.TimeoutExpired as exc:
+                retain_partial(exc)
+                termination = "communicate_10s_SIGTERM_5s_SIGKILL"
+                os.killpg(process.pid, signal.SIGKILL)
+                try:
+                    stdout, stderr = process.communicate(timeout=5)
+                except subprocess.TimeoutExpired as exc:
+                    retain_partial(exc)
+                    raise
+        output_drained = True
+    except BaseException as exc:
+        process_error = {'type': type(exc).__name__, 'errno': getattr(exc, 'errno', None)}
+        raise
+    finally:
+        raw_out = stdout if isinstance(stdout, bytes) else stdout.encode()
+        raw_err = stderr if isinstance(stderr, bytes) else stderr.encode()
+        match = re.search(r'<pre id="twos-geometry-output">(.*?)</pre>',
+                          raw_out.decode('utf-8', 'replace'), re.DOTALL)
+        measured_at = None
+        if match:
+            try:
+                measured_at = json.loads(html_module.unescape(match.group(1))).get('measuredAt')
+            except (ValueError, AttributeError):
+                pass  # The actual geometry assertion below still rejects it.
+        code = process.poll() if process is not None else None
+        if process is not None:
+            for pipe in (process.stdout, process.stderr):
+                pipe.close()  # Owned handles only; this does not claim child exit.
+        diagnostic = tmp_path / f"geometry-{surface}-{width}"
+        diagnostic.mkdir(exist_ok=True)
+        # Fixture output only. Persist bounded partial bytes even when cleanup
+        # itself raises; missing EOF/exit is explicit, never a successful result.
+        (diagnostic / 'stdout.html').write_bytes(raw_out[:4_000_000])
+        (diagnostic / 'stderr.txt').write_bytes(raw_err[:4_000_000])
+        (diagnostic / 'receipt.json').write_text(json.dumps({
+            'surface':surface,'width':width,'started_at':started_at,'ended_at':time.time(),
+            'test_case':os.environ.get('PYTEST_CURRENT_TEST', '').split(' (')[0],
+            'profile':str(profile),'pid':process.pid if process is not None else None,
+            'return_code':code if code is not None else 'UNKNOWN',
+            'signal':-code if code is not None and code < 0 else None,'termination':termination,
+            'process_error':process_error,'timeout_intervals':timeout_intervals,
+            'marker_found':match is not None,'stdout_bytes':len(raw_out),
+            'stderr_bytes':len(raw_err),'output_complete':output_drained and len(raw_out)<=4_000_000 and len(raw_err)<=4_000_000,
+            'fixture_written':page.exists(),'measurement_timestamp':measured_at,
+            'phase':'PROCESS_ERROR' if process_error else 'PARENT_MARKER_RECEIVED' if match else 'PARENT_MARKER_MISSING',
+        },indent=2))
+    assert match is not None, f"{diagnostic}: {stderr[-2000:]}"
     return json.loads(html_module.unescape(match.group(1)))
 
 

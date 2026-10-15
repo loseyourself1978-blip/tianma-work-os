@@ -148,7 +148,7 @@ def test_fresh_owner_project_authorize_prepare_run_apply_and_restart(tmp_path):
         assert client.app.state.settings.source_repo == first
     with TestClient(create_app(settings, start_scheduler=False)) as client:
         login(client)
-        assert client.get('/api/health').json()['schema'] == 'vol20.001'
+        assert client.get('/api/health').json()['schema'] == 'vol20.002'
         assert client.get(f'/api/projects/{project}/workspace').json()['authorized']
         guide = client.get(f'/api/tasks/{task}/first-delivery').json()
         assert guide['stage'] == 'Commit'  # Apply is validated; Commit remains a separate Owner gate.
@@ -214,7 +214,7 @@ def test_ui_release_and_normal_product_entrypoints():
     root = Path(__file__).resolve().parents[1]
     html = (root/'static_cockpit/vol12_static_mvp/twos_command_center.html').read_text()
     js = (root/'static_cockpit/vol12_static_mvp/twos_command_center.js').read_text()
-    assert '<title>TWOS 1.0.0</title>' in html
+    assert '<title>TWOS 1.0.1</title>' in html
     assert 'Vol.17' not in html
     for identifier in ['create-project','authorize-project-workspace','artifact-verification-save']:
         assert f'id="{identifier}"' in html
@@ -371,14 +371,16 @@ def test_workspace_card_tool_setup_binds_selected_project_not_selected_task():
     listener = re.search(r'byId\("project-tool-setup"\)\.addEventListener\("click", (function \(\) \{.*?\})\);', source)[1]
     harness = '''
 const assert = require('assert/strict');
-const state = {};
+const state = {pending:new Set(),taskSelectionEpoch:1};
 const nodes = {};
-function byId(id) { return nodes[id] ||= {value:'',showModal(){this.open=true;}}; }
+function byId(id) { return nodes[id] ||= {value:'',showModal(){this.open=true;},focus(){}}; }
 function selectedTask(){return {id:1,project_id:11};}
 function productActionMessage(e){return e.message;}
+class ApiError extends Error{}
+function renderGuidedToolControls(){}
 let calls=[];
 async function api(path){calls.push(path);throw new Error('stop after recording passive request');}
-''' + function('guidedProjectQuery') + function('openGuidedToolSetup') + '''
+''' + function('guidedProjectQuery') + function('openGuidedToolSetup') + function('loadGuidedToolChoice') + '''
 (async()=>{
   byId('workspace-project').value='22';
   const click = LISTENER;

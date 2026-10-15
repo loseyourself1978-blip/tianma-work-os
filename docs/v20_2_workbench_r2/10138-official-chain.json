@@ -1,0 +1,12 @@
+{
+  "build": "101.38",
+  "single_window": true,
+  "official_chatgpt_instruction_handoff": "PASS",
+  "same_local_codex_thread_real_execution": "PASS",
+  "result_return_to_original_official_composer": "PASS",
+  "official_discussion_continuation": "PASS",
+  "process_restart_official_login_context_and_codex_result_origin": "PASS",
+  "automatic_resubmission": false,
+  "test_only_override": "Desktop process guard disabled only in private harness with exact separate CODEX_HOME precondition. Production guard is tested separately.",
+  "owner_acceptance": "PENDING"
+}

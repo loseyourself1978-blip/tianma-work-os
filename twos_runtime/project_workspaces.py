@@ -32,14 +32,13 @@ def workspace_row(session, settings, project_id):
     return None
 
 
-def _validate_row(row, settings):
+def _validate_row(row, settings, session):
     path, metadata, identity = validate_authorized_workspace(
         row.canonical_path, settings=settings, create_if_missing=False)
     if (path / ".git").is_file() or (path / ".git" / "commondir").exists():
         raise FirstRunError("PROJECT_SHARED_GIT_UNSUPPORTED", "Authorize a standalone repository; linked worktrees share Git state.", 403)
-    if (str(path), metadata.st_dev, metadata.st_ino, identity) != (
-        row.canonical_path, row.device_id, row.inode, row.identity_digest
-    ):
+    from .workspace_recovery import binding_matches
+    if not binding_matches(session, row, path, metadata, identity):
         raise FirstRunError("PROJECT_WORKSPACE_CHANGED", "The authorized project directory identity changed.", 403)
     if isinstance(row, ProjectWorkspaceAuthorization) and row.recovery_epoch != recovery_epoch(settings):
         raise FirstRunError("PROJECT_REAUTHORIZATION_REQUIRED", "Authorize this project again after recovery before execution.", 403)
@@ -63,12 +62,15 @@ def project_settings(session, settings: Settings, project_id: int, owner_id: int
         raise FirstRunError("PROJECT_OWNER_REQUIRED", "The project workspace belongs to a different Owner.", 403)
     roots = tuple(Path(item.canonical_path) for model in (AuthorizedWorkspace, ProjectWorkspaceAuthorization)
                   for item in session.scalars(select(model).where(model.installation_id == installation.id)))
-    return replace(settings, source_repo=_validate_row(row, settings), authorized_workspace_roots=roots)
+    from .tool_recovery import saved_settings
+    return saved_settings(session, replace(settings, source_repo=_validate_row(row, settings, session), authorized_workspace_roots=roots), owner_id)
 
 
 def task_settings(session, settings, task_id, owner_id=None, *, required=True):
     if not settings.fresh_install:
-        return settings
+        from .tool_recovery import saved_settings
+        task = session.get(Task, task_id)
+        return saved_settings(session, settings, owner_id or task.owner_user_id) if task else settings
     task = session.get(Task, task_id)
     if task is None or (owner_id is not None and task.owner_user_id != owner_id):
         raise FirstRunError("TASK_NOT_FOUND", "Task not found.", 404)
@@ -79,7 +81,8 @@ def task_settings(session, settings, task_id, owner_id=None, *, required=True):
 
 def run_settings(session, settings, run_id, owner_id=None):
     if not settings.fresh_install:
-        return settings
+        run = session.get(CodexRun, run_id)
+        return task_settings(session, settings, run.task_id, owner_id) if run else settings
     run = session.get(CodexRun, run_id)
     if run is None:
         raise FirstRunError("RUN_NOT_FOUND", "Run not found.", 404)
@@ -100,7 +103,7 @@ def record_settings(session, settings, record, owner_id=None):
     return run_settings(session, settings, record.run_id, owner_id)
 
 
-def authorize_project(session, settings, owner, project_id, path, *, create_if_missing=False):
+def authorize_project(session, settings, owner, project_id, path, *, create_if_missing=False, transaction_locked=False):
     if not settings.fresh_install:
         raise FirstRunError("FRESH_INSTALL_REQUIRED", "Project workspace authorization requires a canonical installation.")
     installation = active_installation(session)
@@ -110,7 +113,7 @@ def authorize_project(session, settings, owner, project_id, path, *, create_if_m
         raise FirstRunError("PROJECT_NOT_FOUND", "Project not found.", 404)
     # Serialize the authorization identity check and insert. No provider or
     # other long-running work occurs inside this short transaction.
-    if session.get_bind().dialect.name == "sqlite":
+    if session.get_bind().dialect.name == "sqlite" and not transaction_locked:
         session.commit()
         session.execute(text("BEGIN IMMEDIATE"))
     resolved, metadata, identity = validate_authorized_workspace(
@@ -119,9 +122,8 @@ def authorize_project(session, settings, owner, project_id, path, *, create_if_m
         raise FirstRunError("PROJECT_SHARED_GIT_UNSUPPORTED", "Choose a standalone repository; linked worktrees share Git state and are not separate project scopes.", 400)
     existing = workspace_row(session, settings, project_id)
     if existing:
-        if (existing.canonical_path, existing.device_id, existing.inode, existing.identity_digest) != (
-            str(resolved), metadata.st_dev, metadata.st_ino, identity
-        ):
+        from .workspace_recovery import binding_matches
+        if not binding_matches(session, existing, resolved, metadata, identity):
             raise FirstRunError("PROJECT_WORKSPACE_ALREADY_BOUND", "This Project is already bound to another directory identity. Create a separate Project.")
         if isinstance(existing, ProjectWorkspaceAuthorization):
             existing.recovery_epoch = recovery_epoch(settings)
@@ -154,6 +156,8 @@ def workspace_out(session, settings, project_id, owner_id):
     except FirstRunError as exc:
         result.update(blocker={"code": exc.code, "message": exc.message})
         return result
+    from .local_push_destination import project_state
+    result["delivery_destination"] = project_state(scoped)
     result.update(authorized=True, workspace=str(scoped.source_repo), owner_id=row.owner_user_id,
                   authorization_id=row.id, next_action="Configure Tool and Verification",
                   permissions=["read_context", "prepare", "isolated_run", "explicitly_approved_apply"],

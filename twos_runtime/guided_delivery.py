@@ -126,7 +126,10 @@ def discovery(adapter) -> dict[str, Any]:
                 "provider_request_performed": False, "authentication": "Not checked",
                 "catalogue_source": "installed_client_bundled_offline"}
     detected = adapter.detect()
-    version_match = re.fullmatch(r"codex-cli (\d+)\.(\d+)\.(\d+)", detected.version or "")
+    # Official desktop bundles can carry a semantic prerelease suffix. Preserve
+    # its exact identity; command capabilities and a real readiness probe still
+    # gate execution. A prerelease of the minimum itself is below that release.
+    version_match = re.fullmatch(r"codex-cli (\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?", detected.version or "")
     version = version_match.group(0) if version_match else None
     status, reason = "Needs Setup", "Install and authenticate Codex outside TWOS, then reopen Tool Setup."
     path = None
@@ -144,7 +147,9 @@ def discovery(adapter) -> dict[str, Any]:
             safe = False
     if safe and version_match:
         identity = executable_identity(str(path), cli_version=version)
-        if tuple(map(int, version_match.groups())) < tuple(map(int, MINIMUM_CLI_VERSION.split('.'))):
+        numbers = tuple(map(int, version_match.groups()[:3]))
+        minimum = tuple(map(int, MINIMUM_CLI_VERSION.split('.')))
+        if numbers < minimum or (numbers == minimum and version_match.group(4)):
             status, reason = "Needs Upgrade", f"Upgrade Codex explicitly to {MINIMUM_CLI_VERSION} or newer."
         elif detected.status == "configured":
             status, reason = "Not checked", "Select Check Codex Readiness. This makes one bounded provider request."
@@ -234,7 +239,7 @@ def snapshot_is_current(snapshot: dict[str, Any], settings=None) -> bool:
         if settings is not None and snapshot.get("recovery_epoch", "") != recovery_epoch(settings):
             return False
         executable = str(snapshot["executable"])
-        if executable_identity(executable) != snapshot["executable_identity"]:
+        if executable_identity(executable, cli_version=snapshot.get("cli_version", "")) != snapshot["executable_identity"]:
             return False
         for entry in snapshot["verification"]["files"]:
             if _file_content_identity(Path(entry["path"])) != entry["identity"]:
@@ -295,11 +300,18 @@ def configuration_out(session, row, *, settings=None) -> dict[str, Any] | None:
                    and evidence.execution_context_identity == execution_context_identity())
     ready = bool(current
                  and connectivity_evidence_is_current(session, owner_id=row.owner_id, model=model, evidence=evidence))
+    from .tool_recovery import diagnosis
+    explanation = diagnosis(row, settings) if settings is not None else None
     return {"id": row.id, "model": snapshot["requested_model"], "reasoning_effort": snapshot["reasoning_effort"],
+            "executable": snapshot["executable"], "diagnosis": explanation,
+            "explicit_executable_selection": snapshot.get("explicit_executable_selection", False),
             "workspace": snapshot["workspace"],
             "confirmed": row.confirmed_at is not None, "ready": ready,
             "status": "Ready" if ready else (evidence.readiness_state if current and evidence.readiness_state != "READY_FOR_REAL_RUN" else "Needs Setup" if evidence else "Not checked"),
             "authentication": evidence.authentication_state if evidence else "Not checked",
+            "last_readiness_check": {"checked_at": evidence.checked_at.isoformat() + "Z",
+                "state": evidence.readiness_state, "workspace": snapshot["workspace"],
+                "configuration_id": row.id} if evidence else None,
             "last_successful_readiness_check": evidence.checked_at.isoformat() if evidence and evidence.readiness_state == "READY_FOR_REAL_RUN" else None,
             "next_action": "Save Tool Setup" if ready and row.confirmed_at is None else "Prepare First Delivery" if ready else
                 evidence.safe_summary if current and evidence.readiness_state != "READY_FOR_REAL_RUN" else "Check Codex Readiness for the current configuration.",
@@ -314,8 +326,7 @@ def invalidate_future_packs(session, owner_id: int, digest: str, *, workspace=No
         binding = pack_binding(pack)
         if (binding and binding.get("owner_id") == owner_id and binding.get("configuration_digest") != digest
             and (workspace is None or binding.get("snapshot", {}).get("workspace") == workspace)):
-            if session.scalar(select(CodexRun.id).where(CodexRun.pack_id == pack.id,
-                CodexRun.status.in_(["queued", "starting", "running", "verifying", "settling"]))):
+            if session.scalar(select(CodexRun.id).where(CodexRun.pack_id == pack.id)):
                 continue
             pack.status = "invalidated"
             pack.invalidated_at = utc_now()

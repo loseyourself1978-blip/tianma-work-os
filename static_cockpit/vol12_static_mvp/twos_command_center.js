@@ -28,7 +28,7 @@
   const FIRST_RUN_RECONCILE_TIMEOUT_MS = 5000;
 
   const DEFAULT_BOUNDARY = "No automatic merge, push, live trading, live betting, or unrestricted command execution.";
-  const UI_VERSION = "1.0.0";
+  const UI_VERSION = "1.0.1";
   const TASK_DETAIL_DEFAULTS = Object.freeze({
     objective: "Complete the Development task exactly as specified.",
     source_sync_summary: "None provided.",
@@ -698,6 +698,7 @@
     commitBuilderSection: byId("commit-builder-section"),
     canonicalCommitBuilderControls: document.querySelector(".canonical-commit-builder-controls"),
     legacyCommitBuilderControls: document.querySelector(".legacy-commit-builder-controls"),
+    configureCommitIdentity: byId("configure-commit-identity"),
     reviewOwnerCommit: byId("review-owner-commit"),
     approveCommitProposal: byId("approve-commit-proposal"),
     confirmOwnerLocalCommit: byId("confirm-owner-local-commit"),
@@ -759,6 +760,10 @@
     commitBuilderPathEvidence: byId("commit-builder-path-evidence"),
     commitBuilderDiagnostics: byId("commit-builder-diagnostics"),
     pushDeliverySection: byId("push-delivery-section"),
+    pushReviewFeedback: byId("push-review-feedback"),
+    pushReviewedPlan: byId("push-reviewed-plan"),
+    pushTargetBranch: byId("push-target-branch"),
+    pushReviewedScope: byId("push-reviewed-scope"),
     canonicalPushDeliveryControls: document.querySelector(".canonical-push-delivery-controls"),
     legacyPushDeliveryControls: document.querySelector(".legacy-push-delivery-controls"),
     reviewPushPlan: byId("review-push-plan"),
@@ -1027,6 +1032,7 @@
     pushDeliveryRequestSequences: Object.create(null),
     pushDeliveryResultVisible: new Set(),
     ownerDeliveryProjections: Object.create(null),
+    ownerPushReviewAttempts: Object.create(null),
     ownerDeliveryProjectionLoads: new Set(),
     ownerDeliveryRequestSequences: Object.create(null),
     runConfirmationContext: null,
@@ -1334,6 +1340,7 @@
       elements.firstRunConfirmInstallation,
       elements.firstRunCreateOwner,
       elements.firstRunAuthorizeWorkspace,
+      byId("first-run-managed-workspace"),
       elements.firstRunReviewTools,
       elements.firstRunSkipTools,
       elements.firstRunFinishSetup,
@@ -1979,6 +1986,11 @@
 
   function resetProtectedState() {
     state.pending.clear();
+    state.flowTaskId = null; state.flowView = null; state.flowDeliveredTasks = {};
+    state.guidedToolEpoch = (state.guidedToolEpoch || 0) + 1;
+    state.guidedToolChecked = null; state.guidedToolDiscovery = null;
+    state.guidedToolChecking = false; state.guidedToolLoading = false;
+    if (byId("guided-tool-dialog").open) byId("guided-tool-dialog").close();
     state.workspaceLoaded = false;
     state.registryLoaded = false;
     state.projects = [];
@@ -2025,6 +2037,7 @@
     state.pushDeliveryRequestSequences = Object.create(null);
     state.pushDeliveryResultVisible = new Set();
     state.ownerDeliveryProjections = Object.create(null);
+    state.ownerPushReviewAttempts = Object.create(null);
     state.ownerDeliveryProjectionLoads = new Set();
     state.ownerDeliveryRequestSequences = Object.create(null);
     state.runConfirmationContext = null;
@@ -2737,6 +2750,7 @@
         );
       }
       state.ownerDeliveryProjections[key] = projection;
+      resolveOwnerPushReviewAttempt(projection);
       resolveOwnerPushConfirmationUncertainty(key, projection, requestSequence);
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) throw error;
@@ -2915,7 +2929,7 @@
         throw new ApiError(
           409,
           "RUNTIME_ASSET_MISMATCH",
-          "The Workbench assets and runtime version do not match. Restart the current TWOS 1.0.0 runtime.",
+          "The Workbench assets and runtime version do not match. Restart the current TWOS 1.0.1 runtime.",
           {},
           "product"
         );
@@ -2946,7 +2960,9 @@
       if (!state.creatingTask) {
         const stillExists = state.tasks.some(function (task) { return task.id === state.selectedTaskId; });
         if (!stillExists) {
-          state.selectedTaskId = state.tasks.length ? state.tasks[state.tasks.length - 1].id : null;
+          const remembered = readFlowContext();
+          state.selectedTaskId = remembered && state.tasks.some(function (item) { return item.id === remembered.task_id; })
+            ? remembered.task_id : state.tasks.length ? state.tasks[state.tasks.length - 1].id : null;
           state.taskSelectionEpoch += 1;
           state.taskLoadState = state.selectedTaskId === null ? "empty" : "loading";
           state.taskLoadMessage = state.selectedTaskId === null
@@ -2976,7 +2992,8 @@
           api("/api/tasks/" + task.id + "/codex-packs"),
           api("/api/tasks/" + task.id + "/codex-runs"),
           api("/api/tasks/" + task.id + "/owner-acceptance"),
-          api("/api/tasks/" + task.id + "/run-eligibility")
+          api("/api/tasks/" + task.id + "/run-eligibility"),
+          state.firstRun && state.firstRun.enabled ? api("/api/projects/" + task.project_id + "/workspace") : Promise.resolve(null)
         ]);
         if (
           requestSelectionEpoch !== state.taskSelectionEpoch
@@ -2985,6 +3002,7 @@
           state.refreshQueued = true;
           return;
         }
+        state.taskWorkspaceInspection = detail[6] || null;
         state.acceptance = detail[0] || null;
         state.aiPlan = detail[1] || null;
         state.packs = Array.isArray(detail[2]) ? detail[2] : [];
@@ -2997,6 +3015,9 @@
             return String(run.id) === String(state.selectedActivityRunId);
           })
         ) state.selectedActivityRunId = null;
+        const rememberedRun = readFlowContext();
+        if (state.selectedActivityRunId === null && rememberedRun && rememberedRun.task_id === task.id
+            && state.codexRuns.some(function (item) { return item.id === rememberedRun.run_id; })) state.selectedActivityRunId = rememberedRun.run_id;
         const selectedRun = currentCodexRun();
         if (selectedRun) {
           const exactAcceptance = await api(
@@ -3024,6 +3045,8 @@
         await loadPushDelivery(currentCodexRun(), true);
         await loadOwnerDelivery(currentCodexRun(), true);
         await loadFirstDeliveryGuide(task, requestSelectionEpoch);
+        const taskToolStatus = await api("/api/codex/status?task_id=" + task.id);
+        if (requestSelectionEpoch === state.taskSelectionEpoch && String(state.selectedTaskId) === String(task.id)) state.codexStatus = taskToolStatus;
         if (
           requestSelectionEpoch !== state.taskSelectionEpoch
           || String(state.selectedTaskId) !== String(requestedTaskId)
@@ -3098,6 +3121,7 @@
     renderActionAvailability();
     renderHeaderStatus();
     renderFirstDeliveryGuide();
+    renderConsolidatedFlow();
   }
 
   function renderHeaderStatus() {
@@ -3110,6 +3134,10 @@
       : runtimeAvailable
       ? "Codex: Tool ready — check Task readiness below"
       : "Codex: " + connectivityStateLabel(connectivity.readiness_state);
+    if (detection && detection.saved_configuration && detection.saved_configuration.confirmed) {
+      elements.codexHeaderStatus.textContent = runtimeAvailable
+        ? "Tool saved · ready for a new Run" : "Tool saved · review before a new Run";
+    }
     elements.codexHeaderStatus.dataset.status = runtimeAvailable ? "ready" : "setup";
     elements.accountUsername.textContent = state.user ? state.user.username : "Account";
     elements.runtimeHealth.textContent = state.health && state.health.status === "healthy" && state.health.database === "ok"
@@ -8666,9 +8694,15 @@
     }
     if (ownerPushConfirmationRequestInFlight(parts)) return "PUSHING";
     if (ownerPushConfirmationUncertaintyActive(parts)) return "NEEDS_REVIEW";
+    if (ownerPushReviewAttempt(parts).phase === "failed") return "BLOCKED";
     const confirmation = objectRecord(parts.pushConfirmation);
     const confirmationState = String(confirmation.state || "").toLowerCase();
     if (ownerPushConfirmationProjectionRelevant(parts)) {
+      // Confirmation is deliberately blocked before approval. A valid plan
+      // awaiting its separate approval is not a failed preflight.
+      if (confirmationState === "blocked" && ownerDeliveryRecordId(parts.pushPlan)
+          && parts.pushActions.can_approve_push_plan === true
+          && !ownerDeliveryRecordId(parts.pushExecution)) return "PUSH_APPROVAL_REQUIRED";
       const confirmationStates = {
         ready_for_confirmation: "PUSH_CONFIRMATION_REQUIRED",
         submitting: "PUSHING",
@@ -8889,6 +8923,7 @@
       .concat(applyPlanTextList(parts.proposal.blockers, ""))
       .concat(applyPlanTextList(parts.commitExecution.blockers, ""));
     const pushBlockers = applyPlanTextList(parts.pushDelivery.blockers, "")
+      .concat(applyPlanTextList(objectRecord(parts.pushDelivery.readiness).blockers, ""))
       .concat(applyPlanTextList(parts.pushPlan.blockers, ""))
       .concat(applyPlanTextList(parts.pushExecution.blockers, ""));
     const pushConfirmationPhase = ownerPushConfirmationPhaseFor(parts);
@@ -9045,10 +9080,12 @@
     elements.commitMessageFields.hidden = commitApprovalState === "APPROVED" || Boolean(commitId);
     elements.commitPlanSubject.disabled = !canRevise;
     elements.commitPlanBody.disabled = !canRevise;
+    elements.configureCommitIdentity.hidden = !parts.commitPrerequisitesMet || Boolean(commitId);
+    elements.configureCommitIdentity.disabled = state.pending.has("save-commit-identity");
     elements.reviewOwnerCommit.hidden = false;
     elements.reviewOwnerCommit.className = reviewCompleted ? "button button-quiet" : "button button-primary";
     elements.reviewOwnerCommit.textContent = reviewCompleted ? "Review completed" : "Review Commit";
-    elements.reviewOwnerCommit.disabled = reviewCompleted || !canRevise || state.pending.has("review-owner-commit");
+    elements.reviewOwnerCommit.disabled = reviewCompleted || !canRevise || state.pending.has("review-owner-commit") || state.pending.has("save-commit-identity");
     elements.approveCommitProposal.hidden = false;
     elements.approveCommitProposal.disabled = !(
       parts.commitActions.can_approve_commit === true
@@ -9078,11 +9115,25 @@
       );
       elements.pushPlanApproval.textContent = humanStatus(pushApprovalState);
       setStatusLabel(elements.pushPlanApproval, elements.pushPlanApproval.textContent);
-      elements.pushDestination.textContent = sanitizedApplyPlanText(
-        parts.pushPlan.destination || parts.pushPlan.target_ref || pushPlanAdvanced.target_ref,
-        "origin/main",
-        300
+      // This authenticated field is validated by the backend and intentionally
+      // identifies the real destination. Generic diagnostic path redaction
+      // would hide the very target the Owner must review before approval.
+      elements.pushDestination.textContent = boundedText(
+        parts.pushPlan.owner_destination || parts.pushPlan.remote_display,
+        "Not reviewed — no destination verified",
+        8192
       );
+      elements.pushReviewedPlan.textContent = pushPlanId
+        ? String(pushPlanId) + " · v" + String(parts.pushPlan.version) : "Not reviewed";
+      elements.pushTargetBranch.textContent = boundedText(parts.pushPlan.target_ref, "Not reviewed", 300);
+      elements.pushReviewedScope.textContent = approved.length
+        ? "One approved Commit; " + approved.map(commitBuilderPath).join(", ") : "Not reviewed";
+      const pushChecks = objectRecord(parts.pushPlan.checks);
+      elements.pushAheadBehind.textContent = pushChecks.ahead !== null && pushChecks.ahead !== undefined
+        ? String(pushChecks.ahead) + " / " + String(pushChecks.behind) : "Not evaluated";
+      elements.pushCleanliness.textContent = typeof pushChecks.worktree_clean === "boolean"
+        ? "Worktree " + (pushChecks.worktree_clean ? "clean" : "reviewed changes")
+          + " · index " + (pushChecks.index_clean ? "clean" : "reviewed staged paths") : "Not evaluated";
       const remoteOldSha = parts.pushPlan.remote_old_sha || parts.pushPlan.expected_remote_old_sha
         || parts.pushPlan.expected_remote_base_sha || pushPlanAdvanced.remote_old_sha;
       const remoteNewSha = parts.pushPlan.remote_new_sha || parts.pushPlan.expected_new_sha
@@ -9143,6 +9194,8 @@
         ? ownerPushConfirmationReason(parts, "Push confirmation is not currently eligible.")
         : "";
       renderCanonicalPushAdvanced(parts);
+      renderOwnerPushReviewFeedback(parts);
+      renderPushDestinationState(parts, pushState);
     }
 
     if (committed) {
@@ -10284,20 +10337,22 @@
         || elements.commitPlanBody.value !== (ownerDelivery.proposal.body || "");
       elements.reviewOwnerCommit.className = reviewed && !messageChanged ? "button button-quiet" : "button button-primary";
       elements.reviewOwnerCommit.textContent = reviewed && !messageChanged ? "Review completed" : "Review Commit";
+      elements.configureCommitIdentity.disabled = !authenticated || committed
+        || !ownerDelivery.commitPrerequisitesMet || state.pending.has("save-commit-identity");
       elements.reviewOwnerCommit.disabled = !authenticated || (reviewed && !messageChanged)
         || !(canonicalCommitActions.can_create_proposal === true
           || canonicalCommitActions.can_edit === true
           || canonicalCommitActions.can_review_commit === true
           || canonicalCommitActions.can_review_commit_proposal === true)
-        || state.pending.has("review-owner-commit");
+        || state.pending.has("review-owner-commit") || state.pending.has("save-commit-identity");
       elements.approveCommitProposal.disabled = !authenticated || messageChanged
-        || state.pending.has("review-owner-commit")
+        || state.pending.has("review-owner-commit") || state.pending.has("save-commit-identity")
         || !(canonicalCommitActions.can_approve_commit === true
           || canonicalCommitActions.can_approve_commit_proposal === true
           || canonicalCommitActions.can_approve === true)
         || state.pending.has("approve-commit-proposal");
       elements.confirmOwnerLocalCommit.disabled = !authenticated || messageChanged
-        || state.pending.has("review-owner-commit")
+        || state.pending.has("review-owner-commit") || state.pending.has("save-commit-identity")
         || !(canonicalCommitActions.can_confirm_commit === true
           || canonicalCommitActions.can_create_local_commit === true
           || canonicalCommitActions.can_commit === true)
@@ -10307,10 +10362,14 @@
           || canonicalPushActions.can_create_plan === true)
         || state.pending.has("review-push-plan");
       elements.approvePushPlan.disabled = !authenticated
+        || ownerPushReviewAttempt(ownerDelivery).phase === "failed"
+        || state.pending.has("review-push-plan")
         || !(canonicalPushActions.can_approve_push_plan === true
           || canonicalPushActions.can_approve === true)
         || state.pending.has("approve-push-plan");
       elements.confirmOwnerPush.disabled = !authenticated
+        || ownerPushReviewAttempt(ownerDelivery).phase === "failed"
+        || state.pending.has("review-push-plan")
         || !ownerPushConfirmationCanConfirm(ownerDelivery)
         || state.pending.has("confirm-owner-push");
       if (committed) elements.revertAppliedChanges.disabled = true;
@@ -11086,6 +11145,150 @@
     }
   }
 
+  let localPushDestinationContext = null;
+
+  async function openLocalPushDestination() {
+    if (state.pending.has("open-local-push-destination") || state.pending.has("save-local-push-destination")) return;
+    state.pending.add("open-local-push-destination");
+    const sequence = state.destinationOpenEpoch = (state.destinationOpenEpoch || 0) + 1;
+    const feedback = byId("local-push-setup-feedback"), dialog = byId("local-push-destination-dialog");
+    localPushDestinationContext = null;
+    byId("save-local-push-destination").disabled = true;
+    byId("retry-local-push-preview").hidden = true;
+    ["local-push-project", "local-push-source", "local-push-target", "local-push-parent", "local-push-commit"].forEach(function (id) { byId(id).textContent = "Reading the bound delivery…"; });
+    byId("local-push-error").textContent = "Reading local destination eligibility. No configuration or Push is performed.";
+    if (!dialog.open) dialog.showModal();
+    byId("cancel-local-push-destination").focus();
+    try {
+      const context = ownerDeliveryActionContext();
+      const commitId = ownerDeliveryRecordId(context.parts.commitExecution);
+      if (!commitId) throw new Error("Select a Task with an existing local Commit first.");
+      feedback.dataset.commitId = String(commitId); feedback.hidden = false;
+      feedback.textContent = "Checking local test destination setup…";
+      const url = "/api/local-commits/" + encodeURIComponent(commitId) + "/local-test-destination";
+      const configuration = await api(url);
+      assertOwnerDeliveryActionCurrent(context);
+      if (sequence !== state.destinationOpenEpoch || !dialog.open) return;
+      if (configuration.commit_id !== commitId) throw new Error("Destination Commit binding changed.");
+      localPushDestinationContext = {context, configuration, url};
+      byId("local-push-project").textContent = configuration.project + " / " + configuration.task;
+      byId("local-push-source").textContent = configuration.repository;
+      byId("local-push-target").textContent = configuration.destination;
+      byId("local-push-parent").textContent = configuration.parent_sha;
+      byId("local-push-commit").textContent = configuration.commit_sha;
+      byId("local-push-error").textContent = configuration.configured ? "Already configured. Close this dialog, then Review Push Plan." : "";
+      byId("save-local-push-destination").disabled = configuration.configured === true;
+      feedback.textContent = "Review the exact local destination. Setup requires your confirmation.";
+    } catch (error) {
+      if (sequence === state.destinationOpenEpoch) {
+        feedback.textContent = productActionMessage(error);
+        byId("local-push-error").textContent = productActionMessage(error);
+        byId("retry-local-push-preview").hidden = false;
+      }
+      if (error instanceof ApiError && error.status === 401) handleExpiredSession();
+    } finally { state.pending.delete("open-local-push-destination"); }
+  }
+
+  async function saveLocalPushDestination(event) {
+    event.preventDefault();
+    if (!localPushDestinationContext || state.pending.has("save-local-push-destination")) return;
+    const saved = localPushDestinationContext;
+    const button = byId("save-local-push-destination");
+    state.pending.add("save-local-push-destination");
+    button.disabled = true;
+    byId("local-push-error").textContent = "Creating the private local test repository…";
+    try {
+      assertOwnerDeliveryActionCurrent(saved.context);
+      const response = await api(saved.url, {method: "POST", timeoutMs: 150000, body: {
+        confirmation: "CREATE_AND_BIND_LOCAL_TEST_DESTINATION",
+        expected_preview_digest: saved.configuration.preview_digest
+      }});
+      assertOwnerDeliveryActionCurrent(saved.context);
+      if (!response.configured || response.commit_id !== saved.configuration.commit_id) throw new Error("Setup status could not be verified. Reopen setup before proceeding.");
+      delete state.ownerPushReviewAttempts[saved.configuration.commit_id];
+      byId("local-push-destination-dialog").close();
+      byId("local-push-setup-feedback").textContent = "Local test destination configured: " + response.destination + ". No Push occurred. Select Review Push Plan.";
+      localPushDestinationContext = null;
+    } catch (error) {
+      byId("local-push-error").textContent = productActionMessage(error);
+      if (error instanceof ApiError && error.status === 401) handleExpiredSession();
+    } finally {
+      state.pending.delete("save-local-push-destination");
+      button.disabled = false;
+      await loadOwnerDelivery(saved.context.run, true);
+      renderWorkspace();
+    }
+  }
+
+  let commitIdentityContext = null;
+
+  async function openCommitIdentity() {
+    if (state.pending.has("open-commit-identity") || state.pending.has("save-commit-identity")) return;
+    state.pending.add("open-commit-identity");
+    const sequence = state.identityOpenEpoch = (state.identityOpenEpoch || 0) + 1;
+    const dialog = byId("commit-identity-dialog");
+    commitIdentityContext = null;
+    byId("commit-identity-name").value = ""; byId("commit-identity-email").value = "";
+    byId("save-commit-identity").disabled = true; byId("retry-commit-identity-preview").hidden = true;
+    ["commit-identity-project", "commit-identity-repository", "commit-identity-source"].forEach(function (id) { byId(id).textContent = "Reading the authorized repository…"; });
+    byId("commit-identity-error").textContent = "Reading local identity status. Nothing is saved until your explicit Save identity.";
+    if (!dialog.open) dialog.showModal();
+    byId("commit-identity-name").focus();
+    try {
+      const context = ownerDeliveryActionContext();
+      if (!context.parts.commitPrerequisitesMet) throw new Error("Complete Apply and its validation before setting this Commit identity.");
+      const verificationId = ownerDeliveryRecordId(context.parts.postApply);
+      const url = "/api/post-apply-verifications/" + encodeURIComponent(verificationId) + "/git-identity";
+      const configuration = await api(url);
+      assertOwnerDeliveryActionCurrent(context);
+      if (sequence !== state.identityOpenEpoch || !dialog.open) return;
+      if (configuration.verification_id !== verificationId) throw new Error("Commit identity binding changed.");
+      commitIdentityContext = {context, configuration, url};
+      byId("commit-identity-project").textContent = configuration.project_name + " / " + configuration.task_title + " (#" + configuration.task_id + ")";
+      byId("commit-identity-repository").textContent = configuration.repository;
+      byId("commit-identity-source").textContent = Object.entries(configuration.fields).map(function (item) { return item[0] + ": " + item[1].replace(/_/g, " "); }).join("; ");
+      byId("commit-identity-error").textContent = "";
+      byId("save-commit-identity").disabled = false;
+    } catch (error) {
+      if (sequence === state.identityOpenEpoch) {
+        byId("commit-identity-error").textContent = productActionMessage(error);
+        byId("retry-commit-identity-preview").hidden = false;
+      }
+      if (error instanceof ApiError && error.status === 401) handleExpiredSession();
+    } finally { state.pending.delete("open-commit-identity"); }
+  }
+
+  async function saveCommitIdentity(event) {
+    event.preventDefault();
+    if (!commitIdentityContext) return;
+    await performAction("save-commit-identity", byId("save-commit-identity"), "Saving…", async function () {
+      const saved = commitIdentityContext;
+      try {
+        assertOwnerDeliveryActionCurrent(saved.context);
+        const response = await api(saved.url, { method: "POST", body: {
+          confirmation: "SAVE_REPOSITORY_GIT_IDENTITY",
+          expected_repository_identity: saved.configuration.repository_identity,
+          expected_config_digest: saved.configuration.config_digest,
+          name: byId("commit-identity-name").value,
+          email: byId("commit-identity-email").value
+        }});
+        assertOwnerDeliveryActionCurrent(saved.context);
+        byId("commit-identity-dialog").close();
+        byId("commit-identity-name").value = "";
+        byId("commit-identity-email").value = "";
+        commitIdentityContext = null;
+        return "Repository identity saved. " + (response.review.next_action || "Review the remaining Commit blockers.");
+      } catch (error) {
+        byId("commit-identity-error").textContent = productActionMessage(error);
+        throw error;
+      } finally {
+        // A failed response may follow a durable identity-save intent. Re-fetch
+        // authority even on failure; load errors disable all Commit actions.
+        await loadOwnerDelivery(saved.context.run, true);
+      }
+    });
+  }
+
   async function reviewOwnerCommit() {
     await performAction(
       "review-owner-commit",
@@ -11296,31 +11499,93 @@
     );
   }
 
+  function ownerPushReviewAttempt(parts) {
+    const commitId = String(ownerDeliveryRecordId(objectRecord(parts).commitExecution) || "");
+    return objectRecord(objectRecord(state.ownerPushReviewAttempts)[commitId]);
+  }
+
+  function resolveOwnerPushReviewAttempt(projection) {
+    const delivery = objectRecord(projection.push_delivery);
+    const plan = objectRecord(delivery.push_plan);
+    const commitId = String(delivery.local_commit_execution_id || "");
+    const commit = objectRecord(objectRecord(projection.commit_delivery).execution);
+    if (commitId && ownerDeliveryRecordId(plan)
+        && String(ownerDeliveryRecordId(commit) || "") === commitId
+        && plan.local_commit_sha === (commit.commit_oid || commit.commit_sha)
+        && !state.pending.has("review-push-plan")) {
+      delete state.ownerPushReviewAttempts[commitId];
+    }
+  }
+
+  function renderOwnerPushReviewFeedback(parts) {
+    const attempt = ownerPushReviewAttempt(parts);
+    const blockers = applyPlanTextList(objectRecord(parts.pushDelivery.readiness).blockers, "");
+    const failed = attempt.phase === "failed" || blockers.length > 0;
+    const checking = attempt.phase === "checking";
+    const node = elements.pushReviewFeedback;
+    node.hidden = !attempt.phase && !blockers.length;
+    node.dataset.phase = checking ? "checking" : failed ? "failed" : "reviewed";
+    node.textContent = checking ? "Checking the destination, Commit, branch and live baseline… No Push is performed."
+      : attempt.phase === "failed" ? attempt.message
+      : blockers.length ? blockers.join(" · ")
+      : attempt.message || "";
+    if (failed || checking) {
+      elements.pushGateStatus.textContent = checking ? "CHECKING PUSH PLAN" : "PUSH REVIEW BLOCKED";
+      elements.pushProgress.textContent = elements.pushGateStatus.textContent;
+      elements.pushNextAction.textContent = checking ? "Wait for this review to finish." : node.textContent;
+      if (failed) appendTextList(elements.pushBlockers, [node.textContent], "");
+    }
+    elements.reviewPushPlan.textContent = checking ? "Checking…" : failed ? "Retry Review Push Plan" : "Review Push Plan";
+  }
+
   async function reviewOwnerPushPlan() {
-    await performAction(
-      "review-push-plan",
-      elements.reviewPushPlan,
-      "Reviewing…",
-      async function () {
-        const context = ownerDeliveryActionContext();
-        const commitId = ownerDeliveryRecordId(context.parts.commitExecution);
-        if (!commitId) {
-          throw new ApiError(
-            409,
-            "LOCAL_COMMIT_REQUIRED",
-            "Review Push Plan requires the exact successful local Commit.",
-            {},
-            "product"
-          );
-        }
-        await api(
-          "/api/local-commits/" + encodeURIComponent(commitId) + "/push-plans",
-          { method: "POST" }
-        );
-        assertOwnerDeliveryActionCurrent(context);
-        return "Push Plan reviewed. Push approval remains a separate explicit Owner action.";
+    const key = "review-push-plan";
+    if (state.pending.has(key)) return;
+    const context = ownerDeliveryActionContext();
+    const commitId = String(ownerDeliveryRecordId(context.parts.commitExecution) || "");
+    if (!commitId || !(context.parts.pushActions.can_review_push_plan === true
+        || context.parts.pushActions.can_create_plan === true)) return;
+    state.pending.add(key);
+    state.ownerPushReviewAttempts[commitId] = { phase: "checking" };
+    elements.reviewPushPlan.setAttribute("aria-busy", "true");
+    renderWorkspace();
+    elements.pushDeliverySection.scrollIntoView({ block: "start", behavior: "auto" });
+    try {
+      const response = await api(
+        "/api/local-commits/" + encodeURIComponent(commitId) + "/push-plans",
+        { method: "POST", timeoutMs: 45000 }
+      );
+      assertOwnerDeliveryActionCurrent(context);
+      const plan = objectRecord(response.push_plan);
+      const expectedSha = context.parts.commitExecution.commit_oid || context.parts.commitExecution.commit_sha;
+      if (String(response.local_commit_execution_id || "") !== commitId
+          || !ownerDeliveryRecordId(plan) || plan.local_commit_sha !== expectedSha
+          || !response.actions || !response.confirmation) {
+        throw new ApiError(200, "PUSH_PLAN_RESPONSE_INVALID",
+          "Review returned no matching plan. It may have been saved; retry this read-only review to reload its authoritative state.", {}, "product");
       }
-    );
+      // Apply the authoritative response before any background refresh. A later
+      // stale in-flight projection must not erase the just-reviewed plan.
+      const runId = String(context.run.id);
+      state.ownerDeliveryRequestSequences[runId] = Number(state.ownerDeliveryRequestSequences[runId] || 0) + 1;
+      state.ownerDeliveryProjections[runId] = Object.assign({}, context.parts.projection, { push_delivery: response });
+      state.ownerPushReviewAttempts[commitId] = { phase: "reviewed",
+        message: "Push Plan " + String(plan.id) + " reviewed. Inspect the destination and checks below. Approval and Confirm Push remain separate." };
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        handleExpiredSession();
+        return;
+      }
+      const code = error instanceof ApiError ? error.code : "PUSH_REVIEW_FAILED";
+      state.ownerPushReviewAttempts[commitId] = { phase: "failed", code: code,
+        message: code + ": " + productActionMessage(error) + (code === "ORIGIN_UNAVAILABLE"
+          ? " No Push was requested. Configure the local test destination to continue."
+          : " No Push was requested. Resolve the blocker, then retry this read-only review.") };
+    } finally {
+      state.pending.delete(key);
+      elements.reviewPushPlan.removeAttribute("aria-busy");
+      if (state.auth === AUTH_STATES.SIGNED_IN) renderWorkspace();
+    }
   }
 
   async function approveOwnerPushPlan() {
@@ -11652,10 +11917,11 @@
     };
     elements.ownerPushConfirmationPlan.textContent = "Push Plan " + String(planId)
       + " · v" + String(context.parts.pushPlan.version || context.parts.pushPlan.plan_version || "?");
-    elements.ownerPushConfirmationRemote.textContent = sanitizedApplyPlanText(
-      context.parts.pushPlan.remote_name || context.parts.pushPlan.remote || advanced.remote_name,
+    elements.ownerPushConfirmationRemote.textContent = boundedText(
+      context.parts.pushPlan.owner_destination || context.parts.pushPlan.remote_display
+        || context.parts.pushPlan.remote_name || context.parts.pushPlan.remote || advanced.remote_name,
       "origin",
-      200
+      8192
     );
     elements.ownerPushConfirmationBranch.textContent = sanitizedApplyPlanText(
       context.parts.pushPlan.target_branch || context.parts.pushPlan.target_ref
@@ -12468,10 +12734,16 @@
     panel.hidden = !guide || !task || String(guide.task_id) !== String(task.id)
       || guide.stage_index >= 4 && (!run || String(guide.run_id) !== String(run.id));
     if (panel.hidden) return;
-    byId("first-delivery-title").textContent = String(guide.stage_index + 1) + ". " + guide.stage;
+    byId("first-delivery-title").textContent = guide.stage;
     byId("first-delivery-message").textContent = guide.message;
     byId("first-delivery-action").textContent = guide.action_label;
     byId("first-delivery-action").disabled = state.pending.has("prepare-first-delivery");
+    if (run && ownerPushNeedsDestination(ownerDeliveryParts(run))) {
+      byId("first-delivery-message").textContent = "Your Commit is saved. Configure a destination before reviewing Push. Local testing stays on this Mac.";
+      byId("first-delivery-action").textContent = "Configure local test destination";
+      byId("first-delivery-action").disabled = state.pending.has("open-local-push-destination") || state.pending.has("save-local-push-destination");
+    }
+
     const location = guide.location || {};
     byId("first-delivery-workspace").textContent = location.authorized_workspace || "Unavailable";
     byId("first-delivery-source").textContent = location.source_repository || "Unavailable";
@@ -12592,16 +12864,23 @@
   function renderGuidedToolControls() {
     const config = state.guidedToolChecked;
     const checking = state.guidedToolChecking === true;
-    const matches = config && config.model === byId("guided-model").value && config.reasoning_effort === byId("guided-effort").value;
+    const saving = Boolean(state.pending && state.pending.has("save-guided-tool"));
+    const matches = config && config.model === byId("guided-model").value && config.reasoning_effort === byId("guided-effort").value
+      && (!state.guidedToolChoices || config.executable === state.guidedToolSelectedPath);
     const ready = Boolean(matches && config.ready);
     const button = byId("guided-tool-check");
-    button.disabled = checking || ready || !state.guidedToolDiscovery || state.guidedToolDiscovery.status !== "Not checked" || !byId("guided-model").value || !byId("guided-effort").value;
+    button.disabled = checking || saving || ready || state.guidedToolLoading === true
+      || (state.guidedToolChoices && (!byId("guided-tool-choice").value || !state.guidedToolSelectedPath
+        || state.guidedToolDiagnosis && state.guidedToolDiagnosis.verifier_changed && !byId("guided-verifier-confirm").checked))
+      || !state.guidedToolDiscovery || state.guidedToolDiscovery.status !== "Not checked" || !byId("guided-model").value || !byId("guided-effort").value;
     button.className = "button " + (ready ? "button-quiet" : "button-primary");
     button.textContent = checking ? "Checking Codex Readiness…" : ready ? "Codex Readiness checked" : "Check Codex Readiness";
-    byId("guided-tool-save").disabled = checking || !ready || config.confirmed === true;
-    byId("guided-model").disabled = checking;
-    byId("guided-effort").disabled = checking;
-    byId("guided-tool-close").disabled = checking;
+    byId("guided-tool-save").disabled = checking || saving || !ready || config.confirmed === true;
+    byId("guided-model").disabled = checking || saving;
+    byId("guided-effort").disabled = checking || saving;
+    byId("guided-tool-close").disabled = checking || saving;
+    byId("guided-tool-choice").disabled = checking || saving || state.guidedToolLoading === true;
+    byId("guided-verifier-confirm").disabled = checking || saving;
   }
 
   function populateGuidedEfforts(preferred) {
@@ -12620,67 +12899,131 @@
   function showGuidedConfiguration(config) {
     state.guidedToolChecked = config;
     byId("guided-tool-state").textContent = config ? config.status + ". " + config.next_action : "Not checked. Select Check Codex Readiness explicitly.";
-    byId("guided-auth").textContent = config ? config.authentication : "Not checked";
-    byId("guided-last-check").textContent = config && config.last_successful_readiness_check || "Never";
+    byId("guided-auth").textContent = config ? (config.ready ? config.authentication : "Recorded at last check: " + config.authentication + ". Current selection needs checking.") : "Not checked";
+    const check = config && config.last_readiness_check;
+    byId("guided-last-check").textContent = check ? check.checked_at + " · " + check.state + " · " + check.workspace : config && config.last_successful_readiness_check || "Never";
     renderGuidedToolControls();
   }
 
   async function openGuidedToolSetup(projectId) {
     const dialog = byId("guided-tool-dialog");
-    if (state.guidedToolChecking) return;
+    if (state.guidedToolChecking || state.pending.has("save-guided-tool")) return;
     state.guidedToolProjectId = projectId || (selectedTask() ? selectedTask().project_id : byId("workspace-project").value);
     state.guidedToolChecked = null;
+    state.guidedToolChoices = null;
+    state.guidedToolSelectedPath = null;
+    state.guidedToolTaskEpoch = state.taskSelectionEpoch;
+    byId("guided-verifier-confirm").checked = false;
     byId("guided-auth").textContent = "Not checked";
     byId("guided-last-check").textContent = "Never";
-    byId("guided-tool-state").textContent = "Reading local CLI metadata…";
+    byId("guided-tool-state").textContent = "Reading local tool metadata… No provider request.";
     byId("guided-tool-check").disabled = true;
     byId("guided-tool-save").disabled = true;
     if (!dialog.open) dialog.showModal();
+    byId("guided-tool-close").focus();
+    await loadGuidedToolChoice(null);
+  }
+
+  async function loadGuidedToolChoice(identity) {
+    const sequence = state.guidedToolEpoch = (state.guidedToolEpoch || 0) + 1;
+    const taskEpoch = state.taskSelectionEpoch;
+    const query = guidedProjectQuery();
+    state.guidedToolLoading = true;
+    state.guidedToolChecked = null;
+    renderGuidedToolControls();
     try {
-      const response = await api("/api/guided-tool-setup" + guidedProjectQuery());
+      const response = await api("/api/guided-tool-setup" + query + (identity ? (query ? "&" : "?") + "executable_id=" + encodeURIComponent(identity) : ""));
+      if (sequence !== state.guidedToolEpoch || taskEpoch !== state.taskSelectionEpoch || !byId("guided-tool-dialog").open) return;
       const found = response.discovery;
       state.guidedToolDiscovery = found;
-      byId("guided-executable").textContent = found.executable || "Not found";
+      state.guidedToolDiagnosis = response.diagnosis || {};
+      state.guidedToolChoices = response.tool_choices || [];
+      const saved = response.saved_configuration || response.configuration;
+      byId("guided-project-scope").textContent = "Project #" + state.guidedToolProjectId + " · " + (state.guidedToolDiagnosis.scope || "Current workspace");
+      byId("guided-saved-status").textContent = saved && saved.confirmed
+        ? "Configuration saved. Historical deliveries remain unchanged. Recovery applies to future runs."
+        : "No confirmed configuration for this Project. Select, check and explicitly save your tool.";
+      appendTextList(byId("guided-recovery-reasons"), (state.guidedToolDiagnosis.reasons || []).map(function (v) { return v.message; }), "No saved file-identity issue detected. A readiness check remains explicit.");
+      byId("guided-verifier-files").textContent = (state.guidedToolDiagnosis.verifier_files || []).join("\n");
+      byId("guided-verifier-confirmation").hidden = !state.guidedToolDiagnosis.verifier_changed;
+      const choices = byId("guided-tool-choice"); choices.replaceChildren();
+      const blank = document.createElement("option"); blank.value = ""; blank.textContent = "Choose a trusted installed tool"; choices.appendChild(blank);
+      state.guidedToolChoices.forEach(function (item) { const option = document.createElement("option"); option.value = item.id; option.textContent = item.label; choices.appendChild(option); });
+      const existing = saved && state.guidedToolChoices.find(function (item) { return item.path === saved.executable; });
+      choices.value = identity || (existing ? existing.id : "");
+      const chosen = state.guidedToolChoices.find(function (item) { return item.id === choices.value; });
+      state.guidedToolSelectedPath = chosen ? chosen.path : null;
+      byId("guided-no-tool").hidden = state.guidedToolChoices.length > 0;
+      byId("guided-executable").textContent = found.executable || "Not available";
       byId("guided-version").textContent = found.cli_version || "Unavailable";
       byId("guided-minimum").textContent = found.minimum_supported_version;
       byId("guided-tool-evidence").textContent = JSON.stringify({ executable_identity: found.executable_identity, catalogue_source: found.catalogue_source, provider_request_performed: false }, null, 2);
-      const select = byId("guided-model");
-      select.replaceChildren();
-      (found.models || []).forEach(function (entry) {
-        const option = document.createElement("option");
-        option.value = entry.model;
-        option.textContent = entry.model;
-        select.appendChild(option);
-      });
-      const wanted = response.configuration ? response.configuration.model : "gpt-6-astra";
-      select.value = wanted;
-      populateGuidedEfforts(response.configuration ? response.configuration.reasoning_effort : "xhigh");
-      showGuidedConfiguration(response.configuration);
-      if (found.status !== "Not checked" || !select.value) byId("guided-tool-state").textContent = found.status + ". " + found.next_action;
-    } catch (error) { byId("guided-tool-state").textContent = productActionMessage(error); }
+      const select = byId("guided-model"); select.replaceChildren();
+      (found.models || []).forEach(function (entry) { const option = document.createElement("option"); option.value = entry.model; option.textContent = entry.model; select.appendChild(option); });
+      select.value = saved ? saved.model : "gpt-6-astra";
+      populateGuidedEfforts(saved ? saved.reasoning_effort : "xhigh");
+      showGuidedConfiguration(identity ? null : response.configuration);
+      const recent = response.configuration && response.configuration.last_readiness_check;
+      if (recent) byId("guided-last-check").textContent = recent.checked_at + " · " + recent.state + " · " + recent.workspace;
+      if (!choices.value) byId("guided-tool-state").textContent = "Choose a trusted installed tool above. Your saved configuration has not been replaced.";
+      else if (found.status !== "Not checked" || !select.value) byId("guided-tool-state").textContent = found.status + ". " + found.next_action;
+    } catch (error) {
+      if (sequence !== state.guidedToolEpoch || taskEpoch !== state.taskSelectionEpoch) return;
+      state.guidedToolDiscovery = null;
+      byId("guided-tool-state").textContent = productActionMessage(error) + " Close and reopen Tool Setup to retry this local inspection.";
+      if (error instanceof ApiError && error.status === 401) handleExpiredSession();
+    } finally {
+      if (sequence === state.guidedToolEpoch) { state.guidedToolLoading = false; renderGuidedToolControls(); }
+    }
   }
 
   async function checkGuidedTool() {
     const button = byId("guided-tool-check");
     if (button.disabled || state.guidedToolChecking) return;
+    const sequence = state.guidedToolEpoch;
+    const taskEpoch = state.taskSelectionEpoch;
     state.guidedToolChecking = true;
     renderGuidedToolControls();
     byId("guided-tool-state").textContent = "Checking the exact selected Codex configuration after your explicit action…";
     try {
-      const result = await api("/api/guided-tool-setup/check" + guidedProjectQuery(), { method: "POST", body: { model_identifier: byId("guided-model").value, reasoning_effort: byId("guided-effort").value } });
+      const body = { model_identifier: byId("guided-model").value, reasoning_effort: byId("guided-effort").value };
+      if (state.guidedToolChoices) {
+        body.executable_id = byId("guided-tool-choice").value;
+        body.verifier_digest = state.guidedToolDiagnosis.verifier_digest;
+        body.confirm_verifier_change = byId("guided-verifier-confirm").checked;
+      }
+      const result = await api("/api/guided-tool-setup/check" + guidedProjectQuery(), { method: "POST", timeoutMs: 150000, body: body });
+      if (sequence !== state.guidedToolEpoch || taskEpoch !== state.taskSelectionEpoch) return;
       showGuidedConfiguration(result.configuration);
-    } catch (error) { state.guidedToolChecked = null; byId("guided-tool-state").textContent = productActionMessage(error); }
+    } catch (error) {
+      if (sequence === state.guidedToolEpoch && taskEpoch === state.taskSelectionEpoch) {
+        state.guidedToolChecked = null; byId("guided-tool-state").textContent = productActionMessage(error);
+      }
+      if (error instanceof ApiError && error.status === 401) handleExpiredSession();
+    }
     finally { state.guidedToolChecking = false; renderGuidedToolControls(); }
   }
 
   async function saveGuidedTool() {
     const config = state.guidedToolChecked;
-    if (!config || byId("guided-tool-save").disabled) return;
-    await performAction("save-guided-tool", byId("guided-tool-save"), "Saving…", async function () {
-      await api("/api/guided-tool-setup/save" + guidedProjectQuery(), { method: "POST", body: { configuration_id: config.id } });
-      byId("guided-tool-dialog").close();
-      return "Tool Setup saved. Prepare First Delivery when you are ready.";
-    });
+    if (!config || byId("guided-tool-save").disabled || state.pending.has("save-guided-tool")) return;
+    const sequence = state.guidedToolEpoch, taskEpoch = state.taskSelectionEpoch;
+    state.pending.add("save-guided-tool"); renderGuidedToolControls();
+    try {
+      if (state.guidedToolTaskEpoch !== taskEpoch) throw new Error("Task changed. Reopen Tool Setup for the current Project.");
+      const result = await api("/api/guided-tool-setup/save" + guidedProjectQuery(), { method: "POST", body: { configuration_id: config.id } });
+      if (sequence !== state.guidedToolEpoch || taskEpoch !== state.taskSelectionEpoch) return;
+      showGuidedConfiguration(result.configuration);
+      state.guidedToolDiagnosis = result.configuration.diagnosis || {};
+      appendTextList(byId("guided-recovery-reasons"), (state.guidedToolDiagnosis.reasons || []).map(function (item) { return item.message; }), "No saved file-identity issue detected for this confirmed configuration.");
+      byId("guided-verifier-confirmation").hidden = !state.guidedToolDiagnosis.verifier_changed;
+      byId("guided-saved-status").textContent = "Current configuration saved for this Project. Historical deliveries remain unchanged.";
+      byId("guided-tool-state").textContent = "Tool configuration saved for this Project. Prepare and approve a new Pack for future work; historical deliveries are preserved.";
+      await refreshWorkspace({force: true});
+    } catch (error) {
+      if (sequence === state.guidedToolEpoch && taskEpoch === state.taskSelectionEpoch) byId("guided-tool-state").textContent = productActionMessage(error) + " Your prior saved configuration is preserved. Retry Save only after resolving this blocker.";
+      if (error instanceof ApiError && error.status === 401) handleExpiredSession();
+    } finally { state.pending.delete("save-guided-tool"); renderGuidedToolControls(); }
   }
 
   async function firstDeliveryAction() {
@@ -12691,10 +13034,13 @@
       const run = currentCodexRun();
       if (!run || String(guide.run_id) !== String(run.id)) return;
     }
+    if (guide.stage_index === 10) { selectFlowView("history", true); return; }
     if (guide.next_action === "authorize_workspace") {
       state.workspaceProjectId = String(task.project_id);
+      selectFlowView("setup", true);
       renderProjectWorkspaceOptions();
       byId("project-workspace-card").scrollIntoView({block: "center"});
+      byId("settings-project-workspace-card").open = true;
       byId("project-workspace-path").focus();
       return;
     }
@@ -12723,21 +13069,52 @@
     if (guide.next_action === "review_candidate") return reviewChangeCandidate();
     if (guide.next_action === "approve_apply_plan") return approveApplyPlan();
     if (guide.next_action === "apply") return openApplyConfirmation();
+    if (guide.next_action === "commit_identity") return openCommitIdentity();
     if (guide.next_action === "delivery") {
       const code = guide.delivery && guide.delivery.next_action && guide.delivery.next_action.primary && guide.delivery.next_action.primary.code;
       if (code === "review_commit") return reviewOwnerCommit();
       if (code === "approve_commit") return approveOwnerCommitProposal();
       if (code === "confirm_local_commit") return openOwnerLocalCommitConfirmation();
-      if (code === "review_push_plan") return reviewOwnerPushPlan();
+      if (code === "review_push_plan") return ownerPushNeedsDestination(ownerDeliveryParts(currentCodexRun()))
+        ? openLocalPushDestination() : reviewOwnerPushPlan();
       if (code === "approve_push_plan") return approveOwnerPushPlan();
       if (code === "confirm_push") return openOwnerPushConfirmation();
     }
+    selectFlowView(guide.next_action === "review_result" ? "history" : "work", true);
     const target = byId(guide.next_action === "view_run" ? "run-card" : guide.stage_index >= 8 ? "commit-builder-section" : "result-card");
     if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function bindEvents() {
+    document.querySelectorAll("[data-flow-view]").forEach(function (button) {
+      button.addEventListener("click", function () { selectFlowView(button.dataset.flowView, true); });
+    });
+    byId("guided-tool-choice").addEventListener("change", function () {
+      byId("guided-verifier-confirm").checked = false;
+      loadGuidedToolChoice(byId("guided-tool-choice").value || null);
+    });
+    byId("guided-verifier-confirm").addEventListener("change", renderGuidedToolControls);
+    byId("guided-tool-dialog").addEventListener("cancel", function (event) {
+      if (state.guidedToolChecking || state.pending.has("save-guided-tool")) event.preventDefault();
+      else { state.guidedToolEpoch = (state.guidedToolEpoch || 0) + 1; state.guidedToolLoading = false; }
+    });
+    byId("flow-work-next").addEventListener("click", function () { selectFlowView(byId("flow-work-next").dataset.view, true); });
+    byId("flow-tool-open").addEventListener("click", function () { openGuidedToolSetup(); });
+    byId("flow-destination-open").addEventListener("click", openLocalPushDestination);
+    window.addEventListener("popstate", restoreFlowHistory);
     byId("create-project").addEventListener("click", createProject);
+    byId("first-run-managed-workspace").addEventListener("click", async function () {
+      await runFirstRunAction(byId("first-run-managed-workspace"), "Creating…", function () {
+        return api("/api/setup/managed-workspace", {method: "POST", timeoutMs: FIRST_RUN_ACTION_TIMEOUT_MS, body: {confirmed: true}});
+      }, {settled: function (setup) { return setupStepCompleted(setup, "workspace"); }});
+    });
+    byId("project-managed-workspace").addEventListener("click", async function () {
+      const projectId = byId("workspace-project").value;
+      await performAction("authorize-project", byId("project-managed-workspace"), "Creating…", async function () {
+        await api("/api/projects/" + encodeURIComponent(projectId) + "/managed-workspace", {method: "POST", body: {confirmed: true}});
+        return "Managed workspace created and authorized. No delivery or remote action started.";
+      });
+    });
     byId("authorize-project-workspace").addEventListener("click", authorizeProjectWorkspace);
     byId("workspace-project").addEventListener("change", function () {
       state.workspaceProjectId = byId("workspace-project").value;
@@ -12757,7 +13134,7 @@
     byId("first-delivery-action").addEventListener("click", firstDeliveryAction);
     byId("guided-tool-check").addEventListener("click", checkGuidedTool);
     byId("guided-tool-save").addEventListener("click", saveGuidedTool);
-    byId("guided-tool-close").addEventListener("click", function () { byId("guided-tool-dialog").close(); });
+    byId("guided-tool-close").addEventListener("click", function () { state.guidedToolEpoch = (state.guidedToolEpoch || 0) + 1; state.guidedToolLoading = false; byId("guided-tool-dialog").close(); });
     byId("guided-model").addEventListener("change", function () { populateGuidedEfforts("xhigh"); guidedToolSelectionsChanged(); });
     byId("guided-effort").addEventListener("change", guidedToolSelectionsChanged);
     byId("guided-pack-close").addEventListener("click", function () { byId("guided-pack-dialog").close(); });
@@ -12936,6 +13313,26 @@
     elements.applyAcceptedChanges.addEventListener("click", openApplyConfirmation);
     elements.revertAppliedChanges.addEventListener("click", openRevertConfirmation);
     elements.verifyAppliedChanges.addEventListener("click", verifyAppliedChanges);
+    elements.configureCommitIdentity.addEventListener("click", openCommitIdentity);
+    byId("setup-local-push-destination").addEventListener("click", openLocalPushDestination);
+    byId("local-push-destination-form").addEventListener("submit", saveLocalPushDestination);
+    byId("retry-local-push-preview").addEventListener("click", openLocalPushDestination);
+    byId("retry-commit-identity-preview").addEventListener("click", openCommitIdentity);
+    byId("cancel-local-push-destination").addEventListener("click", function () {
+      if (!state.pending.has("save-local-push-destination")) byId("local-push-destination-dialog").close();
+    });
+    byId("local-push-destination-dialog").addEventListener("close", function () { state.destinationOpenEpoch = (state.destinationOpenEpoch || 0) + 1; localPushDestinationContext = null; });
+    byId("local-push-destination-dialog").addEventListener("cancel", function (event) {
+      if (state.pending.has("save-local-push-destination")) event.preventDefault();
+    });
+    byId("commit-identity-form").addEventListener("submit", saveCommitIdentity);
+    byId("cancel-commit-identity").addEventListener("click", function () {
+      if (!state.pending.has("save-commit-identity")) byId("commit-identity-dialog").close();
+    });
+    byId("commit-identity-dialog").addEventListener("close", function () { state.identityOpenEpoch = (state.identityOpenEpoch || 0) + 1; commitIdentityContext = null; });
+    byId("commit-identity-dialog").addEventListener("cancel", function (event) {
+      if (state.pending.has("save-commit-identity")) event.preventDefault();
+    });
     elements.reviewOwnerCommit.addEventListener("click", reviewOwnerCommit);
     elements.commitPlanSubject.addEventListener("input", renderActionAvailability);
     elements.commitPlanBody.addEventListener("input", renderActionAvailability);
@@ -13044,6 +13441,228 @@
     });
   }
 
+  // A fragment is never sent in HTTP requests or Referer headers. Consume it
+  // before any application request and remove it from the current history entry.
+  function ownerPushNeedsDestination(parts) {
+    if (!parts || !ownerDeliveryRecordId(parts.commitExecution)) return false;
+    if (ownerDeliveryRecordId(parts.pushExecution)) return false;
+    const attempt = ownerPushReviewAttempt(parts);
+    if (attempt.phase === "failed" && attempt.code === "ORIGIN_UNAVAILABLE") return true;
+    const blockers = objectRecord(parts.pushDelivery.readiness).blockers;
+    return Array.isArray(blockers) && blockers.some(function (b) { return b && b.code === "ORIGIN_UNAVAILABLE"; });
+  }
+
+  function renderPushDestinationState(parts, pushState) {
+    const missing = ownerPushNeedsDestination(parts);
+    const delivered = ["DELIVERED", "ALREADY_DELIVERED"].indexOf(pushState) !== -1;
+    const plan = objectRecord(parts.pushPlan);
+    const execution = objectRecord(parts.pushExecution);
+    const post = objectRecord(execution.post_push);
+    byId("push-destination-prerequisite").hidden = !missing;
+    byId("setup-local-push-destination").disabled = state.pending.has("open-local-push-destination")
+      || state.pending.has("save-local-push-destination") || state.pending.has("review-push-plan");
+    if (missing) {
+      elements.approvePushPlan.hidden = true; elements.confirmOwnerPush.hidden = true;
+      elements.reviewPushPlan.hidden = true;
+      elements.pushNextAction.textContent = "Configure a local test destination before reviewing Push.";
+    }
+    const setupFeedback = byId("local-push-setup-feedback");
+    setupFeedback.hidden = delivered || Boolean(ownerDeliveryRecordId(plan))
+      || setupFeedback.dataset.commitId !== String(ownerDeliveryRecordId(parts.commitExecution) || "");
+    if (delivered) {
+      elements.pushReviewFeedback.hidden = true;
+      elements.reviewPushPlan.hidden = true;
+      elements.approvePushPlan.hidden = true;
+      elements.confirmOwnerPush.hidden = true;
+      elements.pushNextAction.textContent = "Delivered to the verified destination. This receipt is preserved; no repeat action is required.";
+    }
+    byId("push-preflight-time").textContent = plan.created_at || "Not recorded";
+    byId("push-post-ahead-behind").textContent = execution.remote_receipt_verified === true && post.complete === true
+      ? String(post.ahead) + " / " + String(post.behind) + " · complete"
+      : "Not verified";
+    byId("push-post-time").textContent = execution.remote_receipt_verified === true
+      ? objectRecord(execution.advanced).recovered_at || execution.finished_at || "Not recorded" : "Not recorded";
+  }
+
+  function flowContextKey() {
+    return "twos.flow.v1:" + String(objectRecord(state.health).installation_id || window.location.origin)
+      + ":" + String(objectRecord(state.user).id || "signed-out");
+  }
+
+  function readFlowContext() {
+    try { return JSON.parse(window.localStorage.getItem(flowContextKey()) || "null"); }
+    catch (error) { return null; }
+  }
+
+  function saveFlowContext() {
+    const task = selectedTask();
+    if (!task || state.taskLoadState && state.taskLoadState !== "success") return;
+    try { window.localStorage.setItem(flowContextKey() + ":task:" + task.id, JSON.stringify({view: state.flowView || "work"}));
+      window.localStorage.setItem(flowContextKey(), JSON.stringify({task_id: task.id,
+      run_id: state.selectedActivityRunId, view: state.flowView || "work"})); } catch (error) { /* Storage is optional. */ }
+  }
+
+  function selectFlowView(view, focus) {
+    if (["setup", "work", "history"].indexOf(view) === -1) return;
+    state.flowView = view;
+    state.flowTaskId = String(state.selectedTaskId || "new");
+    if (focus) window.history.pushState({twosFlow: view, taskId: state.selectedTaskId}, "", "#twos-" + view);
+    renderConsolidatedFlow();
+    if (focus) {
+      const target = byId("flow-" + view);
+      target.setAttribute("tabindex", "-1"); target.focus({preventScroll: true});
+      byId("flow-navigation").scrollIntoView({block: "start", behavior: "auto"});
+    }
+  }
+
+  function restoreFlowHistory(event) {
+    const value = objectRecord(event.state);
+    if (state.auth !== AUTH_STATES.SIGNED_IN || ["setup", "work", "history"].indexOf(value.twosFlow) === -1) return;
+    if (state.tasks.some(function (task) { return task.id === value.taskId; }) && state.selectedTaskId !== value.taskId) {
+      state.selectedTaskId = value.taskId; state.taskSelectionEpoch += 1;
+      resetTaskDetails(); state.renderedTaskId = null;
+    }
+    state.flowTaskId = String(state.selectedTaskId || "new"); state.flowView = value.twosFlow;
+    saveFlowContext(); refreshWorkspace({force: true});
+  }
+
+  function initializeConsolidatedFlow() {
+    const move = function (id, host) { const el = byId(id); if (el && el.parentElement !== host) host.appendChild(el); };
+    ["project-workspace-card", "task-card", "ai-team-card"].forEach(function (id) { move(id, byId("flow-setup-cards")); });
+    move("first-delivery-guide", byId("flow-guide-host"));
+    move("workbench-feedback", byId("flow-navigation").parentElement);
+    move("result-card", byId("flow-result-host"));
+    move("advanced-panel", byId("flow-audit-host"));
+    ["pack-card", "run-card", "run-activity-card", "compact-sync-card", "acceptance-card", "handoff-review-section",
+      "candidate-review-section", "apply-plan-review-section", "apply-session-section", "post-apply-verification-section", "commit-builder-section"].forEach(function (id) {
+      const el = byId(id); if (!el) return;
+      const wrapper = document.createElement("details"); wrapper.id = "history-" + id;
+      const summary = document.createElement("summary");
+      const heading = el.querySelector("h2, h3"); summary.textContent = heading ? heading.textContent : id;
+      wrapper.appendChild(summary); wrapper.appendChild(el); byId("flow-audit-host").appendChild(wrapper);
+    });
+    move("push-delivery-section", byId("flow-delivered-host"));
+    // Feedback remains beside the current action on every view, not at the page bottom.
+    byId("flow-navigation").before(byId("selected-task-context"));
+    byId("flow-navigation").after(byId("workbench-feedback"));
+    byId("flow-setup").prepend(byId("task-card"));
+    [["project-workspace-card", "Project and workspace settings"], ["ai-team-card", "Team configuration and audit"]].forEach(function (item) {
+      const details = document.createElement("details"); details.id = "settings-" + item[0];
+      const summary = document.createElement("summary"); summary.textContent = item[1]; details.appendChild(summary);
+      details.appendChild(byId(item[0])); byId("flow-setup-cards").appendChild(details);
+    });
+    document.addEventListener("click", function (event) {
+      const link = event.target.closest("a[href='#result-card'], a[href='/twos#result-card']");
+      if (link) { event.preventDefault(); selectFlowView("history", true); }
+    });
+  }
+
+  function renderConsolidatedFlow() {
+    if (!byId("flow-navigation") || state.auth !== AUTH_STATES.SIGNED_IN) return;
+    const task = selectedTask(), run = currentCodexRun();
+    const parts = run ? ownerDeliveryParts(run) : null;
+    const guide = state.firstDeliveryGuide;
+    const stage = guide && task && String(guide.task_id) === String(task.id) ? guide.stage_index : -1;
+    const delivered = parts && ["DELIVERED", "ALREADY_DELIVERED"].indexOf(canonicalPushState(parts)) !== -1;
+    const missing = parts && ownerPushNeedsDestination(parts);
+    const key = String(state.selectedTaskId || "new");
+    state.flowDeliveredTasks = state.flowDeliveredTasks || {};
+    if (state.taskLoadState === "success") {
+      if (delivered && state.flowDeliveredTasks[key] === false) {
+        state.flowView = "history"; state.flowTaskId = key;
+      }
+      state.flowDeliveredTasks[key] = Boolean(delivered);
+    }
+    if (state.flowTaskId !== key && (!task || state.taskLoadState === "success")) {
+      let saved = readFlowContext();
+      try { const prior = task && JSON.parse(window.localStorage.getItem(flowContextKey() + ":task:" + task.id) || "null");
+        if (prior) saved = {task_id: task.id, view: prior.view}; } catch (error) { /* Optional storage. */ }
+      state.flowTaskId = key;
+      state.flowView = saved && task && saved.task_id === task.id && ["setup", "work", "history"].indexOf(saved.view) !== -1
+        ? saved.view : delivered ? "history" : !task || stage < 2 ? "setup" : "work";
+    }
+    if (state.creatingTask) state.flowView = "setup";
+    byId("flow-work-summary").hidden = !delivered && stage >= 2;
+    byId("flow-work-summary-text").textContent = delivered
+      ? "This Task is delivered. Its output, verified target and audit history remain available. No repeat action is required."
+      : "Complete the task and its required setup before preparing work. Opening setup does not start execution.";
+    byId("flow-work-next").textContent = delivered ? "Open delivery history" : "Open task setup";
+    byId("flow-work-next").dataset.view = delivered ? "history" : "setup";
+    byId("first-delivery-kind").textContent = delivered ? "Delivery history" : state.tasks.length <= 1 && stage < 4 ? "First Safe Delivery" : "Current decision";
+    const view = state.flowView || "work";
+    ["setup", "work", "history"].forEach(function (name) { byId("flow-" + name).hidden = view !== name; });
+    document.querySelectorAll("[data-flow-view]").forEach(function (button) {
+      button.setAttribute("aria-current", button.dataset.flowView === view ? "page" : "false");
+      button.className = "button " + (button.dataset.flowView === view ? "button-primary" : "button-secondary");
+    });
+    const build = objectRecord(objectRecord(state.health).build);
+    byId("instance-summary").textContent = "TWOS " + UI_VERSION + " · build " + (build.build_version || "Unknown");
+    byId("instance-identity").textContent = "Installation: " + (objectRecord(state.health).installation_id || "Advanced source runtime")
+      + " · Source: " + (build.source_commit || "Not recorded") + " · " + window.location.origin;
+    const config = objectRecord(objectRecord(state.codexStatus).saved_configuration);
+    const diagnosis = objectRecord(config.diagnosis);
+    byId("flow-tool-state").textContent = (config.confirmed ? "Configuration saved. " : "No confirmed tool configuration for this scope. ")
+      + (config.ready ? "Ready for a new Run." : "Review tool readiness before a new Run.")
+      + (delivered ? " This historical Task is delivered." : "");
+    const latestCheck = objectRecord(objectRecord(state.codexStatus).latest_check || config.last_readiness_check);
+    byId("flow-tool-reasons").textContent = (diagnosis.reasons || []).map(function (v) { return v.message; }).join(" ")
+      + " Last actual check: " + (latestCheck.checked_at || config.last_successful_readiness_check || "Not recorded")
+      + (latestCheck.state ? " · " + latestCheck.state : "")
+      + ". Scope: " + (config.workspace || "Current Project") + ". No automatic provider check.";
+    const plan = objectRecord(parts && parts.pushPlan);
+    const inspectedWorkspace = objectRecord(state.taskWorkspaceInspection);
+    const destination = task && String(inspectedWorkspace.project_id) === String(task.project_id)
+      ? objectRecord(inspectedWorkspace.delivery_destination) : {};
+    const historicalDestination = plan.owner_destination || plan.remote_display;
+    byId("flow-destination-state").textContent = missing ? "Destination needs configuration. Your local Commit is safe."
+      : historicalDestination || destination.destination || destination.message || (parts && ownerDeliveryRecordId(parts.commitExecution)
+        ? "Inspect the current destination in Push Plan review." : "Destination is reviewed after a local Commit exists. No target is selected automatically.");
+    byId("flow-destination-purpose").textContent = (plan.owner_destination || "").includes("/local-push-tests/") || destination.status === "LOCAL_TEST_CONFIGURED"
+      ? "Purpose: local Push testing on this Mac. Configuration is not a Push approval or external-host acceptance. Each Task keeps its own review and confirmation."
+      : missing ? "Available setup: private local test destination. Existing remotes will not be replaced."
+      : destination.message || "Only the exact approved destination is eligible for delivery.";
+    byId("result-history-intro").textContent = delivered
+      ? "Historical Run evidence. Its observations and suggested actions were recorded before delivery; the verified Delivery Receipt above is the current outcome."
+      : "See what Codex did, whether independent Verification passed, which files changed, what tests ran, and the exact Owner action required next.";
+    byId("result-action-label").textContent = delivered ? "Run-stage action (historical)" : "Exact Owner action";
+    byId("flow-destination-open").hidden = !missing;
+    byId("flow-destination-open").disabled = state.pending.has("open-local-push-destination") || state.pending.has("save-local-push-destination");
+    const active = delivered ? [] : stage === 8 ? ["commit-builder-section"] : stage === 9 ? ["push-delivery-section"]
+      : stage === 7 ? ["candidate-review-section", "apply-plan-review-section", "apply-session-section", "post-apply-verification-section"]
+      : stage === 6 ? ["acceptance-card", "handoff-review-section", "candidate-review-section"]
+      : stage === 5 ? ["run-activity-card", "handoff-review-section"]
+      : stage === 4 ? ["run-card", "run-activity-card"]
+      : stage >= 2 ? ["pack-card", "run-card"] : [];
+    if (!guide && run && !delivered) active.push("run-card", "acceptance-card", "commit-builder-section", "push-delivery-section");
+    ["pack-card", "run-card", "run-activity-card", "acceptance-card", "handoff-review-section", "candidate-review-section", "apply-plan-review-section", "apply-session-section", "post-apply-verification-section", "commit-builder-section", "push-delivery-section"].forEach(function (id) {
+      const el = byId(id); if (!el) return;
+      const host = active.indexOf(id) !== -1 ? byId("flow-action-host")
+        : id === "push-delivery-section" ? byId("flow-delivered-host") : byId("history-" + id);
+      if (host && el.parentElement !== host) host.appendChild(el);
+    });
+    // Eleven stages remain in a disclosure. First use can expand the full guide;
+    // daily work sees the actual pending decision, not eleven required clicks.
+    if (state.flowGuideTask !== key) {
+      byId("first-delivery-stage-details").open = !delivered && state.tasks.length <= 1 && stage >= 0 && stage < 4;
+      state.flowGuideTask = key;
+    }
+    const guideHost = stage >= 0 && stage < 2 ? byId("flow-setup-guide-host") : delivered ? byId("flow-history-guide-host") : byId("flow-guide-host");
+    if (byId("first-delivery-guide").parentElement !== guideHost) guideHost.appendChild(byId("first-delivery-guide"));
+    saveFlowContext();
+  }
+
+  function consumeDesktopSetupAuthorization() {
+    const desktopSetup = new URLSearchParams(window.location.hash.slice(1)).get("setup");
+    if (desktopSetup) {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+      if (/^[A-Za-z0-9_-]{20,256}$/.test(desktopSetup)) {
+        elements.firstRunSetupAuthorization.value = desktopSetup;
+        elements.firstRunSetupAuthorization.closest(".field-group").hidden = true;
+      }
+    }
+  }
+  consumeDesktopSetupAuthorization();
+  initializeConsolidatedFlow();
   bindEvents();
   renderAuthShell();
   initializeSession();
