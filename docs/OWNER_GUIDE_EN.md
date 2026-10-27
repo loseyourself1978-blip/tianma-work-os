@@ -7,6 +7,10 @@ Discuss on the official ChatGPT website in the left pane, execute with the local
 
 **Choose one scenario and stop at its end point.** Upgrading does not require following the first-task scenario afterward. Existing accepted work does not need to be recreated.
 
+## Installation entry
+
+After the final delivery receipt identifies the installer, double-click the DMG and drag **Tianma Work OS** into **Applications**. Before replacing an older copy, let active work reach a safe terminal state and quit normally. Eject the disk image and open TWOS from Applications. Use the normal macOS launch prompt; do not disable system protections. See the [complete installation guide](release-1.0/INSTALL.en.md) for first-use account and model connections.
+
 ## A · Incremental upgrade checks
 
 **Entry condition:** You already use TWOS. This joint 1.0 candidate introduces Nyra 1.0 and corrects its reactive playback. Prior GPT→Claude, Show Nyra, daily outfit switching, business artifacts and Open/View/Save/Finder acceptances are preserved.

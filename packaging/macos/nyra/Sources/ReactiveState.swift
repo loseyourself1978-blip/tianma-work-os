@@ -322,7 +322,7 @@ func runReactiveTests() throws {
     reducer.disconnect(); try expect(!reducer.receive(event(4,"verified_success",task:"new",evidence:true),now:6).celebrate)
     try expect(!reducer.receive(event(6,"verified_success",task:"new",evidence:true),now:7).celebrate)
     try expect(!reducer.receive(event(1,"verified_success",instance:"restart",evidence:true),now:8).celebrate)
-    do { _ = try event(8,"verified_success"); throw NSError(domain:"missing evidence accepted",code:1) } catch PreviewError.invalidManifest {} 
+    do { _ = try event(8,"verified_success"); throw NSError(domain:"missing evidence accepted",code:1) } catch PreviewError.invalidManifest {}
     var immutable = StatusReducer()
     let initial = try event(1,"running")
     try expect(immutable.receive(initial,now:1).accepted)
