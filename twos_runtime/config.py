@@ -51,6 +51,9 @@ class Settings:
     bind_port: int | None = None
     session_cookie_name: str = "twos_session"
     maintenance_mode: bool = False
+    managed_workspace_root: Path | None = None
+    ui_preference_path: Path | None = None
+    mail_config_path: Path | None = None
 
 
 def _environment_flag(name: str, default: bool = False) -> bool:
@@ -145,4 +148,7 @@ def get_settings() -> Settings:
         ),
         session_cookie_name=os.environ.get("TWOS_SESSION_COOKIE_NAME", "twos_session"),
         maintenance_mode=_environment_flag("TWOS_MAINTENANCE_MODE"),
+        managed_workspace_root=_optional_path("TWOS_MANAGED_WORKSPACE_ROOT"),
+        ui_preference_path=_optional_path("TWOS_UI_PREFERENCE_PATH"),
+        mail_config_path=_optional_path("TWOS_MAIL_CONFIG"),
     )

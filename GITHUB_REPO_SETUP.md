@@ -1,3 +1,5 @@
+> Historical design / 历史设计。For the current product, start with [README](README.md).
+
 # GitHub Repository Setup v0.1
 
 ## Repository

@@ -1,0 +1,91 @@
+{
+  "schema": "nyra.frame-sequence-plan.v1",
+  "status": "P0_ART_AND_BROWSER_PLAYBACK_REVIEWED",
+  "canvas": [
+    1024,
+    1536
+  ],
+  "anchor": [
+    512,
+    1444
+  ],
+  "unique_asset_count": 20,
+  "required_frame_slots": 23,
+  "sequences": {
+    "idle": {
+      "loop": true,
+      "asset_ids": [
+        "nyra_neutral",
+        "nyra_idle_01",
+        "nyra_idle_02",
+        "nyra_idle_03",
+        "nyra_idle_04",
+        "nyra_idle_05"
+      ],
+      "durations_ms": [
+        1600,
+        180,
+        90,
+        110,
+        90,
+        220
+      ]
+    },
+    "working": {
+      "loop": true,
+      "asset_ids": [
+        "nyra_working_00",
+        "nyra_working_01",
+        "nyra_working_02",
+        "nyra_working_03",
+        "nyra_working_04",
+        "nyra_working_05"
+      ],
+      "durations_ms": [
+        300,
+        160,
+        140,
+        160,
+        180,
+        300
+      ]
+    },
+    "gaze_head": {
+      "loop": false,
+      "interactive": true,
+      "asset_ids": [
+        "nyra_neutral",
+        "nyra_gaze_left",
+        "nyra_gaze_right",
+        "nyra_gaze_up",
+        "nyra_gaze_down"
+      ],
+      "durations_ms": [
+        200,
+        200,
+        200,
+        200,
+        200
+      ]
+    },
+    "verified_success": {
+      "loop": false,
+      "asset_ids": [
+        "nyra_neutral",
+        "nyra_success_01",
+        "nyra_success_02",
+        "nyra_success_03",
+        "nyra_success_04",
+        "nyra_neutral"
+      ],
+      "durations_ms": [
+        180,
+        320,
+        340,
+        420,
+        420,
+        220
+      ]
+    }
+  }
+}

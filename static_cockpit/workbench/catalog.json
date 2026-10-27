@@ -1,0 +1,1054 @@
+{
+  "language": [
+    "Language",
+    "语言"
+  ],
+  "projects": [
+    "Projects",
+    "项目"
+  ],
+  "chat": [
+    "Conversation",
+    "对话"
+  ],
+  "codex": [
+    "Codex execution",
+    "Codex 执行"
+  ],
+  "newProject": [
+    "New project",
+    "新建项目"
+  ],
+  "importProject": [
+    "Import",
+    "导入项目"
+  ],
+  "newChat": [
+    "New chat",
+    "新建聊天"
+  ],
+  "localNote": [
+    "Local macOS workbench",
+    "本机 macOS 工作台"
+  ],
+  "allProjects": [
+    "My projects",
+    "我的项目"
+  ],
+  "overview": [
+    "Overview",
+    "概览"
+  ],
+  "sources": [
+    "Sources",
+    "资料"
+  ],
+  "team": [
+    "AI team",
+    "AI 团队"
+  ],
+  "tasks": [
+    "Tasks",
+    "任务"
+  ],
+  "deliverables": [
+    "Deliverables",
+    "成果"
+  ],
+  "introTitle": [
+    "What would you like to work on?",
+    "今天想推进什么工作？"
+  ],
+  "intro": [
+    "Describe your goal here. Start a conversation now; files and project setup can be added when needed.",
+    "直接在下方描述目标，就能开始对话。资料与项目配置可以按需补充，不是开聊前置条件。"
+  ],
+  "suggest1": [
+    "Discuss an improvement before writing code",
+    "先讨论一项改进，暂时不写代码"
+  ],
+  "suggest2": [
+    "Explain a screenshot or a document",
+    "一起看看截图或文档"
+  ],
+  "suggest3": [
+    "Continue an existing project task",
+    "接着推进现有项目任务"
+  ],
+  "messagePlaceholder": [
+    "Message your AI teammate…",
+    "向 AI 团队描述你的需求…"
+  ],
+  "composerNote": [
+    "Enter to send · Shift+Enter for a new line · Sending a message does not approve code changes.",
+    "Enter 发送 · Shift+Enter 换行 · 发送聊天消息不等于批准代码修改。"
+  ],
+  "send": [
+    "Send",
+    "发送"
+  ],
+  "plugins": [
+    "Tools",
+    "工具"
+  ],
+  "route": [
+    "AI discussion",
+    "AI 对话"
+  ],
+  "noFiles": [
+    "No files required",
+    "无需先导入资料"
+  ],
+  "newChatTitle": [
+    "A new conversation",
+    "新的对话"
+  ],
+  "you": [
+    "You",
+    "你"
+  ],
+  "assistant": [
+    "AI discussion",
+    "AI 对话"
+  ],
+  "handoff": [
+    "Describe a deliverable",
+    "整理交付说明"
+  ],
+  "emptyExecTitle": [
+    "Work together, in one place",
+    "在同一页，把工作接上"
+  ],
+  "emptyExec": [
+    "Discuss in the middle. When the deliverable is clear, hand it to Codex once and follow its progress here.",
+    "在中间讨论，明确交付内容后，一次交给 Codex，在这里查看进展与成果。"
+  ],
+  "step1": [
+    "Discuss and clarify",
+    "讨论并澄清需求"
+  ],
+  "step2": [
+    "Hand to Codex",
+    "交给 Codex"
+  ],
+  "step3": [
+    "Follow progress and results",
+    "查看进展与成果"
+  ],
+  "rightFoot": [
+    "Your conversation remains available while a task runs. Approvals apply only to the reviewed task and scope.",
+    "执行中仍能继续对话。批准仅适用于已审查的具体任务与范围。"
+  ],
+  "reviewNeeded": [
+    "Review needed",
+    "等待审查"
+  ],
+  "approved": [
+    "Approved · not started",
+    "已批准 · 尚未执行"
+  ],
+  "running": [
+    "Running",
+    "执行中"
+  ],
+  "done": [
+    "Completed",
+    "已完成"
+  ],
+  "cancelled": [
+    "Stopped",
+    "已停止"
+  ],
+  "execTitle": [
+    "Refine the workbench empty state",
+    "改进工作台空状态提示"
+  ],
+  "target": [
+    "Target",
+    "目标"
+  ],
+  "targetValue": [
+    "Isolated development workspace",
+    "隔离开发工作区"
+  ],
+  "allowed": [
+    "Scope",
+    "范围"
+  ],
+  "allowedValue": [
+    "One UI change + focused test",
+    "一项界面改进＋定向测试"
+  ],
+  "reviewer": [
+    "Reviewer",
+    "复核模型"
+  ],
+  "reviewValue": [
+    "Independent, read-only session",
+    "独立只读会话"
+  ],
+  "approve": [
+    "Approve this exact scope",
+    "批准此确切范围"
+  ],
+  "start": [
+    "Start Codex",
+    "开始 Codex 执行"
+  ],
+  "stop": [
+    "Stop task",
+    "停止任务"
+  ],
+  "viewChanges": [
+    "View changes",
+    "查看差异"
+  ],
+  "addImage": [
+    "Add images",
+    "添加图片"
+  ],
+  "addFiles": [
+    "Add files",
+    "添加文件"
+  ],
+  "useSources": [
+    "Use project sources",
+    "引用项目资料"
+  ],
+  "previewNote": [
+    "Stored locally. Only attachments selected for a message are sent to the model.",
+    "附件保存在本机。只有本次发送明确选中的附件才发给模型。"
+  ],
+  "pluginTitle": [
+    "Tools for this conversation",
+    "本次对话的工具"
+  ],
+  "pluginName": [
+    "Local project search",
+    "本机项目检索"
+  ],
+  "pluginDescription": [
+    "Read only the selected sources in this project. Search results will be shown and included only when you send.",
+    "只读检索本项目明确选中的资料。检索结果在发送时展示并进入模型上下文。"
+  ],
+  "doneButton": [
+    "Done",
+    "完成"
+  ],
+  "cancel": [
+    "Cancel",
+    "取消"
+  ],
+  "projectLabel": [
+    "Project name",
+    "项目名称"
+  ],
+  "create": [
+    "Create project",
+    "创建项目"
+  ],
+  "back": [
+    "Back to workbench",
+    "返回工作台"
+  ],
+  "detailDescription": [
+    "Project management is a side destination. Return to the same conversation, draft and execution without losing your place.",
+    "项目管理是辅助页面。返回后仍是同一对话、草稿与执行现场，不丢失上下文。"
+  ],
+  "sourceDesc": [
+    "No source is required to start a conversation. Add sources here or attach them directly to a message.",
+    "开始对话无需资料。可以在这里添加资料，也可以直接随消息附上。"
+  ],
+  "teamDesc": [
+    "Connect the discussion model and Codex separately. Show the real connection, model identity and granted scope; never use a logo as proof of a live connection.",
+    "分别连接对话模型与 Codex，显示真实连接、模型身份及授权范围；不能用一个图标冒充真实接入。"
+  ],
+  "tasksDesc": [
+    "Execution tasks are linked to conversations. An ordinary chat message does not automatically become a coding task.",
+    "执行任务与聊天关联。普通聊天消息不会自动变成代码执行任务。"
+  ],
+  "deliverDesc": [
+    "Read outputs, compare versions and return to the conversation that produced them.",
+    "阅读成果、对比版本，并返回产生它的对话。"
+  ],
+  "overviewDesc": [
+    "Goals, recent work and pending decisions live here. The workbench is the default entry, not this overview page.",
+    "这里汇总目标、近期工作与待决定事项。默认入口是工作台，而不是这张概览页。"
+  ],
+  "sourcesEmpty": [
+    "No sources yet. You can still send a text message.",
+    "暂无资料，仍然可以直接发送文字。"
+  ],
+  "allHidden": [
+    "Keep at least one pane open.",
+    "至少保留一栏展开。"
+  ],
+  "handoffBusy": [
+    "An execution is active. Continue discussing; revise its scope only through a new approval.",
+    "当前任务正在执行。可以继续讨论，变更执行范围需要新的明确批准。"
+  ],
+  "resumeHint": [
+    "Conversations stay scoped to each project.",
+    "聊天始终绑定各自项目。"
+  ],
+  "newImported": [
+    "Imported project",
+    "导入项目"
+  ],
+  "draftSaved": [
+    "Draft remains in this conversation.",
+    "草稿保留在当前聊天。"
+  ],
+  "slogan": [
+    "Lead an AI team. Keep your projects moving forward.",
+    "让你带领一支 AI 团队，把项目持续做成。"
+  ],
+  "starter": [
+    "Enter your idea, then let AI help bring it to life.",
+    "输入你的想法，然后让AI帮你实现"
+  ],
+  "homeNote": [
+    "Start with a thought. No project or file is required.",
+    "先说出想法，无需先建项目或导入资料。"
+  ],
+  "recentChats": [
+    "Recent conversations",
+    "最近对话"
+  ],
+  "saveToProject": [
+    "Save to project",
+    "保存到项目"
+  ],
+  "homeLink": [
+    "Home",
+    "首页"
+  ],
+  "signOut": [
+    "Log out",
+    "退出登录"
+  ],
+  "accountTitle": [
+    "Your TWOS account",
+    "你的 TWOS 账号"
+  ],
+  "accountNote": [
+    "Your TWOS data is stored on this Mac. Email sign-in does not sync projects to other devices.",
+    "TWOS 数据保存在本机。邮箱登录不意味着项目已跨设备同步。"
+  ],
+  "authWelcome": [
+    "Welcome to TWOS",
+    "欢迎使用 TWOS"
+  ],
+  "authIntro": [
+    "Your ideas. A team to make them happen.",
+    "你的想法，由 AI 团队一起实现。"
+  ],
+  "authStory": [
+    "Discuss the idea, hand over the work, and keep the result — without losing the conversation.",
+    "讨论想法、交接执行、保留成果，让每一步始终接得上。"
+  ],
+  "register": [
+    "Create account",
+    "注册账号"
+  ],
+  "login": [
+    "Log in",
+    "登录"
+  ],
+  "welcomeHint": [
+    "Create an account with your email, or return to your existing TWOS workspace.",
+    "使用邮箱创建账号，或登录并返回已有的 TWOS 工作环境。"
+  ],
+  "email": [
+    "Email address",
+    "邮箱地址"
+  ],
+  "password": [
+    "Password",
+    "密码"
+  ],
+  "newPassword": [
+    "New password",
+    "新密码"
+  ],
+  "confirmPassword": [
+    "Confirm new password",
+    "确认新密码"
+  ],
+  "continue": [
+    "Continue",
+    "继续"
+  ],
+  "backAuth": [
+    "Back",
+    "返回"
+  ],
+  "alreadyAccount": [
+    "Already have an account?",
+    "已有账号？"
+  ],
+  "noAccount": [
+    "New to TWOS?",
+    "还没有账号？"
+  ],
+  "signupTitle": [
+    "Create your account",
+    "创建你的账号"
+  ],
+  "signupEmailNote": [
+    "Use an email address you can verify. This is a TWOS account, not your ChatGPT login.",
+    "使用可以验证的邮箱。这是 TWOS 账号，不是你的 ChatGPT 登录。"
+  ],
+  "passwordTitle": [
+    "Create a password",
+    "设置密码"
+  ],
+  "passwordRule": [
+    "Use 12–200 characters.",
+    "使用 12–200 个字符。"
+  ],
+  "sendCode": [
+    "Send verification code",
+    "发送验证码"
+  ],
+  "verifyTitle": [
+    "Check your email",
+    "查看你的邮箱"
+  ],
+  "verifyDesc": [
+    "Enter the six-digit code for the email shown below.",
+    "请输入发送至下方邮箱的六位验证码。"
+  ],
+  "code": [
+    "Verification code",
+    "验证码"
+  ],
+  "verifyEmail": [
+    "Verify email",
+    "验证邮箱"
+  ],
+  "resend": [
+    "Resend code",
+    "重新发送"
+  ],
+  "changeEmail": [
+    "Use a different email",
+    "更换邮箱"
+  ],
+  "codeExpiry": [
+    "The latest code expires in 10 minutes. Resending replaces the previous code.",
+    "最新验证码 10 分钟内有效；重发后旧验证码失效。"
+  ],
+  "verifiedTitle": [
+    "You’re ready to begin",
+    "现在可以开始了"
+  ],
+  "verifiedDesc": [
+    "Your email is verified. Your new workspace starts empty.",
+    "邮箱验证完成。你的新工作环境从空白开始。"
+  ],
+  "enterTwos": [
+    "Enter TWOS",
+    "进入 TWOS"
+  ],
+  "loginTitle": [
+    "Welcome back",
+    "欢迎回来"
+  ],
+  "loginNote": [
+    "Log in to your TWOS account. Your AI services connect separately.",
+    "登录你的 TWOS 账号。AI 服务需另行连接授权。"
+  ],
+  "loginPasswordTitle": [
+    "Enter your password",
+    "输入密码"
+  ],
+  "forgot": [
+    "Forgot password?",
+    "忘记密码？"
+  ],
+  "resetTitle": [
+    "Reset your password",
+    "重置密码"
+  ],
+  "resetNote": [
+    "Enter your email. If this account exists, we’ll send a reset code.",
+    "输入邮箱。如果账号存在，我们会发送重置验证码。"
+  ],
+  "sendReset": [
+    "Send reset code",
+    "发送重置验证码"
+  ],
+  "resetPasswordTitle": [
+    "Set a new password",
+    "设置新密码"
+  ],
+  "resetDone": [
+    "Password reset. Log in with your new password.",
+    "密码已重置，请使用新密码登录。"
+  ],
+  "savePassword": [
+    "Save new password",
+    "保存新密码"
+  ],
+  "identityBoundary": [
+    "TWOS account ≠ ChatGPT / Codex authorization. Connecting an AI service comes after sign-in and uses its official flow.",
+    "TWOS 账号不等于 ChatGPT / Codex 授权。登录后需通过对应官方流程连接 AI 服务。"
+  ],
+  "showPassword": [
+    "Show",
+    "显示"
+  ],
+  "hidePassword": [
+    "Hide",
+    "隐藏"
+  ],
+  "invalidEmail": [
+    "Enter a valid email address.",
+    "请输入有效邮箱地址。"
+  ],
+  "passwordShort": [
+    "Use at least 12 characters.",
+    "密码至少 12 个字符。"
+  ],
+  "passwordMismatch": [
+    "The new passwords do not match.",
+    "两次输入的新密码不一致。"
+  ],
+  "invalidCredentials": [
+    "Email or password is incorrect.",
+    "邮箱或密码不正确。"
+  ],
+  "emailTaken": [
+    "An account cannot be created with these details. Try logging in or recovering access.",
+    "无法使用这些信息创建账号，请尝试登录或找回账号。"
+  ],
+  "invalidCode": [
+    "The code is invalid or has expired. Use the latest code.",
+    "验证码错误或已过期，请使用最新验证码。"
+  ],
+  "rateCode": [
+    "Please wait before requesting another code.",
+    "请稍候再重新发送验证码。"
+  ],
+  "resendDone": [
+    "If eligible, a new code has been sent. Use the latest email.",
+    "如符合条件，新验证码已发送，请使用最新邮件。"
+  ],
+  "verifyFailed": [
+    "This verification attempt has ended. Request a new code.",
+    "本次验证尝试已结束，请获取新验证码。"
+  ],
+  "noProjectHandoff": [
+    "Choose where this work belongs",
+    "选择工作的所属项目"
+  ],
+  "noProjectDesc": [
+    "Your conversation stays intact. Create a project for execution; this does not authorize code changes.",
+    "对话将完整保留。为执行建立项目，这不授予代码修改权限。"
+  ],
+  "connectTitle": [
+    "Connect discussion model",
+    "连接对话模型"
+  ],
+  "connectDesc": [
+    "Authorize TWOS to use the existing official Codex sign-in on this Mac for discussion. Uses shared ChatGPT Work / Codex allowance. No API-key fallback or additional purchase.",
+    "授权 TWOS 使用本机现有官方 Codex 登录进行对话。计入共享的 ChatGPT Work / Codex 额度。不启用 API Key 付费备选，不额外购买。"
+  ],
+  "removeAttachment": [
+    "Remove attachment",
+    "移除附件"
+  ],
+  "legacyLogin": [
+    "Existing local account",
+    "已有本机账号"
+  ],
+  "username": [
+    "Local username",
+    "本机用户名"
+  ],
+  "emailBlocked": [
+    "Email delivery is not configured. Ask the maintainer to finish the mail connection. Existing local accounts can still sign in.",
+    "邮件服务尚未配置，请维护者完成邮件连接。已有本机账号仍可登录。"
+  ],
+  "notConnected": [
+    "Model not connected · connect to send",
+    "尚未连接模型 · 连接后发送"
+  ],
+  "connect": [
+    "Connect",
+    "连接"
+  ],
+  "model": [
+    "Model",
+    "模型"
+  ],
+  "tool": [
+    "Installed Codex",
+    "本机 Codex"
+  ],
+  "quota": [
+    "Uses existing shared Work / Codex allowance; provider limits apply.",
+    "使用现有共享 Work / Codex 额度，受供应商实际限制。"
+  ],
+  "consent": [
+    "I authorize this connection using my existing plan.",
+    "我授权此连接使用现有套餐。"
+  ],
+  "noTools": [
+    "No installed Codex found. Install or sign in through the official Codex app, then return here.",
+    "未找到已安装 Codex。请通过官方 Codex App 安装或登录后返回。"
+  ],
+  "localAuth": [
+    "Open local account setup",
+    "打开本机账号设置"
+  ],
+  "save": [
+    "Save",
+    "保存"
+  ],
+  "saved": [
+    "Saved on this Mac",
+    "已保存在本机"
+  ],
+  "newMessage": [
+    "New conversation",
+    "新对话"
+  ],
+  "close": [
+    "Close",
+    "关闭"
+  ],
+  "review": [
+    "Run independent review",
+    "运行独立复核"
+  ],
+  "plan": [
+    "Prepare plan",
+    "准备方案"
+  ],
+  "kind": [
+    "Work type",
+    "工作类型"
+  ],
+  "document": [
+    "Document",
+    "文稿"
+  ],
+  "iteration": [
+    "Controlled code iteration",
+    "受控代码迭代"
+  ],
+  "instruction": [
+    "Execution goal",
+    "执行目标"
+  ],
+  "prepareConsent": [
+    "Prepare a reviewable handoff. This does not approve execution.",
+    "准备可审查的交接内容。此操作不批准执行。"
+  ],
+  "sendConsent": [
+    "Send selected attachments / search results to the model",
+    "将选中的附件 / 检索结果发送给模型"
+  ],
+  "query": [
+    "Search selected sources",
+    "检索选中的资料"
+  ],
+  "noSources": [
+    "No imported project sources.",
+    "暂无已导入的项目资料。"
+  ],
+  "newProjectNote": [
+    "Name the project. Your conversation will keep its identity and history.",
+    "为项目命名。对话的标识及历史保持不变。"
+  ],
+  "development": [
+    "Enable an isolated development target",
+    "启用隔离开发目标"
+  ],
+  "upload": [
+    "Choose sources to import",
+    "选择导入资料"
+  ],
+  "confirmImport": [
+    "Import selected files locally",
+    "将所选文件导入本机"
+  ],
+  "importBoundary": [
+    "Importing files does not authorize sending them to a model or executing code.",
+    "导入资料不授予模型外发或代码执行权限。"
+  ],
+  "teamSave": [
+    "Save execution team",
+    "保存执行团队"
+  ],
+  "planner": [
+    "Planner",
+    "方案模型"
+  ],
+  "executor": [
+    "Executor",
+    "执行模型"
+  ],
+  "budget": [
+    "Application call limit",
+    "应用调用上限"
+  ],
+  "budgetNote": [
+    "Application cap: 0–10 execution requests for this account. Requests already used remain counted; provider shared-plan limits still apply.",
+    "应用上限：本账号 0–10 次执行请求。已使用次数继续计数，同时遵守供应商共享套餐限额。"
+  ],
+  "devPath": [
+    "Clean local TWOS source directory",
+    "干净的本机 TWOS 源码目录"
+  ],
+  "targetPreview": [
+    "Review development target",
+    "审查开发目标"
+  ],
+  "targetConfirm": [
+    "Confirm isolated target",
+    "确认隔离目标"
+  ],
+  "codingScope": [
+    "Current code adapter: bilingual noSourcesDesc guidance and its regression test in an isolated TWOS target. Review the exact files, baseline and plan before approval.",
+    "当前代码适配器：隔离 TWOS 目标中的 noSourcesDesc 双语提示及回归测试。批准前审查确切文件、基线及方案。"
+  ],
+  "noHistory": [
+    "No conversation yet. Start below.",
+    "尚无对话，可在下方开始。"
+  ],
+  "noResults": [
+    "No results yet.",
+    "尚无成果。"
+  ],
+  "noTasks": [
+    "No execution tasks yet.",
+    "尚无执行任务。"
+  ],
+  "error": [
+    "The operation could not finish. Your saved work remains available.",
+    "操作未能完成，已保存的工作仍可使用。"
+  ],
+  "bind": [
+    "Bind an email to this local account",
+    "为本机账号绑定邮箱"
+  ],
+  "bindConfirm": [
+    "Confirm binding to this account",
+    "确认绑定到此账号"
+  ],
+  "proofPending": [
+    "Check your inbox. Server acceptance is not proof of delivery.",
+    "请检查收件箱。服务器接受请求不等于邮件已送达。"
+  ],
+  "realIdentity": [
+    "Requested model; actual identity is recorded when reported by Codex.",
+    "请求模型；Codex 回报实际模型时记录其身份。"
+  ],
+  "authRequired": [
+    "If Codex is signed out, open the official Codex app and sign in with ChatGPT. Return here and choose Connect to recheck. Your TWOS draft stays in this account.",
+    "若 Codex 尚未登录，请打开官方 Codex App 并使用 ChatGPT 登录，然后回到此页点击“连接”重新检查。TWOS 草稿保留在本账号。"
+  ],
+  "loginInvalid": [
+    "Email or password was not accepted. Check your details or reset your password.",
+    "邮箱或密码未被接受，请检查输入或找回密码。"
+  ],
+  "sendFailed": [
+    "Mail could not be sent. Retry later or ask the maintainer to check the mail connection.",
+    "邮件发送失败，请稍后重试，或请维护者检查邮件连接。"
+  ],
+  "draftConflict": [
+    "This draft changed in another page. Your text is still here; copy it before reopening the saved chat.",
+    "另一页面已修改草稿。当前文字仍保留，请复制后再重新打开已保存的聊天。"
+  ],
+  "pdfTextRequired": [
+    "This PDF has no readable text. Attach a text PDF or images of the relevant pages.",
+    "此 PDF 没有可读取文本。请附加文本型 PDF 或相关页面图片。"
+  ],
+  "developmentRequired": [
+    "Enable the development workbench for this project before reviewing an isolated source folder.",
+    "请先为本项目启用开发工作台，再审查隔离源码目录。"
+  ],
+  "enableDevelopment": [
+    "Enable development workbench",
+    "启用开发工作台"
+  ],
+  "enableDevelopmentNote": [
+    "Keep this project and its chats. Enable review of an isolated TWOS source copy. You will review and confirm the source separately; this step does not read a source folder, contact a model or start work.",
+    "保留本项目及所有对话，启用隔离 TWOS 源码副本的审查入口。之后仍需单独审查并确认源码；本步骤不读取源码目录、不调用模型、不开始任务。"
+  ],
+  "confirmEnableDevelopment": [
+    "Confirm and continue",
+    "确认并继续"
+  ],
+  "chatOptions": [
+    "Chat options",
+    "聊天选项"
+  ],
+  "deleteChat": [
+    "Delete chat",
+    "删除聊天"
+  ],
+  "deleteChatNote": [
+    "Move this chat to Deleted chats? You can restore it from the account menu. Its project, tasks and results remain. Stop any running response or task first.",
+    "将此聊天移到“已删除聊天”？可以在右上角账号菜单中恢复。所属项目、任务与成果保留。请先停止正在进行的回复或任务。"
+  ],
+  "deletedChats": [
+    "Deleted chats",
+    "已删除聊天"
+  ],
+  "deletedNote": [
+    "Restore a chat to its original project or recent chats. Restoring does not resend messages or restart tasks.",
+    "恢复后，聊天回到原项目或最近聊天。恢复不会重新发送消息或执行任务。"
+  ],
+  "restoreChat": [
+    "Restore",
+    "恢复"
+  ],
+  "noDeletedChats": [
+    "No deleted chats.",
+    "没有已删除的聊天。"
+  ],
+  "chatBusy": [
+    "Stop the current response or task before deleting this chat.",
+    "请先停止当前回复或任务，再删除聊天。"
+  ],
+  "chatDeleted": [
+    "This chat has been deleted. Restore it from the account menu to continue.",
+    "此聊天已删除。可从账号菜单恢复后继续。"
+  ],
+  "noModels": [
+    "No local models found",
+    "未找到本机模型目录"
+  ],
+  "copy": [
+    "Copy",
+    "复制"
+  ],
+  "copied": [
+    "Copied",
+    "已复制"
+  ],
+  "thinking": [
+    "Thinking…",
+    "正在思考…"
+  ],
+  "responseCancelled": [
+    "Response stopped.",
+    "回复已停止。"
+  ],
+  "responseInterrupted": [
+    "Response interrupted. Send another message when ready.",
+    "回复已中断。准备好后可继续发送消息。"
+  ],
+  "responseFailed": [
+    "The response could not finish. Your message is saved; details are below.",
+    "回复未能完成。你的消息已保存，原因可在下方查看。"
+  ],
+  "messageDetails": [
+    "Message details",
+    "消息详情"
+  ],
+  "replan": [
+    "Replan this task",
+    "重新规划此任务"
+  ],
+  "replanNote": [
+    "Create a new plan for the same saved handoff using one model request. Previous results and failed changes stay preserved. The new plan requires a new approval and a separate Start.",
+    "对同一份已保存交接重新规划，消耗一次模型请求。原结果及失败改动保留。新方案必须重新批准，并单独点击开始。"
+  ],
+  "confirmReplan": [
+    "Create a new plan",
+    "生成新方案"
+  ],
+  "historicalTask": [
+    "Previous delivery",
+    "历史交付"
+  ],
+  "resumeChecks": [
+    "Continue remaining checks",
+    "继续未完成检查"
+  ],
+  "providerQuota": [
+    "Usage limits are set by your connected provider. TWOS adds no invocation limit.",
+    "额度以所连接服务商为准，TWOS 不另设调用次数上限。"
+  ],
+  "error.PROJECT_EXECUTION_BUSY": [
+    "This project is already working. Add instructions in the Codex pane, or hand over the next task when it finishes.",
+    "项目已有工作正在执行。可在 Codex 栏补充意见，或等当前工作结束后交付下一项。"
+  ],
+  "error.APPROVAL_EXPIRED": [
+    "This decision is no longer pending. The latest progress is shown in the Codex pane.",
+    "该决定已不再等待处理，请查看 Codex 栏的最新进展。"
+  ],
+  "error.DELIVERY_CHANGED": [
+    "The deliverable or configuration has changed. Read the updated card and hand it to Codex when ready.",
+    "交付内容或配置已更新。阅读最新卡片后即可交给 Codex。"
+  ],
+  "error.WORKSPACE_NOT_EMPTY": [
+    "This project already contains files. Continue with its current source, or create a new project for another source folder.",
+    "当前项目已有文件。可继续修改现有源码，或为另一份源码新建项目。"
+  ],
+  "error.PERMISSION_OUTSIDE_PROJECT": [
+    "The request reaches outside this project. Ask Codex to keep the work in the project workspace.",
+    "请求超出了本项目范围，请让 Codex 在项目工作目录内完成。"
+  ],
+  "error.PERMISSION_SCOPE_UNSUPPORTED": [
+    "This request does not specify a permission scope TWOS can preserve. Reject it and ask Codex for a project-scoped alternative.",
+    "该请求没有可保留项目边界的明确权限范围。请拒绝，并让 Codex 改用项目内方式。"
+  ],
+  "error.REVIEW_READ_ONLY": [
+    "Independent review can inspect this project but cannot change its files.",
+    "独立复核可以检查项目，但不能修改项目文件。"
+  ],
+  "error.SOURCE_CHANGED": [
+    "The source copy changed during preparation. Select the folder again to review the current files.",
+    "准备过程中源码副本发生变化，请重新选择目录审查当前文件。"
+  ],
+  "error.SOURCE_EMPTY": [
+    "No supported source files were found in the selected folder.",
+    "所选目录中没有可导入的源码文件。"
+  ],
+  "error.SOURCE_TOO_LARGE": [
+    "This source selection is too large. Select the source folder without generated files or dependencies.",
+    "所选源码过大，请选择不含生成文件和依赖目录的源码文件夹。"
+  ],
+  "error.ARTIFACT_CHANGED": [
+    "The saved file no longer matches its delivery record. The project and conversation are still available.",
+    "保存文件与交付记录不一致，项目和对话仍可使用。"
+  ],
+  "error.PROVIDER_ALLOWANCE_UNAVAILABLE": [
+    "Your provider reports that its allowance is unavailable. Progress is saved; continue when the provider allows it.",
+    "服务商返回额度暂不可用。进度已保存，额度恢复后可继续。"
+  ],
+  "error.PROVIDER_CONNECTION_FAILED": [
+    "The provider connection was interrupted. Progress is saved; you can continue from here.",
+    "服务商连接已中断。进度已保存，可从当前步骤继续。"
+  ],
+  "limit": [
+    "Provider allowance",
+    "服务商额度"
+  ],
+  "error.MODEL_NOT_ADVERTISED": [
+    "This model is not in the selected Codex client’s model list. Check the connection before sending again.",
+    "所选 Codex 客户端的模型列表中没有此模型。请检查连接后重新发送。"
+  ],
+  "error.MODEL_CATALOG_UNAVAILABLE": [
+    "The selected client did not return its model list. Retry the connection.",
+    "所选客户端未返回模型列表，请重新连接。"
+  ],
+  "error.CODEX_MODEL_BINDING_CHANGED": [
+    "Codex changed the requested model. Work stopped; choose the model before continuing.",
+    "Codex 返回的模型与所选模型不同，工作已停止，请先确认模型再继续。"
+  ],
+  "error.PROJECT_REQUIRED_FOR_CONFIGURATION": [
+    "Project settings become available with your first deliverable.",
+    "首次准备交付时会建立项目，随后可以更新项目配置。"
+  ],
+  "error.SOURCE_PATH_CONFLICT": [
+    "The source selection has a file and directory at the same path. Check the selected files.",
+    "源码中有文件与目录路径冲突，请检查所选文件。"
+  ],
+  "reasoningSummary": [
+    "Thinking summary",
+    "思考摘要"
+  ],
+  "summaryTruncated": [
+    "The displayed summary has been shortened.",
+    "此段摘要较长，显示已截短。"
+  ],
+  "progress.PROVIDER_QUEUED": [
+    "Preparing your request…",
+    "正在准备请求…"
+  ],
+  "progress.PROVIDER_CONNECTING": [
+    "Connecting to the model…",
+    "正在连接模型…"
+  ],
+  "progress.PROVIDER_CONNECTED": [
+    "Connected. Waiting for the model…",
+    "已连接，正在等待模型响应…"
+  ],
+  "progress.PROVIDER_WAITING": [
+    "Waiting for the model response…",
+    "正在等待模型响应…"
+  ],
+  "progress.PROVIDER_THINKING": [
+    "Thinking — summary below",
+    "正在思考 · 摘要见下方"
+  ],
+  "progress.CLI_MODEL_METADATA_FALLBACK": [
+    "The selected client could not find this model in its local catalog.",
+    "所选客户端未在本地目录中找到该模型信息。"
+  ],
+  "progress.CLI_RECONNECTING": [
+    "The Codex client is reconnecting…",
+    "Codex 客户端正在重新连接…"
+  ],
+  "progress.CLI_HTTPS_TRANSPORT_RECOVERY": [
+    "The Codex client is retrying over HTTPS…",
+    "Codex 客户端正在改用 HTTPS 连接…"
+  ],
+  "error.PROVIDER_MODEL_UNAVAILABLE": [
+    "The selected Codex client or account does not support this model. Check the connection and select a compatible client, then resend your message.",
+    "所选 Codex 客户端或账号不支持此模型。请检查连接，选择支持该模型的客户端后重新发送消息。"
+  ],
+  "error.PROVIDER_AUTH_REQUIRED": [
+    "The Codex client needs you to sign in with your ChatGPT account. Check the connection after signing in.",
+    "Codex 客户端需要登录 ChatGPT 账号。登录后请检查连接。"
+  ],
+  "error.EXECUTABLE_MISSING_OR_CHANGED": [
+    "The connected Codex client moved or changed. Check the connection to select it again.",
+    "已连接的 Codex 客户端已移动或更新，请检查连接并重新选择。"
+  ],
+  "error.EXECUTOR_CONFIGURATION_UNSUPPORTED": [
+    "This Codex client does not support the required connection settings. Select an up-to-date installed client.",
+    "此 Codex 客户端不支持所需连接设置，请选择本机已更新的客户端。"
+  ],
+  "error.EXECUTION_TIMEOUT": [
+    "The model did not finish before the response timeout. Your message is saved; you can resend it.",
+    "模型未在等待时间内完成回复。你的消息已保存，可重新发送。"
+  ],
+  "error.PROVIDER_REQUEST_FAILED": [
+    "The provider could not complete the request. Your message is saved; check the connection and try again.",
+    "服务商未能完成请求。你的消息已保存，请检查连接后重试。"
+  ],
+  "diagnosticCode": [
+    "Reason code",
+    "原因代码"
+  ],
+  "diagnosticUnavailable": [
+    "No further diagnostic information was saved.",
+    "未保存更多诊断信息。"
+  ],
+  "diagnosticReference": [
+    "Diagnostic reference",
+    "诊断编号"
+  ],
+  "duration": [
+    "Elapsed time",
+    "耗时"
+  ],
+  "seconds": [
+    "seconds",
+    "秒"
+  ],
+  "noAutomaticReplay": [
+    "This request will not be sent again automatically.",
+    "此请求不会自动重新发送。"
+  ],
+  "reviewConnection": [
+    "Check connection",
+    "检查连接"
+  ],
+  "connectionRepairHint": [
+    "An installed desktop Codex client is selected below for review. Confirm Connect to use it; your model and saved conversation remain. Then resend your message.",
+    "下方已选中本机桌面应用附带的 Codex 客户端供你核对。确认连接后生效，所选模型及聊天记录保留。随后可重新发送消息。"
+  ],
+  "connectionUpdateHint": [
+    "Select an installed Codex client that supports your model, then confirm Connect. Your saved conversation remains.",
+    "请选择支持所需模型的本机 Codex 客户端，然后确认连接。已保存的聊天记录保留。"
+  ]
+}

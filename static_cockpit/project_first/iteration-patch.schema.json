@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "baseline", "catalog_sha256", "replacement", "regression", "summary"],
+  "properties": {
+    "schema": {"type": "string", "enum": ["twos.iteration.patch.v1"]},
+    "baseline": {"type": "string"},
+    "catalog_sha256": {"type": "string"},
+    "replacement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["en-US", "zh-CN"],
+      "properties": {"en-US": {"type": "string"}, "zh-CN": {"type": "string"}}
+    },
+    "regression": {"type": "string"},
+    "summary": {"type": "string"}
+  }
+}

@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f6f7f4">
-  <meta name="twos-version" content="1.0.0">
-  <title>TWOS 1.0.0</title>
+  <meta name="twos-version" content="1.0.1">
+  <title>TWOS 1.0.1</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="/static_cockpit/vol12_static_mvp/styles.css?v=1.0.0">
-  <script src="/static_cockpit/vol12_static_mvp/twos_command_center.js?v=1.0.0" defer></script>
+  <link rel="stylesheet" href="/static_cockpit/vol12_static_mvp/styles.css?v=1.0.1">
+  <script src="/static_cockpit/vol12_static_mvp/twos_command_center.js?v=1.0.1" defer></script>
 </head>
 <body data-auth-state="loading">
   <div id="loading-view" class="loading-view" role="status" aria-live="polite">
@@ -135,7 +135,9 @@
         <section id="first-run-workspace" class="first-run-step" hidden aria-labelledby="first-run-workspace-title">
           <span class="step-label">04</span>
           <h2 id="first-run-workspace-title">Authorize one workspace</h2>
-          <p>Only this exact local directory becomes the Owner workspace. Authorization does not inspect, create, or modify project files.</p>
+          <p>Create a private project with a local history baseline. This authorizes work only inside the new project; it does not start a Run or connect a remote.</p>
+          <button id="first-run-managed-workspace" class="button button-primary" type="button">Create and Authorize My First Project</button>
+          <details><summary>Advanced: authorize an existing directory</summary>
           <form id="first-run-workspace-form" novalidate>
             <div class="field-group">
               <label for="first-run-workspace-path">Absolute workspace path</label>
@@ -148,6 +150,7 @@
             </label>
             <button id="first-run-authorize-workspace" class="button button-primary" type="submit">Authorize Workspace</button>
           </form>
+          </details>
         </section>
 
         <section id="first-run-tools" class="first-run-step" hidden aria-labelledby="first-run-tools-title">
@@ -200,7 +203,7 @@
     <main class="public-main">
       <section id="landing-view" class="landing-view" aria-labelledby="landing-title">
         <div class="landing-copy">
-          <span class="eyebrow">TWOS 1.0.0</span>
+          <span class="eyebrow">TWOS 1.0.1</span>
           <h1 id="landing-title">Assign, approve, run, and review TWOS work with explicit Owner control.</h1>
           <p>Move from a development task through visible model assignments to a reviewable result, with clear approval gates at every consequential step.</p>
           <div class="landing-actions">
@@ -312,16 +315,45 @@
       <main id="workbench-main" class="workbench-main" tabindex="-1">
         <div class="workspace-heading">
           <div>
-            <span class="eyebrow">TWOS 1.0.0</span>
-            <h1>Multi-Model Orchestration Workbench</h1>
+            <span class="eyebrow">TWOS 1.0.1</span>
+            <h1>Your workbench</h1>
           </div>
-          <p>Inspect model responsibility and readiness, approve the exact routing snapshot, then verify execution evidence.</p>
+          <p>Set up your task, review the decisions that need you, and keep its results and history.</p>
         </div>
 
+        <nav id="flow-navigation" class="flow-navigation" aria-label="Task workflow">
+          <button type="button" class="button button-secondary" data-flow-view="setup">Task and configuration</button>
+          <button type="button" class="button button-secondary" data-flow-view="work">Processing and your decisions</button>
+          <button type="button" class="button button-secondary" data-flow-view="history">Results and history</button>
+        </nav>
+        <details id="instance-details" class="instance-details"><summary id="instance-summary">App identity</summary><p id="instance-identity"></p></details>
+        <section id="flow-setup" aria-label="Task and configuration" hidden>
+          <section id="flow-tool-card" class="workbench-card"><h2>Tools for this Project</h2>
+            <p id="flow-tool-state"></p><p id="flow-tool-reasons"></p>
+            <button id="flow-tool-open" type="button" class="button button-secondary">Review tool setup</button>
+          </section>
+          <section id="flow-destination-card" class="workbench-card"><h2>Delivery destination</h2>
+            <p id="flow-destination-state"></p><p id="flow-destination-purpose"></p>
+            <button id="flow-destination-open" type="button" class="button button-primary" hidden>Configure local test destination</button>
+          </section>
+          <div id="flow-setup-guide-host"></div>
+          <div id="flow-setup-cards"></div>
+        </section>
+        <section id="flow-work" aria-label="Processing and your decisions">
+          <section id="flow-work-summary" class="workbench-card" hidden><p id="flow-work-summary-text"></p><button id="flow-work-next" class="button button-primary" type="button">Open task setup</button></section>
+          <div id="flow-guide-host"></div>
+          <div id="flow-action-host" tabindex="-1" aria-label="Current task action"></div>
+        </section>
+        <section id="flow-history" aria-label="Results and history" hidden>
+          <div id="flow-history-guide-host"></div>
+          <div id="flow-delivered-host"></div>
+          <div id="flow-result-host"></div>
+          <details id="flow-audit"><summary>Internal stages and audit history</summary><div id="flow-audit-host"></div></details>
+        </section>
         <section id="first-delivery-guide" class="workbench-card guided-delivery" aria-labelledby="first-delivery-title" hidden>
-          <span class="eyebrow">First Safe Delivery</span>
+          <span id="first-delivery-kind" class="eyebrow">First Safe Delivery</span>
           <h2 id="first-delivery-title">Tool Setup</h2>
-          <ol id="first-delivery-stages" aria-label="First delivery progress"></ol>
+          <details id="first-delivery-stage-details"><summary>Full first-use guide · eleven internal stages</summary><ol id="first-delivery-stages" aria-label="First delivery progress"></ol></details>
           <p id="first-delivery-message"></p>
           <div class="button-row"><button id="first-delivery-action" class="button button-primary" type="button">Open Guided Tool Setup</button>
           <button id="guided-tool-open" class="button button-quiet" type="button">Guided Tool Setup</button></div>
@@ -353,10 +385,14 @@
             </div>
             <button id="create-project" class="button button-secondary" type="button">Create Project</button>
             <div class="field-group"><label for="workspace-project">Project to authorize</label><select id="workspace-project"></select></div>
+            <button id="project-managed-workspace" class="button button-primary" type="button">Create and Authorize Managed Workspace</button>
+            <p>This creates a private project directory and its initial local history baseline. Future delivery, Commit and Push approvals remain separate.</p>
+            <details><summary>Advanced: authorize an existing directory</summary>
             <div class="field-group"><label for="project-workspace-path">Workspace directory</label><input id="project-workspace-path" placeholder="/absolute/path/to/project"></div>
             <label><input id="project-create-directory" type="checkbox"> Create this directory if missing</label>
             <p>Choose a dedicated standalone Git repository. Authorization does not edit its files, initialize Git, or approve Commit or Push.</p>
             <button id="authorize-project-workspace" class="button button-secondary" type="button">Authorize Project Workspace</button>
+            </details>
             <p id="project-workspace-status" role="status">Select a Project to inspect its authorization.</p>
             <div class="button-row"><button id="project-tool-setup" class="button button-quiet" type="button">Tool Setup for selected Task</button><button id="artifact-verification-open" class="button button-quiet" type="button">Artifact Verification for selected Task</button></div>
           </section>
@@ -561,7 +597,7 @@
               <div><span class="step-label">06</span><h2 id="result-title">Run Result</h2></div>
               <strong id="result-status" class="status-label">Not run</strong>
             </div>
-            <p class="card-intro">See what Codex did, whether independent Verification passed, which files changed, what tests ran, and the exact Owner action required next.</p>
+            <p id="result-history-intro" class="card-intro">See what Codex did, whether independent Verification passed, which files changed, what tests ran, and the exact Owner action required next.</p>
 
             <section id="push-delivery-section" class="result-section push-delivery-section" aria-labelledby="push-delivery-title" hidden>
               <div class="push-delivery-heading">
@@ -579,17 +615,30 @@
                   <button id="view-delivery-result" class="button button-secondary" type="button" hidden disabled>View Delivery Result</button>
                 </div>
               </div>
+              <section id="push-destination-prerequisite" class="destination-prerequisite" hidden>
+                <h4>Choose where this delivery goes</h4>
+                <p>Your Commit is saved locally. To validate Push on this Mac, review and confirm a private local test destination. No external destination is selected.</p>
+                <button id="setup-local-push-destination" class="button button-primary" type="button">Configure local test destination</button>
+              </section>
+              <p id="local-push-setup-feedback" role="status" aria-live="polite" hidden></p>
+              <p id="push-review-feedback" class="push-review-feedback" role="status" aria-live="polite" tabindex="-1" hidden></p>
               <p class="push-delivery-boundary-note"><strong>Push does not create a release, tag, merge, or deployment.</strong> No Push occurs on page load, refresh, preflight review, Push Plan review, approval, or Delivery Result review. Confirm Push authorizes one standard fast-forward attempt only.</p>
               <dl class="fact-list result-facts push-delivery-facts">
+                <div><dt>Reviewed Push Plan</dt><dd id="push-reviewed-plan">Not reviewed</dd></div>
                 <div><dt>Local commit</dt><dd id="push-local-commit">Not ready</dd></div>
                 <div><dt>Commit subject</dt><dd id="push-commit-subject">Not available</dd></div>
                 <div><dt>Push readiness</dt><dd id="push-gate-status" class="candidate-inline-status">Not evaluated</dd></div>
                 <div><dt>Push Plan approval</dt><dd id="push-plan-approval" class="candidate-inline-status">Not reviewed</dd></div>
                 <div><dt>Destination</dt><dd id="push-destination">origin/main</dd></div>
+                <div><dt>Target branch</dt><dd id="push-target-branch">Not reviewed</dd></div>
+                <div><dt>Delivery scope</dt><dd id="push-reviewed-scope">Not reviewed</dd></div>
                 <div><dt>Expected remote base</dt><dd id="push-remote-base">Not evaluated</dd></div>
                 <div><dt>Proposed remote SHA</dt><dd id="push-proposed-new-sha">Not evaluated</dd></div>
                 <div><dt>Fast-forward readiness</dt><dd id="push-fast-forward-readiness">Not evaluated</dd></div>
-                <div><dt>Ahead / behind</dt><dd id="push-ahead-behind">Not evaluated</dd></div>
+                <div><dt>Pre-Push snapshot · ahead / behind</dt><dd id="push-ahead-behind">Not evaluated</dd></div>
+                <div><dt>Plan snapshot recorded at</dt><dd id="push-preflight-time">Not recorded</dd></div>
+                <div><dt>Post-Push verification · ahead / behind</dt><dd id="push-post-ahead-behind">Not verified</dd></div>
+                <div><dt>Post-Push verification recorded at</dt><dd id="push-post-time">Not recorded</dd></div>
                 <div><dt>Worktree and index</dt><dd id="push-cleanliness">Not evaluated</dd></div>
                 <div><dt>Push progress</dt><dd id="push-progress">Not started</dd></div>
                 <div><dt>Verified remote SHA</dt><dd id="push-final-remote-sha">Not delivered</dd></div>
@@ -662,7 +711,7 @@
                 <div><dt>Independent Verification</dt><dd id="result-envelope-verification">Not started</dd></div>
                 <div><dt>Validation / tests</dt><dd id="result-envelope-tests">No test result available.</dd></div>
                 <div><dt>Result integrity</dt><dd id="result-envelope-integrity" class="candidate-inline-status">Pending</dd></div>
-                <div><dt>Exact Owner action</dt><dd id="result-envelope-next-action">Run Codex when the approved Pack is ready.</dd></div>
+                <div><dt id="result-action-label">Exact Owner action</dt><dd id="result-envelope-next-action">Run Codex when the approved Pack is ready.</dd></div>
               </dl>
             </section>
             <section id="acceptance-card" class="result-section result-delivery-review-section" aria-labelledby="acceptance-title">
@@ -1012,6 +1061,7 @@
                   <p>Review the exact applied delivery, approve one immutable Commit proposal, then separately confirm one local commit.</p>
                 </div>
                 <div class="button-row commit-builder-controls canonical-commit-builder-controls" hidden>
+                  <button id="configure-commit-identity" class="button button-secondary" type="button" hidden disabled>Set Commit identity</button>
                   <button id="review-owner-commit" class="button button-primary" type="button" hidden disabled>Review Commit</button>
                   <button id="approve-commit-proposal" class="button button-secondary" type="button" hidden disabled>Approve Commit</button>
                   <button id="confirm-owner-local-commit" class="button button-danger" type="button" hidden disabled>Confirm Local Commit</button>
@@ -1649,6 +1699,52 @@
           </div>
         </form>
       </dialog>
+      <dialog id="local-push-destination-dialog" class="confirmation-dialog" aria-labelledby="local-push-destination-title">
+        <form id="local-push-destination-form" class="confirmation-surface">
+          <h2 id="local-push-destination-title">Configure local test destination</h2>
+          <p>This creates a private test repository on this Mac and binds this Project's origin to it. It copies the parent commit and its reachable history locally. The delivery commit is sent only after separate Push Plan review, approval and Confirm Push.</p>
+          <p>No network, GitHub, public repository, credentials or automatic Push. This tests local delivery, not external publication or GA acceptance.</p>
+          <dl class="fact-list">
+            <div><dt>Project / Task</dt><dd id="local-push-project"></dd></div>
+            <div><dt>Source repository</dt><dd id="local-push-source"></dd></div>
+            <div><dt>Local test destination</dt><dd id="local-push-target"></dd></div>
+            <div><dt>Initial main / parent SHA</dt><dd id="local-push-parent"></dd></div>
+            <div><dt>Delivery commit (not sent by setup)</dt><dd id="local-push-commit"></dd></div>
+          </dl>
+          <p>Only this repository's origin URL is configured. Existing Commit, files, index, global Git configuration and approvals are preserved. No Push approval is created.</p>
+          <p id="local-push-error" role="alert"></p>
+          <div class="button-row">
+            <button id="retry-local-push-preview" class="button button-secondary" type="button" hidden>Retry destination preview</button>
+            <button id="save-local-push-destination" class="button button-primary" type="submit">Create and bind local test destination</button>
+            <button id="cancel-local-push-destination" class="button button-secondary" type="button">Cancel</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog id="commit-identity-dialog" class="confirmation-dialog" aria-labelledby="commit-identity-title">
+        <form id="commit-identity-form" class="confirmation-surface" autocomplete="off">
+          <div class="confirmation-heading">
+            <h2 id="commit-identity-title">Set Commit identity</h2>
+            <p>Enter and confirm your name and email for this repository. These fields enter Git commit history; they are not your login password.</p>
+          </div>
+          <dl class="fact-list compact-facts confirmation-facts">
+            <div><dt>Project / Task</dt><dd id="commit-identity-project"></dd></div>
+            <div><dt>Authorized repository</dt><dd id="commit-identity-repository"></dd></div>
+            <div><dt>Current configuration source</dt><dd id="commit-identity-source"></dd></div>
+          </dl>
+          <label for="commit-identity-name">Commit author name</label>
+          <input id="commit-identity-name" name="commit_author_name" type="text" maxlength="512" autocomplete="off" required>
+          <label for="commit-identity-email">Commit author email</label>
+          <input id="commit-identity-email" name="commit_author_email" type="email" maxlength="512" autocomplete="off" required>
+          <p>Save changes only this repository's user.name and user.email. Global settings stay unchanged. Existing Run, Apply and validation history remain. A changed identity requires a new Commit review and approval.</p>
+          <p id="commit-identity-error" role="alert"></p>
+          <div class="button-row confirmation-actions">
+            <button id="retry-commit-identity-preview" class="button button-secondary" type="button" hidden>Retry identity inspection</button>
+            <button id="save-commit-identity" class="button button-primary" type="submit">Save identity</button>
+            <button id="cancel-commit-identity" class="button button-secondary" type="button">Cancel</button>
+          </div>
+        </form>
+      </dialog>
       <dialog id="owner-local-commit-confirmation-dialog" class="confirmation-dialog" aria-labelledby="owner-local-commit-confirmation-title">
         <form method="dialog" class="confirmation-surface">
           <div class="confirmation-heading">
@@ -1819,9 +1915,15 @@
     <div class="button-row"><button id="artifact-verification-save" class="button button-primary" type="button">Save Artifact Verification</button><button id="artifact-verification-close" class="button button-quiet" type="button">Close</button></div>
   </dialog>
   <dialog id="guided-tool-dialog" class="guided-dialog" aria-labelledby="guided-tool-title">
-    <h2 id="guided-tool-title">Guided Tool Setup</h2>
+    <h2 id="guided-tool-title">Project tool setup</h2>
+    <p id="guided-project-scope"></p>
+    <p id="guided-saved-status"></p><ul id="guided-recovery-reasons"></ul>
+    <label for="guided-tool-choice">Trusted installed Codex tool</label><select id="guided-tool-choice"><option value="">Choose a tool explicitly</option></select>
+    <p id="guided-no-tool" hidden>No trusted installed Codex tool was found. Install or restore Codex using its official application, then reopen this panel. TWOS does not install credentials or create replacement links.</p>
+    <label id="guided-verifier-confirmation" hidden><input id="guided-verifier-confirm" type="checkbox"> I have reviewed the current independent verifier for future runs.</label>
+    <details><summary>Current verifier files</summary><pre id="guided-verifier-files"></pre></details>
     <p>TWOS reuses your existing Codex login. Credentials stay with Codex. Opening this page does not contact a provider.</p>
-    <dl><dt>Detected executable</dt><dd id="guided-executable"></dd><dt>CLI version</dt><dd id="guided-version"></dd><dt>Minimum supported version</dt><dd id="guided-minimum"></dd><dt>Authentication readiness</dt><dd id="guided-auth">Not checked</dd><dt>Last successful readiness check</dt><dd id="guided-last-check">Never</dd></dl>
+    <dl><dt>Detected executable</dt><dd id="guided-executable"></dd><dt>CLI version</dt><dd id="guided-version"></dd><dt>Minimum supported version</dt><dd id="guided-minimum"></dd><dt>Authentication readiness</dt><dd id="guided-auth">Not checked</dd><dt>Last actual readiness check</dt><dd id="guided-last-check">Never</dd></dl>
     <label for="guided-model">Requested Coding model</label><select id="guided-model"></select>
     <label for="guided-effort">Requested reasoning effort</label><select id="guided-effort"></select>
     <p id="guided-tool-state" role="status" aria-live="polite">Not checked</p>

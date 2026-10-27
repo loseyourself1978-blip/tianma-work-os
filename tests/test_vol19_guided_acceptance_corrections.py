@@ -257,6 +257,8 @@ const nodes = {};
 function byId(id) { return nodes[id] ||= {replaceChildren() {}}; }
 function selectedTask() { return {id: 1}; }
 function currentCodexRun() { return {id: 1}; }
+function ownerDeliveryParts() { return {}; }
+function ownerPushNeedsDestination() { return false; }
 ''' + function('renderFirstDeliveryGuide') + '''
 renderFirstDeliveryGuide();
 process.stdout.write(JSON.stringify(nodes));

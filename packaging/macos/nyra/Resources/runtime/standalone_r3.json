@@ -1,0 +1,269 @@
+{
+  "schema": "nyra.frame-sequence-plan.v1",
+  "status": "R3_REAL_ART_FROM_REVIEWED_R2",
+  "canvas": [
+    1024,
+    1536
+  ],
+  "anchor": [
+    512,
+    1444
+  ],
+  "unique_asset_count": 77,
+  "required_frame_slots": 84,
+  "sequences": {
+    "idle": {
+      "loop": true,
+      "asset_ids": [
+        "nyra_neutral",
+        "nyra_idle_01",
+        "nyra_idle_02",
+        "nyra_idle_03",
+        "nyra_idle_04",
+        "nyra_idle_05"
+      ],
+      "durations_ms": [
+        1600,
+        180,
+        90,
+        110,
+        90,
+        220
+      ]
+    },
+    "working": {
+      "loop": true,
+      "asset_ids": [
+        "nyra_working_00",
+        "nyra_working_01",
+        "nyra_working_02",
+        "nyra_working_03",
+        "nyra_working_04",
+        "nyra_working_05"
+      ],
+      "durations_ms": [
+        300,
+        160,
+        140,
+        160,
+        180,
+        300
+      ]
+    },
+    "gaze_head": {
+      "loop": false,
+      "interactive": true,
+      "asset_ids": [
+        "nyra_neutral",
+        "nyra_gaze_left",
+        "nyra_gaze_right",
+        "nyra_gaze_up",
+        "nyra_gaze_down"
+      ],
+      "durations_ms": [
+        200,
+        200,
+        200,
+        200,
+        200
+      ]
+    },
+    "verified_success": {
+      "loop": false,
+      "asset_ids": [
+        "nyra_neutral",
+        "nyra_success_01",
+        "nyra_success_02",
+        "nyra_success_03",
+        "nyra_success_04",
+        "nyra_neutral"
+      ],
+      "durations_ms": [
+        180,
+        320,
+        340,
+        420,
+        420,
+        220
+      ]
+    },
+    "running_right": {
+      "loop": true,
+      "asset_ids": [
+        "nyra_run_right_00",
+        "nyra_run_right_01",
+        "nyra_run_right_02",
+        "nyra_run_right_03",
+        "nyra_run_right_04",
+        "nyra_run_right_05",
+        "nyra_run_right_06",
+        "nyra_run_right_07"
+      ],
+      "durations_ms": [
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120
+      ]
+    },
+    "running_left": {
+      "loop": true,
+      "asset_ids": [
+        "nyra_run_left_00",
+        "nyra_run_left_01",
+        "nyra_run_left_02",
+        "nyra_run_left_03",
+        "nyra_run_left_04",
+        "nyra_run_left_05",
+        "nyra_run_left_06",
+        "nyra_run_left_07"
+      ],
+      "durations_ms": [
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120
+      ]
+    },
+    "waving": {
+      "loop": false,
+      "asset_ids": [
+        "nyra_waving_00",
+        "nyra_waving_01",
+        "nyra_waving_02",
+        "nyra_waving_03"
+      ],
+      "durations_ms": [
+        180,
+        180,
+        180,
+        180
+      ]
+    },
+    "jumping": {
+      "loop": false,
+      "asset_ids": [
+        "nyra_jumping_00",
+        "nyra_jumping_01",
+        "nyra_jumping_02",
+        "nyra_jumping_03",
+        "nyra_jumping_04"
+      ],
+      "durations_ms": [
+        180,
+        180,
+        180,
+        180,
+        180
+      ]
+    },
+    "failed": {
+      "loop": false,
+      "asset_ids": [
+        "nyra_failed_00",
+        "nyra_failed_01",
+        "nyra_failed_02",
+        "nyra_failed_03",
+        "nyra_failed_04",
+        "nyra_failed_05",
+        "nyra_failed_06",
+        "nyra_failed_07"
+      ],
+      "durations_ms": [
+        180,
+        180,
+        180,
+        180,
+        180,
+        180,
+        180,
+        180
+      ]
+    },
+    "waiting": {
+      "loop": true,
+      "asset_ids": [
+        "nyra_waiting_00",
+        "nyra_waiting_01",
+        "nyra_waiting_02",
+        "nyra_waiting_03",
+        "nyra_waiting_04",
+        "nyra_waiting_05"
+      ],
+      "durations_ms": [
+        180,
+        180,
+        180,
+        180,
+        180,
+        180
+      ]
+    },
+    "review": {
+      "loop": true,
+      "asset_ids": [
+        "nyra_review_00",
+        "nyra_review_01",
+        "nyra_review_02",
+        "nyra_review_03",
+        "nyra_review_04",
+        "nyra_review_05"
+      ],
+      "durations_ms": [
+        180,
+        180,
+        180,
+        180,
+        180,
+        180
+      ]
+    },
+    "look_around": {
+      "loop": false,
+      "asset_ids": [
+        "nyra_gaze_up",
+        "nyra_gaze_cw_01",
+        "nyra_gaze_cw_02",
+        "nyra_gaze_cw_03",
+        "nyra_gaze_right",
+        "nyra_gaze_cw_05",
+        "nyra_gaze_cw_06",
+        "nyra_gaze_cw_07",
+        "nyra_gaze_down",
+        "nyra_gaze_cw_09",
+        "nyra_gaze_cw_10",
+        "nyra_gaze_cw_11",
+        "nyra_gaze_left",
+        "nyra_gaze_cw_13",
+        "nyra_gaze_cw_14",
+        "nyra_gaze_cw_15"
+      ],
+      "durations_ms": [
+        220,
+        220,
+        220,
+        220,
+        220,
+        220,
+        220,
+        220,
+        220,
+        220,
+        220,
+        220,
+        220,
+        220,
+        220,
+        220
+      ]
+    }
+  }
+}

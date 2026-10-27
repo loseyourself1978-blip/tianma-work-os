@@ -21,8 +21,8 @@ from pathlib import Path
 from . import __version__
 
 FORMAT = "TWOS_BACKUP_V1"
-TARGET_SCHEMA = "vol20.001"
-SUPPORTED_SCHEMAS = ("vol19.003", "vol19.004", "vol19.005", TARGET_SCHEMA)
+TARGET_SCHEMA = "vol20.002"
+SUPPORTED_SCHEMAS = ("vol19.003", "vol19.004", "vol19.005", "vol20.001", TARGET_SCHEMA)
 TERMINAL_OPERATIONS = {"BACKUP_COMPLETE", "BACKUP_FAILED", "RESTORE_COMPLETE",
     "RESTORE_FAILED", "MIGRATION_COMPLETE", "MIGRATION_FAILED", "RECOVERY_COMPLETE"}
 
@@ -214,7 +214,7 @@ def inspect_database(db, *, allow_legacy=True):
                 fail("SCHEMA_UNSUPPORTED", "Unknown or future schema history. Use a compatible TWOS version.")
             latest = next((v for v in reversed(SUPPORTED_SCHEMAS) if v in versions), None)
             if latest is None or (not allow_legacy and latest != TARGET_SCHEMA):
-                fail("SCHEMA_UNSUPPORTED", "Supported migration sources are vol19.003 through vol19.005; restore requires vol20.001.")
+                fail("SCHEMA_UNSUPPORTED", "Supported migration sources are vol19.003 through vol20.001; restore requires vol20.002.")
             expected = set(_CANONICAL_FRESH_SCHEMA_VERSIONS) - {v for v in SUPPORTED_SCHEMAS if v > latest}
             if set(versions) != expected:
                 fail("SCHEMA_UNSUPPORTED", "The schema history is incomplete; restore a verified recovery point.")
@@ -245,6 +245,9 @@ def safe_state(db):
         "stage_executions": ("state", ("STAGING", "INTEGRITY_BLOCKED")),
         "local_commit_executions": ("state", ("COMMITTING",)),
         "push_executions": ("state", ("PUSHING", "RECONCILIATION_BLOCKED")),
+        "r2_work_executions": ("state", ("QUEUED", "RUNNING")),
+        "r2_work_items": ("state", ("COMMITTING", "COMMIT_RECONCILIATION_REQUIRED")),
+        "wb_chat_messages": ("state", ("QUEUED", "RUNNING")),
     }
     with readonly(db) as connection:
         names = tables(connection)
@@ -276,6 +279,9 @@ def snapshot(source, target, *, remove_sessions=False):
         original.backup(copy)
         if remove_sessions:
             copy.execute("DELETE FROM session_tokens")
+            if "wb_email_challenges" in tables(copy):
+                # Authentication proofs must never become reusable by restore.
+                copy.execute("DELETE FROM wb_email_challenges")
             if "installations" in tables(copy):
                 copy.execute("UPDATE installations SET setup_token_hash=NULL, setup_token_issued_at=NULL, setup_token_expires_at=NULL")
             copy.commit()
@@ -772,7 +778,10 @@ class Maintenance:
                     connection.execute("UPDATE schedules SET paused=1, next_run_at=NULL")
                     connection.commit()
             self.fault(kind.lower() + "_after_staged_verification")
-            authority = old_authority if engine_compatibility else self._recovery_authority(staged, old_authority, kind)
+            # An additive 101.26 -> 20.2 startup upgrade preserves the same
+            # machine/workspace binding. Recovery/restore still invalidates it.
+            preserve = kind == 'MIGRATION' and plan.get('preserve_workspace_authority') is True
+            authority = old_authority if engine_compatibility or preserve else self._recovery_authority(staged, old_authority, kind)
             if kind == "RESTORE":
                 archive_id = self.journal()["operation_id"]
                 private_directory(self.root / "archives")
@@ -935,7 +944,10 @@ def verify_preserved_data(before, after, *, allow_seed_rows=False):
 
 def recovery_epoch(settings):
     try:
-        return Maintenance(settings).authority().get("epoch", "") if settings else ""
+        existing = Maintenance(settings).authority().get("epoch", "") if settings else ""
+        from .workspace_recovery import epoch
+        workspace = epoch(settings)
+        return digest([existing, workspace]) if workspace else existing
     except MaintenanceError as exc:
         if exc.code == "DATABASE_UNSUPPORTED":
             return ""
@@ -1001,6 +1013,7 @@ def protect_startup_migration(engine, *, seed_default_projects=True):
     if service.journal()["state"] in {"MIGRATION_FAILED", "RECOVERY_REQUIRED", "RECOVERY_COMPLETE"}:
         fail("MIGRATION_CONFIRMATION_REQUIRED", "A previous migration was interrupted or failed. Open Maintenance and explicitly review a new migration plan.")
     strict = bool(set(SUPPORTED_SCHEMAS[:2]) & versions) and TARGET_SCHEMA not in versions
+    additive_workbench = versions == _CANONICAL_FRESH_SCHEMA_VERSIONS - {TARGET_SCHEMA}
     if strict:
         info = inspect_database(db)
         from_schema = info["schema"]
@@ -1010,6 +1023,7 @@ def protect_startup_migration(engine, *, seed_default_projects=True):
         safe_state(db)
         plan = {"plan_id": uuid.uuid4().hex, "kind": "MIGRATION", "from_schema": from_schema,
             "to_schema": TARGET_SCHEMA, "initiator": "EXISTING_STARTUP_ENGINE",
+            "preserve_workspace_authority": additive_workbench,
             "compatibility": "accepted 19.1/19.2A" if strict else "existing engine compatibility",
             "active_identity": logical_digest(db), "created_at": now()}
         return bool(service._execute_bound_plan(plan, seed_default_projects=seed_default_projects,

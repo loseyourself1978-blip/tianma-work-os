@@ -152,6 +152,18 @@ def authenticate(session: Session, username: str, password: str, ttl_seconds: in
     return user, raw_token, token
 
 
+def legacy_owner_candidates(session: Session, owner_id: int | None = None) -> list[User]:
+    """Email-only principals do not become installation Owners by row order.
+
+    Keep the original single-Owner invariant for every non-email principal.
+    A legacy Owner that explicitly binds email retains that exact identity.
+    """
+    from .workbench_models import EmailIdentity
+    verified = set(session.scalars(select(EmailIdentity.user_id)))
+    return [u for u in session.scalars(select(User).order_by(User.id))
+            if u.id == owner_id or u.id not in verified or not u.username.startswith('email_user_')]
+
+
 def recover_owner_credentials(
     session: Session,
     password: str,
@@ -160,7 +172,9 @@ def recover_owner_credentials(
     allow_valid_record: bool = False,
 ) -> User:
     """Repair exactly one Owner row from an explicit local maintenance flow."""
-    users = session.scalars(select(User).order_by(User.id).limit(2)).all()
+    from .models import Installation
+    installation = session.scalar(select(Installation))
+    users = legacy_owner_candidates(session, installation.owner_user_id if installation else None)
     if len(users) != 1 or (owner_record_issue(users[0]) is None and not allow_valid_record):
         raise ValueError("Owner recovery is unavailable.")
     user = users[0]

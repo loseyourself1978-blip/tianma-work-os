@@ -1,3 +1,5 @@
+> Historical design / 历史设计。For the current product, start with [README](README.md).
+
 # GITHUB_ISSUES_BACKLOG.md v0.1.7
 
 Status: Draft — v0.1.7 updated with Agent Resource / Quota-Aware Execution Scheduler, Multi-Dimensional Progress Continuity, Rule-Based Execution Review, Volatility-Aware Execution Splitter, DUXD Spiral Improvement Loop, Account Structure Quality Score, Trigger-to-Execution Rule Ledger, and Profit Surge Protection for Strategy-State Risk Monitor.

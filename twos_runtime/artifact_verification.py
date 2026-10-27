@@ -13,6 +13,8 @@ from .result_intake import canonical_sha256
 
 
 def command():
+    if getattr(sys, "frozen", False):
+        return (str(Path(sys.executable).resolve()), "--twos-verify")
     return (str(Path(sys.executable).resolve()), "-I", str(Path(__file__).with_name("builtin_verifier.py").resolve()))
 
 

@@ -40,6 +40,7 @@ from .db import (
     VOL19_GUIDED_DELIVERY_SCHEMA_VERSION,
     VOL19_OWNER_COMMIT_PUSH_SCHEMA_VERSION,
     VOL20_PROJECT_WORKSPACE_SCHEMA_VERSION,
+    VOL20_WORKBENCH_SCHEMA_VERSION,
     VOL19_RESULT_DELIVERY_LOOP_SCHEMA_VERSION,
 )
 from .models import (
@@ -95,6 +96,7 @@ _CANONICAL_FRESH_SCHEMA_VERSIONS = frozenset(
         VOL19_FRESH_INSTALL_SCHEMA_VERSION,
         VOL19_GUIDED_DELIVERY_SCHEMA_VERSION,
         VOL20_PROJECT_WORKSPACE_SCHEMA_VERSION,
+        VOL20_WORKBENCH_SCHEMA_VERSION,
     }
 )
 _MAX_PRIVATE_CONFIGURATION_BYTES = 64 * 1024
@@ -298,7 +300,7 @@ def validate_fresh_database_before_initialization(settings: Settings) -> Path:
             "DATABASE_INCOMPATIBLE",
             "The existing database could not be validated safely.",
         ) from exc
-    current_schema_key = _vol_schema_version_key(VOL20_PROJECT_WORKSPACE_SCHEMA_VERSION)
+    current_schema_key = _vol_schema_version_key(VOL20_WORKBENCH_SCHEMA_VERSION)
     assert current_schema_key is not None
     newer = sorted(
         version
@@ -311,14 +313,16 @@ def validate_fresh_database_before_initialization(settings: Settings) -> Path:
             "NEWER_SCHEMA_UNSUPPORTED",
             "This database was created by a newer TWOS schema and cannot be opened safely.",
         )
-    if VOL20_PROJECT_WORKSPACE_SCHEMA_VERSION not in versions:
+    previous_workbench_schema = _CANONICAL_FRESH_SCHEMA_VERSIONS - {VOL20_WORKBENCH_SCHEMA_VERSION}
+    compatible_10126 = versions == previous_workbench_schema and len(version_rows) == len(previous_workbench_schema)
+    if VOL20_WORKBENCH_SCHEMA_VERSION not in versions and not compatible_10126:
         raise FirstRunError(
             "OLDER_INSTALL_MIGRATION_REQUIRED",
             "This database predates the current Fresh Install schema. Use a new installation or the explicit Maintenance migration flow with a verified backup.",
         )
     if (
-        len(version_rows) != len(_CANONICAL_FRESH_SCHEMA_VERSIONS)
-        or versions != _CANONICAL_FRESH_SCHEMA_VERSIONS
+        not compatible_10126 and (len(version_rows) != len(_CANONICAL_FRESH_SCHEMA_VERSIONS)
+        or versions != _CANONICAL_FRESH_SCHEMA_VERSIONS)
     ):
         raise FirstRunError(
             "DATABASE_INCOMPATIBLE",
@@ -704,11 +708,8 @@ def initialize_fresh_installation(
                 settings=settings,
                 create_if_missing=False,
             )
-            if (
-                workspace.identity_digest != workspace_identity
-                or workspace.device_id != int(workspace_metadata.st_dev)
-                or workspace.inode != int(workspace_metadata.st_ino)
-            ):
+            from .workspace_recovery import binding_matches
+            if not binding_matches(session, workspace, workspace_path, workspace_metadata, workspace_identity):
                 raise FirstRunError(
                     "WORKSPACE_IDENTITY_CHANGED",
                     "The authorized workspace identity changed. Review is required before TWOS can resume.",
@@ -725,7 +726,8 @@ def _validate_installation_invariants(
     settings: Settings,
     installation: Installation,
 ) -> AuthorizedWorkspace | None:
-    users = session.scalars(select(User).order_by(User.id).limit(2)).all()
+    from .security import legacy_owner_candidates
+    users = legacy_owner_candidates(session, installation.owner_user_id)
     workspace = session.scalar(
         select(AuthorizedWorkspace).where(
             AuthorizedWorkspace.installation_id == installation.id
@@ -785,12 +787,8 @@ def _validate_installation_invariants(
         settings=settings,
         create_if_missing=False,
     )
-    if (
-        str(current_path) != workspace.canonical_path
-        or int(metadata.st_dev) != workspace.device_id
-        or int(metadata.st_ino) != workspace.inode
-        or identity != workspace.identity_digest
-    ):
+    from .workspace_recovery import binding_matches
+    if not binding_matches(session, workspace, current_path, metadata, identity):
         raise FirstRunError(
             "WORKSPACE_IDENTITY_CHANGED",
             "The authorized workspace identity changed. Review is required before TWOS can resume.",
@@ -935,7 +933,7 @@ def first_run_status(
         ),
         "owner_exists": owner is not None,
         "authenticated": authenticated_owner,
-        "owner": {"username": owner.username} if owner and authenticated_user else None,
+        "owner": {"username": owner.username} if owner and authenticated_owner else None,
         "installation": {
             "source_version": installation.source_version,
             "data_root_summary": _display_path(

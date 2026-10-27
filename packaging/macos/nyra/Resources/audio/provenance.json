@@ -1,0 +1,18 @@
+{
+  "source": "Original procedural two/three-note UI sound design; no external samples",
+  "speech": "Runtime macOS female system synthesis; not an exclusive voice; user-imported voice stays local",
+  "files": [
+    {
+      "file": "open.wav",
+      "sha256": "1c525f712a0f9251225882b24bb3ee31a2c0a602a73d8623814d136ca072309c",
+      "duration_seconds": 0.65,
+      "sample_rate": 44100
+    },
+    {
+      "file": "outfit.wav",
+      "sha256": "3b6ac6a802dea4ad3ccaa647931d49d88485e2d234ad0659ba7939a1512a2d01",
+      "duration_seconds": 0.65,
+      "sample_rate": 44100
+    }
+  ]
+}

@@ -31,7 +31,7 @@ def test_incompatible_installation_version_is_rejected_without_writes(tmp_path, 
     data, runtime, logs = (tmp_path / name for name in ('data', 'runtime', 'logs'))
     data.mkdir()
     config, fresh = twos_bootstrap.initial_installation(data, runtime, logs, None)
-    assert fresh and config['source_version'] == '1.0.0'
+    assert fresh and config['source_version'] == '1.0.1'
     config['source_version'] = old_version
     (data / 'installation.json').write_text(json.dumps(config))
     (data / 'installation.json').chmod(0o600)
@@ -639,7 +639,11 @@ def test_bare_python_resolution_and_special_control_files_are_safe(
 def test_real_dependency_install_failure_is_redacted_and_does_not_launch(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    source = ROOT.resolve()
+    # Snapshot the same clean source distribution used by bootstrap fixtures.
+    # A live checkout also contains mutable run logs and deliberate unreadable
+    # attachment samples; those are not inputs to dependency installation.
+    source = tmp_path / "source"
+    clean_source_copy(source)
     runtime = tmp_path / "runtime"
     logs = tmp_path / "logs"
     logs.mkdir(mode=0o700)

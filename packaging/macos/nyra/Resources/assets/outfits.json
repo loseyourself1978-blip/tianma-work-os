@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "character": "夜璃 · Nyra",
+  "mode": "NYRA_1_0_REACTIVE",
+  "defaultOutfit": "runtime-default",
+  "outfits": [
+    {
+      "id": "runtime-default",
+      "name": "黑紫 / Black & purple",
+      "file": "runtime-default.png",
+      "note": "Native animated wardrobe · standing and reclining",
+      "width": 1024,
+      "height": 1536,
+      "runtimeReady": true,
+      "classification": "NATIVE_RUNTIME",
+      "sha256": "7780d8d9319a6578ba492e37dd122d7bfe2f559adfac5d053c62d73fa26ecd69"
+    },
+    {
+      "id": "runtime-office",
+      "name": "职场 / Office",
+      "file": "runtime-office.png",
+      "note": "Native animated wardrobe · standing and reclining",
+      "width": 1024,
+      "height": 1536,
+      "runtimeReady": true,
+      "classification": "NATIVE_RUNTIME",
+      "sha256": "e12414521cba25dc01077aeea97ed935d79035d80d6b23e4e0a516740b6d94d4"
+    },
+    {
+      "id": "runtime-gala",
+      "name": "晚礼服 / Gala",
+      "file": "runtime-gala.png",
+      "note": "Native animated wardrobe · standing and reclining",
+      "width": 1024,
+      "height": 1536,
+      "runtimeReady": true,
+      "classification": "NATIVE_RUNTIME",
+      "sha256": "e390c578f481cd42caae6af08835c4c2a44e28afc4125aaa1ecb588fa749fce4"
+    }
+  ],
+  "wardrobeStatus": "THREE_OUTFIT_STANDING_AND_RECLINING"
+}

@@ -256,5 +256,47 @@
     "match_sha256": "fae96ddfa8e614f51dc2805dc2d48006bde11d018f34455ecd5f34cf49ce6a14",
     "path": "tests/test_vol19_result_owner_delivery.py",
     "rule": "credential-assignment"
+  },
+  {
+    "disposition": "public synthetic foreign-session authorization test fixture; excluded",
+    "match_sha256": "ec8304e48d5030f2467de12d67282b0675872a0f91aa62586a4924d2b3a13453",
+    "path": "tests/test_vol20_commit_identity_setup.py",
+    "rule": "credential-assignment"
+  },
+  {
+    "path": "docs/v20_2_workbench_r2/contract/TWOS-V20.2-CHATGPT-CODEX-WORKBENCH-R2.html",
+    "rule": "credential-assignment",
+    "match_sha256": "c8cbf78f920752bfb6eda094b6a048e4248f4b9855ceb25c18f61b1df4ff9101",
+    "disposition": "Reference prototype password-visibility expression, not a credential; excluded from source release"
+  },
+  {
+    "path": "tests/test_vol20_2_workbench.py",
+    "rule": "credential-assignment",
+    "match_sha256": "db6fe66bbc3ff411409e800df25261f47bffa54627cd9cbfa6fc506457a31fd5",
+    "disposition": "Public synthetic workbench account test fixture, never a production secret; excluded"
+  },
+  {
+    "path": "tests/test_vol20_2_codex_transport.py",
+    "rule": "credential-assignment",
+    "match_sha256": "d3c96ea22c086fb13c21f00fb3bdaf3f57afa30f6ce651f6189a1d3ab8f1ff5d",
+    "disposition": "Public synthetic credential-removal or credential-detection test fixture, never a production secret; excluded from source release"
+  },
+  {
+    "path": "tests/test_vol20_2_integrated_delivery.py",
+    "rule": "credential-assignment",
+    "match_sha256": "ec817f89e50c893fab72ae83da1fb498dd9cade30f287edf4e971b8534143a24",
+    "disposition": "Public synthetic credential-removal or credential-detection test fixture, never a production secret; excluded from source release"
+  },
+  {
+    "path": "tests/test_vol20_2_integrated_delivery.py",
+    "rule": "credential-assignment",
+    "match_sha256": "e89fb481f22a50135618bcede98b288ee4fa098a528e55e8776efa5ec50ebbd4",
+    "disposition": "Public synthetic credential-removal or credential-detection test fixture, never a production secret; excluded from source release"
+  },
+  {
+    "disposition": "synthetic deliberately invalid directory-preview token in native state-machine test; never a credential",
+    "match_sha256": "4498a99ffd4fc4218431e15b7a277f615a8884b673dc8063f2e22fbf5c01fa8c",
+    "path": "tests/test_vol20_2_native_codex.py",
+    "rule": "credential-assignment"
   }
 ]

@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TWOS Nyra minimal status event, proposed v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "producer_instance_id",
+    "event_id",
+    "sequence",
+    "timestamp",
+    "session_id",
+    "task_id",
+    "state",
+    "source",
+    "simulation"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "twos.nyra.status.v1"
+    },
+    "producer_instance_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "task_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128
+    },
+    "state": {
+      "enum": [
+        "idle",
+        "queued",
+        "running",
+        "waiting_user",
+        "partial",
+        "failed",
+        "completed_unverified",
+        "verified_success",
+        "cancelled",
+        "disconnected"
+      ]
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "twos_runtime",
+        "codex_adapter",
+        "web_handoff_adapter",
+        "engineering_simulator"
+      ]
+    },
+    "simulation": {
+      "type": "boolean"
+    },
+    "evidence_ref": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "verified_success"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "evidence_ref"
+        ],
+        "properties": {
+          "evidence_ref": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  ]
+}

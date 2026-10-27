@@ -1,0 +1,2154 @@
+{
+  "prototype": {
+    "en-US": "INTERACTIVE PROTOTYPE",
+    "zh-CN": "交互设计原型"
+  },
+  "disclaimer": {
+    "en-US": "Demo data only. No model calls, real file imports, code execution, installation, or updates.",
+    "zh-CN": "仅演示数据。不调用模型、不导入真实文件、不执行代码、不安装或更新软件。"
+  },
+  "title": {
+    "en-US": "Tianma Work OS",
+    "zh-CN": "天马工作操作系统"
+  },
+  "language": {
+    "en-US": "Language",
+    "zh-CN": "界面语言"
+  },
+  "localDemo": {
+    "en-US": "Local demo · R2",
+    "zh-CN": "本地演示 · R2"
+  },
+  "home": {
+    "en-US": "My projects",
+    "zh-CN": "我的项目"
+  },
+  "newProject": {
+    "en-US": "New project",
+    "zh-CN": "新建项目"
+  },
+  "projectSpaces": {
+    "en-US": "PROJECTS",
+    "zh-CN": "项目"
+  },
+  "getStarted": {
+    "en-US": "GET STARTED",
+    "zh-CN": "从零开始"
+  },
+  "setupGuide": {
+    "en-US": "Installation & setup",
+    "zh-CN": "安装与首次设置"
+  },
+  "demoRelaunch": {
+    "en-US": "Simulate relaunch",
+    "zh-CN": "模拟重新启动"
+  },
+  "reset": {
+    "en-US": "Reset demo",
+    "zh-CN": "重置演示"
+  },
+  "sidebarFoot": {
+    "en-US": "Work stays with its project. Changes to TWOS are built separately from the running app.",
+    "zh-CN": "工作归属于各自的项目。TWOS 的改动在独立环境构建，不直接覆盖运行中的应用。"
+  },
+  "welcomeEyebrow": {
+    "en-US": "YOUR WORK, ORGANIZED",
+    "zh-CN": "让实际工作有序推进"
+  },
+  "welcomeTitle": {
+    "en-US": "Start with a project.\nBring your AI team.",
+    "zh-CN": "从一个项目开始，\n让 AI 团队协同工作。"
+  },
+  "welcomeDesc": {
+    "en-US": "Keep your sources, models, decisions, and deliverables together — from the first task to the next iteration.",
+    "zh-CN": "把资料、模型、决策与成果放在一起，从第一项任务持续推进到下一轮迭代。"
+  },
+  "startSetup": {
+    "en-US": "Start setup",
+    "zh-CN": "开始设置"
+  },
+  "previewHome": {
+    "en-US": "Preview project home",
+    "zh-CN": "预览项目主页"
+  },
+  "fromZero": {
+    "en-US": "A guided start, from zero",
+    "zh-CN": "从零开始的连续引导"
+  },
+  "stepInstall": {
+    "en-US": "Install",
+    "zh-CN": "安装"
+  },
+  "stepAccount": {
+    "en-US": "Local account",
+    "zh-CN": "本地账号"
+  },
+  "stepProject": {
+    "en-US": "Your first project",
+    "zh-CN": "第一个项目"
+  },
+  "stepTeam": {
+    "en-US": "Models & tools",
+    "zh-CN": "模型与工具"
+  },
+  "stepWork": {
+    "en-US": "Real work & results",
+    "zh-CN": "实际工作与成果"
+  },
+  "noTerminal": {
+    "en-US": "No Terminal required in the product’s normal setup flow.",
+    "zh-CN": "产品的正常设置流程无需使用终端。"
+  },
+  "oneHome": {
+    "en-US": "One home for different kinds of work",
+    "zh-CN": "不同工作，共用一个项目入口"
+  },
+  "templateNote": {
+    "en-US": "These are optional starting points, not projects created on your behalf.",
+    "zh-CN": "这些是可选起点，不是替你创建好的项目。"
+  },
+  "installTitle": {
+    "en-US": "Install Tianma Work OS",
+    "zh-CN": "安装 Tianma Work OS"
+  },
+  "installDesc": {
+    "en-US": "Open the verified DMG, drag Tianma Work OS into Applications, then launch it. Select an environment in the native window. Your existing environment is retained.",
+    "zh-CN": "打开已核验的 DMG，将 Tianma Work OS 拖入 Applications 后启动。在原生窗口选择环境，已有环境会保留。"
+  },
+  "imageDemo": {
+    "en-US": "Installer preview · no actual DMG in this prototype",
+    "zh-CN": "安装器示意 · 原型不包含实际 DMG"
+  },
+  "applications": {
+    "en-US": "Applications",
+    "zh-CN": "应用程序"
+  },
+  "dragToInstall": {
+    "en-US": "Drag the app to Applications",
+    "zh-CN": "将应用拖入“应用程序”"
+  },
+  "integrity": {
+    "en-US": "The product must verify the installer identity and display its version.",
+    "zh-CN": "产品必须校验安装包身份并显示版本。"
+  },
+  "simulateInstall": {
+    "en-US": "Simulate installation & launch",
+    "zh-CN": "模拟安装并启动"
+  },
+  "accountTitle": {
+    "en-US": "Create your local account",
+    "zh-CN": "创建本地账号"
+  },
+  "accountDesc": {
+    "en-US": "This account belongs to this local environment. It is separate from model provider authentication.",
+    "zh-CN": "此账号属于当前本机环境，与模型服务的认证独立。"
+  },
+  "displayName": {
+    "en-US": "Demo display name",
+    "zh-CN": "演示显示名称"
+  },
+  "noSecrets": {
+    "en-US": "Do not enter passwords, API keys, or personal information into this prototype.",
+    "zh-CN": "请勿在本原型输入密码、API 密钥或个人敏感信息。"
+  },
+  "existingEnv": {
+    "en-US": "Already have a workspace? The product must let you return to it or create a separate one without deleting anything.",
+    "zh-CN": "已有工作环境时，产品应允许返回原环境或新建独立环境，不删除原有内容。"
+  },
+  "createDemoAccount": {
+    "en-US": "Create local Owner account",
+    "zh-CN": "创建本地 Owner 账号"
+  },
+  "chooseProject": {
+    "en-US": "What would you like to work on?",
+    "zh-CN": "你想先推进哪项工作？"
+  },
+  "chooseDesc": {
+    "en-US": "Create one independent project now. Add the other projects whenever you need them.",
+    "zh-CN": "现在创建一个独立项目，之后可按需要新增其他项目。"
+  },
+  "openHome": {
+    "en-US": "Go to my projects",
+    "zh-CN": "进入我的项目"
+  },
+  "homeEyebrow": {
+    "en-US": "PROJECT-FIRST WORKSPACE",
+    "zh-CN": "项目优先工作空间"
+  },
+  "homeTitle": {
+    "en-US": "Your work, in one place.",
+    "zh-CN": "在一个地方，推进你的工作。"
+  },
+  "homeDesc": {
+    "en-US": "Separate projects. Shared tools. Clear next steps.",
+    "zh-CN": "项目彼此独立，工具按需使用，下一步清晰可见。"
+  },
+  "emptyHome": {
+    "en-US": "No projects yet. Choose a starting point or create a blank project.",
+    "zh-CN": "还没有项目。选择项目起点或创建空项目。"
+  },
+  "yourProjects": {
+    "en-US": "Your projects",
+    "zh-CN": "你的项目"
+  },
+  "startProject": {
+    "en-US": "Start a new project",
+    "zh-CN": "开始一个新项目"
+  },
+  "useTemplate": {
+    "en-US": "Use this starting point",
+    "zh-CN": "使用此项目起点"
+  },
+  "openProject": {
+    "en-US": "Open project",
+    "zh-CN": "打开项目"
+  },
+  "lddName": {
+    "en-US": "LDD Review",
+    "zh-CN": "LDD Review"
+  },
+  "dashuName": {
+    "en-US": "Dashu AI",
+    "zh-CN": "大算度 AI"
+  },
+  "twosName": {
+    "en-US": "TWOS Development",
+    "zh-CN": "TWOS 产品迭代"
+  },
+  "generalName": {
+    "en-US": "New project",
+    "zh-CN": "新项目"
+  },
+  "lddDesc": {
+    "en-US": "Import project evidence, organize review work, and deliver source-linked reports.",
+    "zh-CN": "导入项目证据，组织复核任务，交付可追溯来源的报告。"
+  },
+  "dashuDesc": {
+    "en-US": "Plan non-clinical validation with a multi-model team and named human review gates.",
+    "zh-CN": "由多模型团队规划非临床验证，并明确真人审核环节。"
+  },
+  "twosDesc": {
+    "en-US": "Discuss improvements, delegate to Codex, inspect evidence, and prepare the next version — on one page.",
+    "zh-CN": "在同一页面讨论改进、交给 Codex 执行、检查证据并准备下一版本。"
+  },
+  "lddTag": {
+    "en-US": "Read-only project work",
+    "zh-CN": "只读项目工作"
+  },
+  "dashuTag": {
+    "en-US": "Non-clinical planning",
+    "zh-CN": "非临床规划"
+  },
+  "twosTag": {
+    "en-US": "Controlled self-iteration",
+    "zh-CN": "受控自身迭代"
+  },
+  "blank": {
+    "en-US": "Blank project",
+    "zh-CN": "空白项目"
+  },
+  "projectName": {
+    "en-US": "Project name",
+    "zh-CN": "项目名称"
+  },
+  "projectGoal": {
+    "en-US": "Project goal",
+    "zh-CN": "项目目标"
+  },
+  "createProject": {
+    "en-US": "Create project",
+    "zh-CN": "创建项目"
+  },
+  "cancel": {
+    "en-US": "Cancel",
+    "zh-CN": "取消"
+  },
+  "close": {
+    "en-US": "Close",
+    "zh-CN": "关闭"
+  },
+  "back": {
+    "en-US": "Back",
+    "zh-CN": "返回"
+  },
+  "createNotice": {
+    "en-US": "Create separate private project storage. Your other projects remain unchanged. Optional tools can be configured later.",
+    "zh-CN": "创建独立的私有项目存储，其他项目保持不变。可稍后配置可选工具。"
+  },
+  "required": {
+    "en-US": "Enter a project name and a complete goal.",
+    "zh-CN": "请填写项目名称和完整目标。"
+  },
+  "overview": {
+    "en-US": "Overview",
+    "zh-CN": "概览"
+  },
+  "sources": {
+    "en-US": "Sources",
+    "zh-CN": "资料"
+  },
+  "team": {
+    "en-US": "AI team",
+    "zh-CN": "AI 团队"
+  },
+  "tasks": {
+    "en-US": "Tasks",
+    "zh-CN": "任务"
+  },
+  "deliverables": {
+    "en-US": "Deliverables",
+    "zh-CN": "成果"
+  },
+  "studio": {
+    "en-US": "Iteration studio",
+    "zh-CN": "迭代工作台"
+  },
+  "newTask": {
+    "en-US": "New task",
+    "zh-CN": "新建任务"
+  },
+  "openStudio": {
+    "en-US": "Open iteration studio",
+    "zh-CN": "打开迭代工作台"
+  },
+  "nextStep": {
+    "en-US": "NEXT STEP",
+    "zh-CN": "下一步"
+  },
+  "importNext": {
+    "en-US": "Bring in your project sources",
+    "zh-CN": "导入项目资料"
+  },
+  "importNextDesc": {
+    "en-US": "Preview each source, confirm its scope, and make it available to this project’s tasks.",
+    "zh-CN": "先预览来源并确认范围，再供本项目任务使用。"
+  },
+  "teamNext": {
+    "en-US": "Choose the team for this project",
+    "zh-CN": "配置本项目的 AI 团队"
+  },
+  "teamNextDesc": {
+    "en-US": "Assign models to roles. A configured model is not yet a verified execution.",
+    "zh-CN": "为角色分配模型。已选择模型不等于已经验证执行。"
+  },
+  "taskNext": {
+    "en-US": "Turn the goal into useful work",
+    "zh-CN": "把项目目标变成实际工作"
+  },
+  "taskNextDesc": {
+    "en-US": "Create a task with selected sources, a clear output, and an explicit execution plan.",
+    "zh-CN": "创建任务，明确所用资料、成果和执行方案。"
+  },
+  "studioNext": {
+    "en-US": "Improve TWOS from inside TWOS",
+    "zh-CN": "在 TWOS 内改进 TWOS"
+  },
+  "studioNextDesc": {
+    "en-US": "Keep the discussion, approved instruction, execution, and evidence in the same project thread.",
+    "zh-CN": "在同一项目线程保留讨论、已批准指令、执行和证据。"
+  },
+  "import": {
+    "en-US": "Import sources",
+    "zh-CN": "导入资料"
+  },
+  "configureTeam": {
+    "en-US": "Configure AI team",
+    "zh-CN": "配置 AI 团队"
+  },
+  "boundaries": {
+    "en-US": "Project boundaries",
+    "zh-CN": "项目边界"
+  },
+  "lddBoundary": {
+    "en-US": "Read-only continuity work. No trading authority, live market claims, or invented audit results.",
+    "zh-CN": "仅进行只读接续整理。不授予交易权限，不冒称实时行情，不编造审计结果。"
+  },
+  "dashuBoundary": {
+    "en-US": "Non-clinical planning. Local model connection is unverified; technical, TCM, and compliance reviews remain human decisions.",
+    "zh-CN": "仅进行非临床规划。本地模型连接尚未验证；技术、中医与合规审核由真人决定。"
+  },
+  "twosBoundary": {
+    "en-US": "Build in an isolated development workspace. The running app, user data, and permission system are protected.",
+    "zh-CN": "在隔离开发工作区构建。运行中的应用、用户数据和权限系统受到保护。"
+  },
+  "generalBoundary": {
+    "en-US": "Only selected project inputs and approved output locations are in scope.",
+    "zh-CN": "仅处理选定的项目输入，并向已批准位置输出成果。"
+  },
+  "projectId": {
+    "en-US": "Project ID",
+    "zh-CN": "项目 ID"
+  },
+  "demoState": {
+    "en-US": "Demo state is stored in this browser only, not in the TWOS app.",
+    "zh-CN": "演示状态仅保存在此浏览器，不写入 TWOS 应用。"
+  },
+  "sourcesDesc": {
+    "en-US": "Select → preview → confirm → read and cite. Imported sources remain local until explicitly selected for an approved model request.",
+    "zh-CN": "选择 → 预览 → 确认 → 阅读与引用。导入资料留在本机，只有明确选入已批准任务后才会发送给模型。"
+  },
+  "noSources": {
+    "en-US": "No sources imported",
+    "zh-CN": "尚未导入资料"
+  },
+  "noSourcesDesc": {
+    "en-US": "A project name is not an import. Sources must be visible, readable, and linked to task inputs.",
+    "zh-CN": "项目名称不代表资料已导入。资料必须可见、可读，并能绑定为任务输入。"
+  },
+  "previewSample": {
+    "en-US": "Preview sample import",
+    "zh-CN": "预览示例导入"
+  },
+  "readSource": {
+    "en-US": "Read source",
+    "zh-CN": "阅读资料"
+  },
+  "sampleSource": {
+    "en-US": "Sample source · not your real archive",
+    "zh-CN": "示例资料 · 非你的真实归档"
+  },
+  "importTitle": {
+    "en-US": "Review the import scope",
+    "zh-CN": "确认导入范围"
+  },
+  "importDesc": {
+    "en-US": "Choose local text or a ZIP. Review the scan and select safe documents before importing. Files are data, never instructions to execute.",
+    "zh-CN": "选择本机文本或 ZIP。先查看扫描结果并选择安全资料，再确认导入。文件只作资料，不作为执行指令。"
+  },
+  "importBoundary": {
+    "en-US": "Credentials are excluded. Import is local; it does not send content to a model. Select model inputs separately.",
+    "zh-CN": "排除认证秘密。导入仅在本机保存，不会向模型发送内容；模型输入另行选择。"
+  },
+  "confirmImport": {
+    "en-US": "Confirm selected import",
+    "zh-CN": "确认导入所选资料"
+  },
+  "importReceipt": {
+    "en-US": "Sample import recorded",
+    "zh-CN": "已记录示例导入"
+  },
+  "sourceRef": {
+    "en-US": "Source reference",
+    "zh-CN": "资料引用"
+  },
+  "teamDesc": {
+    "en-US": "Select a trusted installed Codex tool and explicitly name each model. Saving is passive; actual access is proven by a completed execution.",
+    "zh-CN": "选择可信的已安装 Codex 工具，并明确各角色的模型。保存不调用服务；实际可用性由成功执行证明。"
+  },
+  "role": {
+    "en-US": "Role",
+    "zh-CN": "角色"
+  },
+  "responsibility": {
+    "en-US": "Responsibility",
+    "zh-CN": "职责"
+  },
+  "model": {
+    "en-US": "Model / tool",
+    "zh-CN": "模型／工具"
+  },
+  "planRole": {
+    "en-US": "Planner",
+    "zh-CN": "规划模型"
+  },
+  "draftRole": {
+    "en-US": "Author",
+    "zh-CN": "内容生成模型"
+  },
+  "reviewRole": {
+    "en-US": "Independent reviewer",
+    "zh-CN": "独立复核模型"
+  },
+  "planRoleDesc": {
+    "en-US": "Break down the task and identify dependencies.",
+    "zh-CN": "拆解任务并识别依赖。"
+  },
+  "draftRoleDesc": {
+    "en-US": "Produce a deliverable from approved inputs.",
+    "zh-CN": "依据已批准输入生成成果。"
+  },
+  "reviewRoleDesc": {
+    "en-US": "Check evidence, scope, and unresolved gaps.",
+    "zh-CN": "检查证据、范围与未解决缺口。"
+  },
+  "notSelected": {
+    "en-US": "Not selected",
+    "zh-CN": "未选择"
+  },
+  "modelA": {
+    "en-US": "Demo model A",
+    "zh-CN": "演示模型 A"
+  },
+  "modelB": {
+    "en-US": "Demo model B",
+    "zh-CN": "演示模型 B"
+  },
+  "gptPlanner": {
+    "en-US": "GPT-family planner · demo",
+    "zh-CN": "GPT 系列规划模型 · 演示"
+  },
+  "codexExecutor": {
+    "en-US": "Codex executor · demo",
+    "zh-CN": "Codex 执行器 · 演示"
+  },
+  "modelC": {
+    "en-US": "Demo review model C",
+    "zh-CN": "演示复核模型 C"
+  },
+  "oneModel": {
+    "en-US": "One model, multiple roles · not independent models",
+    "zh-CN": "一个模型承担多个角色 · 不代表多个独立模型"
+  },
+  "manyModels": {
+    "en-US": "Multiple model IDs configured · execution unverified",
+    "zh-CN": "已配置多个模型 ID · 尚未执行验证"
+  },
+  "noModels": {
+    "en-US": "No model selected",
+    "zh-CN": "尚未选择模型"
+  },
+  "saveDemoTeam": {
+    "en-US": "Save AI team",
+    "zh-CN": "保存 AI 团队"
+  },
+  "needTeam": {
+    "en-US": "Select a model for each required role before saving.",
+    "zh-CN": "请为每个必需角色选择模型后再保存。"
+  },
+  "teamSaved": {
+    "en-US": "Demo configuration saved. Real service readiness is not established.",
+    "zh-CN": "演示配置已保存；这不证明真实服务可用。"
+  },
+  "humanGate": {
+    "en-US": "Human review gate",
+    "zh-CN": "真人审核环节"
+  },
+  "humanGateDesc": {
+    "en-US": "Technical review · TCM review · Medical quality & compliance. Not replaced by AI approval.",
+    "zh-CN": "技术审核 · 中医审核 · 医疗质量与合规审核。不能由 AI 批准替代。"
+  },
+  "localModel": {
+    "en-US": "Local model: Qwen3.6-35B-A3B · connection not verified",
+    "zh-CN": "本地模型：Qwen3.6-35B-A3B · 连接尚未验证"
+  },
+  "taskTitle": {
+    "en-US": "Task title",
+    "zh-CN": "任务标题"
+  },
+  "taskBody": {
+    "en-US": "What should be done?",
+    "zh-CN": "需要完成什么工作？"
+  },
+  "bodyHelp": {
+    "en-US": "One complete task body is the source of truth. Switching interface language does not rewrite it.",
+    "zh-CN": "完整任务正文是唯一执行依据。切换界面语言不会改写正文。"
+  },
+  "outputLanguage": {
+    "en-US": "Deliverable language",
+    "zh-CN": "成果语言"
+  },
+  "outputHelp": {
+    "en-US": "Independent of interface language. Existing source and output text is never translated silently.",
+    "zh-CN": "与界面语言独立。已有资料和成果不会被静默翻译。"
+  },
+  "inputs": {
+    "en-US": "Selected inputs",
+    "zh-CN": "已选输入"
+  },
+  "goalOnly": {
+    "en-US": "Use the project goal only; no source selected",
+    "zh-CN": "仅使用项目目标，未选择资料"
+  },
+  "newOutput": {
+    "en-US": "A new document in this project’s Deliverables. No source-file overwrite or Git Push.",
+    "zh-CN": "在本项目成果区新建文档，不覆盖原文件，不进行 Git Push。"
+  },
+  "saveTask": {
+    "en-US": "Save task",
+    "zh-CN": "保存任务"
+  },
+  "needTask": {
+    "en-US": "Enter a title and the full task description.",
+    "zh-CN": "请填写标题和完整任务正文。"
+  },
+  "planReview": {
+    "en-US": "Review the exact task plan",
+    "zh-CN": "审查准确任务方案"
+  },
+  "taskRevision": {
+    "en-US": "Task revision",
+    "zh-CN": "任务修订版"
+  },
+  "awaitApproval": {
+    "en-US": "Awaiting approval · demo",
+    "zh-CN": "等待批准 · 演示"
+  },
+  "approved": {
+    "en-US": "Approved · demo",
+    "zh-CN": "已批准 · 演示"
+  },
+  "taskScope": {
+    "en-US": "Generate one new project deliverable. No trading, clinical action, external sending, or source-code changes.",
+    "zh-CN": "仅生成一个新的项目成果。不交易、不开展临床操作、不对外发送、不修改源代码。"
+  },
+  "configureRequired": {
+    "en-US": "The required team is not configured. Your task is saved; return here after setup.",
+    "zh-CN": "所需团队尚未配置。任务已保存，配置完成后可回到此方案。"
+  },
+  "approvePlan": {
+    "en-US": "Approve this exact plan",
+    "zh-CN": "批准此精确方案"
+  },
+  "startDemo": {
+    "en-US": "Start this approved task · one CLI invocation",
+    "zh-CN": "开始已批准任务 · 一次 CLI 调用"
+  },
+  "backTasks": {
+    "en-US": "Back to tasks",
+    "zh-CN": "返回任务列表"
+  },
+  "noneTasks": {
+    "en-US": "No tasks yet",
+    "zh-CN": "尚无任务"
+  },
+  "noneTasksDesc": {
+    "en-US": "Describe useful work. Routine reports do not require a Git repository or exact-answer verifier.",
+    "zh-CN": "描述一项有用的工作。普通报告不需要 Git 仓库或逐字答案验证器。"
+  },
+  "reviewTask": {
+    "en-US": "Review plan",
+    "zh-CN": "查看方案"
+  },
+  "viewOutput": {
+    "en-US": "View deliverable",
+    "zh-CN": "查看成果"
+  },
+  "simulationComplete": {
+    "en-US": "Simulation complete",
+    "zh-CN": "模拟已完成"
+  },
+  "noneOutputs": {
+    "en-US": "No saved deliverables yet. Complete an approved task to create one.",
+    "zh-CN": "尚无保存的成果。完成已批准任务后生成成果。"
+  },
+  "outputsDesc": {
+    "en-US": "Versioned results, their inputs and actual execution evidence stay with this project.",
+    "zh-CN": "成果版本、输入与实际执行证据保存在各自项目中。"
+  },
+  "outputDemo": {
+    "en-US": "DEMO DELIVERABLE · NOT MODEL OUTPUT",
+    "zh-CN": "示例成果 · 非模型输出"
+  },
+  "outputPreserve": {
+    "en-US": "The body below keeps its original language. Use a separate translation task to create another version.",
+    "zh-CN": "下方正文保留生成时的语言。需要译文时，应以独立翻译任务创建新版本。"
+  },
+  "exportMd": {
+    "en-US": "Export Markdown",
+    "zh-CN": "导出 Markdown"
+  },
+  "savedTo": {
+    "en-US": "Saved to this demo project",
+    "zh-CN": "已保存到本演示项目"
+  },
+  "reviewStatus": {
+    "en-US": "Review status",
+    "zh-CN": "审核状态"
+  },
+  "sampleReview": {
+    "en-US": "Simulated checks only; no expert acceptance",
+    "zh-CN": "仅模拟检查，不代表专家验收"
+  },
+  "studioEyebrow": {
+    "en-US": "TWOS DEVELOPMENT · SINGLE-PAGE WORKFLOW",
+    "zh-CN": "TWOS 产品迭代 · 单页工作流"
+  },
+  "studioTitle": {
+    "en-US": "Build the next version, together.",
+    "zh-CN": "在这里，协作构建下一版本。"
+  },
+  "studioDesc": {
+    "en-US": "Discuss → plan → execute → review → candidate. No copying instructions between ChatGPT and Codex.",
+    "zh-CN": "讨论 → 规划 → 执行 → 复核 → 候选版本。无需在 ChatGPT 与 Codex 间复制指令。"
+  },
+  "discuss": {
+    "en-US": "Discuss",
+    "zh-CN": "讨论"
+  },
+  "plan": {
+    "en-US": "Plan",
+    "zh-CN": "方案"
+  },
+  "build": {
+    "en-US": "Build",
+    "zh-CN": "开发"
+  },
+  "verify": {
+    "en-US": "Verify",
+    "zh-CN": "验证"
+  },
+  "update": {
+    "en-US": "Update",
+    "zh-CN": "更新"
+  },
+  "studioThread": {
+    "en-US": "Iteration conversation",
+    "zh-CN": "迭代对话"
+  },
+  "studioThreadDesc": {
+    "en-US": "One thread retains the requirement, plan versions, execution evidence, and your decisions.",
+    "zh-CN": "同一线程保留需求、方案版本、执行证据与用户决策。"
+  },
+  "studioFirst": {
+    "en-US": "What should improve in TWOS?",
+    "zh-CN": "TWOS 哪方面需要改进？"
+  },
+  "studioFirstDesc": {
+    "en-US": "Describe the user problem. The planner will propose scope and checks before any coding starts.",
+    "zh-CN": "描述用户问题，规划模型会先提出改动范围与验证标准，不直接启动编码。"
+  },
+  "ideaLabel": {
+    "en-US": "Improvement request",
+    "zh-CN": "改进需求"
+  },
+  "ideaPlaceholder": {
+    "en-US": "For example: show a clear next step when a project has no sources.",
+    "zh-CN": "例如：项目没有资料时，显示清晰可见的下一步。"
+  },
+  "useExample": {
+    "en-US": "Use an example",
+    "zh-CN": "使用示例需求"
+  },
+  "exampleIdea": {
+    "en-US": "Make empty-project guidance clearer in both languages without changing execution permissions.",
+    "zh-CN": "让两种语言下的空项目引导更清晰，不改变执行权限。"
+  },
+  "generatePlan": {
+    "en-US": "Generate plan · one model CLI invocation",
+    "zh-CN": "生成方案 · 一次模型 CLI 启动"
+  },
+  "needIdea": {
+    "en-US": "Describe the improvement before generating a plan.",
+    "zh-CN": "请先描述改进需求，再生成方案。"
+  },
+  "owner": {
+    "en-US": "You",
+    "zh-CN": "你"
+  },
+  "planner": {
+    "en-US": "Planner",
+    "zh-CN": "规划模型"
+  },
+  "executor": {
+    "en-US": "Codex executor",
+    "zh-CN": "Codex 执行器"
+  },
+  "reviewer": {
+    "en-US": "Independent reviewer",
+    "zh-CN": "独立复核模型"
+  },
+  "system": {
+    "en-US": "TWOS controller",
+    "zh-CN": "TWOS 控制器"
+  },
+  "stageSetup": {
+    "en-US": "Set up this iteration",
+    "zh-CN": "配置本次迭代"
+  },
+  "setupStudioDesc": {
+    "en-US": "Pick the roles and confirm an isolated development target. The prototype does not open a real repository.",
+    "zh-CN": "选择角色并确认隔离开发目标。原型不会打开真实仓库。"
+  },
+  "devTarget": {
+    "en-US": "Development target",
+    "zh-CN": "开发目标"
+  },
+  "devTargetValue": {
+    "en-US": "TWOS source copy · isolated demo workspace",
+    "zh-CN": "TWOS 源码副本 · 隔离演示工作区"
+  },
+  "targetConfirm": {
+    "en-US": "I understand this target is separate from the running app.",
+    "zh-CN": "我已了解：此目标与运行中的应用分离。"
+  },
+  "saveStudioSetup": {
+    "en-US": "Save demo setup",
+    "zh-CN": "保存演示配置"
+  },
+  "studioNeedSetup": {
+    "en-US": "Select all three roles and confirm the development boundary.",
+    "zh-CN": "请完成三个角色选择并确认开发边界。"
+  },
+  "savedStudio": {
+    "en-US": "Roles and development boundary saved (simulation only).",
+    "zh-CN": "已保存角色与开发边界（仅模拟）。"
+  },
+  "waitingRequest": {
+    "en-US": "Ready for your improvement request",
+    "zh-CN": "等待你的改进需求"
+  },
+  "waitingRequestDesc": {
+    "en-US": "Generate a plan on the left. Nothing executes just because this page is open.",
+    "zh-CN": "在左侧生成方案。打开本页不会触发执行。"
+  },
+  "planCardTitle": {
+    "en-US": "Review the proposed change",
+    "zh-CN": "审查拟议改动"
+  },
+  "scopeLabel": {
+    "en-US": "Change scope",
+    "zh-CN": "改动范围"
+  },
+  "scopeValue": {
+    "en-US": "Project empty-state guidance and matching English / Chinese strings.",
+    "zh-CN": "项目空状态引导及对应英／中文案。"
+  },
+  "checksLabel": {
+    "en-US": "Required checks",
+    "zh-CN": "必需验证"
+  },
+  "checksValue": {
+    "en-US": "Locale parity, navigation, project isolation, and persistence regression.",
+    "zh-CN": "双语对应、导航、项目隔离及持久化回归。"
+  },
+  "exclusionsLabel": {
+    "en-US": "Excluded",
+    "zh-CN": "不包含"
+  },
+  "exclusionsValue": {
+    "en-US": "Live-app writes, permission changes, external Push, and release publication.",
+    "zh-CN": "修改运行中应用、改变权限、外部 Push 及版本公开发布。"
+  },
+  "approveDev": {
+    "en-US": "Approve this development plan",
+    "zh-CN": "批准此开发方案"
+  },
+  "devApproved": {
+    "en-US": "Development approved, not started",
+    "zh-CN": "开发已批准，尚未开始"
+  },
+  "runCodex": {
+    "en-US": "Start isolated development",
+    "zh-CN": "开始隔离开发"
+  },
+  "runScope": {
+    "en-US": "Run only in the confirmed development workspace. The active application stays unchanged.",
+    "zh-CN": "仅在已确认的开发工作区运行，不改变当前使用的应用。"
+  },
+  "builtTitle": {
+    "en-US": "Changes ready for independent review",
+    "zh-CN": "改动等待独立复核"
+  },
+  "inspectChanges": {
+    "en-US": "Inspect changes & evidence",
+    "zh-CN": "查看改动与证据"
+  },
+  "diffDemo": {
+    "en-US": "Illustrative diff · no source files changed",
+    "zh-CN": "示意差异 · 未修改源文件"
+  },
+  "runReview": {
+    "en-US": "Start independent read-only review",
+    "zh-CN": "开始独立只读复核"
+  },
+  "showFailure": {
+    "en-US": "Preview a failed review",
+    "zh-CN": "预览复核失败场景"
+  },
+  "failedTitle": {
+    "en-US": "Review needs changes",
+    "zh-CN": "复核要求修改"
+  },
+  "failedDesc": {
+    "en-US": "Sample failure: Chinese empty-state copy is missing. Candidate packaging and installation stay blocked.",
+    "zh-CN": "示例失败：缺少中文空状态文案。候选打包与安装继续阻断。"
+  },
+  "revise": {
+    "en-US": "Draft a revised plan (demo)",
+    "zh-CN": "起草修订方案（演示）"
+  },
+  "revisionNotice": {
+    "en-US": "The revised plan needs a new approval. Earlier evidence is preserved.",
+    "zh-CN": "修订方案需要重新批准，早先证据保留。"
+  },
+  "reviewPassed": {
+    "en-US": "Review complete · simulated",
+    "zh-CN": "复核完成 · 模拟"
+  },
+  "reviewPassedDesc": {
+    "en-US": "The demo review and checks are complete. Actual test evidence is required in the installed product.",
+    "zh-CN": "演示复核与检查已完成。真实产品必须提供实际测试证据。"
+  },
+  "prepareCandidate": {
+    "en-US": "Review candidate build",
+    "zh-CN": "审查候选构建"
+  },
+  "candidateTitle": {
+    "en-US": "Candidate ready to inspect",
+    "zh-CN": "候选版本可供检查"
+  },
+  "candidateNotInstalled": {
+    "en-US": "Candidate ready does not mean installed or Owner accepted.",
+    "zh-CN": "候选已准备好不代表已安装或 Owner 已验收。"
+  },
+  "candidateLabel": {
+    "en-US": "Candidate",
+    "zh-CN": "候选版本"
+  },
+  "candidateValue": {
+    "en-US": "demo.next · simulated package",
+    "zh-CN": "demo.next · 模拟安装包"
+  },
+  "runningLabel": {
+    "en-US": "Running version",
+    "zh-CN": "当前运行版本"
+  },
+  "baselineValue": {
+    "en-US": "demo.current · not your installed build",
+    "zh-CN": "demo.current · 非实际安装版本"
+  },
+  "digestLabel": {
+    "en-US": "Package identity",
+    "zh-CN": "安装包身份"
+  },
+  "digestValue": {
+    "en-US": "No real package or SHA-256 exists in this prototype.",
+    "zh-CN": "本原型没有真实安装包或 SHA-256。"
+  },
+  "reviewUpdate": {
+    "en-US": "Review update (demo)",
+    "zh-CN": "审查更新（演示）"
+  },
+  "updateReviewTitle": {
+    "en-US": "Review before switching versions",
+    "zh-CN": "切换版本前确认"
+  },
+  "updateBoundary": {
+    "en-US": "The product must validate the candidate, back up data, stop safely, and use a separate updater. No hot-patching the app that controls this session.",
+    "zh-CN": "产品必须核验候选、备份数据、安全退出，并由独立更新器切换版本。不得热修改承载当前会话的应用。"
+  },
+  "backupDemo": {
+    "en-US": "Simulate backup checkpoint",
+    "zh-CN": "模拟备份检查点"
+  },
+  "backupReady": {
+    "en-US": "Demo backup checkpoint recorded. No real backup was created.",
+    "zh-CN": "已记录演示备份检查点，未创建真实备份。"
+  },
+  "updateConsent": {
+    "en-US": "I reviewed the candidate, scope, and recovery plan.",
+    "zh-CN": "我已审查候选版本、范围和恢复方案。"
+  },
+  "confirmUpdate": {
+    "en-US": "Confirm and open candidate installer",
+    "zh-CN": "确认并打开候选安装器"
+  },
+  "needBackup": {
+    "en-US": "Record the demo backup checkpoint and confirm the review first.",
+    "zh-CN": "请先记录演示备份检查点并确认审查。"
+  },
+  "updatedTitle": {
+    "en-US": "Iteration complete · simulation",
+    "zh-CN": "迭代完成 · 模拟"
+  },
+  "updatedDesc": {
+    "en-US": "The demo version changed. Your demo projects and the iteration evidence remain available. No software was actually installed.",
+    "zh-CN": "演示版本已切换，演示项目和迭代证据继续保留。实际未安装任何软件。"
+  },
+  "nextIteration": {
+    "en-US": "Start another iteration",
+    "zh-CN": "开始下一轮迭代"
+  },
+  "rollbackPreview": {
+    "en-US": "Review rollback",
+    "zh-CN": "查看回退方案"
+  },
+  "rollbackTitle": {
+    "en-US": "Controlled rollback · simulation",
+    "zh-CN": "受控回退 · 模拟"
+  },
+  "rollbackDesc": {
+    "en-US": "In the real product, verify schema compatibility and recovery scope before restoring an application version. Never silently overwrite newer user data.",
+    "zh-CN": "实际产品回退前必须核验数据结构兼容性与恢复范围，不得静默覆盖更新后的用户数据。"
+  },
+  "confirmRollback": {
+    "en-US": "Restore previous demo version",
+    "zh-CN": "恢复上一演示版本"
+  },
+  "rolledBack": {
+    "en-US": "Previous demo version restored. Demo data and history were kept.",
+    "zh-CN": "已恢复上一演示版本，演示数据与历史均保留。"
+  },
+  "resetIterationConfirm": {
+    "en-US": "Start a new iteration? Current demo evidence will remain in the project history.",
+    "zh-CN": "开始新一轮迭代？当前演示证据将保留在项目历史中。"
+  },
+  "audit": {
+    "en-US": "Execution & decision details",
+    "zh-CN": "执行与决策详情"
+  },
+  "auditDesc": {
+    "en-US": "Simulation events only. No model identity, test count, package hash, or approval here is real production evidence.",
+    "zh-CN": "这里只记录模拟事件。模型身份、测试数、安装包哈希及批准均不构成真实生产证据。"
+  },
+  "eventPlan": {
+    "en-US": "Planner produced a scoped plan from the request. No implementation started.",
+    "zh-CN": "规划模型已根据需求给出限定范围的方案，尚未开始实现。"
+  },
+  "eventApprove": {
+    "en-US": "Owner approved this exact demo plan revision.",
+    "zh-CN": "用户批准了此演示方案的准确修订版。"
+  },
+  "eventRun": {
+    "en-US": "Codex simulation produced an isolated candidate change and returned structured evidence to this page.",
+    "zh-CN": "Codex 模拟产生了隔离候选改动，并将结构化证据回传本页。"
+  },
+  "eventReview": {
+    "en-US": "Independent review simulation found no remaining demo blockers. Not a real test result.",
+    "zh-CN": "独立复核模拟未发现剩余演示阻塞；这不是真实测试结果。"
+  },
+  "eventFail": {
+    "en-US": "Review simulation found missing Chinese copy. Packaging is blocked.",
+    "zh-CN": "复核模拟发现缺少中文文案，打包被阻断。"
+  },
+  "eventRevise": {
+    "en-US": "A revised plan addresses the review finding. Prior approval does not carry forward.",
+    "zh-CN": "修订方案处理复核发现，旧批准不自动沿用。"
+  },
+  "eventCandidate": {
+    "en-US": "A demo candidate was staged. The running version is unchanged.",
+    "zh-CN": "已暂存演示候选版本，当前运行版本未改变。"
+  },
+  "eventUpdate": {
+    "en-US": "Owner confirmed the simulated switch after the backup checkpoint.",
+    "zh-CN": "用户在备份检查点之后确认了模拟版本切换。"
+  },
+  "eventRollback": {
+    "en-US": "Owner confirmed rollback of the demo application version only.",
+    "zh-CN": "用户仅确认回退演示应用版本。"
+  },
+  "resetTitle": {
+    "en-US": "Reset this prototype?",
+    "zh-CN": "重置本原型？"
+  },
+  "resetDesc": {
+    "en-US": "This deletes this browser’s demo projects and state only. Your TWOS application is not accessed. The language preference is retained.",
+    "zh-CN": "只清除此浏览器的演示项目与状态，不访问 TWOS 应用。语言偏好会保留。"
+  },
+  "resetConfirm": {
+    "en-US": "Reset demo data",
+    "zh-CN": "重置演示数据"
+  },
+  "relaunchTitle": {
+    "en-US": "Demo state restored",
+    "zh-CN": "演示状态已恢复"
+  },
+  "relaunchDesc": {
+    "en-US": "This shows browser-local restoration only. It is not a test of macOS app startup or TWOS database persistence.",
+    "zh-CN": "这里仅演示浏览器本地状态恢复，不是 macOS 应用启动或 TWOS 数据库持久化测试。"
+  },
+  "storageOff": {
+    "en-US": "Browser storage is unavailable. The demo will work in memory; it cannot demonstrate restoration after reload.",
+    "zh-CN": "浏览器存储不可用。演示仅在内存运行，无法演示刷新后恢复。"
+  },
+  "originalText": {
+    "en-US": "Original content · not translated by the language switch",
+    "zh-CN": "原始内容 · 不随界面语言切换翻译"
+  },
+  "scopeOnly": {
+    "en-US": "Only this project",
+    "zh-CN": "仅当前项目"
+  },
+  "sourceName1": {
+    "en-US": "Project brief · sample.md",
+    "zh-CN": "项目说明 · 示例.md"
+  },
+  "sourceName2": {
+    "en-US": "Continuity notes · sample.md",
+    "zh-CN": "接续记录 · 示例.md"
+  },
+  "sourceDash1": {
+    "en-US": "Validation goals · sample.md",
+    "zh-CN": "验证目标 · 示例.md"
+  },
+  "sourceDash2": {
+    "en-US": "Review responsibilities · sample.md",
+    "zh-CN": "审核责任 · 示例.md"
+  },
+  "sourceTwos1": {
+    "en-US": "Product requirements · sample.md",
+    "zh-CN": "产品需求 · 示例.md"
+  },
+  "sourceTwos2": {
+    "en-US": "Development boundaries · sample.md",
+    "zh-CN": "开发边界 · 示例.md"
+  },
+  "lddGoal": {
+    "en-US": "Organize LDD project evidence, continuity tasks, and reviewable deliverables under read-only boundaries.",
+    "zh-CN": "在只读边界下组织 LDD 资料、接续任务和可复核成果。"
+  },
+  "dashuGoal": {
+    "en-US": "Prepare non-clinical validation for a local TCM model with a multi-model team and human review gates.",
+    "zh-CN": "以多模型团队和真人审核环节，为本地中医模型准备非临床验证。"
+  },
+  "twosGoal": {
+    "en-US": "Use TWOS to plan, implement, verify, and safely deliver improvements to TWOS itself.",
+    "zh-CN": "使用 TWOS 规划、实现、验证并安全交付 TWOS 自身的改进。"
+  },
+  "generalGoal": {
+    "en-US": "Organize sources and a team to complete useful, verifiable work.",
+    "zh-CN": "组织资料与团队，完成有用且可核验的工作。"
+  },
+  "lddTask": {
+    "en-US": "LDD continuity and evidence-gap report",
+    "zh-CN": "LDD 项目接续与资料缺口清单"
+  },
+  "lddBody": {
+    "en-US": "Use the selected project sources to identify known facts, provenance and cutoffs, missing evidence, next actions, and forbidden actions. Do not invent market data, trades, or audit acceptance.",
+    "zh-CN": "依据选定项目资料，列出已知事实、来源与截止时间、缺失证据、下一步和禁止动作。不得编造行情、成交或审计验收。"
+  },
+  "dashuTask": {
+    "en-US": "Dashu validation work plan",
+    "zh-CN": "大算度验证工作计划"
+  },
+  "dashuBody": {
+    "en-US": "Use the project goal and non-sensitive technical sources to define work packages, responsibilities, dependencies, model connection status, human review gates, and acceptance criteria. State unknown budgets or deployment evidence as missing.",
+    "zh-CN": "根据项目目标和非敏感技术资料，定义工作包、职责、依赖、模型连接状态、真人审核点和验收标准。未知预算或部署证据明确列为缺失。"
+  },
+  "twosTask": {
+    "en-US": "TWOS iteration planning note",
+    "zh-CN": "TWOS 迭代规划说明"
+  },
+  "twosBody": {
+    "en-US": "Prepare a source-linked improvement plan. Use the iteration studio for approved source changes, execution, review, and candidate updates.",
+    "zh-CN": "准备带来源的改进计划。需要源代码改动、执行、复核和候选更新时，使用迭代工作台。"
+  },
+  "generalTask": {
+    "en-US": "Project work plan",
+    "zh-CN": "项目工作计划"
+  },
+  "generalBody": {
+    "en-US": "Use the selected sources to prepare a concise work plan with dependencies, deliverables, and open questions.",
+    "zh-CN": "依据所选资料，形成包含依赖、成果和待确认问题的工作计划。"
+  },
+  "lddSource1": {
+    "en-US": "Sample: read-only continuity work. Trading authority is NONE. This is not a complete historical restore or live market feed.",
+    "zh-CN": "示例：仅做只读接续整理，交易权限为 NONE。这不是完整历史恢复或实时行情源。"
+  },
+  "lddSource2": {
+    "en-US": "Sample: verify report provenance and distinguish current rules from research proposals. Unverified facts remain evidence gaps.",
+    "zh-CN": "示例：核对报告来源，区分现行规则与研究方案。未经验证的事实保留为证据缺口。"
+  },
+  "dashuSource1": {
+    "en-US": "Sample: Qwen3.6-35B-A3B is the selected direction. Deployment and connection are not verified in this prototype.",
+    "zh-CN": "示例：Qwen3.6-35B-A3B 是已选方向。本原型未验证部署或连接。"
+  },
+  "dashuSource2": {
+    "en-US": "Sample: technical, TCM, and quality/compliance approval remains with qualified humans. No patient records or clinical action are included.",
+    "zh-CN": "示例：技术、中医及质量合规批准由合格真人负责。不包含患者记录或临床操作。"
+  },
+  "twosSource1": {
+    "en-US": "Sample: project-first workflows, complete English and Simplified Chinese UI, and a single-page iteration studio.",
+    "zh-CN": "示例：项目优先流程、完整英／简中界面，以及单页迭代工作台。"
+  },
+  "twosSource2": {
+    "en-US": "Sample: code only in the approved isolated development workspace. Planning approval does not authorize installation or publication.",
+    "zh-CN": "示例：仅在批准的隔离开发工作区修改代码。方案批准不授予安装或发布权限。"
+  },
+  "outputIntro": {
+    "en-US": "This is a design sample, not model output or project acceptance evidence.",
+    "zh-CN": "这是设计示例，不是模型输出或项目验收证据。"
+  },
+  "outputGoal": {
+    "en-US": "Project goal",
+    "zh-CN": "项目目标"
+  },
+  "outputSources": {
+    "en-US": "Input sources",
+    "zh-CN": "输入资料"
+  },
+  "outputGaps": {
+    "en-US": "Open evidence gaps",
+    "zh-CN": "尚缺证据"
+  },
+  "outputGapText": {
+    "en-US": "Only sample sources were used. No live data, connected model, expert decision, or production run was verified.",
+    "zh-CN": "仅使用示例资料，未验证实时数据、模型连接、专家决策或生产运行。"
+  },
+  "outputNext": {
+    "en-US": "Next action",
+    "zh-CN": "下一步"
+  },
+  "outputNextText": {
+    "en-US": "Add approved sources, check their scope, and run the task through a verified model connection in the actual product.",
+    "zh-CN": "在实际产品中补入已批准资料、核对范围，并通过已验证模型连接执行任务。"
+  },
+  "outputReview": {
+    "en-US": "Review remains a separate, evidenced step.",
+    "zh-CN": "审核仍是独立且需要证据的环节。"
+  },
+  "returnStudio": {
+    "en-US": "Return to iteration studio",
+    "zh-CN": "返回迭代工作台"
+  },
+  "demoOnly": {
+    "en-US": "Simulation only",
+    "zh-CN": "仅模拟"
+  },
+  "editRequest": {
+    "en-US": "Revise this request",
+    "zh-CN": "修改此需求"
+  },
+  "eventEdit": {
+    "en-US": "The request is being revised. The previous plan is preserved but is no longer eligible to run.",
+    "zh-CN": "需求正在修订。旧方案保留，但不再具备执行资格。"
+  },
+  "setupTitle": {
+    "en-US": "Welcome to your workspace",
+    "zh-CN": "欢迎使用工作空间"
+  },
+  "continue": {
+    "en-US": "Continue",
+    "zh-CN": "继续"
+  },
+  "signIn": {
+    "en-US": "Sign in",
+    "zh-CN": "登录"
+  },
+  "signOut": {
+    "en-US": "Sign out",
+    "zh-CN": "退出登录"
+  },
+  "password": {
+    "en-US": "Password",
+    "zh-CN": "密码"
+  },
+  "passwordConfirm": {
+    "en-US": "Confirm password",
+    "zh-CN": "确认密码"
+  },
+  "username": {
+    "en-US": "Local account name",
+    "zh-CN": "本地账号名称"
+  },
+  "setupToken": {
+    "en-US": "Local setup authorization",
+    "zh-CN": "本地设置授权"
+  },
+  "startNotice": {
+    "en-US": "Prepare private local storage and create your Owner account. No provider request is made.",
+    "zh-CN": "准备私有本机存储并创建 Owner 账号，不调用模型服务。"
+  },
+  "confirmInstall": {
+    "en-US": "Confirm local installation",
+    "zh-CN": "确认本机安装"
+  },
+  "loading": {
+    "en-US": "Loading saved state…",
+    "zh-CN": "正在读取保存状态…"
+  },
+  "working": {
+    "en-US": "Working…",
+    "zh-CN": "处理中…"
+  },
+  "saved": {
+    "en-US": "Saved",
+    "zh-CN": "已保存"
+  },
+  "chooseFile": {
+    "en-US": "Choose a file",
+    "zh-CN": "选择文件"
+  },
+  "previewImport": {
+    "en-US": "Scan & preview",
+    "zh-CN": "扫描并预览"
+  },
+  "safe": {
+    "en-US": "Safe to select",
+    "zh-CN": "可选择导入"
+  },
+  "reference": {
+    "en-US": "Reference only",
+    "zh-CN": "仅参考"
+  },
+  "excluded": {
+    "en-US": "Excluded",
+    "zh-CN": "已排除"
+  },
+  "selectSources": {
+    "en-US": "Select the sources this task may send to its model",
+    "zh-CN": "选择本任务可发送给模型的资料"
+  },
+  "tool": {
+    "en-US": "Trusted local tool",
+    "zh-CN": "可信本机工具"
+  },
+  "toolMissing": {
+    "en-US": "Saved configuration exists, but the executable is missing or changed. Choose a trusted tool before a new execution. Historical results are preserved.",
+    "zh-CN": "配置仍已保存，但可执行文件缺失或变化。新执行前请选择可信工具，历史成果保留。"
+  },
+  "toolUnselected": {
+    "en-US": "Choose a tool and models. Project creation, import and reading do not require a provider.",
+    "zh-CN": "选择工具与模型。创建项目、导入和阅读无需模型服务。"
+  },
+  "toolSelected": {
+    "en-US": "Configuration saved · service has not been checked by this selection",
+    "zh-CN": "配置已保存 · 此选择未进行服务检查"
+  },
+  "modelId": {
+    "en-US": "Exact model ID",
+    "zh-CN": "准确模型 ID"
+  },
+  "budget": {
+    "en-US": "Provider allowance",
+    "zh-CN": "服务商额度"
+  },
+  "budgetUsed": {
+    "en-US": "Historical invocations",
+    "zh-CN": "历史调用记录"
+  },
+  "budgetConsent": {
+    "en-US": "Use my existing authenticated plan only. No purchase or additional payment is authorized.",
+    "zh-CN": "仅使用我已有的认证计划，不授权购买或额外付费。"
+  },
+  "humanGatesInput": {
+    "en-US": "Human review gates (one per line)",
+    "zh-CN": "真人审核环节（每行一项）"
+  },
+  "previewPlan": {
+    "en-US": "Prepare review plan · no model call",
+    "zh-CN": "准备审查方案 · 不调用模型"
+  },
+  "approvalConsent": {
+    "en-US": "I approve this exact input, model, output scope and one CLI invocation.",
+    "zh-CN": "我批准这份精确输入、模型、成果范围及一次 CLI 调用。"
+  },
+  "fallbackConsent": {
+    "en-US": "I understand when one model fills multiple roles. This is not independent multi-model validation.",
+    "zh-CN": "我理解同一模型可能承担多个角色，这不构成独立多模型验证。"
+  },
+  "status": {
+    "en-US": "Status",
+    "zh-CN": "状态"
+  },
+  "revision": {
+    "en-US": "Revision",
+    "zh-CN": "修订版"
+  },
+  "inputScope": {
+    "en-US": "Approved inputs",
+    "zh-CN": "获准输入"
+  },
+  "outputScope": {
+    "en-US": "Save a project document; do not change source files or Git",
+    "zh-CN": "保存项目文档，不修改来源文件或 Git"
+  },
+  "noGitNeeded": {
+    "en-US": "A saved document is this task’s delivery. Git Commit and Push are not required.",
+    "zh-CN": "保存的文档即本任务交付，无需 Git Commit 或 Push。"
+  },
+  "pendingHuman": {
+    "en-US": "Human review remains pending unless separately recorded by the reviewer.",
+    "zh-CN": "真人复核仍待审核者单独确认。"
+  },
+  "actualEvidence": {
+    "en-US": "Actual execution evidence",
+    "zh-CN": "实际执行证据"
+  },
+  "originalContent": {
+    "en-US": "Original content · not translated by the language switch",
+    "zh-CN": "原始内容，不随界面语言切换翻译"
+  },
+  "history": {
+    "en-US": "History & evidence",
+    "zh-CN": "历史与证据"
+  },
+  "legacy": {
+    "en-US": "Historical code delivery",
+    "zh-CN": "历史代码交付"
+  },
+  "openLegacy": {
+    "en-US": "Open preserved code-delivery history",
+    "zh-CN": "打开保留的代码交付历史"
+  },
+  "legacyNotice": {
+    "en-US": "These are existing task records. Their original objective, body, approvals and receipts are preserved. Opening history does not repeat any action.",
+    "zh-CN": "这是已有任务记录，原目标、正文、批准及回执保持不变。打开历史不会重复任何操作。"
+  },
+  "environment": {
+    "en-US": "Environment & installation",
+    "zh-CN": "环境与安装身份"
+  },
+  "advanced": {
+    "en-US": "Advanced code delivery",
+    "zh-CN": "高级代码交付"
+  },
+  "retry": {
+    "en-US": "Retry",
+    "zh-CN": "重试"
+  },
+  "cancelRun": {
+    "en-US": "Request cancellation",
+    "zh-CN": "请求取消"
+  },
+  "cancelRequested": {
+    "en-US": "Cancellation requested; wait for confirmed termination.",
+    "zh-CN": "已请求取消，请等待终止确认。"
+  },
+  "errorFallback": {
+    "en-US": "The action could not complete. Your saved work is retained. See the diagnostic code, then retry only if it is safe.",
+    "zh-CN": "操作未能完成，已保存工作保留。请查看诊断代码，仅在安全时重试。"
+  },
+  "networkError": {
+    "en-US": "The product could not be reached. Check the native window, then reload. The action may already have completed; inspect its saved state before retrying.",
+    "zh-CN": "无法连接产品。请查看原生窗口后重新加载。操作可能已经完成，重试前请核对保存状态。"
+  },
+  "localeFailed": {
+    "en-US": "Language could not be saved. The previous preference is retained.",
+    "zh-CN": "语言偏好未能保存，原偏好保留。"
+  },
+  "planScope": {
+    "en-US": "Input scope and permissions",
+    "zh-CN": "输入范围与权限"
+  },
+  "privacy": {
+    "en-US": "Selected task input is sent only after approval and explicit Start. Never select credentials or patient data.",
+    "zh-CN": "所选任务输入仅在批准并明确开始后发送。不要选择凭据或患者数据。"
+  },
+  "readiness": {
+    "en-US": "Service access is verified by an actual request, not by saving a model name.",
+    "zh-CN": "实际请求才验证服务权限，保存模型名称不代表可用。"
+  },
+  "installationIdentity": {
+    "en-US": "Installed build and source",
+    "zh-CN": "安装 build 与源码身份"
+  },
+  "request": {
+    "en-US": "Request",
+    "zh-CN": "请求"
+  },
+  "path": {
+    "en-US": "Path",
+    "zh-CN": "路径"
+  },
+  "sourceHash": {
+    "en-US": "SHA-256",
+    "zh-CN": "SHA-256"
+  },
+  "selectAllSafe": {
+    "en-US": "Select safe text files",
+    "zh-CN": "选择安全文本文件"
+  },
+  "studioBlocked": {
+    "en-US": "Configure a trusted tool, three role models and an isolated development target to begin. No action runs on page load.",
+    "zh-CN": "先配置可信工具、三个角色模型及隔离开发目标。打开页面不会执行动作。"
+  },
+  "devPath": {
+    "en-US": "TWOS source repository to snapshot",
+    "zh-CN": "要生成快照的 TWOS 源码仓库"
+  },
+  "bindTarget": {
+    "en-US": "Review development target",
+    "zh-CN": "审查开发目标"
+  },
+  "confirmTarget": {
+    "en-US": "Confirm isolated development target",
+    "zh-CN": "确认隔离开发目标"
+  },
+  "targetConsent": {
+    "en-US": "Only the isolated snapshot may be modified. The running app, original repository, user data and permissions stay protected.",
+    "zh-CN": "仅允许修改隔离快照，运行中的应用、原仓库、用户数据及权限保持受保护。"
+  },
+  "deterministicChecks": {
+    "en-US": "Deterministic checks",
+    "zh-CN": "确定性检查"
+  },
+  "notRun": {
+    "en-US": "Not run",
+    "zh-CN": "未运行"
+  },
+  "backup": {
+    "en-US": "Create consistent backup",
+    "zh-CN": "创建一致性备份"
+  },
+  "notAvailable": {
+    "en-US": "Unavailable",
+    "zh-CN": "不可用"
+  },
+  "fileCount": {
+    "en-US": "Files",
+    "zh-CN": "文件"
+  },
+  "importScope": {
+    "en-US": "Import scope",
+    "zh-CN": "导入范围"
+  },
+  "manifest": {
+    "en-US": "Manifest entries verified",
+    "zh-CN": "已核验清单项"
+  },
+  "budgetWarning": {
+    "en-US": "Usage limits are set by your connected provider. TWOS adds no invocation limit.",
+    "zh-CN": "额度以所连接服务商为准，TWOS 不另设调用次数上限。"
+  },
+  "error.PROJECT_NOT_FOUND": {
+    "en-US": "This project is unavailable in this account.",
+    "zh-CN": "当前账号无法访问此项目。"
+  },
+  "error.TASK_NOT_FOUND": {
+    "en-US": "This task is unavailable. Return to the project.",
+    "zh-CN": "此任务不可用，请返回项目。"
+  },
+  "error.ORIGIN_MISMATCH": {
+    "en-US": "Use the product window for this local environment.",
+    "zh-CN": "请使用当前本机环境的产品窗口。"
+  },
+  "error.JSON_REQUIRED": {
+    "en-US": "This action requires an explicit product request.",
+    "zh-CN": "此动作需要明确的产品请求。"
+  },
+  "error.IMPORT_PATH_UNSAFE": {
+    "en-US": "The archive contains an unsafe path. Nothing was imported.",
+    "zh-CN": "压缩包含不安全路径，未导入内容。"
+  },
+  "error.IMPORT_TOO_LARGE": {
+    "en-US": "The file exceeds the bounded import size. Select a smaller source package.",
+    "zh-CN": "文件超过导入大小限制，请选择更小的资料包。"
+  },
+  "error.IMPORT_DUPLICATE_PATH": {
+    "en-US": "The archive contains duplicate or ambiguous paths.",
+    "zh-CN": "压缩包含重复或有歧义的路径。"
+  },
+  "error.IMPORT_LINK_OR_ENCRYPTION": {
+    "en-US": "Links, special files and encrypted archives cannot be imported.",
+    "zh-CN": "不支持导入链接、特殊文件或加密压缩包。"
+  },
+  "error.IMPORT_NESTING_UNSUPPORTED": {
+    "en-US": "Nested archives are not imported. Select an approved text-only export.",
+    "zh-CN": "不导入嵌套压缩包，请选择获准的文本导出。"
+  },
+  "error.IMPORT_ZIP_INVALID": {
+    "en-US": "The ZIP is damaged or unsupported. Check its source and hash.",
+    "zh-CN": "ZIP 损坏或不受支持，请核对来源与哈希。"
+  },
+  "error.IMPORT_MANIFEST_INVALID": {
+    "en-US": "The manifest is malformed. Nothing was imported.",
+    "zh-CN": "完整性清单格式无效，未导入内容。"
+  },
+  "error.IMPORT_MANIFEST_MISMATCH": {
+    "en-US": "A source hash does not match the manifest. Nothing was imported.",
+    "zh-CN": "资料哈希与清单不符，未导入内容。"
+  },
+  "error.IMPORT_SELECTION_REQUIRED": {
+    "en-US": "Select at least one safe document.",
+    "zh-CN": "请至少选择一份安全资料。"
+  },
+  "error.IMPORT_SELECTION_UNSAFE": {
+    "en-US": "Only scanned safe documents can be selected.",
+    "zh-CN": "仅可选择已扫描的安全资料。"
+  },
+  "error.TEAM_REQUIRED": {
+    "en-US": "Configure this project’s tool and model roles first.",
+    "zh-CN": "请先配置本项目的工具和模型角色。"
+  },
+  "error.EXECUTABLE_MISSING_OR_CHANGED": {
+    "en-US": "The selected tool is missing or changed. Choose it again in AI team.",
+    "zh-CN": "所选工具缺失或变化，请在 AI 团队中重新选择。"
+  },
+  "error.MODEL_REQUIRED": {
+    "en-US": "Enter a valid model ID for each role.",
+    "zh-CN": "请为各角色输入有效模型 ID。"
+  },
+  "error.BUDGET_REQUIRED": {
+    "en-US": "Confirm the existing plan and request limit.",
+    "zh-CN": "请确认已有计划和 CLI 启动上限。"
+  },
+  "error.REQUEST_BUDGET_EXHAUSTED": {
+    "en-US": "This historical task stopped at an old TWOS invocation limit. That application limit has been removed; you can continue the unfinished work.",
+    "zh-CN": "该历史任务曾因旧版 TWOS 调用上限停止。应用上限现已移除，可继续未完成的工作。"
+  },
+  "error.APPROVAL_REQUIRED": {
+    "en-US": "Review and approve the current plan before starting.",
+    "zh-CN": "开始前请审查并批准当前方案。"
+  },
+  "error.APPROVAL_CHANGED": {
+    "en-US": "The plan changed. Read the current revision and approve it explicitly.",
+    "zh-CN": "方案已变化，请阅读当前修订并明确批准。"
+  },
+  "error.SOURCE_CHANGED": {
+    "en-US": "An approved source changed. Prepare a new plan.",
+    "zh-CN": "获准资料已变化，请重新准备方案。"
+  },
+  "error.SOURCE_CONTEXT_TOO_LARGE": {
+    "en-US": "The selected context is too large. Create a task with fewer sources.",
+    "zh-CN": "所选上下文过大，请新建任务并选择更少资料。"
+  },
+  "error.TEAM_CHANGED": {
+    "en-US": "The team changed. Prepare and approve a new plan.",
+    "zh-CN": "团队已变化，请重新准备并批准方案。"
+  },
+  "error.PROVIDER_REQUEST_FAILED": {
+    "en-US": "The provider did not complete the request. Your input and failure receipt are retained. TWOS did not start another execution. Review the failure before explicitly revising and starting again.",
+    "zh-CN": "服务未完成请求，输入与失败回执已保留。TWOS 未另行启动执行。请先查看失败记录，再明确修订并重新开始。"
+  },
+  "error.EXECUTION_TIMEOUT": {
+    "en-US": "The bounded execution timed out and was stopped. TWOS did not start another execution.",
+    "zh-CN": "执行超时并已停止。TWOS 未另行启动执行。"
+  },
+  "error.EXECUTION_CANCELLED": {
+    "en-US": "Execution was cancelled. No completed result is claimed.",
+    "zh-CN": "执行已取消，不声明已完成成果。"
+  },
+  "error.EXECUTION_INTERRUPTED": {
+    "en-US": "The application stopped during execution. Its record is retained; it was not restarted automatically.",
+    "zh-CN": "应用在执行中停止。记录保留，未自动重新执行。"
+  },
+  "error.EXECUTION_INTERNAL_ERROR": {
+    "en-US": "Execution could not finish. Inspect the local diagnostics; do not repeat the original business delivery.",
+    "zh-CN": "执行未完成，请查看本机诊断，不要重复原业务交付。"
+  },
+  "error.RESULT_SECRET_REJECTED": {
+    "en-US": "Possible credentials were detected in the response. The result was withheld.",
+    "zh-CN": "响应中发现疑似凭据，成果未保存。"
+  },
+  "state.DRAFT": {
+    "en-US": "Draft",
+    "zh-CN": "草稿"
+  },
+  "state.PLANNED": {
+    "en-US": "Awaiting approval",
+    "zh-CN": "等待批准"
+  },
+  "state.APPROVED": {
+    "en-US": "Approved; not started",
+    "zh-CN": "已批准，尚未开始"
+  },
+  "state.RUNNING": {
+    "en-US": "Running",
+    "zh-CN": "执行中"
+  },
+  "state.QUEUED": {
+    "en-US": "Starting",
+    "zh-CN": "准备启动"
+  },
+  "state.COMPLETED": {
+    "en-US": "Result saved",
+    "zh-CN": "成果已保存"
+  },
+  "state.FAILED": {
+    "en-US": "Failed",
+    "zh-CN": "失败"
+  },
+  "state.CANCELLED": {
+    "en-US": "Cancelled",
+    "zh-CN": "已取消"
+  },
+  "state.INTERRUPTED": {
+    "en-US": "Interrupted",
+    "zh-CN": "已中断"
+  },
+  "state.REPLAN_REQUIRED": {
+    "en-US": "New review required",
+    "zh-CN": "需要重新审查"
+  },
+  "studioApprove": {
+    "en-US": "Approve this development plan",
+    "zh-CN": "批准此开发方案"
+  },
+  "studioExecute": {
+    "en-US": "Start Codex implementation",
+    "zh-CN": "开始 Codex 实现"
+  },
+  "studioReview": {
+    "en-US": "Start separate read-only review",
+    "zh-CN": "开始独立只读复核"
+  },
+  "candidateIdentityHelp": {
+    "en-US": "Choose the author identity for the isolated candidate commit. This enters Git history; it is not a login password. No global settings change.",
+    "zh-CN": "请为隔离候选提交选择署名和邮箱。这些信息将进入 Git 历史，不是登录密码；不会更改全局设置。"
+  },
+  "candidateReview": {
+    "en-US": "Review candidate and local commit",
+    "zh-CN": "审查候选与本地提交"
+  },
+  "candidateApprove": {
+    "en-US": "Approve exact local candidate commit",
+    "zh-CN": "批准此候选本地提交"
+  },
+  "candidateCommit": {
+    "en-US": "Confirm local candidate commit",
+    "zh-CN": "确认候选本地提交"
+  },
+  "candidateBuild": {
+    "en-US": "Build reviewed candidate",
+    "zh-CN": "构建已审查候选"
+  },
+  "targetScope": {
+    "en-US": "The selected source stays unchanged. Confirming creates a separate local clone with no remote. Only the two listed files may change.",
+    "zh-CN": "所选源码保持不变。确认后创建无远端的独立本机副本，只允许更改所列的两个文件。"
+  },
+  "candidateScope": {
+    "en-US": "This is one local commit in the isolated development target. No Push, release, running-app replacement or Owner acceptance is included.",
+    "zh-CN": "这只会在隔离开发目标中创建一次本地提交，不包含 Push、发布、替换运行中应用或 Owner 验收。"
+  },
+  "prepareUpdate": {
+    "en-US": "Prepare backup and update review",
+    "zh-CN": "准备备份并审查更新"
+  },
+  "checkInstalled": {
+    "en-US": "Verify running candidate identity",
+    "zh-CN": "核验正在运行的候选身份"
+  },
+  "guiInstallInstructions": {
+    "en-US": "The consistent backup and candidate identity are listed below. After confirming: quit this app, drag the candidate app into your chosen Applications location, replace the controller copy only, relaunch it, select the same environment, then return here to verify identity. Do not replace or restore the data directory.",
+    "zh-CN": "一致性备份及候选身份如下。确认后：退出此应用，将候选 App 拖入选定的“应用程序”位置，仅替换控制应用副本；重新启动、选择相同环境，再返回这里核验身份。不要替换或恢复数据目录。"
+  },
+  "installPending": {
+    "en-US": "Installation is not yet verified",
+    "zh-CN": "尚未核验安装"
+  },
+  "installedMatched": {
+    "en-US": "Running build matches the prepared candidate",
+    "zh-CN": "正在运行的构建与已准备候选一致"
+  },
+  "ownerAcceptanceSeparate": {
+    "en-US": "Candidate generation, installed identity and Owner acceptance are separate. No Owner acceptance has been recorded.",
+    "zh-CN": "候选生成、安装身份与 Owner 验收分别记录；此处未记录 Owner 验收。"
+  },
+  "state.BUILT": {
+    "en-US": "Implementation returned",
+    "zh-CN": "实现结果已返回"
+  },
+  "state.REVIEWED": {
+    "en-US": "Independent review passed",
+    "zh-CN": "独立复核通过"
+  },
+  "state.REVIEW_FAILED": {
+    "en-US": "Independent review failed",
+    "zh-CN": "独立复核未通过"
+  },
+  "state.COMMITTING": {
+    "en-US": "Local commit in progress",
+    "zh-CN": "正在本地提交"
+  },
+  "state.COMMITTED": {
+    "en-US": "Candidate committed locally",
+    "zh-CN": "候选已本地提交"
+  },
+  "state.COMMIT_RECONCILIATION_REQUIRED": {
+    "en-US": "Local commit needs reconciliation",
+    "zh-CN": "需要核对本地提交"
+  },
+  "state.CANDIDATE_READY": {
+    "en-US": "Candidate ready; not installed",
+    "zh-CN": "候选已生成，尚未安装"
+  },
+  "commitName": {
+    "en-US": "Commit author name",
+    "zh-CN": "提交署名"
+  },
+  "commitEmail": {
+    "en-US": "Commit author email",
+    "zh-CN": "提交邮箱"
+  },
+  "executionDetails": {
+    "en-US": "Execution and decision details",
+    "zh-CN": "执行与决策详情"
+  },
+  "studioReadyDesc": {
+    "en-US": "Select a clean TWOS source copy and configure your AI team. Generating a plan uses one real model CLI invocation; implementation requires a separate approval.",
+    "zh-CN": "选择干净的 TWOS 源码副本并配置 AI 团队。生成方案消耗一次真实模型 CLI 启动；实现必须另行批准。"
+  },
+  "error.ACTIVE_OPERATIONS": {
+    "en-US": "Wait for active work to finish before preparing an update.",
+    "zh-CN": "请等待进行中的工作结束后再准备更新。"
+  },
+  "error.BUILD_BASELINE_MISMATCH": {
+    "en-US": "Development source differs from the running candidate. Review the exact source before building.",
+    "zh-CN": "开发源码与正在运行的候选不匹配。构建前请核对精确源码。"
+  },
+  "error.BUNDLED_CATALOG_MISSING": {
+    "en-US": "The packaged translation catalog is missing. Keep existing data and inspect the installer.",
+    "zh-CN": "安装包缺少翻译目录。请保留已有数据并核对安装器。"
+  },
+  "error.CANDIDATE_INPUT_CHANGED": {
+    "en-US": "Candidate inputs changed after review. Review them again; nothing was approved automatically.",
+    "zh-CN": "候选输入在审查后发生变化。请重新审查；不会自动批准。"
+  },
+  "error.CANDIDATE_NOT_READY": {
+    "en-US": "A verified candidate is required before preparing installation.",
+    "zh-CN": "准备安装前必须有已核验的候选。"
+  },
+  "error.CANDIDATE_SOURCE_DIRTY": {
+    "en-US": "The candidate source contains uncommitted changes. Installation has not started.",
+    "zh-CN": "候选源码存在未提交改动。尚未开始安装。"
+  },
+  "error.COMMIT_IDENTITY_INVALID": {
+    "en-US": "Enter a non-empty author name and valid email for this local commit.",
+    "zh-CN": "请为此次本地提交填写署名及有效邮箱。"
+  },
+  "error.DEVELOPMENT_CONFIRMATION_REQUIRED": {
+    "en-US": "Confirm the isolated development boundary before continuing.",
+    "zh-CN": "请先确认隔离开发边界。"
+  },
+  "error.DEVELOPMENT_GIT_FAILED": {
+    "en-US": "The bounded local repository check failed. Original source and running app were not replaced.",
+    "zh-CN": "限定的本地仓库检查失败。未替换原源码或正在运行的应用。"
+  },
+  "error.DEVELOPMENT_PATH_UNAVAILABLE": {
+    "en-US": "The selected development source is unavailable. Choose an existing local source copy.",
+    "zh-CN": "所选开发源码不可用。请选择已存在的本机源码副本。"
+  },
+  "error.DEVELOPMENT_PATH_UNSAFE": {
+    "en-US": "The path overlaps protected data or executable locations, or uses a symbolic link. Choose a separate real source directory.",
+    "zh-CN": "路径与受保护数据或可执行文件位置重叠，或使用了符号链接。请选择独立的真实源码目录。"
+  },
+  "error.DEVELOPMENT_PROJECT_REQUIRED": {
+    "en-US": "Controlled iteration requires a TWOS Development project.",
+    "zh-CN": "受控迭代必须在 TWOS 产品迭代项目中进行。"
+  },
+  "error.DEVELOPMENT_REPOSITORY_REQUIRED": {
+    "en-US": "Choose a complete local Git source copy with its own repository history.",
+    "zh-CN": "请选择具有独立仓库历史的完整本地 Git 源码副本。"
+  },
+  "error.DEVELOPMENT_SNAPSHOT_EXISTS": {
+    "en-US": "This development target already exists with another binding. It was not overwritten.",
+    "zh-CN": "开发目标已存在且绑定不同，未覆盖它。"
+  },
+  "error.DEVELOPMENT_SOURCE_DIRTY": {
+    "en-US": "The source contains uncommitted changes. Preserve them and choose a clean source copy.",
+    "zh-CN": "源码存在未提交改动。请保留这些改动并选择干净副本。"
+  },
+  "error.DEVELOPMENT_TARGET_CHANGED": {
+    "en-US": "The development identity changed. Review the source and plan again.",
+    "zh-CN": "开发身份发生变化。请重新审查源码和方案。"
+  },
+  "error.DEVELOPMENT_TARGET_REQUIRED": {
+    "en-US": "Select and confirm an isolated development target first.",
+    "zh-CN": "请先选择并确认隔离开发目标。"
+  },
+  "error.EXECUTION_OUTPUT_LIMIT": {
+    "en-US": "The response exceeded the allowed output size. It was stopped; review before making another request.",
+    "zh-CN": "响应超过允许大小，已停止。再次请求前请审查。"
+  },
+  "error.IDEMPOTENCY_CONFLICT": {
+    "en-US": "This action identifier was already used with different inputs. No second execution was started.",
+    "zh-CN": "此操作标识已用于不同输入，未启动第二次执行。"
+  },
+  "error.IMPORT_ALREADY_CONFIRMED": {
+    "en-US": "This preview was already imported with another selection. Start a new preview to change the selection.",
+    "zh-CN": "此预览已按另一选择导入。更改选择前请重新预览。"
+  },
+  "error.IMPORT_CHANGED": {
+    "en-US": "The archive or selected sources changed. Preview the import again.",
+    "zh-CN": "归档或选定资料发生变化。请重新预览导入。"
+  },
+  "error.IMPORT_NOT_FOUND": {
+    "en-US": "The import preview is unavailable for this project. Start a new preview.",
+    "zh-CN": "此项目的导入预览不可用。请重新预览。"
+  },
+  "error.INDEPENDENT_REVIEW_REQUIRED": {
+    "en-US": "A successful separate review is required before the local candidate commit.",
+    "zh-CN": "候选本地提交前必须完成独立复核。"
+  },
+  "error.ITERATION_ACTION_INVALID": {
+    "en-US": "This action does not belong to this type of task.",
+    "zh-CN": "此操作不适用于该任务类型。"
+  },
+  "error.ITERATION_ALREADY_ACTIVE": {
+    "en-US": "An iteration is already active for this target. Continue it before creating another.",
+    "zh-CN": "此目标已有进行中的迭代。请先继续当前迭代。"
+  },
+  "error.ITERATION_REGRESSION_REQUIRED": {
+    "en-US": "The candidate is missing the required bilingual regression test.",
+    "zh-CN": "候选缺少要求的双语回归测试。"
+  },
+  "error.ITERATION_REGRESSION_INVALID": {
+    "en-US": "The generated regression test is not valid Python. No candidate was applied.",
+    "zh-CN": "生成的回归测试不是有效的 Python 代码，未应用该候选。"
+  },
+  "error.ITERATION_SCOPE_VIOLATION": {
+    "en-US": "The candidate changed files or content outside the approved scope. No candidate was accepted.",
+    "zh-CN": "候选更改超出批准的文件或内容范围，未接收该候选。"
+  },
+  "error.ITERATION_STATE_CHANGED": {
+    "en-US": "The iteration state changed. Reload its recorded state before continuing.",
+    "zh-CN": "迭代状态已变化。请重新读取记录后继续。"
+  },
+  "error.ITERATION_TEST_FAILED": {
+    "en-US": "The candidate regression did not pass in the isolated check. Inspect its review evidence; installation is blocked.",
+    "zh-CN": "候选回归未通过隔离检查。请查看复核证据；安装被阻止。"
+  },
+  "error.ITERATION_TRANSLATION_INVALID": {
+    "en-US": "The candidate translation is incomplete or exceeds its approved scope.",
+    "zh-CN": "候选翻译不完整或超出批准范围。"
+  },
+  "error.LOCALE_INVALID": {
+    "en-US": "Choose English or Simplified Chinese.",
+    "zh-CN": "请选择 English 或简体中文。"
+  },
+  "error.OWNER_REQUIRED": {
+    "en-US": "Sign in to the local account that owns this project.",
+    "zh-CN": "请登录拥有此项目的本地账号。"
+  },
+  "error.PACKAGED_BUILDER_REQUIRED": {
+    "en-US": "Candidate creation requires the installed packaged app. Source preview cannot claim an installer build.",
+    "zh-CN": "候选生成必须使用已安装的打包应用。源码预览不能作为安装包构建证明。"
+  },
+  "error.PROJECT_INPUT_INVALID": {
+    "en-US": "Enter a project name, choose a supported starting point and confirm creation.",
+    "zh-CN": "请填写项目名称、选择支持的起点并确认创建。"
+  },
+  "error.REQUEST_REUSED": {
+    "en-US": "This request identifier has already been used. No duplicate action was performed.",
+    "zh-CN": "此请求标识已使用，未重复执行。"
+  },
+  "error.RESULT_EMPTY": {
+    "en-US": "The model returned no usable document. Review the recorded failure before a new request.",
+    "zh-CN": "模型未返回可用文档。新请求前请审查失败记录。"
+  },
+  "error.RESULT_NOT_READY": {
+    "en-US": "No completed result is available to export yet.",
+    "zh-CN": "目前尚无可导出的已完成成果。"
+  },
+  "error.REVIEW_FORMAT_INVALID": {
+    "en-US": "The reviewer response could not be validated. It does not grant approval.",
+    "zh-CN": "无法验证复核响应，其结果不构成批准。"
+  },
+  "error.SETUP_REQUIRED": {
+    "en-US": "Complete the local account and first-project setup before continuing.",
+    "zh-CN": "请先完成本地账号及首个项目设置。"
+  },
+  "error.SINGLE_MODEL_CONFIRMATION_REQUIRED": {
+    "en-US": "Confirm the disclosed single-model multi-role arrangement. It is not independent-model validation.",
+    "zh-CN": "请确认已披露的单模型多角色安排；它不等于独立模型验证。"
+  },
+  "error.SOURCE_NOT_FOUND": {
+    "en-US": "This source does not belong to the selected project or is unavailable.",
+    "zh-CN": "资料不属于当前项目或已不可用。"
+  },
+  "error.START_CONFIRMATION_REQUIRED": {
+    "en-US": "Explicitly confirm starting this bounded request.",
+    "zh-CN": "请明确确认启动此次限定请求。"
+  },
+  "error.TASK_INPUT_INVALID": {
+    "en-US": "Enter the canonical task request and choose an output language.",
+    "zh-CN": "请填写任务正文并选择成果语言。"
+  },
+  "error.TASK_STATE_CHANGED": {
+    "en-US": "Task state changed. Read its current state before continuing; no repeat execution was started.",
+    "zh-CN": "任务状态已变化。请先读取当前状态；未启动重复执行。"
+  },
+  "error.TWOS_SOURCE_REQUIRED": {
+    "en-US": "This folder is not a complete supported TWOS source repository.",
+    "zh-CN": "此目录不是完整且受支持的 TWOS 源码仓库。"
+  },
+  "importReason.CREDENTIAL_FILENAME": {
+    "en-US": "Credential filename; excluded",
+    "zh-CN": "凭据文件名，已排除"
+  },
+  "importReason.FILE_TOO_LARGE": {
+    "en-US": "Too large for model context; reference only",
+    "zh-CN": "超出上下文大小限制，仅供参考"
+  },
+  "importReason.UNSUPPORTED_FORMAT": {
+    "en-US": "Unsupported content format; reference only",
+    "zh-CN": "暂不支持的格式，仅供参考"
+  },
+  "importReason.UTF8_REQUIRED": {
+    "en-US": "Not UTF-8; reference only",
+    "zh-CN": "非 UTF-8，仅供参考"
+  },
+  "importReason.POSSIBLE_CREDENTIAL": {
+    "en-US": "Possible credential content; excluded",
+    "zh-CN": "可能含凭据，已排除"
+  },
+  "importReason.JSON_INVALID": {
+    "en-US": "Invalid JSON; reference only",
+    "zh-CN": "JSON 无效，仅供参考"
+  },
+  "importReason.TEXT_DATA_ONLY": {
+    "en-US": "Readable source text",
+    "zh-CN": "可读资料文本"
+  },
+  "error.RECOVERY_REPLAN_REQUIRED": {
+    "en-US": "This approval predates data recovery. Prepare and explicitly approve a new plan before execution. Saved historical results remain unchanged.",
+    "zh-CN": "此批准早于数据恢复。执行前请重新准备并明确批准方案；已保存的历史成果保持不变。"
+  },
+  "error.CHILD_ARTIFACT_ITERATION_DISABLED": {
+    "en-US": "This self-iteration test candidate cannot create another candidate. Return to the controller app for further development.",
+    "zh-CN": "此自身迭代测试候选不能生成下一层候选。请返回控制端应用继续开发。"
+  },
+  "editProject": {
+    "en-US": "Edit project context",
+    "zh-CN": "编辑项目说明"
+  },
+  "saveProject": {
+    "en-US": "Save project context",
+    "zh-CN": "保存项目说明"
+  },
+  "contextRevisionNotice": {
+    "en-US": "This records your current project context and invalidates unstarted plan approvals. Historical results and source text are preserved.",
+    "zh-CN": "这会记录你本次确认的项目说明，并使尚未开始的方案批准失效。历史成果与资料原文保留。"
+  },
+  "reviseTask": {
+    "en-US": "Revise task · new approval required",
+    "zh-CN": "修订任务 · 需重新批准"
+  },
+  "error.PROJECT_CONTEXT_CHANGED": {
+    "en-US": "The project context changed. Reopen the form and review the current values.",
+    "zh-CN": "项目说明已变化。请重新打开表单并审查当前内容。"
+  },
+  "error.VALIDATION_ERROR": {
+    "en-US": "Required fields are missing or invalid. Check the account name, password length, confirmation, and selected fields before saving.",
+    "zh-CN": "必填项缺失或格式不正确。保存前请检查账号名称、密码长度、确认输入及所选字段。"
+  },
+  "error.PROVIDER_ALLOWANCE_UNAVAILABLE": {
+    "en-US": "The existing plan allowance is unavailable. No extra payment or automatic retry was attempted.",
+    "zh-CN": "现有计划额度不可用。未追加付费，也未自动重试。"
+  },
+  "error.PROVIDER_AUTH_REQUIRED": {
+    "en-US": "The selected tool needs its official sign-in flow. No credentials are copied into TWOS.",
+    "zh-CN": "所选工具需要通过官方流程登录。TWOS 不复制凭据。"
+  },
+  "error.PROVIDER_MODEL_UNAVAILABLE": {
+    "en-US": "This model is unavailable to the selected tool or account. Review the AI team configuration before a new request.",
+    "zh-CN": "所选工具或账号无法使用此模型。请在新请求前检查 AI 团队配置。"
+  },
+  "error.PROVIDER_TLS_FAILED": {
+    "en-US": "The provider connection failed certificate verification. Check your trusted system network setup; certificate checks remain enabled.",
+    "zh-CN": "服务连接未通过证书校验。请检查可信系统网络设置；证书检查保持启用。"
+  },
+  "error.PROVIDER_CONNECTION_FAILED": {
+    "en-US": "The tool could not maintain its provider connection. Your task is saved. Check the service and network before explicitly requesting a new plan.",
+    "zh-CN": "工具无法保持服务连接。任务已保存。请检查服务与网络，再明确发起新方案。"
+  },
+  "reviseIteration": {
+    "en-US": "Revise this request",
+    "zh-CN": "修订本次需求"
+  },
+  "revisionCallNotice": {
+    "en-US": "A new plan uses one model CLI invocation from the existing allowance. Old evidence and files remain; the revised plan needs new approval before execution.",
+    "zh-CN": "生成新方案将使用现有额度中的一次模型 CLI 启动。旧证据和文件保留；修订方案执行前需重新批准。"
+  },
+  "confirmIterationRevision": {
+    "en-US": "Generate revised plan · one model CLI invocation",
+    "zh-CN": "生成修订方案 · 一次模型 CLI 启动"
+  },
+  "error.CONTEXT_CHANGED": {
+    "en-US": "The selected context changed. Open the relevant project to see the saved action result.",
+    "zh-CN": "当前选择已改变。请打开对应项目查看已保存的操作结果。"
+  },
+  "error.EXECUTOR_CONFIGURATION_UNSUPPORTED": {
+    "en-US": "The selected Codex version rejected the execution configuration before a model result. Keep this receipt and use a compatible product update. Repeated Start will not repair this configuration.",
+    "zh-CN": "所选 Codex 版本拒绝了执行配置，尚未产生模型成果。请保留回执并使用兼容的产品更新；反复点击开始不能修复该配置。"
+  },
+  "error.ITERATION_NO_CHANGES": {
+    "en-US": "The executor returned without changing the approved files. Its response is retained for review. Revise the request and approve a new plan before retrying. No candidate was accepted.",
+    "zh-CN": "执行器返回后没有修改获准文件。其回复已保留供检查；重试前请修订需求并重新批准方案。没有接受候选版本。"
+  },
+  "teamMode.SINGLE_MODEL_MULTI_ROLE": {
+    "en-US": "One model assigned to multiple roles; this is not independent-model validation.",
+    "zh-CN": "同一模型承担多个角色；这不代表独立模型验证。"
+  },
+  "teamMode.MULTIPLE_MODELS_CONFIGURED_NOT_VERIFIED": {
+    "en-US": "Different models are configured; this is not proof that every role has executed or passed review.",
+    "zh-CN": "已配置不同模型；这不代表各角色已执行或通过复核。"
+  },
+  "teamModeUnknown": {
+    "en-US": "Team execution mode is not verified. See the recorded plan details.",
+    "zh-CN": "团队执行方式尚未核验，请查看已记录的方案详情。"
+  },
+  "error.ITERATION_PATCH_FORMAT_INVALID": {
+    "en-US": "The executor returned an invalid structured patch. No approval follows; inspect the retained response and revise the plan.",
+    "zh-CN": "执行器返回的结构化补丁格式不正确。未授予后续批准；请查看保留的回复并修订方案。"
+  },
+  "error.ITERATION_PATCH_WRITE_FAILED": {
+    "en-US": "The isolated patch could not be saved. Review remains blocked; the original response is retained.",
+    "zh-CN": "隔离补丁未能保存。复核仍被阻止，原回复已保留。"
+  },
+  "error.ITERATION_TEST_EVIDENCE_REQUIRED": {
+    "en-US": "Review requires passing tests bound to this exact plan and file contents. No reviewer request was started.",
+    "zh-CN": "复核需要与当前方案和精确文件内容绑定的通过测试；尚未启动复核请求。"
+  },
+  "error.DEVELOPMENT_TARGET_IN_USE": {
+    "en-US": "This development target already has an iteration. Its source binding cannot be replaced.",
+    "zh-CN": "此开发目标已有迭代记录，不能替换其源码绑定。"
+  },
+  "rebindUnusedTarget": {
+    "en-US": "Select a new source before the first iteration",
+    "zh-CN": "首次迭代前选择新源码"
+  },
+  "rebindUnusedNotice": {
+    "en-US": "The previous isolated snapshot is retained. Selecting a source does not start a model or change the running app. This is available only before this project has any tasks or iterations.",
+    "zh-CN": "原隔离快照保留。选择源码不调用模型，不修改运行中的应用。仅此项目尚无任务或迭代时可用。"
+  },
+  "error.ITERATION_BOTH_LOCALES_REQUIRED": {
+    "en-US": "Both language values must change from their approved baseline. No independent review was started.",
+    "zh-CN": "两种语言都必须相对已批准基准改变，尚未启动独立复核。"
+  },
+  "error.ITERATION_CONTRACT_CHANGED": {
+    "en-US": "The response contract changed. Review a new plan before execution.",
+    "zh-CN": "输出契约已改变。执行前请重新审查新方案。"
+  },
+  "error.ITERATION_REGRESSION_INSENSITIVE": {
+    "en-US": "The generated test did not detect the unchanged or one-sided input. Execution is blocked before independent review.",
+    "zh-CN": "生成的测试未能检出未修改或只改一侧的输入，执行在独立复核前被阻断。"
+  },
+  "error.RESULT_FILE_UNAVAILABLE": {
+    "en-US": "The current CLI invocation did not produce a safe readable final result. No retry was started.",
+    "zh-CN": "本次 CLI 未生成安全可读的最终结果，未自动重试。"
+  },
+  "error.RESULT_FILE_INVALID": {
+    "en-US": "The CLI final result file is invalid. No candidate was accepted.",
+    "zh-CN": "CLI 最终结果文件无效，未接受候选改动。"
+  },
+  "error.RESULT_FINAL_AMBIGUOUS": {
+    "en-US": "Final result and CLI events are ambiguous or do not match. No candidate was accepted.",
+    "zh-CN": "最终结果与 CLI 事件存在歧义或不一致，未接受候选改动。"
+  },
+  "error.RESULT_EVENT_STREAM_INCOMPLETE": {
+    "en-US": "The CLI event stream is incomplete. No candidate was accepted.",
+    "zh-CN": "CLI 事件流不完整，未接受候选改动。"
+  },
+  "error.ENGINEERING_INVOCATION_BUDGET_BLOCKED": {
+    "en-US": "The shared engineering invocation ledger blocks this start. No model CLI was launched. Check the allocation and ledger before any new action.",
+    "zh-CN": "共享工程调用账本阻止本次启动，未启动模型 CLI。请先核对额度分配与账本，再进行新操作。"
+  },
+  "error.EXECUTION_PROCESS_REGISTRATION_FAILED": {
+    "en-US": "The CLI process started but its tracking could not be recorded. It was stopped; do not retry until the invocation ledger is reconciled.",
+    "zh-CN": "CLI 进程已启动，但无法记录跟踪状态，已停止。请核对调用账本后再决定下一步，不要重复启动。"
+  },
+  "error.PROVIDER_REFUSED": {
+    "en-US": "The provider refused this execution. No candidate was accepted and no retry was started.",
+    "zh-CN": "服务拒绝了本次执行，未接受候选，也未自动重试。"
+  },
+  "error.EVIDENCE_WRITE_FAILED": {
+    "en-US": "Private execution diagnostics could not be saved. No automatic retry occurred. Check available disk space and local data permissions.",
+    "zh-CN": "无法保存本机私有执行诊断。未自动重试。请检查磁盘空间及本机数据权限。"
+  },
+  "error.EXECUTION_TRANSPORT_EXCEPTION": {
+    "en-US": "The local execution transport stopped unexpectedly. Inspect the private diagnostics; no automatic retry occurred.",
+    "zh-CN": "本机执行通道意外停止。请查看私有诊断；未自动重试。"
+  },
+  "error.RESULT_TERMINAL_CONFLICT": {
+    "en-US": "The CLI reported conflicting terminal events. The result was rejected.",
+    "zh-CN": "CLI 的终态事件冲突，结果已被拒绝。"
+  },
+  "error.RESULT_ITEM_CONFLICT": {
+    "en-US": "The CLI reused a message identity with different content. The result was rejected.",
+    "zh-CN": "CLI 对同一消息身份返回了不同内容，结果已被拒绝。"
+  },
+  "error.INVALID_CREDENTIALS": {
+    "en-US": "The local account name or password was not accepted. Use the password for this selected environment. If you cannot sign in, quit and reopen the TWOS App, select the same environment, then choose Recover local account before opening it. Do not create another account or delete data.",
+    "zh-CN": "本地账号名称或密码未通过验证，请使用所选环境的密码。若仍无法登录，请正常退出并重新打开 TWOS App，选定同一环境，在打开环境前点“恢复本地账号”。请勿注册新账号或删除数据。"
+  },
+  "providerQuota": {
+    "en-US": "Usage limits are set by your connected provider. TWOS adds no invocation limit.",
+    "zh-CN": "额度以所连接服务商为准，TWOS 不另设调用次数上限。"
+  },
+  "error.BUDGET_CONSENT_REQUIRED": {
+    "en-US": "Confirm use of your existing authenticated plan. No additional purchase is authorized.",
+    "zh-CN": "请确认使用已有认证计划，不授权额外购买。"
+  }
+}

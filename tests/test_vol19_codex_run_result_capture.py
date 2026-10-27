@@ -54,6 +54,11 @@ from twos_runtime.models import (
 from twos_runtime.security import hash_password, hash_token
 
 
+# Bounded readiness allowance for the real Git/ticket preparation path.
+# Cancellation and process-exit deadlines remain separate and unchanged.
+PREPARATION_WAIT_SECONDS = 30
+
+
 TERMINAL_CANONICAL_STATES = {
     "succeeded",
     "failed",
@@ -227,7 +232,7 @@ def test_distinct_concurrent_start_requests_admit_exactly_one_process(
             headers=headers,
         ).json()
         assert [item["id"] for item in runs] == [admitted.json()["id"]]
-        deadline = time.monotonic() + 5
+        deadline = time.monotonic() + PREPARATION_WAIT_SECONDS
         while time.monotonic() < deadline:
             active = client.get(
                 f"/api/codex-runs/{admitted.json()['id']}",
@@ -945,7 +950,7 @@ def test_live_bound_terminal_receipt_is_non_running_on_detail_and_activity(
         run_id = started.json()["id"]
 
         try:
-            assert live_bound.wait(5)
+            assert live_bound.wait(PREPARATION_WAIT_SECONDS)
             running = client.get(
                 f"/api/codex-runs/{run_id}", headers=headers
             ).json()
@@ -1436,7 +1441,7 @@ def test_repeated_active_cancellation_is_idempotent(
         assert started.status_code == 200, started.text
         run_id = started.json()["id"]
 
-        deadline = time.monotonic() + 5
+        deadline = time.monotonic() + PREPARATION_WAIT_SECONDS
         while time.monotonic() < deadline:
             active = client.get(
                 f"/api/codex-runs/{run_id}", headers=headers
@@ -1494,6 +1499,10 @@ def test_same_runtime_prelaunch_cancel_never_crosses_process_boundary(
     fake_codex = make_fake_codex(tmp_path)
     prepared = threading.Event()
     release_preparation = threading.Event()
+    # This test controls the launch boundary, not workspace/bridge preparation
+    # latency. Allow bounded startup time under a full macOS run; the event still
+    # holds the real prepared bridge until cancellation has been persisted.
+    preparation_timeout = PREPARATION_WAIT_SECONDS
 
     with make_client(tmp_path, source_repo, fake_codex) as client:
         headers = init_and_login(client)
@@ -1514,7 +1523,7 @@ def test_same_runtime_prelaunch_cancel_never_crosses_process_boundary(
                 partial_ticket.chmod(0o600)
                 handle = None
             prepared.set()
-            assert release_preparation.wait(10)
+            assert release_preparation.wait(preparation_timeout)
             if handle is None:
                 raise CodexExecBridgeError(
                     "TEST_PREPARATION_INTERRUPTED",
@@ -1530,7 +1539,9 @@ def test_same_runtime_prelaunch_cancel_never_crosses_process_boundary(
         assert started.status_code == 200, started.text
         run_id = started.json()["id"]
         try:
-            assert prepared.wait(5)
+            assert prepared.wait(preparation_timeout), (
+                "The real bridge did not reach the prelaunch cancellation barrier."
+            )
             cancellation = client.post(
                 f"/api/codex-runs/{run_id}/cancel", headers=headers
             )
@@ -1662,7 +1673,7 @@ def test_cancel_intent_reaches_active_detached_process_after_restart(
         started = start_codex_run(first_client, headers, task_id, pack)
         assert started.status_code == 200, started.text
         run_id = started.json()["id"]
-        deadline = time.monotonic() + 5
+        deadline = time.monotonic() + PREPARATION_WAIT_SECONDS
         while time.monotonic() < deadline:
             active = first_client.get(
                 f"/api/codex-runs/{run_id}", headers=headers
@@ -2178,7 +2189,7 @@ def test_concurrent_cancellation_creates_one_owner_intent(
         started = start_codex_run(client, headers, task_id, pack)
         assert started.status_code == 200, started.text
         run_id = started.json()["id"]
-        deadline = time.monotonic() + 5
+        deadline = time.monotonic() + PREPARATION_WAIT_SECONDS
         while time.monotonic() < deadline:
             active = client.get(
                 f"/api/codex-runs/{run_id}", headers=headers
@@ -2242,7 +2253,10 @@ def test_active_run_blocks_second_task_in_same_authorized_workspace(
         approve_pack(client, headers, first_task, first_pack["id"])
         first = start_codex_run(client, headers, first_task, first_pack)
         assert first.status_code == 200, first.text
-        deadline = time.monotonic() + 5
+        # Startup preparation is a precondition, not a five-second performance
+        # contract. Wait boundedly for a real running state before testing the
+        # second-task exclusion; all exclusion/cancellation assertions stay strict.
+        deadline = time.monotonic() + PREPARATION_WAIT_SECONDS
         while time.monotonic() < deadline:
             active = client.get(
                 f"/api/codex-runs/{first.json()['id']}", headers=headers

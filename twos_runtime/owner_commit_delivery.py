@@ -45,6 +45,7 @@ from .commit_builder import (
     _verify_exact_stage,
     get_or_create_commit_plan,
 )
+from .repository_identity import proposal_identity_invalidated
 from .delivery_candidates import canonical_json, canonical_sha256, normalize_repository_path
 from .models import (
     ApplyPlanApproval,
@@ -610,6 +611,7 @@ def create_commit_proposal(
     root = _verified_root(run, source_repo)
     with _commit_builder_repository_lock(apply_session.repository_locator_fingerprint):
         status, blockers, tests, current_global = _current_boundary_locked(
+            session=session,
             run=run,
             pack=pack,
             apply_session=apply_session,
@@ -692,6 +694,7 @@ def create_commit_proposal(
     )
     if (
         latest is not None
+        and not proposal_identity_invalidated(session, latest)
         and latest.binding_digest == binding_digest
         and latest.subject == subject_value
         and latest.body == body_value
@@ -813,6 +816,8 @@ def approve_commit_proposal(
     )
     if latest is None or latest.id != proposal.id:
         raise _failure("COMMIT_PROPOSAL_SUPERSEDED", "A newer Commit proposal requires review.")
+    if proposal_identity_invalidated(session, proposal):
+        raise _failure("GIT_IDENTITY_CHANGED", "Commit identity was saved after this proposal. Review and approve a new proposal.")
     if proposal.status_at_creation != "READY":
         raise _failure("COMMIT_PROPOSAL_BLOCKED", "The Commit proposal is not ready for approval.")
     existing = _approval_for_proposal(
@@ -1254,6 +1259,8 @@ def confirm_local_commit(
         )
         if latest is None or latest.id != proposal.id:
             raise _failure("COMMIT_PROPOSAL_SUPERSEDED", "A newer Commit proposal requires review.")
+        if proposal_identity_invalidated(session, proposal):
+            raise _failure("GIT_IDENTITY_CHANGED", "Commit identity changed. Review and approve a new proposal before Commit.")
         verification = session.get(PostApplyVerification, proposal.post_apply_verification_id)
         if verification is None:
             raise _failure("VERIFICATION_NOT_FOUND", "Post-Apply Verification not found.")
@@ -1305,6 +1312,7 @@ def confirm_local_commit(
         ) is not None:
             raise _failure("REPOSITORY_MUTATION_ACTIVE", "Another repository mutation is active.")
         status, blockers, _tests, current_global = _current_boundary_locked(
+            session=session,
             run=run,
             pack=pack,
             apply_session=apply_session,
@@ -1784,11 +1792,16 @@ def commit_proposal_out(
         verification_id=proposal.post_apply_verification_id,
     )
     is_latest = latest is not None and latest.id == proposal.id
+    identity_current = not proposal_identity_invalidated(session, proposal)
+    approval_output = _approval_out(approval)
+    if not identity_current and execution is None and approval_output is not None:
+        approval_output = {**approval_output, "historical_state": approval_output["state"],
+                           "state": "INVALIDATED", "reason": "GIT_IDENTITY_CHANGED"}
     return {
         "id": proposal.proposal_id,
         "version": proposal.version,
         "proposal_digest": proposal.proposal_digest,
-        "status": proposal.status_at_creation,
+        "status": proposal.status_at_creation if identity_current or execution is not None else "INVALIDATED",
         "is_latest": is_latest,
         "subject": proposal.subject,
         "body": proposal.body,
@@ -1806,18 +1819,20 @@ def commit_proposal_out(
                 "non_blocking_drift_warnings"
             )
         ),
-        "approval": _approval_out(approval),
+        "approval": approval_output,
         "commit": _execution_out(execution),
         "actions": {
             "can_edit": bool(is_latest and approval is None and execution is None),
             "can_approve": bool(
                 is_latest
+                and identity_current
                 and proposal.status_at_creation == "READY"
                 and approval is None
                 and execution is None
             ),
             "can_commit": bool(
                 is_latest
+                and identity_current
                 and proposal.status_at_creation == "READY"
                 and approval is not None
                 and execution is None
@@ -1855,12 +1870,15 @@ def commit_proposal_out(
 
 
 def _proposal_review_is_current(session, proposal, verification, source_repo) -> bool:
+    if proposal_identity_invalidated(session, proposal):
+        return False
     try:
         applied, plan, candidate, run, pack, entries, result, acceptance, approval = _result_lineage(
             session, owner_id=proposal.owner_id, verification=verification)
         root = _verified_root(run, source_repo)
         with _commit_builder_repository_lock(applied.repository_locator_fingerprint):
             _status, blockers, tests, current = _current_boundary_locked(
+                session=session,
                 run=run, pack=pack, apply_session=applied, entries=entries, source_repo=root)
             planned = _planned_stage_entries(root, entries)
             paths = [{"path": item["path"], "path_identity": item["path_identity"],
@@ -1902,6 +1920,9 @@ def owner_commit_review(
     )
     author_readiness: dict[str, Any]
     readiness_blockers: list[dict[str, str]] = []
+    boundary_allowed = False
+    proposal_output = commit_proposal_out(session, proposal=proposal) if proposal is not None else None
+    executed = bool(proposal_output and proposal_output.get("commit"))
     try:
         _apply_session, _apply_plan, _candidate, run, _pack, _entries, *_ = (
             _result_lineage(
@@ -1912,13 +1933,25 @@ def owner_commit_review(
         )
         root = _verified_root(run, source_repo)
         identity = _author_readiness(root)
+        boundary_allowed = executed
+        if not executed:
+            with _commit_builder_repository_lock(_apply_session.repository_locator_fingerprint):
+                _status, boundary_blockers, _tests, _current = _current_boundary_locked(
+                    session=session, run=run, pack=_pack, apply_session=_apply_session,
+                    entries=_entries, source_repo=root)
+                boundary_allowed, hard_blockers, _warnings, _staged = _commit_boundary_decision(
+                    root=root, base_head=_apply_session.pre_apply_head,
+                    planned_paths=[item["path"] for item in _planned_stage_entries(root, _entries)],
+                    blockers=boundary_blockers)
+                readiness_blockers.extend(hard_blockers)
         author_readiness = {
             "status": "READY",
             "status_label": "READY",
             "ready": True,
             "author": identity["author"]["sanitized"],
         }
-        if proposal is not None and identity["identity_digest"] != proposal.author_identity_digest:
+        if proposal is not None and (identity["identity_digest"] != proposal.author_identity_digest
+                                     or proposal_identity_invalidated(session, proposal)):
             author_readiness = {
                 "status": "CHANGED",
                 "status_label": "REVIEW REQUIRED",
@@ -1941,12 +1974,10 @@ def owner_commit_review(
             "author": None,
         }
         readiness_blockers.append({"code": exc.code, "message": exc.message})
-    proposal_output = (
-        commit_proposal_out(session, proposal=proposal) if proposal is not None else None
-    )
-    executed = bool(proposal_output and proposal_output.get("commit"))
     review_required = not executed and (proposal is None or not _proposal_review_is_current(
         session, proposal, post_apply_verification, source_repo))
+    if proposal_output is not None and (author_readiness["status"] == "NEEDS_SETUP" or not boundary_allowed):
+        proposal_output["actions"]["can_edit"] = False
     if proposal_output is not None and (not author_readiness["ready"] or review_required):
         proposal_output["actions"]["can_approve"] = False
         proposal_output["actions"]["can_commit"] = False
@@ -1959,7 +1990,7 @@ def owner_commit_review(
         if author_readiness["status"] == "NEEDS_SETUP"
         else (
             "BLOCKED"
-            if not author_readiness["ready"]
+            if not author_readiness["ready"] or not boundary_allowed
             else ("READY_FOR_PROPOSAL" if proposal is None else proposal.status_at_creation)
         )
     )
@@ -1970,13 +2001,13 @@ def owner_commit_review(
         "author_readiness": author_readiness,
         "blockers": readiness_blockers,
         "actions": {
-            "can_create_proposal": proposal is None and author_readiness["ready"],
-            "can_review_commit": review_required and author_readiness["status"] != "NEEDS_SETUP",
+            "can_create_proposal": proposal is None and author_readiness["ready"] and boundary_allowed,
+            "can_review_commit": review_required and author_readiness["status"] != "NEEDS_SETUP" and boundary_allowed,
         },
         "next_action": (
             "Configure a local Git user name and email for this repository."
             if author_readiness["status"] == "NEEDS_SETUP"
-            else (
+            else "Resolve the remaining Commit blockers before Review Commit." if not boundary_allowed else (
                 "Review the changed Git author identity before creating a new proposal."
                 if not author_readiness["ready"]
                 else (

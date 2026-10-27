@@ -821,7 +821,7 @@ def test_twos_is_canonical_and_legacy_html_redirects_without_exposing_legacy_loc
     with make_client(tmp_path, source_repo) as client:
         root = client.get("/", follow_redirects=False)
         assert root.status_code in {302, 303, 307, 308}
-        assert root.headers["location"] == "/twos"
+        assert root.headers["location"] == "/projects"  # R2 primary; advanced /twos remains below.
 
         canonical = client.get("/twos", follow_redirects=False)
         assert canonical.status_code == 200
@@ -888,8 +888,11 @@ def test_twos_is_canonical_and_legacy_html_redirects_without_exposing_legacy_loc
 
         health = client.get("/api/health")
         assert health.status_code == 200
-        assert health.json()["version"] == "1.0.0"
-        assert "v=1.0.0" in canonical.text
+        assert health.json()["version"] == "1.0.1"
+        assert canonical.headers["cache-control"] == "no-store"
+        assert "?v=1.0.1" not in canonical.text
+        assert "?sha256=" in script_url
+        assert hashlib.sha256(script.content).hexdigest() == urlparse(script_url).query.split("sha256=")[1]
 
 
 def test_minimal_development_task_derives_traceable_defaults_without_execution_side_effects(

@@ -3513,9 +3513,14 @@ def launch_sidecar(
     module_root = Path(__file__).resolve().parent.parent
     ticket = _load_ticket_and_seal(handle)
     environment = _validated_detached_environment(ticket, child_environment)
-    environment["PYTHONPATH"] = str(module_root)
+    frozen = bool(getattr(sys, "frozen", False))
+    if not frozen:
+        environment["PYTHONPATH"] = str(module_root)
+    else:
+        environment.pop("PYTHONPATH", None)
+    entry = ["--twos-sidecar"] if frozen else ["-m", "twos_runtime.codex_exec_bridge"]
     process = subprocess.Popen(
-        [str(python_path), "-m", "twos_runtime.codex_exec_bridge", "--ticket", str(handle.ticket_path)],
+        [str(python_path), *entry, "--ticket", str(handle.ticket_path)],
         cwd=str(handle.spool_root),
         env=environment,
         stdin=subprocess.DEVNULL,

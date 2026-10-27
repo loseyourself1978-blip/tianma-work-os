@@ -591,6 +591,7 @@ def _assert_targets_match(root: Path, entries: list[Any]) -> None:
 
 def _current_boundary_locked(
     *,
+    session: Session | None = None,
     run: Any,
     pack: Any,
     apply_session: ApplySession,
@@ -624,6 +625,11 @@ def _current_boundary_locked(
         stable = canonical_json(_semantic_observation(first)) == canonical_json(
             _semantic_observation(second)
         )
+        if session is not None:
+            from .repository_identity import authorized_config_baseline
+            baseline["local_config_fingerprint"] = authorized_config_baseline(
+                session, apply_session, baseline.get("local_config_fingerprint"),
+                _decoded_object(second.get("global")).get("local_config_fingerprint"))
         status, blockers, _unexpected, _preserved, tests = _evaluate_observation(
             apply_session=apply_session,
             baseline_global=baseline,
@@ -733,6 +739,7 @@ def get_or_create_commit_plan(
         apply_session.repository_locator_fingerprint
     ):
         status, blockers, tests, current_global = _current_boundary_locked(
+            session=session,
             run=run,
             pack=pack,
             apply_session=apply_session,
@@ -1029,6 +1036,7 @@ def _effective_status_locked(
                     )
                 return "STAGED", []
         status, blockers, _tests, _global = _current_boundary_locked(
+            session=session,
             run=run,
             pack=pack,
             apply_session=apply_session,
@@ -1512,6 +1520,7 @@ def stage_commit_plan(
         ):
             return existing, False
         status, blockers, _tests, current_global = _current_boundary_locked(
+            session=session,
             run=run,
             pack=pack,
             apply_session=apply_session,
@@ -1600,6 +1609,7 @@ def stage_commit_plan(
             # Revalidate after the durable intent is committed and immediately
             # before changing the object database or index.
             status, blockers, _tests, immediate_global = _current_boundary_locked(
+                session=session,
                 run=run,
                 pack=pack,
                 apply_session=apply_session,

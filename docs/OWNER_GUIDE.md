@@ -1,378 +1,110 @@
-# TWOS Owner Guide
-
-Start here to operate TWOS 1.0.0, schema vol20.001. You decide whether a result
-is acceptable; a successful technical check is not Owner Acceptance.
-
-## 1. What TWOS is
-
-TWOS helps you describe a development Task, authorize a precise instruction
-Pack, run Codex in an isolated workspace, inspect its Result, and deliver only
-the changes you approve. It records each separate decision. Research documents
-in the repository describe ambitions beyond this release.
-
-## 2. Supported platform and release identity
-
-TWOS 1.0.0 is a **source-based macOS distribution**, requiring Python 3.11–3.13
-and trusted local Git for development workspaces. Codex is optional until Run.
-A signed/notarized DMG, App Store release, and Windows/Linux acceptance are not
-established. TWOS does not install system tools or accept their licenses for you.
-
-### Download and Verify SHA256
-
-Open the canonical [1.0.0 Release](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.0).
-Download the `twos-1.0.0-<12-character-commit>.tar.gz` asset, its matching
-`.manifest.json`, `release-1.0.0.json` and `SHA256SUMS` into one new folder.
-The release receipt gives version, full commit, annotated `v1.0.0` tag,
-artifact, SHA-256 and release date. If the page or assets are unavailable,
-distribution is incomplete: do not treat another checkout as the release.
-GitHub's automatic source-code archives are not the supported install package.
-
-In Terminal, change to that download folder and verify **before** extraction:
-
-```sh
-shasum -a 256 -c SHA256SUMS
-```
-
-All listed files must say `OK`. Extract only the `.tar.gz` using Archive Utility.
-The included `RELEASE_SOURCE.json` must match the receipt's full commit and
-version. From the extracted folder, inspect every packaged file using the
-actual archive and manifest paths (replace the uppercase placeholders):
-
-```sh
-python3 scripts/build_release.py --inspect /PATH/TO/ARCHIVE.tar.gz --manifest /PATH/TO/ARCHIVE.manifest.json
-```
-
-Require `verified: true`. A hash detects changed bytes; verify that the download
-came from the canonical publisher account, not an unrelated copy.
-
-## 3. Fresh installation
-
-This release supports **fresh installation only**, plus backup/restore within
-1.0.0. Do not reuse a 0.17.0 data directory or restore a 0.17.0 backup. Old-version
-upgrades and cross-version restore are outside this release scope and have not
-been validated. Existing installation-version and incompatible-backup checks
-remain enforced. Keep old installations and their data intact. If you already
-have TWOS data, supply new empty `--data-root`, `--runtime-root` and `--log-root`
-directories for this installation; never point these options at old Owner data.
-
-1. Verify the received archive and retain its adjacent manifest.
-2. Extract it with Archive Utility into a folder you own.
-3. Open Terminal in the extracted `twos-1.0.0-…` folder.
-4. Run `./start-twos`.
-5. Wait for the healthy `http://127.0.0.1:…/twos` URL and open it if the browser does not open.
-
-The first launch creates a private Python environment and installs dependencies
-from `requirements.txt`. It needs the configured Python package service; it
-never uses sudo or installs globally. Installation and First Run do not require
-any Codex/provider request. Keep the initiating terminal open.
-
-## 4. First Owner creation
-
-First Run applies only to an installation with **zero Owners**. Select **Start
-Setup**, confirm the installation, and create your username and unique
-password (at least 8 characters). Enter the one-time setup authorization code
-printed in the initiating terminal. Keep it private. After creation, use
-**Log in** on this installation. First Run cannot replace an existing Owner.
-
-## 5. Workspace authorization
-
-Choose an exact, dedicated local folder you own and review its path. For Git
-projects, authorize the repository root. Do not select your whole Home, TWOS
-source/data/runtime, an overly broad parent folder or a symlink. Traversal,
-symlink boundaries and incompatible nested Git roots are rejected. Project
-source files are separate from the TWOS database and backups.
-
-First Run creates the initial Project/workspace binding. To create another,
-open **Projects and workspaces**, enter a unique key and name, and select
-**Create Project**. Select that Project, enter its dedicated repository path,
-review it, then select **Authorize Project Workspace**. Creating a Project alone
-does not authorize execution. Repeating authorization for the same directory is
-idempotent. Different projects cannot share or nest workspace directories or
-use linked Git worktrees. Authorization persists across normal restart;
-backup recovery requires explicit reauthorization before new execution.
-Tool Setup opened from this card applies to the Project selected on the card.
-
-## 6. Guided Codex Tool Setup
-
-You may skip optional tools in First Run and create a Task first. Later open
-Tool Setup, select the trusted installed Codex executable, exact supported
-model and reasoning. Sign in using Codex's own supported authentication when
-required. TWOS does not copy its credential store or ask you to paste provider
-secrets into ordinary UI. Local discovery is different from provider readiness.
-
-### Configure Artifact Verification
-
-The supported first-delivery preset includes a read-only verifier shipped with
-TWOS. No hidden acceptance tool or custom script is needed. On the selected Task,
-open **Configure Artifact Verification**, enter one relative artifact path and
-its exact expected UTF-8 text, then **Save Verification**. Include any final
-newline in the expected text. Use a small, non-secret output (contract limit:
-2800 UTF-8 bytes). The verifier checks exact bytes, unexpected files (including
-ignored additions), unchanged Git HEAD/index/remotes and a clean source baseline.
-It does not run project code or decide technical, medical or Owner acceptance.
-
-The preset requires a clean committed Git repository. For a new dedicated
-folder, the following complete example creates an initial local baseline.
-Choose a new folder name if it already exists; do not reuse an existing project.
-The sample commit identity is local to this command and does not alter Git settings.
-
-```sh
-mkdir -p "$HOME/TWOS Projects"
-mkdir "$HOME/TWOS Projects/My First Project"
-cd "$HOME/TWOS Projects/My First Project"
-git init --initial-branch=main
-printf '# My First Project\n' > README.md
-git add README.md
-git -c user.name='TWOS Owner' -c user.email='owner@localhost.invalid' commit -m 'Initialize project'
-```
-
-Authorize that exact folder in TWOS. Create a Task instructing Codex to write
-`first_delivery.txt` containing exactly `TWOS FIRST DELIVERY PASS` and a newline,
-without modifying other files. Enter the same filename and text (including its
-newline) in **Configure Artifact Verification**. After an applied delivery,
-review the separate Commit gate before preparing another exact-artifact delivery.
-
-Saving or changing the contract invalidates affected Pack approvals. Review the
-sealed file/text contract in the new Pack; only an explicit Run starts Coding.
-The existing advanced Generate Pack action uses this same binding in a fresh
-installation. Merely opening Tool Setup or Verification performs no provider
-request and runs no verifier.
-
-Advanced operators may explicitly configure a different trusted deterministic
-verifier using `TWOS_LOCAL_VERIFICATION_COMMAND_JSON` when launching TWOS. It is
-an argument-vector JSON array, not shell text; the absolute executable and scripts
-must live outside **all** authorized project and Run directories. Supply the
-same setting on restart. It must emit the `twos.verification.v1` JSONL protocol
-and truthfully check the approved Task. This advanced operator path is separate
-from the supported built-in preset. Malformed configuration blocks startup;
-unsafe or unavailable commands block readiness. A command that merely exits
-zero is not sufficient. Recheck and save tools after changing the verifier.
-
-## 7. Readiness versus Save Tool Setup
-
-**Check readiness** is explicit and may contact the provider using your Codex
-sign-in. Opening a page does not perform that check. A successful check does
-not save your choices: select **Save Tool Setup** for the exact checked setup.
-Changes to executable, model, reasoning, verifier or workspace can invalidate
-readiness and future eligibility. Recheck and save when requested. Fallback is
-disclosed; do not assume a different model silently fulfilled your selection.
-
-## 8. Create Task
-
-For the first Task, enter **Task title** and the complete task body in **Goal or
-objective**, including exact files, expected output and boundaries. The authorized
-workspace supplies the initial Project; select the intended Project for additional
-projects and keep the initial **General task** Workflow. Select
-**Save Task**. The saved body is then labelled **Development task**. Task creation
-does not start Codex. Derived Task details refer to that complete body; review them
-if you need to add constraints. Guided Delivery shows the current next action.
-
-## 9. Prepare, review and approve Pack
-
-After **Check Codex Readiness** and **Save Tool Setup**, select **Prepare First
-Delivery**. This configures the development workflow and binds the saved tools to
-this Task and Pack. Tool readiness alone does not make a Task executable, and an
-approved ordinary Pack is not a Guided configuration binding. Follow the specific
-Run blocker and its next action if preparation is still required.
-
-Select **Review Instruction Pack** to review objective, files, restrictions,
-workspace identity and tools, then explicitly **Approve Instruction Pack**.
-**Review Pack** also opens a read-only view of the current Pack; it does not approve
-or execute anything. Correct the Task and prepare again if needed. Approve only
-the exact intended Pack. An old approval cannot authorize a materially changed
-version.
-
-## 10. Explicit Run
-
-Select **Start Codex Run**, review the confirmation for the approved Pack, then
-select **Confirm Start Codex Run** once.
-Watch persisted Coding and Verification states. Pending actions block duplicate
-submission. If a page stalls, refresh and inspect recorded status before retrying.
-
-## 11. Verification and Result
-
-Coding completion and Verification success are separate. Read both, then the
-captured Result and changed-file evidence. A captured Result does not itself
-mean Verification passed or delivery is safe. Resolve the displayed blocker.
-
-## 12. Accept for Delivery
-
-Review the exact Result and Candidate, then select Accept for Delivery if they
-meet your intent. Acceptance records your decision; it does not Apply, Commit
-or Push.
-
-## 13. Apply
-
-Review the Apply Plan, included/excluded files and drift warnings. Approve the
-exact Plan, then separately confirm Apply. Inspect its state. Conflicts and
-material drift block execution; unrelated Owner changes remain excluded.
-Revert Applied Changes is a separate guarded recovery action, never permission
-to erase later work.
-
-## 14. Validate Applied Changes
-
-When Apply is APPLIED, select Validate Applied Changes. This checks the delivered
-source separately from Run Verification. Wait for PASSED before Review Commit.
-An earlier coding success cannot substitute for this check.
-
-## 15. Commit
-
-Enter subject/body, select Review Commit, and inspect paths, branch, parent
-revision, author and exclusions. Successful review shows a neutral disabled
-**Review completed**. Material dependency or message changes require review
-again when prerequisites permit it; resolve Apply/Validation blockers first.
-Approve the exact proposal, then separately confirm Local Commit. Exact-path
-staging occurs only within that authorized confirmation. Configure the local
-Git author first. Configured Commit hooks run: trust your repository and hooks.
-Hook failure is Commit failure, never permission to Push. Local Commit does not Push.
-
-## 16. Push
-
-Review the separate Push Plan, exact Commit, `origin/main`, remote base and
-warnings. Approve it, then explicitly confirm Push. Verify the receipt's remote
-SHA. Reconcile remote movement instead of forcing it. Local bare-remote acceptance
-is established; credentialed external Git-host Push acceptance is not established.
-Force, tags, release publication, pull requests and deployment are outside this
-accepted delivery permission.
-
-## 17. Backup
-
-Open the account menu, then **Backup & Recovery**. From **Maintenance action**
-choose **Create a backup**. One action is displayed at a time. Select Create
-Backup and inspect the sealed path/integrity evidence in Advanced. The bundle
-contains sensitive account password verifiers, Tasks and delivery evidence;
-it excludes external credentials and copied sessions. It does not back up your
-project source files. Protect those using your repository/file backup practices.
-
-## 18. Restore
-
-In Maintenance action choose **Inspect and restore a backup**. Enter the exact
-sealed `.twos-backup` directory. Select Inspect Backup, then Review Restore Plan.
-Read the replacement consequences and protected prior recovery point. Approve
-the Plan, type the displayed confirmation, then Confirm Restore. Log in again
-using the restored account. Only 1.0.0 backups with the supported schema are
-eligible. Corrupt, future-format, incompatible-application-version or incompatible-schema bundles
-are rejected. Do not modify bundle members to bypass rejection. Acceptance tests
-must use isolated data, never your normal installation.
-
-## 19. Migration
-
-The existing schema-maintenance mechanism described here is retained; it is not
-a 0.17.0-to-1.0.0 upgrade path or a cross-version compatibility claim. This
-release supports fresh installation only. Older supported schemas within a
-compatible application installation open a Maintenance boundary. Choose **Migrate an older
-installation**. Review the plan and prior recovery point, approve, then separately
-confirm. Accepted schema sources are vol19.003/vol19.004/vol19.005 to vol20.001;
-application-version compatibility is still enforced. Migration does not
-run or retry automatically. Future schemas stay blocked. Repeated restarts do
-not grant permission to force a migration.
-
-## 20. Workspace reauthorization after recovery
-
-Restore/migration preserves history while withdrawing executable authority.
-Log in, choose **Reauthorize workspace after recovery**, review and authorize
-the exact current workspace. Recheck Tool Setup as required before new work.
-Historical Run/Apply/Commit/Push records and approvals cannot authorize replay.
-
-## 21. Failure recovery
-
-Read the persisted failure/blocker before acting. Refresh if needed. Unresolved
-maintenance journals prevent ordinary writes. Preserve sealed backups and the
-prior recovery point. Do not edit SQLite, delete journals or replay historical
-external actions. Seek technical help with sanitized error codes/version, never
-passwords or tokens. Canonical startup opens Maintenance for supported old schemas.
-
-## 22. Security model
-
-Canonical startup binds only to **127.0.0.1**. This is a local single-Owner app,
-not an internet service. Do not expose it with a public bind, forwarding or proxy.
-Cookies are HttpOnly and SameSite Strict. Logout revokes the presented active
-session; recovery invalidates old sessions. Passwords use salted derivation;
-session tokens are stored as hashes. Protect your macOS account and disk: TWOS
-is not a sandbox against malicious code already running as your OS user,
-compromised tools, malicious Git hooks or modified Python dependencies.
-
-## 23. What TWOS never does automatically
-
-Opening a page does not request provider readiness or start a Codex Run.
-**Accept != Apply != Stage != Commit != Push.** Each delivery action requires
-its own authority. Materially changed bindings do not inherit approval. No
-automatic Force, tag, publication, migration retry or recovered action replay
-is authorized. Legacy explicitly configured schedules perform local
-`compact_sync` bookkeeping; they do not authorize Codex or delivery actions.
-
-## 24. Troubleshooting
-
-| Symptom | Action |
+# TWOS 1.0 · 安装与使用指南
+
+**适用：1.0.1 / build 101.49，TWOS + Nyra 1.0 联合工程候选。** [English guide](OWNER_GUIDE_EN.md) · [实际交付与验证状态](CURRENT_DELIVERY.md)
+
+**候选使用说明：安装、工程验证和交付状态以随包 `START_HERE.md` 与验证回执为准。尚未交付时，不替换已安装应用。**
+在一个 macOS 窗口中，左侧官方 ChatGPT 网页用于讨论，右侧 TWOS Codex 客户端通过本机官方 App Server 执行。它使用官方执行协议，但不是把官方 Codex App 的整个图形界面嵌进网页。两侧账号语言设置相互独立。
+
+**先选一个场景，做到该场景的结束点即可。** A 适用于升级；B 仅适用于首次创建任务；C 适用于接续已有任务。升级完成后不必继续 B。已有业务不需要重新制作。
+
+## A · 本次升级的增量验收
+
+**进入条件：** 已在使用 TWOS。本次联合 1.0 候选接入 Nyra 1.0 并修复真实动作播放。GPT→Claude、Show Nyra、日常换装、既有业务成果及 Open/View/Save/Finder 接受全部保留。
+
+1. 活动工作到达安全终态，保存草稿并正常退出 TWOS。只安装最终交付回执中的已签名候选，整体替换 App；不改运行中的包内文件、不关闭系统保护。
+2. 回到原工作台点 **显示夜璃 / Show Nyra**。随包组件无需第二个安装包、开发目录、Python、Node、Pets 或首次下载画稿。已独立运行的兼容 Nyra 会复用；显示成功与任务状态关联分开。
+3. 无活动任务时观察待机；移入可见人物一次，向左/右拖动并松开。在 **＋ → 动作** 和透明舞台的“动作”中确认真实播放。这是手动试播，不是业务成功，结束后恢复当前真实状态。
+4. 舞台顶部依次选择黑紫、职场、晚礼服，用“姿态”切换侧卧。三套均有侧卧运行素材，跑跳使用同服装“起身→动作→躺回”。空白处可点击下层窗口；“桌面/返回”或在舞台有焦点时按 Esc，恢复原位置、大小和服装。
+5. 下一次真正需要执行的任务可显示排队、工作和等待。PARTIAL/失败/取消/未核验结束不庆祝。可选“确认已检查的结果”只记录你对这份准确结果的明确核对，保留执行器原报告，不启动工作，也不代表整个项目接受。不要为此重建同名业务任务。
+6. 隐藏后停止动画和声音，正常退出保留偏好；重开或 Show Nyra 可恢复。新用户默认静音，已有声音偏好继续保留，不自动注册开机登录项。
+
+**完成结束点：** 只检查新增的反应桌宠和受影响的结果状态入口。不要重做 Claude 登录、出行清单、计划管理、LDD 或已通过保存。完成 A 不要求接着做 B。工程、公开发行和 Owner 接受状态在回执中分开。
+
+**网页边界：** 仅交接本次选定内容，绑定当前提供方和目标。网页返回代码不等于本机已创建文件；网页交接附件仍为“无”，Codex 附件和权限沿用独立的已支持路径。
+
+## B · 首次创建任务
+
+**进入条件：** 确实需要一个新的执行会话。已有有效会话请使用 C。
+
+1. 左侧登录现有 ChatGPT 账号；右侧 **连接本机 Codex / Connect local Codex** 使用本机官方工具已有登录。新工作台不要求先注册 TWOS 或配置 iCloud 邮件。旧账号和项目通过 **原有 TWOS 项目 / Original TWOS projects** 进入。
+2. 点 **新建任务 / 会话 / New task / conversation**，选择目录模式：
+
+| 模式 | 可以做什么 | 不会做什么 |
+| --- | --- | --- |
+| **独立任务：使用空目录 / Independent task: empty folder** | 选择已存在的空文件夹；或在系统选择器点 New Folder 新建空文件夹 | 不要求必须新建文件夹，不初始化 Git |
+| **已有项目：使用现有目录 / Existing project: existing folder** | 明确选择非空项目目录，保留内容 | 不清空、不搬走现有文件 |
+
+3. 点 **选择文件夹 / Choose folder** 或 **新建文件夹 / New folder**。系统选择器内可以进入已有目录，也可以创建文件夹。取消不创建会话、不启动模型。选择目录不等于发送其中全部正文。
+4. 查看规范绝对路径、读写范围、模型和推理档位，点 **确认目录并创建任务 / Confirm folder and create task**。右侧应显示会话名称与该目录，此时没有发送业务指令。目录非空、无权限或身份变化会显示不同原因；不要通过清空文件绕过检查。
+5. 在左侧讨论并整理完整指令，点其下方 **交付 Codex 执行 / Send to Codex**。首次交接或带新附件时，就地核对正文、目录、模型和附件，再点 **交付并开始 / Send and start**。已确认目标且没有新待确认附件时直接交接。忙时新工单排队。不要手动重复发送一份。
+6. 在右侧阅读真实工作过程。结果安全回到原讨论；原讨论正在生成、有草稿或已切走时，回传等待安全时机，不覆盖内容。
+
+**结束点：** 这一任务有可读结果、明确的剩余项和实际成果入口。执行结束与业务验证、Owner 接受是不同状态。
+
+普通空文件夹可以制作网页，无需 git init。“打开工作目录 / Open workspace”只在 Finder 查看，不切换目录。运行中的任务不静默换目录；换目录使用新绑定。若服务报告读取上层 AGENTS.md 被拒绝，先核对所选目录是否嵌套在受限制工程路径内；保持权限边界，不把提示词“已授权”当成系统权限。
+
+## C · 接续已有任务
+
+**进入条件：** 原讨论和 Codex 会话已存在，不是新任务。
+
+1. 正常重开 TWOS 后连接本机 Codex。选择原会话名称，核对下方实际目录。已有有效绑定直接复用，不重新选择目录。
+2. 如有同名项，展开 **会话详情 / Conversation details**，再在 **技术标识 / Technical identifiers** 核对 thread/turn；不要按列表顺序或相同目录猜会话。
+3. 查看当前工作、草稿和后续队列。活动执行控制不明时先 **刷新状态 / Refresh run status** 或连接核验；不要从官方 Codex App 和 TWOS 同时启动同一任务。共享历史不等于共享活动控制权。
+4. 在底部继续输入。**Enter 发送，Shift+Enter 换行**；中文输入法正在选字时 Enter 不发送。**补充当前 · Steer** 进入当前轮，不停止重跑；**排队 · Queue** 等前一轮结束，未派发时可编辑或删除。模型/推理档位变化对下一轮生效，不改变活动轮次。
+5. 要停止时用独立 **停止 / Stop** 按钮，收到对应终态后才确认停止。未知送达先核对，不能靠反复点击重试。恢复队列前核对已保存输入。
+
+**结束点：** 原任务正常继续或明确结束，没有重复 Run；结果、草稿和目录仍属于正确会话。
+
+## 附件能力与边界
+
+点输入框 **＋ / Add files or images** 选择文件，也可拖入文件或粘贴图片。选择和本地解析不发送模型。卡片显示文件名、解析覆盖范围和大小，可逐个移除；确认发送后才将这些明确选择的内容送达。附件不授权其父目录。
+
+| 文件 | 本机交给模型的内容 | 未覆盖或拒绝的部分 |
+| --- | --- | --- |
+| 文本、代码、Markdown、JSON、CSV、HTML | UTF-8 或带 BOM 的 UTF-16 文本 | 不执行代码/HTML；非法编码、空内容及超长文本明确拒绝 |
+| PNG / JPEG | 官方支持的图像输入 | 文件结构及像素尺寸校验；不伪称已识别所有细节 |
+| PDF | PDFKit 提取的文字层，显示页数覆盖 | 不做 OCR，不包含扫描图像、原版式；加密/无文字文档拒绝 |
+| DOCX | 主文档段落和表格文字 | 不含图片、批注、页眉页脚或嵌入对象 |
+| XLSX | 单元格文字、共享字符串、已有缓存值及公式文本 | 不执行公式或宏，不提供图表/样式解释 |
+| PPTX | 幻灯片文字 | 不含图片、备注、动画和布局 |
+
+每个源文件最多 8,000,000 字节，每次消息源文件合计 12,000,000 字节，每个文件提取文字最多 200,000 字节。文档还有页数/压缩项/展开大小/解析时间边界；不静默截断，不上传云端转换，不执行宏或展开任意压缩包。**已附加**不等于**已发送**；模型回执或真实执行证据才说明本次内容被接收。实际格式验收范围见交付记录。
+
+真实权限/用户输入请求就地显示原因、命令和范围。允许本次、拒绝、停止或填写回答后，仍等待服务确认。不要把模型文字当作用户授权。
+
+## 额度、时间和执行详情怎么读
+
+**语言 / Language** 保留 TWOS 的中文、English 选择及刷新后的偏好，不改写用户聊天、模型 ID、路径或官方网页账户语言。网页交接提示和夜璃顶部按钮跟随 TWOS 语言；原生网站与夜璃原有控制环保持各自已支持的文案。
+
+**额度与用量**分开显示服务账号/工作区窗口与本线程观测，不相加。窗口长度、重置时间和 Credits 以服务返回为准；没有返回不是 0 或无限。Token 累计快照替换旧快照，缓存/推理子项不重复加总。“最近一次”是最近模型请求，不是整项任务。模型请求次数没有可靠枚举时显示未知；不换算费用或剩余可运行次数。多个客户端不自动视为多个额度池，也不把普通 ChatGPT 对话强行合并。
+
+刷新采用只读接口并限频；断线保留最近可信值与时间。倒计时到重置时刻仍需服务新快照确认。容量不足、速率限制、配额耗尽、认证失败和网络失败分别显示。TWOS 不购买、充值、使用重置券或擅自降档/切换供应商。
+
+**运行活动**使用真实事件。提交时间不冒充开始时间；未收到开始证据显示“尚未确认开始”。观测计时与等待时间采用单调时间间隔；跨休眠/离线区间明确标记，终态冻结。计时不是费用或模型纯计算时长。并行子任务不累加为主任务墙钟耗时。
+
+**TWOS 本地估计**在当前计划至少两项完成步骤具有可观测耗时后，根据步骤耗时中位数、最长样本和剩余步骤给出区间。样本不足、剩余工作量不明、等待批准/输入、断线或活动过期时说明原因；超时重新估计。不是官方 ETA，步骤比例也不是时间完成比例。
+
+过程行可展开公开摘要、计划、命令/cwd/输出、文件差异和错误。只展示真实服务事件，不生成隐藏思维。**完整执行回执**保留原文；普通回复保持 Markdown。执行通道结束、业务结果、验证、结果回传和 Owner 接受分开。
+
+## 成果：打开、查看、另存为、Finder
+
+数量以任务和实际文件为准。**单文件网页任务只有 `index.html` 就是正确结果**，不应为了凑指南中的数量创建别的文件。多文件任务可能有报告与 JSON 等，各自以该任务要求为准。
+
+结果附近的 **工作目录文件 / Workspace files** 显示当前目录文件，前三个只是快捷入口，不代表必须交三个文件。更多内容点 **全部文件 / All files** 或 **成果文件 / Files**。
+
+| 操作 | 预期结果 |
 | --- | --- |
-| Python unavailable | Install trusted Python 3.11–3.13, then relaunch. |
-| Git/Xcode license error | Resolve the system tool/license yourself; TWOS cannot accept legal terms. |
-| Dependency failure | Check private logs/connectivity; run `./start-twos --refresh-dependencies`. |
-| Already running | Open the existing URL; stop that installation before another launch. |
-| Log in fails | Check installation/username; do not replace existing data with First Run. |
-| Readiness passed, Run blocked | Save Tool Setup, then review current Pack/blocker. |
-| Review Commit unavailable | Confirm APPLIED and PASSED; inspect drift/author blockers. |
-| Recovery rejected | Preserve sealed input/recovery point and resolve the shown error. |
-| Browser disconnect | Reload persisted status before submitting another action. |
+| **打开网页 / Open webpage** | 可信宿主核对授权目录和确切 HTML 后，在 Safari 打开；不让 HTML 获得 TWOS 登录或原生桥权限 |
+| **查看文件 / View file** | 查看支持的文本/代码或图片；HTML 源码不在产品主页面执行 |
+| **另存为… / Save as…** | macOS 保存窗口把一个成果文件的原始字节复制到所选位置，原文件保留；取消无保存 |
+| **在 Finder 显示 / Show in Finder** | 定位原文件，不是导出 |
 
-## 25. Stop and restart
+另存为实际保存已经 Owner 确认，本轮不要求重复证明。保存成功显示实际位置；错误不声称成功。同名替换由系统确认，不允许选择原文件本身。成果区支持的文本、代码、Markdown、JSON、CSV、HTML、PNG/JPEG 等仍限单文件 8,000,000 字节；附件新增文档解析能力不等于成果区新增所有文档的预览/导出。PDF、压缩包与批量导出不在成果区支持范围。
 
-Press **Control-C in the original launcher terminal** and wait for shutdown.
-Run `./start-twos` from the same source folder to restart. Reuse custom path
-options if provided. Accounts/Tasks persist. Never delete data to fix startup.
+打开成功不等于网页功能或刷新持久化通过。没有真实浏览器测试就标 NOT_RUN；已有 Owner 业务通过不因本次 UI 更新重开。精确视口控制器不是本轮新增功能，实体手机测试也不是本轮门槛。
 
-## 26. Where data lives
+## 资料与维护
 
-Default logical data is `~/Library/Application Support/Tianma Work OS`.
-The launcher prints exact data/runtime/log locations; `installation.json`
-records installation identity/port. By default the environment is under
-`~/Library/Caches/Tianma Work OS/<installation-id>/venv` and the private log is
-`~/Library/Logs/Tianma Work OS/<installation-id>/runtime.log`. Both live outside source.
-Use printed paths instead of guessing. Codex credentials remain in Codex's own
-location, outside TWOS backups.
+本机候选不等于正式公开发行。完整 20.2、GA 和后续阶段没有因出行或另存为通过而自动授予。20.1 / 101.26 限定接受保持关闭。
 
-## 27. Protect backups
-
-Backups are integrity-checked, **not encrypted by TWOS**. Keep them private to
-your OS account and use encrypted storage for transfer/retention. Never email,
-publish, commit or package them. Preserve the whole sealed directory/manifest;
-do not distribute database files or live runtime internals.
-
-## 28. Known limitations
-
-The canonical Release receipt is authoritative for distribution identity.
-Historical Vol.19 closeout records retain their original dates and conclusions;
-they are not the current download instructions. Fresh installation and 1.0.0
-same-version backup/restore are supported; old-version upgrades and cross-version
-restore remain outside scope. Distribution remains macOS source; signing,
-notarization and self-contained dependency packaging are not established.
-Dependencies resolve supported ranges, not a locked reproducible binary environment.
-External credentialed Git-host Push acceptance, live multi-model aggregation
-and email/calendar integration are not established. LDD live broker execution
-is not authorized. Only the Owner can declare Owner Acceptance PASS.
-
-## Advanced / technical operations
-
-Replace the capitalized placeholders with actual paths:
-
-```sh
-shasum -a 256 ARTIFACT.tar.gz
-python3 scripts/build_release.py --inspect ARTIFACT.tar.gz --manifest MANIFEST.json
-```
-
-Maintainers with a clean Git checkout can run
-`python3 scripts/build_release.py --output /absolute/empty/release-folder`.
-It scans committed HEAD blobs, stages only approved components, rejects prohibited
-content, creates deterministic bytes, hashes them, and independently inspects the
-archive. Build time is source commit time for reproducibility.
-
-Launcher options include `--data-root`, `--runtime-root`, `--log-root`, `--port`,
-`--no-browser`, `--detach`, `--check`, `--refresh-dependencies`. Use isolated roots
-for tests. For detached runtimes, verify that the PID belongs to the printed
-installation before SIGTERM, then repeat the identical launcher command. Never
-kill an unrelated process using a stale PID.
-
-Technical records: [contract](runtime/VOL19_19_4_SECURITY_RELEASE_HARDENING_CONTRACT_v0.1.md),
-[security audit](runtime/VOL19_19_4_SECURITY_AUDIT_v0.1.md),
-[package manifest](runtime/VOL19_19_4_RELEASE_PACKAGE_MANIFEST_v0.1.md),
-[implementation gate](runtime/VOL19_19_4_SECURITY_RELEASE_HARDENING_IMPLEMENTATION_GATE_v0.1.md).
+旧项目备份、维护和源码安装见 [历史 Owner Guide](LEGACY_OWNER_GUIDE.md)及[仓库地图](REPOSITORY_MAP.md)。历史资料不作为新工作台的前置步骤，也不授权重跑已接受交付。

@@ -1,0 +1,5 @@
+Licensing notice
+
+No new open-source license is granted by this release. Existing copyright holders retain their rights. Public source visibility and the Owner's authorization to publish do not by themselves grant unrestricted redistribution or relicensing rights. No third-party license is changed. For permissions beyond applicable law and the platform's repository terms, contact the repository maintainer through GitHub.
+
+Bundled dependencies remain under their own licenses; see THIRD_PARTY_NOTICES.md. Generated character/runtime resources and audio provenance are documented separately. This notice does not assert exclusive rights over purely generated content or override third-party rights.

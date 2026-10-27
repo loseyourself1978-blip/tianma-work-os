@@ -469,9 +469,16 @@ def test_jsonl_contradiction_does_not_hide_a_real_process_timeout(tmp_path: Path
 
 @pytest.mark.parametrize('failed_read', [None, 'remote', 'git', 'workspace'])
 def test_timeout_preflight_joins_all_independent_boundary_reads_before_launch(tmp_path, monkeypatch, failed_read):
+    trace=[]; trace_lock=threading.Lock(); origin=time.monotonic()
+    def record(stage,**fields):
+        with trace_lock:
+            trace.append({'stage':stage,'elapsed':time.monotonic()-origin,'thread':threading.current_thread().name,**fields})
+            (tmp_path/'preflight-trace.json').write_text(json.dumps(trace,indent=2))
+    record('test_started',failed_read=failed_read)
     source = make_source_repo(tmp_path)
     executable = make_nonreading_codex(tmp_path)
     barrier = threading.Barrier(3)
+    boundary_entered = threading.Event()
     observations = []
     completed = []
     with make_client(tmp_path, source, executable, timeout=1) as client:
@@ -482,11 +489,14 @@ def test_timeout_preflight_joins_all_independent_boundary_reads_before_launch(tm
             def read(*args, **kwargs):
                 parallel = threading.current_thread().name.startswith('twos-boundary-read')
                 if parallel:
+                    record('boundary_enter',boundary=name)
+                    boundary_entered.set()
                     observations.append(name)
                     barrier.wait(timeout=3)
                 value = original(*args, **kwargs)
                 if parallel:
                     completed.append(name)
+                    record('boundary_complete',boundary=name)
                     if name == failed_read:
                         if name == 'workspace':
                             raise RuntimeError('Controlled preflight snapshot failure')
@@ -494,6 +504,13 @@ def test_timeout_preflight_joins_all_independent_boundary_reads_before_launch(tm
                 return value
             return read
 
+        for method in ('_execute','_record_launch_intent','_bridge_execution_identity','_finish_pack_blocked','_finish_cancelled'):
+            original=getattr(manager,method)
+            def traced(*args,_original=original,_method=method,**kwargs):
+                record(_method+'_enter')
+                try:return _original(*args,**kwargs)
+                finally:record(_method+'_exit')
+            monkeypatch.setattr(manager,method,traced)
         monkeypatch.setattr(manager, '_remote_state_fingerprint', observe('remote', manager._remote_state_fingerprint))
         monkeypatch.setattr(manager, '_git_boundary_fingerprint', observe('git', manager._git_boundary_fingerprint))
         monkeypatch.setattr(adapter_module, '_capture_approved_source_snapshot', observe('workspace', adapter_module._capture_approved_source_snapshot))
@@ -508,12 +525,21 @@ def test_timeout_preflight_joins_all_independent_boundary_reads_before_launch(tm
 
         monkeypatch.setattr(codex_exec_bridge, 'launch_sidecar', launch)
         run_id = start_large_pack(client, headers, 1_000_000)
+        record('post_returned',run_id=run_id,preparation_deadline=time.monotonic()-origin+10)
+        # Archived runs spent 4.93–5.43s before workspace_prepared: their
+        # POST-based 5s wait expired before the boundary under test completed.
+        # Separate a bounded preparation wait from the unchanged 5s terminal
+        # assertion; never rely on shutdown to write BLOCKED.
+        assert boundary_entered.wait(10), 'Preflight did not enter its boundary within the preparation budget'
+        record('boundary_wait_started',terminal_wait_deadline=time.monotonic()-origin+5)
         expected = 'blocked' if failed_read else 'timed_out'
         run = (
             wait_for_run(client, headers, run_id, {expected}, timeout=5)
             if failed_read else wait_for_coding_timeout(client, headers, run_id)
         )
+        record('terminal_observed',status=run['status'])
         join_workers(manager)
+        record('workers_joined')
         assert sorted(observations) == ['git', 'remote', 'workspace']
         assert sorted(completed) == ['git', 'remote', 'workspace']
         if failed_read:
@@ -527,3 +553,42 @@ def test_timeout_preflight_joins_all_independent_boundary_reads_before_launch(tm
             assert_one_timeout(client.app.state.session_factory, run_id, incomplete=False)
     assert not any(t.name.startswith('twos-boundary-read') for t in threading.enumerate())
     assert run_lifecycle._reconciliation_lock_registry_size() == 0
+
+
+def test_preflight_preparation_clock_and_late_cancel_are_distinct(tmp_path,monkeypatch):
+    """A controlled preparation stall reproduces the old POST-based 5s wait.
+
+    Cancellation must reach a terminal state before releasing the worker; its
+    late completion must not launch anything or be repaired by fixture teardown.
+    """
+    source=make_source_repo(tmp_path);executable=make_nonreading_codex(tmp_path)
+    entered=threading.Event();release=threading.Event();trace=[];started=time.monotonic()
+    def mark(stage):
+        trace.append({'stage':stage,'elapsed':time.monotonic()-started})
+        (tmp_path/'controlled-preparation-trace.json').write_text(json.dumps(trace,indent=2))
+    with make_client(tmp_path,source,executable,timeout=1) as client:
+        manager=client.app.state.codex_manager;headers=init_and_login(client)
+        original=manager.adapter.create_worktree
+        def delayed(*args,**kwargs):
+            mark('preparation_enter');entered.set()
+            assert release.wait(9)
+            mark('preparation_release')
+            return original(*args,**kwargs)
+        monkeypatch.setattr(manager.adapter,'create_worktree',delayed)
+        launches=[]
+        monkeypatch.setattr(codex_exec_bridge,'launch_sidecar',lambda *a,**k:launches.append(1))
+        run_id=start_large_pack(client,headers,1_000_000)
+        try:
+            assert entered.wait(3)
+            with pytest.raises(AssertionError,match='did not reach'):
+                wait_for_run(client,headers,run_id,{'blocked'},timeout=5)
+            mark('POST_clock_expired_while_preparing')
+            r=client.post(f'/api/codex-runs/{run_id}/cancel',headers=headers)
+            assert r.status_code==200,r.text
+            run=wait_for_run(client,headers,run_id,{'cancelled'},timeout=2)
+            mark('cancelled_before_release')
+            assert not run['process_spawned'] and not run['model_invocations']
+        finally:release.set()
+        join_workers(manager);mark('workers_joined_before_teardown')
+        run=client.get(f'/api/codex-runs/{run_id}',headers=headers).json()
+        assert run['status']=='cancelled' and not run['process_spawned'] and not launches

@@ -1,0 +1,1304 @@
+{
+  "schemaVersion": 5,
+  "sets": {
+    "default": {
+      "folder": "default",
+      "neutral": "nyra_neutral",
+      "width": 1024,
+      "height": 1536,
+      "bbox": [
+        30,
+        66,
+        989,
+        1419
+      ],
+      "sequences": {
+        "idle": {
+          "loop": true,
+          "asset_ids": [
+            "nyra_neutral",
+            "nyra_idle_01",
+            "nyra_idle_02",
+            "nyra_idle_03",
+            "nyra_idle_04",
+            "nyra_idle_05"
+          ],
+          "durations_ms": [
+            1600,
+            180,
+            90,
+            110,
+            90,
+            220
+          ]
+        },
+        "working": {
+          "loop": true,
+          "asset_ids": [
+            "nyra_working_00",
+            "nyra_working_01",
+            "nyra_working_02",
+            "nyra_working_03",
+            "nyra_working_04",
+            "nyra_working_05"
+          ],
+          "durations_ms": [
+            300,
+            160,
+            140,
+            160,
+            180,
+            300
+          ]
+        },
+        "gaze_head": {
+          "loop": false,
+          "interactive": true,
+          "asset_ids": [
+            "nyra_neutral",
+            "nyra_gaze_left",
+            "nyra_gaze_right",
+            "nyra_gaze_up",
+            "nyra_gaze_down"
+          ],
+          "durations_ms": [
+            200,
+            200,
+            200,
+            200,
+            200
+          ]
+        },
+        "verified_success": {
+          "loop": false,
+          "asset_ids": [
+            "nyra_neutral",
+            "nyra_success_01",
+            "nyra_success_02",
+            "nyra_success_03",
+            "nyra_success_04",
+            "nyra_neutral"
+          ],
+          "durations_ms": [
+            180,
+            320,
+            340,
+            420,
+            420,
+            220
+          ]
+        },
+        "running_right": {
+          "loop": true,
+          "asset_ids": [
+            "nyra_run_right_00",
+            "nyra_run_right_01",
+            "nyra_run_right_02",
+            "nyra_run_right_03",
+            "nyra_run_right_04",
+            "nyra_run_right_05",
+            "nyra_run_right_06",
+            "nyra_run_right_07"
+          ],
+          "durations_ms": [
+            120,
+            120,
+            120,
+            120,
+            120,
+            120,
+            120,
+            120
+          ]
+        },
+        "running_left": {
+          "loop": true,
+          "asset_ids": [
+            "nyra_run_left_00",
+            "nyra_run_left_01",
+            "nyra_run_left_02",
+            "nyra_run_left_03",
+            "nyra_run_left_04",
+            "nyra_run_left_05",
+            "nyra_run_left_06",
+            "nyra_run_left_07"
+          ],
+          "durations_ms": [
+            120,
+            120,
+            120,
+            120,
+            120,
+            120,
+            120,
+            120
+          ]
+        },
+        "waving": {
+          "loop": false,
+          "asset_ids": [
+            "nyra_waving_00",
+            "nyra_waving_01",
+            "nyra_waving_02",
+            "nyra_waving_03"
+          ],
+          "durations_ms": [
+            180,
+            180,
+            180,
+            180
+          ]
+        },
+        "jumping": {
+          "loop": false,
+          "asset_ids": [
+            "nyra_jumping_00",
+            "nyra_jumping_01",
+            "nyra_jumping_02",
+            "nyra_jumping_03",
+            "nyra_jumping_04"
+          ],
+          "durations_ms": [
+            180,
+            180,
+            180,
+            180,
+            180
+          ]
+        },
+        "failed": {
+          "loop": false,
+          "asset_ids": [
+            "nyra_failed_00",
+            "nyra_failed_01",
+            "nyra_failed_02",
+            "nyra_failed_03",
+            "nyra_failed_04",
+            "nyra_failed_05",
+            "nyra_failed_06",
+            "nyra_failed_07"
+          ],
+          "durations_ms": [
+            180,
+            180,
+            180,
+            180,
+            180,
+            180,
+            180,
+            180
+          ]
+        },
+        "waiting": {
+          "loop": true,
+          "asset_ids": [
+            "nyra_waiting_00",
+            "nyra_waiting_01",
+            "nyra_waiting_02",
+            "nyra_waiting_03",
+            "nyra_waiting_04",
+            "nyra_waiting_05"
+          ],
+          "durations_ms": [
+            180,
+            180,
+            180,
+            180,
+            180,
+            180
+          ]
+        },
+        "review": {
+          "loop": true,
+          "asset_ids": [
+            "nyra_review_00",
+            "nyra_review_01",
+            "nyra_review_02",
+            "nyra_review_03",
+            "nyra_review_04",
+            "nyra_review_05"
+          ],
+          "durations_ms": [
+            180,
+            180,
+            180,
+            180,
+            180,
+            180
+          ]
+        },
+        "look_around": {
+          "loop": false,
+          "asset_ids": [
+            "nyra_gaze_up",
+            "nyra_gaze_cw_01",
+            "nyra_gaze_cw_02",
+            "nyra_gaze_cw_03",
+            "nyra_gaze_right",
+            "nyra_gaze_cw_05",
+            "nyra_gaze_cw_06",
+            "nyra_gaze_cw_07",
+            "nyra_gaze_down",
+            "nyra_gaze_cw_09",
+            "nyra_gaze_cw_10",
+            "nyra_gaze_cw_11",
+            "nyra_gaze_left",
+            "nyra_gaze_cw_13",
+            "nyra_gaze_cw_14",
+            "nyra_gaze_cw_15"
+          ],
+          "durations_ms": [
+            220,
+            220,
+            220,
+            220,
+            220,
+            220,
+            220,
+            220,
+            220,
+            220,
+            220,
+            220,
+            220,
+            220,
+            220,
+            220
+          ]
+        },
+        "gaze_left": {
+          "asset_ids": [
+            "nyra_gaze_left"
+          ],
+          "durations_ms": [
+            1500
+          ],
+          "loop": false
+        },
+        "gaze_right": {
+          "asset_ids": [
+            "nyra_gaze_right"
+          ],
+          "durations_ms": [
+            1500
+          ],
+          "loop": false
+        },
+        "gaze_00": {
+          "asset_ids": [
+            "nyra_gaze_up"
+          ],
+          "durations_ms": [
+            1500
+          ],
+          "loop": false
+        },
+        "gaze_01": {
+          "asset_ids": [
+            "nyra_gaze_cw_01"
+          ],
+          "durations_ms": [
+            1500
+          ],
+          "loop": false
+        },
+        "gaze_02": {
+          "asset_ids": [
+            "nyra_gaze_cw_02"
+          ],
+          "durations_ms": [
+            1500
+          ],
+          "loop": false
+        },
+        "gaze_03": {
+          "asset_ids": [
+            "nyra_gaze_cw_03"
+          ],
+          "durations_ms": [
+            1500
+          ],
+          "loop": false
+        },
+        "gaze_04": {
+          "asset_ids": [
+            "nyra_gaze_right"
+          ],
+          "durations_ms": [
+            1500
+          ],
+          "loop": false
+        },
+        "gaze_05": {
+          "asset_ids": [
+            "nyra_gaze_cw_05"
+          ],
+          "durations_ms": [
+            1500
+          ],
+          "loop": false
+        },
+        "gaze_06": {
+          "asset_ids": [
+            "nyra_gaze_cw_06"
+          ],
+          "durations_ms": [
+            1500
+          ],
+          "loop": false
+        },
+        "gaze_07": {
+          "asset_ids": [
+            "nyra_gaze_cw_07"
+          ],
+          "durations_ms": [
+            1500
+          ],
+          "loop": false
+        },
+        "gaze_08": {
+          "asset_ids": [
+            "nyra_gaze_down"
+          ],
+          "durations_ms": [
+            1500
+          ],
+          "loop": false
+        },
+        "gaze_09": {
+          "asset_ids": [
+            "nyra_gaze_cw_09"
+          ],
+          "durations_ms": [
+            1500
+          ],
+          "loop": false
+        },
+        "gaze_10": {
+          "asset_ids": [
+            "nyra_gaze_cw_10"
+          ],
+          "durations_ms": [
+            1500
+          ],
+          "loop": false
+        },
+        "gaze_11": {
+          "asset_ids": [
+            "nyra_gaze_cw_11"
+          ],
+          "durations_ms": [
+            1500
+          ],
+          "loop": false
+        },
+        "gaze_12": {
+          "asset_ids": [
+            "nyra_gaze_left"
+          ],
+          "durations_ms": [
+            1500
+          ],
+          "loop": false
+        },
+        "gaze_13": {
+          "asset_ids": [
+            "nyra_gaze_cw_13"
+          ],
+          "durations_ms": [
+            1500
+          ],
+          "loop": false
+        },
+        "gaze_14": {
+          "asset_ids": [
+            "nyra_gaze_cw_14"
+          ],
+          "durations_ms": [
+            1500
+          ],
+          "loop": false
+        },
+        "gaze_15": {
+          "asset_ids": [
+            "nyra_gaze_cw_15"
+          ],
+          "durations_ms": [
+            1500
+          ],
+          "loop": false
+        },
+        "drag": {
+          "asset_ids": [
+            "nyra_waving_01",
+            "nyra_waving_02",
+            "nyra_waving_03"
+          ],
+          "durations_ms": [
+            220,
+            240,
+            240
+          ],
+          "loop": true
+        },
+        "settle": {
+          "asset_ids": [
+            "nyra_waving_00",
+            "nyra_neutral"
+          ],
+          "durations_ms": [
+            180,
+            300
+          ],
+          "loop": false
+        },
+        "rise": {
+          "asset_ids": [
+            "nyra_default_rise",
+            "nyra_neutral"
+          ],
+          "durations_ms": [
+            280,
+            40
+          ],
+          "loop": false
+        },
+        "lower": {
+          "asset_ids": [
+            "nyra_neutral",
+            "nyra_default_rise"
+          ],
+          "durations_ms": [
+            40,
+            280
+          ],
+          "loop": false
+        }
+      },
+      "capabilities": "Native standing animation; same-outfit rise/lower and directional run/jump. Unsupported menu actions disabled.",
+      "frame_scales": {
+        "nyra_default_rise": 0.72
+      }
+    },
+    "office": {
+      "folder": "office",
+      "neutral": "nyra_office_neutral",
+      "width": 1024,
+      "height": 1536,
+      "bbox": [
+        100,
+        69,
+        899,
+        1396
+      ],
+      "sequences": {
+        "idle": {
+          "asset_ids": [
+            "nyra_office_neutral",
+            "nyra_office_blink",
+            "nyra_office_neutral"
+          ],
+          "durations_ms": [
+            3200,
+            130,
+            1800
+          ],
+          "loop": true
+        },
+        "gaze_left": {
+          "asset_ids": [
+            "nyra_office_left"
+          ],
+          "durations_ms": [
+            2000
+          ],
+          "loop": false
+        },
+        "gaze_right": {
+          "asset_ids": [
+            "nyra_office_right"
+          ],
+          "durations_ms": [
+            2000
+          ],
+          "loop": false
+        },
+        "gaze_head": {
+          "asset_ids": [
+            "nyra_office_left",
+            "nyra_office_neutral"
+          ],
+          "durations_ms": [
+            500,
+            400
+          ],
+          "loop": false
+        },
+        "drag": {
+          "asset_ids": [
+            "nyra_office_drag"
+          ],
+          "durations_ms": [
+            1000
+          ],
+          "loop": true
+        },
+        "settle": {
+          "asset_ids": [
+            "nyra_office_crouch",
+            "nyra_office_neutral"
+          ],
+          "durations_ms": [
+            180,
+            400
+          ],
+          "loop": false
+        },
+        "working": {
+          "asset_ids": [
+            "nyra_office_neutral",
+            "nyra_office_working",
+            "nyra_office_neutral"
+          ],
+          "durations_ms": [
+            500,
+            2600,
+            700
+          ],
+          "loop": true
+        },
+        "waiting": {
+          "asset_ids": [
+            "nyra_office_working"
+          ],
+          "durations_ms": [
+            2000
+          ],
+          "loop": true
+        },
+        "rise": {
+          "asset_ids": [
+            "nyra_office_rise",
+            "nyra_office_neutral"
+          ],
+          "durations_ms": [
+            280,
+            40
+          ],
+          "loop": false
+        },
+        "lower": {
+          "asset_ids": [
+            "nyra_office_neutral",
+            "nyra_office_rise"
+          ],
+          "durations_ms": [
+            40,
+            280
+          ],
+          "loop": false
+        },
+        "running_left": {
+          "asset_ids": [
+            "nyra_office_run_left_1",
+            "nyra_office_run_left_2"
+          ],
+          "durations_ms": [
+            180,
+            180
+          ],
+          "loop": true
+        },
+        "running_right": {
+          "asset_ids": [
+            "nyra_office_run_right_1",
+            "nyra_office_run_right_2"
+          ],
+          "durations_ms": [
+            180,
+            180
+          ],
+          "loop": true
+        },
+        "jumping": {
+          "asset_ids": [
+            "nyra_office_neutral",
+            "nyra_office_crouch",
+            "nyra_office_jump",
+            "nyra_office_crouch",
+            "nyra_office_neutral"
+          ],
+          "durations_ms": [
+            100,
+            140,
+            280,
+            160,
+            160
+          ],
+          "loop": false
+        },
+        "verified_success": {
+          "asset_ids": [
+            "nyra_office_neutral",
+            "nyra_office_crouch",
+            "nyra_office_jump",
+            "nyra_office_neutral"
+          ],
+          "durations_ms": [
+            100,
+            180,
+            440,
+            200
+          ],
+          "loop": false
+        },
+        "review": {
+          "asset_ids": [
+            "nyra_office_neutral",
+            "nyra_office_working",
+            "nyra_office_neutral"
+          ],
+          "durations_ms": [
+            500,
+            2600,
+            700
+          ],
+          "loop": true
+        },
+        "look_around": {
+          "asset_ids": [
+            "nyra_office_left",
+            "nyra_office_neutral",
+            "nyra_office_right",
+            "nyra_office_neutral"
+          ],
+          "durations_ms": [
+            300,
+            150,
+            300,
+            150
+          ],
+          "loop": false
+        }
+      },
+      "capabilities": "Native standing animation; same-outfit rise/lower and directional run/jump. Unsupported menu actions disabled.",
+      "frame_scales": {
+        "nyra_office_rise": 0.72
+      }
+    },
+    "gala": {
+      "folder": "gala",
+      "neutral": "nyra_gala_neutral",
+      "width": 1024,
+      "height": 1536,
+      "bbox": [
+        16,
+        32,
+        1006,
+        1469
+      ],
+      "sequences": {
+        "idle": {
+          "asset_ids": [
+            "nyra_gala_neutral",
+            "nyra_gala_blink",
+            "nyra_gala_neutral"
+          ],
+          "durations_ms": [
+            3200,
+            130,
+            1800
+          ],
+          "loop": true
+        },
+        "gaze_left": {
+          "asset_ids": [
+            "nyra_gala_left"
+          ],
+          "durations_ms": [
+            2000
+          ],
+          "loop": false
+        },
+        "gaze_right": {
+          "asset_ids": [
+            "nyra_gala_right"
+          ],
+          "durations_ms": [
+            2000
+          ],
+          "loop": false
+        },
+        "gaze_head": {
+          "asset_ids": [
+            "nyra_gala_left",
+            "nyra_gala_neutral"
+          ],
+          "durations_ms": [
+            500,
+            400
+          ],
+          "loop": false
+        },
+        "drag": {
+          "asset_ids": [
+            "nyra_gala_drag"
+          ],
+          "durations_ms": [
+            1000
+          ],
+          "loop": true
+        },
+        "settle": {
+          "asset_ids": [
+            "nyra_gala_crouch",
+            "nyra_gala_neutral"
+          ],
+          "durations_ms": [
+            180,
+            400
+          ],
+          "loop": false
+        },
+        "working": {
+          "asset_ids": [
+            "nyra_gala_neutral",
+            "nyra_gala_working",
+            "nyra_gala_neutral"
+          ],
+          "durations_ms": [
+            500,
+            2600,
+            700
+          ],
+          "loop": true
+        },
+        "waiting": {
+          "asset_ids": [
+            "nyra_gala_working"
+          ],
+          "durations_ms": [
+            2000
+          ],
+          "loop": true
+        },
+        "rise": {
+          "asset_ids": [
+            "nyra_gala_rise",
+            "nyra_gala_neutral"
+          ],
+          "durations_ms": [
+            280,
+            40
+          ],
+          "loop": false
+        },
+        "lower": {
+          "asset_ids": [
+            "nyra_gala_neutral",
+            "nyra_gala_rise"
+          ],
+          "durations_ms": [
+            40,
+            280
+          ],
+          "loop": false
+        },
+        "running_left": {
+          "asset_ids": [
+            "nyra_gala_run_left_1",
+            "nyra_gala_run_left_2"
+          ],
+          "durations_ms": [
+            180,
+            180
+          ],
+          "loop": true
+        },
+        "running_right": {
+          "asset_ids": [
+            "nyra_gala_run_right_1",
+            "nyra_gala_run_right_2"
+          ],
+          "durations_ms": [
+            180,
+            180
+          ],
+          "loop": true
+        },
+        "jumping": {
+          "asset_ids": [
+            "nyra_gala_neutral",
+            "nyra_gala_crouch",
+            "nyra_gala_jump",
+            "nyra_gala_crouch",
+            "nyra_gala_neutral"
+          ],
+          "durations_ms": [
+            100,
+            140,
+            280,
+            160,
+            160
+          ],
+          "loop": false
+        },
+        "verified_success": {
+          "asset_ids": [
+            "nyra_gala_neutral",
+            "nyra_gala_crouch",
+            "nyra_gala_jump",
+            "nyra_gala_neutral"
+          ],
+          "durations_ms": [
+            100,
+            180,
+            440,
+            200
+          ],
+          "loop": false
+        },
+        "review": {
+          "asset_ids": [
+            "nyra_gala_neutral",
+            "nyra_gala_working",
+            "nyra_gala_neutral"
+          ],
+          "durations_ms": [
+            500,
+            2600,
+            700
+          ],
+          "loop": true
+        },
+        "look_around": {
+          "asset_ids": [
+            "nyra_gala_left",
+            "nyra_gala_neutral",
+            "nyra_gala_right",
+            "nyra_gala_neutral"
+          ],
+          "durations_ms": [
+            300,
+            150,
+            300,
+            150
+          ],
+          "loop": false
+        }
+      },
+      "capabilities": "Native standing animation; same-outfit rise/lower and directional run/jump. Unsupported menu actions disabled.",
+      "frame_scales": {
+        "nyra_gala_rise": 0.72
+      }
+    },
+    "recline": {
+      "folder": "recline_default",
+      "neutral": "nyra_default_recline_neutral",
+      "width": 1536,
+      "height": 1024,
+      "bbox": [
+        2,
+        62,
+        1528,
+        867
+      ],
+      "frame_scales": {},
+      "capabilities": "Full native reclining art: idle/blink, gaze, working/reading, waiting and once-only celebration; run/jump use same-outfit rise/action/lower.",
+      "sequences": {
+        "idle": {
+          "asset_ids": [
+            "nyra_default_recline_neutral",
+            "nyra_default_recline_blink",
+            "nyra_default_recline_neutral"
+          ],
+          "durations_ms": [
+            3000,
+            160,
+            1800
+          ],
+          "loop": true
+        },
+        "working": {
+          "asset_ids": [
+            "nyra_default_recline_work",
+            "nyra_default_recline_workblink",
+            "nyra_default_recline_work"
+          ],
+          "durations_ms": [
+            2400,
+            160,
+            1400
+          ],
+          "loop": true
+        },
+        "review": {
+          "asset_ids": [
+            "nyra_default_recline_work",
+            "nyra_default_recline_workblink",
+            "nyra_default_recline_work"
+          ],
+          "durations_ms": [
+            2400,
+            160,
+            1400
+          ],
+          "loop": true
+        },
+        "waiting": {
+          "asset_ids": [
+            "nyra_default_recline_gaze",
+            "nyra_default_recline_neutral"
+          ],
+          "durations_ms": [
+            1800,
+            1400
+          ],
+          "loop": true
+        },
+        "gaze_head": {
+          "asset_ids": [
+            "nyra_default_recline_gaze",
+            "nyra_default_recline_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        },
+        "gaze_left": {
+          "asset_ids": [
+            "nyra_default_recline_gaze",
+            "nyra_default_recline_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        },
+        "gaze_right": {
+          "asset_ids": [
+            "nyra_default_recline_gaze",
+            "nyra_default_recline_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        },
+        "look_around": {
+          "asset_ids": [
+            "nyra_default_recline_neutral",
+            "nyra_default_recline_gaze",
+            "nyra_default_recline_neutral"
+          ],
+          "durations_ms": [
+            200,
+            600,
+            200
+          ],
+          "loop": false
+        },
+        "verified_success": {
+          "asset_ids": [
+            "nyra_default_recline_neutral",
+            "nyra_default_recline_celebrate",
+            "nyra_default_recline_neutral"
+          ],
+          "durations_ms": [
+            150,
+            1000,
+            350
+          ],
+          "loop": false
+        },
+        "settle": {
+          "asset_ids": [
+            "nyra_default_recline_blink",
+            "nyra_default_recline_neutral"
+          ],
+          "durations_ms": [
+            160,
+            400
+          ],
+          "loop": false
+        }
+      }
+    },
+    "recline_office": {
+      "folder": "recline_office",
+      "neutral": "nyra_office_recline_neutral",
+      "width": 1536,
+      "height": 1024,
+      "bbox": [
+        4,
+        113,
+        1514,
+        841
+      ],
+      "frame_scales": {},
+      "capabilities": "Full native reclining art: idle/blink, gaze, working/reading, waiting and once-only celebration; run/jump use same-outfit rise/action/lower.",
+      "sequences": {
+        "idle": {
+          "asset_ids": [
+            "nyra_office_recline_neutral",
+            "nyra_office_recline_blink",
+            "nyra_office_recline_neutral"
+          ],
+          "durations_ms": [
+            3000,
+            160,
+            1800
+          ],
+          "loop": true
+        },
+        "working": {
+          "asset_ids": [
+            "nyra_office_recline_work",
+            "nyra_office_recline_workblink",
+            "nyra_office_recline_work"
+          ],
+          "durations_ms": [
+            2400,
+            160,
+            1400
+          ],
+          "loop": true
+        },
+        "review": {
+          "asset_ids": [
+            "nyra_office_recline_work",
+            "nyra_office_recline_workblink",
+            "nyra_office_recline_work"
+          ],
+          "durations_ms": [
+            2400,
+            160,
+            1400
+          ],
+          "loop": true
+        },
+        "waiting": {
+          "asset_ids": [
+            "nyra_office_recline_gaze",
+            "nyra_office_recline_neutral"
+          ],
+          "durations_ms": [
+            1800,
+            1400
+          ],
+          "loop": true
+        },
+        "gaze_head": {
+          "asset_ids": [
+            "nyra_office_recline_gaze",
+            "nyra_office_recline_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        },
+        "gaze_left": {
+          "asset_ids": [
+            "nyra_office_recline_gaze",
+            "nyra_office_recline_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        },
+        "gaze_right": {
+          "asset_ids": [
+            "nyra_office_recline_gaze",
+            "nyra_office_recline_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        },
+        "look_around": {
+          "asset_ids": [
+            "nyra_office_recline_neutral",
+            "nyra_office_recline_gaze",
+            "nyra_office_recline_neutral"
+          ],
+          "durations_ms": [
+            200,
+            600,
+            200
+          ],
+          "loop": false
+        },
+        "verified_success": {
+          "asset_ids": [
+            "nyra_office_recline_neutral",
+            "nyra_office_recline_celebrate",
+            "nyra_office_recline_neutral"
+          ],
+          "durations_ms": [
+            150,
+            1000,
+            350
+          ],
+          "loop": false
+        },
+        "settle": {
+          "asset_ids": [
+            "nyra_office_recline_blink",
+            "nyra_office_recline_neutral"
+          ],
+          "durations_ms": [
+            160,
+            400
+          ],
+          "loop": false
+        }
+      }
+    },
+    "recline_gala": {
+      "folder": "recline_gala",
+      "neutral": "nyra_gala_recline_neutral",
+      "width": 1536,
+      "height": 1024,
+      "bbox": [
+        2,
+        49,
+        1522,
+        906
+      ],
+      "frame_scales": {},
+      "capabilities": "Full native reclining art: idle/blink, gaze, working/reading, waiting and once-only celebration; run/jump use same-outfit rise/action/lower.",
+      "sequences": {
+        "idle": {
+          "asset_ids": [
+            "nyra_gala_recline_neutral",
+            "nyra_gala_recline_blink",
+            "nyra_gala_recline_neutral"
+          ],
+          "durations_ms": [
+            3000,
+            160,
+            1800
+          ],
+          "loop": true
+        },
+        "working": {
+          "asset_ids": [
+            "nyra_gala_recline_work",
+            "nyra_gala_recline_workblink",
+            "nyra_gala_recline_work"
+          ],
+          "durations_ms": [
+            2400,
+            160,
+            1400
+          ],
+          "loop": true
+        },
+        "review": {
+          "asset_ids": [
+            "nyra_gala_recline_work",
+            "nyra_gala_recline_workblink",
+            "nyra_gala_recline_work"
+          ],
+          "durations_ms": [
+            2400,
+            160,
+            1400
+          ],
+          "loop": true
+        },
+        "waiting": {
+          "asset_ids": [
+            "nyra_gala_recline_gaze",
+            "nyra_gala_recline_neutral"
+          ],
+          "durations_ms": [
+            1800,
+            1400
+          ],
+          "loop": true
+        },
+        "gaze_head": {
+          "asset_ids": [
+            "nyra_gala_recline_gaze",
+            "nyra_gala_recline_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        },
+        "gaze_left": {
+          "asset_ids": [
+            "nyra_gala_recline_gaze",
+            "nyra_gala_recline_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        },
+        "gaze_right": {
+          "asset_ids": [
+            "nyra_gala_recline_gaze",
+            "nyra_gala_recline_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        },
+        "look_around": {
+          "asset_ids": [
+            "nyra_gala_recline_neutral",
+            "nyra_gala_recline_gaze",
+            "nyra_gala_recline_neutral"
+          ],
+          "durations_ms": [
+            200,
+            600,
+            200
+          ],
+          "loop": false
+        },
+        "verified_success": {
+          "asset_ids": [
+            "nyra_gala_recline_neutral",
+            "nyra_gala_recline_celebrate",
+            "nyra_gala_recline_neutral"
+          ],
+          "durations_ms": [
+            150,
+            1000,
+            350
+          ],
+          "loop": false
+        },
+        "settle": {
+          "asset_ids": [
+            "nyra_gala_recline_blink",
+            "nyra_gala_recline_neutral"
+          ],
+          "durations_ms": [
+            160,
+            400
+          ],
+          "loop": false
+        }
+      }
+    }
+  }
+}
