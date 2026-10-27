@@ -27,3 +27,5 @@ Nyra consumes minimal read-only state. Idle, running, queued/waiting, partial/fa
 Sound is muted by default; explicit system speech/imported voice and procedural cues are described in provenance. No exclusive AI voice is shipped. Hiding stops animation/audio work; quitting TWOS does not kill a separately used Nyra.
 
 [English / 简体中文](USER_GUIDE.zh-CN.md)
+
+[Actual screenshots and recording / 真实截图与录像](MEDIA.en.md)

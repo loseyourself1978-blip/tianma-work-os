@@ -14,6 +14,15 @@ def cross_harness(tmp_path_factory):
     code=(ROOT/'packaging/macos/TianmaLauncher.swift').read_text().split('// The only child runtime',1)[0]
     for name in ('CodexAttachments.swift','CodexTelemetry.swift','NativeCodex.swift','IntegratedWorkbench.swift'):
         code+='\n'+(ROOT/'packaging/macos'/name).read_text()
+    # Fixture-only target/process lookup: exercise the production refresh and
+    # asynchronous read path with a selected standalone and no bundled helper.
+    # No production trust check is bypassed outside this compiled test harness.
+    code=code.replace('var targetURL: URL? { standalone?.bundleURL ?? helperURL }',
+        'var targetURL: URL? { CommandLine.arguments[1] == "nyra_selected_target" ? Bundle.main.bundleURL : (standalone?.bundleURL ?? helperURL) }')
+    code=code.replace('var targetStateRoot: URL {\n        standalone != nil ?',
+        'var targetStateRoot: URL {\n        if CommandLine.arguments[1] == "nyra_selected_target" { return stateRoot }; return standalone != nil ?')
+    code=code.replace('var targetProcesses: [NSRunningApplication] {\n        if let app = standalone',
+        'var targetProcesses: [NSRunningApplication] {\n        if CommandLine.arguments[1] == "nyra_selected_target" { return [.current] }; if let app = standalone')
     # The real R4 consumer and decoder, without the companion UI extension.
     code+='\n'+(ROOT/'packaging/macos/nyra/Sources/ReactiveState.swift').read_text().split('struct ReactiveState {',1)[0]
     code+='\nenum PreviewError: Error { case invalidManifest }\n'
@@ -117,6 +126,28 @@ if mode == "nyra_socket_queue" {
                 }
             }
         }
+    }
+    app.run();exit(0)
+}
+if mode == "nyra_selected_target" {
+    var reads=0, observed=false
+    let bridge=NativeNyra(stateRoot:prefs) { state in
+        if state["observed"] as? Bool == true && state["visible"] as? Bool == true { observed=true }
+    }
+    precondition(bridge.helperURL == nil && bridge.targetURL == Bundle.main.bundleURL)
+    bridge.visibilityReader={file in
+        dispatchPrecondition(condition:.notOnQueue(.main))
+        precondition(file == prefs.appendingPathComponent("visibility-state.json"))
+        reads += 1
+        return ["pid":ProcessInfo.processInfo.processIdentifier,"bundle":Bundle.main.bundleURL.path,"visible":true]
+    }
+    bridge.refresh()
+    DispatchQueue.main.asyncAfter(deadline:.now()+0.4) {
+        precondition(reads == 1 && observed,"selected standalone never became observable")
+        precondition(bridge.snapshot()["visible"] as? Bool == true)
+        precondition(bridge.snapshot()["binding"] as? String == "NOT_CONNECTED","showing standalone does not claim task binding")
+        withExtendedLifetime(bridge) {}
+        print("NYRA_SELECTED_STANDALONE_REFRESH_PASS");exit(0)
     }
     app.run();exit(0)
 }
@@ -366,7 +397,7 @@ probe();DispatchQueue.main.asyncAfter(deadline:.now()+20){fatalError("fixture ti
     assert run.returncode==0,run.stderr
     return binary
 
-@pytest.mark.parametrize('mode',['nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','claude','claude_streaming','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
+@pytest.mark.parametrize('mode',['nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','claude','claude_streaming','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
 def test_exact_target_single_dispatch_and_preflight(cross_harness,tmp_path,mode):
     class Fixture(BaseHTTPRequestHandler):
         def do_GET(self):
@@ -384,7 +415,17 @@ if(TEST_MODE==='chatgpt_semantic'){delete user.dataset.role;delete reply.dataset
         def log_message(self,*args):pass
     server=ThreadingHTTPServer(('127.0.0.1',0),Fixture);thread=Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
-        result=subprocess.run([str(cross_harness),mode,str(tmp_path/'profile'),f'http://127.0.0.1:{server.server_port}/',str(ROOT/'static_cockpit')],capture_output=True,text=True,timeout=30)
+        executable=cross_harness
+        if mode=='nyra_selected_target':
+            # NSRunningApplication needs an actual bundle identity for the
+            # unchanged snapshot PID/bundle checks; a naked test binary has none.
+            import plistlib,shutil
+            bundle=tmp_path/'Selected Nyra Fixture.app'
+            executable=bundle/'Contents/MacOS/cross'
+            executable.parent.mkdir(parents=True)
+            shutil.copy2(cross_harness,executable)
+            (bundle/'Contents/Info.plist').write_bytes(plistlib.dumps({'CFBundleIdentifier':'com.tianma.tests.nyra.selected','CFBundleExecutable':'cross','CFBundlePackageType':'APPL'}))
+        result=subprocess.run([str(executable),mode,str(tmp_path/'profile'),f'http://127.0.0.1:{server.server_port}/',str(ROOT/'static_cockpit')],capture_output=True,text=True,timeout=30)
         assert result.returncode==0,result.stdout+result.stderr
         assert 'PASS' in result.stdout
     finally:server.shutdown();server.server_close();thread.join()

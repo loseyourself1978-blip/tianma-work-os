@@ -27,3 +27,5 @@ Nyra 只读最小状态。空闲、运行、排队/等待、partial/失败/取�
 声音默认静音，系统语音/导入声音和程序合成提示音的范围见资源说明；没有内置独家 AI 声线。隐藏停止无必要动画/音频；退出 TWOS 不强退另行使用的 Nyra。
 
 [English / 简体中文](USER_GUIDE.en.md)
+
+[Actual screenshots and recording / 真实截图与录像](MEDIA.zh-CN.md)

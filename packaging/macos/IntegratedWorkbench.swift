@@ -858,7 +858,9 @@ final class NativeNyra: NSObject {
                 "observed": true, "binding": connected ? "CONNECTED_READONLY" : "NOT_CONNECTED", "updatedAt": state["updatedAt"] ?? NSNull()]
     }
     func refresh() {
-        if let helper = helperURL, targetProcesses
+        // Observe the actual selected component, including a compatible signed
+        // standalone. Looking only at helperURL leaves standalone state unread.
+        if let helper = targetURL, targetProcesses
             .contains(where: { !$0.isTerminated && $0.bundleURL?.standardizedFileURL == helper.standardizedFileURL }) {
             requestVisibilityRead()
         } else { visibilityCache = nil }

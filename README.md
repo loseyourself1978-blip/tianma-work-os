@@ -33,3 +33,5 @@ The independent companion is maintained in [Nyra](https://github.com/loseyoursel
 [Detailed Owner guide](docs/OWNER_GUIDE_EN.md) · [Repository map](docs/REPOSITORY_MAP.md) · [Original local projects](docs/LEGACY_OWNER_GUIDE.md) · [Advanced source installation](docs/ADVANCED_INSTALLATION.md). Historical designs and stage records do not describe the current installer or establish current acceptance.
 
 </details>
+
+[Actual candidate screenshots and recording / 真实候选截图与录像](docs/release-1.0/MEDIA.en.md)
