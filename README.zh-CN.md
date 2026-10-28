@@ -12,7 +12,7 @@
 
 ## 下载与首次使用
 
-联合候选 **TWOS 1.0.1 / build 101.49** 正在验证。只使用带准确源码、签名公证、DMG 哈希和检查回执的发行。[GitHub Releases](https://github.com/loseyourself1978-blip/tianma-work-os/releases) 是发布位置。历史 v1.0.0 是源码分发，不是本次桌面安装包，旧标签与发行保持。
+**TWOS 1.0.1 / build 101.49**：Apple Silicon 安装包已完成 Developer ID 签名、Apple 公证及 Gatekeeper 检查。[下载本版](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.1) · [签名、hash 与验证回执](docs/release-1.0/release.json)。旧发行和标签保持；本版发布不代签 Owner 差量验收。
 
 打开对应 DMG，拖入应用程序并启动。登录所选供应商官网，连接已安装/登录的官方本机 Codex，再创建或接续一个绑定目录的任务。Nyra 在同一 App 内，无需第二个桌宠安装包或首次联网下载画稿；普通安装无需 Python、Node 或终端。
 

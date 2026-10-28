@@ -1,6 +1,6 @@
-# TWOS 1.0.1 / build 101.49 — joint candidate notes
+# TWOS 1.0.1 / build 101.49 — release notes
 
-This candidate includes Nyra 1.0 and its fixed runtime resources in `Contents/Helpers`. Exact source/asset hashes, signatures, notarization and validation are recorded in the final receipt; until that receipt exists this is not a published binary.
+Signing and engineering checks passed: both app and DMG notarizations are Accepted, tickets are stapled and Gatekeeper accepts them. The matching complete suite passed 1726 tests, skipped one retained historical-installer upgrade test and had zero failures, with 38 actual Safari measurements. Isolated signed installation, both bundled/standalone launch orders and network-denied bundled display passed. See the [release receipt](release.json) for exact source, SHA-256 and notarization IDs. Final Owner differential acceptance remains PENDING; earlier business acceptance is preserved.
 
 Changes: fresh task snapshots instead of historical work replay; explicit unverified/partial/disconnected states; bounded manual actions; screen-direction dragging with frame progression; three matching-outfit reclining sets; transparent stage and desktop restoration; shared standalone/bundled preferences and single-instance control; asynchronous status access; nested signing and notarization receipt validation.
 

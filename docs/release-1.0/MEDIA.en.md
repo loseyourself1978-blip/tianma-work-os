@@ -21,3 +21,10 @@ The release media includes `nyra-walkthrough.mp4` with selectable English and Si
 The actions are explicitly **Manual preview**, not evidence of a model task or business acceptance. The video demonstrates stage outfits and controls; directional drag and live task linkage have separate engineering observations. A full TWOS install-to-first-task video is NOT_RECORDED: the authorized recordings were limited to isolated TWOS/Nyra/test windows, and accepted business tasks were not replayed for filming. Use the illustrated installation and operation guides.
 
 Binary source: TWOS `293e4f9a80194ea7dce1107732cb104f6d60892f`; pinned Nyra `37d8cf8a8d12cf6a6622fe8bcca663fc525659ae`. Subsequent documentation-only commits do not change these binary inputs. Signing/notarization and final distribution gates are reported separately in the release receipt. Final Owner differential acceptance is not implied by these media.
+
+
+## Final signed-package check
+
+This is the actual isolated Nyra window from the signed, notarized installer, without private content. The final TWOS package also reopened the existing engineering task and displayed `status-check.txt`; no extra model task was run for media. Its full task-window capture remains local evidence because the background includes account telemetry.
+
+![Final signed Nyra controls](images/nyra-signed-office-controls.png)

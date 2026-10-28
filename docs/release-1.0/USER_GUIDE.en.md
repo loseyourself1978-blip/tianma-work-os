@@ -29,3 +29,14 @@ Sound is muted by default; explicit system speech/imported voice and procedural 
 [English / 简体中文](USER_GUIDE.zh-CN.md)
 
 [Actual screenshots and recording / 真实截图与录像](MEDIA.en.md)
+
+
+## Action coverage in this release
+
+| Outfit | Desktop and directional drag | Transparent reclining stage | Manual preview |
+|---|---|---|---|
+| Black & purple | Idle, hover jump, left/right run | Blink, gaze, work, wait, celebrate | Shared actual playback entry |
+| Office | Same; running uses 2 painted frames | Matching reclining art and rise/lower transition | Shared actual playback entry |
+| Gala | Same; running uses 2 painted frames | Matching reclining art and rise/lower transition | Shared actual playback entry |
+
+A preview restores the real base state. Partial, failed, cancelled or unverified completion does not automatically celebrate. Audio covers two original chimes, installed system speech and local user imports, muted by default; no exclusive AI voice is included.

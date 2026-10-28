@@ -12,7 +12,7 @@ Discuss a goal and execute it in one macOS workspace. TWOS pairs official ChatGP
 
 ## Download and first use
 
-The joint **TWOS 1.0.1 / build 101.49** candidate is being verified. Use only a release whose receipt records the exact source, signed/notarized DMG, hash and checks. [GitHub Releases](https://github.com/loseyourself1978-blip/tianma-work-os/releases) is the publication location. Historical v1.0.0 is a source distribution; it is not this desktop installer. Existing tags and releases are preserved.
+**TWOS 1.0.1 / build 101.49** provides an Apple Silicon installer signed with Developer ID, notarized by Apple and checked with Gatekeeper. [Download this version](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.1) · [Signature, hash and validation receipt](docs/release-1.0/release.json). Earlier tags/releases are preserved. Publication does not grant Owner differential acceptance.
 
 Open the matching DMG, drag TWOS into Applications and open it. Sign into the chosen official provider website, connect your already installed/logged-in local Codex, then create or resume one folder-bound task. Nyra is inside the same app; no separate pet installer or first-run artwork download is required. Ordinary installation needs no Python, Node or terminal.
 
