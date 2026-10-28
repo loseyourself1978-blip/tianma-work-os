@@ -35,3 +35,7 @@ The independent companion is maintained in [Nyra](https://github.com/loseyoursel
 </details>
 
 [Actual candidate screenshots and recording / 真实候选截图与录像](docs/release-1.0/MEDIA.en.md)
+
+![ Actual 1.0.1 / 101.49 candidate: first workspace with bundled Nyra. ](docs/release-1.0/images/twos-first-workspace.png)
+
+Actual 1.0.1 / 101.49 candidate: first workspace with bundled Nyra.

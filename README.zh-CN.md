@@ -35,3 +35,7 @@ TWOS 使用官方 Codex App Server 协议实现客户端，不是嵌入官方 ma
 </details>
 
 [Actual candidate screenshots and recording / 真实候选截图与录像](docs/release-1.0/MEDIA.zh-CN.md)
+
+![ 1.0.1 / 101.49 真实候选：首次工作台与内置夜璃。 ](docs/release-1.0/images/twos-first-workspace.png)
+
+1.0.1 / 101.49 真实候选：首次工作台与内置夜璃。

@@ -142,22 +142,40 @@ def test_owner_confirmation_and_idempotent_start_spawn_one_real_run(
         assert replayed.json()["start_request_replayed"] is True
 
         observed = {started.json()["canonical_status"]}
-        deadline = time.monotonic() + 15
         run = started.json()
-        while time.monotonic() < deadline:
+        # Git worktree/ticket preparation is not child execution. Wait for the
+        # actual spawn before starting the live-state observation deadline.
+        # Releasing on a preparation timeout used to let the controlled child
+        # finish immediately without ever testing its sustained Running state.
+        preparation_deadline = time.monotonic() + PREPARATION_WAIT_SECONDS
+        while time.monotonic() < preparation_deadline:
             response = client.get(
-                f"/api/codex-runs/{started.json()['id']}",
-                headers=headers,
+                f"/api/codex-runs/{started.json()['id']}", headers=headers,
+            )
+            assert response.status_code == 200, response.text
+            run = response.json()
+            observed.add(run["canonical_status"])
+            if run["process_spawned"] or run["canonical_status"] in TERMINAL_CANONICAL_STATES:
+                break
+            time.sleep(0.02)
+        assert run["process_spawned"], ("preparation did not spawn", observed, run)
+        assert run["canonical_status"] not in TERMINAL_CANONICAL_STATES, run
+
+        deadline = time.monotonic() + 15
+        while not {"starting", "running"}.issubset(observed) and time.monotonic() < deadline:
+            response = client.get(
+                f"/api/codex-runs/{started.json()['id']}", headers=headers,
             )
             assert response.status_code == 200, response.text
             run = response.json()
             observed.add(run["canonical_status"])
             if run["canonical_status"] in TERMINAL_CANONICAL_STATES:
                 break
-            if {"starting", "running"}.issubset(observed):
-                break
             time.sleep(0.02)
-
+        # Do not make a failed observation look like successful execution by
+        # releasing first. ExitStack still releases the fixture on failure.
+        assert {"starting", "running"}.issubset(observed), (observed, run)
+        assert not progress_release.exists()
         progress_release.write_text("released\n")
         if "succeeded" not in observed:
             run = wait_for_run(
