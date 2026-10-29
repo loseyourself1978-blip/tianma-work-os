@@ -160,7 +160,14 @@ return await (async () => {
   const range=document.createRange();range.selectNodeContents(input);const selection=getSelection();selection.removeAllRanges();selection.addRange(range);
   if(!document.execCommand('insertHTML',false,prompt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')))return {state:'unsupported'};
  }
- if(normalize(value())!==normalize(prompt))return {state:'draft'};
+ // Rich-text editors may reconcile their controlled value asynchronously.
+ // Wait for the exact frozen body, never normalize away a content difference.
+ const draftDeadline=performance.now()+2000;
+ while(normalize(value())!==normalize(prompt)&&performance.now()<draftDeadline){
+  if(!same()||clean(location.href)!==original)return {state:'target_changed'};
+  await new Promise(r=>setTimeout(r,50));
+ }
+ if(normalize(value())!==normalize(prompt))return {state:'draft',reason:'EXACT_DRAFT_NOT_CONFIRMED_NO_MESSAGE_SENT'};
  if(!same()||clean(location.href)!==original)return {state:"target_changed"};
  // Exact native-selected bytes only. File objects use the website's standard
  // file-input/change path, never a private upload endpoint or filename proxy.
@@ -263,5 +270,5 @@ return await (async () => {
   }
   return {state:'unknown'};
  }
- return {state:'draft'};
+ return {state:'draft',reason:'EXACT_SEND_CONTROL_NOT_READY_NO_MESSAGE_SENT'};
 })();
