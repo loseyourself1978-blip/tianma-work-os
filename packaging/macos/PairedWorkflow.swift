@@ -302,13 +302,26 @@ extension IntegratedWorkbench {
                kinds[1-r.targetPane]==d.providers[1-r.targetPane],
                NativeWorkbench.restorableURL(other.web.url,service:other.serviceHome)?.absoluteString==d.conversations[1-r.targetPane] {
                 if inspectionsInFlight.contains(id) {return}
-                dialogueTickInFlight=true
+                // URL assignment and message hydration are separate website
+                // events. A bounded read-only reconciliation window may wait
+                // for the exact receipt; it never resends or grants a new URL.
+                let attempts=dialogueNavigationReads[id,default:0]
+                guard attempts<5 else {
+                    pauseDialogue("A participant or conversation changed. Restore the bound conversations before continuing.");return
+                }
+                dialogueNavigationReads[id]=attempts+1
+                dialogueTickInFlight=true;inspectionsInFlight.insert(id)
                 pane.webTransfer(r.request(inspectOnly:true)) { [weak self] response in
-                    guard let self=self else{return};self.dialogueTickInFlight=false
+                    guard let self=self else{return};self.dialogueTickInFlight=false;self.inspectionsInFlight.remove(id)
                     guard self.dialogue?.id==d.id,self.dialogue?.state=="running",self.dialogue?.pendingID==id else{return}
+                    if let i=self.webTransfers.firstIndex(where:{$0.id==id}) {
+                        self.webTransfers[i].inspection="FIRST_CONVERSATION_RECONCILIATION · " + (response["state"] as? String ?? "unknown") + (response["reason"].map {" · \($0)"} ?? "")
+                        self.webTransfers[i].inspectedAt=Date().timeIntervalSince1970
+                    }
                     self.applyWebResponse(id,response:response)
-                    if self.dialogueTargetsMatch(d) {self.tickDialogue()}
-                    else {self.pauseDialogue("A participant or conversation changed. Restore the bound conversations before continuing.")}
+                    if self.dialogueTargetsMatch(d) {self.dialogueNavigationReads.removeValue(forKey:id);self.tickDialogue()}
+                    // Otherwise wait for the next regular tick, within five
+                    // reads. Changed/missing bodies cannot advance the run.
                 }
                 return
             }

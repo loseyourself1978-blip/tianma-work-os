@@ -241,6 +241,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
     var paneActivityRunIDs: [Int:String] = [:]
     var dialogue: PairedDialogue?
     var dialogueTickInFlight = false
+    var dialogueNavigationReads: [String:Int] = [:]
     var dialogueWindow: NSWindow?
     var dialogueStatus: NSTextField?
     var dialogueText: NSTextView?
