@@ -831,7 +831,13 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
         webRuntimeObservations[id] = (state, ProcessInfo.processInfo.systemUptime)
         // Only the original call can prove a pre-send refusal. Read-only polling
         // after SPA navigation must never turn uncertain delivery into "not sent".
-        if !dispatchResponse && !["sent", "reply"].contains(state) { state = "unknown" }
+        if !dispatchResponse && !["sent", "reply"].contains(state) {
+            // A read does not send. Preserve an original, explicit pre-send
+            // refusal; otherwise a harmless Check would disable its draft
+            // recovery/cancel actions. An uncertain dispatch remains unknown.
+            let prior = webTransfers[i]
+            state = prior.mayHaveSent == false && !["sending", "sent", "reply", "unknown"].contains(prior.state) ? prior.state : "unknown"
+        }
         if dispatchResponse && !["sent", "reply", "unknown"].contains(state) { webTransfers[i].mayHaveSent = false }
         if ["sent", "reply"].contains(state) { webTransfers[i].mayHaveSent = true }
         if dispatchResponse && state == "busy" { state = "queued" }

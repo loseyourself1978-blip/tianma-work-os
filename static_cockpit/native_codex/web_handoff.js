@@ -21,14 +21,23 @@ return await (async () => {
  if(/at capacity|overloaded|服务繁忙|容量不足/i.test(alerts))return {state:'provider_limited',reason:'SERVICE_CAPACITY'};
  if(/usage limit|rate limit|limit reached|too many requests|额度|达到.{0,6}上限/i.test(alerts))return {state:'provider_limited',reason:'SERVICE_LIMIT'};
  if(/network error|connection lost|网络错误|网络连接失败/i.test(alerts))return {state:'unknown',reason:'NETWORK_UNAVAILABLE'};
- const fields=[...document.querySelectorAll('textarea,#prompt-textarea,[contenteditable=true][role=textbox],.tiptap[contenteditable=true]')].filter(e=>visible(e)&&!e.disabled&&!e.readOnly&&!e.closest('[data-twos-native-card],[data-message-author-role],.ds-markdown'));
+ const composerFields=()=>[...document.querySelectorAll('textarea,#prompt-textarea,[contenteditable=true][role=textbox],.tiptap[contenteditable=true]')].filter(e=>visible(e)&&!e.disabled&&!e.readOnly&&!e.closest('[data-twos-native-card],[data-message-author-role],.ds-markdown'));
+ const fields=composerFields();
  if(fields.length!==1){
   const login=[...document.querySelectorAll('button,a')].filter(visible).some(e=>/^(log in|sign in|登录|登入)$/i.test(e.textContent.trim()));
   return {state:login?'login':'not_loaded'};
  }
  if(request.readinessOnly)return {state:'input_ready'};
- const input=fields[0],value=()=>input instanceof HTMLTextAreaElement?input.value:input.innerText;
+ let input=fields[0];const value=()=>input instanceof HTMLTextAreaElement?input.value:input.innerText;
  const prompt='[TWOS handoff '+request.id+']\n'+request.text;
+ // Read-only control metadata for an unavailable upload path. Never include
+ // values, filenames, page text, URLs, credentials or arbitrary DOM dumps.
+ const uploadShape=()=>[...document.querySelectorAll('input[type=file]')].slice(0,12).map((e,index)=>{
+  const chain=[];for(let p=e.parentElement,n=0;p&&p!==document.body&&n<4;p=p.parentElement,n++)chain.push({tag:p.tagName,role:p.getAttribute('role'),testID:p.getAttribute('data-testid'),className:String(p.className||'').slice(0,180),visible:visible(p),containsDraft:p.contains(input)});
+  return {index,accept:e.accept.slice(0,400),multiple:e.multiple,disabled:e.disabled,directory:e.webkitdirectory||e.hasAttribute('directory'),capture:e.getAttribute('capture'),ariaHidden:Boolean(e.closest('[aria-hidden=true]')),chain};
+ });
+ const isSendControl=e=>e.matches('[data-testid="send-button"],#composer-submit-button,[data-testid="chat-input-send"]')||/^(Send(?: message| prompt)?|发送(?:消息|提示)?)$/i.test(e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent.trim());
+ const sendShape=()=>[...document.querySelectorAll('button,[role=button]')].filter(isSendControl).slice(0,8).map(e=>({tag:e.tagName,testID:e.getAttribute('data-testid'),visible:visible(e),disabled:Boolean(e.disabled),ariaDisabled:e.getAttribute('aria-disabled'),inHistory:Boolean(e.closest('[data-twos-native-card],[data-message-author-role],[data-is-streaming],.font-claude-response'))}));
  const deepSeekArrow="M8.3125 0.980206C8.66767 1.05312 8.97902 1.2042 9.2627 1.43235C9.48724 1.613 9.73029 1.85795 9.97949 2.10716L14.707 6.8347L13.293 8.24876L9 3.95579V15.0417H7V3.95579L2.70703 8.24876L1.29297 6.8347L6.02051 2.10716C6.26971 1.85795 6.51277 1.613 6.7373 1.43235C6.97662 1.23988 7.28445 1.04404 7.6875 0.980206C7.8973 0.947029 8.1031 0.955183 8.3125 0.980206Z";
  const deepSeekSend=(requireEnabled=true)=>{
   if(provider!=='DeepSeek'||(location.hostname!=='chat.deepseek.com'&&!localFixture))return null;
@@ -122,7 +131,7 @@ return await (async () => {
   return {state:settled&&reply.trim()?'reply':'sent',conversationURL:clean(location.href),attachments:request.files?.map(({id,name,mime,size,hash})=>({id,name,mime,size,hash}))||[],...(reply?{reply,replyMessage:last.closest('[data-message-id]')?.getAttribute('data-message-id')||last.closest('[data-testid^=conversation-turn-]')?.getAttribute('data-testid')||'rendered-answer'}:{})};
  };
  const existing=result();if(existing)return existing;
- if(request.inspectOnly)return {state:'unknown',reason:'EXACT_RECEIPT_NOT_FOUND'};
+ if(request.inspectOnly)return {state:'unknown',reason:'EXACT_RECEIPT_NOT_FOUND · SEND_CONTROL_SHAPE '+JSON.stringify(sendShape())+(request.files?.length?' · UPLOAD_CONTROL_SHAPE '+JSON.stringify(uploadShape()):'')};
  // An old draft may have been manually submitted outside TWOS. Losing that
  // draft is not proof of non-delivery: reconcile rather than recreate/resend.
  if(request.resumeDraft&&!value().trim())return {state:'unknown'};
@@ -132,10 +141,19 @@ return await (async () => {
  // composer. Expand only through bounded draft ancestors which contain no
  // conversation messages; never count an earlier message's file card.
  const composerScopes=[];
- for(let root=input.parentElement,depth=0;root&&depth<8&&root!==document.body;root=root.parentElement,depth++){
-  if(root.querySelector(selectors.user+','+selectors.reply))break;
-  composerScopes.push(root);
- }
+ const refreshComposerScopes=()=>{
+  composerScopes.length=0;
+  for(let root=input.parentElement,depth=0;root&&depth<8&&root!==document.body;root=root.parentElement,depth++){
+   if(root.querySelector(selectors.user+','+selectors.reply))break;
+   composerScopes.push(root);
+  }
+ };
+ refreshComposerScopes();
+ const bindExactComposer=()=>{
+  const current=composerFields();
+  if(current.length!==1||normalize(current[0] instanceof HTMLTextAreaElement?current[0].value:current[0].innerText)!==normalize(prompt))return false;
+  input=current[0];refreshComposerScopes();return true;
+ };
  const inComposer=e=>visible(e)&&composerScopes.some(root=>root.contains(e))&&!e.closest('nav,aside,[data-twos-native-card],[data-message-author-role],[data-message-role],[data-role="user"],[data-role="assistant"],[data-testid="user-message"],[data-is-streaming],.font-claude-response,.ds-message');
  // Past uploaded files belong to conversation history, not the current draft.
  // Do not mistake them for newly selected attachments or re-upload evidence.
@@ -163,12 +181,14 @@ return await (async () => {
  }
  // Rich-text editors may reconcile their controlled value asynchronously.
  // Wait for the exact frozen body, never normalize away a content difference.
- const draftDeadline=performance.now()+2000;
- while(normalize(value())!==normalize(prompt)&&performance.now()<draftDeadline){
+ const draftDeadline=performance.now()+2000;let stableDraft=0;
+ while(performance.now()<draftDeadline){
   if(!same()||clean(location.href)!==original)return {state:'target_changed'};
+  stableDraft=bindExactComposer()?stableDraft+1:0;
+  if(stableDraft>=2)break;
   await new Promise(r=>setTimeout(r,50));
  }
- if(normalize(value())!==normalize(prompt))return {state:'draft',reason:'EXACT_DRAFT_NOT_CONFIRMED_NO_MESSAGE_SENT'};
+ if(stableDraft<2)return {state:'draft',reason:'EXACT_DRAFT_NOT_CONFIRMED_NO_MESSAGE_SENT'};
  if(!same()||clean(location.href)!==original)return {state:"target_changed"};
  // Exact native-selected bytes only. File objects use the website's standard
  // file-input/change path, never a private upload endpoint or filename proxy.
@@ -183,7 +203,7 @@ return await (async () => {
   if(!previous){
    if(chips().length)return {state:'draft_conflict',reason:'EXISTING_WEBSITE_ATTACHMENTS_PRESERVED'};
    const uploadInputs=()=>{
-    const candidates=[...document.querySelectorAll('input[type=file]')].filter(e=>!e.disabled&&!e.webkitdirectory&&!e.hasAttribute('directory')&&(files.length===1||e.multiple)&&files.every(f=>{
+    const candidates=[...document.querySelectorAll('input[type=file]')].filter(e=>!e.disabled&&!e.closest('[inert],[aria-hidden=true]')&&!e.webkitdirectory&&!e.hasAttribute('directory')&&(files.length===1||e.multiple)&&files.every(f=>{
     const accept=e.accept.toLowerCase().split(',').map(x=>x.trim()).filter(Boolean);
     return !accept.length||accept.includes('*/*')||accept.some(a=>a===f.mime||a==='.'+f.name.split('.').at(-1).toLowerCase()||(a.endsWith('/*')&&f.mime.startsWith(a.slice(0,-1))));
     }));
@@ -198,18 +218,20 @@ return await (async () => {
    };
    let inputs=uploadInputs();
    const controlDeadline=performance.now()+2500;let openedMenu=false;
-   while(inputs.length===0&&performance.now()<controlDeadline){
+   while(inputs.length!==1&&performance.now()<controlDeadline){
     if(!same()||clean(location.href)!==original)return {state:'target_changed'};
     // ChatGPT's supported Add files menu may mount its native file input
     // lazily on a new chat. Open only the verified local composer menu, never
     // the file-picker action, history, a connector or a private upload API.
-    if(provider==='ChatGPT'&&!openedMenu){
+    if(inputs.length===0&&provider==='ChatGPT'&&!openedMenu){
      const menus=[...document.querySelectorAll('button')].filter(e=>inComposer(e)&&/^(Add files and more|添加文件等内容)$/i.test(e.getAttribute('aria-label')||''));
      if(menus.length===1&&menus[0].getAttribute('aria-expanded')!=='true'){menus[0].click();openedMenu=true;}
     }
-    await new Promise(r=>setTimeout(r,100));inputs=uploadInputs();
+    await new Promise(r=>setTimeout(r,100));
+    if(!bindExactComposer())return {state:'draft',reason:'EXACT_DRAFT_NOT_CONFIRMED_NO_MESSAGE_SENT'};
+    inputs=uploadInputs();
    }
-   if(inputs.length!==1)return {state:'unsupported',reason:'EXACT_FILE_UPLOAD_CONTROL_UNAVAILABLE · eligible='+inputs.length+' · total='+document.querySelectorAll('input[type=file]').length};
+   if(inputs.length!==1)return {state:'unsupported',reason:'EXACT_FILE_UPLOAD_CONTROL_UNAVAILABLE · eligible='+inputs.length+' · total='+document.querySelectorAll('input[type=file]').length+' · UPLOAD_CONTROL_SHAPE '+JSON.stringify(uploadShape())};
    const transfer=new DataTransfer();
    for(const f of files){
     const bytes=Uint8Array.from(atob(f.base64),c=>c.charCodeAt(0));
@@ -218,12 +240,14 @@ return await (async () => {
     transfer.items.add(new File([bytes],f.name,{type:f.mime}));
    }
    if(!same()||clean(location.href)!==original)return {state:'target_changed'};
+   if(!bindExactComposer()||!inputs[0].isConnected||uploadInputs().length!==1||uploadInputs()[0]!==inputs[0])return {state:'draft',reason:'UPLOAD_CONTROL_CHANGED_NO_MESSAGE_SENT'};
    inputs[0].files=transfer.files;inputs[0].dispatchEvent(new Event('change',{bubbles:true}));
    window.twosUploadReceipts.set(request.id,manifest);
   }
   let uploaded=false;
   for(let n=0;n<80;n++){
    if(!same()||clean(location.href)!==original)return {state:'unknown',reason:'ATTACHMENT_TARGET_CHANGED'};
+   if(!bindExactComposer()){await new Promise(r=>setTimeout(r,100));continue;}
    const nodes=chips().filter(e=>!chips().some(other=>other!==e&&other.contains(e)));
    const available=new Set(nodes),remaining=[];
    const labels=e=>[fileLabel(e),...(e.innerText||'').split('\n'),(e.getAttribute('aria-label')||'').replace(removeLabel,''),e.getAttribute('title')||''].filter(Boolean).map(v=>v.trim());
@@ -254,11 +278,14 @@ return await (async () => {
  // Optional draft-only mode never reports SENT. Normal transfers require one
  // exact visible send control and then the complete marked user-message echo.
  if(request.draftOnly)return {state:'draft'};
- for(let n=0;n<20;n++){
+ const sendDeadline=performance.now()+8000;
+ while(performance.now()<sendDeadline){
   await new Promise(r=>setTimeout(r,100));
-  if(!same()||clean(location.href)!==original||normalize(value())!==normalize(prompt))return {state:'target_changed'};
-  const buttons=[...document.querySelectorAll('button,[role=button]')].filter(e=>visible(e)&&!e.disabled&&e.getAttribute('aria-disabled')!=='true'&&(
-   e.matches('[data-testid="send-button"],#composer-submit-button')||/^(Send(?: message| prompt)?|发送(?:消息|提示)?)$/i.test(e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent.trim())));
+  if(!same()||clean(location.href)!==original)return {state:'target_changed'};
+  if(!bindExactComposer())return {state:'draft',reason:'EXACT_DRAFT_CHANGED_NO_MESSAGE_SENT'};
+  const candidates=[...document.querySelectorAll('button,[role=button]')].filter(e=>visible(e)&&!e.disabled&&e.getAttribute('aria-disabled')!=='true'&&!e.closest('[inert],[aria-hidden=true],[data-twos-native-card],[data-message-author-role],[data-is-streaming],.font-claude-response')&&isSendControl(e));
+  const scoped=composerScopes.map(root=>candidates.filter(e=>root.contains(e))).find(items=>items.length);
+  const buttons=scoped||candidates;
   const deepSeekControl=deepSeekSend();if(!buttons.length&&deepSeekControl)buttons.push(deepSeekControl);
   if(buttons.length!==1)continue;
   buttons[0].click(); // Exactly one real website control; never guess Enter or another icon.
@@ -274,5 +301,5 @@ return await (async () => {
   }
   return {state:'unknown'};
  }
- return {state:'draft',reason:'EXACT_SEND_CONTROL_NOT_READY_NO_MESSAGE_SENT'};
+ return {state:'draft',reason:'EXACT_SEND_CONTROL_NOT_READY_NO_MESSAGE_SENT · SEND_CONTROL_SHAPE '+JSON.stringify(sendShape())};
 })();

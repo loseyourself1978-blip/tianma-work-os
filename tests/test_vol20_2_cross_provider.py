@@ -507,6 +507,11 @@ if mode == "states" {
     work.applyWebResponse(r.id,response:["state":"reply","reply":"TEST/FIXTURE reply"])
     work.applyWebResponse(r.id,response:["state":"unknown"])
     precondition(work.webTransfers[0].state=="reply" && work.webTransfers[0].result=="TEST/FIXTURE reply")
+    var draft=r;draft.id="UNSENT-DRAFT";draft.state="sending";work.webTransfers.append(draft)
+    work.applyWebResponse(draft.id,response:["state":"draft","reason":"EXACT_SEND_CONTROL_NOT_READY_NO_MESSAGE_SENT"],dispatchResponse:true)
+    work.applyWebResponse(draft.id,response:["state":"unknown","reason":"EXACT_RECEIPT_NOT_FOUND"])
+    precondition(work.webTransfers.last!.state=="draft" && work.webTransfers.last!.mayHaveSent==false,"read-only check must preserve proven unsent draft")
+    work.webTransfers.removeLast()
     var q=r;q.id="QUEUE-FIXTURE";q.state="sending";q.createdAt+=1;work.webTransfers.append(q)
     work.applyWebResponse(q.id,response:["state":"busy"],dispatchResponse:true)
     precondition(work.webTransfers[1].state=="queued" && work.webTransfers[1].mayHaveSent==false)
@@ -581,6 +586,10 @@ func probe(){
         case "upload_nearest_control": setup="const f=document.querySelector('input[type=file]');document.getElementById('draft').parentElement.append(f);document.getElementById('draft-area').insertAdjacentHTML('beforeend','<input type=file multiple>')"
         case "upload_directory_control": setup="document.getElementById('draft-area').insertAdjacentHTML('beforeend','<input type=file multiple webkitdirectory>')"
         case "upload_ambiguous_control": setup="document.querySelector('input[type=file]').insertAdjacentHTML('afterend','<input type=file multiple>')"
+        case "upload_transient_duplicate": setup="const f=document.querySelector('input[type=file]');const duplicate=f.cloneNode();f.after(duplicate);setTimeout(()=>duplicate.remove(),600)"
+        case "send_delayed_control": setup="const b=document.getElementById('send');b.disabled=true;setTimeout(()=>b.disabled=false,2800)"
+        case "send_ambiguous_control": setup="document.getElementById('send').insertAdjacentHTML('afterend','<button aria-label=Send onclick=window.unexpectedSend=true>Send</button>')"
+        case "send_changed_draft": setup="const b=document.getElementById('send');b.disabled=true;document.getElementById('draft').addEventListener('input',()=>setTimeout(()=>{document.getElementById('draft').value='USER CHANGED DRAFT';b.disabled=false},350))"
         case "upload_no_control": setup="document.querySelector('input[type=file]').remove()"
         case "upload_switch": setup="document.documentElement.dataset.changeDuringUpload='yes'"
         case "challenge": setup="document.body.insertAdjacentHTML('afterbegin','<h1>正在进行安全验证</h1>')"
@@ -596,7 +605,7 @@ func probe(){
             var req=request
             if mode=="origin" {req["targetURL"]="https://evil.test/"}
             b.webTransfer(req) { response in
-                let expected=["challenge":"verification","existing":"draft_conflict","busy":"busy","origin":"target_changed","draft":"draft","cancel":"target_changed","preflight":"ready","readiness":"input_ready","inspect_missing":"unknown","chatgpt_bubble_changed":"unknown","claude_markup_changed":"unknown","chatgpt_markup_changed":"unknown","resume_missing":"unknown","deepseek_streaming":"sent","claude_streaming":"sent","upload_corrupt":"unsupported","upload_foreign":"draft_conflict","upload_foreign_image":"draft_conflict","upload_changed_input":"draft","upload_no_control":"unsupported","upload_ambiguous_control":"unsupported","upload_switch":"unknown"][mode] ?? "reply"
+                let expected=["challenge":"verification","existing":"draft_conflict","busy":"busy","origin":"target_changed","draft":"draft","cancel":"target_changed","preflight":"ready","readiness":"input_ready","inspect_missing":"unknown","chatgpt_bubble_changed":"unknown","claude_markup_changed":"unknown","chatgpt_markup_changed":"unknown","resume_missing":"unknown","deepseek_streaming":"sent","claude_streaming":"sent","upload_corrupt":"unsupported","upload_foreign":"draft_conflict","upload_foreign_image":"draft_conflict","upload_changed_input":"draft","upload_no_control":"unsupported","upload_ambiguous_control":"unsupported","send_ambiguous_control":"draft","send_changed_draft":"draft","upload_switch":"unknown"][mode] ?? "reply"
                 if mode=="claude_markup" {precondition((response["reply"] as? String)?.contains("TEST/FIXTURE response") == true && (response["reply"] as? String)?.contains("PROGRESS") == false && (response["reply"] as? String)?.contains("待办 ✓") == true,"final body must exclude public progress but preserve code") }
                 if mode=="chatgpt_file_reference" {precondition((response["reply"] as? String)?.contains("TEST-FILE.txt") == true && (response["reply"] as? String)?.contains("Copy table") == false,"inline file label is content; toolbar action is not: \(response)")}
                 if mode=="claude_chrome" {precondition(response["reply"] as? String=="TEST/FIXTURE response","UI chrome is not answer text")}
@@ -605,9 +614,11 @@ func probe(){
                     let facts=try! JSONSerialization.jsonObject(with:Data((value as! String).utf8)) as! [String:Any]
                     if mode=="chatgpt_file_reference" {precondition(facts["previewActivations"] as? Int==0,"reading must not open a file")}
                     if mode.contains("markup") {precondition(facts["inlineCode"] as? Int==2,"fixture must actually render both inline code fragments")}
-                    let sends = ["upload_exact","upload_async_input","upload_delayed_control","upload_menu_control","upload_scoped_control","upload_nearest_control","upload_directory_control","upload_same_name","upload_history","upload_claude_labels","upload_chatgpt_cards","upload_chatgpt_renamed","send","spa","deepseek_shape","deepseek_streaming","chatgpt_semantic","chatgpt_bubble","chatgpt_bubble_changed","chatgpt_markup","chatgpt_markup_changed","upload_chatgpt_bubble","claude","claude_streaming","claude_chrome","chatgpt_file_reference","claude_markup","claude_markup_changed","resume_exact"].contains(mode)
+                    let sends = ["upload_transient_duplicate","upload_remounted_composer","send_delayed_control","upload_exact","upload_async_input","upload_delayed_control","upload_menu_control","upload_scoped_control","upload_nearest_control","upload_directory_control","upload_same_name","upload_history","upload_claude_labels","upload_chatgpt_cards","upload_chatgpt_renamed","send","spa","deepseek_shape","deepseek_streaming","chatgpt_semantic","chatgpt_bubble","chatgpt_bubble_changed","chatgpt_markup","chatgpt_markup_changed","upload_chatgpt_bubble","claude","claude_streaming","claude_chrome","chatgpt_file_reference","claude_markup","claude_markup_changed","resume_exact"].contains(mode)
                     precondition(facts["sends"] as? Int == (sends ? 1:0),"side effect")
                     if mode=="existing" {precondition(facts["draft"] as? String == "KEEP EXISTING")}
+                    if mode=="send_changed_draft" {precondition(facts["draft"] as? String == "USER CHANGED DRAFT")}
+
                     func verifySingleDispatch() {
                         if sends {
                             var inspect=request;inspect["inspectOnly"]=true
@@ -622,7 +633,7 @@ func probe(){
                             else { reconcile() }
                         }else{print("CROSS_\(mode)_PASS");exit(0)}
                     }
-                    if ["upload_async_input","upload_delayed_control","upload_menu_control","upload_scoped_control","upload_nearest_control","upload_directory_control"].contains(mode) || mode=="upload_exact" || mode=="upload_same_name" || mode=="upload_history" || mode=="upload_claude_labels" || mode=="upload_chatgpt_cards" || mode=="upload_chatgpt_renamed" {
+                    if ["upload_transient_duplicate","upload_remounted_composer","upload_async_input","upload_delayed_control","upload_menu_control","upload_scoped_control","upload_nearest_control","upload_directory_control"].contains(mode) || mode=="upload_exact" || mode=="upload_same_name" || mode=="upload_history" || mode=="upload_claude_labels" || mode=="upload_chatgpt_cards" || mode=="upload_chatgpt_renamed" {
                         precondition((response["attachments"] as? [[String:Any]])?.count == (request["files"] as? [[String:Any]])?.count)
                         b.web.evaluateJavaScript("JSON.stringify(window.uploaded)") { raw,_ in
                             let bytes=try! JSONSerialization.jsonObject(with:Data((raw as! String).utf8)) as! [[String:Any]]
@@ -646,7 +657,7 @@ probe();DispatchQueue.main.asyncAfter(deadline:.now()+20){fatalError("fixture ti
     assert run.returncode==0,run.stderr
     return binary
 
-@pytest.mark.parametrize('mode',['paired_attachment_scope_ui','auxiliary_window_close','history_restore','paired_policy','paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_hydration','paired_auto_late_changed','paired_recovery','upload_exact','upload_async_input','upload_changed_input','upload_delayed_control','upload_menu_control','upload_scoped_control','upload_nearest_control','upload_directory_control','upload_ambiguous_control','upload_same_name','upload_history','upload_claude_labels','upload_chatgpt_cards','upload_chatgpt_renamed','upload_foreign_image','upload_corrupt','upload_foreign','upload_no_control','upload_switch','nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble','claude','claude_streaming','claude_chrome','chatgpt_file_reference','claude_markup','claude_markup_changed','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
+@pytest.mark.parametrize('mode',['paired_attachment_scope_ui','auxiliary_window_close','history_restore','paired_policy','paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_hydration','paired_auto_late_changed','paired_recovery','upload_exact','upload_async_input','upload_changed_input','upload_delayed_control','upload_menu_control','upload_scoped_control','upload_nearest_control','upload_directory_control','upload_ambiguous_control','upload_transient_duplicate','upload_remounted_composer','send_delayed_control','send_ambiguous_control','send_changed_draft','upload_same_name','upload_history','upload_claude_labels','upload_chatgpt_cards','upload_chatgpt_renamed','upload_foreign_image','upload_corrupt','upload_foreign','upload_no_control','upload_switch','nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble','claude','claude_streaming','claude_chrome','chatgpt_file_reference','claude_markup','claude_markup_changed','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
 def test_exact_target_single_dispatch_and_preflight(cross_harness,tmp_path,mode):
     class Fixture(BaseHTTPRequestHandler):
         def do_GET(self):
@@ -683,6 +694,11 @@ window.uploaded=[];document.querySelector('input[type=file]').onchange=async e=>
  const wrapper=document.createElement('div');wrapper.append(chip);const remove=document.createElement('button');remove.setAttribute('aria-label','Remove '+shown);wrapper.append(remove);document.getElementById('draft-area').append(wrapper);
  }else{document.getElementById('draft-area').append(chip);} }
 };
+// Model a provider framework remount in the page's own world, where its
+// upload handler lives; a named isolated world cannot copy page JS handlers.
+if(TEST_MODE==='upload_remounted_composer'){
+ const old=document.getElementById('draft');old.addEventListener('input',()=>{const field=old.cloneNode();field.value=old.value;old.replaceWith(field);const f=document.querySelector('input[type=file]');const fresh=f.cloneNode();fresh.onchange=f.onchange;f.replaceWith(fresh);},{once:true});
+}
 </script>""")
             if mode in ('history_restore','paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_hydration','paired_auto_late_changed'):
                 provider='ChatGPT' if self.path in ('/a','/') else 'Claude'
