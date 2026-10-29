@@ -174,11 +174,31 @@ return await (async () => {
   const chips=attachmentChips;
   if(!previous){
    if(chips().length)return {state:'draft_conflict',reason:'EXISTING_WEBSITE_ATTACHMENTS_PRESERVED'};
-   const inputs=[...document.querySelectorAll('input[type=file]')].filter(e=>!e.disabled&&(files.length===1||e.multiple)&&files.every(f=>{
+   const uploadInputs=()=>{
+    const candidates=[...document.querySelectorAll('input[type=file]')].filter(e=>!e.disabled&&(files.length===1||e.multiple)&&files.every(f=>{
     const accept=e.accept.toLowerCase().split(',').map(x=>x.trim()).filter(Boolean);
     return !accept.length||accept.includes('*/*')||accept.some(a=>a===f.mime||a==='.'+f.name.split('.').at(-1).toLowerCase()||(a.endsWith('/*')&&f.mime.startsWith(a.slice(0,-1))));
-   }));
-   if(inputs.length!==1)return {state:'unsupported',reason:'EXACT_FILE_UPLOAD_CONTROL_UNAVAILABLE'};
+    }));
+    // Hidden file inputs can belong to a different composer or modal. Prefer
+    // one within this exact draft's bounded subtree; never pick the first of
+    // several equally eligible controls.
+    const scoped=candidates.filter(e=>composerScopes.some(root=>root.contains(e)));
+    return scoped.length===1 ? scoped : candidates;
+   };
+   let inputs=uploadInputs();
+   const controlDeadline=performance.now()+2500;let openedMenu=false;
+   while(inputs.length===0&&performance.now()<controlDeadline){
+    if(!same()||clean(location.href)!==original)return {state:'target_changed'};
+    // ChatGPT's supported Add files menu may mount its native file input
+    // lazily on a new chat. Open only the verified local composer menu, never
+    // the file-picker action, history, a connector or a private upload API.
+    if(provider==='ChatGPT'&&!openedMenu){
+     const menus=[...document.querySelectorAll('button')].filter(e=>inComposer(e)&&/^(Add files and more|添加文件等内容)$/i.test(e.getAttribute('aria-label')||''));
+     if(menus.length===1&&menus[0].getAttribute('aria-expanded')!=='true'){menus[0].click();openedMenu=true;}
+    }
+    await new Promise(r=>setTimeout(r,100));inputs=uploadInputs();
+   }
+   if(inputs.length!==1)return {state:'unsupported',reason:'EXACT_FILE_UPLOAD_CONTROL_UNAVAILABLE · eligible='+inputs.length+' · total='+document.querySelectorAll('input[type=file]').length};
    const transfer=new DataTransfer();
    for(const f of files){
     const bytes=Uint8Array.from(atob(f.base64),c=>c.charCodeAt(0));

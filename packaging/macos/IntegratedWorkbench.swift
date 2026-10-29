@@ -950,7 +950,9 @@ struct WebHandoffReceipt: Codable {
         case "cancelled": return "Unsent handoff cancelled. Existing website drafts are preserved."
         case "target_changed": return "The destination changed. Nothing was sent."
         case "draft_conflict": return "The target has an existing draft. It has been preserved."
-        case "unsupported": return "No verified website send control is available. Nothing was sent."
+        case "unsupported":
+            if inspection?.hasPrefix("EXACT_FILE_UPLOAD_CONTROL_UNAVAILABLE") == true {return "The website attachment control is unavailable or ambiguous. Your draft is preserved; nothing was sent."}
+            return "No verified website send control is available. Nothing was sent."
         case "sending": return "Sending the confirmed instruction."
         default: return "Delivery needs verification. It will not be repeated automatically."
         }

@@ -1442,5 +1442,9 @@
   "Files selected for a new exchange": {
     "en-US": "Files selected for a new exchange",
     "zh-CN": "新互聊将发送的已选附件"
+  },
+  "The website attachment control is unavailable or ambiguous. Your draft is preserved; nothing was sent.": {
+    "en-US": "The website attachment control is unavailable or ambiguous. Your draft is preserved; nothing was sent.",
+    "zh-CN": "网站附件入口尚未就绪或无法唯一确认。草稿已保留，未发送。"
   }
 }
