@@ -691,7 +691,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
         // marker and full body. This never enables resume/send or changes an
         // already established conversation binding.
         guard (r.resolvedURL == nil || r.resolvedURL == r.targetURL), r.mayHaveSent == true,
-              ["unknown","sending","sent"].contains(r.state), kinds[r.targetPane] == r.provider,
+              ["unknown","sending","sent","reply"].contains(r.state), kinds[r.targetPane] == r.provider,
               let pane=webPanes[r.targetPane],let original=URL(string:r.targetURL),
               ["","/","/new"].contains(original.path),
               let current=NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome) else { return false }
@@ -820,7 +820,10 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
         guard let i = webTransfers.firstIndex(where: { $0.id == id }) else { return }
         let allowed = ["sent", "reply", "unknown", "draft", "verification", "login", "busy", "not_loaded", "target_changed", "unsupported", "draft_conflict", "provider_limited"]
         var state = response["state"] as? String ?? "unknown"
-        if let reason=response["reason"] as? String {webTransfers[i].inspection=reason}
+        if let reason=response["reason"] as? String {
+            webTransfers[i].inspection=reason
+            if dispatchResponse {webTransfers[i].dispatchReason=reason}
+        }
         guard allowed.contains(state) else { return }
         if webTransfers[i].dialogueID != nil, ["verification","login","provider_limited"].contains(state) {
             pauseDialogue(state == "provider_limited" ? "The provider reported a service limit or capacity issue. No next message is sent." : "Login or human verification is required. No next message is sent.")
@@ -940,6 +943,7 @@ struct WebHandoffReceipt: Codable {
     var resultHash: String?
     var replyMessage: String?
     var inspection: String?
+    var dispatchReason: String?
     var inspectedAt: TimeInterval?
     var createdAt = Date().timeIntervalSince1970
     var updatedAt = Date().timeIntervalSince1970
@@ -958,7 +962,7 @@ struct WebHandoffReceipt: Codable {
         case "target_changed": return "The destination changed. Nothing was sent."
         case "draft_conflict": return "The target has an existing draft. It has been preserved."
         case "unsupported":
-            if inspection?.hasPrefix("EXACT_FILE_UPLOAD_CONTROL_UNAVAILABLE") == true {return "The website attachment control is unavailable or ambiguous. Your draft is preserved; nothing was sent."}
+            if (dispatchReason ?? inspection)?.hasPrefix("EXACT_FILE_UPLOAD_CONTROL_UNAVAILABLE") == true {return "The website attachment control is unavailable or ambiguous. Your draft is preserved; nothing was sent."}
             return "No verified website send control is available. Nothing was sent."
         case "sending": return "Sending the confirmed instruction."
         default: return "Delivery needs verification. It will not be repeated automatically."

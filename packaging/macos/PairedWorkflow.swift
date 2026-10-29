@@ -294,6 +294,29 @@ extension IntegratedWorkbench {
         // Restart turns persisted `sending` into `unknown`, never an auto retry.
         if let id=d.pendingID,webTransfers.first(where:{$0.id==id})?.state=="sending" {return}
         guard dialogueTargetsMatch(d) else {
+            // During a first conversation transition WebKit can temporarily
+            // expose no restorable URL even though it already echoed our exact
+            // submission. Wait read-only for at most five regular ticks. Do not
+            // inspect an unapproved location, send again, or rebind from a URL.
+            if let id=d.pendingID,let i=webTransfers.firstIndex(where:{$0.id==id}) {
+                let r=webTransfers[i],side=r.targetPane,other=1-side
+                if r.mayHaveSent == true,["sent","reply","unknown"].contains(r.state),
+                   r.resolvedURL == nil || r.resolvedURL == r.targetURL,
+                   kinds[side]==r.provider,kinds[other]==d.providers[other],
+                   let original=URL(string:r.targetURL),["","/","/new"].contains(original.path),
+                   let pane=webPanes[side],let peer=webPanes[other],
+                   NativeWorkbench.restorableURL(peer.web.url,service:peer.serviceHome)?.absoluteString==d.conversations[other],
+                   NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome)==nil,
+                   pane.web.url == nil || (pane.web.url?.scheme==original.scheme && pane.web.url?.host==original.host && pane.web.url?.port==original.port) {
+                    let attempts=dialogueNavigationReads[id,default:0]
+                    if attempts<5 {
+                        dialogueNavigationReads[id]=attempts+1
+                        webTransfers[i].inspection="FIRST_CONVERSATION_ADDRESS_PENDING · read-only wait \(attempts+1)/5"
+                        webTransfers[i].inspectedAt=Date().timeIntervalSince1970
+                        _ = persistWebTransfers();return
+                    }
+                }
+            }
             // Some providers acknowledge the exact user message on /new before
             // assigning its conversation URL. Reconcile that one pending first
             // send read-only; never treat navigation itself as authorization.
