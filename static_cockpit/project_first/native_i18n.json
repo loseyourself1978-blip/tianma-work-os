@@ -1434,5 +1434,13 @@
   "Opening the recorded conversations. This only navigates; check delivery after they finish loading. Nothing was sent.": {
     "en-US": "Opening the recorded conversations. This only navigates; check delivery after they finish loading. Nothing was sent.",
     "zh-CN": "正在打开记录中的原会话。此操作只切换页面；加载完成后可检查投递。未发送内容。"
+  },
+  "Authorized files for the saved exchange": {
+    "en-US": "Authorized files for the saved exchange",
+    "zh-CN": "已保存互聊的授权附件"
+  },
+  "Files selected for a new exchange": {
+    "en-US": "Files selected for a new exchange",
+    "zh-CN": "新互聊将发送的已选附件"
   }
 }

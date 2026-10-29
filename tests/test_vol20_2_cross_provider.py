@@ -360,6 +360,24 @@ if mode == "history_restore" {
         }
     };ready();DispatchQueue.main.asyncAfter(deadline:.now()+20){fatalError("history restore timeout")};app.run();exit(0)
 }
+if mode == "paired_attachment_scope_ui" {
+    let work=IntegratedWorkbench(preferences:prefs,resources:resources,translate:{$0},openProjects:{fatalError("no business action")})
+    let old=WebTransferFile(id:"OLD",name:"OLD-authorized.txt",mime:"text/plain",size:3,hash:"old1234567890",source:"TEST")
+    let next=WebTransferFile(id:"NEXT",name:"NEXT-selected.png",mime:"image/png",size:4,hash:"new1234567890",source:"TEST")
+    work.webFileSelections=[0:[next]]
+    work.dialogue=PairedDialogue(id:"OLD-DIALOGUE",providers:["ChatGPT","Claude"],conversations:["https://chatgpt.com/","https://claude.ai/new"],roles:["A","B"],firstText:"TEST/FIXTURE",maxExchanges:6,duration:900,createdAt:Date().timeIntervalSince1970,state:"finished",files:[old])
+    work.showDialogue()
+    for state in ["finished","stopped","paused","running"] {
+        work.dialogue?.state=state;work.refreshDialogueUI()
+        let label=work.dialogueStatus!.stringValue
+        precondition(label.contains("NEXT-selected.png")==["finished","stopped","paused"].contains(state))
+        precondition(label.contains("OLD-authorized.txt")==["paused","running"].contains(state))
+        if state != "running" {precondition(label.contains("Files selected for a new exchange"))}
+        precondition(work.dialogue?.files==[old] && work.webFileSelections[0]==[next],"rendering must not change authorization")
+        precondition(work.webTransfers.isEmpty && work.dialogue?.sentCount==0,"review must never dispatch")
+    }
+    print("PAIRED_ATTACHMENT_SCOPE_UI_TERMINAL_NEW_AND_PAUSED_OLD_NO_DISPATCH_PASS");exit(0)
+}
 if mode == "paired_auto" || mode == "paired_auto_navigation" {
     let left=base.appendingPathComponent("a"),right=base.appendingPathComponent("b")
     try! NativeWorkbench.save(["kind0":"ChatGPT","kind1":"Claude","url0":left.absoluteString,"url1":right.absoluteString],at:prefs.appendingPathComponent("paired-workbench.json"))
@@ -612,7 +630,7 @@ probe();DispatchQueue.main.asyncAfter(deadline:.now()+20){fatalError("fixture ti
     assert run.returncode==0,run.stderr
     return binary
 
-@pytest.mark.parametrize('mode',['auxiliary_window_close','history_restore','paired_policy','paired_auto','paired_auto_navigation','paired_recovery','upload_exact','upload_same_name','upload_history','upload_claude_labels','upload_chatgpt_cards','upload_chatgpt_renamed','upload_foreign_image','upload_corrupt','upload_foreign','upload_no_control','upload_switch','nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble','claude','claude_streaming','claude_chrome','claude_markup','claude_markup_changed','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
+@pytest.mark.parametrize('mode',['paired_attachment_scope_ui','auxiliary_window_close','history_restore','paired_policy','paired_auto','paired_auto_navigation','paired_recovery','upload_exact','upload_same_name','upload_history','upload_claude_labels','upload_chatgpt_cards','upload_chatgpt_renamed','upload_foreign_image','upload_corrupt','upload_foreign','upload_no_control','upload_switch','nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble','claude','claude_streaming','claude_chrome','claude_markup','claude_markup_changed','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
 def test_exact_target_single_dispatch_and_preflight(cross_harness,tmp_path,mode):
     class Fixture(BaseHTTPRequestHandler):
         def do_GET(self):

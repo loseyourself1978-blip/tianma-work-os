@@ -192,8 +192,16 @@ extension IntegratedWorkbench {
             dialogueMinutes?.setAccessibilityLabel(translate("Minutes (1–120)"))
         }
         let targets=(0...1).map { kinds[$0] + " · " + (webPanes[$0].flatMap { NativeWorkbench.restorableURL($0.web.url,service:$0.serviceHome) }?.absoluteString ?? translate("Not ready")) }.joined(separator:"\n↔ ")
-        let selectedFiles=dialogue?.files ?? ((webFileSelections[0] ?? [])+(webFileSelections[1] ?? []))
-        let fileLabel="\n"+translate("Selected exact files for both directions")+": "+(selectedFiles.isEmpty ? "—" : selectedFiles.map{$0.name+" ["+$0.hash.prefix(12)+"]"}.joined(separator:", "))
+        let nextFiles=(webFileSelections[0] ?? [])+(webFileSelections[1] ?? [])
+        func fileList(_ files:[WebTransferFile],_ label:String)->String {
+            "\n"+translate(label)+": "+(files.isEmpty ? "—" : files.map{$0.name+" ["+$0.hash.prefix(12)+"]"}.joined(separator:", "))
+        }
+        // A saved terminal exchange is history, not the next Start's scope.
+        // Paused exchanges retain their authorized list independently of new
+        // selections; Continue must never silently adopt those selections.
+        let continuing=["running","paused"].contains(dialogue?.state ?? "")
+        var fileLabel=continuing ? fileList(dialogue?.files ?? [],"Authorized files for the saved exchange") : ""
+        if dialogue?.state != "running" { fileLabel += fileList(nextFiles,"Files selected for a new exchange") }
         if let d=dialogue {
             let pending=d.pendingID.flatMap { id in webTransfers.first{$0.id==id} }
             let waiting=pending.map { "\n"+translate("Waiting for")+": "+$0.provider+" · "+translate($0.statusLabel) } ?? ""
