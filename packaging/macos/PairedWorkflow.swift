@@ -293,7 +293,27 @@ extension IntegratedWorkbench {
         // Its response must still prove the full body and bind resolvedURL.
         // Restart turns persisted `sending` into `unknown`, never an auto retry.
         if let id=d.pendingID,webTransfers.first(where:{$0.id==id})?.state=="sending" {return}
-        guard dialogueTargetsMatch(d) else { pauseDialogue("A participant or conversation changed. Restore the bound conversations before continuing.");return }
+        guard dialogueTargetsMatch(d) else {
+            // Some providers acknowledge the exact user message on /new before
+            // assigning its conversation URL. Reconcile that one pending first
+            // send read-only; never treat navigation itself as authorization.
+            if let id=d.pendingID,let r=webTransfers.first(where:{$0.id==id}),
+               let pane=webPanes[r.targetPane],let other=webPanes[1-r.targetPane],canInspectCurrentTarget(r),
+               kinds[1-r.targetPane]==d.providers[1-r.targetPane],
+               NativeWorkbench.restorableURL(other.web.url,service:other.serviceHome)?.absoluteString==d.conversations[1-r.targetPane] {
+                if inspectionsInFlight.contains(id) {return}
+                dialogueTickInFlight=true
+                pane.webTransfer(r.request(inspectOnly:true)) { [weak self] response in
+                    guard let self=self else{return};self.dialogueTickInFlight=false
+                    guard self.dialogue?.id==d.id,self.dialogue?.state=="running",self.dialogue?.pendingID==id else{return}
+                    self.applyWebResponse(id,response:response)
+                    if self.dialogueTargetsMatch(d) {self.tickDialogue()}
+                    else {self.pauseDialogue("A participant or conversation changed. Restore the bound conversations before continuing.")}
+                }
+                return
+            }
+            pauseDialogue("A participant or conversation changed. Restore the bound conversations before continuing.");return
+        }
         if let id=d.pendingID {
             guard let r=webTransfers.first(where:{$0.id==id}), let pane=webPanes[r.targetPane] else { pauseDialogue("Pending receipt is missing. Nothing will be resent.");return }
             if inspectionsInFlight.contains(id) || r.state=="sending" {return}

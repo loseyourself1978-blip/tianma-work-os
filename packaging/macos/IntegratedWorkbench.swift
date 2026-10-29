@@ -689,8 +689,8 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
         // may search that currently open same-service chat for the exact unique
         // marker and full body. This never enables resume/send or changes an
         // already established conversation binding.
-        guard r.resolvedURL == nil, r.mayHaveSent == true,
-              ["unknown","sending"].contains(r.state), kinds[r.targetPane] == r.provider,
+        guard (r.resolvedURL == nil || r.resolvedURL == r.targetURL), r.mayHaveSent == true,
+              ["unknown","sending","sent"].contains(r.state), kinds[r.targetPane] == r.provider,
               let pane=webPanes[r.targetPane],let original=URL(string:r.targetURL),
               ["","/","/new"].contains(original.path),
               let current=NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome) else { return false }
@@ -836,7 +836,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
         if dispatchResponse && state == "busy" { state = "queued" }
         // A later inspection failure cannot erase an established send receipt.
         if webTransfers[i].state != "reply" && (webTransfers[i].state != "sent" || state == "reply") { webTransfers[i].state = state }
-        if let destination = response["conversationURL"] as? String, let original = URL(string: webTransfers[i].targetURL),
+        if ["sent","reply"].contains(state), let destination = response["conversationURL"] as? String, let original = URL(string: webTransfers[i].targetURL),
            let actual = NativeWorkbench.restorableURL(URL(string: destination), service: original) { webTransfers[i].resolvedURL = actual.absoluteString }
         if let reply = response["reply"] as? String, state == "reply", reply.utf8.count <= 200_000 {
             if let original=webTransfers[i].result, original != reply {

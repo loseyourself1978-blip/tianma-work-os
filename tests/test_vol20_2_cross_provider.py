@@ -331,6 +331,8 @@ if mode == "history_restore" {
                 var uncertain=WebHandoffReceipt(source:left.absoluteString,message:"TEST/FIXTURE",text:"non-sensitive",hash:"hash",provider:"Claude",targetPane:1,targetURL:base.absoluteString,binding:"fixture")
                 uncertain.state="unknown";uncertain.mayHaveSent=true
                 precondition(work.canInspectCurrentTarget(uncertain) && !work.currentTargetMatches(uncertain),"first-send reconciliation must be read-only")
+                uncertain.state="sent";uncertain.resolvedURL=uncertain.targetURL
+                precondition(work.canInspectCurrentTarget(uncertain),"landing-page acknowledgement must allow exact read-only reconciliation")
                 uncertain.mayHaveSent=false;precondition(!work.canInspectCurrentTarget(uncertain))
                 uncertain.mayHaveSent=true;uncertain.resolvedURL=right.appendingPathComponent("different").absoluteString
                 precondition(!work.canInspectCurrentTarget(uncertain),"do not rebind a proven destination")
@@ -378,8 +380,8 @@ if mode == "paired_attachment_scope_ui" {
     }
     print("PAIRED_ATTACHMENT_SCOPE_UI_TERMINAL_NEW_AND_PAUSED_OLD_NO_DISPATCH_PASS");exit(0)
 }
-if mode == "paired_auto" || mode == "paired_auto_navigation" {
-    let left=base.appendingPathComponent("a"),right=base.appendingPathComponent("b")
+if ["paired_auto","paired_auto_navigation","paired_auto_late_navigation","paired_auto_late_changed"].contains(mode) {
+    let left=mode.hasPrefix("paired_auto_late_") ? base : base.appendingPathComponent("a"),right=mode.hasPrefix("paired_auto_late_") ? base.appendingPathComponent("new") : base.appendingPathComponent("b")
     try! NativeWorkbench.save(["kind0":"ChatGPT","kind1":"Claude","url0":left.absoluteString,"url1":right.absoluteString],at:prefs.appendingPathComponent("paired-workbench.json"))
     let work=IntegratedWorkbench(preferences:prefs,resources:resources,translate:{$0},openProjects:{fatalError("no business action")})
     work.start();work.showDialogue()
@@ -401,13 +403,18 @@ if mode == "paired_auto" || mode == "paired_auto_navigation" {
             work.dialogueRounds!.stringValue="3";work.dialogueMinutes!.stringValue="2"
             work.startDialogue()
             func finish(){
+                if mode=="paired_auto_late_changed",work.dialogue?.state=="paused" {
+                    precondition(work.webTransfers.count==1 && work.dialogue!.sentCount==1 && work.dialogue!.completedCount==0)
+                    precondition(work.webTransfers[0].resolvedURL==right.absoluteString,"changed body must not rebind the destination")
+                    print("LATE_NAVIGATION_CHANGED_RECEIPT_PAUSES_NO_REBIND_NO_SECOND_SEND_PASS");exit(0)
+                }
                 if work.dialogue?.state=="paused" {fatalError("auto paused: \(work.dialogue?.reason ?? "")")}
                 guard work.dialogue?.state=="finished" else{DispatchQueue.main.asyncAfter(deadline:.now()+0.2,execute:finish);return}
                 precondition(work.dialogue!.completedCount==6 && work.webTransfers.count==6)
                 precondition(Set(work.webTransfers.map(\.id)).count==6)
                 precondition(work.webTransfers.map(\.targetPane)==[1,0,1,0,1,0])
                 precondition(work.webTransfers.allSatisfy{$0.state=="reply" && $0.resultHash != nil})
-                if mode=="paired_auto_navigation" {
+                if mode=="paired_auto_navigation" || mode=="paired_auto_late_navigation" {
                     precondition(work.dialogue!.conversations.allSatisfy{$0.hasSuffix("/conversation")},"new conversation was not bound by exact receipt")
                 }
                 let last=work.webTransfers.last!
@@ -630,7 +637,7 @@ probe();DispatchQueue.main.asyncAfter(deadline:.now()+20){fatalError("fixture ti
     assert run.returncode==0,run.stderr
     return binary
 
-@pytest.mark.parametrize('mode',['paired_attachment_scope_ui','auxiliary_window_close','history_restore','paired_policy','paired_auto','paired_auto_navigation','paired_recovery','upload_exact','upload_same_name','upload_history','upload_claude_labels','upload_chatgpt_cards','upload_chatgpt_renamed','upload_foreign_image','upload_corrupt','upload_foreign','upload_no_control','upload_switch','nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble','claude','claude_streaming','claude_chrome','claude_markup','claude_markup_changed','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
+@pytest.mark.parametrize('mode',['paired_attachment_scope_ui','auxiliary_window_close','history_restore','paired_policy','paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_changed','paired_recovery','upload_exact','upload_same_name','upload_history','upload_claude_labels','upload_chatgpt_cards','upload_chatgpt_renamed','upload_foreign_image','upload_corrupt','upload_foreign','upload_no_control','upload_switch','nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble','claude','claude_streaming','claude_chrome','claude_markup','claude_markup_changed','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
 def test_exact_target_single_dispatch_and_preflight(cross_harness,tmp_path,mode):
     class Fixture(BaseHTTPRequestHandler):
         def do_GET(self):
@@ -666,14 +673,19 @@ window.uploaded=[];document.querySelector('input[type=file]').onchange=async e=>
  }else{document.getElementById('draft-area').append(chip);} }
 };
 </script>""")
-            if mode in ('history_restore','paired_auto','paired_auto_navigation'):
-                provider='ChatGPT' if self.path=='/a' else 'Claude'
+            if mode in ('history_restore','paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_changed'):
+                provider='ChatGPT' if self.path in ('/a','/') else 'Claude'
                 body=('''<!doctype html><html data-twos-fixture-provider="PROVIDER"><meta charset=utf-8><h1>TEST/FIXTURE automatic participant PROVIDER</h1><textarea id=draft></textarea><button aria-label=Send id=send>Send</button><script>
 window.sends=0;document.getElementById('send').onclick=()=>{window.sends++;const user=document.createElement('div');user.dataset.messageAuthorRole='user';user.dataset.testid='user-message';user.textContent=document.getElementById('draft').value;document.body.append(user);document.getElementById('draft').value='';const reply=document.createElement('div');reply.dataset.messageAuthorRole='assistant';reply.dataset.isStreaming='false';reply.className='font-claude-response';reply.textContent='TEST/FIXTURE PROVIDER complete answer '+window.sends+' 中文\\nline two';document.body.append(reply);};
 </script></html>''').replace('PROVIDER',provider).encode()
                 if mode=='paired_auto_navigation':
                     body=body.replace(b'const user=document.createElement',b"if(window.sends===1)history.pushState({},'',location.pathname+'/conversation');setTimeout(()=>{const user=document.createElement")
                     body=body.replace(b'document.body.append(reply);};',b'document.body.append(reply);},window.sends===1?3200:0);};')
+                if mode in ('paired_auto_late_navigation','paired_auto_late_changed'):
+                    body=body.replace(b"const reply=document.createElement",br"if(window.sends===1)setTimeout(()=>history.pushState({},'',location.pathname.replace(/\/$/,'')+'/conversation'),350);setTimeout(()=>{const reply=document.createElement")
+                    body=body.replace(b'document.body.append(reply);};',b'document.body.append(reply);},window.sends===1?3200:0);};')
+                if mode=='paired_auto_late_changed':
+                    body=body.replace(br"history.pushState({},'',location.pathname.replace(/\/$/,'')+'/conversation')",br"(history.pushState({},'',location.pathname.replace(/\/$/,'')+'/conversation'),user.textContent+=' CHANGED')")
             self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.end_headers();self.wfile.write(body)
         def log_message(self,*args):pass
     server=ThreadingHTTPServer(('127.0.0.1',0),Fixture);thread=Thread(target=server.serve_forever,daemon=True);thread.start()
@@ -688,7 +700,7 @@ window.sends=0;document.getElementById('send').onclick=()=>{window.sends++;const
             executable.parent.mkdir(parents=True)
             shutil.copy2(cross_harness,executable)
             (bundle/'Contents/Info.plist').write_bytes(plistlib.dumps({'CFBundleIdentifier':'com.tianma.tests.nyra.selected','CFBundleExecutable':'cross','CFBundlePackageType':'APPL'}))
-        result=subprocess.run([str(executable),mode,str(tmp_path/'profile'),f'http://127.0.0.1:{server.server_port}/',str(ROOT/'static_cockpit')],capture_output=True,text=True,timeout=75 if mode in ('paired_auto','paired_auto_navigation') else 30)
+        result=subprocess.run([str(executable),mode,str(tmp_path/'profile'),f'http://127.0.0.1:{server.server_port}/',str(ROOT/'static_cockpit')],capture_output=True,text=True,timeout=75 if mode in ('paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_changed') else 30)
         assert result.returncode==0,result.stdout+result.stderr
         assert 'PASS' in result.stdout
     finally:server.shutdown();server.server_close();thread.join()
