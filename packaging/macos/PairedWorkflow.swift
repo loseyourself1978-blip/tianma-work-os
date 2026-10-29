@@ -325,6 +325,16 @@ extension IntegratedWorkbench {
                 }
                 return
             }
+            if let id=d.pendingID,let i=webTransfers.firstIndex(where:{$0.id==id}) {
+                let r=webTransfers[i],p=r.targetPane,other=1-p
+                let actual=webPanes[p].flatMap {NativeWorkbench.restorableURL($0.web.url,service:$0.serviceHome)}
+                let peer=webPanes[other].flatMap {NativeWorkbench.restorableURL($0.web.url,service:$0.serviceHome)}
+                // Bounded, content-free evidence explains why no reconciliation
+                // was allowed. Do not persist URLs, drafts or account details.
+                let firstRoot=["","/","/new"].contains(URL(string:r.targetURL)?.path ?? "invalid")
+                webTransfers[i].inspection="TARGET_RECONCILIATION_INELIGIBLE · state=\(r.state) · mayHaveSent=\(r.mayHaveSent == true) · sameProvider=\(kinds[p]==r.provider) · sourceUnchanged=\(peer?.absoluteString==d.conversations[other]) · targetRestorable=\(actual != nil) · firstRoot=\(firstRoot) · inspectable=\(canInspectCurrentTarget(r))"
+                webTransfers[i].inspectedAt=Date().timeIntervalSince1970
+            }
             pauseDialogue("A participant or conversation changed. Restore the bound conversations before continuing.");return
         }
         if let id=d.pendingID {

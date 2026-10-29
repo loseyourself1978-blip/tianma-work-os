@@ -44,7 +44,10 @@
   return textBody(el);
  }
  function textBody(el){
-  const controls=[...el.querySelectorAll('button,[role=button],[role=toolbar],time,[data-twos-native-card]'),
+  // Inline file references are answer content, not toolbar controls. Preserve
+  // their visible name without activating the preview or exporting file bytes.
+  const fileReference=e=>e.closest('p,td,li')&&/^(?:打开 .+ 的预览|Open .+ preview)$/i.test(e.getAttribute('aria-label')||'');
+  const controls=[...[...el.querySelectorAll('button,[role=button],[role=toolbar],time,[data-twos-native-card]')].filter(e=>!fileReference(e)),
    ...[...el.querySelectorAll('h3,[role=heading]')].filter(e=>/^(Claude (?:已回复|说|said|replied)[:：])/.test(e.textContent.trim()))
   ].map(e=>[e,e.getAttribute('style')]);
   try{controls.forEach(([e,s])=>e.setAttribute('style',(s||'')+';display:none!important'));return el.innerText||'';}

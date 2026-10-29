@@ -113,7 +113,8 @@ return await (async () => {
   const claudeStreaming=provider==='Claude'&&last&&(last.matches('[data-is-streaming="true"]')||last.querySelector('[data-is-streaming="true"]'));
   const settled=last&&!busy()&&!claudeStreaming&&(!deepSeekShape||Boolean(deepSeekSend(false)));
   let reply='';if(settled){
-   const controls=[...last.querySelectorAll('button,[role=button],[role=toolbar],time,[data-twos-native-card]')].map(e=>[e,e.getAttribute('style')]);
+   const fileReference=e=>e.closest('p,td,li')&&/^(?:打开 .+ 的预览|Open .+ preview)$/i.test(e.getAttribute('aria-label')||'');
+   const controls=[...last.querySelectorAll('button,[role=button],[role=toolbar],time,[data-twos-native-card]')].filter(e=>!fileReference(e)).map(e=>[e,e.getAttribute('style')]);
    try{controls.forEach(([e,s])=>e.setAttribute('style',(s||'')+';display:none!important'));reply=window.twosProviderDOM?.text?window.twosProviderDOM.text(last):(last.innerText||'');}
    finally{controls.forEach(([e,s])=>s===null?e.removeAttribute('style'):e.setAttribute('style',s));}
   }
