@@ -34,7 +34,7 @@ return await (async () => {
  // values, filenames, page text, URLs, credentials or arbitrary DOM dumps.
  const uploadShape=()=>[...document.querySelectorAll('input[type=file]')].slice(0,12).map((e,index)=>{
   const chain=[];for(let p=e.parentElement,n=0;p&&p!==document.body&&n<4;p=p.parentElement,n++)chain.push({tag:p.tagName,role:p.getAttribute('role'),testID:p.getAttribute('data-testid'),className:String(p.className||'').slice(0,180),visible:visible(p),containsDraft:p.contains(input)});
-  return {index,accept:e.accept.slice(0,400),multiple:e.multiple,disabled:e.disabled,directory:e.webkitdirectory||e.hasAttribute('directory'),capture:e.getAttribute('capture'),ariaHidden:Boolean(e.closest('[aria-hidden=true]')),chain};
+  return {index,accept:e.accept.slice(0,400),multiple:e.multiple,disabled:e.disabled,directory:e.webkitdirectory||e.hasAttribute('directory'),capture:e.getAttribute('capture'),selfAriaHidden:e.getAttribute('aria-hidden'),ariaHidden:Boolean(e.closest('[aria-hidden=true]')),chain};
  });
  const isSendControl=e=>e.matches('[data-testid="send-button"],#composer-submit-button,[data-testid="chat-input-send"]')||/^(Send(?: message| prompt)?|发送(?:消息|提示)?)$/i.test(e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent.trim());
  const sendShape=()=>[...document.querySelectorAll('button,[role=button]')].filter(isSendControl).slice(0,8).map(e=>({tag:e.tagName,testID:e.getAttribute('data-testid'),visible:visible(e),disabled:Boolean(e.disabled),ariaDisabled:e.getAttribute('aria-disabled'),inHistory:Boolean(e.closest('[data-twos-native-card],[data-message-author-role],[data-is-streaming],.font-claude-response'))}));
@@ -203,7 +203,7 @@ return await (async () => {
   if(!previous){
    if(chips().length)return {state:'draft_conflict',reason:'EXISTING_WEBSITE_ATTACHMENTS_PRESERVED'};
    const uploadInputs=()=>{
-    const candidates=[...document.querySelectorAll('input[type=file]')].filter(e=>!e.disabled&&!e.closest('[inert],[aria-hidden=true]')&&!e.webkitdirectory&&!e.hasAttribute('directory')&&(files.length===1||e.multiple)&&files.every(f=>{
+    const candidates=[...document.querySelectorAll('input[type=file]')].filter(e=>!e.disabled&&!e.closest('[inert]')&&!e.parentElement?.closest('[aria-hidden=true]')&&!e.webkitdirectory&&!e.hasAttribute('directory')&&(files.length===1||e.multiple)&&files.every(f=>{
     const accept=e.accept.toLowerCase().split(',').map(x=>x.trim()).filter(Boolean);
     return !accept.length||accept.includes('*/*')||accept.some(a=>a===f.mime||a==='.'+f.name.split('.').at(-1).toLowerCase()||(a.endsWith('/*')&&f.mime.startsWith(a.slice(0,-1))));
     }));
