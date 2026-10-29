@@ -182,15 +182,18 @@ return await (async () => {
   if(!previous){
    if(chips().length)return {state:'draft_conflict',reason:'EXISTING_WEBSITE_ATTACHMENTS_PRESERVED'};
    const uploadInputs=()=>{
-    const candidates=[...document.querySelectorAll('input[type=file]')].filter(e=>!e.disabled&&(files.length===1||e.multiple)&&files.every(f=>{
+    const candidates=[...document.querySelectorAll('input[type=file]')].filter(e=>!e.disabled&&!e.webkitdirectory&&!e.hasAttribute('directory')&&(files.length===1||e.multiple)&&files.every(f=>{
     const accept=e.accept.toLowerCase().split(',').map(x=>x.trim()).filter(Boolean);
     return !accept.length||accept.includes('*/*')||accept.some(a=>a===f.mime||a==='.'+f.name.split('.').at(-1).toLowerCase()||(a.endsWith('/*')&&f.mime.startsWith(a.slice(0,-1))));
     }));
     // Hidden file inputs can belong to a different composer or modal. Prefer
     // one within this exact draft's bounded subtree; never pick the first of
     // several equally eligible controls.
-    const scoped=candidates.filter(e=>composerScopes.some(root=>root.contains(e)));
-    return scoped.length===1 ? scoped : candidates;
+    for(const root of composerScopes){
+     const scoped=candidates.filter(e=>root.contains(e));
+     if(scoped.length)return scoped; // nearest actual draft subtree wins
+    }
+    return candidates;
    };
    let inputs=uploadInputs();
    const controlDeadline=performance.now()+2500;let openedMenu=false;

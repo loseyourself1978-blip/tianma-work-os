@@ -578,7 +578,9 @@ func probe(){
         case "upload_delayed_control": setup="const f=document.querySelector('input[type=file]');f.remove();setTimeout(()=>document.getElementById('draft-area').append(f),400)"
         case "upload_menu_control": setup="const f=document.querySelector('input[type=file]');f.remove();const b=document.createElement('button');b.setAttribute('aria-label','Add files and more');b.onclick=()=>{b.setAttribute('aria-expanded','true');document.getElementById('draft-area').append(f)};document.getElementById('draft-area').append(b)"
         case "upload_scoped_control": setup="document.body.insertAdjacentHTML('beforeend','<aside><input type=file multiple></aside>')"
-        case "upload_ambiguous_control": setup="document.getElementById('draft-area').insertAdjacentHTML('beforeend','<input type=file multiple>')"
+        case "upload_nearest_control": setup="const f=document.querySelector('input[type=file]');document.getElementById('draft').parentElement.append(f);document.getElementById('draft-area').insertAdjacentHTML('beforeend','<input type=file multiple>')"
+        case "upload_directory_control": setup="document.getElementById('draft-area').insertAdjacentHTML('beforeend','<input type=file multiple webkitdirectory>')"
+        case "upload_ambiguous_control": setup="document.querySelector('input[type=file]').insertAdjacentHTML('afterend','<input type=file multiple>')"
         case "upload_no_control": setup="document.querySelector('input[type=file]').remove()"
         case "upload_switch": setup="document.documentElement.dataset.changeDuringUpload='yes'"
         case "challenge": setup="document.body.insertAdjacentHTML('afterbegin','<h1>正在进行安全验证</h1>')"
@@ -601,7 +603,7 @@ func probe(){
                 b.web.evaluateJavaScript("JSON.stringify({sends:window.sends,draft:document.getElementById('draft').value,inlineCode:document.querySelectorAll('[data-testid=user-message] code').length})") { value,_ in
                     let facts=try! JSONSerialization.jsonObject(with:Data((value as! String).utf8)) as! [String:Any]
                     if mode.contains("markup") {precondition(facts["inlineCode"] as? Int==2,"fixture must actually render both inline code fragments")}
-                    let sends = ["upload_exact","upload_async_input","upload_delayed_control","upload_menu_control","upload_scoped_control","upload_same_name","upload_history","upload_claude_labels","upload_chatgpt_cards","upload_chatgpt_renamed","send","spa","deepseek_shape","deepseek_streaming","chatgpt_semantic","chatgpt_bubble","chatgpt_bubble_changed","chatgpt_markup","chatgpt_markup_changed","upload_chatgpt_bubble","claude","claude_streaming","claude_chrome","claude_markup","claude_markup_changed","resume_exact"].contains(mode)
+                    let sends = ["upload_exact","upload_async_input","upload_delayed_control","upload_menu_control","upload_scoped_control","upload_nearest_control","upload_directory_control","upload_same_name","upload_history","upload_claude_labels","upload_chatgpt_cards","upload_chatgpt_renamed","send","spa","deepseek_shape","deepseek_streaming","chatgpt_semantic","chatgpt_bubble","chatgpt_bubble_changed","chatgpt_markup","chatgpt_markup_changed","upload_chatgpt_bubble","claude","claude_streaming","claude_chrome","claude_markup","claude_markup_changed","resume_exact"].contains(mode)
                     precondition(facts["sends"] as? Int == (sends ? 1:0),"side effect")
                     if mode=="existing" {precondition(facts["draft"] as? String == "KEEP EXISTING")}
                     func verifySingleDispatch() {
@@ -618,7 +620,7 @@ func probe(){
                             else { reconcile() }
                         }else{print("CROSS_\(mode)_PASS");exit(0)}
                     }
-                    if ["upload_async_input","upload_delayed_control","upload_menu_control","upload_scoped_control"].contains(mode) || mode=="upload_exact" || mode=="upload_same_name" || mode=="upload_history" || mode=="upload_claude_labels" || mode=="upload_chatgpt_cards" || mode=="upload_chatgpt_renamed" {
+                    if ["upload_async_input","upload_delayed_control","upload_menu_control","upload_scoped_control","upload_nearest_control","upload_directory_control"].contains(mode) || mode=="upload_exact" || mode=="upload_same_name" || mode=="upload_history" || mode=="upload_claude_labels" || mode=="upload_chatgpt_cards" || mode=="upload_chatgpt_renamed" {
                         precondition((response["attachments"] as? [[String:Any]])?.count == (request["files"] as? [[String:Any]])?.count)
                         b.web.evaluateJavaScript("JSON.stringify(window.uploaded)") { raw,_ in
                             let bytes=try! JSONSerialization.jsonObject(with:Data((raw as! String).utf8)) as! [[String:Any]]
@@ -642,7 +644,7 @@ probe();DispatchQueue.main.asyncAfter(deadline:.now()+20){fatalError("fixture ti
     assert run.returncode==0,run.stderr
     return binary
 
-@pytest.mark.parametrize('mode',['paired_attachment_scope_ui','auxiliary_window_close','history_restore','paired_policy','paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_hydration','paired_auto_late_changed','paired_recovery','upload_exact','upload_async_input','upload_changed_input','upload_delayed_control','upload_menu_control','upload_scoped_control','upload_ambiguous_control','upload_same_name','upload_history','upload_claude_labels','upload_chatgpt_cards','upload_chatgpt_renamed','upload_foreign_image','upload_corrupt','upload_foreign','upload_no_control','upload_switch','nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble','claude','claude_streaming','claude_chrome','claude_markup','claude_markup_changed','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
+@pytest.mark.parametrize('mode',['paired_attachment_scope_ui','auxiliary_window_close','history_restore','paired_policy','paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_hydration','paired_auto_late_changed','paired_recovery','upload_exact','upload_async_input','upload_changed_input','upload_delayed_control','upload_menu_control','upload_scoped_control','upload_nearest_control','upload_directory_control','upload_ambiguous_control','upload_same_name','upload_history','upload_claude_labels','upload_chatgpt_cards','upload_chatgpt_renamed','upload_foreign_image','upload_corrupt','upload_foreign','upload_no_control','upload_switch','nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble','claude','claude_streaming','claude_chrome','claude_markup','claude_markup_changed','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
 def test_exact_target_single_dispatch_and_preflight(cross_harness,tmp_path,mode):
     class Fixture(BaseHTTPRequestHandler):
         def do_GET(self):
