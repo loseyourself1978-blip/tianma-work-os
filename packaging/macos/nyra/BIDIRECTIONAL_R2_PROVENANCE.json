@@ -1,0 +1,12 @@
+{
+  "product": "Nyra",
+  "version": "1.0.1",
+  "build": "101",
+  "source_commit": "d49012ff868d28e76463aab557ccf2bc84f413d1",
+  "source_clean": true,
+  "source_snapshot": "22ec9a558c59f14bbc17fc679d4fa37a3773de4eac7a06d7c166e0d593bf35d7",
+  "event_schema": "twos.nyra.status.v2",
+  "event_schema_sha256": "ef6797aa662f28dd36134ba476c5b1ae50c418fd1fa9636330d2cb76c0b59c81",
+  "status": "PINNED_REVIEWED_SOURCE_PENDING_FINAL_GATE",
+  "component_manifest_sha256": "be626f510971a62b11ed7ef7a4e4737276032fd9daf74e4ceddbc485bbd9f701"
+}

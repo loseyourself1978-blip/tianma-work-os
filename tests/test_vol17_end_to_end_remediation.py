@@ -888,9 +888,9 @@ def test_twos_is_canonical_and_legacy_html_redirects_without_exposing_legacy_loc
 
         health = client.get("/api/health")
         assert health.status_code == 200
-        assert health.json()["version"] == "1.0.1"
+        assert health.json()["version"] == "1.0.2"
         assert canonical.headers["cache-control"] == "no-store"
-        assert "?v=1.0.1" not in canonical.text
+        assert "?v=1.0.2" not in canonical.text
         assert "?sha256=" in script_url
         assert hashlib.sha256(script.content).hexdigest() == urlparse(script_url).query.split("sha256=")[1]
 

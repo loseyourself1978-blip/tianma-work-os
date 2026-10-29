@@ -118,7 +118,7 @@ def main():
     provenance = {"version": version, "source_commit": commit, "source_clean": not bool(dirty),
                   "source_identity": "development-snapshot" if dirty else "git-commit", "source_input_sha256": digest,
                   "input_hashes": hashes, "architecture": "arm64", "python": platform.python_version(),
-                  "macos": platform.mac_ver()[0], "bundle_identifier": "com.tianma.workos", "build_version": "101.49",
+                  "macos": platform.mac_ver()[0], "bundle_identifier": "com.tianma.workos", "build_version": "101.50",
                   "public_ga": False, "signing": "ad-hoc-local-validation-only"}
     (output / "source-provenance.json").write_text(json.dumps(provenance, indent=2) + "\n")
     (output / "builder-dependencies.txt").write_bytes(subprocess.check_output([sys.executable, "-m", "pip", "freeze", "--all"]))
@@ -137,7 +137,7 @@ def main():
     shutil.copytree(dist / "twos-service", resources / "engine", symlinks=True)
     launcher_source = output / "TianmaLauncher.swift"
     launcher_source.write_text("\n".join((source / "packaging/macos" / name).read_text() for name in
-        ("CodexAttachments.swift", "CodexTelemetry.swift", "NativeCodex.swift", "IntegratedWorkbench.swift", "TianmaLauncher.swift")))
+        ("CodexAttachments.swift", "CodexTelemetry.swift", "NativeCodex.swift", "IntegratedWorkbench.swift", "PairedWorkflow.swift", "TianmaLauncher.swift")))
     run(["xcrun", "swiftc", "-swift-version", "5", "-module-cache-path", output / "swift-module-cache", "-O", "-target", "arm64-apple-macosx13.0", "-framework", "AppKit", "-framework", "LocalAuthentication", "-framework", "WebKit",
          launcher_source, "-o", contents / "MacOS/TianmaLauncher"])
     run(["xcrun", "swiftc", "-framework", "AppKit", source / "packaging/macos/MakeIcon.swift", "-o", output / "make-icon"])

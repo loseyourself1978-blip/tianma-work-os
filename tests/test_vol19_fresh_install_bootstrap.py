@@ -31,7 +31,7 @@ def test_incompatible_installation_version_is_rejected_without_writes(tmp_path, 
     data, runtime, logs = (tmp_path / name for name in ('data', 'runtime', 'logs'))
     data.mkdir()
     config, fresh = twos_bootstrap.initial_installation(data, runtime, logs, None)
-    assert fresh and config['source_version'] == '1.0.1'
+    assert fresh and config['source_version'] == '1.0.2'
     config['source_version'] = old_version
     (data / 'installation.json').write_text(json.dumps(config))
     (data / 'installation.json').chmod(0o600)

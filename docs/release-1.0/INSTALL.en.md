@@ -1,6 +1,11 @@
-# Install Tianma Work OS 1.0.1
+# Install Tianma Work OS 1.0.2
 
-This guide applies to TWOS 1.0.1 / build 101.49 with bundled Nyra 1.0.0. Download the exact signed, notarized DMG linked by the release; its [receipt](release.json) records signatures and tested platforms.
+**R2 candidate documentation — not a release/GUI PASS receipt.** Native and synthetic regression evidence is recorded separately. Actual provider round trips, attachments and final packaged interface checks remain pending until the matching receipt records them.
+
+[R2 incremental instructions and exact boundaries](BIDIRECTIONAL_R2.en.md).
+
+
+This guide applies to the joint TWOS/Nyra candidate, build 101.50. Its release receipt is the authority for publication, signatures and tested platforms. A local candidate is not a published release.
 
 Currently supports macOS only. A Windows version is in development; no downloadable build is available yet. The current TWOS package is Apple Silicon. Engineering testing uses macOS 27.0.1 / Safari 27.0.1. A binary deployment target does not prove testing on every older system; consult the release support matrix before installing elsewhere.
 

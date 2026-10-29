@@ -7,7 +7,7 @@ enum CompanionIdentity {
     static func compatible(_ app: NSRunningApplication) -> Bool {
         guard let url = app.bundleURL, let bundle = Bundle(url:url),
               bundleIDs.contains(bundle.bundleIdentifier ?? ""),
-              bundle.object(forInfoDictionaryKey:"NyraVisibilityProtocol") as? Int == 1 else { return false }
+              [1,2].contains(bundle.object(forInfoDictionaryKey:"NyraVisibilityProtocol") as? Int ?? 0) else { return false }
         var code: SecStaticCode?; var requirement: SecRequirement?
         let text = "anchor apple generic and certificate leaf[subject.OU] = BZJWQJ352K"
         guard SecStaticCodeCreateWithPath(url as CFURL,[],&code) == errSecSuccess,
@@ -29,6 +29,7 @@ extension Companion {
             if let other = others.first {
                 if others.count == 1, CompanionIdentity.compatible(other), let url = other.bundleURL {
                     let options = NSWorkspace.OpenConfiguration(); options.activates = false
+                    options.allowsRunningApplicationSubstitution = false
                     let action = launchVisibility == false ? "hide" : "show"
                     NSWorkspace.shared.open([URL(string:"nyra://visibility/"+action)!],withApplicationAt:url,configuration:options) { _, _ in
                         DispatchQueue.main.async { NSApp.terminate(nil) }

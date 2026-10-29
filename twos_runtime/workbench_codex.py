@@ -263,7 +263,7 @@ class AppServer:
             self.emit(method, params)
 
     def run(self, *, model, prompt, cwd, thread_id='', readonly=False):
-        self.request('initialize', {'clientInfo': {'name': 'twos_workbench', 'title': 'Tianma Work OS', 'version': '1.0.1'},
+        self.request('initialize', {'clientInfo': {'name': 'twos_workbench', 'title': 'Tianma Work OS', 'version': '1.0.2'},
                                     'capabilities': {'experimentalApi': True}})
         self.send({'method': 'initialized'})
         try:
@@ -355,7 +355,7 @@ def advertised_models(executable, root):
     cwd = root/'metadata'; private_path(cwd)
     transport = AppServer(executable,cwd,root/'client',threading.Event(),lambda *_:None,lambda:[])
     try:
-        transport.request('initialize',{'clientInfo':{'name':'twos_workbench','version':'1.0.1'},'capabilities':{'experimentalApi':True}})
+        transport.request('initialize',{'clientInfo':{'name':'twos_workbench','version':'1.0.2'},'capabilities':{'experimentalApi':True}})
         transport.send({'method':'initialized'})
         models=set();cursor=None
         while True:

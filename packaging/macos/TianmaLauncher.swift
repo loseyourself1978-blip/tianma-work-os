@@ -76,6 +76,7 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
     let openProjects: () -> Void
     let address = NSTextField(labelWithString: "https://chatgpt.com")
     let notice = NSTextField(wrappingLabelWithString: "")
+    private var noticeMessage = ""
     let progress = NSProgressIndicator()
     var observations: [NSKeyValueObservation] = []
     var popups: [NativeWorkbench] = []
@@ -96,6 +97,11 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
     var inspectHandler: ((String, URL) -> Void)?
     var handoffReady: (() -> Void)?
     var discussResult: ((String) -> Void)?
+    var sendWebReply: ((String, URL) -> Void)?
+    var chooseFiles: (() -> Void)?
+    var clearFiles: (() -> Void)?
+    var fileButton: NSButton?
+    var fileSelectionCount = 0
     static let handoffWorld = WKContentWorld.world(name: "TWOS explicit instruction handoff")
     let serviceHome: URL
     var locationKey: String
@@ -162,10 +168,11 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
         win.isReleasedWhenClosed = false
         super.init(window: win)
         web.navigationDelegate = self; web.uiDelegate = self
-        if configuration == nil, serviceHome.host == "chatgpt.com" || ["localhost", "127.0.0.1"].contains(serviceHome.host ?? "") {
+        if configuration == nil, ["chatgpt.com", "claude.ai", "chat.deepseek.com", "localhost", "127.0.0.1"].contains(serviceHome.host ?? "") {
             let root = handoffResources ?? Bundle.main.resourceURL?.appendingPathComponent("engine/_internal/static_cockpit")
             if let file = root?.appendingPathComponent("native_codex/handoff.js"), let script = try? String(contentsOf: file, encoding: .utf8) {
-                let source = script.replacingOccurrences(of: "__TWOS_ZH__", with: translate("Back") != "Back" ? "true" : "false")
+                let adapter = (try? String(contentsOf: root!.appendingPathComponent("native_codex/provider_dom.js"), encoding: .utf8)) ?? ""
+                let source = adapter + "\n" + script.replacingOccurrences(of: "__TWOS_ZH__", with: translate("Back") != "Back" ? "true" : "false")
                 config.userContentController.add(self, contentWorld: Self.handoffWorld, name: "twosHandoff")
                 config.userContentController.addUserScript(WKUserScript(source: source, injectionTime: .atDocumentEnd, forMainFrameOnly: true, in: Self.handoffWorld))
             }
@@ -181,7 +188,8 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
                                      button("Open in Safari", #selector(openSafari))])
         top.orientation = .horizontal; top.spacing = 10
         handoffButton = button("Handoff to paired pane", #selector(handoff))
-        let actions = NSStackView(views: [button("Original TWOS projects", #selector(projects)), handoffButton])
+        let files=button("Attachments",#selector(selectWebFiles));fileButton=files
+        let actions = NSStackView(views: [button("Original TWOS projects", #selector(projects)), files, button("Remove selection",#selector(removeWebFiles)), handoffButton])
         actions.orientation = .horizontal; actions.spacing = 10
         notice.font = .systemFont(ofSize: 12); notice.textColor = .secondaryLabelColor
         notice.isHidden = true
@@ -219,12 +227,28 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
             view.subviews.forEach(walk)
         }
         walk(paneView)
+        setFileSelectionCount(fileSelectionCount)
         updateTarget(provider: targetProvider, binding: targetBinding)
         backButton.toolTip = translate("Back"); forwardButton.toolTip = translate("Forward")
         address.setAccessibilityLabel(translate("Current website"))
         web.evaluateJavaScript("window.twosHandoffLanguage?.(\(translate("Back") != "Back" ? "true" : "false"))", in: nil, in: Self.handoffWorld, completionHandler: nil)
     }
-    func showNotice(_ message: String) { notice.stringValue = translate(message); notice.isHidden = false }
+    func setFileSelectionCount(_ count:Int) {
+        fileSelectionCount=count
+        fileButton?.title=translate("Attachments") + (count>0 ? " (\(count))" : "")
+        fileButton?.setAccessibilityLabel(fileButton?.title)
+    }
+    func showNotice(_ message: String) { noticeMessage=message;notice.stringValue = translate(message); notice.isHidden = false }
+    func reconcileAccessNotice(_ state:String) {
+        if ["idle","running"].contains(state),noticeMessage=="ChatGPT could not finish loading. Retry with ↻, or open this page in Safari. Your saved work is retained." {
+            noticeMessage="";notice.stringValue="";notice.isHidden=true
+            return
+        }
+        let authNotices=["Claude sign-in is available. Sign in on this page; no task has been sent.","Claude is waiting for website verification. No task was sent. Open in Safari is a fallback, not embedded verification success."]
+        if ["idle","running"].contains(state),authNotices.contains(noticeMessage) {
+            showNotice("Claude input is ready. Handoff sends only the instruction you select.")
+        }
+    }
     func start(embedded: Bool = false) {
         if !embedded { showWindow(nil) }
         guard web.url == nil else { return }
@@ -248,6 +272,8 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
     @objc func forward() { web.goForward() }
     @objc func reload() { if web.url == nil { web.load(URLRequest(url: serviceHome)) } else { web.reload() } }
     @objc func projects() { openProjects() }
+    @objc func selectWebFiles() { chooseFiles?() }
+    @objc func removeWebFiles() { clearFiles?() }
     @objc func openSafari() {
         let url = Self.restorableURL(web.url, service: serviceHome) ?? serviceHome
         guard let safari = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Safari") else { return }
@@ -265,6 +291,7 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
         else if value["action"] as? String == "inspectHandoff", let id = value["id"] as? String { inspectHandler?(id, source) }
         else if value["action"] as? String == "ready" { handoffReady?() }
         else if value["action"] as? String == "discuss", let id = value["id"] as? String { discussResult?(id) }
+        else if value["action"] as? String == "sendReply", let id = value["id"] as? String { sendWebReply?(id, source) }
     }
     func showHandoffProgress(_ value: [String: Any]) {
         guard let raw = value["source"] as? String, let source = URL(string: raw), Self.restorableURL(web.url, service: serviceHome) == source else { return }
@@ -302,21 +329,31 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
         guard let source = Self.restorableURL(web.url, service: serviceHome), let handler = handoffHandler else {
             showNotice("Select a destination pane before handing off instructions."); return
         }
-        // Only this explicit user action reads a selection or one final visible
-        // ChatGPT reply. Never continuously scrape or share a whole conversation.
+        // Read an explicit selection within a complete answer, or the final answer.
+        // Floating controls and streaming fragments cannot become instructions.
         let binding = targetBinding
-        let script = Self.handoffScript(allowLatestReply: source.host == "chatgpt.com")
-        web.evaluateJavaScript(script) { [weak self] result, _ in
+        providerSnapshot(includeReply: true) { [weak self] value in
             guard let self = self else { return }
-            guard let text = result as? String, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                self.showNotice("Select the instructions on this page, then hand them to the paired pane."); return
+            guard value["state"] as? String == "reply", let text = value["text"] as? String, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                self.showNotice("No complete reply is available yet. Wait for the reply to finish, then send it. " + (value["reason"] as? String ?? "")); return
             }
             guard self.web.url.flatMap({ Self.restorableURL($0, service: self.serviceHome) }) == source else {
                 self.showNotice("The source conversation changed. Review it before handing off again."); return
             }
             guard binding == self.targetBinding, !binding.isEmpty else { self.showNotice("The destination changed. Review the current destination and send again."); return }
             self.notice.isHidden = true
-            handler(text, source)
+            if let instruction = self.instructionHandler { instruction(text, source, value["message"] as? String ?? "") }
+            else { handler(text, source) }
+        }
+    }
+    func providerSnapshot(includeReply: Bool = false, completion: @escaping ([String: Any]) -> Void) {
+        guard let source = Self.restorableURL(web.url, service: serviceHome),
+              let file = handoffResources?.appendingPathComponent("native_codex/provider_dom.js"),
+              let script = try? String(contentsOf: file, encoding: .utf8) else { completion(["state":"unknown","reason":"PAGE_UNAVAILABLE"]); return }
+        web.callAsyncJavaScript(script + "\nreturn window.twosProviderDOM?." + (includeReply ? "selectedOrLatest()" : "observe()") + ";", arguments: [:], in: nil, in: Self.handoffWorld) { [weak self] result in
+            guard let self = self, Self.restorableURL(self.web.url, service:self.serviceHome) == source else { completion(["state":"unknown","reason":"CONVERSATION_CHANGED"]); return }
+            if case .success(let value) = result, let value = value as? [String:Any] { completion(value) }
+            else { completion(["state":"unknown","reason":"OBSERVER_UNAVAILABLE"]) }
         }
     }
     func updateTarget(provider: String, binding: String) {
@@ -338,7 +375,14 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
             case .success(let value): completion(value as? [String: Any] ?? ["state": "unknown"])
             case .failure(let error):
                 let failure = error as NSError
+                // Preserve the actionable script failure in the existing
+                // advanced receipt instead of silently labelling it unknown.
+                // JavaScript expressions here are shipped code, not evaluated
+                // user instructions; bound length and remove URL parameters.
+                let detail=(failure.userInfo["WKJavaScriptExceptionMessage"] as? String ?? "WEB_OPERATION_FAILED")
+                    .replacingOccurrences(of:"https?://[^\\s]+",with:"[website]",options:.regularExpression)
                 completion(["state": "unknown", "errorCode": failure.code,
+                            "reason": "WEB_OPERATION_FAILED · \(failure.code) · " + String(detail.prefix(240)),
                             "scriptError": failure.userInfo["WKJavaScriptExceptionMessage"] as? String ?? "WEB_OPERATION_FAILED"])
             }
         }

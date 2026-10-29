@@ -6,7 +6,7 @@ from pathlib import Path
 def build(source, destination, cache):
     source, destination, cache = map(Path, (source, destination, cache))
     manifest = json.loads((source/'Resources/component-manifest.json').read_text())
-    if manifest.get('product') != 'Nyra' or manifest.get('event_schema') != 'twos.nyra.status.v1':
+    if manifest.get('product') != 'Nyra' or manifest.get('event_schema') != 'twos.nyra.status.v2':
         raise ValueError('Unrecognized Nyra component manifest')
     for name, expected in manifest['bundle_files'].items():
         path = source/'Resources'/name
@@ -29,7 +29,7 @@ def build(source, destination, cache):
         target = contents/'Resources'/name
         target.parent.mkdir(parents=True,exist_ok=True)
         shutil.copy2(source/'Resources'/name,target)
-    (contents/'Info.plist').write_bytes(plistlib.dumps(dict(CFBundleName='TWOS · 夜璃 Nyra',CFBundleDisplayName='TWOS · 夜璃 Nyra',CFBundleIdentifier='com.tianma.workos.nyra',CFBundleExecutable='TWOSNyra',CFBundlePackageType='APPL',CFBundleShortVersionString=manifest['version'],CFBundleVersion=manifest['build'],LSMinimumSystemVersion='13.0',LSUIElement=True,NSHighResolutionCapable=True,NSPrincipalClass='NSApplication',LSMultipleInstancesProhibited=True,NyraVisibilityProtocol=1,CFBundleURLTypes=[dict(CFBundleURLName='TWOS Nyra visibility',CFBundleURLSchemes=['nyra','twos-nyra'])])))
+    (contents/'Info.plist').write_bytes(plistlib.dumps(dict(CFBundleName='TWOS · 夜璃 Nyra',CFBundleDisplayName='TWOS · 夜璃 Nyra',CFBundleIdentifier='com.tianma.workos.nyra',CFBundleExecutable='TWOSNyra',CFBundlePackageType='APPL',CFBundleShortVersionString=manifest['version'],CFBundleVersion=manifest['build'],LSMinimumSystemVersion='13.0',LSUIElement=True,NSHighResolutionCapable=True,NSPrincipalClass='NSApplication',LSMultipleInstancesProhibited=True,NyraVisibilityProtocol=2,CFBundleURLTypes=[dict(CFBundleURLName='TWOS Nyra visibility',CFBundleURLSchemes=['nyra','twos-nyra'])])))
     cache.mkdir(parents=True,exist_ok=True)
     subprocess.run(['xcrun','swiftc','-swift-version','5','-O','-target','arm64-apple-macos13.0','-module-cache-path',str(cache),'-framework','AppKit','-framework','AVFoundation',*[str(p) for p in sorted((source/'Sources').glob('*.swift'))],'-o',str(contents/'MacOS/TWOSNyra')],check=True)
     subprocess.run(['codesign','--force','--sign','-',str(destination)],check=True)

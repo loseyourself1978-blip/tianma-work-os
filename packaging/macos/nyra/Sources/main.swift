@@ -139,41 +139,53 @@ final class StageView: NSView {
     var wardrobe: NSSegmentedControl!
     var actions: [NSButton] = []
     var previewOutfit: Outfit?
+    private let controlsPlate = NSView()
     private var controlsVisible = true
-    override func draw(_ dirtyRect: NSRect) {
-        super.draw(dirtyRect)
-        // Only small control backplates are opaque; the character stage is clear.
-        ink.withAlphaComponent(0.92).setFill()
-        if controlsVisible {
-            NSBezierPath(roundedRect:NSRect(x:8,y:bounds.height-88,width:min(760,bounds.width-16),height:80),xRadius:12,yRadius:12).fill()
-            NSBezierPath(roundedRect:NSRect(x:8,y:0,width:min(850,bounds.width-16),height:100),xRadius:12,yRadius:12).fill()
-        }
+    private var lastSafeBounds: NSRect = .zero
+    private(set) var controlsBackdrop: NSRect = .zero
+    func safeControlBounds() -> NSRect {
+        guard let window = window, let screen = window.screen else { return bounds }
+        let safeScreen = StageGeometry.safeScreenRect(frame:screen.frame, visible:screen.visibleFrame, insets:screen.safeAreaInsets)
+        let local = convert(window.convertFromScreen(safeScreen), from:nil)
+        return local.intersection(bounds)
+    }
+    func refreshSafeLayout() {
+        let current = safeControlBounds()
+        if current != lastSafeBounds { needsLayout = true; layoutSubtreeIfNeeded() }
     }
     func revealControls(_ visible: Bool) {
         if controlsVisible != visible { controlsVisible = visible; needsDisplay = true }
+        controlsPlate.isHidden = !visible
         for view in [title,subtitle,truth,boundary,wardrobe].compactMap({ $0 as NSView? }) + actions { view.isHidden = !visible }
     }
     override init(frame: NSRect) {
         super.init(frame: frame)
         wantsLayer = true; layer?.backgroundColor = NSColor.clear.cgColor; layer?.isOpaque = false
-        for view in [art, title, subtitle, note, truth, quality, boundary] as [NSView] { addSubview(view) }
+        controlsPlate.wantsLayer = true
+        controlsPlate.layer?.backgroundColor = ink.withAlphaComponent(0.92).cgColor
+        controlsPlate.layer?.cornerRadius = 12
+        // Keep the control backplate above animated artwork as well as above
+        // the transparent stage; a large/dragged character must not mask labels.
+        for view in [art, controlsPlate, title, subtitle, note, truth, quality, boundary] as [NSView] { addSubview(view) }
         art.onDragEnd = nil
     }
     required init?(coder: NSCoder) { fatalError() }
     override func layout() {
         super.layout()
-        let w = bounds.width, h = bounds.height
-        art.frame = NSRect(x: 24,y: 35,width: w-48,height: max(50,h-70))
-        title.frame = NSRect(x: 20,y: h-39,width: 190,height: 28)
+        let safe = safeControlBounds(); lastSafeBounds = safe
+        let layout = StageGeometry.toolbar(in:safe, actionCount:actions.count)
+        controlsBackdrop = layout.backdrop
+        controlsPlate.frame = controlsBackdrop
+        art.frame = StageGeometry.art(in:bounds, below:controlsBackdrop)
+        title.frame = layout.title
         title.font = .systemFont(ofSize: 17, weight: .medium)
-        subtitle.frame = NSRect(x: 210,y: h-34,width: w-230,height: 20)
-        wardrobe?.frame = NSRect(x: 20,y: h-76,width: min(390,w-40),height: 28)
+        subtitle.frame = layout.subtitle
+        wardrobe?.frame = layout.wardrobe
         note.isHidden = true; quality.isHidden = true
         truth.isHidden = !controlsVisible; boundary.isHidden = !controlsVisible
-        truth.frame = NSRect(x: 20,y: 63,width: w-40,height: 22)
-        boundary.frame = NSRect(x: 20,y: 44,width: w-40,height: 18)
-        let actionWidth = min(120,(w-40)/CGFloat(max(1,actions.count)))
-        for (i,b) in actions.enumerated() { b.frame = NSRect(x: 20+CGFloat(i)*actionWidth,y: 8,width: actionWidth-5,height: 30) }
+        truth.frame = layout.truth; boundary.frame = layout.boundary
+        for (button, frame) in zip(actions,layout.actions) { button.frame = frame }
+        needsDisplay = true
         if let outfit = previewOutfit {
             let shown = Geometry.fit(image: CGSize(width: outfit.width, height: outfit.height), in: art.bounds)
             let factor = shown.height/CGFloat(outfit.height)*(window?.backingScaleFactor ?? 1)
@@ -230,8 +242,10 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         lastRequested = desired
         let missing = availableSequence(desired) == nil ? " · 此服装缺该动作，保持本装待机" : ""
-        panelView.detail.stringValue = reactive.label + missing
-        stageView?.truth.stringValue = reactive.label + missing
+        let side = liveReducer.connected ? liveReducer.current?.activity_side : nil
+        let sideLabel = side == "left" ? " · 左侧 / Left" : side == "right" ? " · 右侧 / Right" : side == "both" ? " · 双侧 / Both" : ""
+        panelView.detail.stringValue = reactive.label + sideLabel + missing
+        stageView?.truth.stringValue = reactive.label + sideLabel + missing
     }
     var images: [String: NSImage] = [:]
     var selected = 0
@@ -249,6 +263,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var desiredHeight: CGFloat = 400
     var passThrough = false
     var demo: DemoState = .none
+    var connectionObserver: NSObjectProtocol?
     var screenObserver: NSObjectProtocol?
     var motionObserver: NSObjectProtocol?
     var runtimePlan: RuntimePlan?
@@ -284,7 +299,8 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         do {
-            try FileManager.default.createDirectory(at: stateDirectory, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(at: stateDirectory, withIntermediateDirectories: true, attributes:[.posixPermissions:0o700])
+            try FileManager.default.setAttributes([.posixPermissions:0o700],ofItemAtPath:stateDirectory.path)
             try FileManager.default.createDirectory(at: preferenceDirectory, withIntermediateDirectories:true)
             let previousBundledPrefs = stateDirectory.appendingPathComponent("preview-settings.json")
             if !isolated, previousBundledPrefs != prefsURL, !FileManager.default.fileExists(atPath:prefsURL.path), FileManager.default.fileExists(atPath:previousBundledPrefs.path) {
@@ -400,6 +416,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         for b in panelView.controls { panelView.addSubview(b) }
         panelView.art.onInput = { [weak self] name in self?.receiveInput(name) }
         panelView.configureHub()
+        panelView.onStage = { [weak self] in self?.fullscreen() }
         panelView.grip.onBegin = { [weak self] in self?.resizeStartHeight = self?.desiredHeight ?? 280 }
         panelView.grip.onResize = { [weak self] delta in
             guard let self = self else { return }
@@ -459,6 +476,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
             if let window = art.window {
                 let p = art.convert(window.convertPoint(fromScreen: NSEvent.mouseLocation),from:nil)
                 if let view = stageView, window == stage {
+                    view.refreshSafeLayout()
                     let local = view.convert(window.convertPoint(fromScreen:NSEvent.mouseLocation),from:nil)
                     view.revealControls(true) // Keep menus and the exit action reachable; blank art still passes through.
                     window.ignoresMouseEvents = !view.visibleHit(local)
@@ -561,7 +579,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
             self?.writePlaybackState("stage_zoom")
         }
         view.art.onMenu = { [weak self] event in guard let self = self else { return }; NSMenu.popUpContextMenu(self.makeAnimationMenu(),with:event,for:view.art) }
-        view.actions = [button("姿态 / Pose", self, #selector(togglePose), hint: "三套服装均支持站姿与侧卧 / All three outfits"), button("桌面 / Desktop", self, #selector(backToDesktop), hint: "回到浮动桌宠"),
+        view.actions = [button("姿态 / Pose", self, #selector(togglePose), hint: "三套服装均支持站姿与侧卧 / All three outfits"), button("返回桌面 / Back", self, #selector(backToDesktop), hint: "返回桌面 / Return to desktop"),
                         button("舞台 / Stage", self, #selector(fullscreen), hint: "切换全屏展示"),
                         button("动作 / Actions", self, #selector(showAnimationMenu), hint: "动作试播 / Manual preview · 不改任务状态"),
                         button("声音 / Sound", self, #selector(showSound), hint: "声音 · 试听 / 静音 / 音量"),
@@ -578,6 +596,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if stage?.isVisible != true { desktopBeforeStage = (panel.frame,desiredHeight,selected) }
         let screen = panel.screen ?? NSScreen.main ?? NSScreen.screens[0]
         stage!.setFrame(screen.frame,display:true)
+        stageView?.needsLayout = true; stageView?.layoutSubtreeIfNeeded()
         panel.orderOut(nil); soundPopover?.close(); clearPointerState()
         stage!.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps:true)
         updateOutfit(); startHoverTimer(); rebuildMenu(); publishVisibility(); writePlaybackState("stage_opened")
@@ -657,9 +676,13 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
             "work_order":"TWOS-NYRA-1_0-JOINT-RELEASE-R1", "reactive_inputs":reactive.counts,
             "requested_animation":lastRequested,"pose":activeSetKey,"pose_transition":poseArbiter.phase.rawValue,"frame_asset":frameCursor?.assetID ?? "",
             "task_state":reactive.work.rawValue,"simulation":reactive.simulation,"twos_connection":live.connectionLabel,
+            "activity_side":liveReducer.connected ? (liveReducer.current?.activity_side ?? "unknown") : "unknown",
             "celebration_count":liveReducer.celebrationCount,"character_bbox":activeSet.bbox,
             "stage_art_rect":stageView.map { NSStringFromRect($0.art.drawingRect) } ?? "",
             "stage_zoom":stageView?.art.zoom ?? 1,
+            "stage_controls_rect":stageView.map { NSStringFromRect($0.controlsBackdrop) } ?? "",
+            "stage_safe_rect":stageView.map { NSStringFromRect($0.safeControlBounds()) } ?? "",
+            "hover_stage_button_rect":NSStringFromRect(panelView.stageButton?.frame ?? .zero),
             "event": event, "animation": animationName, "displayed_frames": displayedFrames, "frames_during_drag": framesDuringDrag,
             "panel_visible": panel.isVisible, "stage_visible": stage?.isVisible == true,
             "control_ring_expanded": panelView.expanded, "hover_timer_scheduled": hoverTimer?.isValid == true,
@@ -776,6 +799,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         stopFrameTimer(); frameImages.removeAll(); hoverTimer?.invalidate(); hoverTimer = nil; sound.stop()
         writePlaybackState("terminating")
         if let observer = screenObserver { NotificationCenter.default.removeObserver(observer) }
+        if let observer = connectionObserver { DistributedNotificationCenter.default().removeObserver(observer); connectionObserver=nil }
         if let observer = motionObserver { NSWorkspace.shared.notificationCenter.removeObserver(observer) }
         livePollTimer?.invalidate(); live.stop()
         if let observer = sleepObserver { NSWorkspace.shared.notificationCenter.removeObserver(observer) }

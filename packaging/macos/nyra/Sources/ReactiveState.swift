@@ -58,15 +58,17 @@ struct StatusEvent: Decodable, Equatable {
     let source: String
     let simulation: Bool
     let evidence_ref: String?
+    let activity_side: String?
     static func decode(_ data: Data, simulation: Bool) throws -> StatusEvent {
         let required: Set<String> = ["schema_version","producer_instance_id","event_id","sequence","timestamp","session_id","task_id","state","source","simulation"]
         guard data.count <= 16384, let raw = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              required.isSubset(of: Set(raw.keys)), Set(raw.keys).isSubset(of: required.union(["evidence_ref"])) else { throw PreviewError.invalidManifest }
+              required.isSubset(of: Set(raw.keys)), Set(raw.keys).isSubset(of: required.union(["evidence_ref","activity_side"])) else { throw PreviewError.invalidManifest }
         let v = try JSONDecoder().decode(StatusEvent.self, from: data)
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let date = formatter.date(from: v.timestamp) ?? ISO8601DateFormatter().date(from: v.timestamp)
-        guard v.schema_version == "twos.nyra.status.v1", v.simulation == simulation, date != nil,
+        guard ["twos.nyra.status.v1","twos.nyra.status.v2"].contains(v.schema_version),
+              v.activity_side.map({["left","right","both"].contains($0)}) ?? (v.schema_version == "twos.nyra.status.v1"), v.simulation == simulation, date != nil,
               [v.producer_instance_id,v.event_id,v.session_id].allSatisfy({ !$0.isEmpty && $0.count <= 128 }),
               v.task_id.map({ !$0.isEmpty && $0.count <= 128 }) ?? true,
               v.evidence_ref.map({ $0.count <= 128 }) ?? true,

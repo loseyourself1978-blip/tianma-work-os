@@ -1,6 +1,11 @@
-# 安装 Tianma Work OS 1.0.1
+# 安装 Tianma Work OS 1.0.2
 
-适用 TWOS 1.0.1 / build 101.49，内置 Nyra 1.0.0。下载本版 Release 提供的已签名、公证 DMG；签名和实测平台见[发行回执](release.json)。
+**R2 候选说明，不能作为已发行或真实 GUI 通过回执。** 原生及合成页面回归单独记录；真实提供方往返、附件和最终打包界面检查，须以匹配回执为准，当前仍待完成。
+
+[R2 差量操作和准确边界](BIDIRECTIONAL_R2.zh-CN.md)。
+
+
+适用本次 TWOS/Nyra 联合候选 build 101.50。是否发布、签名和系统实测以发行回执为准；本机候选不等于已公开发行。
 
 当前仅支持 macOS。Windows 版本开发中，尚无可下载版本。当前 TWOS 包为 Apple Silicon，工程实测为 macOS 27.0.1 / Safari 27.0.1。编译下限不代表所有旧系统都已测试，其他系统请先核对发行支持表。
 

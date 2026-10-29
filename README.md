@@ -1,5 +1,10 @@
 # Tianma Work OS 1.0
 
+**R2 candidate documentation — not a release/GUI PASS receipt.** Native and synthetic regression evidence is recorded separately. Actual provider round trips, attachments and final packaged interface checks remain pending until the matching receipt records them.
+
+[R2 candidate operations](docs/release-1.0/BIDIRECTIONAL_R2.en.md). Previous published release: [TWOS v1.0.1](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.1). New version 1.0.2 / 101.50 is not yet published.
+
+
 [简体中文](README.zh-CN.md) · [Install](docs/release-1.0/INSTALL.en.md) · [User guide](docs/release-1.0/USER_GUIDE.en.md) · [Current release status](docs/CURRENT_DELIVERY.md)
 
 Discuss a goal and execute it in one macOS workspace. TWOS pairs official ChatGPT, DeepSeek or Claude webpages with a local Codex client, binds handoffs to the selected destination, and brings results back to the discussion.
@@ -12,7 +17,7 @@ Discuss a goal and execute it in one macOS workspace. TWOS pairs official ChatGP
 
 ## Download and first use
 
-**TWOS 1.0.1 / build 101.49** provides an Apple Silicon installer signed with Developer ID, notarized by Apple and checked with Gatekeeper. [Download this version](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.1) · [Signature, hash and validation receipt](docs/release-1.0/release.json). Earlier tags/releases are preserved. Publication does not grant Owner differential acceptance.
+The published TWOS v1.0.1 remains available. R2 (1.0.2 / 101.50) is under verification and is not a downloadable release yet. Use only a matching Release receipt with exact source, signature/notarization results and hashes. Historical v1.0.0 is the preserved source distribution.
 
 Open the matching DMG, drag TWOS into Applications and open it. Sign into the chosen official provider website, connect your already installed/logged-in local Codex, then create or resume one folder-bound task. Nyra is inside the same app; no separate pet installer or first-run artwork download is required. Ordinary installation needs no Python, Node or terminal.
 
@@ -33,9 +38,3 @@ The independent companion is maintained in [Nyra](https://github.com/loseyoursel
 [Detailed Owner Guide](docs/OWNER_GUIDE_EN.md) · [Repository map](docs/REPOSITORY_MAP.md) · [Original local projects](docs/LEGACY_OWNER_GUIDE.md) · [Advanced source installation](docs/ADVANCED_INSTALLATION.md). Historical designs and stage records do not describe the current installer or establish current acceptance.
 
 </details>
-
-[Actual candidate screenshots and recording / 真实候选截图与录像](docs/release-1.0/MEDIA.en.md)
-
-![ Actual 1.0.1 / 101.49 candidate: first workspace with bundled Nyra. ](docs/release-1.0/images/twos-first-workspace.png)
-
-Actual 1.0.1 / 101.49 candidate: first workspace with bundled Nyra.

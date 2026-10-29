@@ -214,7 +214,7 @@ def test_ui_release_and_normal_product_entrypoints():
     root = Path(__file__).resolve().parents[1]
     html = (root/'static_cockpit/vol12_static_mvp/twos_command_center.html').read_text()
     js = (root/'static_cockpit/vol12_static_mvp/twos_command_center.js').read_text()
-    assert '<title>TWOS 1.0.1</title>' in html
+    assert '<title>TWOS 1.0.2</title>' in html
     assert 'Vol.17' not in html
     for identifier in ['create-project','authorize-project-workspace','artifact-verification-save']:
         assert f'id="{identifier}"' in html

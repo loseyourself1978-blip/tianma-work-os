@@ -13,7 +13,7 @@ pytestmark=pytest.mark.skipif(sys.platform!='darwin',reason='macOS WebKit integr
 def integrated_harness(tmp_path_factory):
     root=tmp_path_factory.mktemp('integrated-webkit')
     code=(ROOT/'packaging/macos/TianmaLauncher.swift').read_text().split('// The only child runtime',1)[0]
-    code+='\n'+(ROOT/'packaging/macos/CodexAttachments.swift').read_text()+'\n'+(ROOT/'packaging/macos/CodexTelemetry.swift').read_text()+'\n'+(ROOT/'packaging/macos/NativeCodex.swift').read_text()+'\n'+(ROOT/'packaging/macos/IntegratedWorkbench.swift').read_text()
+    code+='\n'+(ROOT/'packaging/macos/CodexAttachments.swift').read_text()+'\n'+(ROOT/'packaging/macos/CodexTelemetry.swift').read_text()+'\n'+(ROOT/'packaging/macos/NativeCodex.swift').read_text()+'\n'+(ROOT/'packaging/macos/IntegratedWorkbench.swift').read_text()+'\n'+(ROOT/'packaging/macos/PairedWorkflow.swift').read_text()
     code+=r'''
 let app = NSApplication.shared
 let root = URL(fileURLWithPath:CommandLine.arguments[1])
@@ -137,7 +137,7 @@ func verifyOutcomeCard(_ completion: @escaping () -> Void) {
     browser.web.callAsyncJavaScript("await window.twosHandoffUpdate(record)", arguments:["record":old],in:nil,in:NativeWorkbench.handoffWorld) { _ in
         browser.web.evaluateJavaScript("(()=>{const c=document.getElementById('final-fixture').nextElementSibling;return !c.querySelector('button').disabled&&c.textContent.includes('Task BLOCKED')&&c.textContent.includes('Execution channel finished')&&c.querySelector('[data-twos-result]').open&&!c.querySelector('[data-twos-send-preview]').open&&c.querySelector('[data-twos-send-preview] summary').textContent==='View selected content'&&c.textContent.includes('No directory context')})()") { value,_ in
             precondition(value as? Bool == true,"clean body hash matches despite visible suggestion/copy controls; historical completed/BLOCKED remains actionable")
-            var newer=old;newer["id"]="new-attempt";newer["createdAt"]=2;newer["state"]="running";newer["retryable"]=false;newer["businessResult"]="not_completed";newer["result"]=""
+            var newer=old;newer["id"]="new-attempt";newer["message"]="latest-rendered-reply";newer["createdAt"]=2;newer["state"]="running";newer["retryable"]=false;newer["businessResult"]="not_completed";newer["result"]=""
             browser.web.callAsyncJavaScript("await window.twosHandoffUpdate(newer);await window.twosHandoffUpdate(old)",arguments:["newer":newer,"old":old],in:nil,in:NativeWorkbench.handoffWorld) { _ in
                 browser.web.evaluateJavaScript("(()=>{const c=document.getElementById('final-fixture').nextElementSibling;return c.querySelector('button').disabled&&c.textContent.includes('Running')&&!c.textContent.includes('Task BLOCKED')})()") { value,_ in
                     precondition(value as? Bool == true,"older receipt must not overwrite a newer attempt after reload")

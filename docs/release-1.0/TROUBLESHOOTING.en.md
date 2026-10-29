@@ -1,5 +1,10 @@
 # Troubleshooting
 
+**R2 candidate documentation — not a release/GUI PASS receipt.** Native and synthetic regression evidence is recorded separately. Actual provider round trips, attachments and final packaged interface checks remain pending until the matching receipt records them.
+
+[R2 incremental instructions and exact boundaries](BIDIRECTIONAL_R2.en.md).
+
+
 - **macOS blocks installation:** verify the exact release and hash/signature receipt. Do not disable Gatekeeper or remove quarantine. An unnotarized engineering candidate is not the default public installation path.
 - **Login/challenge:** finish it yourself on the actual provider page. TWOS does not solve CAPTCHA, copy cookies, or replace web access with a billed API. Safari fallback is not proof of embedded success.
 - **Codex not connected:** confirm the official local runtime is installed and signed in; reconnect using the product control. Shared history does not grant two clients control of one active turn. Do not start a second copy of uncertain work.
@@ -11,3 +16,6 @@
 For a report include app version, non-sensitive error text and action taken. Exclude cookies, credentials, private chats and business artifacts.
 
 [English / 简体中文](TROUBLESHOOTING.zh-CN.md)
+
+
+R2: If Check delivery is unknown, retain the receipt and reopen both exact bound conversations; inspect before continuing. Login, validation, quota, draft and upload failures pause automatic exchange. Do not clear website storage or retry an unknown send. If Nyra is visible but disconnected, open Nyra status; use the compatible version and explicit Connect action, preserving peer checks. Existing standalone versions without the v2 connection remain visibility-only.

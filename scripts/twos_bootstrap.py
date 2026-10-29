@@ -31,7 +31,8 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 SUPPORTED_PYTHON_MIN = (3, 11)
 SUPPORTED_PYTHON_MAX = (3, 14)
-APP_VERSION = "1.0.1"
+APP_VERSION = "1.0.2"
+INSTALLATION_COMPATIBLE_VERSIONS = frozenset({"1.0.1", APP_VERSION})
 LATEST_SCHEMA = "vol20.002"
 DEFAULT_HEALTH_TIMEOUT = 60.0
 INSTALLATION_ID_RE = re.compile(r"^install_[a-f0-9]{32}$")
@@ -753,7 +754,7 @@ def initial_installation(
             "runtime_environment": str(runtime_root / "venv"),
             "log_directory": str(log_root),
             "bind_host": "127.0.0.1",
-            "source_version": APP_VERSION,
+            "source_version": config.get("source_version") if isinstance(config.get("source_version"), str) and config["source_version"] in INSTALLATION_COMPATIBLE_VERSIONS else APP_VERSION,
         }
         if any(config.get(key) != value for key, value in expected.items()):
             raise BootstrapError("The existing installation configuration does not match this launch.")

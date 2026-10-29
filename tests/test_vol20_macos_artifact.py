@@ -64,7 +64,7 @@ def post(client, path, payload):
 def test_app_identity_and_bundled_native_dependencies():
     info = plistlib.loads((Path(APP) / "Contents/Info.plist").read_bytes())
     assert info["CFBundleDisplayName"] == "Tianma Work OS"
-    assert info["CFBundleShortVersionString"] == "1.0.1"
+    assert info["CFBundleShortVersionString"] == "1.0.2"
     assert info["CFBundleIdentifier"] == "com.tianma.workos"
     assert len(info["TWOSSourceInputSHA256"]) == 64
     subprocess.run(["codesign", "--verify", "--deep", "--strict", APP], check=True, capture_output=True)
@@ -133,7 +133,7 @@ def test_frozen_first_run_project_task_contract_and_restart(tmp_path):
     with service(root) as (child, ready):
         base = ready["url"].removesuffix("/projects").removesuffix("/twos")
         with httpx.Client(base_url=base, trust_env=False, headers={"Origin": base}, timeout=30) as client:
-            assert client.get("/api/health").json()["version"] == "1.0.1"
+            assert client.get("/api/health").json()["version"] == "1.0.2"
             assert client.get("/api/setup/status").json()["owner_exists"] is False
             post(client, "/api/setup/start", {"confirmation": "START_FIRST_RUN"})
             post(client, "/api/setup/start", {"confirmation": "CONFIRM_INSTALLATION"})

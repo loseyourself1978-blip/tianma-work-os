@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "TWOS Nyra minimal status event, proposed v1",
+  "title": "TWOS Nyra minimal status event v2 — pane attribution",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -17,7 +17,10 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "twos.nyra.status.v1"
+      "enum": [
+        "twos.nyra.status.v1",
+        "twos.nyra.status.v2"
+      ]
     },
     "producer_instance_id": {
       "type": "string",
@@ -81,6 +84,13 @@
         "null"
       ],
       "maxLength": 128
+    },
+    "activity_side": {
+      "enum": [
+        "left",
+        "right",
+        "both"
+      ]
     }
   },
   "allOf": [
@@ -102,6 +112,20 @@
             "minLength": 1
           }
         }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": "twos.nyra.status.v2"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "activity_side"
+        ]
       }
     }
   ]

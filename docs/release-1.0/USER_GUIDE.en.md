@@ -1,8 +1,13 @@
-# Use TWOS 1.0.1
+# Use TWOS 1.0.2
+
+**R2 candidate documentation — not a release/GUI PASS receipt.** Native and synthetic regression evidence is recorded separately. Actual provider round trips, attachments and final packaged interface checks remain pending until the matching receipt records them.
+
+[R2 incremental instructions and exact boundaries](BIDIRECTIONAL_R2.en.md).
+
 
 Choose the path matching your situation; they are not one mandatory sequence.
 
-**Upgrade checks:** retain your accepted work. Check only the newly bundled Nyra interaction, three-outfit transparent stage, restoration and task-status truth. Existing Claude receipt/run and daily outfit switching remain accepted. The optional scoped result check is not a new prerequisite for execution.
+**Upgrade checks:** use the R2 incremental route above; retain accepted work, Claude login, outfits and transparent artwork. Do not follow the first-task route after completing the upgrade route.
 
 **First task:** follow [Install](INSTALL.en.md), select a folder and explicitly send the intended instruction once.
 
@@ -27,16 +32,3 @@ Nyra consumes minimal read-only state. Idle, running, queued/waiting, partial/fa
 Sound is muted by default; explicit system speech/imported voice and procedural cues are described in provenance. No exclusive AI voice is shipped. Hiding stops animation/audio work; quitting TWOS does not kill a separately used Nyra.
 
 [English / 简体中文](USER_GUIDE.zh-CN.md)
-
-[Actual screenshots and recording / 真实截图与录像](MEDIA.en.md)
-
-
-## Action coverage in this release
-
-| Outfit | Desktop and directional drag | Transparent reclining stage | Manual preview |
-|---|---|---|---|
-| Black & purple | Idle, hover jump, left/right run | Blink, gaze, work, wait, celebrate | Shared actual playback entry |
-| Office | Same; running uses 2 painted frames | Matching reclining art and rise/lower transition | Shared actual playback entry |
-| Gala | Same; running uses 2 painted frames | Matching reclining art and rise/lower transition | Shared actual playback entry |
-
-A preview restores the real base state. Partial, failed, cancelled or unverified completion does not automatically celebrate. Audio covers two original chimes, installed system speech and local user imports, muted by default; no exclusive AI voice is included.

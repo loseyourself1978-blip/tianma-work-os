@@ -1,5 +1,10 @@
 # Upgrade and uninstall
 
+**R2 candidate documentation — not a release/GUI PASS receipt.** Native and synthetic regression evidence is recorded separately. Actual provider round trips, attachments and final packaged interface checks remain pending until the matching receipt records them.
+
+[R2 incremental instructions and exact boundaries](BIDIRECTIONAL_R2.en.md).
+
+
 Finish or explicitly stop your own active work. Quit TWOS normally, then replace its application with the verified release. Do not edit the running bundle. Existing local environments, directory authorizations, drafts and provider website stores are not release assets and must not be copied into a public package.
 
 The bundled Nyra has a pinned version. A compatible, same-signer standalone instance is reused for visibility control; conflicting versions are reported, not killed or downgraded. Read-only task binding is reported separately from display. Existing visibility/mute preferences are respected. No login item is registered automatically.

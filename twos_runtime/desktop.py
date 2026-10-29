@@ -19,7 +19,7 @@ import traceback
 import re
 
 from scripts import twos_bootstrap as bootstrap
-from . import __version__
+from . import __version__, INSTALLATION_COMPATIBLE_VERSIONS
 
 
 def event(kind, **fields):
@@ -96,6 +96,8 @@ def installation(data, runtime, logs, sock):
                    runtime_environment=str(Path(sys.prefix).resolve()), log_directory=str(logs), bind_host="127.0.0.1")
     if path.exists():
         saved = bootstrap.read_json(path)
+        if isinstance(saved.get("source_version"), str) and saved["source_version"] in INSTALLATION_COMPATIBLE_VERSIONS:
+            binding["source_version"] = saved["source_version"]
         if not bootstrap.INSTALLATION_ID_RE.fullmatch(str(saved.get("installation_id", ""))) or any(saved.get(key) != value for key, value in binding.items()):
             raise bootstrap.BootstrapError("DESKTOP_INSTALLATION_MISMATCH")
         if type(saved.get("port")) is not int or not 1 <= saved["port"] <= 65535:

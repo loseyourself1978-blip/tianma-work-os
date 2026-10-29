@@ -1106,5 +1106,333 @@
   "I checked this result": {
     "en-US": "I checked this result",
     "zh-CN": "我已检查并接受本次结果"
+  },
+  "Attachments": {
+    "en-US": "Attachments",
+    "zh-CN": "附件"
+  },
+  "Remove selection": {
+    "en-US": "Remove selection",
+    "zh-CN": "移除所选附件"
+  },
+  "Automatic exchange": {
+    "en-US": "Automatic exchange",
+    "zh-CN": "自动互聊"
+  },
+  "Continue": {
+    "en-US": "Continue",
+    "zh-CN": "继续"
+  },
+  "Pause": {
+    "en-US": "Pause",
+    "zh-CN": "暂停"
+  },
+  "Not ready": {
+    "en-US": "Not ready",
+    "zh-CN": "尚未就绪"
+  },
+  "Delivery check": {
+    "en-US": "Delivery check",
+    "zh-CN": "投递检查"
+  },
+  "Nyra status": {
+    "en-US": "Nyra status",
+    "zh-CN": "夜璃状态连接"
+  },
+  "Send reply to the other pane": {
+    "en-US": "Send reply to the other pane",
+    "zh-CN": "将回复发送到另一侧"
+  },
+  "First instruction · sent to the right participant": {
+    "en-US": "First instruction · sent to the right participant",
+    "zh-CN": "首轮内容 · 发送给右侧参与者"
+  },
+  "Left participant role": {
+    "en-US": "Left participant role",
+    "zh-CN": "左侧参与者角色"
+  },
+  "Right participant role": {
+    "en-US": "Right participant role",
+    "zh-CN": "右侧参与者角色"
+  },
+  "Minutes (1–120)": {
+    "en-US": "Minutes (1–120)",
+    "zh-CN": "分钟上限（1–120）"
+  },
+  "Round trips (1–50)": {
+    "en-US": "Round trips (1–50)",
+    "zh-CN": "往返上限（1–50）"
+  },
+  "Off · nothing is sent until you start": {
+    "en-US": "Off · nothing is sent until you start",
+    "zh-CN": "默认关闭 · 点击开始前不会发送"
+  },
+  "Selected exact files for both directions": {
+    "en-US": "Selected exact files for both directions",
+    "zh-CN": "双向明确授权的文件"
+  },
+  "Selected files · not uploaded": {
+    "en-US": "Selected files · not uploaded",
+    "zh-CN": "已选择文件 · 尚未上传"
+  },
+  "Start automatic exchange": {
+    "en-US": "Start automatic exchange",
+    "zh-CN": "开始自动互聊"
+  },
+  "Stop at an explicit final concession": {
+    "en-US": "Stop at an explicit final concession",
+    "zh-CN": "遇到明确的最终认输或僵局声明时停止"
+  },
+  "Stop future exchanges": {
+    "en-US": "Stop future exchanges",
+    "zh-CN": "停止后续互聊"
+  },
+  "directional exchanges": {
+    "en-US": "directional exchanges",
+    "zh-CN": "次单向交接"
+  },
+  "Waiting for": {
+    "en-US": "Waiting for",
+    "zh-CN": "正在等待"
+  },
+  "paused": {
+    "en-US": "paused",
+    "zh-CN": "已暂停"
+  },
+  "running": {
+    "en-US": "running",
+    "zh-CN": "运行中"
+  },
+  "stopped": {
+    "en-US": "stopped",
+    "zh-CN": "已停止"
+  },
+  "finished": {
+    "en-US": "finished",
+    "zh-CN": "已结束"
+  },
+  "checking": {
+    "en-US": "checking",
+    "zh-CN": "检查中"
+  },
+  "reply": {
+    "en-US": "reply",
+    "zh-CN": "已核对完整回复"
+  },
+  "unknown": {
+    "en-US": "unknown",
+    "zh-CN": "状态待核验"
+  },
+  "Automatic exchange is off by default. Only these two conversations, roles, selected files and complete replies are shared. No file execution, commands, approvals or Git rights are granted.": {
+    "en-US": "Automatic exchange is off by default. Only these two conversations, roles, selected files and complete replies are shared. No file execution, commands, approvals or Git rights are granted.",
+    "zh-CN": "自动互聊默认关闭。仅在这两个会话之间分享指定角色、所选文件和完整回复；不授予文件执行、命令、审批或 Git 权限。"
+  },
+  "Select only files authorized for this handoff. Selection does not upload them. Supported: TXT, Markdown, PNG/JPEG, simple PDF; 8 MB per file, 12 MB total.": {
+    "en-US": "Select only files authorized for this handoff. Selection does not upload them. Supported: TXT, Markdown, PNG/JPEG, simple PDF; 8 MB per file, 12 MB total.",
+    "zh-CN": "仅选择本次交接获准分享的文件；选择本身不会上传。支持 TXT、Markdown、PNG/JPEG 和简单 PDF，单文件最多 8 MB，总计最多 12 MB。"
+  },
+  "The bundled Nyra connects to this exact TWOS automatically when shown. No chat or files are shared.": {
+    "en-US": "The bundled Nyra connects to this exact TWOS automatically when shown. No chat or files are shared.",
+    "zh-CN": "显示内置夜璃时，会自动连接当前这份 TWOS 的只读状态，不分享聊天或文件。"
+  },
+  "This handoff receipt is unavailable. Nothing was sent.": {
+    "en-US": "This handoff receipt is unavailable. Nothing was sent.",
+    "zh-CN": "找不到这条交接记录，没有发送任何内容。"
+  },
+  "No complete reply is available yet. Wait for the reply to finish, then send it.": {
+    "en-US": "No complete reply is available yet. Wait for the reply to finish, then send it.",
+    "zh-CN": "尚无完整回复，请等待回复结束后再发送。"
+  },
+  "Open both original conversations and check the completed reply before sending it back. Nothing was sent.": {
+    "en-US": "Open both original conversations and check the completed reply before sending it back. Nothing was sent.",
+    "zh-CN": "请打开原来的两个会话并核对完整回复后再发回；当前没有发送。"
+  },
+  "The completed reply could not be reconciled. Nothing was sent; check delivery again.": {
+    "en-US": "The completed reply could not be reconciled. Nothing was sent; check delivery again.",
+    "zh-CN": "未能核对这条完整回复，没有发送；请检查投递结果。"
+  },
+  "Pause automatic exchange before changing attachment scope.": {
+    "en-US": "Pause automatic exchange before changing attachment scope.",
+    "zh-CN": "请先暂停自动互聊，再更改附件范围。"
+  },
+  "Attachment selection removed. Website drafts and previous handoffs are unchanged.": {
+    "en-US": "Attachment selection removed. Website drafts and previous handoffs are unchanged.",
+    "zh-CN": "已移除所选附件；网站草稿和原交接记录保持不变。"
+  },
+  "Website handoff supports TXT, Markdown, PNG/JPEG and simple PDF. This file was not attached or uploaded.": {
+    "en-US": "Website handoff supports TXT, Markdown, PNG/JPEG and simple PDF. This file was not attached or uploaded.",
+    "zh-CN": "网页交接支持 TXT、Markdown、PNG/JPEG 和简单 PDF。该文件未被附加或上传。"
+  },
+  "The selected files could not be attached. Nothing was uploaded.": {
+    "en-US": "The selected files could not be attached. Nothing was uploaded.",
+    "zh-CN": "无法附加选定文件，未上传任何内容。"
+  },
+  "Could not save exchange state. No next message will be sent.": {
+    "en-US": "Could not save exchange state. No next message will be sent.",
+    "zh-CN": "无法保存互聊状态，不会发送下一条消息。"
+  },
+  "Paused by you. The provider may finish its current reply; no next message is sent.": {
+    "en-US": "Paused by you. The provider may finish its current reply; no next message is sent.",
+    "zh-CN": "你已暂停互聊。对方可以继续完成当前回复，但不会发送下一条消息。"
+  },
+  "Future exchanges stopped. This does not cancel a provider's current generation.": {
+    "en-US": "Future exchanges stopped. This does not cancel a provider's current generation.",
+    "zh-CN": "已停止后续互聊；此操作不会取消网站正在生成的回复。"
+  },
+  "Resolve or resume the saved exchange before starting another.": {
+    "en-US": "Resolve or resume the saved exchange before starting another.",
+    "zh-CN": "请先核对或继续已保存的互聊，再开始另一轮。"
+  },
+  "Select two different supported website conversations and valid round/time budgets. No task was sent.": {
+    "en-US": "Select two different supported website conversations and valid round/time budgets. No task was sent.",
+    "zh-CN": "请选择两个不同提供方的受支持会话，并设置有效往返和时间上限；没有发送任务。"
+  },
+  "An attachment is missing, changed or too large. Nothing was sent.": {
+    "en-US": "An attachment is missing, changed or too large. Nothing was sent.",
+    "zh-CN": "附件缺失、已变化或过大，未发送任何内容。"
+  },
+  "Open both bound conversations before continuing. Nothing was sent.": {
+    "en-US": "Open both bound conversations before continuing. Nothing was sent.",
+    "zh-CN": "请先打开两个已绑定的会话再继续；没有发送。"
+  },
+  "The authorized time budget has ended. Start a new exchange with a new budget; the old one will not replay.": {
+    "en-US": "The authorized time budget has ended. Start a new exchange with a new budget; the old one will not replay.",
+    "zh-CN": "本次授权时间已结束。可设置新预算开始新交流；旧交流不会被重放。"
+  },
+  "Reconcile the last receipt before any new send": {
+    "en-US": "Reconcile the last receipt before any new send",
+    "zh-CN": "先核对上一条投递，再决定是否继续发送"
+  },
+  "Time budget reached": {
+    "en-US": "Time budget reached",
+    "zh-CN": "已达到时间上限"
+  },
+  "A participant or conversation changed. Restore the bound conversations before continuing.": {
+    "en-US": "A participant or conversation changed. Restore the bound conversations before continuing.",
+    "zh-CN": "参与者或会话已变化，请恢复已绑定的会话后再继续。"
+  },
+  "Pending receipt is missing. Nothing will be resent.": {
+    "en-US": "Pending receipt is missing. Nothing will be resent.",
+    "zh-CN": "待核对的回执缺失，不会自动重发。"
+  },
+  "Delivery or input needs verification. Check the pending receipt; no blind resend.": {
+    "en-US": "Delivery or input needs verification. Check the pending receipt; no blind resend.",
+    "zh-CN": "投递或输入状态待核验。请检查当前投递，不会盲目重发。"
+  },
+  "Completed reply is unavailable": {
+    "en-US": "Completed reply is unavailable",
+    "zh-CN": "完整回复暂不可用"
+  },
+  "The complete reply changed or could not be reconciled": {
+    "en-US": "The complete reply changed or could not be reconciled",
+    "zh-CN": "完整回复已变化或暂时无法核对"
+  },
+  "Repeated output detected": {
+    "en-US": "Repeated output detected",
+    "zh-CN": "检测到重复输出，已暂停"
+  },
+  "Authorized round budget completed": {
+    "en-US": "Authorized round budget completed",
+    "zh-CN": "已完成授权的往返次数"
+  },
+  "Current participant made an explicit final concession": {
+    "en-US": "Current participant made an explicit final concession",
+    "zh-CN": "当前参与者明确作出最终认输声明"
+  },
+  "No complete reply is available": {
+    "en-US": "No complete reply is available",
+    "zh-CN": "没有可交接的完整回复"
+  },
+  "Reply exceeds the supported transfer size": {
+    "en-US": "Reply exceeds the supported transfer size",
+    "zh-CN": "回复超出了可传输的大小"
+  },
+  "Could not save handoff intent": {
+    "en-US": "Could not save handoff intent",
+    "zh-CN": "无法保存交接记录"
+  },
+  "Participant selection changed": {
+    "en-US": "Participant selection changed",
+    "zh-CN": "参与者选择已变化"
+  },
+  "The participant is busy. Wait for its current work, then review the pending exchange.": {
+    "en-US": "The participant is busy. Wait for its current work, then review the pending exchange.",
+    "zh-CN": "参与者正在处理其他输入，请等待完成后检查待交接项。"
+  },
+  "The previously complete reply changed. Review it before continuing.": {
+    "en-US": "The previously complete reply changed. Review it before continuing.",
+    "zh-CN": "之前记录为完整的回复发生了变化，请检查后再继续。"
+  },
+  "App restarted. Reconcile the pending receipt before continuing.": {
+    "en-US": "App restarted. Reconcile the pending receipt before continuing.",
+    "zh-CN": "应用已重新打开，请先核对待处理投递再继续。"
+  },
+  "The provider reported a service limit or capacity issue. No next message is sent.": {
+    "en-US": "The provider reported a service limit or capacity issue. No next message is sent.",
+    "zh-CN": "网站报告限制或容量问题，未发送下一条消息。"
+  },
+  "Login or human verification is required. No next message is sent.": {
+    "en-US": "Login or human verification is required. No next message is sent.",
+    "zh-CN": "需要登录或真人验证，未发送下一条消息。"
+  },
+  "The provider reported a limit or capacity issue. Inspect the website notice before continuing.": {
+    "en-US": "The provider reported a limit or capacity issue. Inspect the website notice before continuing.",
+    "zh-CN": "网站报告限制或容量问题，请查看网站提示后再继续。"
+  },
+  "Manual handoff requested. Automatic exchange paused; review the target and send again.": {
+    "en-US": "Manual handoff requested. Automatic exchange paused; review the target and send again.",
+    "zh-CN": "你发起了手动交接，自动互聊已暂停。请核对目标后再发送。"
+  },
+  "Current participant supplied an explicit final CONCEDE or STALEMATE statement": {
+    "en-US": "Current participant supplied an explicit final CONCEDE or STALEMATE statement",
+    "zh-CN": "当前参与者明确给出了最终认输或僵局声明"
+  },
+  "Current panes": {
+    "en-US": "Current panes",
+    "zh-CN": "当前面板"
+  },
+  "Authorized conversations": {
+    "en-US": "Authorized conversations",
+    "zh-CN": "本次授权会话"
+  },
+  "No complete reply is available yet. Wait for the reply to finish, then send it. ": {
+    "en-US": "No complete reply is available yet. Wait for the reply to finish, then send it. ",
+    "zh-CN": "暂无完整回复，请等待回复结束后再发送。"
+  },
+  "The previous submission still needs reconciliation. Check delivery before starting another exchange.": {
+    "en-US": "The previous submission still needs reconciliation. Check delivery before starting another exchange.",
+    "zh-CN": "上一次提交仍需核对，请先检查投递，再开始新互聊。"
+  },
+  "The automatic exchange configuration is invalid. Nothing was sent.": {
+    "en-US": "The automatic exchange configuration is invalid. Nothing was sent.",
+    "zh-CN": "自动互聊配置无效，未发送任何内容。"
+  },
+  "NYRA_OPEN_FAILED": {
+    "en-US": "Nyra could not be opened. The system error is shown below.",
+    "zh-CN": "无法打开夜璃，后方为系统返回的错误。"
+  },
+  "NYRA_OPEN_TARGET_MISMATCH": {
+    "en-US": "The system returned a different Nyra installation. This workspace is not connected.",
+    "zh-CN": "系统返回了其他夜璃安装实例，本工作区尚未连接。"
+  },
+  "NYRA_CONNECTION_UNAVAILABLE_OR_UPDATE_REQUIRED": {
+    "en-US": "The read-only connection could not be verified. Check the selected Nyra version and signed identity.",
+    "zh-CN": "只读连接未能通过核验，请检查所选夜璃版本和签名身份。"
+  },
+  "Open bound conversations": {
+    "en-US": "Open bound conversations",
+    "zh-CN": "打开原交接会话"
+  },
+  "Pause automatic exchange and select the original two services before opening these conversations. Nothing was sent.": {
+    "en-US": "Pause automatic exchange and select the original two services before opening these conversations. Nothing was sent.",
+    "zh-CN": "请先暂停自动互聊，并选择原来的两个服务，再打开原交接会话。未发送内容。"
+  },
+  "Finish the current reply and preserve or clear website drafts before opening bound conversations. No page was changed and nothing was sent.": {
+    "en-US": "Finish the current reply and preserve or clear website drafts before opening bound conversations. No page was changed and nothing was sent.",
+    "zh-CN": "请等待当前回复结束，并保留或清理网页草稿后再打开原交接会话。页面未切换，也未发送内容。"
+  },
+  "Opening the recorded conversations. This only navigates; check delivery after they finish loading. Nothing was sent.": {
+    "en-US": "Opening the recorded conversations. This only navigates; check delivery after they finish loading. Nothing was sent.",
+    "zh-CN": "正在打开记录中的原会话。此操作只切换页面；加载完成后可检查投递。未发送内容。"
   }
 }

@@ -1,6 +1,6 @@
 # TWOS 1.0 · Installation and use
 
-**Applies to application 1.0.1 / build 101.49, TWOS + Nyra 1.0 joint candidate.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md)
+**Applies to application 1.0.2 / build 101.50, TWOS + Nyra 1.0 joint candidate.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md)
 
 **Candidate instructions: installation, engineering validation and delivery status are defined by the accompanying `START_HERE.md` and validation receipt. Do not replace the installed app before delivery.**
 Discuss on the official ChatGPT website in the left pane, execute with the local Codex service in the right pane, and return results to the original discussion. The right pane is TWOS's own client for the official App Server protocol; it does not embed the entire official Codex macOS interface.
@@ -11,20 +11,11 @@ Discuss on the official ChatGPT website in the left pane, execute with the local
 
 After the final delivery receipt identifies the installer, double-click the DMG and drag **Tianma Work OS** into **Applications**. Before replacing an older copy, let active work reach a safe terminal state and quit normally. Eject the disk image and open TWOS from Applications. Use the normal macOS launch prompt; do not disable system protections. See the [complete installation guide](release-1.0/INSTALL.en.md) for first-use account and model connections.
 
-## A · Incremental upgrade checks
+## A · This upgrade only
 
-**Entry condition:** You already use TWOS. This joint 1.0 candidate introduces Nyra 1.0 and corrects its reactive playback. Prior GPT→Claude, Show Nyra, daily outfit switching, business artifacts and Open/View/Save/Finder acceptances are preserved.
+**R2 candidate documentation — not a release/GUI PASS receipt.** Native and synthetic regression evidence is recorded separately. Actual provider round trips, attachments and final packaged interface checks remain pending until the matching receipt records them.
 
-1. Finish active work safely, save drafts and quit TWOS normally. Install only the final signed candidate named in the delivery receipt. Replace the whole App from its DMG; never edit a running app's contents or disable macOS protection.
-2. Reopen the original workbench. **Show Nyra** uses the bundled companion; no second installer, development path, Python, Node, Pets plugin or artwork download is needed. A compatible independently running Nyra is reused; visibility alone does not prove a task-status binding.
-3. With no active task, observe idle. Enter the visible character once, drag left/right, then release. Use **＋ → Actions** and the transparent stage's **Actions** to verify actual playback. These are previews, not business success. After a preview the current real state returns.
-4. In the stage, select Black & purple, Office or Gala and **Pose**. All three have reclining runtime art. A run/jump uses matching-outfit rise → action → lower frames. Blank stage areas pass through to underlying windows. **Desktop/Back** or Esc while the stage is focused restores the saved desktop size, position and outfit.
-5. During the next task you genuinely intend to run, the read-only state can show queued, working and waiting. PARTIAL/failed/cancelled/unverified results do not celebrate. A separate optional **Confirm checked result** records only your explicit check of that exact result, preserves the original executor report and does not start work or accept the whole project. Do not create a duplicate business task just for this check.
-6. Hidden Nyra stops animation and audio; a normal quit preserves preferences. Reopen or use Show Nyra to restore it. Audio defaults to mute for new users; existing preferences are respected. No automatic login item is added.
-
-**Stop here:** check only the new reactive companion and affected result-status path. Do not repeat Claude login, travel, plan-manager, LDD or accepted save tests. Completing A does not lead into B. Full engineering, public-release and Owner-acceptance status remain distinct in the delivery receipt.
-
-**Website boundary:** only selected content is handed off, with the current provider/target binding. A website returning code is not proof of a local file. Website handoff attachments remain “none”; Codex attachments and permissions keep their separate supported path.
+[Follow the R2 incremental route](release-1.0/BIDIRECTIONAL_R2.en.md): hover stage/top controls, real reverse transfer, automatic exchange, attachments and both-pane activity. Keep earlier acceptance. Do not proceed to B after completing this upgrade route.
 
 ## B · First task
 

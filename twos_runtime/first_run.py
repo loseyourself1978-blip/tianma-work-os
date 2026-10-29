@@ -17,7 +17,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session, sessionmaker
 
-from . import __version__
+from . import __version__, INSTALLATION_COMPATIBLE_VERSIONS
 from .config import ROOT_DIR, Settings
 from .db import (
     DEFAULT_AI_CAPABILITIES,
@@ -659,7 +659,7 @@ def initialize_fresh_installation(
         else:
             expected = {
                 "public_id": settings.installation_id,
-                "source_version": __version__,
+                "source_version": installation.source_version if installation.source_version in INSTALLATION_COMPATIBLE_VERSIONS else __version__,
                 "data_root": str(data_root),
                 "database_path": str(database_path),
                 "runtime_environment": str(settings.runtime_environment or ""),

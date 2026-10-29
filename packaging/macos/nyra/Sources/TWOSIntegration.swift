@@ -45,6 +45,7 @@ extension Companion {
             state["producerInstance"] = event.producer_instance_id
             state["sessionID"] = event.session_id; state["taskID"] = event.task_id ?? ""
             state["taskState"] = event.state.rawValue
+            state["activitySide"] = event.activity_side ?? "unknown"
         }
         // Duplicate snapshots are heartbeats, not state transitions. Avoid
         // rewriting preference files or posting UI events every two seconds.

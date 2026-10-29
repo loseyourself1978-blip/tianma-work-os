@@ -1,5 +1,10 @@
 # Tianma Work OS 1.0
 
+**R2 候选说明，不能作为已发行或真实 GUI 通过回执。** 原生及合成页面回归单独记录；真实提供方往返、附件和最终打包界面检查，须以匹配回执为准，当前仍待完成。
+
+[R2 候选操作](docs/release-1.0/BIDIRECTIONAL_R2.zh-CN.md)。此前已发布 [TWOS v1.0.1](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.1)；新 1.0.2 / 101.50 尚未发布。
+
+
 [English](README.md) · [安装](docs/release-1.0/INSTALL.zh-CN.md) · [操作指南](docs/release-1.0/USER_GUIDE.zh-CN.md) · [当前发行状态](docs/CURRENT_DELIVERY.md)
 
 在一个 macOS 工作区中讨论目标、交接指令并执行。TWOS 将 ChatGPT、DeepSeek、Claude 官网与本机 Codex 客户端配对，把明确内容交给选定目标，再将结果带回原讨论。
@@ -12,7 +17,7 @@
 
 ## 下载与首次使用
 
-**TWOS 1.0.1 / build 101.49**：Apple Silicon 安装包已完成 Developer ID 签名、Apple 公证及 Gatekeeper 检查。[下载本版](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.1) · [签名、hash 与验证回执](docs/release-1.0/release.json)。旧发行和标签保持；本版发布不代签 Owner 差量验收。
+已发布的 TWOS v1.0.1 保持可用。R2（1.0.2 / 101.50）仍在验证，尚不是可下载的新发行。只使用带准确源码、签名公证、DMG 哈希和检查回执的匹配 Release。历史 v1.0.0 源码发行保持不变。
 
 打开对应 DMG，拖入应用程序并启动。登录所选供应商官网，连接已安装/登录的官方本机 Codex，再创建或接续一个绑定目录的任务。Nyra 在同一 App 内，无需第二个桌宠安装包或首次联网下载画稿；普通安装无需 Python、Node 或终端。
 
@@ -33,9 +38,3 @@ TWOS 使用官方 Codex App Server 协议实现客户端，不是嵌入官方 ma
 [详细操作指南](docs/OWNER_GUIDE.md) · [仓库地图](docs/REPOSITORY_MAP.md) · [原本机项目](docs/LEGACY_OWNER_GUIDE.md) · [高级源码安装](docs/ADVANCED_INSTALLATION.md)。旧设计和阶段记录不代表当前安装包或接受状态。
 
 </details>
-
-[Actual candidate screenshots and recording / 真实候选截图与录像](docs/release-1.0/MEDIA.zh-CN.md)
-
-![ 1.0.1 / 101.49 真实候选：首次工作台与内置夜璃。 ](docs/release-1.0/images/twos-first-workspace.png)
-
-1.0.1 / 101.49 真实候选：首次工作台与内置夜璃。
