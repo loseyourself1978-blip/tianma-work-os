@@ -30,13 +30,14 @@ def test_source_launcher_retains_compatible_binding_without_writes(tmp_path, ver
     assert INSTALLATION_COMPATIBLE_VERSIONS == bootstrap.INSTALLATION_COMPATIBLE_VERSIONS
 
 
-def test_desktop_patch_retains_identity_and_rejects_invalid_version(tmp_path):
+@pytest.mark.parametrize("version", ["1.0.1", "1.0.2", "1.0.3"])
+def test_desktop_patch_retains_identity_and_rejects_invalid_version(tmp_path, version):
     data, runtime, logs = [tmp_path / x for x in ("data", "runtime", "logs")]
     data.mkdir()
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         config = desktop.installation(data, runtime, logs, sock)
-        config["source_version"] = "1.0.1"
+        config["source_version"] = version
         bootstrap.atomic_private_json(data / "installation.json", config)
         before = (data / "installation.json").read_bytes()
         assert desktop.installation(data, runtime, logs, sock) == config
@@ -50,19 +51,20 @@ def test_desktop_patch_retains_identity_and_rejects_invalid_version(tmp_path):
             assert (data / "installation.json").read_bytes() == unchanged
 
 
-def test_retained_database_version_and_identity_are_not_rewritten(tmp_path):
+@pytest.mark.parametrize("version", ["1.0.1", "1.0.2", "1.0.3"])
+def test_retained_database_version_and_identity_are_not_rewritten(tmp_path, version):
     settings = fresh_settings(tmp_path)
     app = create_app(settings)
     with TestClient(app):
         with app.state.session_factory() as session:
             installation = session.scalar(select(Installation))
-            installation.source_version = "1.0.1"
+            installation.source_version = version
             public_id = installation.public_id
             state = installation.first_run_state
             session.commit()
     config_path = settings.installation_config_path
     config = json.loads(config_path.read_text())
-    config["source_version"] = "1.0.1"
+    config["source_version"] = version
     bootstrap.atomic_private_json(config_path, config)
     restarted = create_app(settings)
     with TestClient(restarted) as client:
@@ -70,5 +72,5 @@ def test_retained_database_version_and_identity_are_not_rewritten(tmp_path):
         with restarted.state.session_factory() as session:
             rows = session.scalars(select(Installation)).all()
             assert len(rows) == 1
-            assert (rows[0].public_id, rows[0].source_version, rows[0].first_run_state) == (public_id, "1.0.1", state)
-    assert json.loads(config_path.read_text())["source_version"] == "1.0.1"
+            assert (rows[0].public_id, rows[0].source_version, rows[0].first_run_state) == (public_id, version, state)
+    assert json.loads(config_path.read_text())["source_version"] == version

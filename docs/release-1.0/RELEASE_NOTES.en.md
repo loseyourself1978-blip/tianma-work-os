@@ -1,5 +1,9 @@
 # TWOS 1.0.3 / 101.51 · R3
 
+## Patch upgrade compatibility
+
+Validation also caught an actual upgrade defect: deriving the compatible set from the current version dropped 1.0.2 when advancing to 1.0.3. The launcher and runtime now retain an explicit schema-compatible patch history (1.0.1, 1.0.2, 1.0.3). Existing installation identity, configuration bytes and stored source-version metadata are preserved; unrelated versions remain rejected. Isolated tests cover source launch, desktop launch and retained database identity. No Owner data was opened or migrated for this check.
+
 
 R3 candidate: normal-reply handoff, explicit stop and separate Nyra transport/activity/rendering. Final package and release evidence pending. [R3 incremental guide / R3 差量指南](OWNER_REGRESSION_R3.en.md).
 

@@ -37,3 +37,8 @@ Editing a previously selected first instruction now clears that selection’s ol
 
 
 The notarized installer coexistence check exposed an additional stale-label defect: after the producer changed, the consumer remained alive but its older pane observations still said Fresh. R3 now requires both the current authenticated producer and a recent snapshot; a live heartbeat alone cannot make old activity current. Last observed state remains visible as Stale.
+
+
+## Patch upgrade compatibility
+
+Validation also caught an actual upgrade defect: deriving the compatible set from the current version dropped 1.0.2 when advancing to 1.0.3. The launcher and runtime now retain an explicit schema-compatible patch history (1.0.1, 1.0.2, 1.0.3). Existing installation identity, configuration bytes and stored source-version metadata are preserved; unrelated versions remain rejected. Isolated tests cover source launch, desktop launch and retained database identity. No Owner data was opened or migrated for this check.
