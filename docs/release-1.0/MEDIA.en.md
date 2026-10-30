@@ -1,3 +1,19 @@
+# R3 actual interface
+
+TWOS 1.0.3 / 101.51 and Nyra 1.0.2 / 102. These are actual isolated candidate windows with TEST ONLY engineering conversations, not Owner debates.
+
+![Final candidate, three actual round trips](images/r3-automatic-three-roundtrips.png)
+
+One Start produced six matched submissions and complete replies. The screenshot is an interface record; hashes and stop/restart checks are separately recorded.
+
+![Same visible Nyra in a real working frame](images/r3-nyra-working.png)
+
+The authenticated consumer’s actual working clip and frame counter were observed independently. Transparent PNG alpha may appear black or white in a viewer. This single screenshot does not prove animation by itself.
+
+No new R3 video was recorded. The actual screenshots and runtime observations cover this patch; the earlier recording below remains historical.
+
+---
+
 # Actual R2 interface · TWOS
 
 TWOS 1.0.2 / build 101.50, bundled and standalone Nyra 1.0.1 / build 101. These screenshots were captured from the isolated, Developer ID signed final candidates. No private account, business history or generated UI mockup is shown. Notarization and publication are separate gates in the matching release receipt.

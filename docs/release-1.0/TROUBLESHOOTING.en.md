@@ -1,11 +1,10 @@
 # Troubleshooting
 
-R3 candidate: normal-reply handoff, explicit stop and separate Nyra transport/activity/rendering. Final package and release evidence pending. [R3 incremental guide / R3 差量指南](OWNER_REGRESSION_R3.en.md).
+Applies to TWOS 1.0.3 / 101.51. Start with the [R3 incremental guide](OWNER_REGRESSION_R3.en.md) after upgrading; stop at its end point. Existing accepted tasks do not need to be recreated.
 
 
-**R2 verification scope.** The signed TWOS 1.0.2 / 101.50 candidate completed one explicitly started three-round-trip exchange between real ChatGPT and Claude webpages: six submissions and six matched complete replies, with no manual per-turn send or check. Reopening preserved the completed exchange without replay. TXT, PNG and simple text-layer PDF readability was observed in both directions; native/synthetic boundary checks are recorded separately. The matching complete main regression and new notarization are recorded in the release receipt; the linked GitHub Release records publication. These observations do not grant Owner acceptance.
 
-[R2 incremental instructions and exact boundaries](BIDIRECTIONAL_R2.en.md).
+[R3 incremental instructions and exact boundaries](OWNER_REGRESSION_R3.en.md).
 
 
 - **macOS blocks installation:** verify the exact release and hash/signature receipt. Do not disable Gatekeeper or remove quarantine. An unnotarized engineering candidate is not the default public installation path.

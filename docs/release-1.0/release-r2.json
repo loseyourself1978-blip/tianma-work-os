@@ -1,0 +1,88 @@
+{
+  "product": "TWOS",
+  "version": "1.0.2",
+  "build": "101.50",
+  "source_commit": "9ddedac271e53c4badc34f4c2fc284eec56046d0",
+  "artifact": "Tianma-Work-OS-1.0.2-build-101.50.dmg",
+  "bytes": 191860228,
+  "sha256": "ad713efa9cc5f7ea2b50bc84d71052b10d9c62900dcb3e602b8e62e943605a3f",
+  "app_notarization_id": "bca3e463-31f6-4791-a779-d711aad1650f",
+  "dmg_notarization_id": "11151c57-d953-43d8-b208-a454df9d014b",
+  "signing_identity": "Developer ID Application: Jing Huang (BZJWQJ352K)",
+  "gatekeeper": "PASS",
+  "architecture": "arm64",
+  "owner_differential_acceptance": "PENDING_NOT_GRANTED_BY_ENGINEERING",
+  "main_gate": {
+    "complete_pass": true,
+    "state": "COMPLETE_GREEN",
+    "counts": {
+      "passed": 1782,
+      "skipped": 1
+    },
+    "collected": 1783,
+    "safari": {
+      "measurements": 38,
+      "visible_start": 38,
+      "visible_finish": 38,
+      "errors": []
+    }
+  },
+  "at": "2026-10-30T16:56:55.242040+08:00",
+  "build_time_signing_metadata": "Source provenance preserves its original builder record; actual distribution signature is verified in this receipt and codesign/Gatekeeper.",
+  "status": "SIGNED_NOTARIZED_VALIDATED",
+  "notarization_status": "Accepted",
+  "stapled": true,
+  "tested_platform": {
+    "architecture": "arm64",
+    "macos": "27.0.1",
+    "safari": "27.0.1"
+  },
+  "deployment_target": "13.0",
+  "other_macos_and_intel": "NOT_TESTED_NOT_SHIPPED_AS_INTEL",
+  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.2",
+  "publication_authorization": "TWOS-NYRA-BIDIRECTIONAL-ACTIVITY-AND-STAGE-R2",
+  "captured_at": "2026-10-30T17:12:27.304832+08:00",
+  "validation": {
+    "full_suite": {
+      "passed": 1782,
+      "skipped": 1,
+      "collected": 1783,
+      "safari_measurements": 38,
+      "scope": "One complete stable-input serial macOS/Safari gate; original failed batch retained privately; one explicitly retained historical-package upgrade case skipped"
+    },
+    "real_bidirectional": "SIGNED_GUI_BASELINE_THREE_ROUNDTRIPS_SIX_EXACT_REPLIES; NATIVE_CLIENT_INPUTS_BYTE_IDENTICAL_IN_FINAL_PACKAGE",
+    "restart_no_replay": "REAL_GUI_SIGNED_BASELINE_PASS; UNCHANGED_NATIVE_CLIENT_INPUTS_REUSED",
+    "files": "REAL_GUI_TXT_PNG_SIMPLE_TEXT_LAYER_PDF_BOTH_DIRECTIONS; packaged upload-script identities checked",
+    "returned_artifact": "REAL_PROVIDER_DOWNLOAD_THEN_EXACT_BYTES_UPLOAD_AND_READ",
+    "both_pane_animation": "REAL_GUI_OBSERVER_AND_AGGREGATE_INPUTS_UNCHANGED; advancing frames",
+    "stage_controls": "REAL_GUI_FINAL_BUNDLED_AND_STANDALONE; physical hover separately OWNER_CONFIRMED",
+    "safe_area": "BOTTOM_VISIBLE_DOCK_REAL_GUI; other Dock/notch/narrow cases NATIVE_GEOMETRY_FIXTURES_ONLY",
+    "business_acceptance": "PRESERVED_NOT_REPLAYED",
+    "new_video": "NOT_RECORDED; prior R1 recording labelled historical",
+    "gui_input_reuse": {
+      "baseline_twos_source": "0efc6e3924de7ad88282d75da34cd4281f8e7d97",
+      "changed_runtime_input": "twos_runtime/run_lifecycle.py",
+      "change_scope": "Legacy run terminal cancellation/timeout/failure settlement; native workbench and Nyra inputs byte-identical",
+      "regression": "Six deterministic stale-read cases plus matching complete suite; original negative-control failure preserved"
+    },
+    "final_notarized_installer": {
+      "actual_gui_launch": "PASS",
+      "version": "1.0.2",
+      "build": "101.50",
+      "source_commit": "9ddedac271e53c4badc34f4c2fc284eec56046d0",
+      "dmg_sha256": "ad713efa9cc5f7ea2b50bc84d71052b10d9c62900dcb3e602b8e62e943605a3f",
+      "exact_installed_manifest": "PASS",
+      "fresh_install_without_standalone": "Show Nyra launched the exact bundled component; visible character, advancing idle frames, transparent stage/top controls/Back observed",
+      "existing_standalone": "Same PID hidden/shown; survives host quit; reopening host creates no duplicate",
+      "owner_app_replaced": false,
+      "new_model_turns": 0
+    }
+  },
+  "embedded_nyra": {
+    "version": "1.0.1",
+    "build": "101",
+    "source_commit": "d49012ff868d28e76463aab557ccf2bc84f413d1",
+    "event_schema": "twos.nyra.status.v2",
+    "component_manifest": "component-manifest.json"
+  }
+}

@@ -1135,6 +1135,16 @@ final class NativeNyra: NSObject {
         if let error=controlFailure {state["reason"]=error}
         return state
     }
+    // Pane freshness belongs to this authenticated producer's recent snapshot,
+    // not merely to a still-alive consumer heartbeat or a saved event flag.
+    static func currentPaneObservations(_ observations: [[String:Any]], connected: Bool, snapshotAge: Double?) -> [[String:Any]] {
+        let snapshotIsCurrent = connected && (snapshotAge.map { $0.isFinite && (0..<7).contains($0) } ?? false)
+        return observations.map { item in
+            var observed = item
+            observed["fresh"] = snapshotIsCurrent && item["fresh"] as? Bool == true
+            return observed
+        }
+    }
     private func observedSnapshot() -> [String: Any] {
         guard let helper = targetURL else { return ["available": false, "visible": false, "reason": "NYRA_HELPER_NOT_BUNDLED", "binding": "NOT_CONNECTED"] }
         // No helper means there is no live visibility evidence to read. Besides
@@ -1156,7 +1166,9 @@ final class NativeNyra: NSObject {
                 "observed": true, "binding": connected ? "CONNECTED_READONLY" : "NOT_CONNECTED", "updatedAt": state["updatedAt"] ?? NSNull(),"fresh":fresh,"heartbeatAge":age as Any? ?? NSNull(),"consumerPID":pid]
         if !fresh {result["reason"]="NYRA_HEARTBEAT_STALE"}
         for key in ["consumerInstance","animation","frameAsset","frameCount","frameTimer","reduceMotion","lastStateChangeAt","paneObservations","taskState","activitySide"] {result[key]=state[key]}
-        if let last=state["lastSnapshotUptime"] as? Double,last>0 {result["snapshotAge"]=max(0,now-last)}
+        let snapshotAge=(state["lastSnapshotUptime"] as? Double).flatMap { $0 > 0 ? now-$0 : nil }
+        if let age=snapshotAge {result["snapshotAge"]=max(0,age)}
+        result["paneObservations"]=Self.currentPaneObservations(state["paneObservations"] as? [[String:Any]] ?? [],connected:connected,snapshotAge:snapshotAge)
         return result
     }
     func refresh() {

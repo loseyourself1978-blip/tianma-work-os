@@ -1,14 +1,13 @@
-# Install Tianma Work OS 1.0.2
+# Install Tianma Work OS 1.0.3
 
-R3 candidate: normal-reply handoff, explicit stop and separate Nyra transport/activity/rendering. Final package and release evidence pending. [R3 incremental guide / R3 差量指南](OWNER_REGRESSION_R3.en.md).
-
-
-**R2 verification scope.** The signed TWOS 1.0.2 / 101.50 candidate completed one explicitly started three-round-trip exchange between real ChatGPT and Claude webpages: six submissions and six matched complete replies, with no manual per-turn send or check. Reopening preserved the completed exchange without replay. TXT, PNG and simple text-layer PDF readability was observed in both directions; native/synthetic boundary checks are recorded separately. The matching complete main regression and new notarization are recorded in the release receipt; the linked GitHub Release records publication. These observations do not grant Owner acceptance.
-
-[R2 incremental instructions and exact boundaries](BIDIRECTIONAL_R2.en.md).
+Applies to TWOS 1.0.3 / 101.51. Start with the [R3 incremental guide](OWNER_REGRESSION_R3.en.md) after upgrading; stop at its end point. Existing accepted tasks do not need to be recreated.
 
 
-This guide applies to the joint TWOS/Nyra candidate, build 101.50. Its release receipt is the authority for publication, signatures and tested platforms. A local candidate is not a published release.
+
+[R3 incremental instructions and exact boundaries](OWNER_REGRESSION_R3.en.md).
+
+
+This guide applies to the joint TWOS/Nyra candidate, build 101.51. Its release receipt is the authority for publication, signatures and tested platforms. A local candidate is not a published release.
 
 Currently supports macOS only. A Windows version is in development; no downloadable build is available yet. The current TWOS package is Apple Silicon. Engineering testing uses macOS 27.0.1 / Safari 27.0.1. A binary deployment target does not prove testing on every older system; consult the release support matrix before installing elsewhere.
 

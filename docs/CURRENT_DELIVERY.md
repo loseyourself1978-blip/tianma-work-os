@@ -1,13 +1,13 @@
-# Current R2 delivery / 当前 R2 交付
+# Current R3 delivery / 当前 R3 交付
 
-TWOS **1.0.2 / 101.50**, bundled/standalone Nyra **1.0.1 / 101**. New App/DMG pairs are Developer ID signed, Apple notarized, stapled and Gatekeeper accepted. 完整主回归：**1782 PASS / 1 historical-package skip / 0 FAIL**，真实 Safari 测量 38 项。
+TWOS **1.0.3 / 101.51**. TWOS bundles the pinned Nyra **1.0.2 / 102** component; the standalone package uses the same source and resources.
 
-[Exact release receipt / 精确发行回执](release-1.0/release.json) · [R2 coverage / 验证范围](release-1.0/R2_VERIFICATION.en.md) · [中文覆盖](release-1.0/R2_VERIFICATION.zh-CN.md)
+[English incremental guide](release-1.0/OWNER_REGRESSION_R3.en.md) · [中文差量指南](release-1.0/OWNER_REGRESSION_R3.zh-CN.md) · [Matching GitHub Release](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.3)
 
-The signed GUI baseline completed three actual ChatGPT↔Claude round trips and preserved completed state across restart without replay. Its native client and Nyra inputs remain byte-identical in this package; the subsequent legacy-run terminal fix is covered by the matching complete regression. Real TXT, PNG and simple PDF transfer, a returned downloaded document, both-pane activity and advancing Nyra frames have separately scoped evidence. Other Dock placements have geometry fixtures, not physical certification. New R2 video was not recorded; current screenshots are actual candidate windows.
+The original Owner regression remains recorded. New real engineering conversations verify exact ordinary-reply handoff and three automatic round trips. Native Stop, host Stop, late reply and stopped recovery have separate receipts; unknown activity is not transport disconnection. No accepted business task or old debate is replayed.
 
-当前仅支持 macOS Apple Silicon；实测 macOS 27.0.1 / Safari 27.0.1。编译下限13.0不代表更早系统实测。Windows 开发中、尚无下载。
+最终完整回归、签名、公证、资产 hash 与发布状态以匹配 Release 回执为准；新版本发布前旧发行保持不变。工程结果不代签 Owner 差量接受，不扩大 LDD／交易／临床或后续阶段权限。
 
-Old accepted work is preserved and not replayed. **Owner differential acceptance remains PENDING.** No LDD content review, trading/clinical authority, future-stage authority or whole20.2 acceptance is inferred.
+macOS Apple Silicon only; engineering checks use macOS 27.0.1 / Safari 27.0.1. A 13.0 deployment target is not testing on all earlier systems. Windows is in development, with no downloadable version.
 
-[English incremental guide](release-1.0/BIDIRECTIONAL_R2.en.md) · [中文差量指南](release-1.0/BIDIRECTIONAL_R2.zh-CN.md) · [Historical R1 receipt](release-1.0/release-r1.json)
+[Historical R2 receipt](release-1.0/release-r2.json) · [Historical R1 receipt](release-1.0/release-r1.json)

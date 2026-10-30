@@ -1,6 +1,6 @@
 # R3 · Reply handoff and observable Nyra activity
 
-**Candidate scope: TWOS 1.0.3 / 101.51 with Nyra 1.0.2 / 102. Final packaged validation, notarization and publication are pending. This document is not an acceptance receipt.**
+**Applies to TWOS 1.0.3 / 101.51 with Nyra 1.0.2 / 102. Use the matching release receipt for final validation, notarization and publication. Engineering verification is not Owner acceptance.**
 
 The Owner reported a missing inline action on a normal reply, a new topic paired with an older response, and an inactive companion despite a connected status. That failed Owner retest remains recorded. Earlier engineering passes and accepted business artifacts remain separate; no old debate is replayed.
 
@@ -31,3 +31,9 @@ Native ChatGPT stopped-thinking and Claude interrupted-reply UI are terminal evi
 Nyra v3 adds only side state, bounded observation reason and freshness to the authenticated minimal protocol. Consumer instance, last snapshot receipt, last state change, actual clip and advancing frame counter are independently observable. Same-value snapshots refresh liveness without restarting the first animation frame. Signature and exact peer checks remain enforced. No chat, attachment bytes, paths, code, account information or credentials are sent to Nyra.
 
 Currently macOS only. Windows is in development; no downloadable Windows version exists. Existing artwork, outfits, transparent stage, top safe-area controls and sound scope are retained. See the matching release receipt for actual tested platform, final source, signatures and hashes.
+
+
+Editing a previously selected first instruction now clears that selection’s old message identity and cancels pending Start validation. The displayed text becomes a new authored first instruction. It never changes an already running exchange or grants a different recipient. An unchanged selected reply still receives exact identity/completion checks.
+
+
+The notarized installer coexistence check exposed an additional stale-label defect: after the producer changed, the consumer remained alive but its older pane observations still said Fresh. R3 now requires both the current authenticated producer and a recent snapshot; a live heartbeat alone cannot make old activity current. Last observed state remains visible as Stale.

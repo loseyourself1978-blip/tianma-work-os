@@ -27,6 +27,20 @@ if mode == "owner_r3_policy" {
     precondition(reducer.receive(uncertain,now:104).accepted && reducer.connected,"activity unknown is not a transport failure")
     var injected=read();var badPanes=injected["pane_observations"] as! [[String:Any]];badPanes[0]["body"]="PRIVATE TEST FORBIDDEN";injected["pane_observations"]=badPanes
     do {_ = try StatusEvent.decode(JSONSerialization.data(withJSONObject:injected),simulation:false);fatalError("private extension accepted")}catch{}
+    // A live consumer with an old/different producer must not label saved
+    // observations Fresh. Heartbeat and snapshot age are separate clocks.
+    let recent=NativeNyra.currentPaneObservations(panes,connected:true,snapshotAge:1)
+    precondition(recent.allSatisfy { $0["fresh"] as? Bool == true })
+    for age:Double? in [nil,7,146.1,-1,Double.infinity,Double.nan] {
+        let stale=NativeNyra.currentPaneObservations(panes,connected:true,snapshotAge:age)
+        precondition(stale.allSatisfy { $0["fresh"] as? Bool == false })
+        precondition(stale.first?["state"] as? String=="running","keep last observation identity; mark stale rather than invent idle")
+    }
+    let detached=NativeNyra.currentPaneObservations(panes,connected:false,snapshotAge:0.1)
+    precondition(detached.allSatisfy { $0["fresh"] as? Bool == false })
+    var partiallyStale=panes;partiallyStale[0]["fresh"]=false
+    let retained=NativeNyra.currentPaneObservations(partiallyStale,connected:true,snapshotAge:1)
+    precondition(retained[0]["fresh"] as? Bool==false && retained[1]["fresh"] as? Bool==true)
     let future=PaneActivity(session:"TEST",task:nil,state:"idle",at:now+100)
     precondition(!future.fresh)
     var d=PairedDialogue(id:"TEST-STOP",providers:["ChatGPT","Claude"],conversations:[base.absoluteString,base.absoluteString],roles:["a","b"],firstText:"TEST ONLY",maxExchanges:0,duration:0,createdAt:1,state:"running",untilStopped:true)

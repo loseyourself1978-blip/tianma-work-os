@@ -1,14 +1,8 @@
 # Tianma Work OS 1.0
 
-R3 candidate: normal-reply handoff, explicit stop and separate Nyra transport/activity/rendering. Final package and release evidence pending. [R3 status / R3 状态](docs/release-1.0/OWNER_REGRESSION_R3.en.md).
+**TWOS 1.0.3 / build 101.51** · [Download and verify](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.3) · [R3 incremental guide](docs/release-1.0/OWNER_REGRESSION_R3.en.md). The matching Release assets and receipts identify source, SHA-256, Developer ID, Apple notarization and actual verification. Publication does not grant Owner acceptance.
 
-
-**TWOS 1.0.2 / build 101.50** provides Apple Silicon app/DMG artifacts signed with Developer ID, notarized by Apple, stapled and accepted by Gatekeeper. [Download this version](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.2) · [Source, SHA-256 and validation receipt](docs/release-1.0/release.json). Publication does not grant Owner differential acceptance.
-
-**R2 verification scope.** The signed TWOS 1.0.2 / 101.50 candidate completed one explicitly started three-round-trip exchange between real ChatGPT and Claude webpages: six submissions and six matched complete replies, with no manual per-turn send or check. Reopening preserved the completed exchange without replay. TXT, PNG and simple text-layer PDF readability was observed in both directions; native/synthetic boundary checks are recorded separately. The matching complete main regression and new notarization are recorded in the release receipt; the linked GitHub Release records publication. These observations do not grant Owner acceptance.
-
-[R2 operations](docs/release-1.0/BIDIRECTIONAL_R2.en.md). Previous published release: [TWOS v1.0.1](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.1). Use the matching v1.0.2 Release and receipt linked above.
-
+This patch addresses the failed Owner retest: ordinary reply actions and exact first-message routing, native and host Stop, and separate Nyra transport/activity/rendering. Dedicated real ChatGPT/Claude engineering conversations completed three round trips; no Owner debate or accepted business task was replayed. See the scope and original-failure boundaries in the R3 guide.
 
 [简体中文](README.zh-CN.md) · [Install](docs/release-1.0/INSTALL.en.md) · [User guide](docs/release-1.0/USER_GUIDE.en.md) · [Current release status](docs/CURRENT_DELIVERY.md)
 
@@ -22,7 +16,7 @@ Discuss a goal and execute it in one macOS workspace. TWOS pairs official ChatGP
 
 ## Download and first use
 
-Download TWOS v1.0.2 using the link above. Verify SHA256SUMS before opening its DMG. The matching receipt binds source, signatures, notarization and artifact hashes. Historical v1.0.1 and v1.0.0 remain unchanged.
+Download TWOS v1.0.3 using the link above. Verify SHA256SUMS before opening its DMG. The matching receipt binds source, signatures, notarization and artifact hashes. Historical v1.0.1 and v1.0.0 remain unchanged.
 
 Open the matching DMG, drag TWOS into Applications and open it. Sign into the chosen official provider website, connect your already installed/logged-in local Codex, then create or resume one folder-bound task. Nyra is inside the same app; no separate pet installer or first-run artwork download is required. Ordinary installation needs no Python, Node or terminal.
 

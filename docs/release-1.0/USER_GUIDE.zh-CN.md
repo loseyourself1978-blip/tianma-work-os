@@ -1,9 +1,8 @@
-# 使用 TWOS 1.0.2
+# 使用 TWOS 1.0.3
 
-R3 候选：普通回复交接、明确停止、夜璃连接／活动／动画分开核验。最终包与发行证据待完成。[R3 incremental guide / R3 差量指南](OWNER_REGRESSION_R3.zh-CN.md).
+适用于 TWOS 1.0.3 / 101.51。升级后先看 [R3 差量指南](OWNER_REGRESSION_R3.zh-CN.md)，完成对应终点即结束；不重新制作已接受任务。
 
 
-**R2 验证范围。** 签名候选 TWOS 1.0.2 / 101.50 已通过一次明确启动的真实 ChatGPT↔Claude 三往返：六次提交及六份对应完整回复，没有逐轮手动发送或检查。重开后保留完成状态且不重放。TXT、PNG 和简单文字层 PDF 已取得双方向内容可读证据；原生／合成边界测试另列。匹配完整主回归、新字节公证和制品 hash 见发行回执；公开发行以对应 GitHub Release 为准，工程结果不代签 Owner 接受。
 
 [R2 差量操作和准确边界](BIDIRECTIONAL_R2.zh-CN.md)。
 

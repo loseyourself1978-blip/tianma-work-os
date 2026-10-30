@@ -82,3 +82,6 @@ Fresh left-only, right-only or simultaneous activity displays the corresponding 
 The bundled helper connects to this exact TWOS. For a separately running compatible new Nyra, **Nyra status** offers one explicit **Connect** action; only minimal read-only status is shared after both live peer signatures are checked. An older visibility-only Nyra may need a normal upgrade for the new connection. Do not disable signature checks or copy endpoint files manually.
 
 **Upgrade end point:** check only the new hover entry/top toolbar, symmetric transfer/automatic controls, exact attachments and both-pane activity. Do not remake travel/LDD pages or repeat previously accepted Open/View/Save/Finder checks.
+
+
+R3 additionally fixes editing a selected first reply: stale seed identity is revoked while active exchange scope stays frozen. Final binaries and validation are identified in the matching release receipt.
