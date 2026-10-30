@@ -217,7 +217,7 @@ final class NyraStatusProducer {
 
 // A single app/window owns both panes. No foreign window positioning, capture,
 // screen mirror, remote-control service, or keyboard synthesis is involved.
-final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
+final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextViewDelegate {
     let preferences: URL
     let resources: URL?
     let translate: (String) -> String

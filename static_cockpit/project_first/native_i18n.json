@@ -1554,5 +1554,9 @@
   "The website confirms that generation was interrupted. Future exchanges cancelled.": {
     "en-US": "The website confirms that generation was interrupted. Future exchanges cancelled.",
     "zh-CN": "网站确认生成已中断。后续交换已取消。"
+  },
+  "First instruction edited. Start will send this text to the displayed participants; nothing has been sent.": {
+    "en-US": "First instruction edited. Start will send this text to the displayed participants; nothing has been sent.",
+    "zh-CN": "首轮指令已修改。点击开始后将把这份正文发送给当前显示的参与方；尚未发送。"
   }
 }

@@ -54,8 +54,17 @@ if mode == "owner_r3_policy" {
     precondition(work.dialogue?.state=="stopped")
     work.applyWebResponse(interrupted.id,response:["state":"unknown"])
     work.tickDialogue();precondition(work.webTransfers.count==1 && work.webTransfers[0].state=="generation_stopped")
-    work.dialogueStartToken="TEST-PENDING-START";work.dialogueStartPending=true;work.stopDialogue()
+    work.dialogueStartToken=UUID().uuidString;work.dialogueStartPending=true;work.stopDialogue()
     precondition(work.dialogueStartToken==nil && !work.dialogueStartPending)
+    // Editing a previously selected seed must revoke its stale identity and
+    // pending validation, without modifying a frozen active exchange.
+    let editor=NSTextView();work.dialogueText=editor;editor.string="TEST ONLY NEW FIRST TEXT"
+    work.dialogueSeed=(base.absoluteString,"OLD-SEED","OLD-HASH")
+    work.dialogueStartToken=UUID().uuidString;work.dialogueStartPending=true
+    let frozenFirst=work.dialogue?.firstText
+    work.textDidChange(Notification(name:NSText.didChangeNotification,object:editor))
+    precondition(work.dialogueSeed==nil && work.dialogueStartToken==nil && !work.dialogueStartPending)
+    precondition(work.dialogue?.firstText==frozenFirst)
     let restored=IntegratedWorkbench(preferences:prefs,resources:resources,translate:{$0},openProjects:{fatalError("business action")})
     precondition(restored.dialogue?.state=="stopped" && restored.activeWebQueues.isEmpty)
     print("R3_STOP_BOTH_SIDES_LATE_REPLY_UNBOUNDED_AND_ACTIVITY_TRUTH_PASS");exit(0)

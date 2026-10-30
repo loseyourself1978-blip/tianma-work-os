@@ -169,7 +169,7 @@ extension IntegratedWorkbench {
             let explain=NSTextField(wrappingLabelWithString:translate("Automatic exchange is off by default. Only these two conversations, roles, selected files and complete replies are shared. No file execution, commands, approvals or Git rights are granted."))
             let roleA=NSTextField(),roleB=NSTextField();dialogueRoles=[roleA,roleB]
             roleA.placeholderString=translate("Left participant role");roleB.placeholderString=translate("Right participant role")
-            let text=NSTextView(frame:NSRect(x:0,y:0,width:680,height:160));text.font = .systemFont(ofSize:14);dialogueText=text
+            let text=NSTextView(frame:NSRect(x:0,y:0,width:680,height:160));text.font = .systemFont(ofSize:14);dialogueText=text;text.delegate=self
             text.minSize=NSSize(width:0,height:140);text.isHorizontallyResizable=false;text.textContainer?.widthTracksTextView=true
             text.setAccessibilityLabel(translate("First instruction · sent to the right participant"))
             let scroll=NSScrollView();scroll.documentView=text;scroll.hasVerticalScroller=true;text.isVerticallyResizable=true;text.autoresizingMask=[.width]
@@ -275,6 +275,15 @@ extension IntegratedWorkbench {
     @objc func dialogueBudgetChanged() {
         let limited=dialogueUntilStopped?.state != .on
         dialogueRounds?.isEnabled=limited;dialogueMinutes?.isEnabled=limited
+    }
+    func textDidChange(_ notification:Notification) {
+        guard let text=notification.object as? NSTextView,text === dialogueText else{return}
+        // This is a newly authored first instruction, not the selected website
+        // reply. Revoke only a pending Start; the active exchange stays frozen.
+        dialogueSeed=nil;dialogueStartToken=nil;dialogueStartPending=false
+        if dialogue?.state != "running" {
+            showDialogueNotice("First instruction edited. Start will send this text to the displayed participants; nothing has been sent.")
+        }
     }
     @objc func selectDialogueSeed() {
         guard dialogue?.state != "running",let pane=webPanes[0],let source=NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome) else{return}
