@@ -17,7 +17,7 @@ from tests.test_vol19_verification_truth_remediation import _result_envelope
 from tests.test_vol19_result_owner_delivery import _decision_payload
 from twos_runtime.app import create_app
 from twos_runtime.models import Project, AuditEvent, CodexInstructionPack, ProjectWorkspaceAuthorization, TaskArtifactContract
-from twos_runtime import artifact_verification
+from twos_runtime import artifact_verification, __version__
 
 
 def installed(tmp_path):
@@ -214,7 +214,8 @@ def test_ui_release_and_normal_product_entrypoints():
     root = Path(__file__).resolve().parents[1]
     html = (root/'static_cockpit/vol12_static_mvp/twos_command_center.html').read_text()
     js = (root/'static_cockpit/vol12_static_mvp/twos_command_center.js').read_text()
-    assert '<title>TWOS 1.0.2</title>' in html
+    assert f'<title>TWOS {__version__}</title>' in html
+    assert f'<meta name="twos-version" content="{__version__}">' in html
     assert 'Vol.17' not in html
     for identifier in ['create-project','authorize-project-workspace','artifact-verification-save']:
         assert f'id="{identifier}"' in html
