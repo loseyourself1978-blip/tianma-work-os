@@ -310,19 +310,42 @@ if mode == "auxiliary_window_close" {
     try! NativeWorkbench.save(["kind0":"ChatGPT","kind1":"Claude","url0":base.absoluteString,"url1":base.absoluteString],at:prefs.appendingPathComponent("paired-workbench.json"))
     let work=IntegratedWorkbench(preferences:prefs,resources:resources,translate:{$0},openProjects:{fatalError("no business action")})
     work.start();work.showWebHistory()
-    DispatchQueue.main.asyncAfter(deadline:.now()+0.4){
+    // This one test requires a real foreground desktop. A visible Cocoa
+    // window alone does not prove activation (for example during screen lock).
+    // Keep the original key-window assertions; record only fixture state.
+    func recordWindowState(_ phase:String) {
+        let row:[String:Any] = ["phase":phase,"active":app.isActive,"hidden":app.isHidden,
+            "historyVisible":work.handoffWindow?.isVisible ?? false,"historyKey":work.handoffWindow?.isKeyWindow ?? false,
+            "dialogueVisible":work.dialogueWindow?.isVisible ?? false,"dialogueKey":work.dialogueWindow?.isKeyWindow ?? false,
+            "mainVisible":work.window?.isVisible ?? false,"mainKey":work.window?.isKeyWindow ?? false]
+        let bytes=try! JSONSerialization.data(withJSONObject:row,options:.sortedKeys)
+        FileHandle.standardError.write(bytes);FileHandle.standardError.write(Data("\n".utf8))
+    }
+    let foregroundDeadline=ProcessInfo.processInfo.systemUptime+10
+    func closeWhenForeground() {
+        guard app.isActive && work.handoffWindow?.isKeyWindow==true else {
+            guard ProcessInfo.processInfo.systemUptime < foregroundDeadline else {
+                recordWindowState("FOREGROUND_NOT_READY")
+                fatalError("FOREGROUND_REQUIRED: fixture did not acquire activation and history focus; restore desktop before validation")
+            }
+            DispatchQueue.main.asyncAfter(deadline:.now()+0.1,execute:closeWhenForeground);return
+        }
+        recordWindowState("READY_HISTORY_KEY")
         precondition(work.handoffWindow?.isVisible==true)
         work.handoffWindow?.performClose(nil)
         DispatchQueue.main.asyncAfter(deadline:.now()+0.2){
+            recordWindowState("AFTER_HISTORY_CLOSE")
             precondition(work.handoffWindow?.isVisible==false && work.window?.isKeyWindow==true,"history close must return to its own workbench")
             work.showDialogue();work.dialogueWindow?.performClose(nil)
             DispatchQueue.main.asyncAfter(deadline:.now()+0.2){
+                recordWindowState("AFTER_DIALOGUE_CLOSE")
                 precondition(work.dialogueWindow?.isVisible==false && work.window?.isKeyWindow==true,"dialogue close must return to its own workbench")
                 precondition(work.webTransfers.isEmpty && work.dialogue==nil,"window close must not send or resume")
                 print("AUXILIARY_CLOSE_RETURNS_OWN_WORKBENCH_WITHOUT_DISPATCH_PASS");exit(0)
             }
         }
-    };app.run();exit(0)
+    }
+    DispatchQueue.main.asyncAfter(deadline:.now()+0.1,execute:closeWhenForeground);app.run();exit(0)
 }
 if mode == "history_restore" {
     let left=base.appendingPathComponent("a"),right=base.appendingPathComponent("b")
@@ -748,6 +771,9 @@ window.sends=0;document.getElementById('send').onclick=()=>{window.sends++;const
             shutil.copy2(cross_harness,executable)
             (bundle/'Contents/Info.plist').write_bytes(plistlib.dumps({'CFBundleIdentifier':'com.tianma.tests.nyra.selected','CFBundleExecutable':'cross','CFBundlePackageType':'APPL'}))
         result=subprocess.run([str(executable),mode,str(tmp_path/'profile'),f'http://127.0.0.1:{server.server_port}/',str(ROOT/'static_cockpit')],capture_output=True,text=True,timeout=75 if mode in ('paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_hydration','paired_auto_late_changed','paired_auto_late_unrestorable') else 30)
+        if mode=='auxiliary_window_close':
+            import json
+            (tmp_path/'native-focus-result.json').write_text(json.dumps({'mode':mode,'returncode':result.returncode,'stdout':result.stdout,'stderr':result.stderr},indent=2)+'\n')
         assert result.returncode==0,result.stdout+result.stderr
         assert 'PASS' in result.stdout
     finally:server.shutdown();server.server_close();thread.join()
