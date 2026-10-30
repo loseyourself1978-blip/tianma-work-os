@@ -2,7 +2,7 @@
 
 __all__ = ["__version__"]
 
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 
 # This patch does not change the installation/database schema. Preserve an
 # existing 1.0.1 binding verbatim; unrelated versions still require maintenance.

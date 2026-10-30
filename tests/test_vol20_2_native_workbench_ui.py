@@ -109,14 +109,15 @@ func verifyDeferredReturn() {
 }
 func verifyHandoffEligibility(_ completion: @escaping () -> Void) {
     browser.web.evaluateJavaScript(#"""
+    document.documentElement.dataset.twosFixtureProvider='ChatGPT';
     const turn=document.createElement('article');turn.id='streaming-fixture';
     turn.innerHTML='<button id="fixture-stop" aria-label="停止">■</button><div id="summary-one" data-markdown-text-style="assistant-message">Public summary one</div><div id="summary-two" data-markdown-text-style="assistant-message">Public summary two</div><div id="final-fixture" data-markdown-text-style="assistant-message">Complete instruction including its final requirement<button style="color: red">Suggest another task</button><span role="button">Copy code</span></div>';
     document.body.append(turn);
     """#) { _, error in
         precondition(error == nil)
         DispatchQueue.main.asyncAfter(deadline:.now()+0.6) {
-            browser.web.evaluateJavaScript("document.querySelectorAll('[data-twos-native-card]').length") { value, _ in
-                precondition(value as? Int == 0,"the current Chinese Stop label prevents handoff of streamed summaries")
+            browser.web.evaluateJavaScript("[...document.querySelectorAll('[data-twos-native-card] > button:first-child')].every(button=>button.disabled) && document.getElementById('final-fixture').nextElementSibling?.textContent.includes('generating')") { value, _ in
+                precondition(value as? Bool == true,"streamed replies retain an explained disabled entry, never an enabled Send")
                 browser.web.evaluateJavaScript("document.getElementById('fixture-stop').remove()") { _, _ in
                     DispatchQueue.main.asyncAfter(deadline:.now()+0.6) {
                         browser.web.evaluateJavaScript("document.getElementById('final-fixture').nextElementSibling?.hasAttribute('data-twos-native-card') && !document.getElementById('summary-one').nextElementSibling?.hasAttribute('data-twos-native-card') && !document.getElementById('summary-two').nextElementSibling?.hasAttribute('data-twos-native-card')") { value, _ in

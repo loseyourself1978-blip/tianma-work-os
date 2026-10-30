@@ -20,7 +20,7 @@ enum PointerDirection {
 
 // No renderer or pointer event may elevate an unverified completion.
 enum WorkState: String, CaseIterable, Codable {
-    case idle, queued, running, waiting_user, partial, failed, completed_unverified, verified_success, cancelled, disconnected
+    case idle, queued, running, waiting_user, partial, failed, completed_unverified, verified_success, cancelled, disconnected, activity_unknown
     var animation: String {
         switch self {
         case .queued, .waiting_user: return "waiting"
@@ -41,11 +41,18 @@ enum WorkState: String, CaseIterable, Codable {
         case .completed_unverified: return "执行结束 · 尚未核验 / Ended · unverified"
         case .verified_success: return "核验成功 · 非 Owner 接受 / Verified · not overall Owner acceptance"
         case .cancelled: return "任务已取消 / Cancelled"
+        case .activity_unknown: return "活动识别异常 · 通道单独核验 / Activity observation unknown · transport checked separately"
         case .disconnected: return "连接中断 · 状态未知 / Disconnected · unknown"
         }
     }
 }
 
+struct PaneObservation: Codable, Equatable {
+    let side: String
+    let state: WorkState
+    let reason: String
+    let fresh: Bool
+}
 struct StatusEvent: Decodable, Equatable {
     let schema_version: String
     let producer_instance_id: String
@@ -59,21 +66,27 @@ struct StatusEvent: Decodable, Equatable {
     let simulation: Bool
     let evidence_ref: String?
     let activity_side: String?
+    var pane_observations: [PaneObservation]? = nil
     static func decode(_ data: Data, simulation: Bool) throws -> StatusEvent {
         let required: Set<String> = ["schema_version","producer_instance_id","event_id","sequence","timestamp","session_id","task_id","state","source","simulation"]
         guard data.count <= 16384, let raw = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              required.isSubset(of: Set(raw.keys)), Set(raw.keys).isSubset(of: required.union(["evidence_ref","activity_side"])) else { throw PreviewError.invalidManifest }
+              required.isSubset(of: Set(raw.keys)), Set(raw.keys).isSubset(of: required.union(["evidence_ref","activity_side","pane_observations"])) else { throw PreviewError.invalidManifest }
         let v = try JSONDecoder().decode(StatusEvent.self, from: data)
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let date = formatter.date(from: v.timestamp) ?? ISO8601DateFormatter().date(from: v.timestamp)
-        guard ["twos.nyra.status.v1","twos.nyra.status.v2"].contains(v.schema_version),
+        guard ["twos.nyra.status.v1","twos.nyra.status.v2","twos.nyra.status.v3"].contains(v.schema_version),
               v.activity_side.map({["left","right","both"].contains($0)}) ?? (v.schema_version == "twos.nyra.status.v1"), v.simulation == simulation, date != nil,
               [v.producer_instance_id,v.event_id,v.session_id].allSatisfy({ !$0.isEmpty && $0.count <= 128 }),
               v.task_id.map({ !$0.isEmpty && $0.count <= 128 }) ?? true,
               v.evidence_ref.map({ $0.count <= 128 }) ?? true,
               simulation ? v.source == "engineering_simulator" : ["twos_runtime","codex_adapter","web_handoff_adapter"].contains(v.source),
               v.state != .verified_success || (v.task_id != nil && !(v.evidence_ref ?? "").isEmpty) else { throw PreviewError.invalidManifest }
+        if v.schema_version=="twos.nyra.status.v3" {
+            guard let panes=v.pane_observations,panes.count==2,Set(panes.map(\.side))==Set(["left","right"]),
+                  panes.allSatisfy({$0.reason.range(of:"^[A-Z0-9_]{1,80}$",options:.regularExpression) != nil}),
+                  let rawPanes=raw["pane_observations"] as? [[String:Any]],rawPanes.allSatisfy({Set($0.keys)==Set(["side","state","reason","fresh"])}) else{throw PreviewError.invalidManifest}
+        } else if v.pane_observations != nil || v.state == .activity_unknown {throw PreviewError.invalidManifest}
         return v
     }
 }

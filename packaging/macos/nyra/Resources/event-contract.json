@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "TWOS Nyra minimal status event v2 — pane attribution",
+  "title": "TWOS Nyra minimal status event v3 — connection and pane observation",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -19,7 +19,8 @@
     "schema_version": {
       "enum": [
         "twos.nyra.status.v1",
-        "twos.nyra.status.v2"
+        "twos.nyra.status.v2",
+        "twos.nyra.status.v3"
       ]
     },
     "producer_instance_id": {
@@ -63,7 +64,8 @@
         "completed_unverified",
         "verified_success",
         "cancelled",
-        "disconnected"
+        "disconnected",
+        "activity_unknown"
       ]
     },
     "source": {
@@ -91,6 +93,51 @@
         "right",
         "both"
       ]
+    },
+    "pane_observations": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "side",
+          "state",
+          "reason",
+          "fresh"
+        ],
+        "properties": {
+          "side": {
+            "enum": [
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "enum": [
+              "idle",
+              "queued",
+              "running",
+              "waiting_user",
+              "partial",
+              "failed",
+              "completed_unverified",
+              "verified_success",
+              "cancelled",
+              "disconnected",
+              "activity_unknown"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "pattern": "^[A-Z0-9_]{1,80}$"
+          },
+          "fresh": {
+            "type": "boolean"
+          }
+        }
+      }
     }
   },
   "allOf": [
@@ -125,6 +172,21 @@
       "then": {
         "required": [
           "activity_side"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": "twos.nyra.status.v3"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "activity_side",
+          "pane_observations"
         ]
       }
     }

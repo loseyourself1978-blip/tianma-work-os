@@ -237,12 +237,20 @@ if mode == "nyra_status" {
     precondition(rejected.endpointError != nil)
     producer.observe(session:"BOTH-PANES",task:nil,state:"running",source:"twos_runtime",side:"left")
     let both=snapshot(producer)
+    // Legacy side-only callers retain v2; v3 requires actual per-pane observations.
     precondition(both["schema_version"] as? String == "twos.nyra.status.v2")
     precondition(Set(both.keys)==Set(["schema_version","producer_instance_id","event_id","sequence","timestamp","session_id","task_id","state","source","simulation","activity_side"]))
     let decoded=try! StatusEvent.decode(JSONSerialization.data(withJSONObject:both),simulation:false)
     precondition(decoded.activity_side=="left")
     producer.observe(session:"BOTH-PANES",task:nil,state:"running",source:"twos_runtime",side:"/private/path")
     precondition(snapshot(producer)["event_id"] as? String==both["event_id"] as? String)
+    let panes:[[String:Any]]=[["side":"left","state":"running","reason":"VISIBLE_GENERATION_CONTROL","fresh":true],["side":"right","state":"activity_unknown","reason":"AMBIGUOUS_COMPOSER","fresh":true]]
+    producer.observe(session:"BOTH-PANES",task:nil,state:"running",source:"twos_runtime",side:"left",panes:panes)
+    let v3=snapshot(producer)
+    precondition(v3["schema_version"] as? String == "twos.nyra.status.v3")
+    precondition(Set(v3.keys)==Set(both.keys).union(["pane_observations"]))
+    let decodedV3=try! StatusEvent.decode(JSONSerialization.data(withJSONObject:v3),simulation:false)
+    precondition(decodedV3.pane_observations?.count==2 && decodedV3.activity_side=="left")
     print("NYRA_STATUS_PRIVACY_DEDUP_RECONNECT_TERMINAL_PASS");exit(0)
 }
 
@@ -253,7 +261,7 @@ if mode == "paired_policy" {
     precondition(PaneActivity.aggregate([0:a("running"),1:a("running")]).side=="both")
     precondition(PaneActivity.aggregate([0:a("idle"),1:a("running")]).state=="running")
     precondition(PaneActivity.aggregate([0:a("idle"),1:a("idle")]).state=="idle")
-    precondition(PaneActivity.aggregate([0:a("idle"),1:a("running",12)]).state=="disconnected")
+    precondition(PaneActivity.aggregate([0:a("idle"),1:a("running",12)]).state=="activity_unknown")
     precondition(PaneActivity.aggregate([0:a("waiting_user"),1:a("idle")]).state=="waiting_user")
     for text in ["> 我认输。","```text\n我认输\n```","The old participant said 我认输。","Do not say I concede.","\"I concede.\""] {precondition(!PairedDialogue.concession(text))}
     precondition(PairedDialogue.concession("A complete answer.\nI concede."))
@@ -453,7 +461,7 @@ if mode == "one_click" {
                         let event=try! JSONSerialization.jsonObject(with:data) as! [String:Any]
                         // The fixture has no verified live composer-state adapter. A durable
                     // reply alone no longer fabricates a live whole-workspace status.
-                    precondition(event["state"] as? String == "disconnected" && event["activity_side"] as? String == "both")
+                    precondition(event["state"] as? String == "activity_unknown" && event["activity_side"] as? String == "both")
                         print("ONE_CLICK_EXACTLY_ONCE_REAL_RESPONSE_AND_METADATA_PASS");exit(0)
                     }
                 }
@@ -566,7 +574,7 @@ func probe(){
         guard ready as? Bool == true else { DispatchQueue.main.asyncAfter(deadline:.now()+0.05,execute:probe);return }
         guard !started else{return};started=true
         let id="TEST-FIXTURE-"+mode
-        var request:[String:Any] = ["id":id,"text":"TEST/FIXTURE 非敏感 <script>文字</script>\nline two", "targetURL":base.absoluteString,"provider":["chatgpt_semantic","chatgpt_bubble","chatgpt_bubble_changed","chatgpt_markup","chatgpt_markup_changed","upload_chatgpt_bubble","upload_chatgpt_renamed","upload_menu_control"].contains(mode) ? "ChatGPT":(mode.hasPrefix("claude") ? "Claude":"DeepSeek"),"inspectOnly":mode=="inspect_missing","preflightOnly":mode=="preflight","readinessOnly":mode=="readiness","draftOnly":mode=="draft","resumeDraft":["resume_missing","resume_exact"].contains(mode)]
+        var request:[String:Any] = ["id":id,"text":"TEST/FIXTURE 非敏感 <script>文字</script>\nline two", "targetURL":base.absoluteString,"provider":["chatgpt_semantic","chatgpt_interrupted","chatgpt_bubble","chatgpt_bubble_changed","chatgpt_markup","chatgpt_markup_changed","upload_chatgpt_bubble","upload_chatgpt_renamed","upload_menu_control"].contains(mode) ? "ChatGPT":(mode.hasPrefix("claude") ? "Claude":"DeepSeek"),"inspectOnly":mode=="inspect_missing","preflightOnly":mode=="preflight","readinessOnly":mode=="readiness","draftOnly":mode=="draft","resumeDraft":["resume_missing","resume_exact"].contains(mode)]
         if mode.contains("markup") { request["text"]=(request["text"] as! String)+"\nInline `const label = \"待办 ✓\";` and ``value `tick` end``" }
         if mode.hasPrefix("upload_") {
             let names=mode=="upload_same_name" ? ["同名.txt","同名.txt"] : ["资料.txt","图片.png","文档.pdf"]
@@ -610,7 +618,7 @@ func probe(){
             var req=request
             if mode=="origin" {req["targetURL"]="https://evil.test/"}
             b.webTransfer(req) { response in
-                let expected=["challenge":"verification","existing":"draft_conflict","busy":"busy","origin":"target_changed","draft":"draft","cancel":"target_changed","preflight":"ready","readiness":"input_ready","inspect_missing":"unknown","chatgpt_bubble_changed":"unknown","claude_markup_changed":"unknown","chatgpt_markup_changed":"unknown","resume_missing":"unknown","deepseek_streaming":"sent","claude_streaming":"sent","upload_corrupt":"unsupported","upload_foreign":"draft_conflict","upload_foreign_image":"draft_conflict","upload_changed_input":"draft","upload_no_control":"unsupported","upload_ambiguous_control":"unsupported","send_ambiguous_control":"draft","send_changed_draft":"draft","upload_switch":"unknown"][mode] ?? "reply"
+                let expected=["challenge":"verification","existing":"draft_conflict","busy":"busy","origin":"target_changed","draft":"draft","cancel":"target_changed","preflight":"ready","readiness":"input_ready","inspect_missing":"unknown","chatgpt_bubble_changed":"unknown","claude_markup_changed":"unknown","chatgpt_markup_changed":"unknown","resume_missing":"unknown","deepseek_streaming":"sent","claude_streaming":"sent","claude_interrupted":"generation_stopped","chatgpt_interrupted":"generation_stopped","upload_corrupt":"unsupported","upload_foreign":"draft_conflict","upload_foreign_image":"draft_conflict","upload_changed_input":"draft","upload_no_control":"unsupported","upload_ambiguous_control":"unsupported","send_ambiguous_control":"draft","send_changed_draft":"draft","upload_switch":"unknown"][mode] ?? "reply"
                 if mode=="claude_markup" {precondition((response["reply"] as? String)?.contains("TEST/FIXTURE response") == true && (response["reply"] as? String)?.contains("PROGRESS") == false && (response["reply"] as? String)?.contains("待办 ✓") == true,"final body must exclude public progress but preserve code") }
                 if mode=="chatgpt_file_reference" {precondition((response["reply"] as? String)?.contains("TEST-FILE.txt") == true && (response["reply"] as? String)?.contains("Copy table") == false,"inline file label is content; toolbar action is not: \(response)")}
                 if mode=="claude_chrome" {precondition(response["reply"] as? String=="TEST/FIXTURE response","UI chrome is not answer text")}
@@ -619,7 +627,7 @@ func probe(){
                     let facts=try! JSONSerialization.jsonObject(with:Data((value as! String).utf8)) as! [String:Any]
                     if mode=="chatgpt_file_reference" {precondition(facts["previewActivations"] as? Int==0,"reading must not open a file")}
                     if mode.contains("markup") {precondition(facts["inlineCode"] as? Int==2,"fixture must actually render both inline code fragments")}
-                    let sends = ["upload_accessibility_hidden_input","upload_hidden_other_control","upload_transient_duplicate","upload_remounted_composer","send_delayed_control","upload_exact","upload_async_input","upload_delayed_control","upload_menu_control","upload_scoped_control","upload_nearest_control","upload_directory_control","upload_same_name","upload_history","upload_claude_labels","upload_chatgpt_cards","upload_chatgpt_renamed","send","spa","deepseek_shape","deepseek_streaming","chatgpt_semantic","chatgpt_bubble","chatgpt_bubble_changed","chatgpt_markup","chatgpt_markup_changed","upload_chatgpt_bubble","claude","claude_streaming","claude_chrome","chatgpt_file_reference","claude_markup","claude_markup_changed","resume_exact"].contains(mode)
+                    let sends = ["upload_accessibility_hidden_input","upload_hidden_other_control","upload_transient_duplicate","upload_remounted_composer","send_delayed_control","upload_exact","upload_async_input","upload_delayed_control","upload_menu_control","upload_scoped_control","upload_nearest_control","upload_directory_control","upload_same_name","upload_history","upload_claude_labels","upload_chatgpt_cards","upload_chatgpt_renamed","send","spa","deepseek_shape","deepseek_streaming","chatgpt_semantic","chatgpt_interrupted","chatgpt_bubble","chatgpt_bubble_changed","chatgpt_markup","chatgpt_markup_changed","upload_chatgpt_bubble","claude","claude_streaming","claude_interrupted","claude_chrome","chatgpt_file_reference","claude_markup","claude_markup_changed","resume_exact"].contains(mode)
                     precondition(facts["sends"] as? Int == (sends ? 1:0),"side effect")
                     if mode=="existing" {precondition(facts["draft"] as? String == "KEEP EXISTING")}
                     if mode=="send_changed_draft" {precondition(facts["draft"] as? String == "USER CHANGED DRAFT")}
@@ -629,7 +637,7 @@ func probe(){
                             var inspect=request;inspect["inspectOnly"]=true
                             func reconcile() {
                                 b.webTransfer(inspect) { duplicate in
-                                    precondition(duplicate["state"] as? String == (["chatgpt_bubble_changed","claude_markup_changed","chatgpt_markup_changed"].contains(mode) ? "unknown":"reply"))
+                                    precondition(duplicate["state"] as? String == (["chatgpt_bubble_changed","claude_markup_changed","chatgpt_markup_changed"].contains(mode) ? "unknown":["claude_interrupted","chatgpt_interrupted"].contains(mode) ? "generation_stopped":"reply"))
                                     b.web.evaluateJavaScript("window.sends") { value,_ in precondition(value as? Int==1);print("CROSS_SEND_ONCE_PASS");exit(0) }
                                 }
                             }
@@ -657,12 +665,13 @@ func probe(){
 }
 probe();DispatchQueue.main.asyncAfter(deadline:.now()+20){fatalError("fixture timeout")};app.run()
 '''
+    code=code.replace('if mode == "paired_policy" {',(ROOT/'tests/fixtures/owner_r3_policy.swift').read_text()+'\nif mode == "paired_policy" {')
     source=root/'main.swift';source.write_text(code);binary=root/'cross'
     run=subprocess.run(['xcrun','swiftc','-swift-version','5','-module-cache-path',str(root/'cache'),str(source),'-o',str(binary)],capture_output=True,text=True,timeout=120)
     assert run.returncode==0,run.stderr
     return binary
 
-@pytest.mark.parametrize('mode',['paired_attachment_scope_ui','auxiliary_window_close','history_restore','paired_policy','paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_hydration','paired_auto_late_changed','paired_auto_late_unrestorable','paired_recovery','upload_exact','upload_async_input','upload_changed_input','upload_delayed_control','upload_menu_control','upload_scoped_control','upload_nearest_control','upload_directory_control','upload_accessibility_hidden_input','upload_hidden_other_control','upload_ambiguous_control','upload_transient_duplicate','upload_remounted_composer','send_delayed_control','send_ambiguous_control','send_changed_draft','upload_same_name','upload_history','upload_claude_labels','upload_chatgpt_cards','upload_chatgpt_renamed','upload_foreign_image','upload_corrupt','upload_foreign','upload_no_control','upload_switch','nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble','claude','claude_streaming','claude_chrome','chatgpt_file_reference','claude_markup','claude_markup_changed','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
+@pytest.mark.parametrize('mode',['owner_r3_policy','paired_attachment_scope_ui','auxiliary_window_close','history_restore','paired_policy','paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_hydration','paired_auto_late_changed','paired_auto_late_unrestorable','paired_recovery','upload_exact','upload_async_input','upload_changed_input','upload_delayed_control','upload_menu_control','upload_scoped_control','upload_nearest_control','upload_directory_control','upload_accessibility_hidden_input','upload_hidden_other_control','upload_ambiguous_control','upload_transient_duplicate','upload_remounted_composer','send_delayed_control','send_ambiguous_control','send_changed_draft','upload_same_name','upload_history','upload_claude_labels','upload_chatgpt_cards','upload_chatgpt_renamed','upload_foreign_image','upload_corrupt','upload_foreign','upload_no_control','upload_switch','nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','chatgpt_interrupted','chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble','claude','claude_streaming','claude_interrupted','claude_chrome','chatgpt_file_reference','claude_markup','claude_markup_changed','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
 def test_exact_target_single_dispatch_and_preflight(cross_harness,tmp_path,mode):
     class Fixture(BaseHTTPRequestHandler):
         def do_GET(self):
@@ -674,7 +683,7 @@ if(TEST_MODE==='chatgpt_file_reference'){reply.innerHTML='<p>TEST/FIXTURE respon
 if(TEST_MODE==='spa')history.pushState({},'', '/new-conversation');
 if(TEST_MODE==='deepseek_shape'||TEST_MODE==='deepseek_streaming'){delete user.dataset.role;delete reply.dataset.role;user.className='ds-collapsible-text';reply.className='ds-markdown ds-assistant-message-main-content';for(const el of [user,reply]){const wrap=document.createElement('div');wrap.className='ds-message';el.before(wrap);wrap.append(el);}}
 window.finishStream=()=>{const idle=document.createElement('div');idle.setAttribute('role','button');idle.className='ds-button--primary ds-button--circle ds-button--disabled';idle.innerHTML='<svg width=16 height=16><path d="M8.3125 0.980206C8.66767 1.05312 8.97902 1.2042 9.2627 1.43235C9.48724 1.613 9.73029 1.85795 9.97949 2.10716L14.707 6.8347L13.293 8.24876L9 3.95579V15.0417H7V3.95579L2.70703 8.24876L1.29297 6.8347L6.02051 2.10716C6.26971 1.85795 6.51277 1.613 6.7373 1.43235C6.97662 1.23988 7.28445 1.04404 7.6875 0.980206C7.8973 0.947029 8.1031 0.955183 8.3125 0.980206Z"></path></svg>';document.getElementById('draft').after(idle);};if(TEST_MODE==='deepseek_shape')window.finishStream();
-if(TEST_MODE.startsWith('claude')){delete user.dataset.role;delete reply.dataset.role;user.dataset.testid='user-message';reply.className='font-claude-response';reply.dataset.isStreaming=TEST_MODE==='claude_streaming'?'true':'false';window.finishStream=()=>{reply.dataset.isStreaming='false';};}
+if(TEST_MODE.startsWith('claude')){document.documentElement.dataset.twosFixtureProvider='Claude';delete user.dataset.role;delete reply.dataset.role;user.dataset.testid='user-message';reply.className='font-claude-response';reply.dataset.isStreaming=TEST_MODE==='claude_streaming'?'true':'false';window.finishStream=()=>{reply.dataset.isStreaming='false';};}
 if(TEST_MODE.includes('markup')){
  document.documentElement.dataset.twosFixtureProvider=TEST_MODE.startsWith('claude')?'Claude':'ChatGPT';user.dataset.testid='user-message';
  const source=user.textContent;user.textContent='';let end=0;
@@ -682,9 +691,11 @@ if(TEST_MODE.includes('markup')){
  if(TEST_MODE.endsWith('markup_changed'))user.querySelector('code').textContent='const label = "CHANGED";';
  reply.className='assistant-message';reply.innerHTML='<div class="group/status"><span>PROGRESS</span><span role=status>PROGRESS</span></div><div class="standard-markdown"><p>TEST/FIXTURE response</p><pre><code>const label = "待办 ✓";</code></pre></div>';
 }
+if(TEST_MODE==='claude_interrupted'){reply.innerHTML='<div class=standard-markdown><p>TEST/FIXTURE partial</p></div><div role=status><span>Claude 的回复已中断。</span></div>'; }
 if(TEST_MODE==='claude_chrome'){reply.insertAdjacentHTML('beforeend','<div role=toolbar>Now<button>Copy</button></div>');}
 if(TEST_MODE==='upload_chatgpt_renamed'){user.insertAdjacentHTML('afterbegin','<button>File.txt</button><span>File.txt document </span><button>Image.png</button>');}
-if(TEST_MODE==='chatgpt_semantic'||TEST_MODE==='upload_chatgpt_renamed'){delete user.dataset.role;delete reply.dataset.role;reply.dataset.messageAuthorRole='assistant';const h=document.createElement('h4');h.textContent='你说：';user.before(h);const a=document.createElement('h4');a.textContent='ChatGPT 说：';reply.before(a);}
+if(TEST_MODE==='chatgpt_interrupted'){document.documentElement.dataset.twosFixtureProvider='ChatGPT';user.dataset.userMessageBubble='true';reply.remove();const stopped=document.createElement('div');stopped.textContent='已停止思考';document.body.append(stopped);}
+if(TEST_MODE==='chatgpt_semantic'||TEST_MODE==='upload_chatgpt_renamed'){delete user.dataset.role;delete reply.dataset.role;reply.dataset.messageAuthorRole='assistant';const h=document.createElement('h4');h.textContent='你说：You';user.before(h);const a=document.createElement('h4');a.textContent='ChatGPT 说：ChatGPT';reply.before(a);}
 if(['chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble'].includes(TEST_MODE)){delete user.dataset.role;delete reply.dataset.role;reply.dataset.messageAuthorRole='assistant';user.setAttribute('data-user-message-bubble','true');const body=document.createElement('div');body.setAttribute('data-search-result-target','');body.append(...user.childNodes);if(TEST_MODE==='chatgpt_bubble_changed')body.append('UNEXPECTED EXTRA CONTENT');user.replaceChildren(body);user.append(document.createTextNode('…'));const h=document.createElement('h4');h.textContent='你说：你说：';user.before(h);if(TEST_MODE==='upload_chatgpt_bubble')user.insertAdjacentHTML('afterbegin','<button>File.txt</button><span>File.txt document</span>');}
 if(TEST_MODE==='chatgpt_semantic'||TEST_MODE==='upload_chatgpt_renamed'){const h=user.previousElementSibling;const wrap=document.createElement('section');h.before(wrap);wrap.append(h,user);const activity=document.createElement('section');activity.innerHTML='<button>Thought for 1m 35s</button><span>Analysis output 1</span>';wrap.after(activity);}
 };

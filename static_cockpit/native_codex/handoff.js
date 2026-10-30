@@ -24,41 +24,25 @@
  }
  const messageSelector='[data-message-author-role="assistant"],[data-markdown-text-style="assistant-message"]';
  const excludedReceipt='textarea,[contenteditable="true"],[data-twos-native-card]';
- const speaker=heading=>/^(?:You said|你说)[:：]?$/i.test(heading.textContent.trim())?'user':/^(?:ChatGPT said|ChatGPT 说)[:：]?$/i.test(heading.textContent.trim())?'assistant':null;
- const turnHeadings=()=>[...document.querySelectorAll('h1,h2,h3,h4,h5,h6,[role="heading"]')].filter(el=>speaker(el)&&!el.closest(messageSelector+','+excludedReceipt));
- function composer(){
-  // Writing/canvas replies are editable too. They are conversation content,
-  // never a draft or a destination for execution results. Hidden legacy
-  // fields must not win over the current visible message composer either.
-  const fields=[...document.querySelectorAll('#prompt-textarea,textarea,[contenteditable=true][role=textbox]')].filter(el=>
-   visible(el)&&!el.disabled&&!el.readOnly&&!el.closest(messageSelector+',[data-twos-native-card]'));
-  const prompt=fields.find(el=>el.id==='prompt-textarea');
-  if(prompt)return prompt;
-  const formFields=fields.filter(el=>el.closest('form'));
-  return formFields.length===1?formFields[0]:fields.length===1?fields[0]:null;
- }
- function generating(){
-  const status=window.twosProviderDOM?.observe();
-  if(status&&status.reason!=='UNSUPPORTED_PROVIDER'&&status.state!=='idle')return true;
-  // The current official site labels the composer stop button simply “停止”.
-  // Its public summaries also use assistant-message markup while streaming.
-  return [...document.querySelectorAll('button')].some(el=>visible(el)&&(
-   el.matches('[data-testid="stop-button"]')||
-   /^(?:Stop(?: generating| response)?|停止(?:生成|回复)?)$/i.test(el.getAttribute('aria-label')||el.getAttribute('title')||el.textContent.trim())));
- }
- function replies(){
-  if(location.hostname==='claude.ai'||location.hostname==='chat.deepseek.com')return window.twosProviderDOM?.replies()||[];
-  const groups=new Map(),headings=turnHeadings();
-  for(const el of document.querySelectorAll('[data-message-author-role="assistant"], [data-markdown-text-style="assistant-message"]')){
-   if(el.parentElement?.closest('[data-message-author-role="assistant"], [data-markdown-text-style="assistant-message"]')||!visible(el))continue;
-   // A turn may contain several public summary blocks followed by one answer.
-   // Keep its last answer only. Unkeyed site variants expose only the latest
-   // complete answer rather than treating every summary as a separate task.
-   const preceding=headings.filter(heading=>Boolean(heading.compareDocumentPosition(el)&Node.DOCUMENT_POSITION_FOLLOWING)).at(-1);
-   const group=el.closest('article,[data-testid^="conversation-turn-"]')||sourceKey(el)||preceding||'latest';
-   groups.set(group,el);
-  }
-  return [...groups.values()];
+ const speaker=heading=>window.twosProviderDOM?.speaker(heading);
+ const turnHeadings=()=>window.twosProviderDOM?.headings()||[];
+ function composer(){return window.twosProviderDOM?.composerSelection().element||null;}
+ function generating(){return window.twosProviderDOM?.observe().state==='running';}
+ function replies(){return window.twosProviderDOM?.replies()||[];}
+ const eligibility=reply=>window.twosProviderDOM?.replyState(reply)||{complete:false,reason:'OBSERVER_UNAVAILABLE'};
+ const reasonText=reason=>({
+  AMBIGUOUS_COMPOSER:label('More than one message input is visible. Sending is paused until the input is unambiguous.','检测到多个独立输入框。确认输入区域后才可发送。'),
+  INPUT_UNAVAILABLE:label('The message input is unavailable. Refresh this check after the page loads.','暂未识别到输入框。页面就绪后可重新检查。'),
+  VISIBLE_GENERATION_CONTROL:label('This pane is generating. Wait for the complete reply.','此侧正在生成，请等待完整回复。'),
+  REPLY_STREAMING:label('This reply is still streaming.','此回复仍在生成。'),
+  REPLY_INTERRUPTED:label('The website reports that this reply was interrupted. It cannot be sent as a complete reply.','网站显示此回复已中断，不能作为完整回复发送。'),
+  LATEST_USER_AWAITS_REPLY:label('Waiting for the latest user message to receive a complete reply. An older reply will not be used.','等待最新消息的完整回复，不会使用旧回复代替。')
+ }[reason]||label('Reply completeness needs verification: ','回复完整性待核验：')+reason);
+ function updateEligibility(card){
+  const state=eligibility(card.reply);
+  const disabled=!state.complete||Boolean(card.record&&!card.record.retryable&&!(receiptProvider(card.record)==='Codex'&&['cancelled','rejected'].includes(card.record.state)));
+  if(card.button.disabled!==disabled)card.button.disabled=disabled;
+  if(!card.record){const note=state.complete?'':reasonText(state.reason);if(card.status.textContent!==note)card.status.textContent=note;if(card.recheck.hidden!==state.complete)card.recheck.hidden=state.complete;}
  }
  function inspect(){
   scheduled=false;
@@ -66,14 +50,14 @@
   const phase=window.twosProviderDOM?.observe();
   if(phase&&phase.state==='waiting_user')return;
   // Never send incomplete streaming content just because a DOM node appeared.
-  const busy=generating(),candidates=busy?[]:replies();
+  const busy=generating(),candidates=replies();
   const input=composer();
-  const available=!busy&&input&&!(input instanceof HTMLTextAreaElement?input.value:input.innerText).trim();
+  const available=phase?.state==='idle'&&input&&!(input instanceof HTMLTextAreaElement?input.value:input.innerText).trim();
   const becameAvailable=available&&!returnAvailable;returnAvailable=Boolean(available);
   let added=false;
   for(const [reply,card] of cards){
    if(!reply.isConnected||(!card.record&&!candidates.includes(reply))){card.box.remove();cards.delete(reply);messages.delete(reply);}
-   else card.button.disabled=generating()||Boolean(card.record&&!card.record.retryable&&!(receiptProvider(card.record)==='Codex'&&['cancelled','rejected'].includes(card.record.state)));
+   else updateEligibility(card);
   }
   for(const reply of candidates){
    if(messages.has(reply))continue;
@@ -85,13 +69,14 @@
    const sendReply=document.createElement('button');sendReply.type='button';sendReply.hidden=true;sendReply.style.cssText=button.style.cssText;sendReply.textContent=label('Send reply to the other pane','将回复发送到另一侧');
    const check=document.createElement('button');check.type='button';check.hidden=true;check.textContent=label('Check delivery','核验送达');check.style.cssText=button.style.cssText;
    const preview=document.createElement('details');preview.dataset.twosSendPreview='';const previewLabel=document.createElement('summary');previewLabel.textContent=label('View selected content','查看本次发送内容');const previewText=document.createElement('div');previewText.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;';preview.append(previewLabel,previewText);
-   const card={reply,box,button,status,details,result,discuss,check,sendReply,preview,message:sourceKey(reply),record:null};added=true;messages.set(reply,card);cards.set(reply,card);
+   const recheck=document.createElement('button');recheck.type='button';recheck.textContent=label('Check reply readiness','重新检查回复状态');recheck.style.cssText=button.style.cssText;recheck.addEventListener('click',event=>{if(event.isTrusted)inspect();});
+   const card={reply,box,button,status,details,result,discuss,check,sendReply,preview,recheck,message:window.twosProviderDOM?.identity(reply)||sourceKey(reply),record:null};added=true;messages.set(reply,card);cards.set(reply,card);
    preview.addEventListener('toggle',()=>{if(preview.open)previewText.textContent=instructionText(reply);});
-   button.addEventListener('click',event=>{if(!event.isTrusted||generating()||!reply.isConnected)return;if(card.record?.retryable){post({action:'retryHandoff',id:card.record.id});return;}if(card.record&&receiptProvider(card.record)!=='Codex')return;const text=instructionText(reply);if(!text.trim())return;post({action:'handoff',text,message:card.message,targetBinding:target.binding});});
+   button.addEventListener('click',event=>{if(!event.isTrusted||!eligibility(reply).complete||!reply.isConnected)return;if(card.record?.retryable){post({action:'retryHandoff',id:card.record.id});return;}if(card.record&&receiptProvider(card.record)!=='Codex')return;const text=instructionText(reply);if(!text.trim())return;post({action:'handoff',text,message:card.message,targetBinding:target.binding});});
    discuss.addEventListener('click',event=>{if(event.isTrusted&&card.record)post({action:'discuss',id:card.record.id});});
    check.addEventListener('click',event=>{if(event.isTrusted&&card.record){status.textContent=label('Checking delivery… Nothing is resent.','正在检查投递… 不会重新发送。');check.disabled=true;post({action:'inspectHandoff',id:card.record.id});}});
    sendReply.addEventListener('click',event=>{if(event.isTrusted&&card.record)post({action:'sendReply',id:card.record.id});});
-   box.append(button,check,status,preview,details,sendReply,discuss);reply.insertAdjacentElement('afterend',box);
+   box.append(button,recheck,check,status,preview,details,sendReply,discuss);reply.insertAdjacentElement('afterend',box);updateEligibility(card);
   }
   if(added||becameAvailable)post({action:'ready'});
  }
@@ -118,6 +103,7 @@
    card.check.disabled=record.inspection==='checking';card.sendReply.hidden=provider==='Codex'||record.state!=='reply'||!record.result;
    card.details.hidden=!record.result;card.result.textContent=record.result||'';card.discuss.hidden=!record.result||provider!=='Codex';card.check.hidden=provider==='Codex';card.check.textContent=label('Check delivery','核验送达');if(record.retryable)card.details.open=true;
    card.button.disabled=!record.retryable&&!(provider==='Codex'&&['cancelled','rejected'].includes(record.state));card.button.textContent=record.retryable?targetLabel(provider)+(provider==='Codex'?label(' · new attempt',' · 新一次复验'):label(' · confirm destination',' · 核对目标')):(provider==='Codex'?label('Sent to Codex','已交付 Codex'):provider+label(' handoff',' 交接'));
+   card.recheck.hidden=true;
    if(record.state==='draft')card.button.textContent=label('Continue draft to ','继续发送草稿到 ')+provider;
   }
  };
@@ -129,7 +115,8 @@
  window.twosHandoffLanguage=value=>{
   zh=Boolean(value);
   for(const card of cards.values()){
-   if(!card.record)card.button.textContent=targetLabel();
+   if(!card.record){card.button.textContent=targetLabel();updateEligibility(card);}
+   card.recheck.textContent=label('Check reply readiness','重新检查回复状态');
    card.preview.querySelector('summary').textContent=label('View selected content','查看本次发送内容');card.sendReply.textContent=label('Send reply to the other pane','将回复发送到另一侧');
    card.details.querySelector('summary').textContent=label('Codex result','Codex 执行结果');card.discuss.textContent=label('Continue discussing this result','继续讨论此结果');
    if(card.record)window.twosHandoffUpdate(card.record);
@@ -187,6 +174,6 @@
   return 'pending';
  };
  const schedule=()=>{if(!scheduled){scheduled=true;setTimeout(inspect,350);}};
- const observer=new MutationObserver(schedule);observer.observe(document.documentElement,{childList:true,subtree:true});
+ const observer=new MutationObserver(schedule);observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','aria-hidden','disabled','data-is-streaming','contenteditable']});
  document.addEventListener('input',schedule,true);inspect();post({action:'ready'});
 })();

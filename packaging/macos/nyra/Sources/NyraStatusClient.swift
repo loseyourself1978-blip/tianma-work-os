@@ -19,7 +19,7 @@ struct StatusEndpoint: Decodable {
 }
 enum BridgeError: Error { case unsafeEndpoint, wrongPeer, unavailable, truncated, invalidFrame }
 final class NyraStatusClient {
-    static let schemaHash = "ef6797aa662f28dd36134ba476c5b1ae50c418fd1fa9636330d2cb76c0b59c81"
+    static let schemaHash = "dbdc1c228b9762fc1b8b3bcd8b89d91672f4ae5e0a7f552d9d1301b93dcde831"
     var selection: BridgeSelection?
     private(set) var connectionLabel = "NOT_CONNECTED · 等待独立客户端授权"
     private var busy = false
@@ -56,7 +56,7 @@ final class NyraStatusClient {
         var bytes = [UInt8](repeating:0,count:Int(st.st_size)); let count = Darwin.read(fd,&bytes,bytes.count)
         guard count == bytes.count else { throw BridgeError.truncated }
         let e = try JSONDecoder().decode(StatusEndpoint.self,from:Data(bytes))
-        guard e.transport == "unix_snapshot_v1", ((e.schema_version == "twos.nyra.status.v2" && e.schema_sha256 == schemaHash) || (e.schema_version == "twos.nyra.status.v1" && e.schema_sha256 == "7ce0d27865647a5ba9bfa44d2355cb3839a80b51348b195fadafc3d7544cc386")),
+        guard e.transport == "unix_snapshot_v1", ((e.schema_version == "twos.nyra.status.v3" && e.schema_sha256 == schemaHash) || (e.schema_version == "twos.nyra.status.v2" && e.schema_sha256 == "ef6797aa662f28dd36134ba476c5b1ae50c418fd1fa9636330d2cb76c0b59c81") || (e.schema_version == "twos.nyra.status.v1" && e.schema_sha256 == "7ce0d27865647a5ba9bfa44d2355cb3839a80b51348b195fadafc3d7544cc386")),
               UUID(uuidString:e.producer_instance_id) != nil,
               e.socket == "/private/tmp/twos-nyra-status-" + e.producer_instance_id + "/status.sock" else { throw BridgeError.unsafeEndpoint }
         try securePath(URL(fileURLWithPath:e.socket).deletingLastPathComponent().path,mode:0o700,directory:true)
@@ -182,8 +182,10 @@ extension Companion {
                 if !self.reactive.simulation { self.reactive.setWork(.disconnected,simulation:false,connected:false,celebrate:false,now:ProcessInfo.processInfo.systemUptime) }
             }
             if previous != self.liveReducer.current || wasConnected != self.liveReducer.connected || previousLabel != self.live.connectionLabel {
-                self.reconcileAnimation(); self.writePlaybackState("status_snapshot"); self.rebuildMenu(); self.publishVisibility()
+                self.reconcileAnimation(); self.writePlaybackState("status_snapshot"); self.rebuildMenu()
             }
+            // A live receipt heartbeat is separate from animation/state changes.
+            self.publishVisibility(persistPreference:false,heartbeat:true)
         }
     }
     func receiveConnectionRefresh() {

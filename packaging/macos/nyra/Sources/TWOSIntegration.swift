@@ -34,7 +34,7 @@ extension Companion {
         }
     }
 
-    func publishVisibility(persistPreference: Bool = true) {
+    func publishVisibility(persistPreference: Bool = true, heartbeat: Bool = false) {
         guard panel != nil else { return }
         let visible = panel.isVisible || stage?.isVisible == true
         let connected = liveReducer.connected && reactive.connected && !reactive.simulation
@@ -47,10 +47,21 @@ extension Companion {
             state["taskState"] = event.state.rawValue
             state["activitySide"] = event.activity_side ?? "unknown"
         }
+        // Current consumer rendering facts, never requested/planned animation.
+        state["consumerInstance"]=consumerInstance
+        state["animation"]=animationName;state["frameAsset"]=frameCursor?.assetID ?? ""
+        state["frameCount"]=displayedFrames[activeSetKey+":"+animationName,default:0]
+        state["frameTimer"]=frameTimer?.isValid == true
+        state["reduceMotion"]=NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        state["lastSnapshotUptime"]=liveReducer.lastReceipt
+        state["lastStateChangeAt"]=liveReducer.current?.timestamp ?? ""
+        if let observations=liveReducer.current?.pane_observations,let data=try? JSONEncoder().encode(observations),let array=try? JSONSerialization.jsonObject(with:data) {state["paneObservations"]=array}
         // Duplicate snapshots are heartbeats, not state transitions. Avoid
         // rewriting preference files or posting UI events every two seconds.
-        if NSDictionary(dictionary:state).isEqual(to:lastPublishedVisibility) { return }
+        let changed = !NSDictionary(dictionary:state).isEqual(to:lastPublishedVisibility)
+        if !changed && !heartbeat { return }
         lastPublishedVisibility = state
+        state["heartbeatUptime"] = ProcessInfo.processInfo.systemUptime
         state["updatedAt"] = Date().timeIntervalSince1970
         let output = stateDirectory.appendingPathComponent("visibility-state.json")
         if let bytes = try? JSONSerialization.data(withJSONObject:state) {
@@ -58,10 +69,10 @@ extension Companion {
             try? FileManager.default.setAttributes([.posixPermissions:0o600],ofItemAtPath:output.path)
         }
         let preference = preferenceDirectory.appendingPathComponent("visibility-preference.json")
-        if persistPreference, let bytes = try? JSONSerialization.data(withJSONObject:["visible":visible]) {
+        if persistPreference && changed, let bytes = try? JSONSerialization.data(withJSONObject:["visible":visible]) {
             try? bytes.write(to:preference,options:.atomic)
             try? FileManager.default.setAttributes([.posixPermissions:0o600],ofItemAtPath:preference.path)
         }
-        DistributedNotificationCenter.default().postNotificationName(Notification.Name("com.tianma.nyra.visibility"),object:Bundle.main.bundleIdentifier,userInfo:nil,deliverImmediately:true)
+        if changed && !heartbeat {DistributedNotificationCenter.default().postNotificationName(Notification.Name("com.tianma.nyra.visibility"),object:Bundle.main.bundleIdentifier,userInfo:nil,deliverImmediately:true)}
     }
 }

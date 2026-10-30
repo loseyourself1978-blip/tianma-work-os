@@ -276,6 +276,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
     let resources = Bundle.main.resourceURL!
     var lockFD: Int32 = -1
     var launchVisibility: Bool?
+    let consumerInstance = UUID().uuidString
     var lastPublishedVisibility: [String:Any] = [:]
     var isBundled: Bool { Bundle.main.bundleIdentifier == "com.tianma.workos.nyra" }
     var isolated: Bool { Bundle.main.bundleIdentifier == "com.tianma.nyra.joint.engineering" || CommandLine.arguments.contains("--diagnostic-root") || ProcessInfo.processInfo.environment["NYRA_ISOLATED_ENGINEERING"] == "1" }

@@ -480,7 +480,7 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
         }
         process = child
         do { try child.run() } catch { notice("Codex could not start. Your saved conversations have not been changed."); return }
-        request("initialize", ["clientInfo": ["name": "twos_integrated_workbench", "title": "Tianma Work OS", "version": "1.0.2"], "capabilities": ["experimentalApi": true]]) { [weak self] result in
+        request("initialize", ["clientInfo": ["name": "twos_integrated_workbench", "title": "Tianma Work OS", "version": "1.0.3"], "capabilities": ["experimentalApi": true]]) { [weak self] result in
             guard let self = self else { return }
             guard result != nil else { self.disconnect(); return }
             self.write(["method": "initialized"]); self.connected = true; self.controlState(); self.listThreads(); self.refreshUsage()

@@ -13,7 +13,7 @@ return await (async () => {
  const same=()=>window.twosTransferLease===lease&&location.origin===origin;
  const visible=el=>Boolean(el?.getClientRects().length)&&getComputedStyle(el).visibility!=='hidden';
  const normalize=s=>(s||'').replace(/\r\n?/g,'\n').trim();
- const plain=el=>{const copy=el.cloneNode(true);copy.querySelectorAll('button,[role=button],[data-twos-native-card],textarea,[contenteditable=true]').forEach(x=>x.remove());copy.querySelectorAll('h1,h2,h3,h4,h5,h6,[role=heading]').forEach(x=>{if(/^(You said|你说)[:：]?$/i.test(x.textContent.trim()))x.remove();});return copy.textContent||'';};
+ const plain=el=>{const copy=el.cloneNode(true);copy.querySelectorAll('button,[role=button],[data-twos-native-card],textarea,[contenteditable=true]').forEach(x=>x.remove());copy.querySelectorAll('h1,h2,h3,h4,h5,h6,[role=heading]').forEach(x=>{if(window.twosProviderDOM?.speaker(x)==='user')x.remove();});return copy.textContent||'';};
  // Inspect challenge/login before any DOM mutation. Do not touch the challenge frame.
  const heading=[...document.querySelectorAll('h1,h2')].filter(visible).map(x=>x.textContent).join(' ');
  if(document.querySelector('iframe[src*="challenges.cloudflare.com"],#challenge-running,#challenge-stage')||/security verification|verify you are human|正在进行安全验证|验证您是真人/i.test(heading))return {state:'verification'};
@@ -21,11 +21,14 @@ return await (async () => {
  if(/at capacity|overloaded|服务繁忙|容量不足/i.test(alerts))return {state:'provider_limited',reason:'SERVICE_CAPACITY'};
  if(/usage limit|rate limit|limit reached|too many requests|额度|达到.{0,6}上限/i.test(alerts))return {state:'provider_limited',reason:'SERVICE_LIMIT'};
  if(/network error|connection lost|网络错误|网络连接失败/i.test(alerts))return {state:'unknown',reason:'NETWORK_UNAVAILABLE'};
- const composerFields=()=>[...document.querySelectorAll('textarea,#prompt-textarea,[contenteditable=true][role=textbox],.tiptap[contenteditable=true]')].filter(e=>visible(e)&&!e.disabled&&!e.readOnly&&!e.closest('[data-twos-native-card],[data-message-author-role],.ds-markdown'));
+ const composerFields=()=>{
+  const selection=window.twosProviderDOM?.composerSelection();
+  return selection?.element?[selection.element]:[];
+ };
  const fields=composerFields();
  if(fields.length!==1){
   const login=[...document.querySelectorAll('button,a')].filter(visible).some(e=>/^(log in|sign in|登录|登入)$/i.test(e.textContent.trim()));
-  return {state:login?'login':'not_loaded'};
+  return {state:login?'login':'not_loaded',reason:window.twosProviderDOM?.composerSelection().reason||'OBSERVER_UNAVAILABLE'};
  }
  if(request.readinessOnly)return {state:'input_ready'};
  let input=fields[0];const value=()=>input instanceof HTMLTextAreaElement?input.value:input.innerText;
@@ -82,11 +85,11 @@ return await (async () => {
   const at=body.indexOf('[TWOS handoff '+request.id+']');
   return at>=0&&compact(body.slice(at))===compact(prompt);
  };
- const turnHeadings=()=>provider==='ChatGPT'?[...document.querySelectorAll('h1,h2,h3,h4,h5,h6,[role=heading]')].filter(e=>/^(You said|你说|ChatGPT said|ChatGPT 说)[:：]?$/i.test(e.textContent.trim())&&!e.closest('[data-twos-native-card],textarea,[contenteditable=true]')):[];
+ const turnHeadings=()=>provider==='ChatGPT'?(window.twosProviderDOM?.headings()||[]):[];
  const semanticReceipt=()=>{
   const headings=turnHeadings();
   for(let i=0;i<headings.length;i++){
-   if(!/^(You said|你说)[:：]?$/i.test(headings[i].textContent.trim()))continue;
+   if(window.twosProviderDOM?.speaker(headings[i])!=='user')continue;
    // A modern ChatGPT turn has a semantic user heading but no stable user
    // data attribute. Its sibling tool/thinking output precedes the assistant
    // heading. Match a bounded single-user container before considering the
@@ -112,15 +115,17 @@ return await (async () => {
  const busy=()=>[...document.querySelectorAll('button,[role=button]')].some(e=>visible(e)&&/^(stop(?: generating| response)?|停止(?:生成|回复)?)$/i.test(e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent.trim()));
  const result=()=>{
   const user=receipt();if(!user)return null;
-  const nextUser=[...messages(),...turnHeadings().filter(e=>/^(You said|你说)[:：]?$/i.test(e.textContent.trim()))].filter(e=>e!==user&&!user.contains(e)&&!e.contains(user)&&Boolean(user.compareDocumentPosition(e)&Node.DOCUMENT_POSITION_FOLLOWING)).sort((a,b)=>a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING?-1:1)[0];
+  const nextUser=[...messages(),...turnHeadings().filter(e=>window.twosProviderDOM?.speaker(e)==='user')].filter(e=>e!==user&&!user.contains(e)&&!e.contains(user)&&Boolean(user.compareDocumentPosition(e)&Node.DOCUMENT_POSITION_FOLLOWING)).sort((a,b)=>a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING?-1:1)[0];
   const replies=[...document.querySelectorAll(selectors.reply)].filter(e=>visible(e)&&!e.closest('[data-twos-native-card]')&&Boolean(user.compareDocumentPosition(e)&Node.DOCUMENT_POSITION_FOLLOWING)&&(!nextUser||Boolean(e.compareDocumentPosition(nextUser)&Node.DOCUMENT_POSITION_FOLLOWING)));
   const last=replies.at(-1);
+  if(!busy()&&window.twosProviderDOM?.stoppedAfter(user,nextUser))return {state:'generation_stopped',reason:'PROVIDER_REPLY_INTERRUPTED',conversationURL:clean(location.href)};
   // DeepSeek's stop icon is not consistently labelled. A reply node can exist
   // while streaming, so require the observed idle composer arrow before calling
   // it a finished reply. Never infer completion from text silence alone.
   const deepSeekShape=provider==='DeepSeek'&&(location.hostname==='chat.deepseek.com'||document.querySelector('.ds-message'));
   const claudeStreaming=provider==='Claude'&&last&&(last.matches('[data-is-streaming="true"]')||last.querySelector('[data-is-streaming="true"]'));
   const settled=last&&!busy()&&!claudeStreaming&&(!deepSeekShape||Boolean(deepSeekSend(false)));
+  if(settled&&window.twosProviderDOM?.interrupted(last))return {state:'generation_stopped',reason:'PROVIDER_REPLY_INTERRUPTED',conversationURL:clean(location.href)};
   let reply='';if(settled){
    const fileReference=e=>e.closest('p,td,li')&&/^(?:打开 .+ 的预览|Open .+ preview)$/i.test(e.getAttribute('aria-label')||'');
    const controls=[...last.querySelectorAll('button,[role=button],[role=toolbar],time,[data-twos-native-card]')].filter(e=>!fileReference(e)).map(e=>[e,e.getAttribute('style')]);
@@ -128,7 +133,7 @@ return await (async () => {
    finally{controls.forEach(([e,s])=>s===null?e.removeAttribute('style'):e.setAttribute('style',s));}
   }
   if(new TextEncoder().encode(reply).length>200000)return {state:'unknown',reason:'REPLY_TOO_LARGE'};
-  return {state:settled&&reply.trim()?'reply':'sent',conversationURL:clean(location.href),attachments:request.files?.map(({id,name,mime,size,hash})=>({id,name,mime,size,hash}))||[],...(reply?{reply,replyMessage:last.closest('[data-message-id]')?.getAttribute('data-message-id')||last.closest('[data-testid^=conversation-turn-]')?.getAttribute('data-testid')||'rendered-answer'}:{})};
+  return {state:settled&&reply.trim()?'reply':'sent',conversationURL:clean(location.href),attachments:request.files?.map(({id,name,mime,size,hash})=>({id,name,mime,size,hash}))||[],...(reply?{reply,replyMessage:window.twosProviderDOM?.identity(last)||'rendered-answer'}:{})};
  };
  const existing=result();if(existing)return existing;
  if(request.inspectOnly)return {state:'unknown',reason:'EXACT_RECEIPT_NOT_FOUND · SEND_CONTROL_SHAPE '+JSON.stringify(sendShape())+(request.files?.length?' · UPLOAD_CONTROL_SHAPE '+JSON.stringify(uploadShape()):'')};

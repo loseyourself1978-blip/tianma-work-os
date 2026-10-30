@@ -45,13 +45,19 @@ struct PairedDialogue: Codable {
     var stopOnConcession = false
     var fileIDs: [String] = []
     var files: [WebTransferFile]?
-    var deadline: TimeInterval { createdAt + duration }
+    var untilStopped: Bool?
+    var firstMessage: String?
+    var firstHash: String?
+    var deadline: TimeInterval { untilStopped == true ? .infinity : createdAt + duration }
+    var roundLimitReached: Bool { untilStopped != true && completedCount >= maxExchanges }
+    var progressLabel: String { untilStopped == true ? "\(completedCount)" : "\(completedCount)/\(maxExchanges)" }
     var nextTarget: Int { completedCount.isMultiple(of:2) ? 1 : 0 }
     var valid: Bool {
         providers.count==2 && Set(providers).count==2 && providers.allSatisfy{["ChatGPT","Claude","DeepSeek"].contains($0)} &&
-        conversations.count==2 && roles.count==2 && (2...100).contains(maxExchanges) && maxExchanges.isMultiple(of:2) &&
-        (0...maxExchanges).contains(sentCount) && (0...sentCount).contains(completedCount) &&
-        createdAt.isFinite && duration.isFinite && duration>0 && duration<=7200 &&
+        conversations.count==2 && roles.count==2 &&
+        (untilStopped == true ? (maxExchanges==0 && duration==0) : ((2...100).contains(maxExchanges) && maxExchanges.isMultiple(of:2) && duration>0 && duration<=7200)) &&
+        sentCount>=0 && completedCount>=0 && completedCount<=sentCount && (untilStopped == true || sentCount<=maxExchanges) &&
+        createdAt.isFinite && duration.isFinite &&
         !firstText.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty && firstText.utf8.count<=150000 &&
         ["paused","running","stopped","finished"].contains(state)
     }
@@ -77,12 +83,20 @@ struct PaneActivity {
     let state: String
     let at: TimeInterval
     var evidence: String? = nil
-    var fresh: Bool { ProcessInfo.processInfo.systemUptime - at < 8 }
+    var reason: String = "OBSERVED_STATE"
+    var fresh: Bool { (0..<8).contains(ProcessInfo.processInfo.systemUptime - at) }
+    var wire: [String:Any] { ["state":fresh ? state : "activity_unknown","reason":fresh ? reason : "OBSERVATION_STALE","fresh":fresh] }
+    static func observations(_ panes:[Int:PaneActivity]) -> [[String:Any]] {
+        (0...1).map { index in
+            var value=panes[index]?.wire ?? ["state":"activity_unknown","reason":"NO_OBSERVATION","fresh":false]
+            value["side"]=index==0 ? "left" : "right";return value
+        }
+    }
     static func aggregate(_ panes: [Int:PaneActivity]) -> (state:String, side:String) {
         let work = (0...1).filter { panes[$0]?.fresh == true && panes[$0]?.state == "running" }
         if !work.isEmpty { return ("running",work.count == 2 ? "both" : work[0] == 0 ? "left" : "right") }
-        let states = (0...1).map { panes[$0]?.fresh == true ? panes[$0]!.state : "disconnected" }
-        for state in ["waiting_user","queued","disconnected","failed","partial","cancelled","completed_unverified"] {
+        let states = (0...1).map { panes[$0]?.fresh == true ? panes[$0]!.state : "activity_unknown" }
+        for state in ["waiting_user","queued","activity_unknown","disconnected","failed","partial","cancelled","completed_unverified"] {
             if states.contains(state) { return (state,"both") }
         }
         if states.contains("verified_success") { return ("verified_success","both") }
@@ -149,7 +163,7 @@ extension IntegratedWorkbench {
     }
     @objc func showDialogue() {
         if dialogueWindow == nil {
-            let w = NSWindow(contentRect:NSRect(x:0,y:0,width:720,height:630),styleMask:[.titled,.closable,.resizable],backing:.buffered,defer:false)
+            let w = NSWindow(contentRect:NSRect(x:0,y:0,width:720,height:730),styleMask:[.titled,.closable,.resizable],backing:.buffered,defer:false)
             w.isReleasedWhenClosed=false;w.delegate=self;dialogueWindow=w
             let status=NSTextField(wrappingLabelWithString:"");dialogueStatus=status
             let explain=NSTextField(wrappingLabelWithString:translate("Automatic exchange is off by default. Only these two conversations, roles, selected files and complete replies are shared. No file execution, commands, approvals or Git rights are granted."))
@@ -167,13 +181,15 @@ extension IntegratedWorkbench {
             rounds.setAccessibilityLabel(translate("Round trips (1–50)"))
             minutes.setAccessibilityLabel(translate("Minutes (1–120)"))
             let budgets=NSStackView(views:[NSTextField(labelWithString:translate("Round trips (1–50)")),rounds,NSTextField(labelWithString:translate("Minutes (1–120)")),minutes]);budgets.spacing=8
+            let unlimited=NSButton(checkboxWithTitle:translate("Until you stop · no round or time limit"),target:self,action:#selector(dialogueBudgetChanged));dialogueUntilStopped=unlimited
+            let seed=NSButton(title:translate("Use latest complete reply from the left"),target:self,action:#selector(selectDialogueSeed))
             let concession=NSButton(checkboxWithTitle:translate("Stop at an explicit final concession"),target:nil,action:nil);dialogueConcession=concession
             let start=NSButton(title:translate("Start automatic exchange"),target:self,action:#selector(startDialogue))
             let pause=NSButton(title:translate("Pause"),target:self,action:#selector(pauseDialogueAction))
             let resume=NSButton(title:translate("Continue"),target:self,action:#selector(resumeDialogue))
             let stop=NSButton(title:translate("Stop future exchanges"),target:self,action:#selector(stopDialogue))
             let buttons=NSStackView(views:[start,pause,resume,stop]);buttons.spacing=8
-            let layout=NSStackView(views:[explain,status,roleA,roleB,NSTextField(labelWithString:translate("First instruction · sent to the right participant")),scroll,budgets,concession,buttons]);layout.orientation = .vertical;layout.alignment = .leading;layout.spacing=12;layout.translatesAutoresizingMaskIntoConstraints=false
+            let layout=NSStackView(views:[explain,status,roleA,roleB,NSTextField(labelWithString:translate("First instruction · sent to the right participant")),scroll,seed,unlimited,budgets,concession,buttons]);layout.orientation = .vertical;layout.alignment = .leading;layout.spacing=12;layout.translatesAutoresizingMaskIntoConstraints=false
             w.contentView!.addSubview(layout)
             NSLayoutConstraint.activate([layout.leadingAnchor.constraint(equalTo:w.contentView!.leadingAnchor,constant:16),layout.trailingAnchor.constraint(equalTo:w.contentView!.trailingAnchor,constant:-16),layout.topAnchor.constraint(equalTo:w.contentView!.topAnchor,constant:16),layout.bottomAnchor.constraint(equalTo:w.contentView!.bottomAnchor,constant:-16),scroll.widthAnchor.constraint(equalTo:layout.widthAnchor),scroll.heightAnchor.constraint(greaterThanOrEqualToConstant:140),roleA.widthAnchor.constraint(equalTo:layout.widthAnchor),roleB.widthAnchor.constraint(equalTo:layout.widthAnchor),status.widthAnchor.constraint(equalTo:layout.widthAnchor),explain.widthAnchor.constraint(equalTo:layout.widthAnchor)])
         }
@@ -206,9 +222,9 @@ extension IntegratedWorkbench {
             let pending=d.pendingID.flatMap { id in webTransfers.first{$0.id==id} }
             let waiting=pending.map { "\n"+translate("Waiting for")+": "+$0.provider+" · "+translate($0.statusLabel) } ?? ""
             let bound=d.providers.enumerated().map { $0.element+" · "+d.conversations[$0.offset] }.joined(separator:"\n↔ ")
-            dialogueStatus?.stringValue=translate("Current panes")+":\n"+targets+"\n"+translate("Authorized conversations")+":\n"+bound + "\n" + translate(d.state) + " · \(d.completedCount)/\(d.maxExchanges) " + translate("directional exchanges") + " · " + translate(d.reason) + waiting + fileLabel
+            dialogueStatus?.stringValue=translate("Current panes")+":\n"+targets+"\n"+translate("Authorized conversations")+":\n"+bound + "\n" + translate(d.state) + " · " + d.progressLabel + " " + translate("directional exchanges") + " · " + translate(d.reason) + waiting + fileLabel
         } else { dialogueStatus?.stringValue=targets + "\n" + translate("Off · nothing is sent until you start") + fileLabel }
-        dialogueButton.title=translate("Automatic exchange") + (dialogue?.state == "running" ? " · \(dialogue!.completedCount)/\(dialogue!.maxExchanges)" : "")
+        dialogueButton.title=translate("Automatic exchange") + (dialogue?.state == "running" ? " · " + dialogue!.progressLabel : "")
     }
     @discardableResult func saveDialogue() -> Bool {
         do {
@@ -227,19 +243,52 @@ extension IntegratedWorkbench {
         dialogue?.state="paused";dialogue?.reason=reason;_ = saveDialogue()
     }
     @objc func pauseDialogueAction() { pauseDialogue("Paused by you. The provider may finish its current reply; no next message is sent.") }
-    @objc func stopDialogue() {
-        guard dialogue != nil else { return }
+    @objc func stopDialogue() { stopDialogueWithReason("Future exchanges stopped. This does not cancel a provider's current generation.") }
+    func stopDialogueWithReason(_ reason:String) {
+        dialogueStartToken=nil;dialogueStartPending=false
+        guard dialogue != nil else{return}
+        // Latch before invalidating asynchronous leases or processing a reply.
+        // A late callback can update its receipt, never schedule the next turn.
+        dialogue?.state="stopped";dialogue?.reason=reason;_ = saveDialogue()
         invalidateDialogueSendLease()
-        dialogue?.state="stopped";dialogue?.reason="Future exchanges stopped. This does not cancel a provider's current generation.";_ = saveDialogue()
+    }
+    func stopDialogueFromPane(_ index:Int,source:URL) {
+        guard let d=dialogue,["running","paused"].contains(d.state), (0...1).contains(index), kinds[index]==d.providers[index] else{return}
+        // Revocation is safe even during /new -> conversation navigation.
+        // The native bridge already binds the trusted click to this actual pane.
+        stopDialogueWithReason(index==0 ? "Left participant stopped · future exchanges cancelled" : "Right participant stopped · future exchanges cancelled")
     }
     func invalidateDialogueSendLease() {
-        guard let id=dialogue?.pendingID, let i=webTransfers.firstIndex(where:{$0.id==id}) else{return}
-        activeWebQueues.remove(id);transferTimers[id]?.invalidate()
-        if webTransfers[i].state=="preparing" {webTransfers[i].state="queue_paused"}
-        if webTransfers[i].state=="sending" {
-            webPanes[webTransfers[i].targetPane]?.web.evaluateJavaScript("window.twosTransferLease = Math.random().toString()",in:nil,in:NativeWorkbench.handoffWorld,completionHandler:nil)
+        guard let d=dialogue else{return}
+        for i in webTransfers.indices where webTransfers[i].dialogueID==d.id {
+            let id=webTransfers[i].id
+            activeWebQueues.remove(id);transferTimers.removeValue(forKey:id)?.invalidate()
+            if webTransfers[i].mayHaveSent != true,["preparing","queued","queue_paused","busy"].contains(webTransfers[i].state) {
+                webTransfers[i].state=d.state=="stopped" ? "cancelled" : "queue_paused"
+            }
+            if webTransfers[i].state=="sending" {
+                webPanes[webTransfers[i].targetPane]?.web.evaluateJavaScript("window.twosTransferLease = crypto.randomUUID()",in:nil,in:NativeWorkbench.handoffWorld,completionHandler:nil)
+            }
         }
         _ = persistWebTransfers()
+    }
+    @objc func dialogueBudgetChanged() {
+        let limited=dialogueUntilStopped?.state != .on
+        dialogueRounds?.isEnabled=limited;dialogueMinutes?.isEnabled=limited
+    }
+    @objc func selectDialogueSeed() {
+        guard dialogue?.state != "running",let pane=webPanes[0],let source=NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome) else{return}
+        let binding=routeSignature(0)
+        pane.providerSnapshot(includeReply:true,latestOnly:true) { [weak self,weak pane] result in
+            guard let self=self,let pane=pane,self.webPanes[0] === pane,self.dialogue?.state != "running",
+                  NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome)==source,binding==self.routeSignature(0) else{return}
+            guard result["state"] as? String=="reply",let text=result["text"] as? String,let message=result["message"] as? String else {
+                self.showDialogueNotice("No complete first reply is available. Nothing was sent. " + (result["reason"] as? String ?? ""));return
+            }
+            self.dialogueText?.string=text
+            self.dialogueSeed=(source.absoluteString,message,NativeCodex.digest(Data(text.utf8)))
+            self.showDialogueNotice("Latest complete reply selected. Start rechecks its identity and both destinations; nothing has been sent.")
+        }
     }
     func dialogueTargetsMatch(_ value:PairedDialogue) -> Bool {
         (0...1).allSatisfy { index in
@@ -254,22 +303,42 @@ extension IntegratedWorkbench {
         }
     }
     @objc func startDialogue() {
-        guard dialogue?.state != "running", dialogue?.pendingID == nil || ["finished","stopped"].contains(dialogue?.state ?? "") else { showDialogueNotice("Resolve or resume the saved exchange before starting another.");return }
+        guard !dialogueStartPending, dialogue?.state != "running", dialogue?.pendingID == nil || ["finished","stopped"].contains(dialogue?.state ?? "") else { showDialogueNotice("Resolve or resume the saved exchange before starting another.");return }
         if let pending=dialogue?.pendingID {
-            guard let receipt=webTransfers.first(where:{$0.id==pending}),receipt.mayHaveSent != true || receipt.state=="reply" else {
+            guard let receipt=webTransfers.first(where:{$0.id==pending}),receipt.mayHaveSent != true || ["reply","generation_stopped"].contains(receipt.state) else {
                 showDialogueNotice("The previous submission still needs reconciliation. Check delivery before starting another exchange.");return
             }
         }
         guard kinds.allSatisfy({["ChatGPT","Claude","DeepSeek"].contains($0)}), kinds[0] != kinds[1],
               let a=webPanes[0],let b=webPanes[1],let au=NativeWorkbench.restorableURL(a.web.url,service:a.serviceHome),let bu=NativeWorkbench.restorableURL(b.web.url,service:b.serviceHome),
-              let rounds=Int(dialogueRounds?.stringValue ?? ""),(1...50).contains(rounds),let minutes=Int(dialogueMinutes?.stringValue ?? ""),(1...120).contains(minutes),
+              let rounds=Int(dialogueRounds?.stringValue ?? ""),let minutes=Int(dialogueMinutes?.stringValue ?? ""),
+              dialogueUntilStopped?.state == .on || ((1...50).contains(rounds) && (1...120).contains(minutes)),
               let text=dialogueText?.string,!text.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty,text.utf8.count<=150000 else { showDialogueNotice("Select two different supported website conversations and valid round/time budgets. No task was sent.");return }
         let files=(webFileSelections[0] ?? [])+(webFileSelections[1] ?? [])
         guard (try? payloadFiles(files)) != nil else{showDialogueNotice("An attachment is missing, changed or too large. Nothing was sent.");return}
-        let value=PairedDialogue(id:UUID().uuidString,providers:kinds,conversations:[au.absoluteString,bu.absoluteString],roles:dialogueRoles.map(\.stringValue),firstText:text,maxExchanges:rounds*2,duration:Double(minutes)*60,createdAt:Date().timeIntervalSince1970,state:"running",stopOnConcession:dialogueConcession?.state == .on,fileIDs:files.map(\.id),files:files)
+        let value=PairedDialogue(id:UUID().uuidString,providers:kinds,conversations:[au.absoluteString,bu.absoluteString],roles:dialogueRoles.map(\.stringValue),firstText:text,maxExchanges:dialogueUntilStopped?.state == .on ? 0 : rounds*2,duration:dialogueUntilStopped?.state == .on ? 0 : Double(minutes)*60,createdAt:Date().timeIntervalSince1970,state:"running",stopOnConcession:dialogueConcession?.state == .on,fileIDs:files.map(\.id),files:files,untilStopped:dialogueUntilStopped?.state == .on,firstMessage:dialogueSeed?.message,firstHash:dialogueSeed?.hash)
         guard value.valid else {showDialogueNotice("The automatic exchange configuration is invalid. Nothing was sent.");return}
-        dialogue=value
-        guard saveDialogue() else { return };tickDialogue()
+        let binding=routeSignature(0),startToken=UUID().uuidString
+        dialogueStartToken=startToken
+        let launch = { [weak self] in
+            guard let self=self,self.dialogueStartToken==startToken,self.dialogue?.state != "running",binding==self.routeSignature(0),self.dialogueTargetsMatch(value) else{return}
+            self.dialogueStartToken=nil;self.dialogueStartPending=false;self.dialogue=value
+            guard self.saveDialogue() else{return};self.tickDialogue()
+        }
+        if let seed=dialogueSeed {
+            guard seed.source==au.absoluteString,seed.hash==NativeCodex.digest(Data(text.utf8)) else {
+                showDialogueNotice("The selected first reply or conversation changed. Select the latest complete reply again. Nothing was sent.");return
+            }
+            dialogueStartPending=true
+            a.providerSnapshot(includeReply:true,latestOnly:true) { [weak self] result in
+                guard let self=self,self.dialogueStartToken==startToken else{return};self.dialogueStartPending=false
+                guard result["state"] as? String=="reply",result["message"] as? String==seed.message,
+                      (result["text"] as? String).map({NativeCodex.digest(Data($0.utf8))})==seed.hash else {
+                    self.showDialogueNotice("The selected first reply changed or is incomplete. Nothing was sent.");return
+                }
+                launch()
+            }
+        } else { launch() }
     }
     func showDialogueNotice(_ text:String) { dialogueStatus?.stringValue=translate(text) }
     @objc func resumeDialogue() {
@@ -363,7 +432,7 @@ extension IntegratedWorkbench {
         if let id=d.pendingID {
             guard let r=webTransfers.first(where:{$0.id==id}), let pane=webPanes[r.targetPane] else { pauseDialogue("Pending receipt is missing. Nothing will be resent.");return }
             if inspectionsInFlight.contains(id) || r.state=="sending" {return}
-            guard !["login","verification","draft","draft_conflict","unsupported","not_loaded","target_changed","queue_paused","unknown","provider_limited","cancelled"].contains(r.state) else { pauseDialogue("Delivery or input needs verification. Check the pending receipt; no blind resend.");return }
+            guard !["login","verification","draft","draft_conflict","unsupported","not_loaded","target_changed","queue_paused","unknown","provider_limited","cancelled","generation_stopped"].contains(r.state) else { pauseDialogue("Delivery or input needs verification. Check the pending receipt; no blind resend.");return }
             if r.state != "reply" { inspectWebTransfer(id,target:pane);return }
             guard let reply=r.result,!reply.isEmpty else { pauseDialogue("Completed reply is unavailable");return }
             dialogueTickInFlight=true
@@ -375,8 +444,8 @@ extension IntegratedWorkbench {
                 guard !d.replyHashes.contains(hash) else { self.pauseDialogue("Repeated output detected");return }
                 self.dialogue?.replyHashes.append(hash);self.dialogue?.completedCount += 1;self.dialogue?.pendingID=nil
                 self.dialogue?.conversations[r.targetPane]=r.resolvedURL ?? r.targetURL
-                if self.dialogue!.completedCount>=d.maxExchanges || (d.stopOnConcession && PairedDialogue.concession(reply)) {
-                    let reason=self.dialogue!.completedCount>=d.maxExchanges ? "Authorized round budget completed" : "Current participant supplied an explicit final CONCEDE or STALEMATE statement"
+                if self.dialogue!.roundLimitReached || (d.stopOnConcession && PairedDialogue.concession(reply)) {
+                    let reason=self.dialogue!.roundLimitReached ? "Authorized round budget completed" : "Current participant supplied an explicit final CONCEDE or STALEMATE statement"
                     self.dialogue?.state="finished";self.dialogue?.reason=reason
                 }
                 // Persist the completed turn and next sequence before dispatch.

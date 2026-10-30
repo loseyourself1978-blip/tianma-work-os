@@ -1446,5 +1446,113 @@
   "The website attachment control is unavailable or ambiguous. Your draft is preserved; nothing was sent.": {
     "en-US": "The website attachment control is unavailable or ambiguous. Your draft is preserved; nothing was sent.",
     "zh-CN": "网站附件入口尚未就绪或无法唯一确认。草稿已保留，未发送。"
+  },
+  "Until you stop · no round or time limit": {
+    "en-US": "Until you stop · no round or time limit",
+    "zh-CN": "直到你停止 · 不设轮次或时间上限"
+  },
+  "Use latest complete reply from the left": {
+    "en-US": "Use latest complete reply from the left",
+    "zh-CN": "选择左侧最新完整回复作为首轮"
+  },
+  "Latest complete reply selected. Start rechecks its identity and both destinations; nothing has been sent.": {
+    "en-US": "Latest complete reply selected. Start rechecks its identity and both destinations; nothing has been sent.",
+    "zh-CN": "已选择最新完整回复。启动时会复核回复身份及双方目标；当前未发送。"
+  },
+  "No complete first reply is available. Nothing was sent. ": {
+    "en-US": "No complete first reply is available. Nothing was sent. ",
+    "zh-CN": "首轮完整回复暂不可用，未发送。"
+  },
+  "The selected first reply or conversation changed. Select the latest complete reply again. Nothing was sent.": {
+    "en-US": "The selected first reply or conversation changed. Select the latest complete reply again. Nothing was sent.",
+    "zh-CN": "已选首轮回复或会话发生变化，请重新选择最新完整回复；未发送。"
+  },
+  "The selected first reply changed or is incomplete. Nothing was sent.": {
+    "en-US": "The selected first reply changed or is incomplete. Nothing was sent.",
+    "zh-CN": "已选首轮回复发生变化或尚未完整，未发送。"
+  },
+  "Left participant stopped · future exchanges cancelled": {
+    "en-US": "Left participant stopped · future exchanges cancelled",
+    "zh-CN": "左侧已停止 · 后续自动派发已撤销"
+  },
+  "Right participant stopped · future exchanges cancelled": {
+    "en-US": "Right participant stopped · future exchanges cancelled",
+    "zh-CN": "右侧已停止 · 后续自动派发已撤销"
+  },
+  "Transport": {
+    "en-US": "Transport",
+    "zh-CN": "状态通道"
+  },
+  "Visible consumer": {
+    "en-US": "Visible consumer",
+    "zh-CN": "当前显示组件"
+  },
+  "Heartbeat age": {
+    "en-US": "Heartbeat age",
+    "zh-CN": "组件心跳距今"
+  },
+  "Last snapshot age": {
+    "en-US": "Last snapshot age",
+    "zh-CN": "最近收包距今"
+  },
+  "Last state change": {
+    "en-US": "Last state change",
+    "zh-CN": "最近状态变化"
+  },
+  "Left activity": {
+    "en-US": "Left activity",
+    "zh-CN": "左侧活动"
+  },
+  "Right activity": {
+    "en-US": "Right activity",
+    "zh-CN": "右侧活动"
+  },
+  "Fresh": {
+    "en-US": "Fresh",
+    "zh-CN": "新鲜观测"
+  },
+  "Stale": {
+    "en-US": "Stale",
+    "zh-CN": "观测已过期"
+  },
+  "Actual animation": {
+    "en-US": "Actual animation",
+    "zh-CN": "实际动画 / 帧"
+  },
+  "Frames displayed": {
+    "en-US": "Frames displayed",
+    "zh-CN": "已显示帧数"
+  },
+  "Animation timer": {
+    "en-US": "Animation timer",
+    "zh-CN": "播放计时器"
+  },
+  "Reduced motion is enabled. Animation is intentionally still.": {
+    "en-US": "Reduced motion is enabled. Animation is intentionally still.",
+    "zh-CN": "系统已开启减少动态效果，动画按偏好静止。"
+  },
+  "Connection, observed activity and rendered animation are separate. No chat or files are shared.": {
+    "en-US": "Connection, observed activity and rendered animation are separate. No chat or files are shared.",
+    "zh-CN": "连接、活动识别与实际动画分别核验；不共享聊天或文件正文。"
+  },
+  "NYRA_HEARTBEAT_STALE": {
+    "en-US": "NYRA_HEARTBEAT_STALE",
+    "zh-CN": "当前组件心跳已过期，不能将旧可见状态当作实时连接。"
+  },
+  "Stop automatic exchange": {
+    "en-US": "Stop automatic exchange",
+    "zh-CN": "停止自动交换"
+  },
+  "Automatic exchange stopped. In-flight replies may finish; no next message will be sent.": {
+    "en-US": "Automatic exchange stopped. In-flight replies may finish; no next message will be sent.",
+    "zh-CN": "自动交换已停止。已发送的回复可能继续完成，不会再派发下一条消息。"
+  },
+  "Instruction received; the website confirms that its reply was interrupted. No complete reply is forwarded.": {
+    "en-US": "Instruction received; the website confirms that its reply was interrupted. No complete reply is forwarded.",
+    "zh-CN": "指令已收到；网站确认回复已中断。不会转发不完整回复。"
+  },
+  "The website confirms that generation was interrupted. Future exchanges cancelled.": {
+    "en-US": "The website confirms that generation was interrupted. Future exchanges cancelled.",
+    "zh-CN": "网站确认生成已中断。后续交换已取消。"
   }
 }

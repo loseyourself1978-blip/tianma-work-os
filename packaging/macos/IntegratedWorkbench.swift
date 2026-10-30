@@ -7,9 +7,9 @@ import Darwin
 // A single, pull-only local snapshot. The endpoint is not a command channel.
 // Nyra's consumer is maintained separately; hiding/quitting it never affects work.
 final class NyraStatusProducer {
-    static let schemaVersion = "twos.nyra.status.v2"
-    static let schemaSHA256 = "ef6797aa662f28dd36134ba476c5b1ae50c418fd1fa9636330d2cb76c0b59c81"
-    static let states: Set<String> = ["idle", "queued", "running", "waiting_user", "partial", "failed", "completed_unverified", "verified_success", "cancelled", "disconnected"]
+    static let schemaVersion = "twos.nyra.status.v3"
+    static let schemaSHA256 = "dbdc1c228b9762fc1b8b3bcd8b89d91672f4ae5e0a7f552d9d1301b93dcde831"
+    static let states: Set<String> = ["idle", "queued", "running", "waiting_user", "partial", "failed", "completed_unverified", "verified_success", "cancelled", "disconnected", "activity_unknown"]
     let instance = UUID().uuidString
     let directory: URL
     let helper: URL
@@ -79,12 +79,18 @@ final class NyraStatusProducer {
     static func validID(_ value: String) -> Bool {
         !value.isEmpty && value.utf8.count <= 128 && value.range(of: "^[A-Za-z0-9_-]+$", options: .regularExpression) != nil
     }
-    func observe(session: String, task: String?, state: String, source: String, ownerEvidence: String? = nil, side: String? = nil) {
+    func observe(session: String, task: String?, state: String, source: String, ownerEvidence: String? = nil, side: String? = nil, panes: [[String:Any]]? = nil) {
         dispatchPrecondition(condition: .onQueue(.main))
         guard Self.validID(session), task.map(Self.validID) ?? true, Self.states.contains(state),
               ["twos_runtime", "codex_adapter", "web_handoff_adapter"].contains(source),
               side.map({["left","right","both"].contains($0)}) ?? true,
               state != "verified_success" || (source == "twos_runtime" && task != nil && ownerEvidence.map(Self.validID) == true) else { return }
+        if let panes=panes {
+            guard side != nil,panes.count==2,Set(panes.compactMap{$0["side"] as? String})==Set(["left","right"]),panes.allSatisfy({
+                Set($0.keys)==Set(["side","state","reason","fresh"]) && Self.states.contains($0["state"] as? String ?? "") &&
+                ($0["reason"] as? String)?.range(of:"^[A-Z0-9_]{1,80}$",options:.regularExpression) != nil && $0["fresh"] is Bool
+            }) else{return}
+        }
         // Only the native result-confirmation path supplies an evidence ID.
         // Executor text and website replies have no acceptance authority.
         let key = session + "|" + (task ?? "")
@@ -101,15 +107,16 @@ final class NyraStatusProducer {
         if terminalTasks.count > 128 { terminalTasks = [key: (effective, effectiveSource, effectiveEvidence)] }
         if current["session_id"] as? String == session, current["task_id"] as? String == task,
            current["state"] as? String == effective, current["source"] as? String == effectiveSource,
-           current["evidence_ref"] as? String == effectiveEvidence, current["activity_side"] as? String == side { return }
+           current["evidence_ref"] as? String == effectiveEvidence, current["activity_side"] as? String == side, (current["pane_observations"] as? [[String:Any]]).map({NSArray(array:$0).isEqual(to:panes ?? [])}) ?? (panes == nil) { return }
         sequence += 1
-        current = ["schema_version": side == nil ? "twos.nyra.status.v1" : Self.schemaVersion, "producer_instance_id": instance,
+        current = ["schema_version": panes != nil ? Self.schemaVersion : (side == nil ? "twos.nyra.status.v1" : "twos.nyra.status.v2"), "producer_instance_id": instance,
                    "event_id": UUID().uuidString, "sequence": sequence,
                    "timestamp": ISO8601DateFormatter().string(from: Date()),
                    "session_id": session, "task_id": task as Any? ?? NSNull(),
                    "state": effective, "source": effectiveSource, "simulation": false]
         if effective == "verified_success", let evidence = effectiveEvidence { current["evidence_ref"] = evidence }
         if let side=side { current["activity_side"]=side }
+        if let panes=panes { current["pane_observations"]=panes }
         let bytes = (try? JSONSerialization.data(withJSONObject: current, options: [.sortedKeys])) ?? Data()
         snapshotLock.lock(); wireSnapshot = bytes; snapshotLock.unlock()
     }
@@ -126,7 +133,7 @@ final class NyraStatusProducer {
         // In particular, restart must not replay an old `sent` as live activity.
         case "sending", "sent": return fresh && ["sending", "sent"].contains(observed ?? "") ? "running" : "disconnected"
         case "reply": return "completed_unverified"
-        case "cancelled": return "cancelled"
+        case "cancelled", "generation_stopped": return "cancelled"
         case "login", "verification", "draft", "draft_conflict", "queue_paused", "target_changed": return "waiting_user"
         case "unsupported": return "failed"
         default: return "disconnected"
@@ -249,6 +256,10 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
     var dialogueRounds: NSTextField?
     var dialogueMinutes: NSTextField?
     var dialogueConcession: NSButton?
+    var dialogueUntilStopped: NSButton?
+    var dialogueSeed: (source:String, message:String, hash:String)?
+    var dialogueStartPending = false
+    var dialogueStartToken: String?
     var webFileSelections: [Int:[WebTransferFile]] = [:]
     let dialogueButton = NSButton(title:"",target:nil,action:nil)
     var nyraObservationTimer: Timer?
@@ -259,6 +270,8 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
     var historyButtons: [(NSButton, String)] = []
     var historyReopenButton: NSButton?
     let nyraButton = NSButton(title: "Nyra", target: nil, action: nil)
+    var nyraStatusWindow: NSWindow?
+    var nyraStatusText: NSTextField?
     let nyraConnectionButton = NSButton(title:"Nyra status",target:nil,action:nil)
     lazy var nyraStatus = NyraStatusProducer(directory: preferences.appendingPathComponent("nyra-status"), helper: Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/TWOS Nyra.app"))
     lazy var nyra = NativeNyra(stateRoot: preferences.appendingPathComponent("nyra"), producerInstance: { [weak self] in self?.nyraStatus.instance }, authorizeConsumer:{ [weak self] app in
@@ -272,6 +285,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
         self.nyraButton.toolTip = state["reason"] as? String
         self.nyraButton.setAccessibilityLabel(self.nyraButton.title)
         self.codex?.emit("nyra", state)
+        self.updateNyraStatusView(state)
     }
 
     init(preferences: URL, resources: URL? = nil, translate: @escaping (String) -> String, openProjects: @escaping () -> Void) {
@@ -331,7 +345,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
             split.trailingAnchor.constraint(equalTo: win.contentView!.trailingAnchor), split.bottomAnchor.constraint(equalTo: win.contentView!.bottomAnchor)])
         for _ in 0...1 { split.addArrangedSubview(NSView()) }
         rebuild(0); rebuild(1); refreshTargets(); nyra.refresh(); win.center()
-        let statusTimer = Timer(timeInterval: 2, repeats: true) { [weak self] _ in self?.refreshNyraStatus();self?.tickDialogue() }
+        let statusTimer = Timer(timeInterval: 2, repeats: true) { [weak self] _ in self?.refreshNyraStatus();self?.nyra.refresh();self?.tickDialogue() }
         nyraObservationTimer = statusTimer; RunLoop.main.add(statusTimer, forMode: .common)
     }
     deinit { nyraObservationTimer?.invalidate() }
@@ -346,16 +360,38 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
     @objc func toggleNyra() { _ = nyraStatus; nyra.toggle() }
     @objc func connectNyra() {
         _ = nyraStatus
-        if let app=nyra.standalone {nyra.connectStandalone(app)}
-        else {
-            nyra.refresh();let state=nyra.snapshot(),alert=NSAlert();alert.messageText=translate("Nyra status")
-            alert.informativeText=(state["binding"] as? String ?? "NOT_CONNECTED")+"\n"+translate("The bundled Nyra connects to this exact TWOS automatically when shown. No chat or files are shared.")
-            if let reason=state["reason"] as? String {
-                let parts=reason.components(separatedBy:" · ")
-                alert.informativeText += "\n"+translate(parts[0])+(parts.count>1 ? " · "+parts.dropFirst().joined(separator:" · ") : "")
-            }
-            alert.runModal()
+        if let app=nyra.standalone,nyra.snapshot()["binding"] as? String != "CONNECTED_READONLY" {nyra.connectStandalone(app)}
+        if nyraStatusWindow == nil {
+            let w=NSWindow(contentRect:NSRect(x:0,y:0,width:680,height:540),styleMask:[.titled,.closable,.resizable],backing:.buffered,defer:false)
+            w.isReleasedWhenClosed=false;w.delegate=self
+            let text=NSTextField(wrappingLabelWithString:"");text.isSelectable=true;text.font = .monospacedSystemFont(ofSize:13,weight:.regular);text.translatesAutoresizingMaskIntoConstraints=false
+            w.contentView!.addSubview(text)
+            NSLayoutConstraint.activate([text.leadingAnchor.constraint(equalTo:w.contentView!.leadingAnchor,constant:20),text.trailingAnchor.constraint(equalTo:w.contentView!.trailingAnchor,constant:-20),text.topAnchor.constraint(equalTo:w.contentView!.topAnchor,constant:20)])
+            nyraStatusWindow=w;nyraStatusText=text
         }
+        updateNyraStatusView(nyra.snapshot());nyra.refresh()
+        nyraStatusWindow?.center();nyraStatusWindow?.makeKeyAndOrderFront(nil)
+    }
+    func updateNyraStatusView(_ state:[String:Any]) {
+        guard let text=nyraStatusText else{return}
+        nyraStatusWindow?.title=translate("Nyra status")
+        let unknown=translate("Unknown")
+        func value(_ key:String)->String {
+            if ["heartbeatAge","snapshotAge"].contains(key),let seconds=state[key] as? Double,seconds.isFinite {return String(format:"%.1f",max(0,seconds))}
+            if key=="frameTimer",let active=state[key] as? Bool {return translate(active ? "Running" : "Stopped")}
+            return state[key].map{String(describing:$0)} ?? unknown
+        }
+        var lines=[translate("Transport")+": "+value("binding"),translate("Visible consumer")+": PID "+value("consumerPID")+" · "+value("consumerInstance"),translate("Heartbeat age")+": "+value("heartbeatAge")+" s",translate("Last snapshot age")+": "+value("snapshotAge")+" s",translate("Last state change")+": "+value("lastStateChangeAt")]
+        for side in ["left","right"] {
+            let item=(state["paneObservations"] as? [[String:Any]])?.first{$0["side"] as? String==side}
+            lines.append(translate(side=="left" ? "Left activity" : "Right activity")+": "+(item?["state"] as? String ?? unknown)+" · "+(item?["reason"] as? String ?? "NO_OBSERVATION")+" · "+translate(item?["fresh"] as? Bool == true ? "Fresh" : "Stale"))
+        }
+        lines.append(translate("Actual animation")+": "+value("animation")+" / "+value("frameAsset"))
+        lines.append(translate("Frames displayed")+": "+value("frameCount")+" · "+translate("Animation timer")+": "+value("frameTimer"))
+        if state["reduceMotion"] as? Bool == true {lines.append(translate("Reduced motion is enabled. Animation is intentionally still."))}
+        if let reason=state["reason"] as? String {lines.append(translate(reason))}
+        lines.append(translate("Connection, observed activity and rendered animation are separate. No chat or files are shared."))
+        text.stringValue=lines.joined(separator:"\n\n")
     }
     func refreshLanguage() {
         nyra.refresh()
@@ -379,7 +415,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
     }
     func windowWillClose(_ notification: Notification) {
         guard let closing = notification.object as? NSWindow,
-              closing === handoffWindow || closing === dialogueWindow else { return }
+              closing === handoffWindow || closing === dialogueWindow || closing === nyraStatusWindow else { return }
         // Closing an auxiliary view returns to this workbench, not another
         // installed TWOS instance. It never navigates, resumes, or dispatches.
         DispatchQueue.main.async { [weak self] in
@@ -528,6 +564,14 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
             self?.returnDelivery(id, explicit: true)
         }
         pane.sendWebReply = { [weak self] id, _ in self?.sendRecordedWebReply(id) }
+        pane.stopExchangeHandler = { [weak self] in
+            self?.stopDialogue()
+            self?.webPanes.values.forEach { $0.showNotice("Automatic exchange stopped. In-flight replies may finish; no next message will be sent.") }
+        }
+        pane.nativeStopHandler = { [weak self, weak pane] source in
+            guard let self=self, let pane=pane, self.webPanes[index] === pane else{return}
+            self.stopDialogueFromPane(index,source:source)
+        }
     }
     func returnDelivery(_ id: String, explicit: Bool) {
         guard let client = codex, let record = client.ledger.submissions.first(where: { $0.id == id }),
@@ -571,7 +615,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
         for index in 0...1 {
             if kinds[index] == "Codex", let client=codex, let thread=client.threadID {
                 let run=client.telemetry.runs.values.filter { $0.thread==thread }.max { $0.lastActivity<$1.lastActivity }
-                var state=client.connected && !client.uncertain ? "idle" : "disconnected"
+                var state=client.connected && !client.uncertain ? "idle" : "activity_unknown"
                 var evidence:String?
                 if let run=run { state=NyraStatusProducer.codexState(run:run,online:client.connected && !client.uncertain,business:client.observedSubmission(for:run)?.businessResult) }
                 if let run=run,run.state=="completed",client.connected && !client.uncertain,
@@ -579,10 +623,10 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
                     state="verified_success";evidence=nyraStatus.alias(check.id)
                 }
                 if run?.terminal != false, client.ledger.submissions.contains(where:{$0.thread==thread && $0.turn==nil && ["queued","preparing","sending","accepted"].contains($0.state)}) { state="queued" }
-                paneActivities[index]=PaneActivity(session:nyraStatus.alias(thread),task:run?.turn,state:state,at:now,evidence:evidence)
+                paneActivities[index]=PaneActivity(session:nyraStatus.alias(thread),task:run?.turn,state:state == "disconnected" ? "activity_unknown" : state,at:now,evidence:evidence,reason:client.connected && !client.uncertain ? "CODEX_STATE_OBSERVED" : "CODEX_CONNECTION_UNAVAILABLE")
             } else if let pane=webPanes[index], kinds[index] != "Codex", let source=NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome) {
                 let session=nyraStatus.alias(kinds[index]+"|"+source.absoluteString)
-                if paneActivities[index]?.session != session { paneActivities[index]=PaneActivity(session:session,task:nil,state:"disconnected",at:now) }
+                if paneActivities[index]?.session != session { paneActivityRunIDs.removeValue(forKey:index);paneActivities[index]=PaneActivity(session:session,task:nil,state:"activity_unknown",at:now,reason:"PAGE_UNAVAILABLE") }
                 guard !paneObservationPending.contains(index) else {continue}
                 paneObservationPending.insert(index)
                 pane.providerSnapshot { [weak self,weak pane] value in
@@ -590,13 +634,15 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
                     guard let pane=pane,self.webPanes[index] === pane,self.kinds[index] != "Codex",NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome)==source else{return}
                     let observed=value["state"] as? String ?? "unknown"
                     pane.reconcileAccessNotice(observed)
-                    let state=["idle","running","waiting_user"].contains(observed) ? observed : "disconnected"
+                    let state=["idle","running","waiting_user"].contains(observed) ? observed : "activity_unknown"
+                    let reported=value["reason"] as? String ?? "OBSERVER_UNAVAILABLE"
+                    let reason=reported.range(of:"^[A-Z0-9_]{1,80}$",options:.regularExpression) != nil ? reported : "OBSERVER_UNAVAILABLE"
                     if state=="running",self.paneActivities[index]?.state != "running" { self.paneActivityRunIDs[index]=UUID().uuidString }
                     if state=="idle" {self.paneActivityRunIDs.removeValue(forKey:index)}
-                    self.paneActivities[index]=PaneActivity(session:session,task:self.paneActivityRunIDs[index],state:state,at:ProcessInfo.processInfo.systemUptime)
+                    self.paneActivities[index]=PaneActivity(session:session,task:self.paneActivityRunIDs[index],state:state,at:ProcessInfo.processInfo.systemUptime,reason:reason)
                     self.publishPaneActivity()
                 }
-            } else { paneActivities[index]=PaneActivity(session:"unselected",task:nil,state:"disconnected",at:now) }
+            } else { paneActivities[index]=PaneActivity(session:"unselected",task:nil,state:"activity_unknown",at:now,reason:"PAGE_UNAVAILABLE") }
         }
         publishPaneActivity()
     }
@@ -608,7 +654,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
         let identity=(0...1).map { paneActivities[$0]?.session ?? "unknown" }.joined(separator:"|")
         let active=(0...1).compactMap { paneActivities[$0]?.task }.joined(separator:"|")
         let checks=(0...1).compactMap { paneActivities[$0]?.fresh == true ? paneActivities[$0]?.evidence : nil }.joined(separator:"|")
-        nyraStatus.observe(session:nyraStatus.alias(identity),task:active.isEmpty ? nil : nyraStatus.alias(active),state:aggregate.state,source:"twos_runtime",ownerEvidence:aggregate.state=="verified_success" && !checks.isEmpty ? nyraStatus.alias(checks) : nil,side:aggregate.side)
+        nyraStatus.observe(session:nyraStatus.alias(identity),task:active.isEmpty ? nil : nyraStatus.alias(active),state:aggregate.state,source:"twos_runtime",ownerEvidence:aggregate.state=="verified_success" && !checks.isEmpty ? nyraStatus.alias(checks) : nil,side:aggregate.side,panes:PaneActivity.observations(paneActivities))
     }
     @discardableResult func persistWebTransfers() -> Bool {
         guard !webLedgerError else { return false }
@@ -818,7 +864,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
     }
     func applyWebResponse(_ id: String, response: [String: Any], dispatchResponse: Bool = false) {
         guard let i = webTransfers.firstIndex(where: { $0.id == id }) else { return }
-        let allowed = ["sent", "reply", "unknown", "draft", "verification", "login", "busy", "not_loaded", "target_changed", "unsupported", "draft_conflict", "provider_limited"]
+        let allowed = ["sent", "reply", "generation_stopped", "unknown", "draft", "verification", "login", "busy", "not_loaded", "target_changed", "unsupported", "draft_conflict", "provider_limited"]
         var state = response["state"] as? String ?? "unknown"
         if let reason=response["reason"] as? String {
             webTransfers[i].inspection=reason
@@ -834,19 +880,19 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
         webRuntimeObservations[id] = (state, ProcessInfo.processInfo.systemUptime)
         // Only the original call can prove a pre-send refusal. Read-only polling
         // after SPA navigation must never turn uncertain delivery into "not sent".
-        if !dispatchResponse && !["sent", "reply"].contains(state) {
+        if !dispatchResponse && !["sent", "reply", "generation_stopped"].contains(state) {
             // A read does not send. Preserve an original, explicit pre-send
             // refusal; otherwise a harmless Check would disable its draft
             // recovery/cancel actions. An uncertain dispatch remains unknown.
             let prior = webTransfers[i]
             state = prior.mayHaveSent == false && !["sending", "sent", "reply", "unknown"].contains(prior.state) ? prior.state : "unknown"
         }
-        if dispatchResponse && !["sent", "reply", "unknown"].contains(state) { webTransfers[i].mayHaveSent = false }
-        if ["sent", "reply"].contains(state) { webTransfers[i].mayHaveSent = true }
+        if dispatchResponse && !["sent", "reply", "generation_stopped", "unknown"].contains(state) { webTransfers[i].mayHaveSent = false }
+        if ["sent", "reply", "generation_stopped"].contains(state) { webTransfers[i].mayHaveSent = true }
         if dispatchResponse && state == "busy" { state = "queued" }
         // A later inspection failure cannot erase an established send receipt.
-        if webTransfers[i].state != "reply" && (webTransfers[i].state != "sent" || state == "reply") { webTransfers[i].state = state }
-        if ["sent","reply"].contains(state), let destination = response["conversationURL"] as? String, let original = URL(string: webTransfers[i].targetURL),
+        if !["reply","generation_stopped"].contains(webTransfers[i].state) && (webTransfers[i].state != "sent" || ["reply","generation_stopped"].contains(state)) { webTransfers[i].state = state }
+        if ["sent","reply","generation_stopped"].contains(state), let destination = response["conversationURL"] as? String, let original = URL(string: webTransfers[i].targetURL),
            let actual = NativeWorkbench.restorableURL(URL(string: destination), service: original) { webTransfers[i].resolvedURL = actual.absoluteString }
         if let reply = response["reply"] as? String, state == "reply", reply.utf8.count <= 200_000 {
             if let original=webTransfers[i].result, original != reply {
@@ -859,6 +905,9 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
         }
         webTransfers[i].updatedAt = Date().timeIntervalSince1970
         if persistWebTransfers() { publishWebTransfer(id) }
+        if state == "generation_stopped", dialogue?.pendingID == id, dialogue?.state == "running" {
+            stopDialogueWithReason("The website confirms that generation was interrupted. Future exchanges cancelled.")
+        }
         if state == "queued", webTransfers[i].dialogueID != nil {
             webTransfers[i].state="queue_paused";_ = persistWebTransfers();publishWebTransfer(id)
             pauseDialogue("The participant is busy. Wait for its current work, then review the pending exchange.")
@@ -907,7 +956,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate {
         transferTimers[id] = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self, weak target] timer in
             reads += 1
             guard let self = self, let target = target, reads <= 90,
-                  let record = self.webTransfers.first(where: { $0.id == id }), record.state != "reply",
+                  let record = self.webTransfers.first(where: { $0.id == id }), !["reply","generation_stopped"].contains(record.state),
                   self.webPanes[record.targetPane] === target, self.kinds[record.targetPane] == record.provider else { timer.invalidate(); return }
             self.inspectWebTransfer(id, target: target)
         }
@@ -951,6 +1000,7 @@ struct WebHandoffReceipt: Codable {
         switch state {
         case "reply": return "Reply received. No local file was created."
         case "sent": return "The website contains this exact instruction."
+        case "generation_stopped": return "Instruction received; the website confirms that its reply was interrupted. No complete reply is forwarded."
         case "draft": return "Draft only. Review and send it in the website."
         case "verification": return "Complete the website's human verification. Nothing was sent."
         case "login": return "Sign in to this website. Nothing was sent."
@@ -1098,9 +1148,16 @@ final class NativeNyra: NSObject {
               let process = NSRunningApplication(processIdentifier: pid), !process.isTerminated,
               process.bundleURL?.standardizedFileURL == helper.standardizedFileURL,
               state["bundle"] as? String == helper.path else { return ["available": true, "visible": false, "observed": false, "binding": "NOT_CONNECTED"] }
-        let connected = state["runBinding"] as? String == "CONNECTED_READONLY" && producerInstance() != nil && state["producerInstance"] as? String == producerInstance()
-        return ["available": true, "visible": state["visible"] as? Bool ?? false, "pending": state["pending"] as? Bool ?? false,
-                "observed": true, "binding": connected ? "CONNECTED_READONLY" : "NOT_CONNECTED", "updatedAt": state["updatedAt"] ?? NSNull()]
+        let now=ProcessInfo.processInfo.systemUptime
+        let age=(state["heartbeatUptime"] as? Double).map{now-$0}
+        let fresh=age.map{(0..<7).contains($0)} ?? false
+        let connected = fresh && state["runBinding"] as? String == "CONNECTED_READONLY" && producerInstance() != nil && state["producerInstance"] as? String == producerInstance()
+        var result: [String:Any] = ["available": true, "visible": state["visible"] as? Bool ?? false, "pending": state["pending"] as? Bool ?? false,
+                "observed": true, "binding": connected ? "CONNECTED_READONLY" : "NOT_CONNECTED", "updatedAt": state["updatedAt"] ?? NSNull(),"fresh":fresh,"heartbeatAge":age as Any? ?? NSNull(),"consumerPID":pid]
+        if !fresh {result["reason"]="NYRA_HEARTBEAT_STALE"}
+        for key in ["consumerInstance","animation","frameAsset","frameCount","frameTimer","reduceMotion","lastStateChangeAt","paneObservations","taskState","activitySide"] {result[key]=state[key]}
+        if let last=state["lastSnapshotUptime"] as? Double,last>0 {result["snapshotAge"]=max(0,now-last)}
+        return result
     }
     func refresh() {
         // Observe the actual selected component, including a compatible signed

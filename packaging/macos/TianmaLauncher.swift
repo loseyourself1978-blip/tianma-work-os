@@ -98,6 +98,9 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
     var handoffReady: (() -> Void)?
     var discussResult: ((String) -> Void)?
     var sendWebReply: ((String, URL) -> Void)?
+    var nativeStopHandler: ((URL) -> Void)?
+    var stopExchangeButton: NSButton?
+    var stopExchangeHandler: (() -> Void)? { didSet { stopExchangeButton?.isHidden = stopExchangeHandler == nil } }
     var chooseFiles: (() -> Void)?
     var clearFiles: (() -> Void)?
     var fileButton: NSButton?
@@ -195,7 +198,9 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
         notice.isHidden = true
         progress.style = .bar; progress.isIndeterminate = false; progress.minValue = 0; progress.maxValue = 1
         progress.isHidden = true
-        let bar = NSStackView(views: [top, actions, notice, progress])
+        let stopExchange = button("Stop automatic exchange", #selector(stopAutomaticExchange))
+        stopExchange.isHidden = true; stopExchangeButton = stopExchange
+        let bar = NSStackView(views: [top, actions, stopExchange, notice, progress])
         bar.orientation = .vertical; bar.alignment = .leading; bar.spacing = 8
         bar.edgeInsets = NSEdgeInsets(top: 10, left: 12, bottom: 8, right: 12)
         bar.translatesAutoresizingMaskIntoConstraints = false; web.translatesAutoresizingMaskIntoConstraints = false
@@ -233,6 +238,7 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
         address.setAccessibilityLabel(translate("Current website"))
         web.evaluateJavaScript("window.twosHandoffLanguage?.(\(translate("Back") != "Back" ? "true" : "false"))", in: nil, in: Self.handoffWorld, completionHandler: nil)
     }
+    @objc func stopAutomaticExchange() { stopExchangeHandler?() }
     func setFileSelectionCount(_ count:Int) {
         fileSelectionCount=count
         fileButton?.title=translate("Attachments") + (count>0 ? " (\(count))" : "")
@@ -289,6 +295,7 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
             instructionHandler?(text, source, value["message"] as? String ?? "")
         } else if value["action"] as? String == "retryHandoff", let id = value["id"] as? String { retryHandler?(id, source) }
         else if value["action"] as? String == "inspectHandoff", let id = value["id"] as? String { inspectHandler?(id, source) }
+        else if value["action"] as? String == "nativeStop" { nativeStopHandler?(source) }
         else if value["action"] as? String == "ready" { handoffReady?() }
         else if value["action"] as? String == "discuss", let id = value["id"] as? String { discussResult?(id) }
         else if value["action"] as? String == "sendReply", let id = value["id"] as? String { sendWebReply?(id, source) }
@@ -346,11 +353,11 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
             else { handler(text, source) }
         }
     }
-    func providerSnapshot(includeReply: Bool = false, completion: @escaping ([String: Any]) -> Void) {
+    func providerSnapshot(includeReply: Bool = false, latestOnly: Bool = false, completion: @escaping ([String: Any]) -> Void) {
         guard let source = Self.restorableURL(web.url, service: serviceHome),
               let file = handoffResources?.appendingPathComponent("native_codex/provider_dom.js"),
               let script = try? String(contentsOf: file, encoding: .utf8) else { completion(["state":"unknown","reason":"PAGE_UNAVAILABLE"]); return }
-        web.callAsyncJavaScript(script + "\nreturn window.twosProviderDOM?." + (includeReply ? "selectedOrLatest()" : "observe()") + ";", arguments: [:], in: nil, in: Self.handoffWorld) { [weak self] result in
+        web.callAsyncJavaScript(script + "\nreturn window.twosProviderDOM?." + (includeReply ? (latestOnly ? "latest()" : "selectedOrLatest()") : "observe()") + ";", arguments: [:], in: nil, in: Self.handoffWorld) { [weak self] result in
             guard let self = self, Self.restorableURL(self.web.url, service:self.serviceHome) == source else { completion(["state":"unknown","reason":"CONVERSATION_CHANGED"]); return }
             if case .success(let value) = result, let value = value as? [String:Any] { completion(value) }
             else { completion(["state":"unknown","reason":"OBSERVER_UNAVAILABLE"]) }
@@ -370,7 +377,8 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
               actual == expected || (request["inspectOnly"] as? Bool == true && actual.host == expected.host && actual.scheme == expected.scheme && actual.port == expected.port),
               let file = handoffResources?.appendingPathComponent("native_codex/web_handoff.js"),
               let script = try? String(contentsOf: file, encoding: .utf8) else { completion(["state": "target_changed"]); return }
-        web.callAsyncJavaScript(script, arguments: ["request": request], in: nil, in: Self.handoffWorld) { result in
+        let observer = (try? String(contentsOf: file.deletingLastPathComponent().appendingPathComponent("provider_dom.js"), encoding: .utf8)) ?? ""
+        web.callAsyncJavaScript(observer + "\n" + script, arguments: ["request": request], in: nil, in: Self.handoffWorld) { result in
             switch result {
             case .success(let value): completion(value as? [String: Any] ?? ["state": "unknown"])
             case .failure(let error):

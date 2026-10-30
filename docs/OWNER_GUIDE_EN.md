@@ -13,9 +13,7 @@ After the final delivery receipt identifies the installer, double-click the DMG 
 
 ## A · This upgrade only
 
-**R2 verification scope.** The signed TWOS 1.0.2 / 101.50 candidate completed one explicitly started three-round-trip exchange between real ChatGPT and Claude webpages: six submissions and six matched complete replies, with no manual per-turn send or check. Reopening preserved the completed exchange without replay. TXT, PNG and simple text-layer PDF readability was observed in both directions; native/synthetic boundary checks are recorded separately. The complete main regression, new notarization and publication are separate release gates. These observations do not grant Owner acceptance.
-
-[Follow the R2 incremental route](release-1.0/BIDIRECTIONAL_R2.en.md): hover stage/top controls, real reverse transfer, automatic exchange, attachments and both-pane activity. Keep earlier acceptance. Do not proceed to B after completing this upgrade route.
+R3 candidate TWOS 1.0.3 / 101.51. Follow the [reply/stop/Nyra differential guide](release-1.0/OWNER_REGRESSION_R3.en.md). End after A; do not continue to B or repeat accepted business tasks. Final candidate/release verification remains pending.
 
 ## B · First task
 

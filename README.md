@@ -1,5 +1,8 @@
 # Tianma Work OS 1.0
 
+R3 candidate: normal-reply handoff, explicit stop and separate Nyra transport/activity/rendering. Final package and release evidence pending. [R3 status / R3 状态](docs/release-1.0/OWNER_REGRESSION_R3.en.md).
+
+
 **TWOS 1.0.2 / build 101.50** provides Apple Silicon app/DMG artifacts signed with Developer ID, notarized by Apple, stapled and accepted by Gatekeeper. [Download this version](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.2) · [Source, SHA-256 and validation receipt](docs/release-1.0/release.json). Publication does not grant Owner differential acceptance.
 
 **R2 verification scope.** The signed TWOS 1.0.2 / 101.50 candidate completed one explicitly started three-round-trip exchange between real ChatGPT and Claude webpages: six submissions and six matched complete replies, with no manual per-turn send or check. Reopening preserved the completed exchange without replay. TXT, PNG and simple text-layer PDF readability was observed in both directions; native/synthetic boundary checks are recorded separately. The matching complete main regression and new notarization are recorded in the release receipt; the linked GitHub Release records publication. These observations do not grant Owner acceptance.

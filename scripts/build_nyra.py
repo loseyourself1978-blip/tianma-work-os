@@ -6,7 +6,7 @@ from pathlib import Path
 def build(source, destination, cache):
     source, destination, cache = map(Path, (source, destination, cache))
     manifest = json.loads((source/'Resources/component-manifest.json').read_text())
-    if manifest.get('product') != 'Nyra' or manifest.get('event_schema') != 'twos.nyra.status.v2':
+    if manifest.get('product') != 'Nyra' or manifest.get('event_schema') != 'twos.nyra.status.v3':
         raise ValueError('Unrecognized Nyra component manifest')
     for name, expected in manifest['bundle_files'].items():
         path = source/'Resources'/name
