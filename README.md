@@ -1,8 +1,10 @@
 # Tianma Work OS 1.0
 
-**R2 verification scope.** The signed TWOS 1.0.2 / 101.50 candidate completed one explicitly started three-round-trip exchange between real ChatGPT and Claude webpages: six submissions and six matched complete replies, with no manual per-turn send or check. Reopening preserved the completed exchange without replay. TXT, PNG and simple text-layer PDF readability was observed in both directions; native/synthetic boundary checks are recorded separately. The complete main regression, new notarization and publication are separate release gates. These observations do not grant Owner acceptance.
+**TWOS 1.0.2 / build 101.50** provides Apple Silicon app/DMG artifacts signed with Developer ID, notarized by Apple, stapled and accepted by Gatekeeper. [Download this version](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.2) · [Source, SHA-256 and validation receipt](docs/release-1.0/release.json). Publication does not grant Owner differential acceptance.
 
-[R2 candidate operations](docs/release-1.0/BIDIRECTIONAL_R2.en.md). Previous published release: [TWOS v1.0.1](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.1). New version 1.0.2 / 101.50 is not yet published.
+**R2 verification scope.** The signed TWOS 1.0.2 / 101.50 candidate completed one explicitly started three-round-trip exchange between real ChatGPT and Claude webpages: six submissions and six matched complete replies, with no manual per-turn send or check. Reopening preserved the completed exchange without replay. TXT, PNG and simple text-layer PDF readability was observed in both directions; native/synthetic boundary checks are recorded separately. The matching complete main regression and new notarization are recorded in the release receipt; the linked GitHub Release records publication. These observations do not grant Owner acceptance.
+
+[R2 operations](docs/release-1.0/BIDIRECTIONAL_R2.en.md). Previous published release: [TWOS v1.0.1](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.1). Use the matching v1.0.2 Release and receipt linked above.
 
 
 [简体中文](README.zh-CN.md) · [Install](docs/release-1.0/INSTALL.en.md) · [User guide](docs/release-1.0/USER_GUIDE.en.md) · [Current release status](docs/CURRENT_DELIVERY.md)
@@ -17,7 +19,7 @@ Discuss a goal and execute it in one macOS workspace. TWOS pairs official ChatGP
 
 ## Download and first use
 
-The published TWOS v1.0.1 remains available. R2 (1.0.2 / 101.50) is under verification and is not a downloadable release yet. Use only a matching Release receipt with exact source, signature/notarization results and hashes. Historical v1.0.0 is the preserved source distribution.
+Download TWOS v1.0.2 using the link above. Verify SHA256SUMS before opening its DMG. The matching receipt binds source, signatures, notarization and artifact hashes. Historical v1.0.1 and v1.0.0 remain unchanged.
 
 Open the matching DMG, drag TWOS into Applications and open it. Sign into the chosen official provider website, connect your already installed/logged-in local Codex, then create or resume one folder-bound task. Nyra is inside the same app; no separate pet installer or first-run artwork download is required. Ordinary installation needs no Python, Node or terminal.
 

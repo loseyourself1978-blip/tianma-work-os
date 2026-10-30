@@ -1,17 +1,13 @@
-# Joint release status / 联合发行状态
+# Current R2 delivery / 当前 R2 交付
 
-R2 candidate: **TWOS 1.0.2 / 101.50 + Nyra 1.0.1 / 101**. [Observed R2 scope / R2 实际验证范围](release-1.0/R2_VERIFICATION.en.md). New main regression, notarization and publication remain separate gates; R1 results below do not prove R2. 新版主回归、公证及发行另行记录，下方 R1 结果不代替新版验证。
+TWOS **1.0.2 / 101.50**, bundled/standalone Nyra **1.0.1 / 101**. New App/DMG pairs are Developer ID signed, Apple notarized, stapled and Gatekeeper accepted. 完整主回归：**1782 PASS / 1 historical-package skip / 0 FAIL**，真实 Safari 测量 38 项。
 
-## Preserved published R1 / 保留的已发行 R1
+[Exact release receipt / 精确发行回执](release-1.0/release.json) · [R2 coverage / 验证范围](release-1.0/R2_VERIFICATION.en.md) · [中文覆盖](release-1.0/R2_VERIFICATION.zh-CN.md)
 
-TWOS **1.0.1 / 101.49**, bundled Nyra **1.0.0 / 100**. Both App/DMG pairs are Developer ID signed, Apple notarized, stapled and Gatekeeper accepted. 完整匹配主回归 **1726 PASS / 1 historical-package skip / 0 FAIL**；实际 Safari 测量 38 项。最终签名隔离安装与双实例协调实测通过。
+The signed GUI baseline completed three actual ChatGPT↔Claude round trips and preserved completed state across restart without replay. Its native client and Nyra inputs remain byte-identical in this package; the subsequent legacy-run terminal fix is covered by the matching complete regression. Real TXT, PNG and simple PDF transfer, a returned downloaded document, both-pane activity and advancing Nyra frames have separately scoped evidence. Other Dock placements have geometry fixtures, not physical certification. New R2 video was not recorded; current screenshots are actual candidate windows.
 
-[Exact release receipt / 精确发行回执](release-1.0/release.json) · [TWOS release](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.1) · [Nyra release](https://github.com/loseyourself1978-blip/Nyra/releases/tag/v1.0.0)
+当前仅支持 macOS Apple Silicon；实测 macOS 27.0.1 / Safari 27.0.1。编译下限13.0不代表更早系统实测。Windows 开发中、尚无下载。
 
-This is a macOS Apple Silicon distribution, tested on macOS 27.0.1 / Safari 27.0.1. A deployment target of 13.0 is not evidence of testing older systems. Windows is in development; no Windows download exists. 当前仅支持 macOS；Windows 版本开发中，尚无可下载版本。
+Old accepted work is preserved and not replayed. **Owner differential acceptance remains PENDING.** No LDD content review, trading/clinical authority, future-stage authority or whole20.2 acceptance is inferred.
 
-Owner PASS is preserved for GPT→Claude receipt/run, Show Nyra, everyday outfit switching and earlier business work. No accepted business file was regenerated. **Final Owner differential acceptance remains PENDING.** Publication does not close all TWOS 20.2 business gates, grant LDD content review, trading/clinical authority or later work stages. 工程发行不代签 Owner 差量接受。
-
-[English installation](release-1.0/INSTALL.en.md) · [中文安装](release-1.0/INSTALL.zh-CN.md) · [English usage](release-1.0/USER_GUIDE.en.md) · [中文操作](release-1.0/USER_GUIDE.zh-CN.md)
-
-Historical releases/tags remain unchanged. Private Owner receipts, account telemetry and local machine logs are not published.
+[English incremental guide](release-1.0/BIDIRECTIONAL_R2.en.md) · [中文差量指南](release-1.0/BIDIRECTIONAL_R2.zh-CN.md) · [Historical R1 receipt](release-1.0/release-r1.json)

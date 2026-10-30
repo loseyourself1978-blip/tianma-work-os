@@ -1,0 +1,48 @@
+{
+  "product": "TWOS",
+  "version": "1.0.1",
+  "source_commit": "293e4f9a80194ea7dce1107732cb104f6d60892f",
+  "artifact": "Tianma-Work-OS-1.0.1.dmg",
+  "bytes": 192043396,
+  "sha256": "48d157749e337b3ce7e4aeca879fdc3a050adef2f97ef3b7a1bb9ca0c1c990ac",
+  "app_notarization_id": "e318de82-48e7-4076-81ee-99f1ce8290f3",
+  "dmg_notarization_id": "8b4c359b-9808-46b0-942a-9853748dc45d",
+  "signing_identity": "Developer ID Application: Jing Huang (BZJWQJ352K)",
+  "gatekeeper": "PASS",
+  "architecture": "arm64",
+  "owner_differential_acceptance": "PENDING",
+  "build": "101.49",
+  "status": "SIGNED_NOTARIZED_VALIDATED",
+  "notarization_status": "Accepted",
+  "stapled": true,
+  "tested_platform": {
+    "architecture": "arm64",
+    "macos": "27.0.1",
+    "safari": "27.0.1"
+  },
+  "deployment_target": "13.0",
+  "other_macos_and_intel": "NOT_TESTED_NOT_SHIPPED_AS_INTEL",
+  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.1",
+  "publication_authorization": "TWOS-NYRA-1_0-JOINT-RELEASE-R1",
+  "captured_at": "2026-10-28T14:55:38.577676+08:00",
+  "validation": {
+    "full_suite": {
+      "passed": 1726,
+      "skipped": 1,
+      "failed": 0,
+      "safari_measurements": 38,
+      "scope": "TWOS matching stable input; Nyra runtime included; one retained historical-package upgrade test skipped"
+    },
+    "signed_fresh_install": "PASS_REAL_GUI",
+    "signed_coexistence": "PASS_REAL_GUI_BOTH_LAUNCH_ORDERS",
+    "offline_bundled_display": "PASS_REAL_GUI_WITH_DENY_NETWORK_PROFILE",
+    "quarantine_launch": "PASS_NORMAL_OPEN_WITH_EXPLICIT_QUARANTINE_FIXTURE_NOT_BROWSER_DOWNLOAD",
+    "business_acceptance": "PRESERVED_NOT_REPLAYED"
+  },
+  "embedded_nyra": {
+    "version": "1.0.0",
+    "source_commit": "37d8cf8a8d12cf6a6622fe8bcca663fc525659ae",
+    "event_schema": "twos.nyra.status.v1",
+    "component_manifest": "component-manifest.json"
+  }
+}

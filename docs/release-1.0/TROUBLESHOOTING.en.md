@@ -1,6 +1,6 @@
 # Troubleshooting
 
-**R2 verification scope.** The signed TWOS 1.0.2 / 101.50 candidate completed one explicitly started three-round-trip exchange between real ChatGPT and Claude webpages: six submissions and six matched complete replies, with no manual per-turn send or check. Reopening preserved the completed exchange without replay. TXT, PNG and simple text-layer PDF readability was observed in both directions; native/synthetic boundary checks are recorded separately. The complete main regression, new notarization and publication are separate release gates. These observations do not grant Owner acceptance.
+**R2 verification scope.** The signed TWOS 1.0.2 / 101.50 candidate completed one explicitly started three-round-trip exchange between real ChatGPT and Claude webpages: six submissions and six matched complete replies, with no manual per-turn send or check. Reopening preserved the completed exchange without replay. TXT, PNG and simple text-layer PDF readability was observed in both directions; native/synthetic boundary checks are recorded separately. The matching complete main regression and new notarization are recorded in the release receipt; the linked GitHub Release records publication. These observations do not grant Owner acceptance.
 
 [R2 incremental instructions and exact boundaries](BIDIRECTIONAL_R2.en.md).
 
@@ -19,3 +19,8 @@ For a report include app version, non-sensitive error text and action taken. Exc
 
 
 R2: If Check delivery is unknown, retain the receipt and reopen both exact bound conversations; inspect before continuing. Login, validation, quota, draft and upload failures pause automatic exchange. Do not clear website storage or retry an unknown send. If Nyra is visible but disconnected, open Nyra status; use the compatible version and explicit Connect action, preserving peer checks. Existing standalone versions without the v2 connection remain visibility-only.
+
+
+### App moved or macOS translocated it
+
+The read-only link is bound to the exact signed producer, including its application path. Moving/replacing TWOS, or macOS running a quarantined copy from a different temporary path, can leave standalone Nyra at NOT_CONNECTED while Show/Hide still works. Install the verified app in Applications, open that version, then use **Nyra status → Connect** to explicitly renew the read-only association if needed. Do not delete preferences or disable Gatekeeper. In the final isolated installer check, a changed macOS translocation path correctly invalidated the old link; that case is not claimed as automatic reconnection.

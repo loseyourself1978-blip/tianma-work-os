@@ -1,10 +1,10 @@
 # Bidirectional exchange and Nyra R2
 
-**R2 verification scope.** The signed TWOS 1.0.2 / 101.50 candidate completed one explicitly started three-round-trip exchange between real ChatGPT and Claude webpages: six submissions and six matched complete replies, with no manual per-turn send or check. Reopening preserved the completed exchange without replay. TXT, PNG and simple text-layer PDF readability was observed in both directions; native/synthetic boundary checks are recorded separately. The complete main regression, new notarization and publication are separate release gates. These observations do not grant Owner acceptance.
+**R2 verification scope.** The signed TWOS 1.0.2 / 101.50 candidate completed one explicitly started three-round-trip exchange between real ChatGPT and Claude webpages: six submissions and six matched complete replies, with no manual per-turn send or check. Reopening preserved the completed exchange without replay. TXT, PNG and simple text-layer PDF readability was observed in both directions; native/synthetic boundary checks are recorded separately. The matching complete main regression and new notarization are recorded in the release receipt; the linked GitHub Release records publication. These observations do not grant Owner acceptance.
 
 ## R2 incremental operations
 
-This candidate is TWOS 1.0.2 / build 101.50 with Nyra 1.0.1 / build 101. Do not replace a running app. Existing accepted work, login stores, folder permissions, drafts and completed debates remain intact; nothing resumes an old debate automatically.
+This version is TWOS 1.0.2 / build 101.50 with Nyra 1.0.1 / build 101. Do not replace a running app. Existing accepted work, login stores, folder permissions, drafts and completed debates remain intact; nothing resumes an old debate automatically.
 
 ### Manual transfer in either direction
 

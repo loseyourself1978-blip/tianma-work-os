@@ -1,8 +1,10 @@
 # Tianma Work OS 1.0
 
-**R2 验证范围。** 签名候选 TWOS 1.0.2 / 101.50 已通过一次明确启动的真实 ChatGPT↔Claude 三往返：六次提交及六份对应完整回复，没有逐轮手动发送或检查。重开后保留完成状态且不重放。TXT、PNG 和简单文字层 PDF 已取得双方向内容可读证据；原生／合成边界测试另列。完整主回归、新字节公证及公开发行仍是独立门禁，这些观察不代签 Owner 接受。
+**TWOS 1.0.2 / build 101.50**：Apple Silicon App 与 DMG 已完成 Developer ID 签名、Apple 公证、票据装订及 Gatekeeper 检查。[下载本版](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.2) · [源码、SHA-256 与验证回执](docs/release-1.0/release.json)。发布不代签 Owner 差量接受。
 
-[R2 候选操作](docs/release-1.0/BIDIRECTIONAL_R2.zh-CN.md)。此前已发布 [TWOS v1.0.1](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.1)；新 1.0.2 / 101.50 尚未发布。
+**R2 验证范围。** 签名候选 TWOS 1.0.2 / 101.50 已通过一次明确启动的真实 ChatGPT↔Claude 三往返：六次提交及六份对应完整回复，没有逐轮手动发送或检查。重开后保留完成状态且不重放。TXT、PNG 和简单文字层 PDF 已取得双方向内容可读证据；原生／合成边界测试另列。匹配完整主回归、新字节公证和制品 hash 见发行回执；公开发行以对应 GitHub Release 为准，工程结果不代签 Owner 接受。
+
+[R2 操作](docs/release-1.0/BIDIRECTIONAL_R2.zh-CN.md)。此前已发布 [TWOS v1.0.1](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.1)；本版使用上方 v1.0.2 Release 与精确回执。
 
 
 [English](README.md) · [安装](docs/release-1.0/INSTALL.zh-CN.md) · [操作指南](docs/release-1.0/USER_GUIDE.zh-CN.md) · [当前发行状态](docs/CURRENT_DELIVERY.md)
@@ -17,7 +19,7 @@
 
 ## 下载与首次使用
 
-已发布的 TWOS v1.0.1 保持可用。R2（1.0.2 / 101.50）仍在验证，尚不是可下载的新发行。只使用带准确源码、签名公证、DMG 哈希和检查回执的匹配 Release。历史 v1.0.0 源码发行保持不变。
+从上方链接下载 TWOS v1.0.2；打开 DMG 前核对 SHA256SUMS。匹配回执绑定源码、签名、公证和制品哈希。历史 v1.0.1 与 v1.0.0 保持不变。
 
 打开对应 DMG，拖入应用程序并启动。登录所选供应商官网，连接已安装/登录的官方本机 Codex，再创建或接续一个绑定目录的任务。Nyra 在同一 App 内，无需第二个桌宠安装包或首次联网下载画稿；普通安装无需 Python、Node 或终端。
 
