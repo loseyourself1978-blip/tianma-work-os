@@ -148,13 +148,6 @@ import sys
 import time
 
 if sys.argv[1:] == ["--version"]:
-    delay_marker = pathlib.Path(__file__).with_name(pathlib.Path(__file__).name + ".delay-second-detection")
-    if delay_marker.exists():
-        count_file = pathlib.Path(__file__).with_name(pathlib.Path(__file__).name + ".detection-count")
-        count = int(count_file.read_text() or "0") + 1 if count_file.exists() else 1
-        count_file.write_text(str(count))
-        if count >= 2:
-            time.sleep(0.75)
     print("codex-cli 0.144.4")
     raise SystemExit(0)
 if sys.argv[1:] == ["exec", "--help"]:
@@ -4359,29 +4352,50 @@ def test_concurrent_run_requests_queue_exactly_one_process(tmp_path: Path) -> No
         assert run["model_invocations"][0]["verified_real_invocation"] is False
 
 
-def test_codex_rechecks_exact_pack_approval_before_process_spawn(tmp_path: Path) -> None:
+def test_codex_rechecks_exact_pack_approval_before_process_spawn(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
     source_repo = make_source_repo(tmp_path)
     fake_codex = make_fake_codex(tmp_path)
-    fake_codex.with_name(fake_codex.name + ".delay-second-detection").write_text("delay\n")
     with make_client(tmp_path, source_repo, fake_codex) as client:
+        # Hold this test worker at its real queued execution boundary. A fixed
+        # --version sleep neither proves that boundary nor guarantees the edit
+        # happens before execution on a busy host. All real authorization and
+        # subprocess checks still run after the edit; none are stubbed out.
+        manager = client.app.state.codex_manager
+        execute = manager._execute
+        queued = threading.Event()
+        release = threading.Event()
+
+        def execute_after_edit(run_id: int) -> None:
+            queued.set()
+            assert release.wait(30), "Test did not release the queued worker"
+            execute(run_id)
+
+        monkeypatch.setattr(manager, "_execute", execute_after_edit)
         headers = init_and_login(client)
         task_id = create_executable_task(client, headers)
         pack = generate_pack(client, headers, task_id)
         approve_pack(client, headers, task_id, pack["id"])
         started = start_codex_run(client, headers, task_id, pack)
         assert started.status_code == 200, started.text
-        changed = client.patch(
-            f"/api/tasks/{task_id}",
-            headers=headers,
-            json={"source_sync_summary": "Changed while the approved run was queued."},
-        )
-        assert changed.status_code == 200
+        try:
+            assert queued.wait(30), "Accepted run never reached its queued worker"
+            before_edit = client.get(f"/api/codex-runs/{started.json()['id']}", headers=headers).json()
+            assert before_edit["process_spawned"] is False
+            changed = client.patch(
+                f"/api/tasks/{task_id}",
+                headers=headers,
+                json={"source_sync_summary": "Changed while the approved run was queued."},
+            )
+            assert changed.status_code == 200
+        finally:
+            release.set()
         run = wait_for_run(
             client,
             headers,
             started.json()["id"],
             {"failed", "blocked", "cancelled"},
-            timeout=5,
         )
 
     assert run["pack_id"] == pack["id"]

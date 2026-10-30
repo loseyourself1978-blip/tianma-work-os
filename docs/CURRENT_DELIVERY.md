@@ -1,4 +1,8 @@
-# Current joint release / 当前联合发行
+# Joint release status / 联合发行状态
+
+R2 candidate: **TWOS 1.0.2 / 101.50 + Nyra 1.0.1 / 101**. [Observed R2 scope / R2 实际验证范围](release-1.0/R2_VERIFICATION.en.md). New main regression, notarization and publication remain separate gates; R1 results below do not prove R2. 新版主回归、公证及发行另行记录，下方 R1 结果不代替新版验证。
+
+## Preserved published R1 / 保留的已发行 R1
 
 TWOS **1.0.1 / 101.49**, bundled Nyra **1.0.0 / 100**. Both App/DMG pairs are Developer ID signed, Apple notarized, stapled and Gatekeeper accepted. 完整匹配主回归 **1726 PASS / 1 historical-package skip / 0 FAIL**；实际 Safari 测量 38 项。最终签名隔离安装与双实例协调实测通过。
 

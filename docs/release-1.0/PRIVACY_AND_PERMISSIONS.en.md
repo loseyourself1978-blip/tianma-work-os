@@ -1,6 +1,6 @@
 # Privacy, permissions and cost
 
-**R2 candidate documentation — not a release/GUI PASS receipt.** Native and synthetic regression evidence is recorded separately. Actual provider round trips, attachments and final packaged interface checks remain pending until the matching receipt records them.
+**R2 verification scope.** The signed TWOS 1.0.2 / 101.50 candidate completed one explicitly started three-round-trip exchange between real ChatGPT and Claude webpages: six submissions and six matched complete replies, with no manual per-turn send or check. Reopening preserved the completed exchange without replay. TXT, PNG and simple text-layer PDF readability was observed in both directions; native/synthetic boundary checks are recorded separately. The complete main regression, new notarization and publication are separate release gates. These observations do not grant Owner acceptance.
 
 [R2 incremental instructions and exact boundaries](BIDIRECTIONAL_R2.en.md).
 

@@ -12,7 +12,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path, PurePosixPath
 from typing import Iterable, Iterator, Mapping
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from . import codex_exec_bridge
@@ -1703,6 +1703,20 @@ def _settle_terminal_failure(
     monitor: CodexRunMonitor,
     attempt: CodexExecutionAttempt,
 ) -> None:
+    # The manager publishes terminal process truth without taking the
+    # lifecycle lock. A watcher can therefore hold an older Run while its
+    # later lazy Task read sees the manager's commit. Acquire the SQLite
+    # writer boundary before refreshing both projections; otherwise a stale
+    # ``settling`` observation can overwrite a newly cancelled Task alone.
+    # Preserve this caller's pending evidence first. This identity-only write
+    # changes no status/timestamp, starts no work, and holds no extra lock past
+    # the caller's existing transaction.
+    session.flush()
+    session.execute(
+        update(CodexRun).where(CodexRun.id == run.id).values(id=CodexRun.id)
+        .execution_options(synchronize_session=False)
+    )
+    session.refresh(run)
     timeout_proved = attempt.attempt_state == "TIMED_OUT"
     prelaunch_blocked = (
         attempt.blocker_code == "CODEX_EXECUTION_BLOCKED_PRELAUNCH"
@@ -1798,7 +1812,7 @@ def _settle_terminal_failure(
         run.duration_ms = max(
             0, int((terminal_at - run.started_at).total_seconds() * 1000)
         )
-    task = session.get(Task, run.task_id)
+    task = session.get(Task, run.task_id, populate_existing=True)
     if task is not None:
         task.status = (
             "blocked" if prelaunch_blocked else

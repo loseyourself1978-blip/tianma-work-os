@@ -500,6 +500,66 @@ def test_monitor_state_contract_is_complete_and_recovery_is_bounded() -> None:
     assert RESULT_INTAKE_POLICY == "twos.result_intake.vol18.004"
 
 
+@pytest.mark.parametrize("cached_status", ["running", "settling"])
+@pytest.mark.parametrize("terminal_status", ["cancelled", "timed_out", "failed"])
+def test_stale_failure_observation_cannot_regress_committed_terminal_run(
+    tmp_path: Path, cached_status: str, terminal_status: str,
+) -> None:
+    """Reproduce the watcher read / manager commit / watcher write ordering."""
+    from twos_runtime.run_lifecycle import _settle_terminal_failure
+
+    with result_intake_fixture(tmp_path) as fixture:
+        fixture.client.app.state.result_intake_monitor.shutdown()
+        factory = fixture.client.app.state.session_factory
+        spool = tmp_path / "synthetic-terminal-spool"
+        spool.mkdir()
+        (spool / "terminal.json").write_text("{}")
+        terminal_at = utc_now()
+        attempt = SimpleNamespace(
+            attempt_state=terminal_status.upper(), phase="CODING",
+            blocker_code="TEST_TERMINAL", safe_summary="Synthetic terminal proof",
+            protected_spool_locator=str(spool), receipt_digest="a" * 64,
+            terminal_at=terminal_at, process_exit_code=-15,
+        )
+        with factory() as setup:
+            run = _run(setup, fixture)
+            run.status = cached_status
+            run.stdout = run.stderr = ""
+            run.structured_result = "{}"
+            run.task.status = "needs_review"
+            ensure_run_monitor(setup, fixture.owner_id, run)
+            setup.commit()
+        with factory() as observer:
+            stale_run = _run(observer, fixture)
+            monitor = observer.scalar(select(CodexRunMonitor).where(
+                CodexRunMonitor.run_id == fixture.run_id,
+            ))
+            assert monitor is not None
+            with factory() as manager:
+                settled = _run(manager, fixture)
+                settled.status = terminal_status
+                settled.finished_at = terminal_at
+                settled.cancelled = terminal_status == "cancelled"
+                settled.timed_out = terminal_status == "timed_out"
+                settled.task.status = (
+                    "cancelled" if terminal_status == "cancelled" else "needs_review"
+                )
+                manager.commit()
+            # No sleep or polling: SQLAlchemy still holds the older Run, while
+            # a lazy Task read can now see the manager's newer terminal state.
+            assert stale_run.status == cached_status
+            _settle_terminal_failure(observer, stale_run, monitor, attempt)
+            observer.commit()
+        with factory() as check:
+            persisted = _run(check, fixture)
+            assert persisted.status == terminal_status
+            assert persisted.finished_at is not None
+            assert persisted.task.status == (
+                "cancelled" if terminal_status == "cancelled" else "needs_review"
+            )
+            assert persisted.cancelled is (terminal_status == "cancelled")
+
+
 def test_sealed_verification_receipt_can_bind_before_manager_without_state_regression(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

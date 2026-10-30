@@ -1,6 +1,6 @@
 # Tianma Work OS 1.0
 
-**R2 candidate documentation — not a release/GUI PASS receipt.** Native and synthetic regression evidence is recorded separately. Actual provider round trips, attachments and final packaged interface checks remain pending until the matching receipt records them.
+**R2 verification scope.** The signed TWOS 1.0.2 / 101.50 candidate completed one explicitly started three-round-trip exchange between real ChatGPT and Claude webpages: six submissions and six matched complete replies, with no manual per-turn send or check. Reopening preserved the completed exchange without replay. TXT, PNG and simple text-layer PDF readability was observed in both directions; native/synthetic boundary checks are recorded separately. The complete main regression, new notarization and publication are separate release gates. These observations do not grant Owner acceptance.
 
 [R2 candidate operations](docs/release-1.0/BIDIRECTIONAL_R2.en.md). Previous published release: [TWOS v1.0.1](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.1). New version 1.0.2 / 101.50 is not yet published.
 

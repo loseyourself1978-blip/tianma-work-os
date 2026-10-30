@@ -1,6 +1,6 @@
 # Use TWOS 1.0.2
 
-**R2 candidate documentation — not a release/GUI PASS receipt.** Native and synthetic regression evidence is recorded separately. Actual provider round trips, attachments and final packaged interface checks remain pending until the matching receipt records them.
+**R2 verification scope.** The signed TWOS 1.0.2 / 101.50 candidate completed one explicitly started three-round-trip exchange between real ChatGPT and Claude webpages: six submissions and six matched complete replies, with no manual per-turn send or check. Reopening preserved the completed exchange without replay. TXT, PNG and simple text-layer PDF readability was observed in both directions; native/synthetic boundary checks are recorded separately. The complete main regression, new notarization and publication are separate release gates. These observations do not grant Owner acceptance.
 
 [R2 incremental instructions and exact boundaries](BIDIRECTIONAL_R2.en.md).
 
@@ -32,3 +32,5 @@ Nyra consumes minimal read-only state. Idle, running, queued/waiting, partial/fa
 Sound is muted by default; explicit system speech/imported voice and procedural cues are described in provenance. No exclusive AI voice is shipped. Hiding stops animation/audio work; quitting TWOS does not kill a separately used Nyra.
 
 [English / 简体中文](USER_GUIDE.zh-CN.md)
+
+[Evidence coverage / 验证范围](R2_VERIFICATION.en.md)

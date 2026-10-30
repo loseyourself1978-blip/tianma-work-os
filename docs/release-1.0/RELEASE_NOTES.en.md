@@ -1,6 +1,6 @@
 # TWOS 1.0.2 / 101.50 — R2 candidate notes
 
-**R2 candidate documentation — not a release/GUI PASS receipt.** Native and synthetic regression evidence is recorded separately. Actual provider round trips, attachments and final packaged interface checks remain pending until the matching receipt records them.
+**R2 verification scope.** The signed TWOS 1.0.2 / 101.50 candidate completed one explicitly started three-round-trip exchange between real ChatGPT and Claude webpages: six submissions and six matched complete replies, with no manual per-turn send or check. Reopening preserved the completed exchange without replay. TXT, PNG and simple text-layer PDF readability was observed in both directions; native/synthetic boundary checks are recorded separately. The complete main regression, new notarization and publication are separate release gates. These observations do not grant Owner acceptance.
 
 ## R2 incremental operations
 
@@ -18,7 +18,7 @@ This candidate is TWOS 1.0.2 / build 101.50 with Nyra 1.0.1 / build 101. Do not 
 
 Open **Automatic exchange** at the top. Check the two bound conversations, enter each participant's role and the first instruction, choose the round-trip and time budgets, review the exact file list, then click **Start automatic exchange** once. A round trip is two directional transfers. Normal complete answers pass to the other participant automatically; no per-turn handoff/check click is required.
 
-**Pause** prevents the next submission; the provider may finish its already submitted request. **Continue** first reconciles the pending receipt. **Stop future exchanges** permanently stops this local session's future submissions; it does not claim to cancel remote generation. An app restart restores the exchange as paused. Restore both bound conversations before continuing. A manual handoff while automatic exchange is active pauses it and asks you to review before sending.
+**Pause** prevents the next submission; the provider may finish its already submitted request. **Continue** first reconciles the pending receipt. **Stop future exchanges** permanently stops this local session's future submissions; it does not claim to cancel remote generation. An app restart restores an unfinished exchange as paused; completed/stopped exchanges keep their terminal state and do not replay. Restore both bound conversations before continuing. A manual handoff while automatic exchange is active pauses it and asks you to review before sending.
 
 Target changes, login/challenge, service limits, missing files, duplicate answers and uncertain delivery pause the session. The optional terminal rule accepts only an explicit standalone final concession or `STATUS: CONCEDE` / `STATUS: STALEMATE`; quoted/code examples do not end a debate. Outputs cannot change participants, permissions, files or budgets. This mode grants no file execution, shell, approval or Git rights.
 
