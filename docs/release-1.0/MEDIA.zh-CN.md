@@ -70,3 +70,12 @@ PNG 保留透明通道，查看器可能用黑色或白色呈现空白。实际�
 以下是最终签名、公证包内 Nyra 的实际隔离窗口，未含私人资料。最终 TWOS 同时实际读回原工程任务并打开 `status-check.txt`；未为截图新增模型调用。该任务窗口的完整截图仅保留在本机验证证据，因为背景含账户遥测。
 
 ![最终签名 Nyra 控制环](images/nyra-signed-office-controls.png)
+
+
+## 最终源码的普通回复入口和新鲜度
+
+实际公证版 TWOS 1.0.3 / 101.51 原生界面：截图早于最终仅涉及 Python 的兼容修正，最终发行的原生界面输入保持相同。左侧完整标题／段落／列表回复下有 Send to Claude，右侧普通段落回复下有 Send to ChatGPT。这是两条已保存的非敏感工程回复，不把画面中的两段文字冒称同一请求／回答；真实送达关系另以回执哈希证明。没有为了截图发起新模型任务。状态图特意展示生产者变化后，仍存活的消费者旧活动正确标为 Stale；明确重连后的恢复已另行验证。
+
+![Ordinary reply actions / 普通回复入口](images/ordinary-reply-actions-final-03.png)
+
+![Stale observations / 旧活动](images/nyra-stale-state-final-03.png)
