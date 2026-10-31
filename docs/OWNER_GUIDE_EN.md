@@ -1,8 +1,8 @@
 # TWOS 1.0 · Installation and use
 
-**Applies to application 1.0.2 / build 101.50, TWOS + Nyra 1.0 joint candidate.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md)
+**Applies to TWOS 1.0.3 / build 101.51, including Nyra 1.0.2 / build 102.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md)
 
-**Candidate instructions: installation, engineering validation and delivery status are defined by the accompanying `START_HERE.md` and validation receipt. Do not replace the installed app before delivery.**
+**Installation and version: use `START_HERE.html` in this bilingual guide, the [release receipt](release-1.0/release.json), and the actual GitHub Release status. The installer passed matching engineering regression, signing and notarization; Owner differential acceptance is separate.**
 Discuss on the official ChatGPT website in the left pane, execute with the local Codex service in the right pane, and return results to the original discussion. The right pane is TWOS's own client for the official App Server protocol; it does not embed the entire official Codex macOS interface.
 
 **Choose one scenario and stop at its end point.** Upgrading does not require following the first-task scenario afterward. Existing accepted work does not need to be recreated.
@@ -13,7 +13,7 @@ After the final delivery receipt identifies the installer, double-click the DMG 
 
 ## A · This upgrade only
 
-R3 candidate TWOS 1.0.3 / 101.51. Follow the [reply/stop/Nyra differential guide](release-1.0/OWNER_REGRESSION_R3.en.md). End after A; do not continue to B or repeat accepted business tasks. Final candidate/release verification remains pending.
+R3 patch TWOS 1.0.3 / 101.51. Follow the [reply/stop/Nyra differential guide](release-1.0/OWNER_REGRESSION_R3.en.md). End after A; do not continue to B or repeat accepted business tasks. Matching engineering verification is complete; only the Owner grants acceptance of the new or repaired controls.
 
 ## B · First task
 
@@ -96,6 +96,6 @@ Opening is separate from functional and refresh-persistence verification. Withou
 
 ## Maintenance and acceptance
 
-This engineering candidate is not yet a public release; use the final signed release receipt when publication is complete. Full 20.2, public GA and later phases are not granted by travel or Save as acceptance. The limited 20.1 / 101.26 local acceptance remains closed.
+Public download availability follows the corresponding GitHub Release status. Full 20.2, Owner GA acceptance and later phases are not granted by engineering publication, travel or Save as acceptance. The limited 20.1 / 101.26 local acceptance remains closed.
 
 See [Legacy Owner Guide](LEGACY_OWNER_GUIDE.md) and the [repository map](REPOSITORY_MAP.md) for old project backup/maintenance and source installation. Historical procedures are not prerequisites for this workbench and do not authorize replaying accepted tasks.
