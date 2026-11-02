@@ -14,6 +14,9 @@ Entry condition: verify the matching release receipt, signature, notarization an
 4. **⋯ More** contains Open in Safari, original TWOS projects, attachment selection/removal, handoff history and diagnostics. Only explicitly selected files are in scope; a filename/path is not upload proof. Stop auto-send before changing files.
 5. Nyra hover controls contain only **+ / Expand** and the actual character-stage button. Expanded controls offer **Larger / Smaller / Reset size**. Wheel/trackpad resizing remains. The old ruler/square drag grip and its hit region are removed.
 
+6. The top **Language: English / 语言：简体中文** selector changes TWOS controls immediately and saves the preference after reopening. Provider website language and conversation text stay unchanged.
+7. Click **Show Nyra** to display the matching companion; the same button becomes **Hide Nyra**. Click it again to hide. An incompatible helper from another installation is explained instead of reporting false success.
+
 End point: report only the visibility/usability of these new controls. Do not proceed into the first-use route below or re-prove accepted business work. Only the Owner grants new UI acceptance.
 
 ## B · First use

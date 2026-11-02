@@ -12,7 +12,7 @@
 1. 从对应 GitHub Release 下载 TWOS DMG，保留 manifest 和 SHA256SUMS。工单 ZIP、自动源码压缩包不是安装包。
 2. 双击 DMG，将 **Tianma Work OS** 拖入 **Applications / 应用程序**。升级时先完成活动工作并正常退出旧 TWOS，再替换应用。本机环境数据不存放在 App 包内。
 3. 推出 DMG，从应用程序启动。按 macOS 正常首次打开提示操作；若出现签名或安全阻止，先看故障排查，不关闭 Gatekeeper。
-4. 配对工作台会打开。如先出现启动器，选择 **Window → ChatGPT + Codex**。TWOS 控件可通过 **语言 / Language → 中文** 切换，不会修改供应商网页账户语言。
+4. 配对工作台会打开。如先出现启动器，选择 **Window → ChatGPT + Codex**。在工作台顶部直接使用 **语言：简体中文 / Language: English** 选择器切换 TWOS 控件，不会修改供应商网页账户语言。
 5. 在选中的 ChatGPT、DeepSeek 或 Claude 官网页面登录自己的账号。TWOS 不内置账号或凭据，正常登录或真人验证由本人完成。
 6. 本机执行时右栏选择 Codex，再点 **连接本机 Codex**。需事先安装并登录官方本机 Codex 应用；TWOS 使用其受支持的 App Server 连接。可用模型、额度与费用遵循你的供应商计划。
 7. 点 **新建任务 / 会话**，选择“独立任务：使用空目录”或“已有项目：保留现有内容”。选择或新建目录，核对规范路径和读写范围后确认。仅选择目录不运行模型。
