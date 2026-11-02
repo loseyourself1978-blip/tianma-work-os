@@ -1412,8 +1412,8 @@
     "zh-CN": "无法打开夜璃，后方为系统返回的错误。"
   },
   "NYRA_OPEN_TARGET_MISMATCH": {
-    "en-US": "The system returned a different Nyra installation. This workspace is not connected.",
-    "zh-CN": "系统返回了其他夜璃安装实例，本工作区尚未连接。"
+    "en-US": "The system opened a different Nyra installation. This TWOS has not taken control of it. Quit the other Nyra before showing this bundled version.",
+    "zh-CN": "系统打开了另一安装位置的夜璃，本 TWOS 未接管它。请正常退出另一夜璃，再显示本版内置组件。"
   },
   "NYRA_CONNECTION_UNAVAILABLE_OR_UPDATE_REQUIRED": {
     "en-US": "The read-only connection could not be verified. Check the selected Nyra version and signed identity.",
@@ -1654,5 +1654,9 @@
   "The previous delivery is still generating or cannot be confirmed. Nothing was resent. Try auto-send again after it finishes; details are in More.": {
     "en-US": "The previous delivery is still generating or cannot be confirmed. Nothing was resent. Try auto-send again after it finishes; details are in More.",
     "zh-CN": "上次投递仍在生成或尚无法确认，没有重新发送。完成后可再次勾选自动发送；详情见“更多”。"
+  },
+  "NYRA_OTHER_INSTALLATION_RUNNING": {
+    "en-US": "Another installed Nyra is running. Quit that Nyra from its own menu, then use Show Nyra here. Existing tasks continue.",
+    "zh-CN": "另一安装位置的夜璃正在运行。请从该夜璃自己的菜单正常退出，再在这里显示夜璃。现有任务会继续。"
   }
 }

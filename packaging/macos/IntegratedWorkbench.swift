@@ -224,6 +224,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
     let openProjects: () -> Void
     var languageChanged: ((String) -> Bool)?
     var toolbarTitle: NSTextField?
+    let languagePicker = NSPopUpButton(frame: .zero, pullsDown: false)
     let split = NSSplitView()
     let leftPicker = NSPopUpButton(frame: .zero, pullsDown: false)
     let rightPicker = NSPopUpButton(frame: .zero, pullsDown: false)
@@ -327,13 +328,19 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         }
         let title = NSTextField(labelWithString: translate("One workspace · two connected contexts"))
         title.textColor = .secondaryLabelColor; toolbarTitle = title
+        title.lineBreakMode = .byTruncatingTail
+        title.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        languagePicker.addItems(withTitles: ["Language: English", "语言：简体中文"])
+        languagePicker.selectItem(at: translate("Back") == "Back" ? 0 : 1)
+        languagePicker.target = self; languagePicker.action = #selector(changeLanguage(_:))
+        languagePicker.setAccessibilityLabel("Language / 语言")
         let spacer = NSView(); spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
         nyraButton.target = self; nyraButton.action = #selector(toggleNyra)
         nyraConnectionButton.target=self;nyraConnectionButton.action=#selector(connectNyra);nyraConnectionButton.title=translate("Nyra status")
         handoffHistoryButton.title = translate("Handoff history")
         handoffHistoryButton.target = self; handoffHistoryButton.action = #selector(showWebHistory)
         dialogueButton.title=translate("Automatic exchange");dialogueButton.target=self;dialogueButton.action=#selector(showDialogue)
-        let bar = NSStackView(views: [leftPicker, title, spacer, nyraButton, rightPicker]); bar.spacing = 10
+        let bar = NSStackView(views: [leftPicker, title, spacer, languagePicker, nyraButton, rightPicker]); bar.spacing = 10
         bar.edgeInsets = NSEdgeInsets(top: 10, left: 14, bottom: 10, right: 14)
         bar.translatesAutoresizingMaskIntoConstraints = false
         split.isVertical = true; split.dividerStyle = .thin; split.translatesAutoresizingMaskIntoConstraints = false
@@ -357,7 +364,22 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         if url.scheme == "http" && ["localhost", "127.0.0.1", "[::1]"].contains(host) { return url }
         return nil
     }
-    @objc func toggleNyra() { _ = nyraStatus; nyra.toggle() }
+    @objc func toggleNyra() {
+        _ = nyraStatus
+        if nyra.snapshot()["available"] as? Bool == false { connectNyra(); return }
+        nyra.toggle()
+    }
+    @objc func changeLanguage(_ sender: NSPopUpButton) {
+        let locale = sender.indexOfSelectedItem == 1 ? "zh-CN" : "en-US"
+        guard languageChanged?(locale) == true else {
+            sender.selectItem(at: translate("Back") == "Back" ? 0 : 1)
+            let alert = NSAlert()
+            alert.messageText = translate("Language preference could not be saved. Existing data is unchanged.")
+            if let window = window { alert.beginSheetModal(for: window) }
+            return
+        }
+        refreshLanguage()
+    }
     @objc func connectNyra() {
         _ = nyraStatus
         if let app=nyra.standalone,nyra.snapshot()["binding"] as? String != "CONNECTED_READONLY" {nyra.connectStandalone(app)}
@@ -394,6 +416,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         text.stringValue=lines.joined(separator:"\n\n")
     }
     func refreshLanguage() {
+        languagePicker.selectItem(at: translate("Back") == "Back" ? 0 : 1)
         nyra.refresh()
         nyraConnectionButton.title=translate("Nyra status")
         refreshDialogueUI()
@@ -1080,6 +1103,12 @@ final class NativeNyra: NSObject {
             !$0.isTerminated && (!isolated || $0.bundleURL?.standardizedFileURL == helperURL?.standardizedFileURL)
         }
     }
+    var otherEmbeddedHelper: Bool {
+        guard standalone == nil, let expected = helperURL else { return false }
+        return NSRunningApplication.runningApplications(withBundleIdentifier:"com.tianma.workos.nyra").contains {
+            !$0.isTerminated && $0.bundleURL?.standardizedFileURL != expected.standardizedFileURL
+        }
+    }
     let producerInstance: () -> String?
     let authorizeConsumer: (NSRunningApplication) throws -> Void
     let changed: ([String: Any]) -> Void
@@ -1143,7 +1172,8 @@ final class NativeNyra: NSObject {
     }
     func snapshot() -> [String: Any] {
         var state=observedSnapshot()
-        if let error=controlFailure {state["reason"]=error}
+        if state["observed"] as? Bool == true && state["fresh"] as? Bool == true { controlFailure=nil }
+        if let error=controlFailure {state["reason"]=error;state["available"]=false}
         return state
     }
     // Pane freshness belongs to this authenticated producer's recent snapshot,
@@ -1158,6 +1188,9 @@ final class NativeNyra: NSObject {
     }
     private func observedSnapshot() -> [String: Any] {
         guard let helper = targetURL else { return ["available": false, "visible": false, "reason": "NYRA_HELPER_NOT_BUNDLED", "binding": "NOT_CONNECTED"] }
+        // Another installed copy is not our hidden pet. Do not present a Show
+        // action that Launch Services could redirect to that unrelated process.
+        if otherEmbeddedHelper { return ["available":false,"observed":false,"reason":"NYRA_OTHER_INSTALLATION_RUNNING","binding":"NOT_CONNECTED"] }
         // No helper means there is no live visibility evidence to read. Besides
         // rejecting old state from another build, this avoids an unnecessary
         // Downloads/TCC file prompt on workbench startup in engineering profiles.
@@ -1183,6 +1216,7 @@ final class NativeNyra: NSObject {
         return result
     }
     func refresh() {
+        if controlFailure == "NYRA_OPEN_TARGET_MISMATCH" && !otherEmbeddedHelper { controlFailure=nil }
         // Observe the actual selected component, including a compatible signed
         // standalone. Looking only at helperURL leaves standalone state unread.
         if let helper = targetURL, targetProcesses
@@ -1220,6 +1254,7 @@ final class NativeNyra: NSObject {
     }
     func setVisible(_ desired: Bool) {
         guard !pending, let helper = targetURL else { refresh(); return }
+        guard !otherEmbeddedHelper else { refresh(); return }
         // Refuse to redirect an already running helper from another installation
         // or profile. A compatible standalone may be shown but is not rebound.
         let running = targetProcesses

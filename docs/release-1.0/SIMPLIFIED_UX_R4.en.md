@@ -39,3 +39,9 @@ Unknown/interrupted replies are not declared complete. Uncertain delivery is rec
 If Send is absent, check whether the reply is still generating, interrupted or has a stated observation problem. There is no header Send to repeatedly click. Use Details or More → Handoff history for evidence. An in-flight reply finishing after Stop does not mean another turn was dispatched.
 
 macOS only. Windows is in development with no downloadable version. Matching media and measurement coverage are listed in MEDIA.en.md and the release receipt. Historical R3 screenshots are not R4 UI evidence.
+
+## Workbench language and Nyra visibility
+
+The top **Language: English / 语言：简体中文** selector changes TWOS controls immediately and saves the choice. It does not change the language of the provider account, task text, messages or files. No task is submitted.
+
+**Show Nyra / Hide Nyra** follows the observed bundled companion window. A helper from another installation is identified as a conflict instead of pretending to be hidden; quit that Nyra normally from its own menu, then show the current bundled component. No running task is stopped.

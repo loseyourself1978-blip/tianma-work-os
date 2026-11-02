@@ -34,3 +34,9 @@ Sound is muted by default; explicit system speech/imported voice and procedural 
 [English / 简体中文](USER_GUIDE.zh-CN.md)
 
 [Evidence coverage / 验证范围](R4_VERIFICATION.en.md)
+
+## Workbench language and Nyra visibility
+
+The top **Language: English / 语言：简体中文** selector changes TWOS controls immediately and saves the choice. It does not change the language of the provider account, task text, messages or files. No task is submitted.
+
+**Show Nyra / Hide Nyra** follows the observed bundled companion window. A helper from another installation is identified as a conflict instead of pretending to be hidden; quit that Nyra normally from its own menu, then show the current bundled component. No running task is stopped.

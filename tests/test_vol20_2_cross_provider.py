@@ -18,16 +18,18 @@ def cross_harness(tmp_path_factory):
     # asynchronous read path with a selected standalone and no bundled helper.
     # No production trust check is bypassed outside this compiled test harness.
     code=code.replace('var targetURL: URL? { standalone?.bundleURL ?? helperURL }',
-        'var targetURL: URL? { CommandLine.arguments[1] == "nyra_selected_target" ? Bundle.main.bundleURL : (standalone?.bundleURL ?? helperURL) }')
+        'var targetURL: URL? { ["nyra_selected_target","nyra_visibility_controls"].contains(CommandLine.arguments[1]) ? Bundle.main.bundleURL : (standalone?.bundleURL ?? helperURL) }')
     code=code.replace('var targetStateRoot: URL {\n        standalone != nil ?',
-        'var targetStateRoot: URL {\n        if CommandLine.arguments[1] == "nyra_selected_target" { return stateRoot }; return standalone != nil ?')
+        'var targetStateRoot: URL {\n        if ["nyra_selected_target","nyra_visibility_controls"].contains(CommandLine.arguments[1]) { return stateRoot }; return standalone != nil ?')
     code=code.replace('var targetProcesses: [NSRunningApplication] {\n        if let app = standalone',
-        'var targetProcesses: [NSRunningApplication] {\n        if CommandLine.arguments[1] == "nyra_selected_target" { return [.current] }; if let app = standalone')
+        'var targetProcesses: [NSRunningApplication] {\n        if ["nyra_selected_target","nyra_visibility_controls"].contains(CommandLine.arguments[1]) { return [.current] }; if let app = standalone')
+    code=code.replace('var otherEmbeddedHelper: Bool {', 'var otherEmbeddedHelper: Bool { if CommandLine.arguments[1] == "nyra_visibility_controls" { return fixtureNyraConflict };')
     # The real R4 consumer and decoder, without the companion UI extension.
     code+='\n'+(ROOT/'packaging/macos/nyra/Sources/ReactiveState.swift').read_text().split('struct ReactiveState {',1)[0]
     code+='\nenum PreviewError: Error { case invalidManifest }\n'
     code+='\n'+(ROOT/'packaging/macos/nyra/Sources/NyraStatusClient.swift').read_text().split('extension Companion {',1)[0]
     code+=r'''
+var fixtureNyraConflict=false
 let app=NSApplication.shared
 let mode=CommandLine.arguments[1], prefs=URL(fileURLWithPath:CommandLine.arguments[2]), base=URL(string:CommandLine.arguments[3])!, resources=URL(fileURLWithPath:CommandLine.arguments[4])
 if mode == "launcher_language" {
@@ -38,6 +40,11 @@ if mode == "launcher_language" {
     launcher.languagePicker.addItems(withTitles:["English","简体中文"])
     let work=IntegratedWorkbench(preferences:prefs,resources:resources,translate:{launcher.localized($0)},openProjects:{fatalError("no business action")})
     launcher.nativeWorkbench=work
+    work.languageChanged={selected in
+        try! NativeWorkbench.save(["locale":selected],at:prefs.appendingPathComponent("ui-preference.json"))
+        launcher.locale=selected;launcher.translateViews();return true
+    }
+    precondition(work.languagePicker.superview != nil && !work.languagePicker.isHidden)
     let initialRoutes=work.routeSignatures
     launcher.languagePicker.selectItem(at:1);launcher.changeLanguage()
     precondition(work.toolbarTitle?.stringValue==launcher.localized("One workspace · two connected contexts") && work.toolbarTitle?.stringValue != "One workspace · two connected contexts","launcher change must update already-open workbench")
@@ -47,8 +54,32 @@ if mode == "launcher_language" {
     try! NativeWorkbench.save(["locale":"en-US"],at:prefs.appendingPathComponent("ui-preference.json"))
     launcher.readLanguage()
     precondition(work.toolbarTitle?.stringValue=="One workspace · two connected contexts","external preference refresh must update open workbench")
+    work.languagePicker.selectItem(at:1);work.changeLanguage(work.languagePicker)
+    precondition(launcher.locale=="zh-CN" && work.languagePicker.indexOfSelectedItem==1)
+    precondition(work.webPanes.values.allSatisfy{$0.moreButton?.title==launcher.localized("⋯ More")})
+    let topSaved=try! JSONSerialization.jsonObject(with:Data(contentsOf:prefs.appendingPathComponent("ui-preference.json"))) as! [String:String]
+    precondition(topSaved["locale"]=="zh-CN")
     precondition(work.webTransfers.isEmpty && work.dialogue==nil && work.routeSignatures==initialRoutes,"language must not dispatch, start automatic exchange or change target identity")
     print("LAUNCHER_LANGUAGE_LIVE_REFRESH_PERSISTENCE_NO_DISPATCH_PASS");exit(0)
+}
+if mode == "nyra_visibility_controls" {
+    try! NativeWorkbench.safeDirectory(prefs)
+    try! NativeWorkbench.save(["kind0":"ChatGPT","kind1":"Claude","url0":base.absoluteString,"url1":base.absoluteString],at:prefs.appendingPathComponent("paired-workbench.json"))
+    let work=IntegratedWorkbench(preferences:prefs,resources:resources,translate:{$0},openProjects:{fatalError("no business action")})
+    var visible=true
+    work.nyra.visibilityReader={_ in
+        ["pid":ProcessInfo.processInfo.processIdentifier,"bundle":Bundle.main.bundleURL.path,"visible":visible,"heartbeatUptime":ProcessInfo.processInfo.systemUptime]
+    }
+    func settle() { work.nyra.refresh();let until=Date().addingTimeInterval(1);repeat{RunLoop.current.run(until:Date().addingTimeInterval(0.01))}while work.nyra.stateReadInFlight && Date()<until }
+    settle();precondition(work.nyraButton.title=="Hide Nyra" && work.nyra.snapshot()["observed"] as? Bool==true)
+    visible=false;settle();precondition(work.nyraButton.title=="Show Nyra")
+    visible=true;settle();precondition(work.nyraButton.title=="Hide Nyra","manual visibility changes must update the actual top button")
+    fixtureNyraConflict=true;settle()
+    precondition(work.nyraButton.title=="Nyra · view status" && work.nyra.snapshot()["reason"] as? String=="NYRA_OTHER_INSTALLATION_RUNNING")
+    work.nyra.setVisible(false);precondition(!work.nyra.pending,"conflicting helper must not receive a URL or launch")
+    fixtureNyraConflict=false;settle();precondition(work.nyraButton.title=="Hide Nyra")
+    precondition(work.webTransfers.isEmpty && work.dialogue==nil)
+    print("NYRA_TOP_BUTTON_LIVE_VISIBLE_HIDDEN_CONFLICT_NO_DISPATCH_PASS");exit(0)
 }
 if mode == "nyra_selection_async" {
     let client=NyraStatusClient();var callbacks=0;var loaders=0
@@ -715,7 +746,7 @@ probe();DispatchQueue.main.asyncAfter(deadline:.now()+20){fatalError("fixture ti
     assert run.returncode==0,run.stderr
     return binary
 
-@pytest.mark.parametrize('mode',['launcher_language','simplified_r4_policy','simplified_r4_auto_legacy','simplified_r4_auto_stopped_unknown','simplified_r4_auto_stopped_same','simplified_r4_auto_stopped_other','simplified_r4_auto_left','simplified_r4_auto_right','simplified_r4_auto_manual','simplified_r4_auto_stream','simplified_r4_auto_empty','simplified_r4_auto_wait_stop','simplified_r4_auto_reconcile','simplified_r4_auto_reconcile_stop','owner_r3_policy','paired_attachment_scope_ui','auxiliary_window_close','history_restore','paired_policy','paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_hydration','paired_auto_late_changed','paired_auto_late_unrestorable','paired_recovery','upload_exact','upload_async_input','upload_changed_input','upload_delayed_control','upload_menu_control','upload_scoped_control','upload_nearest_control','upload_directory_control','upload_accessibility_hidden_input','upload_hidden_other_control','upload_ambiguous_control','upload_transient_duplicate','upload_remounted_composer','send_delayed_control','send_ambiguous_control','send_changed_draft','upload_same_name','upload_history','upload_claude_labels','upload_chatgpt_cards','upload_chatgpt_renamed','upload_foreign_image','upload_corrupt','upload_foreign','upload_no_control','upload_switch','nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','chatgpt_interrupted','chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble','claude','claude_streaming','claude_interrupted','claude_chrome','chatgpt_file_reference','claude_markup','claude_markup_changed','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
+@pytest.mark.parametrize('mode',['launcher_language','nyra_visibility_controls','simplified_r4_policy','simplified_r4_auto_legacy','simplified_r4_auto_stopped_unknown','simplified_r4_auto_stopped_same','simplified_r4_auto_stopped_other','simplified_r4_auto_left','simplified_r4_auto_right','simplified_r4_auto_manual','simplified_r4_auto_stream','simplified_r4_auto_empty','simplified_r4_auto_wait_stop','simplified_r4_auto_reconcile','simplified_r4_auto_reconcile_stop','owner_r3_policy','paired_attachment_scope_ui','auxiliary_window_close','history_restore','paired_policy','paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_hydration','paired_auto_late_changed','paired_auto_late_unrestorable','paired_recovery','upload_exact','upload_async_input','upload_changed_input','upload_delayed_control','upload_menu_control','upload_scoped_control','upload_nearest_control','upload_directory_control','upload_accessibility_hidden_input','upload_hidden_other_control','upload_ambiguous_control','upload_transient_duplicate','upload_remounted_composer','send_delayed_control','send_ambiguous_control','send_changed_draft','upload_same_name','upload_history','upload_claude_labels','upload_chatgpt_cards','upload_chatgpt_renamed','upload_foreign_image','upload_corrupt','upload_foreign','upload_no_control','upload_switch','nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','chatgpt_interrupted','chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble','claude','claude_streaming','claude_interrupted','claude_chrome','chatgpt_file_reference','claude_markup','claude_markup_changed','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
 def test_exact_target_single_dispatch_and_preflight(cross_harness,tmp_path,mode):
     class Fixture(BaseHTTPRequestHandler):
         def do_GET(self):
@@ -782,7 +813,7 @@ window.sends=0;document.getElementById('send').onclick=()=>{window.sends++;const
     server=ThreadingHTTPServer(('127.0.0.1',0),Fixture);thread=Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         executable=cross_harness
-        if mode=='nyra_selected_target':
+        if mode in ('nyra_selected_target','nyra_visibility_controls'):
             # NSRunningApplication needs an actual bundle identity for the
             # unchanged snapshot PID/bundle checks; a naked test binary has none.
             import plistlib,shutil
