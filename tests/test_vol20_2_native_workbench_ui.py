@@ -116,11 +116,11 @@ func verifyHandoffEligibility(_ completion: @escaping () -> Void) {
     """#) { _, error in
         precondition(error == nil)
         DispatchQueue.main.asyncAfter(deadline:.now()+0.6) {
-            browser.web.evaluateJavaScript("[...document.querySelectorAll('[data-twos-native-card] > button:first-child')].every(button=>button.disabled) && document.getElementById('final-fixture').nextElementSibling?.textContent.includes('generating')") { value, _ in
-                precondition(value as? Bool == true,"streamed replies retain an explained disabled entry, never an enabled Send")
+            browser.web.evaluateJavaScript("(()=>{const c=document.getElementById('final-fixture').nextElementSibling;return document.querySelectorAll('[data-twos-native-card]').length===1&&c.querySelector('[data-twos-primary]').hidden&&c.querySelector('details').hidden&&!c.textContent.includes('Check reply readiness')})()") { value, _ in
+                precondition(value as? Bool == true,"R4 streaming keeps no visible Send or Check card; completion remains required")
                 browser.web.evaluateJavaScript("document.getElementById('fixture-stop').remove()") { _, _ in
                     DispatchQueue.main.asyncAfter(deadline:.now()+0.6) {
-                        browser.web.evaluateJavaScript("document.getElementById('final-fixture').nextElementSibling?.hasAttribute('data-twos-native-card') && !document.getElementById('summary-one').nextElementSibling?.hasAttribute('data-twos-native-card') && !document.getElementById('summary-two').nextElementSibling?.hasAttribute('data-twos-native-card')") { value, _ in
+                        browser.web.evaluateJavaScript("document.getElementById('final-fixture').nextElementSibling?.hasAttribute('data-twos-native-card') && !document.getElementById('final-fixture').nextElementSibling.querySelector('[data-twos-primary]').hidden && document.querySelectorAll('[data-twos-native-card]').length===1 && !document.getElementById('summary-one').nextElementSibling?.hasAttribute('data-twos-native-card') && !document.getElementById('summary-two').nextElementSibling?.hasAttribute('data-twos-native-card')") { value, _ in
                             precondition(value as? Bool == true,"only the final complete answer within a turn gets a handoff button")
                             verifyOutcomeCard {
                                 browser.web.evaluateJavaScript("document.getElementById('streaming-fixture').remove()") { _, _ in completion() }
@@ -133,24 +133,35 @@ func verifyHandoffEligibility(_ completion: @escaping () -> Void) {
     }
 }
 func verifyOutcomeCard(_ completion: @escaping () -> Void) {
-    let instruction="Complete instruction including its final requirement"
-    let old:[String:Any] = ["id":"old-blocked","source":base.absoluteString,"message":"","hash":NativeCodex.digest(Data(instruction.utf8)),"state":"completed","businessResult":"blocked","retryable":true,"createdAt":1,"cwd":root.path,"result":"RESULT: BLOCKED\nNo directory context was supplied."]
-    browser.web.callAsyncJavaScript("await window.twosHandoffUpdate(record)", arguments:["record":old],in:nil,in:NativeWorkbench.handoffWorld) { _ in
-        browser.web.evaluateJavaScript("(()=>{const c=document.getElementById('final-fixture').nextElementSibling;return !c.querySelector('button').disabled&&c.textContent.includes('Task BLOCKED')&&c.textContent.includes('Execution channel finished')&&c.querySelector('[data-twos-result]').open&&!c.querySelector('[data-twos-send-preview]').open&&c.querySelector('[data-twos-send-preview] summary').textContent==='View selected content'&&c.textContent.includes('No directory context')})()") { value,_ in
-            precondition(value as? Bool == true,"clean body hash matches despite visible suggestion/copy controls; historical completed/BLOCKED remains actionable")
-            var newer=old;newer["id"]="new-attempt";newer["message"]="latest-rendered-reply";newer["createdAt"]=2;newer["state"]="running";newer["retryable"]=false;newer["businessResult"]="not_completed";newer["result"]=""
-            browser.web.callAsyncJavaScript("await window.twosHandoffUpdate(newer);await window.twosHandoffUpdate(old)",arguments:["newer":newer,"old":old],in:nil,in:NativeWorkbench.handoffWorld) { _ in
-                browser.web.evaluateJavaScript("(()=>{const c=document.getElementById('final-fixture').nextElementSibling;return c.querySelector('button').disabled&&c.textContent.includes('Running')&&!c.textContent.includes('Task BLOCKED')})()") { value,_ in
-                    precondition(value as? Bool == true,"older receipt must not overwrite a newer attempt after reload")
-                    browser.web.callAsyncJavaScript("const reply=document.getElementById('final-fixture');const legacy={...record,id:'legacy-receipt',createdAt:3,result:'Legacy receipt preserved'};legacy.hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(reply.innerText)))].map(x=>x.toString(16).padStart(2,'0')).join('');await window.twosHandoffUpdate(legacy);return JSON.stringify({receipt:reply.nextElementSibling.textContent,style:reply.querySelector('button').getAttribute('style'),roleStyle:reply.querySelector('[role=button]').getAttribute('style')});",arguments:["record":old],in:nil,in:NativeWorkbench.handoffWorld) { outcome in
-                        guard case .success(let value)=outcome else { fatalError("legacy receipt verification failed") }
-                        let observed=try! JSONSerialization.jsonObject(with:(value as! String).data(using:.utf8)!) as! [String:Any]
-                        precondition((observed["receipt"] as? String)?.contains("Legacy receipt preserved") == true && observed["style"] as? String == "color: red" && observed["roleStyle"] is NSNull,"legacy hashes and styles: \(value)")
-                        completion()
-                    }
-                }
-            }
-        }
+    // Synthetic receipts exercise the current identity and on-demand details
+    // contract; no trusted click or model dispatch is generated by this fixture.
+    let script = #"""
+    const assert=(value,why)=>{if(!value)throw Error(why)};
+    const reply=document.getElementById('final-fixture');
+    const current=window.twosProviderDOM.latest();
+    const instruction='Complete instruction including its final requirement';
+    assert(current.state==='reply'&&current.text===instruction,'suggestion/copy controls excluded from complete body');
+    const hash=async text=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))].map(x=>x.toString(16).padStart(2,'0')).join('');
+    const old={id:'old-blocked',source:location.href,message:current.message,hash:await hash(instruction),provider:'Codex',state:'completed',businessResult:'blocked',retryable:true,createdAt:1,result:'RESULT: BLOCKED\nNo directory context was supplied.'};
+    await window.twosHandoffUpdate(old);
+    const c=reply.nextElementSibling,details=c.querySelector('details'),primary=c.querySelector('[data-twos-primary]');
+    assert(primary.hidden&&!details.open&&!details.hidden&&details.querySelector('summary').textContent==='Details','historical receipt is retained behind optional details, not another default Send');
+    details.open=true;await window.twosHandoffUpdate(old);
+    assert(c.textContent.includes('completed')&&c.textContent.includes('blocked')&&c.textContent.includes('No directory context'),'channel completed does not erase business BLOCKED');
+    const newer={...old,id:'new-attempt',createdAt:2,state:'running',retryable:false,businessResult:'not_completed',result:''};
+    await window.twosHandoffUpdate(newer);await window.twosHandoffUpdate(old);
+    assert(primary.hidden&&c.textContent.includes('running')&&!c.textContent.includes('No directory context'),'old receipt cannot replace a newer attempt');
+    const legacy={...old,id:'legacy-receipt',message:'latest-rendered-reply',createdAt:3,result:'Legacy receipt preserved',hash:await hash(reply.innerText)};
+    await window.twosHandoffUpdate(legacy);
+    assert(!c.textContent.includes('Legacy receipt preserved'),'legacy hash containing website controls is not silently accepted as exact selected text');
+    legacy.hash=await hash(instruction);await window.twosHandoffUpdate(legacy);
+    assert(primary.hidden&&c.textContent.includes('Legacy receipt preserved')&&c.textContent.includes('message identity needs verification'),'exact legacy body is preserved but uncertain identity cannot silently resend');
+    assert(reply.querySelector('button').getAttribute('style')==='color: red'&&reply.querySelector('[role=button]').getAttribute('style')===null,'website controls and styles unchanged');
+    return true;
+    """#
+    browser.web.callAsyncJavaScript(script,arguments:[:],in:nil,in:NativeWorkbench.handoffWorld) { outcome in
+        guard case .success(let value)=outcome, value as? Bool == true else { fatalError("R4 outcome/identity details: \(outcome)") }
+        completion()
     }
 }
 func runRenderer() {
