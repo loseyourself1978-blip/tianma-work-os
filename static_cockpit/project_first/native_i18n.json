@@ -1277,7 +1277,7 @@
   },
   "Future exchanges stopped. This does not cancel a provider's current generation.": {
     "en-US": "Future exchanges stopped. This does not cancel a provider's current generation.",
-    "zh-CN": "已停止后续互聊；此操作不会取消网站正在生成的回复。"
+    "zh-CN": "已停止双方后续发送。网站当前已经开始的回复可能继续完成。"
   },
   "Resolve or resume the saved exchange before starting another.": {
     "en-US": "Resolve or resume the saved exchange before starting another.",
@@ -1558,5 +1558,101 @@
   "First instruction edited. Start will send this text to the displayed participants; nothing has been sent.": {
     "en-US": "First instruction edited. Start will send this text to the displayed participants; nothing has been sent.",
     "zh-CN": "首轮指令已修改。点击开始后将把这份正文发送给当前显示的参与方；尚未发送。"
+  },
+  "⋯ More": {
+    "en-US": "⋯ More",
+    "zh-CN": "⋯ 更多"
+  },
+  "Stop auto-send": {
+    "en-US": "Stop auto-send",
+    "zh-CN": "停止自动发送"
+  },
+  "Waiting for a complete new reply": {
+    "en-US": "Waiting for a complete new reply",
+    "zh-CN": "等待新的完整回复"
+  },
+  "This reply was already used. Waiting for a new reply.": {
+    "en-US": "This reply was already used. Waiting for a new reply.",
+    "zh-CN": "此回复已经发送过，正在等待新回复。"
+  },
+  "The selected source turn changed. Auto-send is paused.": {
+    "en-US": "The selected source turn changed. Auto-send is paused.",
+    "zh-CN": "选定的来源轮次已变化，自动发送已暂停。"
+  },
+  "Auto-send requires two ready website conversations. No execution rights are granted.": {
+    "en-US": "Auto-send requires two ready website conversations. No execution rights are granted.",
+    "zh-CN": "自动发送需要两个就绪的网页会话，不授予执行权限。"
+  },
+  "The previous submission still needs reconciliation. Check the receipt in More before continuing.": {
+    "en-US": "The previous submission still needs reconciliation. Check the receipt in More before continuing.",
+    "zh-CN": "上次投递仍需核验，请在“更多”的交接记录中查看。"
+  },
+  "Multiple receipts match this reply. Inspect history; nothing is resent.": {
+    "en-US": "Multiple receipts match this reply. Inspect history; nothing is resent.",
+    "zh-CN": "此回复匹配多份回执，请查看交接记录；不会重复发送。"
+  },
+  "The matching receipt belongs to another or unresolved conversation. Nothing is resent.": {
+    "en-US": "The matching receipt belongs to another or unresolved conversation. Nothing is resent.",
+    "zh-CN": "匹配的回执属于另一个或尚未核验的会话，不会重复发送。"
+  },
+  "The matching handoff needs reconciliation or has a different attachment scope. Nothing is resent.": {
+    "en-US": "The matching handoff needs reconciliation or has a different attachment scope. Nothing is resent.",
+    "zh-CN": "匹配的交接仍需核验，或其附件范围不同；不会重复发送。"
+  },
+  "App restarted. Auto-send is off. Check the receipt before explicitly continuing.": {
+    "en-US": "App restarted. Auto-send is off. Check the receipt before explicitly continuing.",
+    "zh-CN": "应用已重开，自动发送已关闭。核对回执后才可明确继续。"
+  },
+  "Reply observation needs attention": {
+    "en-US": "Reply observation needs attention",
+    "zh-CN": "回复状态需要处理"
+  },
+  "Source pane unavailable": {
+    "en-US": "Source pane unavailable",
+    "zh-CN": "来源面板暂不可用"
+  },
+  "SOURCE_TURN_CHANGED": {
+    "en-US": "Source turn changed",
+    "zh-CN": "来源轮次已变化"
+  },
+  "AMBIGUOUS_COMPOSER": {
+    "en-US": "Ambiguous composer",
+    "zh-CN": "存在多个独立输入框"
+  },
+  "INPUT_UNAVAILABLE": {
+    "en-US": "Input unavailable",
+    "zh-CN": "输入框暂不可用"
+  },
+  "OBSERVER_UNAVAILABLE": {
+    "en-US": "Observer unavailable",
+    "zh-CN": "页面观察暂不可用"
+  },
+  "CURRENT_MESSAGE_TOO_LARGE": {
+    "en-US": "Current message too large",
+    "zh-CN": "当前消息超过读取上限"
+  },
+  "REPLY_INTERRUPTED": {
+    "en-US": "Reply interrupted",
+    "zh-CN": "回复已中断"
+  },
+  "VERIFICATION": {
+    "en-US": "VERIFICATION",
+    "zh-CN": "需要本人完成网站验证"
+  },
+  "CONVERSATION_CHANGED": {
+    "en-US": "Conversation changed",
+    "zh-CN": "会话已变化"
+  },
+  "Checking the previous delivery · nothing is resent": {
+    "en-US": "Checking the previous delivery · nothing is resent",
+    "zh-CN": "正在核对上次投递，不会重新发送"
+  },
+  "The previous delivery belongs to another conversation. Restore that conversation to reconcile it; nothing was resent.": {
+    "en-US": "The previous delivery belongs to another conversation. Restore that conversation to reconcile it; nothing was resent.",
+    "zh-CN": "上次投递属于另一个会话。请恢复该会话以核对；没有重新发送。"
+  },
+  "The previous delivery is still generating or cannot be confirmed. Nothing was resent. Try auto-send again after it finishes; details are in More.": {
+    "en-US": "The previous delivery is still generating or cannot be confirmed. Nothing was resent. Try auto-send again after it finishes; details are in More.",
+    "zh-CN": "上次投递仍在生成或尚无法确认，没有重新发送。完成后可再次勾选自动发送；详情见“更多”。"
   }
 }

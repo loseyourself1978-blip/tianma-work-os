@@ -1,10 +1,8 @@
 # 隐私、权限与费用
 
-适用于 TWOS 1.0.3 / 101.51。升级后先看 [R3 差量指南](OWNER_REGRESSION_R3.zh-CN.md)，完成对应终点即结束；不重新制作已接受任务。
+适用于 TWOS 1.0.4 / 101.52。升级后先看 [R4 差量指南](SIMPLIFIED_UX_R4.zh-CN.md)，完成对应终点即结束；不重新制作已接受任务。
 
-
-
-[R2 差量操作和准确边界](BIDIRECTIONAL_R2.zh-CN.md)。
+[R4 差量操作和准确边界](SIMPLIFIED_UX_R4.zh-CN.md)。
 
 
 TWOS 承载供应商官网，并连接本机 Codex App Server。各供应商遵循自己的账号、留存、计划和用量规则；TWOS 不把所有服务强行合成一个额度池，也不静默变更计费路径，不自动购买、重置或订阅。

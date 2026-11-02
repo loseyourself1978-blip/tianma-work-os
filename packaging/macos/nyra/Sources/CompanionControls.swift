@@ -29,40 +29,11 @@ func orbitButton(_ symbol: String, title: String, target: AnyObject, action: Sel
     return b
 }
 
-final class ResizeGrip: NSView {
-    var onBegin: (() -> Void)?
-    var onResize: ((CGFloat) -> Void)?
-    var onEnd: (() -> Void)?
-    private var start: NSPoint?
-    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
-    override init(frame: NSRect) {
-        super.init(frame: frame)
-        toolTip = "拖动缩放 / Drag to resize · 滚轮 / Scroll"
-        setAccessibilityElement(true); setAccessibilityRole(.button); setAccessibilityLabel("拖动缩放 / Drag to resize")
-    }
-    required init?(coder: NSCoder) { fatalError() }
-    override func draw(_ dirtyRect: NSRect) {
-        let p = NSBezierPath(ovalIn: bounds.insetBy(dx: 1, dy: 1)); ink.withAlphaComponent(0.9).setFill(); p.fill()
-        violet.setStroke(); p.lineWidth = 1; p.stroke()
-        NSImage(systemSymbolName: "ruler", accessibilityDescription: nil)?
-            .withSymbolConfiguration(.init(paletteColors: [.white]))?
-            .draw(in: bounds.insetBy(dx: 8, dy: 8))
-    }
-    override func mouseDown(with event: NSEvent) { start = window?.convertPoint(toScreen: event.locationInWindow); onBegin?() }
-    override func mouseDragged(with event: NSEvent) {
-        guard let start = start else { return }
-        guard let point = window?.convertPoint(toScreen: event.locationInWindow) else { return }
-        onResize?(point.x-start.x-(point.y-start.y))
-    }
-    override func mouseUp(with event: NSEvent) { start = nil; onEnd?() }
-}
-
 final class PanelView: NSView {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
     let art = ArtView()
     let badge = text("夜璃 · Nyra", size: 11, color: violet)
     let detail = text("悬停 + 展开控制", size: 10, color: .white)
-    let grip = ResizeGrip(frame: .zero)
     var hub: OrbitButton!
     var stageButton: OrbitButton!
     var onStage: (() -> Void)?
@@ -72,12 +43,12 @@ final class PanelView: NSView {
     var onDragEnd: (() -> Void)?
     override init(frame: NSRect) {
         super.init(frame: frame)
-        for v in [art, badge, detail, grip] as [NSView] { addSubview(v) }
+        for v in [art, badge, detail] as [NSView] { addSubview(v) }
         for label in [badge,detail] {
             label.drawsBackground = true; label.backgroundColor = ink.withAlphaComponent(0.90)
             label.wantsLayer = true; label.layer?.cornerRadius = 5
         }
-        grip.isHidden = true; badge.isHidden = true; detail.isHidden = true
+        badge.isHidden = true; detail.isHidden = true
     }
     required init?(coder: NSCoder) { fatalError() }
     func configureHub() {
@@ -101,28 +72,27 @@ final class PanelView: NSView {
         badge.isHidden = !hovered && !expanded; detail.isHidden = badge.isHidden
         // Do not remove the first-mouse target while a press is tracking.
         let showHoverControls = hovered || expanded || NSEvent.pressedMouseButtons != 0
-        grip.isHidden = !showHoverControls
         stageButton?.isHidden = !showHoverControls
         needsLayout = true
     }
     override func layout() {
         super.layout()
         art.frame = NSRect(x: 8, y: 32, width: bounds.width-70, height: bounds.height-52)
-        let center = NSPoint(x: bounds.width-89, y: min(145, bounds.height*0.38))
+        // Keep the expanded 36pt actions inside the panel at minimum scale.
+        // The orbit radius is 67pt, so its center needs an 85pt lower inset.
+        let center = NSPoint(x: bounds.width-89, y: min(145, max(86, bounds.height*0.38)))
         hub?.frame = NSRect(x: center.x-20, y: center.y-20, width: 40, height: 40)
         for (i,b) in controls.enumerated() {
             let angle = CGFloat(i)*2 * .pi/CGFloat(max(1,controls.count)) + .pi/2
             b.frame = NSRect(x: center.x+67*cos(angle)-18, y: center.y+67*sin(angle)-18, width: 36, height: 36)
         }
         stageButton?.frame = NSRect(x: bounds.width-43, y: 2, width: 36, height: 36)
-        grip.frame = NSRect(x: bounds.width-79, y: 5, width: 30, height: 30)
         badge.frame = NSRect(x: 12, y: bounds.height-21, width: bounds.width-24, height: 18)
         detail.frame = NSRect(x: 12, y: 3, width: max(20,bounds.width-98), height: 27)
     }
     func visibleHit(_ point: NSPoint) -> Bool {
         if let hub = hub, hub.frame.contains(point) { return true }
         if let stageButton = stageButton, !stageButton.isHidden && stageButton.frame.contains(point) { return true }
-        if !grip.isHidden && grip.frame.contains(point) { return true }
         if expanded && controls.contains(where: { $0.frame.contains(point) }) { return true }
         return art.containsArt(art.convert(point, from: self))
     }
@@ -156,17 +126,25 @@ func runInteractionTests() throws {
     panel.configureHub(); panel.layoutSubtreeIfNeeded()
     try require(panel.visibleHit(NSPoint(x: panel.hub.frame.midX, y: panel.hub.frame.midY)))
     try require(!panel.visibleHit(NSPoint(x: 1, y: 1)))
-    panel.toggleControls(); try require(panel.expanded && !panel.grip.isHidden)
+    panel.toggleControls(); try require(panel.expanded)
     var stageClicks = 0
     panel.onStage = { stageClicks += 1 }
     panel.setHovered(true); panel.layoutSubtreeIfNeeded()
-    try require(!panel.stageButton.isHidden && !panel.grip.isHidden)
-    try require(!panel.stageButton.frame.intersects(panel.grip.frame))
+    try require(!panel.stageButton.isHidden)
+    // Former ruler region must not retain an invisible event target.
+    try require(!panel.visibleHit(NSPoint(x:panel.bounds.width-64,y:18)))
     try require(panel.visibleHit(NSPoint(x:panel.stageButton.frame.midX,y:panel.stageButton.frame.midY)))
     let beforeStageClick = panel.frame
     panel.stageButton.performClick(nil)
     try require(stageClicks == 1 && panel.frame == beforeStageClick)
     try require(panel.stageButton.acceptsFirstMouse(for:nil))
+    panel.controls = (0..<9).map { _ in NSButton() }
+    panel.controls.forEach { panel.addSubview($0) }
+    for height in [212.0, 332.0, 452.0] {
+        panel.setFrameSize(NSSize(width:320,height:height)); panel.needsLayout=true
+        panel.layoutSubtreeIfNeeded()
+        try require(panel.controls.allSatisfy { panel.bounds.contains($0.frame) })
+    }
     try runStageGeometryTests()
-    print("PASS: language, alpha hit testing, hover stage click without resize, distinct resize, safe top toolbar fixtures")
+    print("PASS: language, alpha hit testing, hover stage click without resize, no resize grip/hit region, safe top toolbar fixtures")
 }

@@ -1,8 +1,8 @@
 # TWOS 1.0 · Installation and use
 
-**Applies to TWOS 1.0.3 / build 101.51, including Nyra 1.0.2 / build 102.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md)
+**Applies to TWOS 1.0.4 / build 101.52, including Nyra 1.0.3 / build 103.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md)
 
-**Installation and version: use `START_HERE.html` in this bilingual guide, the [release receipt](release-1.0/release.json), and the actual GitHub Release status. The installer passed matching engineering regression, signing and notarization; Owner differential acceptance is separate.**
+**Installation and version: use `START_HERE.html` in this bilingual guide, the [release receipt](release-1.0/release.json), and the actual GitHub Release status. Use the matching receipt to verify the complete engineering gate, signing and notarization; Owner differential acceptance is separate.**
 Discuss on the official ChatGPT website in the left pane, execute with the local Codex service in the right pane, and return results to the original discussion. The right pane is TWOS's own client for the official App Server protocol; it does not embed the entire official Codex macOS interface.
 
 **Choose one scenario and stop at its end point.** Upgrading does not require following the first-task scenario afterward. Existing accepted work does not need to be recreated.
@@ -13,7 +13,7 @@ After the final delivery receipt identifies the installer, double-click the DMG 
 
 ## A · This upgrade only
 
-R3 patch TWOS 1.0.3 / 101.51. Follow the [reply/stop/Nyra differential guide](release-1.0/OWNER_REGRESSION_R3.en.md). End after A; do not continue to B or repeat accepted business tasks. Matching engineering verification is complete; only the Owner grants acceptance of the new or repaired controls.
+R4 patch TWOS 1.0.4 / 101.52. Follow the [single-Send/shared-checkbox/sizing differential guide](release-1.0/SIMPLIFIED_UX_R4.en.md). End after A; do not continue to B or repeat accepted business tasks. The matching release receipt records engineering verification; only the Owner grants acceptance of the new or repaired controls.
 
 ## B · First task
 

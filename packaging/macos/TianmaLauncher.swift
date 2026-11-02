@@ -100,7 +100,12 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
     var sendWebReply: ((String, URL) -> Void)?
     var nativeStopHandler: ((URL) -> Void)?
     var stopExchangeButton: NSButton?
-    var stopExchangeHandler: (() -> Void)? { didSet { stopExchangeButton?.isHidden = stopExchangeHandler == nil } }
+    var stopExchangeHandler: (() -> Void)?
+    var automaticReplyHandler: ((Bool, URL) -> Void)?
+    var historyHandler: (() -> Void)?
+    var diagnosticsHandler: (() -> Void)?
+    var moreButton: NSButton?
+    var automaticReplyEnabled = false
     var chooseFiles: (() -> Void)?
     var clearFiles: (() -> Void)?
     var fileButton: NSButton?
@@ -187,20 +192,14 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
         address.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         address.setAccessibilityLabel(translate("Current website"))
         address.isSelectable = true
-        let top = NSStackView(views: [backButton, forwardButton, button("↻", #selector(reload)), address,
-                                     button("Open in Safari", #selector(openSafari))])
+        let more=button("⋯ More",#selector(showMore));moreButton=more
+        let top = NSStackView(views: [backButton, forwardButton, button("↻", #selector(reload)), address, more])
         top.orientation = .horizontal; top.spacing = 10
-        handoffButton = button("Handoff to paired pane", #selector(handoff))
-        let files=button("Attachments",#selector(selectWebFiles));fileButton=files
-        let actions = NSStackView(views: [button("Original TWOS projects", #selector(projects)), files, button("Remove selection",#selector(removeWebFiles)), handoffButton])
-        actions.orientation = .horizontal; actions.spacing = 10
         notice.font = .systemFont(ofSize: 12); notice.textColor = .secondaryLabelColor
         notice.isHidden = true
         progress.style = .bar; progress.isIndeterminate = false; progress.minValue = 0; progress.maxValue = 1
         progress.isHidden = true
-        let stopExchange = button("Stop automatic exchange", #selector(stopAutomaticExchange))
-        stopExchange.isHidden = true; stopExchangeButton = stopExchange
-        let bar = NSStackView(views: [top, actions, stopExchange, notice, progress])
+        let bar = NSStackView(views: [top, notice, progress])
         bar.orientation = .vertical; bar.alignment = .leading; bar.spacing = 8
         bar.edgeInsets = NSEdgeInsets(top: 10, left: 12, bottom: 8, right: 12)
         bar.translatesAutoresizingMaskIntoConstraints = false; web.translatesAutoresizingMaskIntoConstraints = false
@@ -239,12 +238,34 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
         web.evaluateJavaScript("window.twosHandoffLanguage?.(\(translate("Back") != "Back" ? "true" : "false"))", in: nil, in: Self.handoffWorld, completionHandler: nil)
     }
     @objc func stopAutomaticExchange() { stopExchangeHandler?() }
+    @objc func showMore() {
+        let menu=NSMenu()
+        func item(_ name:String,_ action:Selector) {
+            let i=NSMenuItem(title:translate(name),action:action,keyEquivalent:"");i.target=self;menu.addItem(i)
+        }
+        item("Open in Safari",#selector(openSafari));item("Original TWOS projects",#selector(projects))
+        menu.addItem(.separator())
+        let files=NSMenuItem(title:translate("Attachments")+(fileSelectionCount>0 ? " (\(fileSelectionCount))" : ""),action:#selector(selectWebFiles),keyEquivalent:"");files.target=self;menu.addItem(files)
+        item("Remove selection",#selector(removeWebFiles));menu.addItem(.separator())
+        item("Handoff history",#selector(showHandoffHistory));item("Nyra status",#selector(showDiagnostics))
+        if automaticReplyEnabled {item("Stop auto-send",#selector(stopAutomaticExchange))}
+        if let button=moreButton {menu.popUp(positioning:nil,at:NSPoint(x:0,y:button.bounds.maxY),in:button)}
+    }
+    @objc func showHandoffHistory() {historyHandler?()}
+    @objc func showDiagnostics() {diagnosticsHandler?()}
+    func setAutomaticReplyState(_ value:[String:Any]) {
+        automaticReplyEnabled=value["enabled"] as? Bool ?? false
+        web.callAsyncJavaScript("window.twosHandoffAutoState?.(value);",arguments:["value":value],in:nil,in:Self.handoffWorld,completionHandler:nil)
+    }
     func setFileSelectionCount(_ count:Int) {
         fileSelectionCount=count
         fileButton?.title=translate("Attachments") + (count>0 ? " (\(count))" : "")
         fileButton?.setAccessibilityLabel(fileButton?.title)
     }
-    func showNotice(_ message: String) { noticeMessage=message;notice.stringValue = translate(message); notice.isHidden = false }
+    func showNotice(_ message: String) {
+        noticeMessage=message;notice.stringValue = translate(message); notice.isHidden = false
+        web.callAsyncJavaScript("window.twosHandoffNotice?.(text);",arguments:["text":translate(message)],in:nil,in:Self.handoffWorld,completionHandler:nil)
+    }
     func reconcileAccessNotice(_ state:String) {
         if ["idle","running"].contains(state),noticeMessage=="ChatGPT could not finish loading. Retry with ↻, or open this page in Safari. Your saved work is retained." {
             noticeMessage="";notice.stringValue="";notice.isHidden=true
@@ -295,6 +316,12 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
             instructionHandler?(text, source, value["message"] as? String ?? "")
         } else if value["action"] as? String == "retryHandoff", let id = value["id"] as? String { retryHandler?(id, source) }
         else if value["action"] as? String == "inspectHandoff", let id = value["id"] as? String { inspectHandler?(id, source) }
+        else if value["action"] as? String == "automaticReplies",let enabled=value["enabled"] as? Bool {
+            // Revocation must always work; starting requires the exact live route.
+            guard !enabled || (value["targetBinding"] as? String==targetBinding && !targetBinding.isEmpty) else {showNotice("The destination changed. Review the current destination and send again.");return}
+            automaticReplyHandler?(enabled,source)
+        }
+        else if value["action"] as? String == "stopAutomaticReplies" {stopExchangeHandler?()}
         else if value["action"] as? String == "nativeStop" { nativeStopHandler?(source) }
         else if value["action"] as? String == "ready" { handoffReady?() }
         else if value["action"] as? String == "discuss", let id = value["id"] as? String { discussResult?(id) }
@@ -353,11 +380,11 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
             else { handler(text, source) }
         }
     }
-    func providerSnapshot(includeReply: Bool = false, latestOnly: Bool = false, completion: @escaping ([String: Any]) -> Void) {
+    func providerSnapshot(includeReply: Bool = false, latestOnly: Bool = false, seedOnly: Bool = false, completion: @escaping ([String: Any]) -> Void) {
         guard let source = Self.restorableURL(web.url, service: serviceHome),
               let file = handoffResources?.appendingPathComponent("native_codex/provider_dom.js"),
               let script = try? String(contentsOf: file, encoding: .utf8) else { completion(["state":"unknown","reason":"PAGE_UNAVAILABLE"]); return }
-        web.callAsyncJavaScript(script + "\nreturn window.twosProviderDOM?." + (includeReply ? (latestOnly ? "latest()" : "selectedOrLatest()") : "observe()") + ";", arguments: [:], in: nil, in: Self.handoffWorld) { [weak self] result in
+        web.callAsyncJavaScript(script + "\nreturn window.twosProviderDOM?." + (seedOnly ? "seedSnapshot()" : (includeReply ? (latestOnly ? "latest()" : "selectedOrLatest()") : "observe()")) + ";", arguments: [:], in: nil, in: Self.handoffWorld) { [weak self] result in
             guard let self = self, Self.restorableURL(self.web.url, service:self.serviceHome) == source else { completion(["state":"unknown","reason":"CONVERSATION_CHANGED"]); return }
             if case .success(let value) = result, let value = value as? [String:Any] { completion(value) }
             else { completion(["state":"unknown","reason":"OBSERVER_UNAVAILABLE"]) }

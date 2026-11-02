@@ -1,15 +1,13 @@
-# 使用 TWOS 1.0.3
+# 使用 TWOS 1.0.4
 
-适用于 TWOS 1.0.3 / 101.51。升级后先看 [R3 差量指南](OWNER_REGRESSION_R3.zh-CN.md)，完成对应终点即结束；不重新制作已接受任务。
+适用于 TWOS 1.0.4 / 101.52。升级后先看 [R4 差量指南](SIMPLIFIED_UX_R4.zh-CN.md)，完成对应终点即结束；不重新制作已接受任务。
 
-
-
-[R2 差量操作和准确边界](BIDIRECTIONAL_R2.zh-CN.md)。
+[R4 差量操作和准确边界](SIMPLIFIED_UX_R4.zh-CN.md)。
 
 
 按当前场景选择一条路径，不把三种场景串成必做流程。
 
-**升级增量：** 使用上方 R2 差量入口，只检查新增的悬停全屏／顶部菜单、双向交接／自动控制、附件和双侧活动。保留 Claude 登录、日常换装和透明素材等已接受工作；完成后结束，不再进入首次任务流程。
+**升级增量：** 使用上方 R4 差量入口，只检查单一发送／共享复选框／停止、更多菜单与 Nyra 明确缩放入口。保留 Claude 登录、日常换装和透明素材等已接受工作；完成后结束，不再进入首次任务流程。
 
 **首次任务：** 按[安装指南](INSTALL.zh-CN.md)确认目录，再明确发送一次完整指令。
 
@@ -35,4 +33,4 @@ Nyra 只读最小状态。空闲、运行、排队/等待、partial/失败/取�
 
 [English / 简体中文](USER_GUIDE.en.md)
 
-[Evidence coverage / 验证范围](R2_VERIFICATION.zh-CN.md)
+[Evidence coverage / 验证范围](R4_VERIFICATION.zh-CN.md)

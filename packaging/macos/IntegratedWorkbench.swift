@@ -317,7 +317,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
             do {
                 dialogue=try JSONDecoder().decode(PairedDialogue.self,from:bytes)
                 guard dialogue?.valid==true else {throw CocoaError(.fileReadCorruptFile)}
-                if dialogue?.state == "running" { dialogue?.state="paused";dialogue?.reason="App restarted. Reconcile the pending receipt before continuing." }
+                if dialogue?.state == "running" { dialogue?.state="paused";dialogue?.reason="App restarted. Auto-send is off. Check the receipt before explicitly continuing." }
             } catch { dialogue=nil;webLedgerError=true }
         }
         for (n, picker) in [leftPicker, rightPicker].enumerated() {
@@ -333,7 +333,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         handoffHistoryButton.title = translate("Handoff history")
         handoffHistoryButton.target = self; handoffHistoryButton.action = #selector(showWebHistory)
         dialogueButton.title=translate("Automatic exchange");dialogueButton.target=self;dialogueButton.action=#selector(showDialogue)
-        let bar = NSStackView(views: [leftPicker, title, spacer, handoffHistoryButton, dialogueButton, nyraConnectionButton, nyraButton, rightPicker]); bar.spacing = 10
+        let bar = NSStackView(views: [leftPicker, title, spacer, nyraButton, rightPicker]); bar.spacing = 10
         bar.edgeInsets = NSEdgeInsets(top: 10, left: 14, bottom: 10, right: 14)
         bar.translatesAutoresizingMaskIntoConstraints = false
         split.isVertical = true; split.dividerStyle = .thin; split.translatesAutoresizingMaskIntoConstraints = false
@@ -345,7 +345,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
             split.trailingAnchor.constraint(equalTo: win.contentView!.trailingAnchor), split.bottomAnchor.constraint(equalTo: win.contentView!.bottomAnchor)])
         for _ in 0...1 { split.addArrangedSubview(NSView()) }
         rebuild(0); rebuild(1); refreshTargets(); nyra.refresh(); win.center()
-        let statusTimer = Timer(timeInterval: 2, repeats: true) { [weak self] _ in self?.refreshNyraStatus();self?.nyra.refresh();self?.tickDialogue() }
+        let statusTimer = Timer(timeInterval: 2, repeats: true) { [weak self] _ in self?.refreshNyraStatus();self?.nyra.refresh();self?.tickDialogue();self?.refreshAutomaticReplyState() }
         nyraObservationTimer = statusTimer; RunLoop.main.add(statusTimer, forMode: .common)
     }
     deinit { nyraObservationTimer?.invalidate() }
@@ -507,6 +507,9 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
                                      view.topAnchor.constraint(equalTo: host.topAnchor), view.bottomAnchor.constraint(equalTo: host.bottomAnchor)])
     }
     func configureHandoff(_ pane: NativeWorkbench, index: Int) {
+        pane.automaticReplyHandler = { [weak self] enabled,source in self?.setAutomaticReplies(enabled,from:index,source:source) }
+        pane.historyHandler = { [weak self] in self?.showWebHistory() }
+        pane.diagnosticsHandler = { [weak self] in self?.connectNyra() }
         pane.chooseFiles = { [weak self] in self?.chooseWebFiles(index) }
         pane.clearFiles = { [weak self] in self?.clearWebFiles(index) }
         pane.inspectHandler = { [weak self, weak pane] id, source in
@@ -554,6 +557,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         }
         pane.handoffReady = { [weak self, weak pane] in
             self?.refreshTargets()
+            self?.refreshAutomaticReplyState()
             self?.webTransfers.forEach { pane?.showHandoffProgress($0.card) }
             for item in self?.codex?.ledger.submissions ?? [] {
                 pane?.showHandoffProgress(item.card)
@@ -1029,7 +1033,7 @@ struct WebHandoffReceipt: Codable {
         return value
     }
     var card: [String: Any] {
-        ["id": id, "source": source, "message": message, "hash": hash, "provider": provider, "targetURL": resolvedURL ?? targetURL, "state": state, "createdAt": createdAt, "retryable": mayHaveSent != true && ["draft", "login", "verification", "busy", "not_loaded", "draft_conflict", "unsupported", "target_changed"].contains(state), "inspectable": mayHaveSent == true || state == "unknown", "result": result ?? "", "error": statusLabel, "inspection": inspection ?? "", "attachments": (files ?? []).map { ["id":$0.id,"name":$0.name,"mime":$0.mime,"size":$0.size,"sha256":$0.hash] as [String:Any] }]
+        ["id": id, "source": source, "message": message, "hash": hash, "binding":binding, "provider": provider, "targetURL": resolvedURL ?? targetURL, "state": state, "createdAt": createdAt, "retryable": mayHaveSent != true && ["draft", "login", "verification", "busy", "not_loaded", "draft_conflict", "unsupported", "target_changed"].contains(state), "inspectable": mayHaveSent == true || state == "unknown", "result": result ?? "", "error": statusLabel, "inspection": inspection ?? "", "attachments": (files ?? []).map { ["id":$0.id,"name":$0.name,"mime":$0.mime,"size":$0.size,"sha256":$0.hash] as [String:Any] }]
     }
 }
 

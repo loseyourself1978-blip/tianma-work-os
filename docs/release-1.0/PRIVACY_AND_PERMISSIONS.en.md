@@ -1,10 +1,8 @@
 # Privacy, permissions and cost
 
-Applies to TWOS 1.0.3 / 101.51. Start with the [R3 incremental guide](OWNER_REGRESSION_R3.en.md) after upgrading; stop at its end point. Existing accepted tasks do not need to be recreated.
+Applies to TWOS 1.0.4 / 101.52. Start with the [R4 incremental guide](SIMPLIFIED_UX_R4.en.md) after upgrading; stop at its end point. Existing accepted tasks do not need to be recreated.
 
-
-
-[R3 incremental instructions and exact boundaries](OWNER_REGRESSION_R3.en.md).
+[R4 incremental instructions and exact boundaries](SIMPLIFIED_UX_R4.en.md).
 
 
 TWOS hosts official provider websites and a local Codex App Server client. Each provider applies its own account, retention, plan and usage terms. TWOS does not merge all visible services into one quota pool or silently switch billing paths. No credits, resets or subscriptions are purchased automatically.

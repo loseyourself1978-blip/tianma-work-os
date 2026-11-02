@@ -1,13 +1,11 @@
-# Install Tianma Work OS 1.0.3
+# Install Tianma Work OS 1.0.4
 
-Applies to TWOS 1.0.3 / 101.51. Start with the [R3 incremental guide](OWNER_REGRESSION_R3.en.md) after upgrading; stop at its end point. Existing accepted tasks do not need to be recreated.
+Applies to TWOS 1.0.4 / 101.52. Start with the [R4 incremental guide](SIMPLIFIED_UX_R4.en.md) after upgrading; stop at its end point. Existing accepted tasks do not need to be recreated.
 
-
-
-[R3 incremental instructions and exact boundaries](OWNER_REGRESSION_R3.en.md).
+[R4 incremental instructions and exact boundaries](SIMPLIFIED_UX_R4.en.md).
 
 
-This guide applies to the joint TWOS/Nyra candidate, build 101.51. Its release receipt is the authority for publication, signatures and tested platforms. A local candidate is not a published release.
+This guide applies to the joint TWOS/Nyra candidate, build 101.52. Its release receipt is the authority for publication, signatures and tested platforms. A local candidate is not a published release.
 
 Currently supports macOS only. A Windows version is in development; no downloadable build is available yet. The current TWOS package is Apple Silicon. Engineering testing uses macOS 27.0.1 / Safari 27.0.1. A binary deployment target does not prove testing on every older system; consult the release support matrix before installing elsewhere.
 
@@ -26,7 +24,7 @@ Currently supports macOS only. A Windows version is in development; no downloada
 
 ## Optional original local project service
 
-**Original TWOS projects** opens the retained local project/account service. It is not a prerequisite for the paired workbench. On its first setup, use the local Owner setup shown by the launcher, authorize a separate workspace, and create the local account. When email delivery is configured for that environment, use **Register**, receive the verification message in your own mailbox, complete verification, then **Log in** with that account. Existing Owners can bind their email without replacing projects. If mail is unavailable, stop the email flow and ask the environment maintainer to configure its approved sender; provider website login is separate. No developer SMTP password is included. [Existing local-project instructions](../LEGACY_OWNER_GUIDE.md) apply only to that mode.
+**More / Original TWOS projects** opens the retained local project/account service. It is not a prerequisite for the paired workbench. On its first setup, use the local Owner setup shown by the launcher, authorize a separate workspace, and create the local account. When email delivery is configured for that environment, use **Register**, receive the verification message in your own mailbox, complete verification, then **Log in** with that account. Existing Owners can bind their email without replacing projects. If mail is unavailable, stop the email flow and ask the environment maintainer to configure its approved sender; provider website login is separate. No developer SMTP password is included. [Existing local-project instructions](../LEGACY_OWNER_GUIDE.md) apply only to that mode.
 
 Advanced checksum check: run `shasum -a 256 -c SHA256SUMS` in the download folder. Ordinary installation does not require a terminal.
 

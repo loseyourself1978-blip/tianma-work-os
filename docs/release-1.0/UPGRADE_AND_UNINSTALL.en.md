@@ -1,10 +1,8 @@
 # Upgrade and uninstall
 
-Applies to TWOS 1.0.3 / 101.51. Start with the [R3 incremental guide](OWNER_REGRESSION_R3.en.md) after upgrading; stop at its end point. Existing accepted tasks do not need to be recreated.
+Applies to TWOS 1.0.4 / 101.52. Start with the [R4 incremental guide](SIMPLIFIED_UX_R4.en.md) after upgrading; stop at its end point. Existing accepted tasks do not need to be recreated.
 
-
-
-[R3 incremental instructions and exact boundaries](OWNER_REGRESSION_R3.en.md).
+[R4 incremental instructions and exact boundaries](SIMPLIFIED_UX_R4.en.md).
 
 
 Finish or explicitly stop your own active work. Quit TWOS normally, then replace its application with the verified release. Do not edit the running bundle. Existing local environments, directory authorizations, drafts and provider website stores are not release assets and must not be copied into a public package.

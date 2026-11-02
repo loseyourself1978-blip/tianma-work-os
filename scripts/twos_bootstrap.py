@@ -31,9 +31,9 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 SUPPORTED_PYTHON_MIN = (3, 11)
 SUPPORTED_PYTHON_MAX = (3, 14)
-APP_VERSION = "1.0.3"
+APP_VERSION = "1.0.4"
 # Explicit schema-compatible patch history; a version bump must not drop prior patches.
-INSTALLATION_COMPATIBLE_VERSIONS = frozenset({"1.0.1", "1.0.2", "1.0.3"})
+INSTALLATION_COMPATIBLE_VERSIONS = frozenset({"1.0.1", "1.0.2", "1.0.3", "1.0.4"})
 LATEST_SCHEMA = "vol20.002"
 DEFAULT_HEALTH_TIMEOUT = 60.0
 INSTALLATION_ID_RE = re.compile(r"^install_[a-f0-9]{32}$")

@@ -1,10 +1,8 @@
 # Troubleshooting
 
-Applies to TWOS 1.0.3 / 101.51. Start with the [R3 incremental guide](OWNER_REGRESSION_R3.en.md) after upgrading; stop at its end point. Existing accepted tasks do not need to be recreated.
+Applies to TWOS 1.0.4 / 101.52. Start with the [R4 incremental guide](SIMPLIFIED_UX_R4.en.md) after upgrading; stop at its end point. Existing accepted tasks do not need to be recreated.
 
-
-
-[R3 incremental instructions and exact boundaries](OWNER_REGRESSION_R3.en.md).
+[R4 incremental instructions and exact boundaries](SIMPLIFIED_UX_R4.en.md).
 
 
 - **macOS blocks installation:** verify the exact release and hash/signature receipt. Do not disable Gatekeeper or remove quarantine. An unnotarized engineering candidate is not the default public installation path.
@@ -20,7 +18,7 @@ For a report include app version, non-sensitive error text and action taken. Exc
 [English / 简体中文](TROUBLESHOOTING.zh-CN.md)
 
 
-R2: If Check delivery is unknown, retain the receipt and reopen both exact bound conversations; inspect before continuing. Login, validation, quota, draft and upload failures pause automatic exchange. Do not clear website storage or retry an unknown send. If Nyra is visible but disconnected, open Nyra status; use the compatible version and explicit Connect action, preserving peer checks. Existing standalone versions without the v2 connection remain visibility-only.
+If delivery is unknown, retain the receipt and reopen both exact bound conversations; inspect before continuing. Login, validation, quota, draft and upload failures pause automatic exchange. Do not clear website storage or retry an unknown send. If Nyra is visible but disconnected, open Nyra status; use the compatible version and explicit Connect action, preserving peer checks. Existing standalone versions without the v2 connection remain visibility-only.
 
 
 ### App moved or macOS translocated it

@@ -1,8 +1,9 @@
 # Tianma Work OS 1.0
 
-**TWOS 1.0.3 / build 101.51** · [Download and verify](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.3) · [R3 incremental guide](docs/release-1.0/OWNER_REGRESSION_R3.en.md). The matching Release assets and receipts identify source, SHA-256, Developer ID, Apple notarization and actual verification. Publication does not grant Owner acceptance.
+R4 keeps one Send and one shared auto-send checkbox by the current reply. Stop from either side revokes future sends. More retains secondary capabilities, and Nyra offers explicit sizing. Earlier acceptance is preserved; the new UI is assessed separately.
 
-This patch addresses the failed Owner retest: ordinary reply actions and exact first-message routing, native and host Stop, and separate Nyra transport/activity/rendering. Dedicated real ChatGPT/Claude engineering conversations completed three round trips; no Owner debate or accepted business task was replayed. See the scope and original-failure boundaries in the R3 guide.
+
+**TWOS 1.0.4 / build 101.52** · [Download and verify](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.4) · [R4 incremental guide](docs/release-1.0/SIMPLIFIED_UX_R4.en.md). The matching Release assets and receipts identify source, SHA-256, Developer ID, Apple notarization and actual verification. Publication does not grant Owner acceptance.
 
 [简体中文](README.zh-CN.md) · [Install](docs/release-1.0/INSTALL.en.md) · [User guide](docs/release-1.0/USER_GUIDE.en.md) · [Current release status](docs/CURRENT_DELIVERY.md)
 
@@ -16,7 +17,7 @@ Discuss a goal and execute it in one macOS workspace. TWOS pairs official ChatGP
 
 ## Download and first use
 
-Download TWOS v1.0.3 using the link above. Verify SHA256SUMS before opening its DMG. The matching receipt binds source, signatures, notarization and artifact hashes. Historical v1.0.1 and v1.0.0 remain unchanged.
+Download TWOS v1.0.4 using the link above. Verify SHA256SUMS before opening its DMG. The matching receipt binds source, signatures, notarization and artifact hashes. Historical v1.0.1 and v1.0.0 remain unchanged.
 
 Open the matching DMG, drag TWOS into Applications and open it. Sign into the chosen official provider website, connect your already installed/logged-in local Codex, then create or resume one folder-bound task. Nyra is inside the same app; no separate pet installer or first-run artwork download is required. Ordinary installation needs no Python, Node or terminal.
 

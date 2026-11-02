@@ -1,8 +1,10 @@
 # Tianma Work OS 1.0
 
-**TWOS 1.0.3 / 构建 101.51** · [下载及核验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.3) · [R3 差量指南](docs/release-1.0/OWNER_REGRESSION_R3.zh-CN.md)。匹配 Release 资产及回执记录 source、SHA-256、Developer ID、Apple 公证和真实验证；发布不代签 Owner 接受。
+R4：每侧完整回复只保留一个发送入口及共享自动发送复选框；任意侧可停止双方后续派发。更多菜单保留附加能力，Nyra 使用明确缩放操作。此前接受保持，新 UI 需单独接受。
 
-本补丁接续未通过的 Owner 复验：普通回复入口、准确首轮绑定、两侧原生及宿主停止，以及 Nyra 连接／活动／播放三维状态。新的 ChatGPT/Claude 工程对话完成三个真实往返，没有重播 Owner 辩论或已接受业务。根因证据及原失败边界见 R3 指南。
+
+**TWOS 1.0.4 / 构建 101.52** · [下载及核验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.4) · [R4 差量指南](docs/release-1.0/SIMPLIFIED_UX_R4.zh-CN.md)。匹配 Release 资产及回执记录 source、SHA-256、Developer ID、Apple 公证和真实验证；发布不代签 Owner 接受。
+
 
 [English](README.md) · [安装](docs/release-1.0/INSTALL.zh-CN.md) · [操作指南](docs/release-1.0/USER_GUIDE.zh-CN.md) · [当前发行状态](docs/CURRENT_DELIVERY.md)
 
@@ -16,7 +18,7 @@
 
 ## 下载与首次使用
 
-从上方链接下载 TWOS v1.0.3；打开 DMG 前核对 SHA256SUMS。匹配回执绑定源码、签名、公证和制品哈希。历史 v1.0.1 与 v1.0.0 保持不变。
+从上方链接下载 TWOS v1.0.4；打开 DMG 前核对 SHA256SUMS。匹配回执绑定源码、签名、公证和制品哈希。历史 v1.0.1 与 v1.0.0 保持不变。
 
 打开对应 DMG，拖入应用程序并启动。登录所选供应商官网，连接已安装/登录的官方本机 Codex，再创建或接续一个绑定目录的任务。Nyra 在同一 App 内，无需第二个桌宠安装包或首次联网下载画稿；普通安装无需 Python、Node 或终端。
 

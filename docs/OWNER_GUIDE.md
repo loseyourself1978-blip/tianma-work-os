@@ -1,8 +1,8 @@
 # TWOS 1.0 · 安装与使用指南
 
-**适用：TWOS 1.0.3 / build 101.51，内置 Nyra 1.0.2 / build 102。** [English guide](OWNER_GUIDE_EN.md) · [实际交付与验证状态](CURRENT_DELIVERY.md)
+**适用：TWOS 1.0.4 / build 101.52，内置 Nyra 1.0.3 / build 103。** [English guide](OWNER_GUIDE_EN.md) · [实际交付与验证状态](CURRENT_DELIVERY.md)
 
-**安装与版本：使用本版双语指南中的 `START_HERE.html`、[发行回执](release-1.0/release.json)和实际 GitHub Release 状态。安装包已完成匹配工程回归、签名和公证；Owner 差量接受单独记录。**
+**安装与版本：使用本版双语指南中的 `START_HERE.html`、[发行回执](release-1.0/release.json)和实际 GitHub Release 状态。按匹配回执核对完整工程回归、签名和公证；Owner 差量接受单独记录。**
 在一个 macOS 窗口中，左侧官方 ChatGPT 网页用于讨论，右侧 TWOS Codex 客户端通过本机官方 App Server 执行。它使用官方执行协议，但不是把官方 Codex App 的整个图形界面嵌进网页。两侧账号语言设置相互独立。
 
 **先选一个场景，做到该场景的结束点即可。** A 适用于升级；B 仅适用于首次创建任务；C 适用于接续已有任务。升级完成后不必继续 B。已有业务不需要重新制作。
@@ -13,7 +13,7 @@
 
 ## A · 本次升级差量验收
 
-R3 修订 TWOS 1.0.3 / 101.51。按[普通回复／停止／夜璃状态差量指南](release-1.0/OWNER_REGRESSION_R3.zh-CN.md)检查。完成后到此结束，不继续 B，不重做已接受业务。本版匹配工程验证已完成；仅由 Owner 确认本次新增或修复入口的接受。
+R4 修订 TWOS 1.0.4 / 101.52。按[单一发送／共享复选框／明确缩放差量指南](release-1.0/SIMPLIFIED_UX_R4.zh-CN.md)检查。完成后到此结束，不继续 B，不重做已接受业务。匹配工程验证以发行回执为准；仅由 Owner 确认本次新增或修复入口的接受。
 
 ## B · 首次创建任务
 

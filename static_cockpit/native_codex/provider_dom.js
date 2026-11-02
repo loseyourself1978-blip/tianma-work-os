@@ -117,6 +117,28 @@
   // No sidebars, unrelated selection, quoted prior card or partial stream.
   return {state:'reply',text:body,message:identity(reply)};
  }
+ async function seedSnapshot(){
+  const result=latest(),user=latestUser();
+  window.twosSeedDocumentID ||= crypto.randomUUID();result.documentID=window.twosSeedDocumentID;
+  if(user){
+   let body=text(user);
+   if(speaker(user)==='user'){
+    const hs=headings(),next=hs[hs.indexOf(user)+1];
+    const range=document.createRange();range.setStartAfter(user);
+    if(next)range.setEndBefore(next);else range.setEnd(document.body,document.body.childNodes.length);
+    const fragment=range.cloneContents();
+    fragment.querySelectorAll(excluded+','+assistant+',textarea,[contenteditable=true],form,button,[role=button]').forEach(e=>e.remove());
+    body=fragment.textContent||'';
+   }
+   if(new TextEncoder().encode(body).length>200000)return {state:'unsupported',reason:'CURRENT_MESSAGE_TOO_LARGE'};
+   const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(body)))].map(x=>x.toString(16).padStart(2,'0')).join('');
+   if(latestUser()!==user)return {state:'unknown',reason:'SOURCE_TURN_CHANGED'};
+   result.userAnchor=(sourceKey(user)||'user-'+users().length)+':'+hash;
+  }
+  const current=latest();
+  if(current.state!==result.state||current.message!==result.message||current.text!==result.text)return {state:'unknown',reason:'SOURCE_TURN_CHANGED'};
+  return result;
+ }
  function navigationSafety(){
   const status=observe(),field=input();
   if(status.state!=='idle'||!field)return {state:status.state,hasDraft:true};
@@ -144,7 +166,7 @@
   }
   return latest();
  }
- window.twosProviderDOM={observe,latest,selectedOrLatest,replies,text,navigationSafety,composerSelection,replyState,identity,isStop,interrupted,speaker,headings,stoppedAfter};
+ window.twosProviderDOM={observe,latest,seedSnapshot,selectedOrLatest,replies,text,navigationSafety,composerSelection,replyState,identity,isStop,interrupted,speaker,headings,stoppedAfter};
  // Only a genuine user activation of a recognized native Stop control signals
  // the host. Isolated-world handler + native frame/origin checks stay in force.
  if(!window.twosNativeStopListener){

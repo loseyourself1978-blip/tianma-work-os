@@ -1,15 +1,13 @@
-# Use TWOS 1.0.3
+# Use TWOS 1.0.4
 
-Applies to TWOS 1.0.3 / 101.51. Start with the [R3 incremental guide](OWNER_REGRESSION_R3.en.md) after upgrading; stop at its end point. Existing accepted tasks do not need to be recreated.
+Applies to TWOS 1.0.4 / 101.52. Start with the [R4 incremental guide](SIMPLIFIED_UX_R4.en.md) after upgrading; stop at its end point. Existing accepted tasks do not need to be recreated.
 
-
-
-[R3 incremental instructions and exact boundaries](OWNER_REGRESSION_R3.en.md).
+[R4 incremental instructions and exact boundaries](SIMPLIFIED_UX_R4.en.md).
 
 
 Choose the path matching your situation; they are not one mandatory sequence.
 
-**Upgrade checks:** use the R2 incremental route above; retain accepted work, Claude login, outfits and transparent artwork. Do not follow the first-task route after completing the upgrade route.
+**Upgrade checks:** use the R4 incremental route above; retain accepted work, Claude login, outfits and transparent artwork. Do not follow the first-task route after completing the upgrade route.
 
 **First task:** follow [Install](INSTALL.en.md), select a folder and explicitly send the intended instruction once.
 
@@ -35,4 +33,4 @@ Sound is muted by default; explicit system speech/imported voice and procedural 
 
 [English / 简体中文](USER_GUIDE.zh-CN.md)
 
-[Evidence coverage / 验证范围](R2_VERIFICATION.en.md)
+[Evidence coverage / 验证范围](R4_VERIFICATION.en.md)

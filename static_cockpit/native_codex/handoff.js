@@ -1,127 +1,141 @@
-// Runs in a named WKContentWorld. Remote page scripts cannot call its native
-// handler. An explicit click sends this selected instruction to its bound web
-// target. Codex retains its separate execution permissions and directory gates.
+// Named WKContentWorld only. The host owns route/session/receipts; web content
+// cannot grant automatic sending or execution rights. One action area per pane.
 (() => {
  'use strict';
- const native=window.webkit?.messageHandlers?.twosHandoff;
- if(!native)return;
+ const native=window.webkit?.messageHandlers?.twosHandoff;if(!native)return;
  const post=value=>native.postMessage({...value,source:location.href});
- const cards=new Map(), messages=new WeakMap();let scheduled=false,returnAvailable=false;
- let target={provider:"Codex",binding:""};
- let zh=__TWOS_ZH__;const label=(en,cn)=>zh?cn:en;
- const targetLabel=(provider=target.provider)=>provider==='Codex'?label('Send to Codex','交付 Codex 执行'):label('Send to ','发送到 ')+provider;
- const receiptProvider=record=>record?.provider||'Codex';
- const sourceKey=el=>el.closest('[data-message-id]')?.getAttribute('data-message-id')||el.closest('[data-testid^="conversation-turn-"]')?.getAttribute('data-testid')||'';
+ let zh=__TWOS_ZH__,target={provider:'Codex',binding:''};
+ const label=(en,cn)=>zh?cn:en,put=(el,text)=>{if(el.textContent!==text)el.textContent=text;},flag=(el,key,value)=>{if(el[key]!==value)el[key]=value;};
+ let auto={enabled:false,supported:false,pending:false,state:'off',reason:''};
+ let scheduled=false,returnAvailable=false,active=null,serial=0;
+ const records=new Map();
+ const api=()=>window.twosProviderDOM;
  const visible=el=>el.getClientRects().length&&getComputedStyle(el).visibility!=='hidden';
- function instructionText(reply){
-  if(window.twosProviderDOM?.text)return window.twosProviderDOM.text(reply);
-  // Official replies can contain follow-up suggestions and code-copy controls.
-  // Read rendered text with those controls temporarily excluded, preserving
-  // paragraphs/code whitespace and restoring the site's exact inline styles.
-  const controls=[...reply.querySelectorAll('button,[role="button"],[data-twos-native-card]')].map(el=>[el,el.getAttribute('style')]);
-  try{for(const [el,style] of controls)el.setAttribute('style',(style||'')+';display:none!important;');return reply.innerText||'';}
-  finally{for(const [el,style] of controls)style===null?el.removeAttribute('style'):el.setAttribute('style',style);}
- }
+ const composer=()=>api()?.composerSelection().element||null;
+ const generating=()=>api()?.observe().state==='running';
+ const replies=()=>api()?.replies()||[];
+ const turnHeadings=()=>api()?.headings()||[];
+ const speaker=heading=>api()?.speaker(heading);
  const messageSelector='[data-message-author-role="assistant"],[data-markdown-text-style="assistant-message"]';
  const excludedReceipt='textarea,[contenteditable="true"],[data-twos-native-card]';
- const speaker=heading=>window.twosProviderDOM?.speaker(heading);
- const turnHeadings=()=>window.twosProviderDOM?.headings()||[];
- function composer(){return window.twosProviderDOM?.composerSelection().element||null;}
- function generating(){return window.twosProviderDOM?.observe().state==='running';}
- function replies(){return window.twosProviderDOM?.replies()||[];}
- const eligibility=reply=>window.twosProviderDOM?.replyState(reply)||{complete:false,reason:'OBSERVER_UNAVAILABLE'};
- const reasonText=reason=>({
-  AMBIGUOUS_COMPOSER:label('More than one message input is visible. Sending is paused until the input is unambiguous.','检测到多个独立输入框。确认输入区域后才可发送。'),
-  INPUT_UNAVAILABLE:label('The message input is unavailable. Refresh this check after the page loads.','暂未识别到输入框。页面就绪后可重新检查。'),
-  VISIBLE_GENERATION_CONTROL:label('This pane is generating. Wait for the complete reply.','此侧正在生成，请等待完整回复。'),
-  REPLY_STREAMING:label('This reply is still streaming.','此回复仍在生成。'),
-  REPLY_INTERRUPTED:label('The website reports that this reply was interrupted. It cannot be sent as a complete reply.','网站显示此回复已中断，不能作为完整回复发送。'),
-  LATEST_USER_AWAITS_REPLY:label('Waiting for the latest user message to receive a complete reply. An older reply will not be used.','等待最新消息的完整回复，不会使用旧回复代替。')
- }[reason]||label('Reply completeness needs verification: ','回复完整性待核验：')+reason);
- function updateEligibility(card){
-  const state=eligibility(card.reply);
-  const disabled=!state.complete||Boolean(card.record&&!card.record.retryable&&!(receiptProvider(card.record)==='Codex'&&['cancelled','rejected'].includes(card.record.state)));
-  if(card.button.disabled!==disabled)card.button.disabled=disabled;
-  if(!card.record){const note=state.complete?'':reasonText(state.reason);if(card.status.textContent!==note)card.status.textContent=note;if(card.recheck.hidden!==state.complete)card.recheck.hidden=state.complete;}
+ const instructionText=reply=>api()?.text(reply)||'';
+ const targetLabel=()=>target.provider==='Codex'?label('Send to Codex','交付 Codex 执行'):label('Send to ','发送到 ')+target.provider;
+ // Route revision prevents stale dispatch; persisted destination identity prevents
+ // an already delivered reply from regaining Send after refresh or App restart.
+ const recordedTarget=record=>!record.binding||record.binding===target.binding||record.binding.split('|').slice(1).join('|')===target.binding.split('|').slice(1).join('|');
+ const sourceMatches=record=>{try{const a=new URL(record.source),b=new URL(location.href);a.search=b.search='';a.hash=b.hash='';return a.href===b.href;}catch{return false;}};
+ const digest=async text=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))].map(x=>x.toString(16).padStart(2,'0')).join('');
+ const reasonText=r=>({
+  AMBIGUOUS_COMPOSER:label('Message input is ambiguous. Sending is paused.','输入区域不明确，发送已暂停。'),
+  INPUT_UNAVAILABLE:label('Message input is not available yet.','输入区域尚不可用。'),
+  REPLY_INTERRUPTED:label('Reply interrupted; it will not be sent as complete.','回复已中断，不会作为完整回复发送。'),
+  LATEST_USER_AWAITS_REPLY:label('Waiting for the current reply.','等待当前回复。'),
+  OBSERVER_UNAVAILABLE:label('Reply status unavailable.','回复状态暂不可用。')
+ }[r]||label('Reply status needs verification: ','回复状态待核验：')+r);
+ function makeArea(){
+  const box=document.createElement('section');box.setAttribute('data-twos-native-card','');
+  box.style.cssText='margin:12px 0;font:13px -apple-system,sans-serif;overflow-wrap:anywhere;color:inherit;';
+  const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:10px;flex-wrap:wrap;';
+  const button=document.createElement('button');button.type='button';button.dataset.twosPrimary='';
+  button.style.cssText='padding:8px 12px;border-radius:8px;border:1px solid #8887;background:transparent;color:inherit;cursor:pointer;';
+  const toggleLabel=document.createElement('label');toggleLabel.style.cssText='display:inline-flex;align-items:center;gap:5px;cursor:pointer;';
+  const toggle=document.createElement('input');toggle.type='checkbox';toggle.dataset.twosAutomatic='';
+  // Provider CSS resets native inputs. Keep this scoped control visibly native
+  // without changing any of the website's own inputs or global styles.
+  toggle.style.cssText='appearance:auto!important;-webkit-appearance:checkbox!important;display:inline-block!important;position:static!important;width:16px!important;height:16px!important;margin:0!important;opacity:1!important;visibility:visible!important;clip:auto!important;clip-path:none!important;flex:0 0 16px;accent-color:#257763;';
+  const toggleText=document.createElement('span');toggleLabel.append(toggle,toggleText);
+  const status=document.createElement('div');status.setAttribute('role','status');status.style.cssText='margin-top:6px;white-space:pre-wrap;';
+  const details=document.createElement('details'),summary=document.createElement('summary');summary.textContent=label('Details','详情');
+  const preview=document.createElement('pre');preview.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto;';
+  const check=document.createElement('button');check.type='button';check.hidden=true;
+  const retry=document.createElement('button');retry.type='button';retry.hidden=true;
+  const result=document.createElement('div');result.style.cssText='white-space:pre-wrap;';
+  details.append(summary,preview,check,retry,result);row.append(button,toggleLabel);box.append(row,status,details);
+  const card={box,button,toggle,toggleText,toggleLabel,status,details,summary,preview,check,retry,result,reply:null,message:'',record:null,pending:false,version:++serial};
+  button.addEventListener('click',event=>{
+   if(!event.isTrusted)return;
+   if(auto.enabled){post({action:'stopAutomaticReplies'});return;}
+   const current=api()?.latest();
+   if(card!==active||card.pending||!card.reply?.isConnected||current?.state!=='reply'||current.message!==card.message||(card.record&&recordedTarget(card.record)))return;
+   const text=instructionText(card.reply);if(text!==current.text||!text.trim())return;
+   card.pending=true;render(card);post({action:'handoff',text,message:card.message,targetBinding:target.binding});
+  });
+  toggle.addEventListener('change',event=>{
+   if(!event.isTrusted){toggle.checked=auto.enabled;return;}
+   post({action:'automaticReplies',enabled:toggle.checked,targetBinding:target.binding});
+   // Reflect the host acknowledgement, never a page-local success boolean.
+   toggle.checked=auto.enabled;
+  });
+  check.addEventListener('click',event=>{
+   if(!event.isTrusted||!card.record)return;
+   put(status,label('Checking delivery… Nothing is resent.','正在核验投递，不会重新发送。'));check.disabled=true;
+   post({action:'inspectHandoff',id:card.record.id});
+  });
+  retry.addEventListener('click',event=>{if(event.isTrusted&&card.record?.retryable)post({action:'retryHandoff',id:card.record.id});});
+  details.addEventListener('toggle',()=>{if(details.open)renderDetails(card);});
+  return card;
+ }
+ function renderDetails(card){
+  put(card.preview,card.reply?instructionText(card.reply):'');
+  const r=card.record;
+  flag(card.check,'hidden',!r||r.provider==='Codex');put(card.check,label('Check delivery','核验投递'));
+  flag(card.check,'disabled',r?.inspection==='checking');
+  flag(card.retry,'hidden',!r?.retryable);put(card.retry,label('Retry this handoff','重试此交接'));
+  put(card.result,r?[r.provider,r.state,r.businessResult,r.inspection,r.error,r.result].filter(Boolean).join('\n'):'');
+ }
+ function render(card){
+  const current=api()?.latest(),complete=current?.state==='reply'&&current.message===card.message&&card.reply?.isConnected;
+  const blocked=Boolean((card.record&&recordedTarget(card.record))||card.pending);
+  flag(card.button,'hidden',!auto.enabled&&(!complete||blocked));
+  flag(card.button,'disabled',false);
+  put(card.button,auto.enabled?label('Stop auto-send','停止自动发送'):targetLabel());
+  flag(card.toggle,'checked',auto.enabled);flag(card.toggle,'disabled',auto.pending||(!auto.supported&&!auto.enabled));
+  put(card.toggleText,label('Automatically send replies to ','自动发送回复到 ')+target.provider);
+  if(card.toggle.getAttribute('aria-label')!==card.toggleText.textContent)card.toggle.setAttribute('aria-label',card.toggleText.textContent);
+  card.toggle.title=auto.supported?'':label('Auto-send shares website replies only. Codex execution retains separate permissions.','自动发送仅交流网页回复。Codex 执行保留独立权限。');
+  put(card.summary,label('Details','详情'));
+  let note='';
+  if(auto.enabled)note=auto.reason||label('Auto-send on · ','自动发送中 · ')+(auto.count||0);
+  else if(auto.state==='paused')note=label('Auto-send paused · ','自动发送已暂停 · ')+(auto.reason||'');
+  else if(card.record){
+   const r=card.record;note=['sent','reply','accepted'].includes(r.state)?label('Sent to ','已发送到 ')+(r.provider||'Codex'):
+    ['sending','preparing','queued'].includes(r.state)?label('Sending…','发送中…'):label('See details · ','详情：')+(r.state||'unknown');
+  }else if(card.pending)note=label('Sending…','发送中…');
+  else if(current?.state==='unknown'&&!['NO_COMPLETE_REPLY','EMPTY_REPLY','LATEST_USER_AWAITS_REPLY'].includes(current.reason))note=reasonText(current.reason);
+  put(card.status,note);flag(card.status,'hidden',!note);
+  flag(card.details,'hidden',!card.record&&!complete);
+  if(card.details.open)renderDetails(card);
+ }
+ async function attachReceipt(card,record){
+  if(!sourceMatches(record)||!card.reply||record.message!==card.message&&record.message!=='latest-rendered-reply')return;
+  const version=card.version,text=instructionText(card.reply);
+  if(await digest(text)!==record.hash)return;
+  if(active!==card||version!==card.version||!card.reply.isConnected||instructionText(card.reply)!==text)return;
+  if(card.record&&card.record.id!==record.id&&(card.record.createdAt||0)>(record.createdAt||0))return;
+  card.record=record;card.pending=false;render(card);
  }
  function inspect(){
-  scheduled=false;
-  // Login/challenge pages stay untouched; no card injection or automatic send.
-  const phase=window.twosProviderDOM?.observe();
-  if(phase&&phase.state==='waiting_user')return;
-  // Never send incomplete streaming content just because a DOM node appeared.
-  const busy=generating(),candidates=replies();
-  const input=composer();
+  scheduled=false;const phase=api()?.observe();
+  if(phase?.state==='waiting_user'){if(active)flag(active.box,'hidden',true);return;}
+  const list=replies(),reply=list.at(-1)||null,input=composer();
   const available=phase?.state==='idle'&&input&&!(input instanceof HTMLTextAreaElement?input.value:input.innerText).trim();
   const becameAvailable=available&&!returnAvailable;returnAvailable=Boolean(available);
   let added=false;
-  for(const [reply,card] of cards){
-   if(!reply.isConnected||(!card.record&&!candidates.includes(reply))){card.box.remove();cards.delete(reply);messages.delete(reply);}
-   else updateEligibility(card);
+  if(!active||active.reply!==reply||!active.box.isConnected){
+   active?.box.remove();active=makeArea();active.reply=reply;active.message=reply?api().identity(reply):'';added=true;
+   if(reply)reply.insertAdjacentElement('afterend',active.box);
+   else if(input)input.closest('form')?.insertAdjacentElement('beforebegin',active.box)||input.insertAdjacentElement('beforebegin',active.box);
+   else document.body.append(active.box);
+   for(const r of records.values())attachReceipt(active,r);
   }
-  for(const reply of candidates){
-   if(messages.has(reply))continue;
-   const box=document.createElement('section');box.setAttribute('data-twos-native-card','');box.style.cssText='margin:16px 0;padding:12px;border:1px solid #8885;border-radius:12px;font:14px -apple-system,sans-serif;overflow-wrap:anywhere;';
-   const button=document.createElement('button');button.type='button';button.textContent=targetLabel();button.style.cssText='padding:9px 14px;border-radius:8px;border:1px solid #8887;cursor:pointer;background:transparent;color:inherit;';
-   const status=document.createElement('p');status.style.cssText='margin:8px 0 0;white-space:pre-wrap;';
-   const details=document.createElement('details');details.dataset.twosResult='';details.hidden=true;const summary=document.createElement('summary');summary.textContent=label('Codex result','Codex 执行结果');const result=document.createElement('div');result.style.cssText='white-space:pre-wrap;line-height:1.6;margin-top:10px;';details.append(summary,result);
-   const discuss=document.createElement('button');discuss.type='button';discuss.hidden=true;discuss.textContent=label('Continue discussing this result','继续讨论此结果');discuss.style.cssText=button.style.cssText;
-   const sendReply=document.createElement('button');sendReply.type='button';sendReply.hidden=true;sendReply.style.cssText=button.style.cssText;sendReply.textContent=label('Send reply to the other pane','将回复发送到另一侧');
-   const check=document.createElement('button');check.type='button';check.hidden=true;check.textContent=label('Check delivery','核验送达');check.style.cssText=button.style.cssText;
-   const preview=document.createElement('details');preview.dataset.twosSendPreview='';const previewLabel=document.createElement('summary');previewLabel.textContent=label('View selected content','查看本次发送内容');const previewText=document.createElement('div');previewText.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;';preview.append(previewLabel,previewText);
-   const recheck=document.createElement('button');recheck.type='button';recheck.textContent=label('Check reply readiness','重新检查回复状态');recheck.style.cssText=button.style.cssText;recheck.addEventListener('click',event=>{if(event.isTrusted)inspect();});
-   const card={reply,box,button,status,details,result,discuss,check,sendReply,preview,recheck,message:window.twosProviderDOM?.identity(reply)||sourceKey(reply),record:null};added=true;messages.set(reply,card);cards.set(reply,card);
-   preview.addEventListener('toggle',()=>{if(preview.open)previewText.textContent=instructionText(reply);});
-   button.addEventListener('click',event=>{if(!event.isTrusted||!eligibility(reply).complete||!reply.isConnected)return;if(card.record?.retryable){post({action:'retryHandoff',id:card.record.id});return;}if(card.record&&receiptProvider(card.record)!=='Codex')return;const text=instructionText(reply);if(!text.trim())return;post({action:'handoff',text,message:card.message,targetBinding:target.binding});});
-   discuss.addEventListener('click',event=>{if(event.isTrusted&&card.record)post({action:'discuss',id:card.record.id});});
-   check.addEventListener('click',event=>{if(event.isTrusted&&card.record){status.textContent=label('Checking delivery… Nothing is resent.','正在检查投递… 不会重新发送。');check.disabled=true;post({action:'inspectHandoff',id:card.record.id});}});
-   sendReply.addEventListener('click',event=>{if(event.isTrusted&&card.record)post({action:'sendReply',id:card.record.id});});
-   box.append(button,recheck,check,status,preview,details,sendReply,discuss);reply.insertAdjacentElement('afterend',box);updateEligibility(card);
-  }
+  flag(active.box,'hidden',false);render(active);
   if(added||becameAvailable)post({action:'ready'});
  }
- window.twosHandoffUpdate=async record=>{
-  inspect();
-  for(const card of cards.values()){
-   if(!card.reply.isConnected)continue;
-   if(record.message&&card.message!==record.message){
-    // Some sites expose no durable DOM message ID. A toolbar handoff's
-    // latest-answer fallback may bind only this latest card, still checked
-    // below against the exact persisted body hash and native conversation.
-    if(record.message!=='latest-rendered-reply'||card.reply!==replies().at(-1))continue;
-   }
-   const digest=async text=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))].map(x=>x.toString(16).padStart(2,'0')).join('');
-   const hash=await digest(instructionText(card.reply));
-   // Historical receipts are immutable, including older extraction formats.
-   if(hash!==record.hash&&await digest(card.reply.innerText||'')!==record.hash)continue;
-   if(card.record&&card.record.id!==record.id&&(card.record.createdAt||0)>(record.createdAt||0))continue;
-   card.record=record;
-   const provider=receiptProvider(record);card.details.querySelector('summary').textContent=provider+label(' result',' 结果');
-   const states={provider_limited:label('Provider limit or capacity · paused','网站限制或容量不足 · 已暂停'),queued:label('Queued for the original conversation','已在原会话排队'),queue_paused:label('Queue paused · resume from Handoff history','队列已暂停 · 请从交接记录继续'),busy:label('Target is replying · handoff saved','目标正在回复 · 交接已保存'),not_loaded:label('Target input is not available','目标输入尚不可用'),draft_conflict:label('Existing website draft preserved · not sent','网站已有草稿，已保留 · 未发送'),preparing:label('Verifying target','正在核对目标'),sending:label('Sending','发送中'),accepted:provider+label(' accepted',' 已接收'),sent:label('Sent to ','已发送到 ')+provider,draft:label('Draft only · send in the website','仅填入草稿 · 请在网站发送'),verification:label('Human verification required','需要真人验证'),login:label('Sign in required','需要登录'),target_changed:label('Destination changed · not sent','目标已变化 · 未发送'),unsupported:label('Website sending is not supported','不支持网站自动发送'),reply:label('Reply received · no local file created','已收到代码/回复 · 未创建本机文件'),running:label('Running','执行中'),completed:label('Execution channel finished','执行通道已结束'),failed:label('Failed','失败'),interrupted:label('Stopped','已停止'),cancelled:label('Queue cancelled','已从队列删除'),unknown:label('Delivery needs verification','送达状态待核验'),rejected:label('Not delivered','未送达')};
-   const business={blocked:label('Task BLOCKED · inspect the reason below','任务受阻 BLOCKED · 原因见下方'),failed:label('Task failed','任务失败'),partial:label('Task partly completed','任务部分完成'),reported_pass:label('Executor reports PASS · artifact acceptance not verified','执行器回报 PASS · 产物尚待验收'),unverified:label('Business result not verified','业务结果尚未核验')};
-   card.status.textContent=[business[record.businessResult],states[record.state]||record.state,record.cwd,record.model,record.effort,provider==='Codex'?record.error:null,record.inspection==='checking'?label('Checking delivery… Nothing is resent.','正在检查投递… 不会重新发送。'):record.inspection?label('Last check: ','最近检查：')+record.inspection:null].filter(Boolean).join('\n');
-   card.check.disabled=record.inspection==='checking';card.sendReply.hidden=provider==='Codex'||record.state!=='reply'||!record.result;
-   card.details.hidden=!record.result;card.result.textContent=record.result||'';card.discuss.hidden=!record.result||provider!=='Codex';card.check.hidden=provider==='Codex';card.check.textContent=label('Check delivery','核验送达');if(record.retryable)card.details.open=true;
-   card.button.disabled=!record.retryable&&!(provider==='Codex'&&['cancelled','rejected'].includes(record.state));card.button.textContent=record.retryable?targetLabel(provider)+(provider==='Codex'?label(' · new attempt',' · 新一次复验'):label(' · confirm destination',' · 核对目标')):(provider==='Codex'?label('Sent to Codex','已交付 Codex'):provider+label(' handoff',' 交接'));
-   card.recheck.hidden=true;
-   if(record.state==='draft')card.button.textContent=label('Continue draft to ','继续发送草稿到 ')+provider;
-  }
- };
-
- window.twosHandoffTarget=value=>{
-  if(!value||typeof value.provider!=='string'||typeof value.binding!=='string')return;
-  target=value;for(const card of cards.values())if(!card.record)card.button.textContent=targetLabel();
- };
- window.twosHandoffLanguage=value=>{
-  zh=Boolean(value);
-  for(const card of cards.values()){
-   if(!card.record){card.button.textContent=targetLabel();updateEligibility(card);}
-   card.recheck.textContent=label('Check reply readiness','重新检查回复状态');
-   card.preview.querySelector('summary').textContent=label('View selected content','查看本次发送内容');card.sendReply.textContent=label('Send reply to the other pane','将回复发送到另一侧');
-   card.details.querySelector('summary').textContent=label('Codex result','Codex 执行结果');card.discuss.textContent=label('Continue discussing this result','继续讨论此结果');
-   if(card.record)window.twosHandoffUpdate(card.record);
-  }
- };
+ window.twosHandoffUpdate=async record=>{if(!sourceMatches(record))return;records.set(record.id,record);inspect();if(active)await attachReceipt(active,record);};
+ window.twosHandoffNotice=text=>{if(active&&!active.record){active.pending=false;render(active);put(active.status,text);flag(active.status,'hidden',!text);}};
+ window.twosHandoffTarget=value=>{if(!value||typeof value.provider!=='string'||typeof value.binding!=='string')return;target=value;inspect();};
+ window.twosHandoffAutoState=value=>{if(!value||typeof value.enabled!=='boolean')return;auto=value;inspect();};
+ window.twosHandoffLanguage=value=>{zh=Boolean(value);inspect();};
  window.twosDeliverResult=async ({id,text,source,inspectOnly})=>{
   const same=()=>{const url=new URL(location.href);url.search='';url.hash='';return url.href===source;};
   const marker='[TWOS delivery '+id+']';

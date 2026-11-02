@@ -257,7 +257,6 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
     let sound = NyraAudio()
     var soundPopover: NSPopover?
     var hoverTimer: Timer?
-    var resizeStartHeight: CGFloat = 280
     let animationNames = ["idle", "working", "gaze_head", "verified_success", "running_right", "running_left", "waving", "jumping", "failed", "waiting", "review", "look_around"]
     let animationLabels = ["待机 / Idle", "工作 / Work", "抬头 / Look up", "庆祝 / Celebrate", "右跑 / Run right", "左跑 / Run left", "挥手 / Wave", "跳跃 / Jump", "失落 / Sad", "等待 / Wait", "阅读 / Read", "环顾 / Look around"]
     var desiredHeight: CGFloat = 400
@@ -409,8 +408,9 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
             ("arrow.up.left.and.arrow.down.right", #selector(fullscreen), "透明舞台 / Transparent stage"),
             ("speaker.wave.2", #selector(showSound), "声音 · 试听 / 静音 / 音量"),
             ("play.fill", #selector(showAnimationMenu), "动作 / Actions"),
-            ("minus", #selector(smaller), "缩小夜璃"),
-            ("plus", #selector(larger), "放大夜璃"),
+            ("minus", #selector(smaller), "缩小 / Smaller"),
+            ("plus", #selector(larger), "放大 / Larger"),
+            ("arrow.counterclockwise", #selector(resetSize), "恢复默认大小 / Reset size"),
             ("eye.slash", #selector(hideAll), "隐藏夜璃 · 菜单栏可恢复"),
             ("power", #selector(quit), "退出 / Quit")]
         panelView.controls = specs.map { orbitButton($0.0, title: $0.2, target: self, action: $0.1) }
@@ -418,13 +418,6 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         panelView.art.onInput = { [weak self] name in self?.receiveInput(name) }
         panelView.configureHub()
         panelView.onStage = { [weak self] in self?.fullscreen() }
-        panelView.grip.onBegin = { [weak self] in self?.resizeStartHeight = self?.desiredHeight ?? 280 }
-        panelView.grip.onResize = { [weak self] delta in
-            guard let self = self else { return }
-            self.desiredHeight = min(max(self.resizeStartHeight+delta,160),max(160,self.currentScreen().visibleFrame.height-64))
-            self.setPanelSize()
-        }
-        panelView.grip.onEnd = { [weak self] in self?.saveSettings(); self?.writePlaybackState("drag_resize") }
         let screen = currentScreen().visibleFrame
         panel.setFrameOrigin(NSPoint(x: screen.maxX-panel.frame.width-24, y: screen.minY+40))
     }
@@ -451,6 +444,10 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     @objc func smaller() { resize(factor: 0.85) }
     @objc func larger() { resize(factor: 1.18) }
+    @objc func resetSize() {
+        desiredHeight = 280; stageView?.art.zoom = 1; stageView?.art.needsDisplay = true
+        setPanelSize(); saveSettings(); writePlaybackState("reset_size")
+    }
     @objc func resetPosition() {
         let screen = currentScreen().visibleFrame
         panel.setFrameOrigin(NSPoint(x: screen.maxX-panel.frame.width-24, y: screen.minY+40))
@@ -755,6 +752,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         wardrobeItem.submenu = outfits
         menu.addItem(.separator())
         item("放大 / Larger", #selector(larger)); item("缩小 / Smaller", #selector(smaller))
+        item("恢复默认大小 / Reset size", #selector(resetSize))
         item("复位位置 / Reset position", #selector(resetPosition))
         let passthrough = item("整窗穿透 / Pass through (restore from menu bar)", #selector(togglePassThrough))
         passthrough.state = passThrough ? .on : .off

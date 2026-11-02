@@ -32,7 +32,7 @@ struct PairedDialogue: Codable {
     let providers: [String]
     var conversations: [String]
     let roles: [String]
-    let firstText: String
+    var firstText: String
     let maxExchanges: Int
     let duration: TimeInterval
     let createdAt: TimeInterval
@@ -48,17 +48,26 @@ struct PairedDialogue: Codable {
     var untilStopped: Bool?
     var firstMessage: String?
     var firstHash: String?
+    // R4 shares the existing engine and ledger. Optional fields decode old history.
+    var checkboxMode: Bool?
+    var firstSource: Int?
+    var awaitingSeed: Bool?
+    var seedAfter: String?
+    var seedUser: String?
+    var seedDocument: String?
     var deadline: TimeInterval { untilStopped == true ? .infinity : createdAt + duration }
     var roundLimitReached: Bool { untilStopped != true && completedCount >= maxExchanges }
     var progressLabel: String { untilStopped == true ? "\(completedCount)" : "\(completedCount)/\(maxExchanges)" }
-    var nextTarget: Int { completedCount.isMultiple(of:2) ? 1 : 0 }
+    var nextTarget: Int { completedCount.isMultiple(of:2) ? 1-(firstSource ?? 0) : (firstSource ?? 0) }
     var valid: Bool {
         providers.count==2 && Set(providers).count==2 && providers.allSatisfy{["ChatGPT","Claude","DeepSeek"].contains($0)} &&
         conversations.count==2 && roles.count==2 &&
         (untilStopped == true ? (maxExchanges==0 && duration==0) : ((2...100).contains(maxExchanges) && maxExchanges.isMultiple(of:2) && duration>0 && duration<=7200)) &&
         sentCount>=0 && completedCount>=0 && completedCount<=sentCount && (untilStopped == true || sentCount<=maxExchanges) &&
         createdAt.isFinite && duration.isFinite &&
-        !firstText.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty && firstText.utf8.count<=150000 &&
+        (firstSource == nil || (0...1).contains(firstSource!)) &&
+        (checkboxMode != true || (untilStopped == true && !stopOnConcession && roles.allSatisfy(\.isEmpty))) &&
+        (awaitingSeed == true && checkboxMode == true || !firstText.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty) && firstText.utf8.count<=200000 &&
         ["paused","running","stopped","finished"].contains(state)
     }
     static func concession(_ text: String) -> Bool {
@@ -105,6 +114,156 @@ struct PaneActivity {
 }
 
 extension IntegratedWorkbench {
+    func refreshAutomaticReplyState() {
+        let supported=kinds.allSatisfy{["ChatGPT","Claude","DeepSeek"].contains($0)} && kinds[0] != kinds[1]
+        let running=dialogue?.state == "running"
+        let rawReason=dialogue?.reason ?? ""
+        let observationPrefix="Reply observation needs attention: "
+        let reason=rawReason.hasPrefix(observationPrefix) ? translate("Reply observation needs attention")+": "+translate(String(rawReason.dropFirst(observationPrefix.count))) : translate(rawReason)
+        let value:[String:Any] = ["enabled":running || dialogueStartPending,"supported":supported,
+            "pending":dialogueStartPending,"state":dialogue?.state ?? "off",
+            "reason":dialogueStartPending ? translate("Checking the previous delivery · nothing is resent") : reason,"count":dialogue?.completedCount ?? 0]
+        webPanes.values.forEach{$0.setAutomaticReplyState(value)}
+    }
+
+    // A checkbox authorizes one shared session, not another dispatcher. Freeze
+    // both conversations and the explicit file list before looking for a seed.
+    func setAutomaticReplies(_ enabled:Bool,from side:Int,source:URL) {
+        guard enabled else {stopDialogue();refreshAutomaticReplyState();return}
+        guard !dialogueStartPending,dialogue?.state != "running" else {refreshAutomaticReplyState();return}
+        guard !webLedgerError,(0...1).contains(side),kinds.allSatisfy({["ChatGPT","Claude","DeepSeek"].contains($0)}),kinds[0] != kinds[1],
+              let a=webPanes[0],let b=webPanes[1],
+              let au=NativeWorkbench.restorableURL(a.web.url,service:a.serviceHome),
+              let bu=NativeWorkbench.restorableURL(b.web.url,service:b.serviceHome),
+              source.absoluteString == [au.absoluteString,bu.absoluteString][side] else {
+            webPanes[side]?.showNotice("Auto-send requires two ready website conversations. No execution rights are granted.");refreshAutomaticReplyState();return
+        }
+        // A paused in-flight exchange keeps its scope; one explicit re-enable
+        // reconciles it. It cannot acquire files or a new recipient on resume.
+        if let d=dialogue,d.checkboxMode==true,d.state=="paused",d.pendingID != nil {
+            guard dialogueTargetsMatch(d) else {
+                webPanes[side]?.showNotice("Open both bound conversations before continuing. Nothing was sent.");refreshAutomaticReplyState();return
+            }
+            resumeDialogue();return
+        }
+        if let id=dialogue?.pendingID,let r=webTransfers.first(where:{$0.id==id}),r.mayHaveSent==true,
+           !["reply","generation_stopped"].contains(r.state) {
+            // Stop preserves an in-flight receipt. A later explicit checkbox
+            // first reconciles it read-only, without resuming the stopped loop
+            // or making normal success depend on a separate Check button.
+            guard currentTargetMatches(r),let target=webPanes[r.targetPane] else {
+                webPanes[side]?.showNotice("The previous delivery belongs to another conversation. Restore that conversation to reconcile it; nothing was resent.");refreshAutomaticReplyState();return
+            }
+            let token=UUID().uuidString,signature=routeSignature(side)
+            let selectedFiles=webFileSelections
+            dialogueStartToken=token;dialogueStartPending=true;refreshAutomaticReplyState()
+            target.webTransfer(r.request(inspectOnly:true)) { [weak self,weak target] response in
+                guard let self=self,self.dialogueStartToken==token else{return}
+                self.dialogueStartPending=false;self.dialogueStartToken=nil
+                guard self.dialogue?.state != "running",self.dialogue?.pendingID==id,
+                      let target=target,self.webPanes[r.targetPane] === target,
+                      self.routeSignature(side)==signature,self.currentTargetMatches(r),
+                      self.webFileSelections==selectedFiles else {self.refreshAutomaticReplyState();return}
+                self.applyWebResponse(id,response:response)
+                guard let observed=self.webTransfers.first(where:{$0.id==id}),["reply","generation_stopped"].contains(observed.state) else {
+                    self.webPanes[side]?.showNotice("The previous delivery is still generating or cannot be confirmed. Nothing was resent. Try auto-send again after it finishes; details are in More.")
+                    self.refreshAutomaticReplyState();return
+                }
+                self.setAutomaticReplies(true,from:side,source:source)
+            }
+            return
+        }
+        let files=(webFileSelections[0] ?? [])+(webFileSelections[1] ?? [])
+        guard (try? payloadFiles(files)) != nil else {
+            webPanes[side]?.showNotice("An attachment is missing, changed or too large. Nothing was sent.");refreshAutomaticReplyState();return
+        }
+        dialogue=PairedDialogue(id:UUID().uuidString,providers:kinds,conversations:[au.absoluteString,bu.absoluteString],roles:["",""],firstText:"",maxExchanges:0,duration:0,createdAt:Date().timeIntervalSince1970,state:"running",reason:"Waiting for a complete new reply",files:files,untilStopped:true,checkboxMode:true,firstSource:side,awaitingSeed:true)
+        guard dialogue?.valid==true,saveDialogue() else{return}
+        readAutomaticSeed(dialogue!)
+    }
+
+    // Read-only while generating or waiting for a new reply. An already consumed
+    // auto reply is a wait boundary, never a seed to replay after Stop/restart.
+    func readAutomaticSeed(_ d:PairedDialogue) {
+        let side=d.firstSource ?? 0
+        guard let pane=webPanes[side] else {pauseDialogue("Source pane unavailable");return}
+        // Only an observed same-document /new -> assigned conversation change
+        // may continue a waiting first reply. A different page or user turn
+        // cannot acquire the checkbox's permission by navigating the pane.
+        let actual=NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome)
+        let firstNavigation=d.seedUser != nil && d.seedDocument != nil && d.pendingID==nil &&
+            ["","/","/new"].contains(URL(string:d.conversations[side])?.path ?? "invalid") &&
+            kinds==d.providers && actual != nil &&
+            webPanes[1-side].flatMap{NativeWorkbench.restorableURL($0.web.url,service:$0.serviceHome)}?.absoluteString==d.conversations[1-side]
+        guard dialogueTargetsMatch(d) || firstNavigation else {
+            pauseDialogue("A participant or conversation changed. Restore the bound conversations before continuing.");return
+        }
+        dialogueTickInFlight=true
+        pane.providerSnapshot(includeReply:true,latestOnly:true,seedOnly:true) { [weak self,weak pane] result in
+            guard let self=self else{return};self.dialogueTickInFlight=false
+            guard self.dialogue?.id==d.id,self.dialogue?.state=="running",self.dialogue?.awaitingSeed==true,
+                  let pane=pane,self.webPanes[side] === pane else{return}
+            let user=result["userAnchor"] as? String
+            if !self.dialogueTargetsMatch(d) {
+                guard firstNavigation,result["documentID"] as? String==d.seedDocument,user==d.seedUser,
+                      let actual=actual,NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome)==actual,
+                      self.kinds==d.providers,
+                      self.webPanes[1-side].flatMap({NativeWorkbench.restorableURL($0.web.url,service:$0.serviceHome)})?.absoluteString==d.conversations[1-side] else {
+                    self.pauseDialogue("A participant or conversation changed. Restore the bound conversations before continuing.");return
+                }
+                self.dialogue?.conversations[side]=actual.absoluteString
+                guard self.saveDialogue() else{return}
+            }
+            if self.dialogue?.seedAfter==nil,let bound=self.dialogue?.seedUser,bound != user {
+                self.pauseDialogue("The selected source turn changed. Auto-send is paused.");return
+            }
+            if self.dialogue?.seedAfter==nil,self.dialogue?.seedUser==nil,let user=user {
+                self.dialogue?.seedUser=user;self.dialogue?.seedDocument=result["documentID"] as? String
+                guard self.saveDialogue() else{return}
+            }
+            guard result["state"] as? String=="reply",let text=result["text"] as? String,!text.isEmpty,
+                  let message=result["message"] as? String else {
+                let reason=result["reason"] as? String ?? "OBSERVER_UNAVAILABLE"
+                if result["state"] as? String=="running" || ["LATEST_USER_AWAITS_REPLY","NO_COMPLETE_REPLY","EMPTY_REPLY"].contains(reason) {
+                    self.dialogue?.reason="Waiting for a complete new reply";self.refreshAutomaticReplyState();return
+                }
+                self.pauseDialogue("Reply observation needs attention: " + reason);return
+            }
+            let hash=NativeCodex.digest(Data(text.utf8)),key=message+":"+hash
+            if self.dialogue?.seedAfter==key {return}
+            let matches=self.webTransfers.indices.filter { index in
+                let r=self.webTransfers[index]
+                // A cancelled/refused intent that is proven unsent is history,
+                // not a consumed reply. A new checkbox action may create a new
+                // receipt without rewriting that failed/cancelled attempt.
+                if r.mayHaveSent != true,["cancelled","rejected","target_changed","verification","login","not_loaded","draft_conflict","unsupported"].contains(r.state) {return false}
+                return r.source==self.dialogue?.conversations[side] && (r.message==message || r.message.hasPrefix("dialogue:")) && r.hash==hash &&
+                    r.provider==d.providers[1-side] && r.targetPane==1-side
+            }
+            guard matches.count<=1 else {self.pauseDialogue("Multiple receipts match this reply. Inspect history; nothing is resent.");return}
+            if let i=matches.first {
+                let r=self.webTransfers[i]
+                guard (r.resolvedURL ?? r.targetURL)==d.conversations[1-side] else {
+                    self.pauseDialogue("The matching receipt belongs to another or unresolved conversation. Nothing is resent.");return
+                }
+                if r.dialogueID != nil {
+                    self.dialogue?.seedAfter=key;self.dialogue?.seedUser=nil;self.dialogue?.reason="This reply was already used. Waiting for a new reply.";_ = self.saveDialogue();return
+                }
+                // Adopt a manual handoff only with the exact same attachment
+                // scope and receipt. Do not upload again or reset its send state.
+                guard (r.files ?? []) == (d.files ?? []),["preparing","sending","sent","reply","queued","busy"].contains(r.state) else {
+                    self.pauseDialogue("The matching handoff needs reconciliation or has a different attachment scope. Nothing is resent.");return
+                }
+                self.webTransfers[i].dialogueID=d.id
+                guard self.persistWebTransfers() else {self.pauseDialogue("Could not save handoff intent");return}
+                self.dialogue?.pendingID=r.id;self.dialogue?.sentCount=1
+            }
+            self.dialogue?.firstText=text;self.dialogue?.firstMessage=message;self.dialogue?.firstHash=hash
+            self.dialogue?.awaitingSeed=false;self.dialogue?.seedAfter=nil;self.dialogue?.reason=""
+            if self.saveDialogue(){self.tickDialogue()}
+        }
+    }
+
     func chooseWebFiles(_ side:Int) {
         guard dialogue?.state != "running" else {webPanes[side]?.showNotice("Pause automatic exchange before changing attachment scope.");return}
         let panel=NSOpenPanel();panel.canChooseDirectories=false;panel.allowsMultipleSelection=true
@@ -196,6 +355,7 @@ extension IntegratedWorkbench {
         dialogueWindow?.title=translate("Automatic exchange");refreshDialogueUI();dialogueWindow?.center();dialogueWindow?.makeKeyAndOrderFront(nil)
     }
     func refreshDialogueUI() {
+        refreshAutomaticReplyState()
         if let view=dialogueWindow?.contentView {
             func walk(_ node:NSView) {
                 if let button=node as? NSButton {button.title=translate(button.title)}
@@ -288,7 +448,7 @@ extension IntegratedWorkbench {
     @objc func selectDialogueSeed() {
         guard dialogue?.state != "running",let pane=webPanes[0],let source=NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome) else{return}
         let binding=routeSignature(0)
-        pane.providerSnapshot(includeReply:true,latestOnly:true) { [weak self,weak pane] result in
+        pane.providerSnapshot(includeReply:true,latestOnly:true,seedOnly:true) { [weak self,weak pane] result in
             guard let self=self,let pane=pane,self.webPanes[0] === pane,self.dialogue?.state != "running",
                   NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome)==source,binding==self.routeSignature(0) else{return}
             guard result["state"] as? String=="reply",let text=result["text"] as? String,let message=result["message"] as? String else {
@@ -364,6 +524,7 @@ extension IntegratedWorkbench {
     }
     func tickDialogue() {
         guard let d=dialogue,d.state=="running",!dialogueTickInFlight else { return }
+        if d.awaitingSeed == true { readAutomaticSeed(d);return }
         guard Date().timeIntervalSince1970<d.deadline else { pauseDialogue("Time budget reached");return }
         // A first website send may replace /new with its new conversation URL
         // before the exact marked-message receipt resolves. Wait for that one
@@ -469,7 +630,7 @@ extension IntegratedWorkbench {
         guard !body.isEmpty else {pauseDialogue("No complete reply is available");return}
         let text=(d.roles[targetIndex].isEmpty ? "" : "Participant role / 参与者角色:\n"+d.roles[targetIndex]+"\n\n")+body
         guard text.utf8.count<=200000 else{pauseDialogue("Reply exceeds the supported transfer size");return}
-        let record=WebHandoffReceipt(source:d.conversations[sourceIndex],message:"dialogue:\(d.id):\(d.completedCount)",text:text,hash:NativeCodex.digest(Data(text.utf8)),provider:d.providers[targetIndex],targetPane:targetIndex,targetURL:d.conversations[targetIndex],binding:routeSignature(sourceIndex),dialogueID:d.id,files:d.files ?? [])
+        let record=WebHandoffReceipt(source:d.conversations[sourceIndex],message:d.completedCount==0 ? (d.firstMessage ?? "dialogue:\(d.id):0") : (previous?.replyMessage ?? "dialogue:\(d.id):\(d.completedCount)"),text:text,hash:NativeCodex.digest(Data(text.utf8)),provider:d.providers[targetIndex],targetPane:targetIndex,targetURL:d.conversations[targetIndex],binding:routeSignature(sourceIndex),dialogueID:d.id,files:d.files ?? [])
         webTransfers.append(record)
         guard persistWebTransfers() else {pauseDialogue("Could not save handoff intent");return}
         dialogue?.pendingID=record.id;dialogue?.sentCount += 1
