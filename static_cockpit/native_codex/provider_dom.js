@@ -85,7 +85,40 @@
   return [...reply.querySelectorAll('*')].some(e=>visible(e)&&!e.closest('.standard-markdown,[data-twos-native-card],button,[role=button]')&&
    !e.children.length&&/^(?:Claude(?:'s|’s) response was interrupted\.?|Claude 的回复已中断[。.]?)$/i.test(e.textContent.trim()));
  }
- function identity(reply){return sourceKey(reply)||'rendered-assistant-'+replies().indexOf(reply);}
+ function userText(user){
+  if(speaker(user)!=='user')return text(user);
+  const hs=headings(),next=hs[hs.indexOf(user)+1],range=document.createRange();range.setStartAfter(user);
+  if(next)range.setEndBefore(next);else range.setEnd(document.body,document.body.childNodes.length);
+  const fragment=range.cloneContents();
+  fragment.querySelectorAll(excluded+','+assistant+',textarea,[contenteditable=true],form,button,[role=button]').forEach(e=>e.remove());
+  return fragment.textContent||'';
+ }
+ // Public message IDs remain preferred. Without one, hash only this reply and
+ // its preceding user turn, never its position in a virtualized history list.
+ // Identical question/answer pairs without public IDs are intentionally
+ // indistinguishable: reconcile instead of risking another send.
+ const identityCache=window.twosReplyIdentityCache ||= new Map();
+ function identityEntry(reply){
+  const user=users().filter(e=>Boolean(e.compareDocumentPosition(reply)&Node.DOCUMENT_POSITION_FOLLOWING))
+   .sort((a,b)=>a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING?-1:1).at(-1);
+  const body=text(reply),question=user?userText(user):'';
+  if(new TextEncoder().encode(body).length>200000||new TextEncoder().encode(question).length>200000)return null;
+  const key=JSON.stringify([selectedProvider(),user?sourceKey(user):'',question,body]);
+  let entry=identityCache.get(key);if(entry)return entry;
+  entry={value:'',pending:null};identityCache.set(key,entry);
+  if(identityCache.size>32)identityCache.delete(identityCache.keys().next().value);
+  entry.pending=crypto.subtle.digest('SHA-256',new TextEncoder().encode(key)).then(bytes=>{
+   entry.value='rendered-turn-v2:'+[...new Uint8Array(bytes)].map(x=>x.toString(16).padStart(2,'0')).join('');
+   window.twosHandoffIdentityReady?.();
+  }).catch(()=>{});
+  return entry;
+ }
+ function identity(reply){return sourceKey(reply)||identityEntry(reply)?.value||'';}
+ async function resolvedLatest(){
+  const result=latest();
+  if(result.reason==='REPLY_IDENTITY_PENDING')await identityEntry(replies().at(-1))?.pending;
+  return latest();
+ }
  function text(el){
   // Current Claude puts its public progress/status line alongside, not inside,
   // the final standard-markdown body. Read that body without forwarding status
@@ -115,25 +148,18 @@
   const body=text(reply);if(!body.trim())return {state:'unknown',reason:'EMPTY_REPLY'};
   if(new TextEncoder().encode(body).length>200000)return {state:'unsupported',reason:'REPLY_TOO_LARGE'};
   // No sidebars, unrelated selection, quoted prior card or partial stream.
-  return {state:'reply',text:body,message:identity(reply)};
+  const message=identity(reply);if(!message)return {state:'unknown',reason:'REPLY_IDENTITY_PENDING'};
+  return {state:'reply',text:body,message};
  }
  async function seedSnapshot(){
-  const result=latest(),user=latestUser();
+  const result=await resolvedLatest(),user=latestUser();
   window.twosSeedDocumentID ||= crypto.randomUUID();result.documentID=window.twosSeedDocumentID;
   if(user){
-   let body=text(user);
-   if(speaker(user)==='user'){
-    const hs=headings(),next=hs[hs.indexOf(user)+1];
-    const range=document.createRange();range.setStartAfter(user);
-    if(next)range.setEndBefore(next);else range.setEnd(document.body,document.body.childNodes.length);
-    const fragment=range.cloneContents();
-    fragment.querySelectorAll(excluded+','+assistant+',textarea,[contenteditable=true],form,button,[role=button]').forEach(e=>e.remove());
-    body=fragment.textContent||'';
-   }
+   const body=userText(user);
    if(new TextEncoder().encode(body).length>200000)return {state:'unsupported',reason:'CURRENT_MESSAGE_TOO_LARGE'};
    const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(body)))].map(x=>x.toString(16).padStart(2,'0')).join('');
    if(latestUser()!==user)return {state:'unknown',reason:'SOURCE_TURN_CHANGED'};
-   result.userAnchor=(sourceKey(user)||'user-'+users().length)+':'+hash;
+   result.userAnchor=(sourceKey(user)||'rendered-user-v2')+':'+hash;
   }
   const current=latest();
   if(current.state!==result.state||current.message!==result.message||current.text!==result.text)return {state:'unknown',reason:'SOURCE_TURN_CHANGED'};
@@ -151,7 +177,7 @@
   }
   return {state:'idle',hasDraft:false};
  }
- function selectedOrLatest(){
+ async function selectedOrLatest(){
   const selection=getSelection();
   if(selection?.rangeCount===1&&!selection.isCollapsed){
    const range=selection.getRangeAt(0),node=range.commonAncestorContainer;
@@ -164,9 +190,9 @@
    }
    return {state:'unknown',reason:'SELECT_A_COMPLETE_REPLY_NOT_A_FLOATING_CONTROL'};
   }
-  return latest();
+  return resolvedLatest();
  }
- window.twosProviderDOM={observe,latest,seedSnapshot,selectedOrLatest,replies,text,navigationSafety,composerSelection,replyState,identity,isStop,interrupted,speaker,headings,stoppedAfter};
+ window.twosProviderDOM={observe,latest,resolvedLatest,seedSnapshot,selectedOrLatest,replies,text,navigationSafety,composerSelection,replyState,identity,isStop,interrupted,speaker,headings,stoppedAfter};
  // Only a genuine user activation of a recognized native Stop control signals
  // the host. Isolated-world handler + native frame/origin checks stay in force.
  if(!window.twosNativeStopListener){

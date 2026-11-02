@@ -41,6 +41,22 @@ if mode.hasPrefix("simplified_r4_auto_") {
             work.webPanes[side]!.web.evaluateJavaScript(initial) { _,error in
                 precondition(error==nil)
                 let source=side==0 ? left : right
+                if mode.hasSuffix("legacy") {
+                    work.webPanes[side]!.providerSnapshot(includeReply:true,latestOnly:true) { reply in
+                        let text=reply["text"] as! String,message=reply["message"] as! String
+                        var old=WebHandoffReceipt(source:source.absoluteString,message:"rendered-assistant-0",text:text,hash:NativeCodex.digest(Data(text.utf8)),provider:"Claude",targetPane:1,targetURL:right.absoluteString,binding:work.routeSignature(0))
+                        old.state="sent";old.mayHaveSent=true;work.webTransfers=[old]
+                        precondition(work.persistWebTransfers())
+                        work.handoff(text,source:source,from:0,message:message)
+                        precondition(work.webTransfers.count==1,"legacy position drift duplicated manual send")
+                        work.setAutomaticReplies(true,from:0,source:source)
+                        DispatchQueue.main.asyncAfter(deadline:.now()+1) {
+                            precondition(work.dialogue?.state=="paused" && work.webTransfers.count==1)
+                            precondition(work.dialogue?.reason.contains("stable message identity")==true)
+                            print("SIMULATED_R4_LEGACY_IDENTITY_BLOCKS_MANUAL_AND_AUTO_REPLAY_PASS");exit(0)
+                        }
+                    };return
+                }
                 if mode.hasSuffix("manual") {
                     work.webPanes[side]!.providerSnapshot(includeReply:true,latestOnly:true) { reply in
                         precondition(reply["state"] as? String=="reply")

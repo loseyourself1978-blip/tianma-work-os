@@ -30,6 +30,7 @@
   INPUT_UNAVAILABLE:label('Message input is not available yet.','输入区域尚不可用。'),
   REPLY_INTERRUPTED:label('Reply interrupted; it will not be sent as complete.','回复已中断，不会作为完整回复发送。'),
   LATEST_USER_AWAITS_REPLY:label('Waiting for the current reply.','等待当前回复。'),
+  REPLY_IDENTITY_PENDING:label('Identifying this reply…','正在核对回复身份…'),
   OBSERVER_UNAVAILABLE:label('Reply status unavailable.','回复状态暂不可用。')
  }[r]||label('Reply status needs verification: ','回复状态待核验：')+r);
  function makeArea(){
@@ -98,7 +99,7 @@
   if(auto.enabled)note=auto.reason||label('Auto-send on · ','自动发送中 · ')+(auto.count||0);
   else if(auto.state==='paused')note=label('Auto-send paused · ','自动发送已暂停 · ')+(auto.reason||'');
   else if(card.record){
-   const r=card.record;note=['sent','reply','accepted'].includes(r.state)?label('Sent to ','已发送到 ')+(r.provider||'Codex'):
+   const r=card.record;note=card.legacyIdentity?label('Matching older receipt found; message identity needs verification. Nothing is resent.','找到内容相同的旧回执，消息身份需核验，不会重复发送。'):['sent','reply','accepted'].includes(r.state)?label('Sent to ','已发送到 ')+(r.provider||'Codex'):
     ['sending','preparing','queued'].includes(r.state)?label('Sending…','发送中…'):label('See details · ','详情：')+(r.state||'unknown');
   }else if(card.pending)note=label('Sending…','发送中…');
   else if(current?.state==='unknown'&&!['NO_COMPLETE_REPLY','EMPTY_REPLY','LATEST_USER_AWAITS_REPLY'].includes(current.reason))note=reasonText(current.reason);
@@ -107,12 +108,13 @@
   if(card.details.open)renderDetails(card);
  }
  async function attachReceipt(card,record){
-  if(!sourceMatches(record)||!card.reply||record.message!==card.message&&record.message!=='latest-rendered-reply')return;
+  const legacy=/^rendered-assistant-\d+$/.test(record.message)||record.message==='latest-rendered-reply';
+  if(!sourceMatches(record)||!card.reply||record.message!==card.message&&!legacy)return;
   const version=card.version,text=instructionText(card.reply);
   if(await digest(text)!==record.hash)return;
   if(active!==card||version!==card.version||!card.reply.isConnected||instructionText(card.reply)!==text)return;
   if(card.record&&card.record.id!==record.id&&(card.record.createdAt||0)>(record.createdAt||0))return;
-  card.record=record;card.pending=false;render(card);
+  card.record=record;card.legacyIdentity=legacy&&record.message!==card.message;card.pending=false;render(card);
  }
  function inspect(){
   scheduled=false;const phase=api()?.observe();
@@ -121,8 +123,12 @@
   const available=phase?.state==='idle'&&input&&!(input instanceof HTMLTextAreaElement?input.value:input.innerText).trim();
   const becameAvailable=available&&!returnAvailable;returnAvailable=Boolean(available);
   let added=false;
-  if(!active||active.reply!==reply||!active.box.isConnected){
-   active?.box.remove();active=makeArea();active.reply=reply;active.message=reply?api().identity(reply):'';added=true;
+  const message=reply?api().identity(reply):'';
+  if(!active||active.reply!==reply||active.message!==message||!active.box.isConnected){
+   // A provider remount may retain a copied DOM card without its callbacks.
+   // Keep exactly one host-owned action area; never retain that stale hit target.
+   document.querySelectorAll('[data-twos-native-card]').forEach(e=>e.remove());
+   active=makeArea();active.reply=reply;active.message=message;added=true;
    if(reply)reply.insertAdjacentElement('afterend',active.box);
    else if(input)input.closest('form')?.insertAdjacentElement('beforebegin',active.box)||input.insertAdjacentElement('beforebegin',active.box);
    else document.body.append(active.box);
@@ -188,6 +194,7 @@
   return 'pending';
  };
  const schedule=()=>{if(!scheduled){scheduled=true;setTimeout(inspect,350);}};
+ window.twosHandoffIdentityReady=schedule;
  const observer=new MutationObserver(schedule);observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','aria-hidden','disabled','data-is-streaming','contenteditable']});
  document.addEventListener('input',schedule,true);inspect();post({action:'ready'});
 })();

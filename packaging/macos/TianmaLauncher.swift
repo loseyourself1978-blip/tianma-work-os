@@ -384,7 +384,7 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
         guard let source = Self.restorableURL(web.url, service: serviceHome),
               let file = handoffResources?.appendingPathComponent("native_codex/provider_dom.js"),
               let script = try? String(contentsOf: file, encoding: .utf8) else { completion(["state":"unknown","reason":"PAGE_UNAVAILABLE"]); return }
-        web.callAsyncJavaScript(script + "\nreturn window.twosProviderDOM?." + (seedOnly ? "seedSnapshot()" : (includeReply ? (latestOnly ? "latest()" : "selectedOrLatest()") : "observe()")) + ";", arguments: [:], in: nil, in: Self.handoffWorld) { [weak self] result in
+        web.callAsyncJavaScript(script + "\nreturn window.twosProviderDOM?." + (seedOnly ? "seedSnapshot()" : (includeReply ? (latestOnly ? "resolvedLatest()" : "selectedOrLatest()") : "observe()")) + ";", arguments: [:], in: nil, in: Self.handoffWorld) { [weak self] result in
             guard let self = self, Self.restorableURL(self.web.url, service:self.serviceHome) == source else { completion(["state":"unknown","reason":"CONVERSATION_CHANGED"]); return }
             if case .success(let value) = result, let value = value as? [String:Any] { completion(value) }
             else { completion(["state":"unknown","reason":"OBSERVER_UNAVAILABLE"]) }

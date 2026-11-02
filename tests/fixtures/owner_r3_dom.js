@@ -67,7 +67,7 @@ claude.insertAdjacentHTML('beforeend','<div role="status"><span>Claude 的回复
 assert(api().latest().reason==='REPLY_INTERRUPTED','native interruption blocks latest');
 assert(!api().replyState(claude).complete&&claude.nextElementSibling.querySelector('[data-twos-primary]').hidden,'R4 interrupted partial has no Send button');
 const selection=getSelection(),range=document.createRange();range.selectNodeContents(claude.querySelector('p'));selection.removeAllRanges();selection.addRange(range);
-assert(api().selectedOrLatest().state==='unknown','selection cannot bypass interrupted reply boundary');selection.removeAllRanges();
+assert((await api().selectedOrLatest()).state==='unknown','selection cannot bypass interrupted reply boundary');selection.removeAllRanges();
 
 window.twosHandoffAutoState({enabled:true,supported:true,pending:false,state:'running',count:3,reason:''});await wait();
 assert(!document.querySelector('[data-twos-primary]').hidden&&document.querySelector('[data-twos-primary]').textContent==='Stop auto-send','Stop stays in the same action area even when no complete reply');

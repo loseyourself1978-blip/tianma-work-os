@@ -224,7 +224,7 @@ extension IntegratedWorkbench {
             guard result["state"] as? String=="reply",let text=result["text"] as? String,!text.isEmpty,
                   let message=result["message"] as? String else {
                 let reason=result["reason"] as? String ?? "OBSERVER_UNAVAILABLE"
-                if result["state"] as? String=="running" || ["LATEST_USER_AWAITS_REPLY","NO_COMPLETE_REPLY","EMPTY_REPLY"].contains(reason) {
+                if result["state"] as? String=="running" || ["LATEST_USER_AWAITS_REPLY","NO_COMPLETE_REPLY","EMPTY_REPLY","REPLY_IDENTITY_PENDING"].contains(reason) {
                     self.dialogue?.reason="Waiting for a complete new reply";self.refreshAutomaticReplyState();return
                 }
                 self.pauseDialogue("Reply observation needs attention: " + reason);return
@@ -237,12 +237,15 @@ extension IntegratedWorkbench {
                 // not a consumed reply. A new checkbox action may create a new
                 // receipt without rewriting that failed/cancelled attempt.
                 if r.mayHaveSent != true,["cancelled","rejected","target_changed","verification","login","not_loaded","draft_conflict","unsupported"].contains(r.state) {return false}
-                return r.source==self.dialogue?.conversations[side] && (r.message==message || r.message.hasPrefix("dialogue:")) && r.hash==hash &&
+                return r.source==self.dialogue?.conversations[side] && (r.message==message || r.message.hasPrefix("dialogue:") || r.legacyMessageIdentity) && r.hash==hash &&
                     r.provider==d.providers[1-side] && r.targetPane==1-side
             }
             guard matches.count<=1 else {self.pauseDialogue("Multiple receipts match this reply. Inspect history; nothing is resent.");return}
             if let i=matches.first {
                 let r=self.webTransfers[i]
+                guard !r.legacyMessageIdentity || r.message==message else {
+                    self.pauseDialogue("A matching older receipt has no stable message identity. Nothing is resent; inspect Handoff history.");return
+                }
                 guard (r.resolvedURL ?? r.targetURL)==d.conversations[1-side] else {
                     self.pauseDialogue("The matching receipt belongs to another or unresolved conversation. Nothing is resent.");return
                 }

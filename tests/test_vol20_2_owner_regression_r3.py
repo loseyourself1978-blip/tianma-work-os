@@ -56,7 +56,8 @@ app.run()
     return binary
 
 
-def test_composer_reply_cards_and_native_stop_authority(dom_harness):
+@pytest.mark.parametrize('fixture', ['owner_r3_dom.js', 'simplified_r4_identity.js'])
+def test_composer_reply_cards_and_native_stop_authority(dom_harness, fixture):
     class Page(BaseHTTPRequestHandler):
         def do_GET(self):
             body=b'<!doctype html><html data-twos-fixture-provider="ChatGPT"><meta charset=utf-8><body><h1>TEST ONLY R3</h1><form><textarea id=draft></textarea></form><article data-testid=conversation-turn-1><div data-message-author-role=assistant id=answer><h2>Shapes</h2><p>A circle and a square.</p><ul><li>Round</li><li>Straight</li></ul><table><tr><td>shape</td><td>edge</td></tr></table><code>square</code><pre>code block</pre></div></article></body></html>'
@@ -65,7 +66,7 @@ def test_composer_reply_cards_and_native_stop_authority(dom_harness):
     server=ThreadingHTTPServer(('127.0.0.1',0),Page)
     thread=Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
-        result=subprocess.run([str(dom_harness),str(ROOT/'static_cockpit/native_codex'),f'http://127.0.0.1:{server.server_port}/',str(ROOT/'tests/fixtures/owner_r3_dom.js')],capture_output=True,text=True,timeout=45)
+        result=subprocess.run([str(dom_harness),str(ROOT/'static_cockpit/native_codex'),f'http://127.0.0.1:{server.server_port}/',str(ROOT/'tests/fixtures'/fixture)],capture_output=True,text=True,timeout=45)
         assert result.returncode == 0, result.stdout+result.stderr
         assert 'R3_DOM_PASS' in result.stdout
     finally:server.shutdown();server.server_close();thread.join()

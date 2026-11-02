@@ -821,7 +821,11 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         guard ["ChatGPT", "DeepSeek", "Claude"].contains(provider) else { origin.showNotice("This website has no verified sending adapter. Nothing was sent."); return }
         let hash = SHA256.hash(data: Data(text.utf8)).map { String(format: "%02x", $0) }.joined()
         var resumedDraft: WebHandoffReceipt?
-        if let previous = webTransfers.last(where: { $0.source == source.absoluteString && ($0.files ?? []) == (webFileSelections[index] ?? []) && $0.message == message && $0.hash == hash && $0.provider == provider && $0.targetPane == destination && ($0.resolvedURL ?? $0.targetURL) == url.absoluteString && ($0.mayHaveSent == true || !["cancelled", "target_changed", "rejected", "verification", "login", "not_loaded", "busy", "draft_conflict", "unsupported"].contains($0.state)) }) {
+        if let previous = webTransfers.last(where: { $0.source == source.absoluteString && ($0.files ?? []) == (webFileSelections[index] ?? []) && ($0.message == message || $0.legacyMessageIdentity) && $0.hash == hash && $0.provider == provider && $0.targetPane == destination && ($0.resolvedURL ?? $0.targetURL) == url.absoluteString && ($0.mayHaveSent == true || !["cancelled", "target_changed", "rejected", "verification", "login", "not_loaded", "busy", "draft_conflict", "unsupported"].contains($0.state)) }) {
+            if previous.legacyMessageIdentity && previous.message != message {
+                publishWebTransfer(previous.id);inspectWebTransfer(previous.id,target:target)
+                origin.showNotice("A matching older receipt has no stable message identity. Nothing is resent; inspect Handoff history.");return
+            }
             if ["draft", "queue_paused", "queued"].contains(previous.state), previous.mayHaveSent != true { resumedDraft = previous }
             else {
                 publishWebTransfer(previous.id)
@@ -977,6 +981,9 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
 
 // TWOS control-plane evidence; never written into provider histories/databases.
 struct WebHandoffReceipt: Codable {
+    var legacyMessageIdentity: Bool {
+        message == "latest-rendered-reply" || message.range(of:"^rendered-assistant-[0-9]+$",options:.regularExpression) != nil
+    }
     var id = UUID().uuidString
     let source: String
     let message: String
