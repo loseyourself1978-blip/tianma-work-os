@@ -9,3 +9,9 @@ These are actual isolated Nyra 1.0.3 / 103 candidate windows, source `18abd9f043
 ![R4 Nyra expanded controls](images/r4-nyra-expanded.png)
 
 ![R4 Nyra transparent stage and top controls](images/r4-nyra-stage.png)
+
+Actual TWOS 1.0.4 / 101.52 candidate, source `02aa02edaa48eeaf0418a1d1d9d8b77abd53ae3d`. The language control stays visible at the top. These TEST ONLY conversations show a delivered reply and an interrupted reply; automatic sending is off. Interrupted content is not represented as a complete response. Nyra is hidden, so the button offers Show Nyra. Provider website languages remain independent of TWOS.
+
+![English workbench and persistent language control](images/r4-twos-en.png)
+
+![Chinese workbench and persistent language control](images/r4-twos-zh.png)

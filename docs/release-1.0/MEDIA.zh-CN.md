@@ -9,3 +9,9 @@
 ![R4 Nyra expanded controls](images/r4-nyra-expanded.png)
 
 ![R4 Nyra transparent stage and top controls](images/r4-nyra-stage.png)
+
+以下来自 TWOS 1.0.4 / 101.52 真实候选，源提交 `02aa02edaa48eeaf0418a1d1d9d8b77abd53ae3d`。语言切换常驻顶部。TEST ONLY 会话展示已送达回复与被中断回复，自动发送已关闭；中断内容不会冒充完整回复。Nyra 处于隐藏状态，按钮因此显示“显示夜璃”。提供方网页语言独立于 TWOS。
+
+![中文工作台与常驻语言切换](images/r4-twos-zh.png)
+
+![英文工作台与常驻语言切换](images/r4-twos-en.png)
