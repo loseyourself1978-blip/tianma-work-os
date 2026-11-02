@@ -677,9 +677,11 @@ final class Launcher: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func readLanguage() {
+        let previous = locale
         if let data = try? Data(contentsOf: preferencesURL.appendingPathComponent("ui-preference.json")),
            let value = try? JSONSerialization.jsonObject(with: data) as? [String:String],
            ["en-US", "zh-CN"].contains(value["locale"] ?? "") { locale = value["locale"]! }
+        if locale != previous { nativeWorkbench?.refreshLanguage() }
     }
     func localized(_ text: String) -> String {
         let key = translations[text] != nil ? text : translations.first(where: { $0.value["zh-CN"] == text })?.key
@@ -727,6 +729,7 @@ final class Launcher: NSObject, NSApplicationDelegate, NSWindowDelegate {
             let data = try JSONSerialization.data(withJSONObject:["locale":selected])
             try data.write(to:preferencesURL.appendingPathComponent("ui-preference.json"),options:.atomic)
             locale=selected; translateViews(); refreshEnvironments()
+            nativeWorkbench?.refreshLanguage()
         } catch { detail.stringValue=localized("Language preference could not be saved. Existing data is unchanged.") }
     }
     func loadEnvironments() {

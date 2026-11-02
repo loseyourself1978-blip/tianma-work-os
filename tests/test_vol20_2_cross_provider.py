@@ -11,7 +11,7 @@ pytestmark=pytest.mark.skipif(sys.platform!='darwin',reason='macOS WebKit')
 @pytest.fixture(scope='module')
 def cross_harness(tmp_path_factory):
     root=tmp_path_factory.mktemp('cross-provider-harness')
-    code=(ROOT/'packaging/macos/TianmaLauncher.swift').read_text().split('// The only child runtime',1)[0]
+    code=(ROOT/'packaging/macos/TianmaLauncher.swift').read_text().split('let app = NSApplication.shared\nlet delegate = Launcher()',1)[0]
     for name in ('CodexAttachments.swift','CodexTelemetry.swift','NativeCodex.swift','IntegratedWorkbench.swift','PairedWorkflow.swift'):
         code+='\n'+(ROOT/'packaging/macos'/name).read_text()
     # Fixture-only target/process lookup: exercise the production refresh and
@@ -30,6 +30,26 @@ def cross_harness(tmp_path_factory):
     code+=r'''
 let app=NSApplication.shared
 let mode=CommandLine.arguments[1], prefs=URL(fileURLWithPath:CommandLine.arguments[2]), base=URL(string:CommandLine.arguments[3])!, resources=URL(fileURLWithPath:CommandLine.arguments[4])
+if mode == "launcher_language" {
+    try! NativeWorkbench.safeDirectory(prefs)
+    try! NativeWorkbench.save(["kind0":"ChatGPT","kind1":"Claude","url0":base.absoluteString,"url1":base.absoluteString],at:prefs.appendingPathComponent("paired-workbench.json"))
+    let launcher=Launcher();launcher.preferencesURL=prefs
+    launcher.translations=try! JSONSerialization.jsonObject(with:Data(contentsOf:resources.appendingPathComponent("project_first/native_i18n.json"))) as! [String:[String:String]]
+    launcher.languagePicker.addItems(withTitles:["English","简体中文"])
+    let work=IntegratedWorkbench(preferences:prefs,resources:resources,translate:{launcher.localized($0)},openProjects:{fatalError("no business action")})
+    launcher.nativeWorkbench=work
+    let initialRoutes=work.routeSignatures
+    launcher.languagePicker.selectItem(at:1);launcher.changeLanguage()
+    precondition(work.toolbarTitle?.stringValue==launcher.localized("One workspace · two connected contexts") && work.toolbarTitle?.stringValue != "One workspace · two connected contexts","launcher change must update already-open workbench")
+    precondition(work.webPanes.values.allSatisfy{$0.moreButton?.title==launcher.localized("⋯ More")})
+    let saved=try! JSONSerialization.jsonObject(with:Data(contentsOf:prefs.appendingPathComponent("ui-preference.json"))) as! [String:String]
+    precondition(saved["locale"]=="zh-CN")
+    try! NativeWorkbench.save(["locale":"en-US"],at:prefs.appendingPathComponent("ui-preference.json"))
+    launcher.readLanguage()
+    precondition(work.toolbarTitle?.stringValue=="One workspace · two connected contexts","external preference refresh must update open workbench")
+    precondition(work.webTransfers.isEmpty && work.dialogue==nil && work.routeSignatures==initialRoutes,"language must not dispatch, start automatic exchange or change target identity")
+    print("LAUNCHER_LANGUAGE_LIVE_REFRESH_PERSISTENCE_NO_DISPATCH_PASS");exit(0)
+}
 if mode == "nyra_selection_async" {
     let client=NyraStatusClient();var callbacks=0;var loaders=0
     let gate=DispatchSemaphore(value:0)
@@ -695,7 +715,7 @@ probe();DispatchQueue.main.asyncAfter(deadline:.now()+20){fatalError("fixture ti
     assert run.returncode==0,run.stderr
     return binary
 
-@pytest.mark.parametrize('mode',['simplified_r4_policy','simplified_r4_auto_legacy','simplified_r4_auto_stopped_unknown','simplified_r4_auto_stopped_same','simplified_r4_auto_stopped_other','simplified_r4_auto_left','simplified_r4_auto_right','simplified_r4_auto_manual','simplified_r4_auto_stream','simplified_r4_auto_empty','simplified_r4_auto_wait_stop','simplified_r4_auto_reconcile','simplified_r4_auto_reconcile_stop','owner_r3_policy','paired_attachment_scope_ui','auxiliary_window_close','history_restore','paired_policy','paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_hydration','paired_auto_late_changed','paired_auto_late_unrestorable','paired_recovery','upload_exact','upload_async_input','upload_changed_input','upload_delayed_control','upload_menu_control','upload_scoped_control','upload_nearest_control','upload_directory_control','upload_accessibility_hidden_input','upload_hidden_other_control','upload_ambiguous_control','upload_transient_duplicate','upload_remounted_composer','send_delayed_control','send_ambiguous_control','send_changed_draft','upload_same_name','upload_history','upload_claude_labels','upload_chatgpt_cards','upload_chatgpt_renamed','upload_foreign_image','upload_corrupt','upload_foreign','upload_no_control','upload_switch','nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','chatgpt_interrupted','chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble','claude','claude_streaming','claude_interrupted','claude_chrome','chatgpt_file_reference','claude_markup','claude_markup_changed','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
+@pytest.mark.parametrize('mode',['launcher_language','simplified_r4_policy','simplified_r4_auto_legacy','simplified_r4_auto_stopped_unknown','simplified_r4_auto_stopped_same','simplified_r4_auto_stopped_other','simplified_r4_auto_left','simplified_r4_auto_right','simplified_r4_auto_manual','simplified_r4_auto_stream','simplified_r4_auto_empty','simplified_r4_auto_wait_stop','simplified_r4_auto_reconcile','simplified_r4_auto_reconcile_stop','owner_r3_policy','paired_attachment_scope_ui','auxiliary_window_close','history_restore','paired_policy','paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_hydration','paired_auto_late_changed','paired_auto_late_unrestorable','paired_recovery','upload_exact','upload_async_input','upload_changed_input','upload_delayed_control','upload_menu_control','upload_scoped_control','upload_nearest_control','upload_directory_control','upload_accessibility_hidden_input','upload_hidden_other_control','upload_ambiguous_control','upload_transient_duplicate','upload_remounted_composer','send_delayed_control','send_ambiguous_control','send_changed_draft','upload_same_name','upload_history','upload_claude_labels','upload_chatgpt_cards','upload_chatgpt_renamed','upload_foreign_image','upload_corrupt','upload_foreign','upload_no_control','upload_switch','nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','chatgpt_interrupted','chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble','claude','claude_streaming','claude_interrupted','claude_chrome','chatgpt_file_reference','claude_markup','claude_markup_changed','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
 def test_exact_target_single_dispatch_and_preflight(cross_harness,tmp_path,mode):
     class Fixture(BaseHTTPRequestHandler):
         def do_GET(self):
