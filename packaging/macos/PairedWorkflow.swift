@@ -152,6 +152,12 @@ extension IntegratedWorkbench {
             // first reconciles it read-only, without resuming the stopped loop
             // or making normal success depend on a separate Check button.
             guard currentTargetMatches(r),let target=webPanes[r.targetPane] else {
+                // A stopped session cannot control a newly selected pair. Its
+                // unresolved receipt stays intact; per-seed matching below
+                // still refuses to replay any previously consumed message.
+                if dialogue?.state=="stopped" {
+                    beginAutomaticReplySession(from:side,conversations:[au.absoluteString,bu.absoluteString]);return
+                }
                 webPanes[side]?.showNotice("The previous delivery belongs to another conversation. Restore that conversation to reconcile it; nothing was resent.");refreshAutomaticReplyState();return
             }
             let token=UUID().uuidString,signature=routeSignature(side)
@@ -166,6 +172,14 @@ extension IntegratedWorkbench {
                       self.webFileSelections==selectedFiles else {self.refreshAutomaticReplyState();return}
                 self.applyWebResponse(id,response:response)
                 guard let observed=self.webTransfers.first(where:{$0.id==id}),["reply","generation_stopped"].contains(observed.state) else {
+                    if self.dialogue?.state=="stopped" {
+                        // Explicit re-enable chooses the current reply, not a
+                        // continuation of the stopped loop. Never mark the old
+                        // unknown delivery successful or resend it. The normal
+                        // seed/receipt guard below waits on consumed replies,
+                        // while exact target preflight protects a new send.
+                        self.beginAutomaticReplySession(from:side,conversations:[au.absoluteString,bu.absoluteString]);return
+                    }
                     self.webPanes[side]?.showNotice("The previous delivery is still generating or cannot be confirmed. Nothing was resent. Try auto-send again after it finishes; details are in More.")
                     self.refreshAutomaticReplyState();return
                 }
@@ -173,11 +187,15 @@ extension IntegratedWorkbench {
             }
             return
         }
+        beginAutomaticReplySession(from:side,conversations:[au.absoluteString,bu.absoluteString])
+    }
+
+    private func beginAutomaticReplySession(from side:Int,conversations:[String]) {
         let files=(webFileSelections[0] ?? [])+(webFileSelections[1] ?? [])
         guard (try? payloadFiles(files)) != nil else {
             webPanes[side]?.showNotice("An attachment is missing, changed or too large. Nothing was sent.");refreshAutomaticReplyState();return
         }
-        dialogue=PairedDialogue(id:UUID().uuidString,providers:kinds,conversations:[au.absoluteString,bu.absoluteString],roles:["",""],firstText:"",maxExchanges:0,duration:0,createdAt:Date().timeIntervalSince1970,state:"running",reason:"Waiting for a complete new reply",files:files,untilStopped:true,checkboxMode:true,firstSource:side,awaitingSeed:true)
+        dialogue=PairedDialogue(id:UUID().uuidString,providers:kinds,conversations:conversations,roles:["",""],firstText:"",maxExchanges:0,duration:0,createdAt:Date().timeIntervalSince1970,state:"running",reason:"Waiting for a complete new reply",files:files,untilStopped:true,checkboxMode:true,firstSource:side,awaitingSeed:true)
         guard dialogue?.valid==true,saveDialogue() else{return}
         readAutomaticSeed(dialogue!)
     }

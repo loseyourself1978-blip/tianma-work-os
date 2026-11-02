@@ -57,6 +57,35 @@ if mode.hasPrefix("simplified_r4_auto_") {
                         }
                     };return
                 }
+                if mode.hasSuffix("stopped_unknown") || mode.hasSuffix("stopped_same") || mode.hasSuffix("stopped_other") {
+                    work.webPanes[side]!.providerSnapshot(includeReply:true,latestOnly:true) { snapshot in
+                        let same=mode.hasSuffix("stopped_same")
+                        let oldText=same ? snapshot["text"] as! String : "TEST R4 OLD UNRESOLVED INPUT"
+                        let oldMessage=same ? snapshot["message"] as! String : "TEST-OLD-MESSAGE"
+                        var old=WebHandoffReceipt(source:source.absoluteString,message:oldMessage,text:oldText,hash:NativeCodex.digest(Data(oldText.utf8)),provider:"Claude",targetPane:1,targetURL:mode.hasSuffix("stopped_other") ? base.appendingPathComponent("old-conversation").absoluteString : right.absoluteString,binding:work.routeSignature(0))
+                        old.state="unknown";old.mayHaveSent=true;old.dialogueID="TEST-STOPPED-SESSION"
+                        work.webTransfers=[old];precondition(work.persistWebTransfers())
+                        work.dialogue=PairedDialogue(id:"TEST-STOPPED-SESSION",providers:work.kinds,conversations:[left.absoluteString,right.absoluteString],roles:["",""],firstText:oldText,maxExchanges:0,duration:0,createdAt:1,state:"stopped",sentCount:1,pendingID:old.id,untilStopped:true,checkboxMode:true,firstSource:0)
+                        precondition(work.saveDialogue())
+                        work.setAutomaticReplies(true,from:0,source:source)
+                        DispatchQueue.main.asyncAfter(deadline:.now()+1.5) {
+                            precondition(work.dialogue?.id != "TEST-STOPPED-SESSION")
+                            precondition(work.webTransfers.first?.id==old.id && work.webTransfers.first?.mayHaveSent==true)
+                            precondition(work.webTransfers.first?.result==nil,"unknown old delivery was fabricated as success")
+                            if same {
+                                precondition(work.webTransfers.count==1 && work.dialogue?.awaitingSeed==true,"consumed stopped seed resent")
+                            } else {
+                                precondition(work.webTransfers.contains{$0.text=="TEST R4 COMPLETE SEED"},"old unknown receipt blocked a different explicit seed")
+                                precondition(work.webTransfers.filter{$0.text==oldText}.count==1,"old unknown delivery resent")
+                            }
+                            work.stopDialogue();let count=work.webTransfers.count
+                            DispatchQueue.main.asyncAfter(deadline:.now()+0.5) {
+                                work.tickDialogue();precondition(work.webTransfers.count==count)
+                                print("SIMULATED_R4_STOPPED_UNKNOWN_PRESERVED_NEW_SEED_WITHOUT_REPLAY_PASS");exit(0)
+                            }
+                        }
+                    };return
+                }
                 if mode.hasSuffix("manual") {
                     work.webPanes[side]!.providerSnapshot(includeReply:true,latestOnly:true) { reply in
                         precondition(reply["state"] as? String=="reply")
