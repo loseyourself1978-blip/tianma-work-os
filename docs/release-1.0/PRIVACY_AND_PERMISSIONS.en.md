@@ -1,6 +1,6 @@
 # Privacy, permissions and cost
 
-Applies to TWOS 1.0.4 / 101.52. Start with the [R4 incremental guide](SIMPLIFIED_UX_R4.en.md) after upgrading; stop at its end point. Existing accepted tasks do not need to be recreated.
+TWOS 1.0.5 / 101.53 · [Tian action voice](AUDIO_FOLLOWUP.en.md)
 
 [R4 incremental instructions and exact boundaries](SIMPLIFIED_UX_R4.en.md).
 

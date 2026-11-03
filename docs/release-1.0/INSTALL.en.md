@@ -1,11 +1,11 @@
-# Install Tianma Work OS 1.0.4
+# Install Tianma Work OS 1.0.5
 
-Applies to TWOS 1.0.4 / 101.52. Start with the [R4 incremental guide](SIMPLIFIED_UX_R4.en.md) after upgrading; stop at its end point. Existing accepted tasks do not need to be recreated.
+TWOS 1.0.5 / 101.53 · [Tian action voice](AUDIO_FOLLOWUP.en.md)
 
 [R4 incremental instructions and exact boundaries](SIMPLIFIED_UX_R4.en.md).
 
 
-This guide applies to the joint TWOS/Nyra candidate, build 101.52. Its release receipt is the authority for publication, signatures and tested platforms. A local candidate is not a published release.
+This guide applies to the joint TWOS/Nyra candidate, build 101.53. Its release receipt is the authority for publication, signatures and tested platforms. A local candidate is not a published release.
 
 Currently supports macOS only. A Windows version is in development; no downloadable build is available yet. The current TWOS package is Apple Silicon. Engineering testing uses macOS 27.0.1 / Safari 27.0.1. A binary deployment target does not prove testing on every older system; consult the release support matrix before installing elsewhere.
 

@@ -71,7 +71,7 @@ if mode == "nyra_visibility_controls" {
         ["pid":ProcessInfo.processInfo.processIdentifier,"bundle":Bundle.main.bundleURL.path,"visible":visible,"heartbeatUptime":ProcessInfo.processInfo.systemUptime]
     }
     func settle() { work.nyra.refresh();let until=Date().addingTimeInterval(1);repeat{RunLoop.current.run(until:Date().addingTimeInterval(0.01))}while work.nyra.stateReadInFlight && Date()<until }
-    settle();precondition(work.nyraButton.title=="Hide Nyra" && work.nyra.snapshot()["observed"] as? Bool==true)
+    settle();precondition(work.nyraButton.title=="Hide Nyra" && work.nyra.snapshot()["observed"] as? Bool==true,"initial visibility: \(work.nyraButton.title); snapshot=\(work.nyra.snapshot()); process=\(String(describing:NSRunningApplication.current.bundleURL)); expected=\(Bundle.main.bundleURL); inFlight=\(work.nyra.stateReadInFlight)")
     visible=false;settle();precondition(work.nyraButton.title=="Show Nyra")
     visible=true;settle();precondition(work.nyraButton.title=="Hide Nyra","manual visibility changes must update the actual top button")
     fixtureNyraConflict=true;settle()

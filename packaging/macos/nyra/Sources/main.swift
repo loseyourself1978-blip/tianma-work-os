@@ -1,4 +1,5 @@
 import AppKit
+import AVFoundation
 import Darwin
 
 let ink = NSColor(calibratedRed: 0.075, green: 0.062, blue: 0.105, alpha: 1)
@@ -222,7 +223,11 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     var activeSet: R4Set { library.sets[activeSetKey]! }
     func receiveInput(_ name: String) {
+        let before = reactive.transientUntil
         reactive.input(name,now: ProcessInfo.processInfo.systemUptime)
+        if ["enter","click"].contains(name), reactive.transientUntil != before {
+            sound.react(.wave,event:"pointer-\(reactive.transientUntil)",visible:panel.isVisible || stage?.isVisible == true)
+        }
         reconcileAnimation(); writePlaybackState(name)
     }
     func clearPointerState() {
@@ -312,6 +317,8 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
             guard acquireSingleInstance() else { return }
             sound.customDirectory = preferenceDirectory
+            sound.legacyDirectory = stateDirectory
+            sound.changed = { [weak self] in self?.writePlaybackState("audio_playback") }
             let data = try Data(contentsOf: resources.appendingPathComponent("assets/outfits.json"))
             wardrobe = try JSONDecoder().decode(Wardrobe.self, from: data).validated()
             let runtimeData = try Data(contentsOf: resources.appendingPathComponent("runtime/standalone_r3.json"))
@@ -406,7 +413,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let specs: [(String, Selector, String)] = [
             ("tshirt", #selector(nextOutfit), "一键换装 · 黑紫 / 职场 / 晚礼服"),
             ("arrow.up.left.and.arrow.down.right", #selector(fullscreen), "透明舞台 / Transparent stage"),
-            ("speaker.wave.2", #selector(showSound), "声音 · 试听 / 静音 / 音量"),
+            ("speaker.wave.2", #selector(showSound), "声音 · 动作语音 / 静音 / 音量"),
             ("play.fill", #selector(showAnimationMenu), "动作 / Actions"),
             ("minus", #selector(smaller), "缩小 / Smaller"),
             ("plus", #selector(larger), "放大 / Larger"),
@@ -531,13 +538,13 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let wearable = wardrobe.outfits.indices.filter { wardrobe.outfits[$0].isTransparentArt }
         let position = wearable.firstIndex(of: selected) ?? -1
         selected = wearable[(position+1)%wearable.count]
-        updateOutfit(); saveSettings(); sound.chime("outfit")
+        updateOutfit(); saveSettings(); sound.react(.outfit,event:UUID().uuidString,visible:true)
     }
     @objc func selectOutfit(_ sender: NSMenuItem) {
-        selected = sender.tag; updateOutfit(); saveSettings()
+        selected = sender.tag; updateOutfit(); saveSettings(); sound.react(.outfit,event:UUID().uuidString,visible:panel.isVisible || stage?.isVisible == true)
     }
     @objc func selectSegment(_ sender: NSSegmentedControl) {
-        selected = sender.selectedSegment; updateOutfit(); saveSettings()
+        selected = sender.selectedSegment; updateOutfit(); saveSettings(); sound.react(.outfit,event:UUID().uuidString,visible:panel.isVisible || stage?.isVisible == true)
     }
     func updateOutfit() {
         let outfit = wardrobe.outfits[selected]
@@ -552,7 +559,9 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         setPanelSize(); reconcileAnimation(force:true); rebuildMenu()
     }
     @objc func togglePose() {
-        useRecline.toggle(); stageView?.art.zoom = 1; updateOutfit(); writePlaybackState("pose_changed")
+        useRecline.toggle(); stageView?.art.zoom = 1; updateOutfit()
+        if useRecline { sound.react(.rest,event:UUID().uuidString,visible:panel.isVisible || stage?.isVisible == true) }
+        writePlaybackState("pose_changed")
     }
 
     func makeStage() {
@@ -580,7 +589,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         view.actions = [button("姿态 / Pose", self, #selector(togglePose), hint: "三套服装均支持站姿与侧卧 / All three outfits"), button("返回桌面 / Back", self, #selector(backToDesktop), hint: "返回桌面 / Return to desktop"),
                         button("舞台 / Stage", self, #selector(fullscreen), hint: "切换全屏展示"),
                         button("动作 / Actions", self, #selector(showAnimationMenu), hint: "动作试播 / Manual preview · 不改任务状态"),
-                        button("声音 / Sound", self, #selector(showSound), hint: "声音 · 试听 / 静音 / 音量"),
+                        button("声音 / Sound", self, #selector(showSound), hint: "声音 · 动作语音 / 静音 / 音量"),
                         button("隐藏 / Hide", self, #selector(hideAll), hint: "隐藏全部预览"),
                         button("退出 / Quit", self, #selector(quit), hint: "完全退出独立夜璃进程")]
         view.actions.forEach { view.addSubview($0) }
@@ -726,7 +735,11 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let seconds = Double(sequence.durationsMS.reduce(0,+))/1000 + (useRecline && PoseArbiter.standingActions.contains(animationNames[sender.tag]) ? 0.64 : 0)
         reactive.beginPreview(animationNames[sender.tag],duration:seconds,now:ProcessInfo.processInfo.systemUptime)
         reconcileAnimation(force:true); writePlaybackState("manual_preview_started")
-        sound.chime("open")
+        // Explicit action preview may audition its phrase; it does not change
+        // the task result or produce a verified-success event.
+        if let cue = VoiceCue.previewAnimation(animationNames[sender.tag]) {
+            sound.react(cue,event:UUID().uuidString,visible:panel.isVisible || stage?.isVisible == true,origin:"manual_action_preview")
+        }
     }
     @objc func showAnimationMenu(_ sender: NSButton) {
         makeAnimationMenu().popUp(positioning: nil, at: NSPoint(x: 0, y: sender.bounds.maxY), in: sender)
@@ -762,7 +775,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         item("TWOS：\(live.connectionLabel)", nil)
         item("连接 TWOS 状态 / Connect read-only status…", #selector(configureBridge))
         item("断开 TWOS 状态 / Disconnect status", #selector(disconnectBridge))
-        item(sound.isMuted ? "声音：已静音" : "声音设置 · 中英试听 / 音量", #selector(showSoundFromMenu))
+        item(sound.isMuted ? "声音：已静音" : "声音设置 · 动作语音 / 音量", #selector(showSoundFromMenu))
         item(NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? "系统减少动态：显示母版" : "动画：隐藏时停止计时", nil)
         menu.addItem(.separator())
         item("退出 / Quit", #selector(quit), key: "q")
@@ -774,7 +787,8 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         guard panel != nil, wardrobe != nil else { return }
         let data: [String: Any] = ["interaction_version": 4, "outfit": wardrobe.outfits[selected].id, "height": desiredHeight,
                                    "x": panel.frame.minX, "y": panel.frame.minY,
-                                   "muted": sound.isMuted, "volume": sound.volume, "language": sound.language]
+                                   "muted": sound.isMuted, "volume": sound.volume, "language": sound.language,
+                                   "action_voice":sound.automatic,"voice_ids":sound.voiceIDs]
         if let bytes = try? JSONSerialization.data(withJSONObject: data, options: [.prettyPrinted, .sortedKeys]) {
             try? bytes.write(to: prefsURL, options: .atomic)
         }
@@ -786,6 +800,8 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if let muted = prefs["muted"] as? Bool { sound.isMuted = muted }
         if let volume = prefs["volume"] as? Float { sound.volume = min(1,max(0,volume)) }
         if let language = prefs["language"] as? String, ["auto","zh","en"].contains(language) { sound.language = language }
+        if let automatic = prefs["action_voice"] as? Bool { sound.automatic = automatic }
+        if let ids = prefs["voice_ids"] as? [String:String] { sound.voiceIDs = ids.filter { ["zh","en"].contains($0.key) } }
         if let height = prefs["height"] as? Double, height.isFinite { desiredHeight = min(max(height, 160), 1000) }
         if prefs["interaction_version"] == nil { desiredHeight = max(400, desiredHeight) }
         if let x = prefs["x"] as? Double, let y = prefs["y"] as? Double, x.isFinite, y.isFinite {
@@ -816,6 +832,8 @@ if CommandLine.arguments.contains("--self-test") {
         let data = try Data(contentsOf: Bundle.main.resourceURL!.appendingPathComponent("runtime/standalone_r3.json"))
         try runRuntimeTests(JSONDecoder().decode(RuntimePlan.self, from: data))
         try runInteractionTests()
+        try runActionVoiceTests()
+        try runAudioStorageTests()
         try runReactiveTests()
         let library = try JSONDecoder().decode(R4Library.self,from:Data(contentsOf:Bundle.main.resourceURL!.appendingPathComponent("runtime/r4.json"))).validated()
         for set in library.sets.values {
@@ -823,6 +841,18 @@ if CommandLine.arguments.contains("--self-test") {
         }
         try runStatusTransportTests()
         print("PASS: R4 outfit/pose containment, missing action fallback stays in selected wardrobe")
+    } catch { fputs("FAIL: \(error)\n", stderr); exit(1) }
+} else if CommandLine.arguments.contains("--verify-bundled-voice") {
+    do {
+        let audio = NyraAudio()
+        audio.language = "zh"
+        guard audio.usesBundledVoice else { throw PreviewError.invalidManifest }
+        for cue in VoiceCue.allCases {
+            let decoded = try AVAudioPlayer(data:audio.bundledData(cue))
+            guard decoded.numberOfChannels == 1, decoded.duration.isFinite,
+                  decoded.duration > 0, decoded.duration <= 120 else { throw PreviewError.invalidManifest }
+            print("Tian 1413: \(cue.rawValue) \(decoded.duration)s")
+        }
     } catch { fputs("FAIL: \(error)\n", stderr); exit(1) }
 } else {
     let app = NSApplication.shared

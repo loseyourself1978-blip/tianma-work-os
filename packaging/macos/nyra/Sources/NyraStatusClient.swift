@@ -153,6 +153,7 @@ extension Companion {
         let wasConnected = liveReducer.connected
         let previousLabel = live.connectionLabel
         liveReducer.expire(now:ProcessInfo.processInfo.systemUptime)
+        let audioWasConnected = liveReducer.connected
         if !liveReducer.connected && reactive.connected {
             reactive.setWork(.disconnected,simulation:false,connected:false,celebrate:false,now:ProcessInfo.processInfo.systemUptime)
             live.markConnected(false); reconcileAnimation()
@@ -170,6 +171,12 @@ extension Companion {
                 self.live.markConnected(decision.accepted)
                 if decision.accepted {
                     self.demo = .none
+                    if [.failed,.cancelled,.partial,.completed_unverified,.disconnected,.activity_unknown].contains(event.state),
+                       previous?.state != event.state, self.sound.lastOrigin == "action" { self.sound.stop() }
+                    if let cue = VoiceCue.live(previous:previous,current:event,decision:decision,wasConnected:audioWasConnected) {
+                        self.sound.react(cue,event:event.producer_instance_id+":"+event.event_id,
+                                         visible:self.panel.isVisible || self.stage?.isVisible == true)
+                    }
                     if decision.changed || self.reactive.simulation || !self.reactive.connected {
                         self.reactive.setWork(self.liveReducer.current?.state ?? .disconnected,simulation:false,connected:true,
                             celebrate:decision.celebrate && (self.panel.isVisible || self.stage?.isVisible == true),now:ProcessInfo.processInfo.systemUptime)

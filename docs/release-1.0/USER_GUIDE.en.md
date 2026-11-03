@@ -1,6 +1,6 @@
-# Use TWOS 1.0.4
+# Use TWOS 1.0.5
 
-Applies to TWOS 1.0.4 / 101.52. Start with the [R4 incremental guide](SIMPLIFIED_UX_R4.en.md) after upgrading; stop at its end point. Existing accepted tasks do not need to be recreated.
+TWOS 1.0.5 / 101.53 · [Tian action voice](AUDIO_FOLLOWUP.en.md)
 
 [R4 incremental instructions and exact boundaries](SIMPLIFIED_UX_R4.en.md).
 
@@ -29,7 +29,7 @@ Black & purple, Office and Gala support standing and reclining. **Stage** opens 
 
 Nyra consumes minimal read-only state. Idle, running, queued/waiting, partial/failure/cancellation and disconnected remain distinguishable. Unverified completion does not celebrate. An explicitly checked, exactly bound result may trigger one celebration, without changing an earlier executor PARTIAL report or granting overall product acceptance. Reconnection does not replay celebrations.
 
-Sound is muted by default; explicit system speech/imported voice and procedural cues are described in provenance. No exclusive AI voice is shipped. Hiding stops animation/audio work; quitting TWOS does not kill a separately used Nyra.
+Nyra plays short, bundled Chinese recordings by Tian at action transitions: a rest reminder on reclining and a cheer on verified success. Sound starts muted. Unmute and enable Action voice in Sound; close the panel with Close, Escape or Sound again.
 
 [English / 简体中文](USER_GUIDE.zh-CN.md)
 

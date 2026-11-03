@@ -1,4 +1,10 @@
-# TWOS 1.0.4 / 101.52 — R4
+# TWOS 1.0.5 / 101.53 — Tian action voice
+
+Nyra plays short, bundled Chinese recordings by Tian at action transitions: a rest reminder on reclining and a cheer on verified success. Sound starts muted. Unmute and enable Action voice in Sound; close the panel with Close, Escape or Sound again.
+
+[Tian action voice](AUDIO_FOLLOWUP.en.md)
+
+## TWOS 1.0.4 / 101.52 — R4
 
 Each complete reply has one Send and a shared auto-send checkbox. Generation hides Send; either side can revoke future dispatch. More retains files, history and diagnostics. Nyra removes the misleading grip and adds explicit sizing.
 

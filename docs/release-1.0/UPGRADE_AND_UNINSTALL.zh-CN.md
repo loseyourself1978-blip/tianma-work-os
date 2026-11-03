@@ -1,6 +1,6 @@
 # 升级与卸载
 
-适用于 TWOS 1.0.4 / 101.52。升级后先看 [R4 差量指南](SIMPLIFIED_UX_R4.zh-CN.md)，完成对应终点即结束；不重新制作已接受任务。
+TWOS 1.0.5 / 101.53 · [小田动作语音](AUDIO_FOLLOWUP.zh-CN.md)
 
 [R4 差量操作和准确边界](SIMPLIFIED_UX_R4.zh-CN.md)。
 

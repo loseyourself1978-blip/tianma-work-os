@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "voice_id": "ttsmaker:1413:default",
+  "display_name": "小田 / Tian",
+  "language": "zh",
+  "source": "TTSMaker free web conversion, generated from fixed action phrases",
+  "source_url": "https://ttsmaker.com/zh-cn",
+  "license_url": "https://ttsmaker.com/copyright_and_commercial_license_terms/zh-cn",
+  "generation_settings": {
+    "style": "default",
+    "speed": 1.0,
+    "pitch": 1.0,
+    "volume": 1.0,
+    "paragraph_pause_ms": 3000,
+    "format": "wav"
+  },
+  "source_sha256": "688fb9f3b09d5de3310ada3357ba04c1a026f7a1c5c33d011b91cd6b066bb021",
+  "received_at": "2026-11-03T12:22:08.594104+08:00",
+  "test_only": false,
+  "clips": {
+    "welcome": {
+      "file": "welcome.wav",
+      "text": "嗨，我在这里，陪着你呢。",
+      "sha256": "06e328db34b8728f06fb5089f4e35ea7cbae223ef69a8a9777e2ce881915bf10",
+      "duration_seconds": 2.25,
+      "source_start_seconds": 0,
+      "source_end_seconds": 2.25
+    },
+    "rest": {
+      "file": "rest.wav",
+      "text": "累了吗？喝口水，休息一下吧。",
+      "sha256": "867430409bd4dd8d372b2580bd1806a11fb311ca18266193718ab86c9ca0dc61",
+      "duration_seconds": 2.96,
+      "source_start_seconds": 5.06,
+      "source_end_seconds": 8.02
+    },
+    "working": {
+      "file": "working.wav",
+      "text": "开工啦，我陪你一起加油。",
+      "sha256": "7742fddda67132fb7fd9428e75ff7c9c3e3aec5212160ddd60a3763fe914a4ef",
+      "duration_seconds": 2.22,
+      "source_start_seconds": 10.81,
+      "source_end_seconds": 13.03
+    },
+    "waiting": {
+      "file": "waiting.wav",
+      "text": "需要你确认一下哦，我在这里等你。",
+      "sha256": "87ebf5fe6675066f06f115211cd26f1cac0613729ead6b0435c9cf4e1a8596ad",
+      "duration_seconds": 2.57,
+      "source_start_seconds": 15.840000000000002,
+      "source_end_seconds": 18.41
+    },
+    "success": {
+      "file": "success.wav",
+      "text": "欧耶！你好棒！",
+      "sha256": "6b225f0740591a7e126f2d943ae94647dd75cdd0b242ce5aa8bc2926f1ae7c21",
+      "duration_seconds": 2.07,
+      "source_start_seconds": 21.209999999999997,
+      "source_end_seconds": 23.28
+    },
+    "sad": {
+      "file": "sad.wav",
+      "text": "别着急，我们慢慢来。",
+      "sha256": "51e06c853533107b35c4aba93a7003323b5be1ba4b6337e93e2fd99009f84f62",
+      "duration_seconds": 1.86,
+      "source_start_seconds": 26.08,
+      "source_end_seconds": 27.94
+    },
+    "outfit": {
+      "file": "outfit.wav",
+      "text": "换好啦，好看吗？",
+      "sha256": "6ef7fd983a89b21342e04cb18cf62cd132c0058d4f809fe859ff9e6b7d9b8669",
+      "duration_seconds": 1.66,
+      "source_start_seconds": 30.74,
+      "source_end_seconds": 32.4
+    },
+    "wave": {
+      "file": "wave.wav",
+      "text": "嘿，我在呢。",
+      "sha256": "cb5f181a8fbd907b432f9dabe257cd3d515ad797614d59d3f59606341cab275b",
+      "duration_seconds": 1.3779583333333334,
+      "source_start_seconds": 35.2,
+      "source_end_seconds": 36.577958333333335
+    }
+  }
+}

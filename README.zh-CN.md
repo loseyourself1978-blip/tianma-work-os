@@ -1,9 +1,8 @@
 # Tianma Work OS 1.0
 
-R4：每侧完整回复只保留一个发送入口及共享自动发送复选框；任意侧可停止双方后续派发。更多菜单保留附加能力，Nyra 使用明确缩放操作。此前接受保持，新 UI 需单独接受。
+夜璃会在合适的动作开始时播放内置的小田中文短句。侧卧时提醒休息，核验成功时说“欧耶！你好棒！”。默认静音；在声音面板中取消静音，打开“跟随动作说话”。点右上角“关闭”、按 Esc 或再点声音图标可收起面板。
 
-
-**TWOS 1.0.4 / 构建 101.52** · [下载及核验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.4) · [R4 差量指南](docs/release-1.0/SIMPLIFIED_UX_R4.zh-CN.md)。匹配 Release 资产及回执记录 source、SHA-256、Developer ID、Apple 公证和真实验证；发布不代签 Owner 接受。
+**TWOS 1.0.5 / build 101.53** · [下载与校验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.5) · [小田动作语音](docs/release-1.0/AUDIO_FOLLOWUP.zh-CN.md)
 
 
 [English](README.md) · [安装](docs/release-1.0/INSTALL.zh-CN.md) · [操作指南](docs/release-1.0/USER_GUIDE.zh-CN.md) · [当前发行状态](docs/CURRENT_DELIVERY.md)
@@ -18,7 +17,7 @@ R4：每侧完整回复只保留一个发送入口及共享自动发送复选框
 
 ## 下载与首次使用
 
-从上方链接下载 TWOS v1.0.4；打开 DMG 前核对 SHA256SUMS。匹配回执绑定源码、签名、公证和制品哈希。历史 v1.0.1 与 v1.0.0 保持不变。
+从上方链接下载 TWOS v1.0.5；打开 DMG 前核对 SHA256SUMS。匹配回执绑定源码、签名、公证和制品哈希。历史 v1.0.1 与 v1.0.0 保持不变。
 
 打开对应 DMG，拖入应用程序并启动。登录所选供应商官网，连接已安装/登录的官方本机 Codex，再创建或接续一个绑定目录的任务。Nyra 在同一 App 内，无需第二个桌宠安装包或首次联网下载画稿；普通安装无需 Python、Node 或终端。
 
