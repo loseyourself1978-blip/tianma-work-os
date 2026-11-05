@@ -36,7 +36,29 @@
       "runtimeReady": true,
       "classification": "NATIVE_RUNTIME",
       "sha256": "e390c578f481cd42caae6af08835c4c2a44e28afc4125aaa1ecb588fa749fce4"
+    },
+    {
+      "id": "runtime-office_white",
+      "name": "白衬衫 / White blouse",
+      "file": "runtime-office_white.png",
+      "note": "Native animated wardrobe · standing and reclining",
+      "width": 1024,
+      "height": 1536,
+      "runtimeReady": true,
+      "classification": "NATIVE_RUNTIME",
+      "sha256": "a824beab71303827b8c45dc7f3804a6922b518c619b9407d7d9da29c87dd0556"
+    },
+    {
+      "id": "runtime-gala_red",
+      "name": "红礼服 / Ruby gown",
+      "file": "runtime-gala_red.png",
+      "note": "Native animated wardrobe · standing and reclining",
+      "width": 1024,
+      "height": 1536,
+      "runtimeReady": true,
+      "classification": "NATIVE_RUNTIME",
+      "sha256": "f4fab3c295c0716ed489ff9b12a0d66879e924d9db71e54c80df28d1eb088ca3"
     }
   ],
-  "wardrobeStatus": "THREE_OUTFIT_STANDING_AND_RECLINING"
+  "wardrobeStatus": "FIVE_OUTFIT_STANDING_AND_RECLINING"
 }

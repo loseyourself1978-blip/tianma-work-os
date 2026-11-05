@@ -1,4 +1,10 @@
-# TWOS 1.0.5 / 101.53 — Tian action voice
+# TWOS 1.0.6 / 101.54 — Candidate update
+
+[DeepSeek relay, five outfits and bilingual action voice](AUTOSEND_AND_WARDROBE.en.md)
+
+Five outfits and 13 bilingual action cues; TWOS fixes DeepSeek relay intent, native Stop and interrupted-reply handling. Matching release gates are required before distribution.
+
+## TWOS 1.0.5 / 101.53 — Tian action voice
 
 Nyra plays short, bundled Chinese recordings by Tian at action transitions: a rest reminder on reclining and a cheer on verified success. Sound starts muted. Unmute and enable Action voice in Sound; close the panel with Close, Escape or Sound again.
 

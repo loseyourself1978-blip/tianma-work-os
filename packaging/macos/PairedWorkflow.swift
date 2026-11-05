@@ -55,6 +55,12 @@ struct PairedDialogue: Codable {
     var seedAfter: String?
     var seedUser: String?
     var seedDocument: String?
+    // User intent is not an engine phase. A safety pause keeps the opt-in
+    // visible, but cannot dispatch until an explicit, scoped resume.
+    var autoSendEnabled: Bool?
+    var automaticIntent: Bool {
+        checkboxMode == true && (autoSendEnabled ?? (state == "running")) && !["stopped","finished"].contains(state)
+    }
     var deadline: TimeInterval { untilStopped == true ? .infinity : createdAt + duration }
     var roundLimitReached: Bool { untilStopped != true && completedCount >= maxExchanges }
     var progressLabel: String { untilStopped == true ? "\(completedCount)" : "\(completedCount)/\(maxExchanges)" }
@@ -116,11 +122,10 @@ struct PaneActivity {
 extension IntegratedWorkbench {
     func refreshAutomaticReplyState() {
         let supported=kinds.allSatisfy{["ChatGPT","Claude","DeepSeek"].contains($0)} && kinds[0] != kinds[1]
-        let running=dialogue?.state == "running"
         let rawReason=dialogue?.reason ?? ""
         let observationPrefix="Reply observation needs attention: "
         let reason=rawReason.hasPrefix(observationPrefix) ? translate("Reply observation needs attention")+": "+translate(String(rawReason.dropFirst(observationPrefix.count))) : translate(rawReason)
-        let value:[String:Any] = ["enabled":running || dialogueStartPending,"supported":supported,
+        let value:[String:Any] = ["enabled":dialogue?.automaticIntent == true || dialogueStartPending,"supported":supported,
             "pending":dialogueStartPending,"state":dialogue?.state ?? "off",
             "reason":dialogueStartPending ? translate("Checking the previous delivery · nothing is resent") : reason,"count":dialogue?.completedCount ?? 0]
         webPanes.values.forEach{$0.setAutomaticReplyState(value)}
@@ -140,7 +145,7 @@ extension IntegratedWorkbench {
         }
         // A paused in-flight exchange keeps its scope; one explicit re-enable
         // reconciles it. It cannot acquire files or a new recipient on resume.
-        if let d=dialogue,d.checkboxMode==true,d.state=="paused",d.pendingID != nil {
+        if let d=dialogue,d.checkboxMode==true,d.state=="paused",d.automaticIntent || d.pendingID != nil {
             guard dialogueTargetsMatch(d) else {
                 webPanes[side]?.showNotice("Open both bound conversations before continuing. Nothing was sent.");refreshAutomaticReplyState();return
             }
@@ -196,6 +201,7 @@ extension IntegratedWorkbench {
             webPanes[side]?.showNotice("An attachment is missing, changed or too large. Nothing was sent.");refreshAutomaticReplyState();return
         }
         dialogue=PairedDialogue(id:UUID().uuidString,providers:kinds,conversations:conversations,roles:["",""],firstText:"",maxExchanges:0,duration:0,createdAt:Date().timeIntervalSince1970,state:"running",reason:"Waiting for a complete new reply",files:files,untilStopped:true,checkboxMode:true,firstSource:side,awaitingSeed:true)
+        dialogue?.autoSendEnabled=true
         guard dialogue?.valid==true,saveDialogue() else{return}
         readAutomaticSeed(dialogue!)
     }
@@ -430,6 +436,7 @@ extension IntegratedWorkbench {
         guard dialogue != nil else{return}
         // Latch before invalidating asynchronous leases or processing a reply.
         // A late callback can update its receipt, never schedule the next turn.
+        dialogue?.autoSendEnabled=false
         dialogue?.state="stopped";dialogue?.reason=reason;_ = saveDialogue()
         invalidateDialogueSendLease()
     }
@@ -534,6 +541,7 @@ extension IntegratedWorkbench {
     @objc func resumeDialogue() {
         guard let d=dialogue,d.state=="paused",dialogueTargetsMatch(d) else { showDialogueNotice("Open both bound conversations before continuing. Nothing was sent.");return }
         guard Date().timeIntervalSince1970<d.deadline else { showDialogueNotice("The authorized time budget has ended. Start a new exchange with a new budget; the old one will not replay.");return }
+        dialogue?.autoSendEnabled=d.checkboxMode == true
         dialogue?.state="running";dialogue?.reason="Reconcile the last receipt before any new send"
         guard saveDialogue() else{return}
         if let id=d.pendingID,let i=webTransfers.firstIndex(where:{$0.id==id}),let target=webPanes[webTransfers[i].targetPane] {

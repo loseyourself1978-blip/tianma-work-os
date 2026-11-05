@@ -24,7 +24,8 @@ struct BundledVoicePack: Decodable {
         let pack = try JSONDecoder().decode(Self.self,from:data)
         guard pack.schema == 1, pack.voice_id == "ttsmaker:1413:default", pack.language == "zh",
               pack.display_name == "小田 / Tian",
-              Set(pack.clips.keys) == Set(VoiceCue.allCases.map(\.rawValue)) else { throw PreviewError.invalidManifest }
+              Set(VoiceCue.originalRecordedCues.map(\.rawValue)).isSubset(of:Set(pack.clips.keys)),
+              Set(pack.clips.keys).isSubset(of:Set(VoiceCue.allCases.map(\.rawValue))) else { throw PreviewError.invalidManifest }
         return pack
     }
     func data(_ cue: VoiceCue, root: URL) throws -> Data {

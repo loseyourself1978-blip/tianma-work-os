@@ -1,7 +1,9 @@
-# TWOS 1.0.5 / 101.53 · Tian / 小田
+# TWOS delivery status
 
-[中文指南](release-1.0/AUDIO_FOLLOWUP.zh-CN.md) · [English guide](release-1.0/AUDIO_FOLLOWUP.en.md) · [GitHub Release](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.5)
+Published: 1.0.5 / 101.53. Candidate: 1.0.6 / 101.54, NOT_RELEASED.
 
-The Owner accepted the previous R4 UI. Audio acceptance is separate. Compare the installer with SHA256SUMS on its matching release.
+[English delta](release-1.0/AUTOSEND_AND_WARDROBE.en.md) · [中文增量](release-1.0/AUTOSEND_AND_WARDROBE.zh-CN.md)
+
+Final matching complete gate, signed embedded verification, notarization and download validation are pending. Prior Owner acceptances remain preserved; this work order is not Owner-accepted or App Store-approved.
 
 macOS Apple Silicon only. Windows is in development; no Windows download.

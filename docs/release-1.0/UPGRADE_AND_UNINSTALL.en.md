@@ -1,6 +1,6 @@
 # Upgrade and uninstall
 
-TWOS 1.0.5 / 101.53 · [Tian action voice](AUDIO_FOLLOWUP.en.md)
+TWOS 1.0.6 / 101.54 · [Tian action voice](AUDIO_FOLLOWUP.en.md)
 
 [R4 incremental instructions and exact boundaries](SIMPLIFIED_UX_R4.en.md).
 
@@ -12,3 +12,6 @@ The bundled Nyra has a pinned version. A compatible, same-signer standalone inst
 To uninstall, quit and remove the TWOS application. This does not remove standalone Nyra or personal data. Optional data deletion is separate: back up needed work and deliberately choose what to remove. Do not delete all Application Support or browser data. Removing Nyra itself leaves its preferences unless you explicitly remove them. Reinstalling is not a reason to replay completed work.
 
 [English / 简体中文](UPGRADE_AND_UNINSTALL.zh-CN.md)
+
+
+[DeepSeek relay, five outfits and bilingual action voice](AUTOSEND_AND_WARDROBE.en.md)

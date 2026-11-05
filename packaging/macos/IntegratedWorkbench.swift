@@ -319,6 +319,8 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
                 dialogue=try JSONDecoder().decode(PairedDialogue.self,from:bytes)
                 guard dialogue?.valid==true else {throw CocoaError(.fileReadCorruptFile)}
                 if dialogue?.state == "running" { dialogue?.state="paused";dialogue?.reason="App restarted. Auto-send is off. Check the receipt before explicitly continuing." }
+                // Receipts survive restart; permission to resume does not.
+                dialogue?.autoSendEnabled=false
             } catch { dialogue=nil;webLedgerError=true }
         }
         for (n, picker) in [leftPicker, rightPicker].enumerated() {

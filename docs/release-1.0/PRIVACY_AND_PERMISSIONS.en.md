@@ -1,6 +1,6 @@
 # Privacy, permissions and cost
 
-TWOS 1.0.5 / 101.53 · [Tian action voice](AUDIO_FOLLOWUP.en.md)
+TWOS 1.0.6 / 101.54 · [Tian action voice](AUDIO_FOLLOWUP.en.md)
 
 [R4 incremental instructions and exact boundaries](SIMPLIFIED_UX_R4.en.md).
 
@@ -17,3 +17,6 @@ The pet does not require Accessibility, full-disk, microphone, screen-recording 
 
 
 Automatic exchange saves only the explicitly authorized instructions/replies and exact selected file snapshots in the private local workbench profile. Provider upload is separate from selection. The read-only Nyra v2 channel adds only `activity_side` (left/right/both); it contains no file bytes, chat text or account information. Reconnecting a standalone requires explicit confirmation and exact live peer validation. No model turn is created by status reads.
+
+
+[DeepSeek relay, five outfits and bilingual action voice](AUTOSEND_AND_WARDROBE.en.md)

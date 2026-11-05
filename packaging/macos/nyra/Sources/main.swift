@@ -137,7 +137,7 @@ final class StageView: NSView {
     let truth = text("", size: 12, color: violet)
     let quality = text("", size: 11, color: .lightGray)
     let boundary = text("静态参考预览 · 动画素材缺失 · 原创声音未制作 · TWOS 未连接", size: 11, color: .lightGray)
-    var wardrobe: NSSegmentedControl!
+    var wardrobe: NSPopUpButton!
     var actions: [NSButton] = []
     var previewOutfit: Outfit?
     private let controlsPlate = NSView()
@@ -224,9 +224,14 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var activeSet: R4Set { library.sets[activeSetKey]! }
     func receiveInput(_ name: String) {
         let before = reactive.transientUntil
+        let wasDragging = reactive.dragging
         reactive.input(name,now: ProcessInfo.processInfo.systemUptime)
         if ["enter","click"].contains(name), reactive.transientUntil != before {
-            sound.react(.wave,event:"pointer-\(reactive.transientUntil)",visible:panel.isVisible || stage?.isVisible == true)
+            sound.react(name == "enter" ? .jumping : .wave,event:"pointer-\(reactive.transientUntil)",visible:panel.isVisible || stage?.isVisible == true)
+        } else if !wasDragging && reactive.dragging {
+            sound.react(.moving,event:UUID().uuidString,visible:panel.isVisible || stage?.isVisible == true)
+        } else if wasDragging && !reactive.dragging {
+            sound.react(.settling,event:UUID().uuidString,visible:panel.isVisible || stage?.isVisible == true)
         }
         reconcileAnimation(); writePlaybackState(name)
     }
@@ -334,7 +339,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 images[outfit.id] = image
             }
             library = try JSONDecoder().decode(R4Library.self,from: Data(contentsOf: resources.appendingPathComponent("runtime/r4.json"))).validated()
-            guard Set(wardrobe.outfits.map(\.id)) == ["runtime-default","runtime-office","runtime-gala"] else { throw PreviewError.invalidManifest }
+            guard Set(wardrobe.outfits.map(\.id)) == Set(library.standingKeys.map { "runtime-" + $0 }) else { throw PreviewError.invalidManifest }
             for set in library.sets.values {
                 for id in Set(set.sequences.values.flatMap(\.assetIDs)) {
                     guard FileManager.default.fileExists(atPath: resources.appendingPathComponent("runtime/\(set.folder)/\(id).png").path) else { throw PreviewError.imageMissing(id) }
@@ -411,7 +416,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
             NSMenu.popUpContextMenu(menu, with: event, for: self.panelView.art)
         }
         let specs: [(String, Selector, String)] = [
-            ("tshirt", #selector(nextOutfit), "一键换装 · 黑紫 / 职场 / 晚礼服"),
+            ("tshirt", #selector(nextOutfit), "一键换装 / Next outfit · 全部已安装服装 / All installed outfits"),
             ("arrow.up.left.and.arrow.down.right", #selector(fullscreen), "透明舞台 / Transparent stage"),
             ("speaker.wave.2", #selector(showSound), "声音 · 动作语音 / 静音 / 音量"),
             ("play.fill", #selector(showAnimationMenu), "动作 / Actions"),
@@ -543,8 +548,9 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc func selectOutfit(_ sender: NSMenuItem) {
         selected = sender.tag; updateOutfit(); saveSettings(); sound.react(.outfit,event:UUID().uuidString,visible:panel.isVisible || stage?.isVisible == true)
     }
-    @objc func selectSegment(_ sender: NSSegmentedControl) {
-        selected = sender.selectedSegment; updateOutfit(); saveSettings(); sound.react(.outfit,event:UUID().uuidString,visible:panel.isVisible || stage?.isVisible == true)
+    @objc func selectStageOutfit(_ sender: NSPopUpButton) {
+        guard wardrobe.outfits.indices.contains(sender.indexOfSelectedItem) else { return }
+        selected = sender.indexOfSelectedItem; updateOutfit(); saveSettings(); sound.react(.outfit,event:UUID().uuidString,visible:panel.isVisible || stage?.isVisible == true)
     }
     func updateOutfit() {
         let outfit = wardrobe.outfits[selected]
@@ -552,7 +558,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         stopFrameTimer(); frameImages.removeAll(); frameCursor = nil
         panelView.art.isRuntime = true; stageView?.art.isRuntime = true
         panelView.badge.stringValue = "夜璃 · " + outfit.name
-        stageView?.wardrobe.selectedSegment = selected; stageView?.previewOutfit = outfit
+        stageView?.wardrobe.selectItem(at: selected); stageView?.previewOutfit = outfit
         stageView?.subtitle.stringValue = useRecline ? outfit.name + " · 侧卧 / Reclining" : outfit.name + " / Standing"
         stageView?.boundary.stringValue = "空白区域可穿透 · Esc 返回桌面 / Click through blank space · Esc returns to desktop"
         stageView?.art.pan = .zero
@@ -576,9 +582,10 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         w.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         let view = StageView(frame: w.contentView!.bounds)
         view.art.stageUnits = CGSize(width:1600,height:1536)
-        view.wardrobe = NSSegmentedControl(labels: wardrobe.outfits.map(\.name), trackingMode: .selectOne,
-                                          target: self, action: #selector(selectSegment))
-        view.wardrobe.setAccessibilityLabel("选择真实运行服装")
+        view.wardrobe = NSPopUpButton(frame: .zero, pullsDown: false)
+        view.wardrobe.addItems(withTitles: wardrobe.outfits.map(\.name))
+        view.wardrobe.target = self; view.wardrobe.action = #selector(selectStageOutfit)
+        view.wardrobe.setAccessibilityLabel("服装 / Outfit")
         view.addSubview(view.wardrobe)
         view.art.onInput = { [weak self] name in self?.receiveInput(name) }
         view.art.onZoom = { [weak self, weak view] factor in
@@ -586,7 +593,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
             self?.writePlaybackState("stage_zoom")
         }
         view.art.onMenu = { [weak self] event in guard let self = self else { return }; NSMenu.popUpContextMenu(self.makeAnimationMenu(),with:event,for:view.art) }
-        view.actions = [button("姿态 / Pose", self, #selector(togglePose), hint: "三套服装均支持站姿与侧卧 / All three outfits"), button("返回桌面 / Back", self, #selector(backToDesktop), hint: "返回桌面 / Return to desktop"),
+        view.actions = [button("姿态 / Pose", self, #selector(togglePose), hint: "全部服装均支持站姿与侧卧 / Standing and reclining in every outfit"), button("返回桌面 / Back", self, #selector(backToDesktop), hint: "返回桌面 / Return to desktop"),
                         button("舞台 / Stage", self, #selector(fullscreen), hint: "切换全屏展示"),
                         button("动作 / Actions", self, #selector(showAnimationMenu), hint: "动作试播 / Manual preview · 不改任务状态"),
                         button("声音 / Sound", self, #selector(showSound), hint: "声音 · 动作语音 / 静音 / 音量"),
@@ -738,7 +745,11 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // Explicit action preview may audition its phrase; it does not change
         // the task result or produce a verified-success event.
         if let cue = VoiceCue.previewAnimation(animationNames[sender.tag]) {
-            sound.react(cue,event:UUID().uuidString,visible:panel.isVisible || stage?.isVisible == true,origin:"manual_action_preview")
+            // The user explicitly selected this preview. Replace the preceding
+            // audition instead of silently suppressing it with automatic cooldown.
+            if sound.automatic && (panel.isVisible || stage?.isVisible == true) {
+                sound.speak(cue,origin:"manual_action_preview")
+            }
         }
     }
     @objc func showAnimationMenu(_ sender: NSButton) {
@@ -836,6 +847,20 @@ if CommandLine.arguments.contains("--self-test") {
         try runAudioStorageTests()
         try runReactiveTests()
         let library = try JSONDecoder().decode(R4Library.self,from:Data(contentsOf:Bundle.main.resourceURL!.appendingPathComponent("runtime/r4.json"))).validated()
+        let manifestURL = Bundle.main.resourceURL!.appendingPathComponent("runtime/r4.json")
+        let manifestObject = try JSONSerialization.jsonObject(with:Data(contentsOf:manifestURL)) as! [String:Any]
+        if library.schemaVersion == 6 {
+            for missingKey in ["office_white", "recline_office_white", "gala_red", "recline_gala_red"] {
+                var malformed = manifestObject
+                var sets = malformed["sets"] as! [String:Any]
+                sets.removeValue(forKey:missingKey); malformed["sets"] = sets
+                let data = try JSONSerialization.data(withJSONObject:malformed)
+                do {
+                    _ = try JSONDecoder().decode(R4Library.self,from:data).validated()
+                    throw NSError(domain:"Incomplete wardrobe accepted",code:1)
+                } catch PreviewError.invalidManifest {}
+            }
+        }
         for set in library.sets.values {
             guard set.resolve("not_a_supported_action").0 == "idle" else { throw PreviewError.invalidManifest }
         }

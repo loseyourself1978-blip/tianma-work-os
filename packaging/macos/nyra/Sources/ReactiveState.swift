@@ -282,14 +282,18 @@ struct R4Set: Decodable {
 struct R4Library: Decodable {
     let schemaVersion: Int
     let sets: [String: R4Set]
+    var standingKeys: Set<String> {
+        schemaVersion == 6 ? ["default","office","gala","office_white","gala_red"] : ["default","office","gala"]
+    }
     func validated() throws -> R4Library {
-        let expected: Set<String> = schemaVersion == 4 ? ["default","office","gala","recline"] : ["default","office","gala","recline","recline_office","recline_gala"]
-        guard [4,5].contains(schemaVersion), Set(sets.keys) == expected else { throw PreviewError.invalidManifest }
-        if schemaVersion == 5 {
-            for key in ["default","office","gala"] {
+        let recliningKeys = Set(standingKeys.map { $0 == "default" ? "recline" : "recline_" + $0 })
+        let expected: Set<String> = schemaVersion == 4 ? ["default","office","gala","recline"] : standingKeys.union(recliningKeys)
+        guard [4,5,6].contains(schemaVersion), Set(sets.keys) == expected else { throw PreviewError.invalidManifest }
+        if schemaVersion >= 5 {
+            for key in standingKeys {
                 guard ["rise","lower","jumping","running_left","running_right"].allSatisfy({sets[key]?.sequences[$0] != nil}) else { throw PreviewError.invalidManifest }
             }
-            for key in ["recline","recline_office","recline_gala"] {
+            for key in recliningKeys {
                 guard ["idle","working","waiting","gaze_head","verified_success"].allSatisfy({sets[key]?.sequences[$0] != nil}) else { throw PreviewError.invalidManifest }
             }
         }

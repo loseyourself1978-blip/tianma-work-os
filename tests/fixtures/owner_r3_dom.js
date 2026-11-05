@@ -76,4 +76,15 @@ window.twosHandoffLanguage(true);await wait();
 assert(document.querySelector('[data-twos-primary]').textContent==='停止自动发送','Chinese stop remains accessible');
 window.twosHandoffAutoState({enabled:false,supported:true,pending:false,state:'stopped',reason:''});await wait();
 assert(!document.querySelector('[data-twos-automatic]').checked&&document.querySelector('[data-twos-primary]').hidden,'stopping restores incomplete state without send');
+// A SPA can retain its previous composer in a hidden subtree. The waiting/Stop
+// area must follow the current composer rather than remain connected but hidden.
+document.documentElement.dataset.twosFixtureProvider='ChatGPT';
+document.body.innerHTML='<section id="old-composer"><form><textarea></textarea></form></section>';
+await wait();
+document.getElementById('old-composer').hidden=true;
+document.body.insertAdjacentHTML('beforeend','<section id="new-composer"><form><textarea></textarea></form></section>');
+await wait();
+assert(document.querySelectorAll('[data-twos-native-card]').length===1&&document.querySelector('#new-composer [data-twos-native-card]')?.getClientRects().length,'waiting action area follows remounted composer');
+window.twosHandoffAutoState({enabled:true,supported:true,pending:false,state:'running',count:0,reason:'Waiting'});await wait();
+assert(document.querySelector('#new-composer [data-twos-primary]')?.textContent==='停止自动发送','Stop is visible after SPA composer replacement');
 return 'R3_DOM_PASS';

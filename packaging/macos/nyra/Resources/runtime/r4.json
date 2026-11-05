@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 5,
+  "schemaVersion": 6,
   "sets": {
     "default": {
       "folder": "default",
@@ -1299,6 +1299,708 @@
           "loop": false
         }
       }
+    },
+    "office_white": {
+      "folder": "office_white",
+      "neutral": "nyra_office_white_neutral",
+      "width": 1024,
+      "height": 1536,
+      "bbox": [
+        29,
+        86,
+        968,
+        1347
+      ],
+      "sequences": {
+        "idle": {
+          "asset_ids": [
+            "nyra_office_white_neutral",
+            "nyra_office_white_blink",
+            "nyra_office_white_neutral"
+          ],
+          "durations_ms": [
+            3000,
+            160,
+            1800
+          ],
+          "loop": true
+        },
+        "working": {
+          "asset_ids": [
+            "nyra_office_white_work",
+            "nyra_office_white_workblink",
+            "nyra_office_white_work"
+          ],
+          "durations_ms": [
+            2400,
+            160,
+            1400
+          ],
+          "loop": true
+        },
+        "review": {
+          "asset_ids": [
+            "nyra_office_white_work",
+            "nyra_office_white_workblink",
+            "nyra_office_white_work"
+          ],
+          "durations_ms": [
+            2400,
+            160,
+            1400
+          ],
+          "loop": true
+        },
+        "waiting": {
+          "asset_ids": [
+            "nyra_office_white_head",
+            "nyra_office_white_neutral"
+          ],
+          "durations_ms": [
+            1800,
+            1400
+          ],
+          "loop": true
+        },
+        "look_around": {
+          "asset_ids": [
+            "nyra_office_white_left",
+            "nyra_office_white_neutral",
+            "nyra_office_white_right",
+            "nyra_office_white_neutral"
+          ],
+          "durations_ms": [
+            300,
+            150,
+            300,
+            150
+          ],
+          "loop": false
+        },
+        "drag": {
+          "asset_ids": [
+            "nyra_office_white_run_right_1",
+            "nyra_office_white_run_right_2"
+          ],
+          "durations_ms": [
+            180,
+            180
+          ],
+          "loop": true
+        },
+        "settle": {
+          "asset_ids": [
+            "nyra_office_white_crouch",
+            "nyra_office_white_neutral"
+          ],
+          "durations_ms": [
+            180,
+            400
+          ],
+          "loop": false
+        },
+        "rise": {
+          "asset_ids": [
+            "nyra_office_white_rise",
+            "nyra_office_white_neutral"
+          ],
+          "durations_ms": [
+            280,
+            40
+          ],
+          "loop": false
+        },
+        "lower": {
+          "asset_ids": [
+            "nyra_office_white_neutral",
+            "nyra_office_white_rise"
+          ],
+          "durations_ms": [
+            40,
+            280
+          ],
+          "loop": false
+        },
+        "jumping": {
+          "asset_ids": [
+            "nyra_office_white_neutral",
+            "nyra_office_white_crouch",
+            "nyra_office_white_jump",
+            "nyra_office_white_crouch",
+            "nyra_office_white_neutral"
+          ],
+          "durations_ms": [
+            100,
+            140,
+            280,
+            160,
+            160
+          ],
+          "loop": false
+        },
+        "verified_success": {
+          "asset_ids": [
+            "nyra_office_white_neutral",
+            "nyra_office_white_crouch",
+            "nyra_office_white_jump",
+            "nyra_office_white_neutral"
+          ],
+          "durations_ms": [
+            100,
+            180,
+            440,
+            200
+          ],
+          "loop": false
+        },
+        "running_left": {
+          "asset_ids": [
+            "nyra_office_white_run_left_1",
+            "nyra_office_white_run_left_2"
+          ],
+          "durations_ms": [
+            180,
+            180
+          ],
+          "loop": true
+        },
+        "running_right": {
+          "asset_ids": [
+            "nyra_office_white_run_right_1",
+            "nyra_office_white_run_right_2"
+          ],
+          "durations_ms": [
+            180,
+            180
+          ],
+          "loop": true
+        },
+        "gaze_head": {
+          "asset_ids": [
+            "nyra_office_white_head",
+            "nyra_office_white_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        },
+        "gaze_left": {
+          "asset_ids": [
+            "nyra_office_white_left",
+            "nyra_office_white_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        },
+        "gaze_right": {
+          "asset_ids": [
+            "nyra_office_white_right",
+            "nyra_office_white_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        }
+      },
+      "frame_scales": {
+        "nyra_office_white_rise": 0.72,
+        "nyra_office_white_crouch": 0.72
+      },
+      "capabilities": "Native full-body RGBA animation; standing and reclining use the same outfit. No rotated standing-art substitute."
+    },
+    "recline_office_white": {
+      "folder": "recline_office_white",
+      "neutral": "nyra_office_white_recline_neutral",
+      "width": 1536,
+      "height": 1024,
+      "bbox": [
+        20,
+        228,
+        1490,
+        676
+      ],
+      "sequences": {
+        "idle": {
+          "asset_ids": [
+            "nyra_office_white_recline_neutral",
+            "nyra_office_white_recline_blink",
+            "nyra_office_white_recline_neutral"
+          ],
+          "durations_ms": [
+            3000,
+            160,
+            1800
+          ],
+          "loop": true
+        },
+        "working": {
+          "asset_ids": [
+            "nyra_office_white_recline_work",
+            "nyra_office_white_recline_workblink",
+            "nyra_office_white_recline_work"
+          ],
+          "durations_ms": [
+            2400,
+            160,
+            1400
+          ],
+          "loop": true
+        },
+        "review": {
+          "asset_ids": [
+            "nyra_office_white_recline_work",
+            "nyra_office_white_recline_workblink",
+            "nyra_office_white_recline_work"
+          ],
+          "durations_ms": [
+            2400,
+            160,
+            1400
+          ],
+          "loop": true
+        },
+        "waiting": {
+          "asset_ids": [
+            "nyra_office_white_recline_gaze",
+            "nyra_office_white_recline_neutral"
+          ],
+          "durations_ms": [
+            1800,
+            1400
+          ],
+          "loop": true
+        },
+        "look_around": {
+          "asset_ids": [
+            "nyra_office_white_recline_neutral",
+            "nyra_office_white_recline_gaze",
+            "nyra_office_white_recline_neutral"
+          ],
+          "durations_ms": [
+            200,
+            600,
+            200
+          ],
+          "loop": false
+        },
+        "verified_success": {
+          "asset_ids": [
+            "nyra_office_white_recline_neutral",
+            "nyra_office_white_recline_celebrate",
+            "nyra_office_white_recline_neutral"
+          ],
+          "durations_ms": [
+            150,
+            1000,
+            350
+          ],
+          "loop": false
+        },
+        "settle": {
+          "asset_ids": [
+            "nyra_office_white_recline_blink",
+            "nyra_office_white_recline_neutral"
+          ],
+          "durations_ms": [
+            160,
+            400
+          ],
+          "loop": false
+        },
+        "gaze_head": {
+          "asset_ids": [
+            "nyra_office_white_recline_gaze",
+            "nyra_office_white_recline_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        },
+        "gaze_left": {
+          "asset_ids": [
+            "nyra_office_white_recline_gaze",
+            "nyra_office_white_recline_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        },
+        "gaze_right": {
+          "asset_ids": [
+            "nyra_office_white_recline_gaze",
+            "nyra_office_white_recline_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        }
+      },
+      "frame_scales": {},
+      "capabilities": "Native full-body RGBA animation; standing and reclining use the same outfit. No rotated standing-art substitute."
+    },
+    "gala_red": {
+      "folder": "gala_red",
+      "neutral": "nyra_gala_red_neutral",
+      "width": 1024,
+      "height": 1536,
+      "bbox": [
+        29,
+        82,
+        986,
+        1384
+      ],
+      "sequences": {
+        "idle": {
+          "asset_ids": [
+            "nyra_gala_red_neutral",
+            "nyra_gala_red_blink",
+            "nyra_gala_red_neutral"
+          ],
+          "durations_ms": [
+            3000,
+            160,
+            1800
+          ],
+          "loop": true
+        },
+        "working": {
+          "asset_ids": [
+            "nyra_gala_red_work",
+            "nyra_gala_red_workblink",
+            "nyra_gala_red_work"
+          ],
+          "durations_ms": [
+            2400,
+            160,
+            1400
+          ],
+          "loop": true
+        },
+        "review": {
+          "asset_ids": [
+            "nyra_gala_red_work",
+            "nyra_gala_red_workblink",
+            "nyra_gala_red_work"
+          ],
+          "durations_ms": [
+            2400,
+            160,
+            1400
+          ],
+          "loop": true
+        },
+        "waiting": {
+          "asset_ids": [
+            "nyra_gala_red_head",
+            "nyra_gala_red_neutral"
+          ],
+          "durations_ms": [
+            1800,
+            1400
+          ],
+          "loop": true
+        },
+        "look_around": {
+          "asset_ids": [
+            "nyra_gala_red_left",
+            "nyra_gala_red_neutral",
+            "nyra_gala_red_right",
+            "nyra_gala_red_neutral"
+          ],
+          "durations_ms": [
+            300,
+            150,
+            300,
+            150
+          ],
+          "loop": false
+        },
+        "drag": {
+          "asset_ids": [
+            "nyra_gala_red_run_right_1",
+            "nyra_gala_red_run_right_2"
+          ],
+          "durations_ms": [
+            180,
+            180
+          ],
+          "loop": true
+        },
+        "settle": {
+          "asset_ids": [
+            "nyra_gala_red_crouch",
+            "nyra_gala_red_neutral"
+          ],
+          "durations_ms": [
+            180,
+            400
+          ],
+          "loop": false
+        },
+        "rise": {
+          "asset_ids": [
+            "nyra_gala_red_rise",
+            "nyra_gala_red_neutral"
+          ],
+          "durations_ms": [
+            280,
+            40
+          ],
+          "loop": false
+        },
+        "lower": {
+          "asset_ids": [
+            "nyra_gala_red_neutral",
+            "nyra_gala_red_rise"
+          ],
+          "durations_ms": [
+            40,
+            280
+          ],
+          "loop": false
+        },
+        "jumping": {
+          "asset_ids": [
+            "nyra_gala_red_neutral",
+            "nyra_gala_red_crouch",
+            "nyra_gala_red_jump",
+            "nyra_gala_red_crouch",
+            "nyra_gala_red_neutral"
+          ],
+          "durations_ms": [
+            100,
+            140,
+            280,
+            160,
+            160
+          ],
+          "loop": false
+        },
+        "verified_success": {
+          "asset_ids": [
+            "nyra_gala_red_neutral",
+            "nyra_gala_red_crouch",
+            "nyra_gala_red_jump",
+            "nyra_gala_red_neutral"
+          ],
+          "durations_ms": [
+            100,
+            180,
+            440,
+            200
+          ],
+          "loop": false
+        },
+        "running_left": {
+          "asset_ids": [
+            "nyra_gala_red_run_left_1",
+            "nyra_gala_red_run_left_2"
+          ],
+          "durations_ms": [
+            180,
+            180
+          ],
+          "loop": true
+        },
+        "running_right": {
+          "asset_ids": [
+            "nyra_gala_red_run_right_1",
+            "nyra_gala_red_run_right_2"
+          ],
+          "durations_ms": [
+            180,
+            180
+          ],
+          "loop": true
+        },
+        "gaze_head": {
+          "asset_ids": [
+            "nyra_gala_red_head",
+            "nyra_gala_red_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        },
+        "gaze_left": {
+          "asset_ids": [
+            "nyra_gala_red_left",
+            "nyra_gala_red_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        },
+        "gaze_right": {
+          "asset_ids": [
+            "nyra_gala_red_right",
+            "nyra_gala_red_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        }
+      },
+      "frame_scales": {
+        "nyra_gala_red_rise": 0.72,
+        "nyra_gala_red_crouch": 0.72
+      },
+      "capabilities": "Native full-body RGBA animation; standing and reclining use the same outfit. No rotated standing-art substitute."
+    },
+    "recline_gala_red": {
+      "folder": "recline_gala_red",
+      "neutral": "nyra_gala_red_recline_neutral",
+      "width": 1536,
+      "height": 1024,
+      "bbox": [
+        9,
+        127,
+        1501,
+        758
+      ],
+      "sequences": {
+        "idle": {
+          "asset_ids": [
+            "nyra_gala_red_recline_neutral",
+            "nyra_gala_red_recline_blink",
+            "nyra_gala_red_recline_neutral"
+          ],
+          "durations_ms": [
+            3000,
+            160,
+            1800
+          ],
+          "loop": true
+        },
+        "working": {
+          "asset_ids": [
+            "nyra_gala_red_recline_work",
+            "nyra_gala_red_recline_workblink",
+            "nyra_gala_red_recline_work"
+          ],
+          "durations_ms": [
+            2400,
+            160,
+            1400
+          ],
+          "loop": true
+        },
+        "review": {
+          "asset_ids": [
+            "nyra_gala_red_recline_work",
+            "nyra_gala_red_recline_workblink",
+            "nyra_gala_red_recline_work"
+          ],
+          "durations_ms": [
+            2400,
+            160,
+            1400
+          ],
+          "loop": true
+        },
+        "waiting": {
+          "asset_ids": [
+            "nyra_gala_red_recline_gaze",
+            "nyra_gala_red_recline_neutral"
+          ],
+          "durations_ms": [
+            1800,
+            1400
+          ],
+          "loop": true
+        },
+        "look_around": {
+          "asset_ids": [
+            "nyra_gala_red_recline_neutral",
+            "nyra_gala_red_recline_gaze",
+            "nyra_gala_red_recline_neutral"
+          ],
+          "durations_ms": [
+            200,
+            600,
+            200
+          ],
+          "loop": false
+        },
+        "verified_success": {
+          "asset_ids": [
+            "nyra_gala_red_recline_neutral",
+            "nyra_gala_red_recline_celebrate",
+            "nyra_gala_red_recline_neutral"
+          ],
+          "durations_ms": [
+            150,
+            1000,
+            350
+          ],
+          "loop": false
+        },
+        "settle": {
+          "asset_ids": [
+            "nyra_gala_red_recline_blink",
+            "nyra_gala_red_recline_neutral"
+          ],
+          "durations_ms": [
+            160,
+            400
+          ],
+          "loop": false
+        },
+        "gaze_head": {
+          "asset_ids": [
+            "nyra_gala_red_recline_gaze",
+            "nyra_gala_red_recline_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        },
+        "gaze_left": {
+          "asset_ids": [
+            "nyra_gala_red_recline_gaze",
+            "nyra_gala_red_recline_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        },
+        "gaze_right": {
+          "asset_ids": [
+            "nyra_gala_red_recline_gaze",
+            "nyra_gala_red_recline_neutral"
+          ],
+          "durations_ms": [
+            700,
+            350
+          ],
+          "loop": false
+        }
+      },
+      "frame_scales": {},
+      "capabilities": "Native full-body RGBA animation; standing and reclining use the same outfit. No rotated standing-art substitute."
     }
   }
 }

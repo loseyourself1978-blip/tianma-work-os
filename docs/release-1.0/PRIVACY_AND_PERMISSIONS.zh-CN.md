@@ -1,6 +1,6 @@
 # 隐私、权限与费用
 
-TWOS 1.0.5 / 101.53 · [小田动作语音](AUDIO_FOLLOWUP.zh-CN.md)
+TWOS 1.0.6 / 101.54 · [小田动作语音](AUDIO_FOLLOWUP.zh-CN.md)
 
 [R4 差量操作和准确边界](SIMPLIFIED_UX_R4.zh-CN.md)。
 
@@ -17,3 +17,6 @@ Nyra 仅接收有界只读状态和不透明关联标识，不接收聊天、代
 
 
 自动互聊只在本机私有工作台配置中保存明确授权的指令／回复和精确选定文件副本。选择与向提供方上传分开。Nyra v2 只读通道仅增加 `activity_side`（左／右／双方），不含文件字节、正文或账户。独立版接续须明确确认并核验真实对端。状态读取不会创建模型轮次。
+
+
+[DeepSeek 接力、五套服装与双语动作语音](AUTOSEND_AND_WARDROBE.zh-CN.md)

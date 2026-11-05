@@ -1,6 +1,6 @@
 # Troubleshooting
 
-TWOS 1.0.5 / 101.53 · [Tian action voice](AUDIO_FOLLOWUP.en.md)
+TWOS 1.0.6 / 101.54 · [Tian action voice](AUDIO_FOLLOWUP.en.md)
 
 [R4 incremental instructions and exact boundaries](SIMPLIFIED_UX_R4.en.md).
 
@@ -28,3 +28,6 @@ The read-only link is bound to the exact signed producer, including its applicat
 ### Older receipt identity
 
 “Matching older receipt found; message identity needs verification” means an old receipt used a rendered position that can change when history reloads. A matching body alone does not identify a new turn. TWOS preserves the receipt and blocks a duplicate instead of offering another Send or claiming the new turn was delivered. **More → Handoff history** inspects without resending. Continue with a genuinely new reply when needed; do not replay an old task to clear the notice. New fallback identities bind the selected reply and its preceding user message, so loading older history does not renumber them.
+
+
+[DeepSeek relay, five outfits and bilingual action voice](AUTOSEND_AND_WARDROBE.en.md)

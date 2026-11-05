@@ -248,9 +248,13 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
         let files=NSMenuItem(title:translate("Attachments")+(fileSelectionCount>0 ? " (\(fileSelectionCount))" : ""),action:#selector(selectWebFiles),keyEquivalent:"");files.target=self;menu.addItem(files)
         item("Remove selection",#selector(removeWebFiles));menu.addItem(.separator())
         item("Handoff history",#selector(showHandoffHistory));item("Nyra status",#selector(showDiagnostics))
+        menu.addItem(.separator());item("Privacy policy",#selector(openPrivacy));item("Product support",#selector(openSupport))
         if automaticReplyEnabled {item("Stop auto-send",#selector(stopAutomaticExchange))}
         if let button=moreButton {menu.popUp(positioning:nil,at:NSPoint(x:0,y:button.bounds.maxY),in:button)}
     }
+    // Only constant public help URLs. Web content cannot choose a native open target.
+    @objc func openPrivacy() { NSWorkspace.shared.open(URL(string:"https://loseyourself1978-blip.github.io/tianma-work-os/privacy/")!) }
+    @objc func openSupport() { NSWorkspace.shared.open(URL(string:"https://loseyourself1978-blip.github.io/tianma-work-os/support/")!) }
     @objc func showHandoffHistory() {historyHandler?()}
     @objc func showDiagnostics() {diagnosticsHandler?()}
     func setAutomaticReplyState(_ value:[String:Any]) {

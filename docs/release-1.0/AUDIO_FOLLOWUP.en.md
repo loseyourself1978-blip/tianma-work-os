@@ -29,3 +29,6 @@ Choose a language and action → Import → select a decodable recording under 2
 ## Incremental check only
 
 After installing the actual new candidate: preview Chinese Rest and Celebrate → close the panel → enable action voice and try Recline and manual Celebrate once. Respect cooldowns. Preserve all existing Nyra, debate, travel and artifact-operation acceptances; no repeated business task is required.
+
+
+Current extension: [DeepSeek relay, five outfits and bilingual action voice](AUTOSEND_AND_WARDROBE.en.md)

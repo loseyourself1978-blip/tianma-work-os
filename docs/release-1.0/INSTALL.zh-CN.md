@@ -1,6 +1,6 @@
 # 安装 Tianma Work OS 1.0.5
 
-TWOS 1.0.5 / 101.53 · [小田动作语音](AUDIO_FOLLOWUP.zh-CN.md)
+TWOS 1.0.6 / 101.54 · [小田动作语音](AUDIO_FOLLOWUP.zh-CN.md)
 
 [R4 差量操作和准确边界](SIMPLIFIED_UX_R4.zh-CN.md)。
 
@@ -29,3 +29,6 @@ TWOS 1.0.5 / 101.53 · [小田动作语音](AUDIO_FOLLOWUP.zh-CN.md)
 高级校验可在下载文件夹运行 `shasum -a 256 -c SHA256SUMS`；普通安装不要求使用终端。
 
 [English / 简体中文](INSTALL.en.md)
+
+
+[DeepSeek 接力、五套服装与双语动作语音](AUTOSEND_AND_WARDROBE.zh-CN.md)

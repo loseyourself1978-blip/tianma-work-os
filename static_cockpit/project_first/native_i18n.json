@@ -1658,5 +1658,7 @@
   "NYRA_OTHER_INSTALLATION_RUNNING": {
     "en-US": "Another installed Nyra is running. Quit that Nyra from its own menu, then use Show Nyra here. Existing tasks continue.",
     "zh-CN": "另一安装位置的夜璃正在运行。请从该夜璃自己的菜单正常退出，再在这里显示夜璃。现有任务会继续。"
-  }
+  },
+  "Privacy policy": {"en-US": "Privacy policy", "zh-CN": "隐私政策"},
+  "Product support": {"en-US": "Product support", "zh-CN": "产品支持"}
 }

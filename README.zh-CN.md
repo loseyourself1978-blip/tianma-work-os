@@ -5,6 +5,8 @@
 **TWOS 1.0.5 / build 101.53** · [下载与校验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.5) · [小田动作语音](docs/release-1.0/AUDIO_FOLLOWUP.zh-CN.md)
 
 
+正在验证 1.0.6 / 101.54 候选：[本轮增量](docs/release-1.0/AUTOSEND_AND_WARDROBE.zh-CN.md)。上方下载仍指向已发布的 1.0.5；未把候选写成已发行。
+
 [English](README.md) · [安装](docs/release-1.0/INSTALL.zh-CN.md) · [操作指南](docs/release-1.0/USER_GUIDE.zh-CN.md) · [当前发行状态](docs/CURRENT_DELIVERY.md)
 
 在一个 macOS 工作区中讨论目标、交接指令并执行。TWOS 将 ChatGPT、DeepSeek、Claude 官网与本机 Codex 客户端配对，把明确内容交给选定目标，再将结果带回原讨论。

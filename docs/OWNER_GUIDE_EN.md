@@ -1,6 +1,6 @@
 # TWOS 1.0 · Installation and use
 
-**Applies to TWOS 1.0.5 / build 101.53, including Nyra 1.0.4 / build 104.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md)
+**Applies to TWOS 1.0.6 / build 101.54, including Nyra 1.0.5 / build 105.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md)
 
 **Installation and version: use `START_HERE.html` in this bilingual guide, the [release receipt](release-1.0/release.json), and the actual GitHub Release status. Use the matching receipt to verify the complete engineering gate, signing and notarization; Owner differential acceptance is separate.**
 Discuss on the official ChatGPT website in the left pane, execute with the local Codex service in the right pane, and return results to the original discussion. The right pane is TWOS's own client for the official App Server protocol; it does not embed the entire official Codex macOS interface.
@@ -13,9 +13,9 @@ After the final delivery receipt identifies the installer, double-click the DMG 
 
 ## A · This upgrade only
 
-TWOS 1.0.5 / 101.53 · [Nyra · 小田 / Tian](release-1.0/AUDIO_FOLLOWUP.en.md)
+This candidate awaits final release verification. Check only relay, new outfits and bilingual voice using the delta below; do not repeat old business tasks or continue into B afterward.
 
-The prior R4 UI was accepted. Finish the audio check here; do not repeat first use.
+[1.0.6 / 101.54](release-1.0/AUTOSEND_AND_WARDROBE.en.md)
 
 ## B · First task
 

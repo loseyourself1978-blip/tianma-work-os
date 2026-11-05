@@ -1,6 +1,6 @@
 # Use TWOS 1.0.5
 
-TWOS 1.0.5 / 101.53 · [Tian action voice](AUDIO_FOLLOWUP.en.md)
+TWOS 1.0.6 / 101.54 · [Tian action voice](AUDIO_FOLLOWUP.en.md)
 
 [R4 incremental instructions and exact boundaries](SIMPLIFIED_UX_R4.en.md).
 
@@ -40,3 +40,6 @@ Nyra plays short, bundled Chinese recordings by Tian at action transitions: a re
 The top **Language: English / 语言：简体中文** selector changes TWOS controls immediately and saves the choice. It does not change the language of the provider account, task text, messages or files. No task is submitted.
 
 **Show Nyra / Hide Nyra** follows the observed bundled companion window. A helper from another installation is identified as a conflict instead of pretending to be hidden; quit that Nyra normally from its own menu, then show the current bundled component. No running task is stopped.
+
+
+[DeepSeek relay, five outfits and bilingual action voice](AUTOSEND_AND_WARDROBE.en.md)

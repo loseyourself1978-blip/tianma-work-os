@@ -3,6 +3,10 @@ import Foundation
 // Fixed local phrases only. Never narrate a task, chat, attachment or credential.
 enum VoiceCue: String, CaseIterable {
     case welcome, rest, working, waiting, success, sad, outfit, wave
+    case idle, reading, moving, jumping, settling
+    // Version 1 shipped these eight recordings. New cues must never make an
+    // intact older pack look corrupt or substitute a Chinese clip for English.
+    static let originalRecordedCues: Set<VoiceCue> = [.welcome,.rest,.working,.waiting,.success,.sad,.outfit,.wave]
     var label: String {
         switch self {
         case .welcome: return "问候 / Greeting"
@@ -13,6 +17,11 @@ enum VoiceCue: String, CaseIterable {
         case .sad: return "鼓励 / Encouragement"
         case .outfit: return "换装 / Outfit"
         case .wave: return "挥手 / Wave"
+        case .idle: return "待机 / Idle"
+        case .reading: return "阅读 / Reading"
+        case .moving: return "移动 / Moving"
+        case .jumping: return "跳跃 / Jump"
+        case .settling: return "落定 / Settle"
         }
     }
     func phrase(_ language: String) -> String {
@@ -26,6 +35,11 @@ enum VoiceCue: String, CaseIterable {
         case .sad: return zh ? "别着急，我们慢慢来。" : "Don't worry. Let's take it one step at a time."
         case .outfit: return zh ? "换好啦，好看吗？" : "All dressed up! How do I look?"
         case .wave: return zh ? "嘿，我在呢。" : "Hey! I'm here."
+        case .idle: return zh ? "我在这里，随时陪着你。" : "I'm right here, whenever you need me."
+        case .reading: return zh ? "我陪你安静读一会儿。" : "Let's enjoy a little quiet reading together."
+        case .moving: return zh ? "出发啦，我跟着你。" : "Let's go! I'm right with you."
+        case .jumping: return zh ? "嘿咻，伸个懒腰。" : "Up we go! Time for a little stretch."
+        case .settling: return zh ? "站稳啦，慢慢来。" : "There we are. Nice and steady."
         }
     }
     static func previewAnimation(_ name: String) -> VoiceCue? {
@@ -34,7 +48,12 @@ enum VoiceCue: String, CaseIterable {
         case "working": return .working
         case "waiting": return .waiting
         case "failed": return .sad
-        case "waving", "jumping": return .wave
+        case "idle": return .idle
+        case "review": return .reading
+        case "waving", "look_around", "gaze_head", "gaze_left", "gaze_right", "gaze_center": return .wave
+        case "jumping", "rise": return .jumping
+        case "running_left", "running_right", "drag": return .moving
+        case "settle", "lower": return .settling
         default: return nil
         }
     }
@@ -49,6 +68,7 @@ enum VoiceCue: String, CaseIterable {
         case .running: return .working
         case .waiting_user: return .waiting
         case .failed: return .sad
+        case .idle: return .idle
         default: return nil // partial, cancelled and unverified must not celebrate.
         }
     }
@@ -66,7 +86,7 @@ struct ActionVoiceGate {
         consumed.insert(event); order.append(event)
         if order.count > 256 { consumed.remove(order.removeFirst()) }
         guard now.isFinite, enabled, visible, !busy else { return false }
-        let cooldown: TimeInterval = cue == .rest || cue == .wave ? 120 : 45
+        let cooldown: TimeInterval = [.rest,.wave,.idle,.moving,.settling].contains(cue) ? 120 : 45
         guard now-lastAny >= 10, now-(lastCue[cue] ?? -.infinity) >= cooldown else { return false }
         lastAny = now; lastCue[cue] = now
         return true
@@ -98,8 +118,15 @@ func runActionVoiceTests() throws {
     try require(VoiceCue.live(previous:event(.running,1),current:event(.running),decision:yes,wasConnected:true) == nil)
     try require(VoiceCue.live(previous:event(.running,1),current:event(.verified_success),decision:success,wasConnected:false) == nil)
     try require(VoiceCue.live(previous:event(.running,1),current:event(.verified_success),decision:success,wasConnected:true) == .success)
-    for state in [WorkState.partial,.cancelled,.completed_unverified,.disconnected,.activity_unknown,.idle] {
+    for state in [WorkState.partial,.cancelled,.completed_unverified,.disconnected,.activity_unknown] {
         try require(VoiceCue.live(previous:event(.running,1),current:event(state),decision:yes,wasConnected:true) == nil)
+    }
+    try require(VoiceCue.live(previous:event(.running,1),current:event(.idle),decision:yes,wasConnected:true) == .idle)
+    for name in ["idle","review","working","waiting","failed","waving","jumping","running_left","running_right","drag","settle","rise","lower","look_around","gaze_head","gaze_left","gaze_right"] {
+        try require(VoiceCue.previewAnimation(name) != nil)
+    }
+    for cue in VoiceCue.allCases {
+        try require(!cue.phrase("zh").isEmpty && !cue.phrase("en").isEmpty && cue.phrase("zh") != cue.phrase("en"))
     }
     try require(VoiceCue.live(previous:event(.idle,1),current:event(.running,2,simulation:true),decision:yes,wasConnected:true) == nil)
     try require(VoiceCue.live(previous:event(.idle,3),current:event(.running),decision:yes,wasConnected:true) == nil)

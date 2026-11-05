@@ -8,6 +8,7 @@ final class NyraAudio: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDeleg
     private var player: AVAudioPlayer?
     private var effect: AVAudioPlayer?
     private var activeUtterance: AVSpeechUtterance?
+    private var speechDeadline: DispatchWorkItem?
     private var gate = ActionVoiceGate()
     var changed: (() -> Void)?
     var isMuted = true { didSet { if isMuted { stop() } } }
@@ -47,8 +48,12 @@ final class NyraAudio: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDeleg
             }
     }
     var voice: AVSpeechSynthesisVoice? {
-        if let id = voiceIDs[resolvedLanguage], !id.isEmpty { return voices.first { $0.identifier == id } }
+        if let id = voiceIDs[resolvedLanguage], !id.isEmpty, let selected = voices.first(where: { $0.identifier == id }) { return selected }
         return voices.first
+    }
+    var voiceSelectionUnavailable: Bool {
+        guard let id = voiceIDs[resolvedLanguage], !id.isEmpty else { return false }
+        return !voices.contains { $0.identifier == id }
     }
     func customCandidates(_ cue: VoiceCue) -> [URL] {
         guard let root = customDirectory else { return [] }
@@ -90,7 +95,7 @@ final class NyraAudio: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDeleg
             return "小田 / Tian · 中文 · 内置离线短句 / Bundled offline cues"
         }
         guard let voice = voice else { return "所选女声未安装；请选择可用声线 / Selected voice unavailable" }
-        return "本机女声 / Local female voice · \(voice.name) · \(voice.language)" + (voice.quality.rawValue > 1 ? " · 高质量 / Enhanced" : "")
+        return (voiceSelectionUnavailable ? "原声线不可用，使用已安装声线 / Saved voice unavailable; using installed voice · " : "本机女声 / Local female voice · ") + "\(voice.name) · \(voice.language)" + (voice.quality.rawValue > 1 ? " · 高质量 / Enhanced" : "")
     }
     var isPlaying: Bool { activeUtterance != nil || speech.isSpeaking || player?.isPlaying == true || effect?.isPlaying == true }
     var snapshot: [String: Any] {
@@ -99,7 +104,18 @@ final class NyraAudio: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDeleg
          "audio_playing":player?.isPlaying == true || effect?.isPlaying == true,"cue":lastCue,"origin":lastOrigin,
          "playback_count":playbackCount,"speech_start_count":speechStartCount,"custom_exclusive_voice_produced":false,"bundled_voice_selected":usesBundledVoice]
     }
-    func stop() { activeUtterance=nil; speech.stopSpeaking(at:.immediate); player?.stop(); effect?.stop(); lastResult = "已停止 / Stopped" }
+    func stop() { speechDeadline?.cancel(); speechDeadline=nil; activeUtterance=nil; speech.stopSpeaking(at:.immediate); player?.stop(); effect?.stop(); lastResult = "已停止 / Stopped" }
+    private func monitorSpeech(_ words: AVSpeechUtterance, after seconds: Double) {
+        speechDeadline?.cancel()
+        let deadline = DispatchWorkItem { [weak self, weak words] in
+            guard let self=self, let words=words, self.activeUtterance === words else { return }
+            self.stop()
+            self.lastResult = "本机语音未完成；可重试或选择其他声线 / Local speech did not complete; retry or choose another voice"
+            self.changed?()
+        }
+        speechDeadline=deadline
+        DispatchQueue.main.asyncAfter(deadline:.now()+seconds,execute:deadline)
+    }
     func chime(_ kind: String) {
         guard !isMuted, volume > 0, !isPlaying,
               let url = Bundle.main.resourceURL?.appendingPathComponent("audio/\(kind).wav") else { return }
@@ -134,17 +150,23 @@ final class NyraAudio: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDeleg
             words.voice = voice; words.volume = volume
             words.rate = resolvedLanguage == "zh" ? 0.48 : 0.46
             words.pitchMultiplier = cue == .success ? 1.12 : 1.06
-            activeUtterance=words; speech.speak(words); lastResult = "等待本机语音播放 / Queued local speech"
+            activeUtterance=words; monitorSpeech(words,after:8); speech.speak(words); lastResult = "等待本机语音播放 / Queued local speech"
         } else { lastResult = "当前语言缺少可用女声 / No installed female voice" }
         changed?()
     }
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didStart utterance: AVSpeechUtterance) {
         guard activeUtterance === utterance else { return }
+        monitorSpeech(utterance,after:30)
         playbackCount += 1; speechStartCount += 1; lastResult = "正在播放本机女声 / Speaking locally"; changed?()
     }
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
-        guard activeUtterance === utterance else { return }; activeUtterance=nil
+        guard activeUtterance === utterance else { return }; speechDeadline?.cancel(); speechDeadline=nil; activeUtterance=nil
         lastResult = "播放结束 / Playback ended"; changed?()
+    }
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        guard activeUtterance === utterance else { return }
+        speechDeadline?.cancel(); speechDeadline=nil; activeUtterance=nil
+        lastResult = "播放已取消 / Playback cancelled"; changed?()
     }
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         guard self.player === player else { return }

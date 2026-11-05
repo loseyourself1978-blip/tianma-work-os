@@ -81,6 +81,75 @@
       "duration_seconds": 1.3779583333333334,
       "source_start_seconds": 35.2,
       "source_end_seconds": 36.577958333333335
+    },
+    "idle": {
+      "file": "idle.wav",
+      "text": "我在这里，随时陪着你。",
+      "sha256": "ba3e8562012dfce72b6226e734448551644e520612b5f43201a319f05ae91586",
+      "duration_seconds": 2.2407083333333335,
+      "source_sha256": "4c80d6e420af47220acc050bc768e87d4de1e793b3bcd0e897cfdc35b071889e",
+      "source_start_seconds": 0,
+      "source_end_seconds": 2.240708,
+      "text_provenance": "Owner supplied five-phrase generation in requested order; automatic transcript not available"
+    },
+    "reading": {
+      "file": "reading.wav",
+      "text": "我陪你安静读一会儿。",
+      "sha256": "0b0f633435c7b9b7e90134e1cb67fe31abb5fdab8c21048babc75cc741cd47f3",
+      "duration_seconds": 1.5830416666666667,
+      "source_sha256": "4c80d6e420af47220acc050bc768e87d4de1e793b3bcd0e897cfdc35b071889e",
+      "source_start_seconds": 2.651083,
+      "source_end_seconds": 4.234125,
+      "text_provenance": "Owner supplied five-phrase generation in requested order; automatic transcript not available"
+    },
+    "moving": {
+      "file": "moving.wav",
+      "text": "出发啦，我跟着你。",
+      "sha256": "21ec8c010de253e677630e443b026380a1efa77aecd9c20bcd239c8facfe7632",
+      "duration_seconds": 1.78225,
+      "source_sha256": "4c80d6e420af47220acc050bc768e87d4de1e793b3bcd0e897cfdc35b071889e",
+      "source_start_seconds": 4.649833,
+      "source_end_seconds": 6.432083,
+      "text_provenance": "Owner supplied five-phrase generation in requested order; automatic transcript not available"
+    },
+    "jumping": {
+      "file": "jumping.wav",
+      "text": "嘿咻，伸个懒腰。",
+      "sha256": "91a016a4f095b43fd82908814226d2ec2a19047d7a935d0f6f1eb2ce71f370e5",
+      "duration_seconds": 1.7438333333333333,
+      "source_sha256": "4c80d6e420af47220acc050bc768e87d4de1e793b3bcd0e897cfdc35b071889e",
+      "source_start_seconds": 6.854583,
+      "source_end_seconds": 8.598417,
+      "text_provenance": "Owner supplied five-phrase generation in requested order; automatic transcript not available"
+    },
+    "settling": {
+      "file": "settling.wav",
+      "text": "站稳啦，慢慢来。",
+      "sha256": "02831e003a536131fd1a782f900e07368aa5a827e3e6983d1e6e70c901966fb0",
+      "duration_seconds": 1.6887083333333333,
+      "source_sha256": "4c80d6e420af47220acc050bc768e87d4de1e793b3bcd0e897cfdc35b071889e",
+      "source_start_seconds": 9.0165,
+      "source_end_seconds": 10.705208,
+      "text_provenance": "Owner supplied five-phrase generation in requested order; automatic transcript not available"
     }
-  }
+  },
+  "supplements": [
+    {
+      "source_sha256": "4c80d6e420af47220acc050bc768e87d4de1e793b3bcd0e897cfdc35b071889e",
+      "source_format": "mp3",
+      "source_bytes": 66960,
+      "decoded_sample_rate": 24000,
+      "received_at": "2026-11-05T09:19:22.562322+00:00",
+      "voice_identity": "Owner selected TTSMaker Xiaotian 1413",
+      "observed_inter_phrase_silence_seconds": [
+        0.650375,
+        0.655708,
+        0.6625,
+        0.658083
+      ],
+      "generation_settings": "Not inspected in website; actual received file is MP3",
+      "operation": "Local PCM conversion and silence-boundary split only; no voice transformation",
+      "auditory_content_validation": "NOT_RUN: interface cannot receive audio input"
+    }
+  ]
 }

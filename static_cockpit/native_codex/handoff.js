@@ -55,7 +55,11 @@
   const card={box,button,toggle,toggleText,toggleLabel,status,details,summary,preview,check,retry,result,reply:null,message:'',record:null,pending:false,version:++serial};
   button.addEventListener('click',event=>{
    if(!event.isTrusted)return;
-   if(auto.enabled){post({action:'stopAutomaticReplies'});return;}
+   if(auto.enabled){
+    if(auto.state==='paused')post({action:'automaticReplies',enabled:true,targetBinding:target.binding});
+    else post({action:'stopAutomaticReplies'});
+    return;
+   }
    const current=api()?.latest();
    if(card!==active||card.pending||!card.reply?.isConnected||current?.state!=='reply'||current.message!==card.message||(card.record&&recordedTarget(card.record)))return;
    const text=instructionText(card.reply);if(text!==current.text||!text.trim())return;
@@ -89,15 +93,15 @@
   const blocked=Boolean((card.record&&recordedTarget(card.record))||card.pending);
   flag(card.button,'hidden',!auto.enabled&&(!complete||blocked));
   flag(card.button,'disabled',false);
-  put(card.button,auto.enabled?label('Stop auto-send','停止自动发送'):targetLabel());
+  put(card.button,auto.enabled?(auto.state==='paused'?label('Resume auto-send','继续自动发送'):label('Stop auto-send','停止自动发送')):targetLabel());
   flag(card.toggle,'checked',auto.enabled);flag(card.toggle,'disabled',auto.pending||(!auto.supported&&!auto.enabled));
   put(card.toggleText,label('Automatically send replies to ','自动发送回复到 ')+target.provider);
   if(card.toggle.getAttribute('aria-label')!==card.toggleText.textContent)card.toggle.setAttribute('aria-label',card.toggleText.textContent);
   card.toggle.title=auto.supported?'':label('Auto-send shares website replies only. Codex execution retains separate permissions.','自动发送仅交流网页回复。Codex 执行保留独立权限。');
   put(card.summary,label('Details','详情'));
   let note='';
-  if(auto.enabled)note=auto.reason||label('Auto-send on · ','自动发送中 · ')+(auto.count||0);
-  else if(auto.state==='paused')note=label('Auto-send paused · ','自动发送已暂停 · ')+(auto.reason||'');
+  if(auto.state==='paused')note=label('Auto-send paused · ','自动发送已暂停 · ')+(auto.reason||'');
+  else if(auto.enabled)note=auto.reason||label('Auto-send on · ','自动发送中 · ')+(auto.count||0);
   else if(card.record){
    const r=card.record;note=card.legacyIdentity?label('Matching older receipt found; message identity needs verification. Nothing is resent.','找到内容相同的旧回执，消息身份需核验，不会重复发送。'):['sent','reply','accepted'].includes(r.state)?label('Sent to ','已发送到 ')+(r.provider||'Codex'):
     ['sending','preparing','queued'].includes(r.state)?label('Sending…','发送中…'):label('See details · ','详情：')+(r.state||'unknown');
@@ -124,11 +128,12 @@
   const becameAvailable=available&&!returnAvailable;returnAvailable=Boolean(available);
   let added=false;
   const message=reply?api().identity(reply):'';
-  if(!active||active.reply!==reply||active.message!==message||!active.box.isConnected){
+  if(!active||active.reply!==reply||active.message!==message||!active.box.isConnected||
+     (!reply&&(active.composer!==input||!visible(active.box)))){
    // A provider remount may retain a copied DOM card without its callbacks.
    // Keep exactly one host-owned action area; never retain that stale hit target.
    document.querySelectorAll('[data-twos-native-card]').forEach(e=>e.remove());
-   active=makeArea();active.reply=reply;active.message=message;added=true;
+   active=makeArea();active.reply=reply;active.message=message;active.composer=input;added=true;
    if(reply)reply.insertAdjacentElement('afterend',active.box);
    else if(input)input.closest('form')?.insertAdjacentElement('beforebegin',active.box)||input.insertAdjacentElement('beforebegin',active.box);
    else document.body.append(active.box);

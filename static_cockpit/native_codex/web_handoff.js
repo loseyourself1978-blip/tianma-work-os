@@ -41,15 +41,7 @@ return await (async () => {
  });
  const isSendControl=e=>e.matches('[data-testid="send-button"],#composer-submit-button,[data-testid="chat-input-send"]')||/^(Send(?: message| prompt)?|发送(?:消息|提示)?)$/i.test(e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent.trim());
  const sendShape=()=>[...document.querySelectorAll('button,[role=button]')].filter(isSendControl).slice(0,8).map(e=>({tag:e.tagName,testID:e.getAttribute('data-testid'),visible:visible(e),disabled:Boolean(e.disabled),ariaDisabled:e.getAttribute('aria-disabled'),inHistory:Boolean(e.closest('[data-twos-native-card],[data-message-author-role],[data-is-streaming],.font-claude-response'))}));
- const deepSeekArrow="M8.3125 0.980206C8.66767 1.05312 8.97902 1.2042 9.2627 1.43235C9.48724 1.613 9.73029 1.85795 9.97949 2.10716L14.707 6.8347L13.293 8.24876L9 3.95579V15.0417H7V3.95579L2.70703 8.24876L1.29297 6.8347L6.02051 2.10716C6.26971 1.85795 6.51277 1.613 6.7373 1.43235C6.97662 1.23988 7.28445 1.04404 7.6875 0.980206C7.8973 0.947029 8.1031 0.955183 8.3125 0.980206Z";
- const deepSeekSend=(requireEnabled=true)=>{
-  if(provider!=='DeepSeek'||(location.hostname!=='chat.deepseek.com'&&!localFixture))return null;
-  let parent=input.parentElement;for(let n=0;parent&&n<5;n++,parent=parent.parentElement){
-   const candidates=[...parent.querySelectorAll('[role=button].ds-button--primary.ds-button--circle')].filter(e=>visible(e)&&(!requireEnabled||!e.classList.contains('ds-button--disabled'))&&e.querySelector('svg path')?.getAttribute('d')===deepSeekArrow);
-   if(candidates.length===1)return candidates[0];
-   if(candidates.length>1)return null;
-  }return null;
- };
+ const deepSeekSend=(requireEnabled=true)=>provider==='DeepSeek' ? window.twosProviderDOM?.deepSeekControl('send',requireEnabled)||null : null;
  // Limit reconciliation to visible conversation messages, not account history.
  const selectors=provider==='ChatGPT'?{user:'[data-message-author-role="user"],[data-testid="user-message"],[data-markdown-text-style="user-message"],[data-user-message-bubble]',reply:'[data-message-author-role="assistant"],[data-markdown-text-style="assistant-message"]'}:
  provider==='DeepSeek'?{user:'[data-role="user"],[data-message-role="user"],.ds-message .ds-collapsible-text',reply:'[data-role="assistant"],[data-message-role="assistant"],.ds-message .ds-markdown'}:
@@ -112,7 +104,7 @@ return await (async () => {
  // or an assistant quotation containing the marker.
  const matchesUser=e=>matchesPrompt(e)||(provider==='ChatGPT'&&e.matches('[data-user-message-bubble]')&&[...e.querySelectorAll('[data-search-result-target]')].some(body=>body.closest('[data-user-message-bubble]')===e&&matchesPrompt(body)));
  const receipt=()=>messages().find(e=>(normalize(e.textContent)===normalize(prompt)||normalize(e.innerText)===normalize(prompt)||matchesUser(e)))||semanticReceipt();
- const busy=()=>[...document.querySelectorAll('button,[role=button]')].some(e=>visible(e)&&/^(stop(?: generating| response)?|停止(?:生成|回复)?)$/i.test(e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent.trim()));
+ const busy=()=>Boolean(window.twosProviderDOM?.deepSeekControl('stop',true))||[...document.querySelectorAll('button,[role=button]')].some(e=>window.twosProviderDOM?.isStop(e));
  const result=()=>{
   const user=receipt();if(!user)return null;
   const nextUser=[...messages(),...turnHeadings().filter(e=>window.twosProviderDOM?.speaker(e)==='user')].filter(e=>e!==user&&!user.contains(e)&&!e.contains(user)&&Boolean(user.compareDocumentPosition(e)&Node.DOCUMENT_POSITION_FOLLOWING)).sort((a,b)=>a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING?-1:1)[0];

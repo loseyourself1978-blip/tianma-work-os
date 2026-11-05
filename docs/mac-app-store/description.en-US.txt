@@ -1,0 +1,22 @@
+Lead your AI team. Keep the work moving.
+
+TWOS brings supported AI conversations into one Mac workspace, so you can explore ideas side by side and move from discussion to useful results with less copying and switching.
+
+COMPARE IDEAS, KEEP THE CONTEXT
+Work in two connected conversation panes. Compare approaches, develop a draft, or ask another assistant to challenge an idea.
+
+HAND OFF WITHOUT THE COPY-PASTE LOOP
+Send a complete reply to the selected conversation. Enable automatic reply sharing for a supported pair, and stop future sends from either side. Waiting, pauses, and delivery problems are shown clearly.
+
+KEEP YOUR FILES IN SCOPE
+Choose the text and supported attachments you intend to share. Inspect available results and use the file actions supported by the submitted version. Selecting a folder is not permission to read everything in it.
+
+MEET NYRA
+Nyra is your bundled animated desktop companion, with five outfits, a transparent character stage, and read-only awareness of supported task activity. She cannot send messages, run commands, or approve work.
+
+YOU STAY IN CONTROL
+Use your own accounts for compatible AI services. Provider availability, model access, usage limits, subscriptions, and data practices remain subject to each provider's terms. TWOS does not include unlimited third-party AI access.
+
+Built for Apple Silicon Macs. Internet access and compatible provider accounts are required for online AI features.
+
+TWOS is an independent product and is not affiliated with or endorsed by third-party AI providers.

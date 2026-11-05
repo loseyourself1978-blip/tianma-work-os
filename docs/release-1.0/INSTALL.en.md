@@ -1,6 +1,6 @@
 # Install Tianma Work OS 1.0.5
 
-TWOS 1.0.5 / 101.53 · [Tian action voice](AUDIO_FOLLOWUP.en.md)
+TWOS 1.0.6 / 101.54 · [Tian action voice](AUDIO_FOLLOWUP.en.md)
 
 [R4 incremental instructions and exact boundaries](SIMPLIFIED_UX_R4.en.md).
 
@@ -29,3 +29,6 @@ Currently supports macOS only. A Windows version is in development; no downloada
 Advanced checksum check: run `shasum -a 256 -c SHA256SUMS` in the download folder. Ordinary installation does not require a terminal.
 
 [English / 简体中文](INSTALL.zh-CN.md)
+
+
+[DeepSeek relay, five outfits and bilingual action voice](AUTOSEND_AND_WARDROBE.en.md)

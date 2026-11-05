@@ -4,6 +4,8 @@ Nyra plays short, bundled Chinese recordings by Tian at action transitions: a re
 
 **TWOS 1.0.5 / build 101.53** · [Download and verify](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.5) · [Tian action voice](docs/release-1.0/AUDIO_FOLLOWUP.en.md)
 
+Candidate 1.0.6 / 101.54 is being verified: [incremental changes](docs/release-1.0/AUTOSEND_AND_WARDROBE.en.md). The download above remains published 1.0.5; the candidate is not yet a release.
+
 [简体中文](README.zh-CN.md) · [Install](docs/release-1.0/INSTALL.en.md) · [User guide](docs/release-1.0/USER_GUIDE.en.md) · [Current release status](docs/CURRENT_DELIVERY.md)
 
 Discuss a goal and execute it in one macOS workspace. TWOS pairs official ChatGPT, DeepSeek or Claude webpages with a local Codex client, binds handoffs to the selected destination, and brings results back to the discussion.
@@ -12,7 +14,7 @@ Discuss a goal and execute it in one macOS workspace. TWOS pairs official ChatGP
 - Send selected instructions and attachments. Continue with Steer or an editable Queue; inspect real tool activity, diffs, errors and permission requests.
 - Open a produced webpage, view a file, save a copy, or reveal the original in Finder.
 - See service-provided quota windows and separately labelled local task usage, elapsed time, plan progress and evidence-based estimates.
-- Show **Nyra**, the bundled local companion, with three outfits, standing/reclining animation and a transparent stage. Nyra observes minimal read-only state; it cannot execute or approve tasks.
+- Show **Nyra**, the bundled local companion, with five outfits, standing/reclining animation and a transparent stage. Nyra observes minimal read-only state; it cannot execute or approve tasks.
 
 ## Download and first use
 

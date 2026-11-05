@@ -1,6 +1,6 @@
 # 升级与卸载
 
-TWOS 1.0.5 / 101.53 · [小田动作语音](AUDIO_FOLLOWUP.zh-CN.md)
+TWOS 1.0.6 / 101.54 · [小田动作语音](AUDIO_FOLLOWUP.zh-CN.md)
 
 [R4 差量操作和准确边界](SIMPLIFIED_UX_R4.zh-CN.md)。
 
@@ -12,3 +12,6 @@ TWOS 1.0.5 / 101.53 · [小田动作语音](AUDIO_FOLLOWUP.zh-CN.md)
 卸载时退出并移除 TWOS App，不会同时删除独立 Nyra 或个人数据。可选数据删除应先备份并明确选择范围，不清空整个 Application Support 或浏览器数据。卸载 Nyra 默认保留偏好。重装不应重放已经完成的工作。
 
 [English / 简体中文](UPGRADE_AND_UNINSTALL.en.md)
+
+
+[DeepSeek 接力、五套服装与双语动作语音](AUTOSEND_AND_WARDROBE.zh-CN.md)
