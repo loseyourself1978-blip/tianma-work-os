@@ -23,3 +23,7 @@ The normal signed DMG fix can proceed independently. The appropriate next Store 
 - `PRIVACY_INVENTORY.md`: actual observed data paths, not a completed Apple privacy label.
 - `REVIEW_NOTES.md`: implementation and access boundaries.
 - Screenshots: final Store candidate NOT_BUILT; six 2880×1800 English screenshots and an optional 15–30 second 1920×1080 preview therefore NOT_CAPTURED. Engineering DMG screenshots must not impersonate Store evidence.
+
+[Primary provider terms checked November 6, 2026](PROVIDER_RIGHTS_CHECK.md). Consumer sign-in is not evidence of permission for automated webpage relay. Public marketing/privacy/support pages were observed anonymously in actual Safari at desktop and 390×800 CSS viewport widths; this does not establish Store readiness.
+
+The final packaged More → Privacy policy / Product support click check is NOT_RUN: native window automation was unavailable. The source-bound menu URLs and the separate anonymous Safari website observations do not substitute for that product-entry click. This remains part of the uncompleted Store preparation, not an Owner acceptance claim.

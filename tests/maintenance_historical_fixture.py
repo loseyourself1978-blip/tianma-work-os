@@ -24,9 +24,31 @@ from fastapi.testclient import TestClient
 from sqlalchemy import text
 import tests.test_self_hosting as helpers
 import tests.test_vol19_owner_commit_push_delivery as delivery
+import tests.test_vol19_result_owner_delivery as result_delivery
 from twos_runtime.app import create_app
 root = Path(sys.argv[1])
 schema = sys.argv[2]
+# Preparing a genuine accepted fixture is not a latency assertion. Its coding
+# and verification subprocesses each retain their historical 30-second limits;
+# the historical result helper's 20-second poll can expire before either starts
+# on a contended Mac. Allow those two phases plus bounded preparation time.
+# Only this positive fixture's completion wait changes: no historical product
+# source, status, approval, result, or migration assertion is fabricated.
+historical_wait = result_delivery.wait_for_run
+def wait_for_fixture_result(client, headers, run_id, statuses, timeout=10):
+    budget = max(timeout, 90) if statuses == {'completed'} else timeout
+    started = time.monotonic()
+    try:
+        return historical_wait(client, headers, run_id, statuses, timeout=budget)
+    except AssertionError as exc:
+        response = client.get(f'/api/codex-runs/{run_id}', headers=headers)
+        current = response.json() if response.status_code == 200 else {}
+        raise AssertionError(
+            f'Historical fixture completion failed after {time.monotonic()-started:.2f}s '
+            f'(budget {budget}s); last status={current.get("status", "unavailable")}, '
+            f'process_spawned={current.get("process_spawned")}, '
+            f'verification_status={current.get("verification_status")}') from exc
+result_delivery.wait_for_run = wait_for_fixture_result
 password = 'fixture-19-3-local-owner-password'
 helpers.OWNER_PASSWORD = password
 settings_used = None

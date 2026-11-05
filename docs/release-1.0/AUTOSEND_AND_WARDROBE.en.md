@@ -1,6 +1,6 @@
 # DeepSeek relay, five outfits and bilingual action voice
 
-Candidate guide for TWOS 1.0.6 / 101.54. The new package still requires its matching complete gate, signing, notarization and download verification. CURRENT_DELIVERY and the release receipt identify actual publication status.
+Guide for TWOS 1.0.6 / 101.54. The matching complete gate, Developer ID signatures, notarization and exact mounted-installer launch checks passed. The corresponding GitHub Release and receipt determine availability and download verification.
 
 ## DeepSeek automatic relay (TWOS)
 

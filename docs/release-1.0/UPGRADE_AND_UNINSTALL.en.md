@@ -1,8 +1,8 @@
 # Upgrade and uninstall
 
-TWOS 1.0.6 / 101.54 · [Tian action voice](AUDIO_FOLLOWUP.en.md)
+TWOS 1.0.6 / 101.54 · [This update](AUTOSEND_AND_WARDROBE.en.md)
 
-[R4 incremental instructions and exact boundaries](SIMPLIFIED_UX_R4.en.md).
+[Current incremental instructions and exact boundaries](AUTOSEND_AND_WARDROBE.en.md).
 
 
 Finish or explicitly stop your own active work. Quit TWOS normally, then replace its application with the verified release. Do not edit the running bundle. Existing local environments, directory authorizations, drafts and provider website stores are not release assets and must not be copied into a public package.

@@ -1,11 +1,11 @@
-# 安装 Tianma Work OS 1.0.5
+# 安装 Tianma Work OS 1.0.6
 
-TWOS 1.0.6 / 101.54 · [小田动作语音](AUDIO_FOLLOWUP.zh-CN.md)
+TWOS 1.0.6 / 101.54 · [本次增量](AUTOSEND_AND_WARDROBE.zh-CN.md)
 
-[R4 差量操作和准确边界](SIMPLIFIED_UX_R4.zh-CN.md)。
+[本次增量操作和准确边界](AUTOSEND_AND_WARDROBE.zh-CN.md)。
 
 
-适用本次 TWOS/Nyra 联合候选 build 101.53。是否发布、签名和系统实测以发行回执为准；本机候选不等于已公开发行。
+适用本次 TWOS/Nyra 联合候选 build 101.54。是否发布、签名和系统实测以发行回执为准；本机候选不等于已公开发行。
 
 当前仅支持 macOS。Windows 版本开发中，尚无可下载版本。当前 TWOS 包为 Apple Silicon，工程实测为 macOS 27.0.1 / Safari 27.0.1。编译下限不代表所有旧系统都已测试，其他系统请先核对发行支持表。
 

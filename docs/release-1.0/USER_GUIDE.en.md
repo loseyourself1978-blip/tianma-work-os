@@ -1,13 +1,13 @@
-# Use TWOS 1.0.5
+# Use TWOS 1.0.6
 
-TWOS 1.0.6 / 101.54 · [Tian action voice](AUDIO_FOLLOWUP.en.md)
+TWOS 1.0.6 / 101.54 · [This update](AUTOSEND_AND_WARDROBE.en.md)
 
-[R4 incremental instructions and exact boundaries](SIMPLIFIED_UX_R4.en.md).
+[Current incremental instructions and exact boundaries](AUTOSEND_AND_WARDROBE.en.md).
 
 
 Choose the path matching your situation; they are not one mandatory sequence.
 
-**Upgrade checks:** use the R4 incremental route above; retain accepted work, Claude login, outfits and transparent artwork. Do not follow the first-task route after completing the upgrade route.
+**Upgrade checks:** use the current incremental route above; retain accepted work, Claude login, outfits and transparent artwork. Do not follow the first-task route after completing the upgrade route.
 
 **First task:** follow [Install](INSTALL.en.md), select a folder and explicitly send the intended instruction once.
 
@@ -25,15 +25,15 @@ A file card may offer **Open webpage** (trusted host opens the exact authorized 
 
 Click **Show Nyra / Hide Nyra**. Enter the character to jump once; drag left/right for matching running frames and release to settle. The control ring and stage use the same bounded manual preview actions. Previewing Celebrate is not business success.
 
-Black & purple, Office and Gala support standing and reclining. **Stage** opens a transparent screen-sized stage; **Pose** changes stance. Runs/jumps from reclining use same-outfit rise/action/lower frames. Blank areas pass pointer input through. **Desktop** or Esc while stage-focused restores saved position, scale and outfit. Hiding/quitting also restores desktop configuration. No global keyboard interception is used.
+Black & purple, Office, Gala, White blouse and Ruby gown support standing and reclining. **Stage** opens a transparent screen-sized stage; **Pose** changes stance. Runs/jumps from reclining use same-outfit rise/action/lower frames. Blank areas pass pointer input through. **Desktop** or Esc while stage-focused restores saved position, scale and outfit. Hiding/quitting also restores desktop configuration. No global keyboard interception is used.
 
 Nyra consumes minimal read-only state. Idle, running, queued/waiting, partial/failure/cancellation and disconnected remain distinguishable. Unverified completion does not celebrate. An explicitly checked, exactly bound result may trigger one celebration, without changing an earlier executor PARTIAL report or granting overall product acceptance. Reconnection does not replay celebrations.
 
-Nyra plays short, bundled Chinese recordings by Tian at action transitions: a rest reminder on reclining and a cheer on verified success. Sound starts muted. Unmute and enable Action voice in Sound; close the panel with Close, Escape or Sound again.
+Nyra plays 13 short bundled Chinese Tian recordings or 13 corresponding English phrases with an installed local female voice. Eligible action transitions include idle, reading, work, rest and verified success; cooldown prevents repetitive speech. Sound starts muted. Unmute and enable Action voice in Sound; close the panel with Close, Escape or Sound again.
 
 [English / 简体中文](USER_GUIDE.zh-CN.md)
 
-[Evidence coverage / 验证范围](R4_VERIFICATION.en.md)
+[Current verification / 本版验证](DEEPSEEK_R1_VERIFICATION.en.md)
 
 ## Workbench language and Nyra visibility
 

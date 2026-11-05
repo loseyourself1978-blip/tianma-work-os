@@ -1,8 +1,8 @@
 # 隐私、权限与费用
 
-TWOS 1.0.6 / 101.54 · [小田动作语音](AUDIO_FOLLOWUP.zh-CN.md)
+TWOS 1.0.6 / 101.54 · [本次增量](AUTOSEND_AND_WARDROBE.zh-CN.md)
 
-[R4 差量操作和准确边界](SIMPLIFIED_UX_R4.zh-CN.md)。
+[本次增量操作和准确边界](AUTOSEND_AND_WARDROBE.zh-CN.md)。
 
 
 TWOS 承载供应商官网，并连接本机 Codex App Server。各供应商遵循自己的账号、留存、计划和用量规则；TWOS 不把所有服务强行合成一个额度池，也不静默变更计费路径，不自动购买、重置或订阅。

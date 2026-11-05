@@ -19,12 +19,14 @@ PAGE = '''<!doctype html><meta charset="utf-8"><title>TWOS Safari geometry valid
 <h1>Actual Safari · isolated geometry fixtures</h1><p id="browser-status"></p><pre id="status">Waiting for a test</pre>
 <script>
 let current=null, frame=null, deadline=null, completion=null, clientStarted=null, checkpoints=[];
+const clientID=crypto.randomUUID();
+const clientHeaders={'X-TWOS-Browser':clientID};
 const status=document.querySelector('#status');
 const browserState=()=>({at:Date.now(),visibility:document.visibilityState,focused:document.hasFocus()});
 async function reportBrowserState(){
- const value={...browserState(),userAgent:navigator.userAgent};
+ const value={...browserState(),userAgent:navigator.userAgent,clientID};
  document.querySelector('#browser-status').textContent='Browser visibility: '+value.visibility;
- try{await fetch('ready',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(value)});}catch(e){}
+ try{await fetch('ready',{method:'POST',headers:{...clientHeaders,'Content-Type':'application/json'},body:JSON.stringify(value)});}catch(e){}
 }
 document.addEventListener('visibilitychange',reportBrowserState);
 window.addEventListener('focus',reportBrowserState);
@@ -33,7 +35,7 @@ setInterval(reportBrowserState,1000);
 async function finish(payload){
  if(!current)return;
  const id=current.id;current=null;clearTimeout(deadline);
- try{await fetch('result',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,userAgent:navigator.userAgent,clientStarted,clientFinished:browserState(),checkpoints,...payload})});
+ try{await fetch('result',{method:'POST',headers:{...clientHeaders,'Content-Type':'application/json'},body:JSON.stringify({id,clientID,userAgent:navigator.userAgent,clientStarted,clientFinished:browserState(),checkpoints,...payload})});
  status.textContent=JSON.stringify({id,...payload},null,2);}
  finally{completion?.();}
 }
@@ -44,7 +46,9 @@ window.addEventListener('message',e=>{
 async function poll(){
  while(true){try{await reportBrowserState();
  if(document.visibilityState!=='visible'){await new Promise(resolve=>setTimeout(resolve,1000));continue;}
- const response=await fetch('next',{cache:'no-store'});const item=await response.json();
+ const response=await fetch('next',{cache:'no-store',headers:clientHeaders});
+ if(!response.ok){await new Promise(resolve=>setTimeout(resolve,1000));continue;}
+ const item=await response.json();
  if(item){current=item;checkpoints=[];clientStarted=browserState();const done=new Promise(resolve=>completion=resolve);
  if(frame)frame.remove();frame=document.createElement('iframe');
  frame.style=`display:block;border:0;width:${item.width}px;height:20000px`;
@@ -69,11 +73,21 @@ def browser_ready(receipt, now):
             and 0 <= now-receipt.get('received_at',0) <= 3)
 
 
+def selected_browser(browsers, now):
+    candidates=[r for r in browsers.values() if browser_ready(r,now)]
+    return max(candidates,key=lambda r:(r.get('focused') is True,r['received_at']),default=None)
+
+
+def matching_browser(browsers, client_id, user_agent, now):
+    receipt=browsers.get(client_id)
+    return bool(receipt and receipt.get('userAgent')==user_agent and browser_ready(receipt,now))
+
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--evidence',type=Path,required=True)
     args=parser.parse_args();args.evidence.mkdir(parents=True,exist_ok=False,mode=0o700)
     lock=threading.Lock();state={'job':None,'result':None,'served':False,'event':threading.Event(),
-                                'available':threading.Event(),'served_at':None,'received_at':None,'browser':None}
+                                'available':threading.Event(),'served_at':None,'received_at':None,'browsers':{}}
     token=uuid.uuid4().hex
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*args):pass
@@ -86,14 +100,22 @@ def main():
             route=self.route()
             if route=='':return self.send(PAGE,html=True)
             if route=='status':
-                with lock:result={'browser':state['browser'],'ready':browser_ready(state['browser'],time.time())}
+                with lock:
+                    browser=selected_browser(state['browsers'],time.time())
+                    result={'browser':browser,'ready':browser_ready(browser,time.time())}
                 return self.send(result)
             if route=='next':
+                client_id=self.headers.get('X-TWOS-Browser','')
+                with lock:
+                    if not matching_browser(state['browsers'],client_id,self.headers.get('User-Agent',''),time.time()):
+                        return self.send({'error':'BROWSER_NOT_ELIGIBLE'},409)
                 # Wait for a job instead of relying on background-tab timer polling.
                 # The measurement deadline remains ten seconds; no retries are added.
                 state['available'].wait(5)
                 with lock:
-                    job=state['job'] if not state['served'] and browser_ready(state['browser'],time.time()) else None
+                    candidate=state['job']
+                    job=candidate if (candidate and candidate['clientID']==client_id and not state['served']
+                        and matching_browser(state['browsers'],client_id,self.headers.get('User-Agent',''),time.time())) else None
                     if job:
                         state.update(served=True,served_at=time.time());state['available'].clear()
                 return self.send(job)
@@ -106,14 +128,27 @@ def main():
             if route=='ready':
                 if not isinstance(body,dict) or body.get('visibility') not in ('visible','hidden') or not isinstance(body.get('userAgent'),str):
                     return self.send({'error':'INVALID_BROWSER_STATE'},400)
-                receipt={k:body.get(k) for k in ('at','visibility','focused','userAgent')}
+                client_id=self.headers.get('X-TWOS-Browser','')
+                try:valid_client=str(uuid.UUID(client_id))==client_id
+                except (ValueError,AttributeError):valid_client=False
+                if not valid_client or body.get('clientID')!=client_id or body['userAgent']!=self.headers.get('User-Agent',''):
+                    return self.send({'error':'INVALID_BROWSER_IDENTITY'},400)
+                receipt={k:body.get(k) for k in ('at','visibility','focused','userAgent','clientID')}
                 receipt['received_at']=time.time()
-                with lock:state['browser']=receipt
+                with lock:
+                    state['browsers']={k:v for k,v in state['browsers'].items() if 0<=time.time()-v['received_at']<=30}
+                    if client_id not in state['browsers'] and len(state['browsers'])>=16:
+                        return self.send({'error':'TOO_MANY_BROWSER_CLIENTS'},409)
+                    state['browsers'][client_id]=receipt
                 return self.send({'ready':browser_ready(receipt,time.time())})
             if route=='result':
                 with lock:
                     job=state['job']
                     if not job or body.get('id')!=job['id'] or state['result'] is not None:return self.send({'error':'STALE_RESULT'},409)
+                    if (not state['served'] or body.get('clientID')!=job['clientID']
+                        or self.headers.get('X-TWOS-Browser')!=job['clientID']
+                        or self.headers.get('User-Agent')!=job['browserUserAgent']):
+                        return self.send({'error':'WRONG_BROWSER_RESULT'},409)
                     ua=body.get('userAgent','')
                     if 'Safari/' not in ua or any(x in ua for x in ('Chrome/','Chromium/','Edg/')):body={'id':job['id'],'error':'NOT_SAFARI','userAgent':ua}
                     state.update(result=body,received_at=time.time());state['event'].set()
@@ -121,8 +156,10 @@ def main():
             with lock:
                 if state['job']:return self.send({'error':'BUSY'},409)
                 if not valid_fixture(body):return self.send({'error':'INVALID_FIXTURE'},400)
-                if not browser_ready(state['browser'],time.time()):return self.send({'error':'SAFARI_NOT_VISIBLE_OR_STALE'},409)
-                job={**body,'id':uuid.uuid4().hex};state.update(job=job,result=None,served=False,served_at=None,received_at=None)
+                browser=selected_browser(state['browsers'],time.time())
+                if not browser:return self.send({'error':'SAFARI_NOT_VISIBLE_OR_STALE'},409)
+                job={**body,'id':uuid.uuid4().hex,'clientID':browser['clientID'],'browserUserAgent':browser['userAgent']}
+                state.update(job=job,result=None,served=False,served_at=None,received_at=None)
                 state['event'].clear();state['available'].set()
             started=time.time();state['event'].wait(12)
             with lock:

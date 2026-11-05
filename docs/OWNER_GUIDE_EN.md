@@ -13,7 +13,7 @@ After the final delivery receipt identifies the installer, double-click the DMG 
 
 ## A · This upgrade only
 
-This candidate awaits final release verification. Check only relay, new outfits and bilingual voice using the delta below; do not repeat old business tasks or continue into B afterward.
+The exact distribution passed its matching complete engineering gate, signing, notarization and mounted-installer launch check; GitHub Release state determines public availability. Check only relay, new outfits and bilingual voice using the delta below; do not repeat old business tasks or continue into B afterward.
 
 [1.0.6 / 101.54](release-1.0/AUTOSEND_AND_WARDROBE.en.md)
 

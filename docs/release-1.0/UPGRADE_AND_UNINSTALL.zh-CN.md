@@ -1,8 +1,8 @@
 # 升级与卸载
 
-TWOS 1.0.6 / 101.54 · [小田动作语音](AUDIO_FOLLOWUP.zh-CN.md)
+TWOS 1.0.6 / 101.54 · [本次增量](AUTOSEND_AND_WARDROBE.zh-CN.md)
 
-[R4 差量操作和准确边界](SIMPLIFIED_UX_R4.zh-CN.md)。
+[本次增量操作和准确边界](AUTOSEND_AND_WARDROBE.zh-CN.md)。
 
 
 先完成或明确停止自己的活动工作，正常退出 TWOS，再替换已验证的新 App，不修改运行中的包。本机环境、目录授权、草稿、供应商网站存储不是发行资产，不得复制进公开安装包。

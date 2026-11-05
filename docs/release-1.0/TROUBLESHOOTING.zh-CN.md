@@ -1,8 +1,8 @@
 # 故障排查
 
-TWOS 1.0.6 / 101.54 · [小田动作语音](AUDIO_FOLLOWUP.zh-CN.md)
+TWOS 1.0.6 / 101.54 · [本次增量](AUTOSEND_AND_WARDROBE.zh-CN.md)
 
-[R4 差量操作和准确边界](SIMPLIFIED_UX_R4.zh-CN.md)。
+[本次增量操作和准确边界](AUTOSEND_AND_WARDROBE.zh-CN.md)。
 
 
 - **系统阻止安装：** 核对对应 Release、哈希和签名回执，不关闭 Gatekeeper、不移除隔离标记。未公证工程候选不等于面向新手的正式安装路径。

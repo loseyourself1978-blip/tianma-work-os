@@ -6,6 +6,10 @@ TWOS 内置固定 Nyra 组件，其 manifest 绑定源码提交、事件契约�
 
 ## 小田动作语音
 
-八句中文录音来自 TTSMaker 1413 小田（默认音色），仅移除分句间长停顿，保留原音高和语速。播放完全在本机完成。保留两个程序合成的开合／换装提示音；英语可用本机女声，用户自定义录音优先且不进入发行。
+十三句中文录音使用 TTSMaker 1413 小田。原八个 WAV 文件不变；新增五句来自 Owner 提供的 MP3，解码为单声道 PCM WAV 并裁去句间间隔，未独立观察新增音频的网页生成设置。英文十三句对应台词由已安装的本机女声朗读（已验证 Samantha），并非小田英文录音。播放离线进行，用户私有导入优先且不进入发行；保留两个程序提示音。
 
-[Manifest](https://github.com/loseyourself1978-blip/tianma-work-os/blob/v1.0.5/packaging/macos/nyra/Resources/audio/tian-1413-zh/manifest.json) · [TTSMaker audio license](https://ttsmaker.com/copyright_and_commercial_license_terms/zh-cn)
+[Manifest](https://github.com/loseyourself1978-blip/tianma-work-os/blob/v1.0.6/packaging/macos/nyra/Resources/audio/tian-1413-zh/manifest.json) · [TTSMaker audio license](https://ttsmaker.com/copyright_and_commercial_license_terms/zh-cn)
+
+白衬衫、红礼服各新增十四张站姿与六张侧卧透明运行帧，原三套服装不变。内置组件清单记录确切源码和资源哈希；左右跑为两帧循环，不宣传为八帧步态。真实界面验证与 Owner 接受边界见本版增量指南。
+
+2026年11月6日核对TTSMaker官方许可页：允许按其条件商用和分发生成音频，不转让语音模型权利。

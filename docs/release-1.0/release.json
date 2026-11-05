@@ -1,34 +1,69 @@
 {
   "product": "TWOS",
-  "version": "1.0.5",
-  "build": "101.53",
-  "source_commit": "1cfa198a73a6299fe0154305409915e7f2e49351",
-  "artifact": "Tianma-Work-OS-1.0.5-build-101.53.dmg",
-  "bytes": 193302359,
-  "sha256": "ef584c991d5c705d699974b422f7381e54d7b327fc885bb04a5bf97002e32ddf",
+  "version": "1.0.6",
+  "build": "101.54",
+  "source_commit": "d230018a5a44b9caddb02d0ff56a38024a740f50",
+  "artifact": "Tianma-Work-OS-1.0.6-build-101.54.dmg",
+  "bytes": 264486086,
+  "sha256": "4880e1c372186661a5968a4afed1fde6c0ba08e7fe5be69596846b9c84c18520",
+  "app_notarization_id": "2314aeea-0678-434f-88c3-3d98f1ec8475",
+  "dmg_notarization_id": "42c5fe6d-647e-42b6-893c-cbeafe231ce5",
   "signing_identity": "Developer ID Application: Jing Huang (BZJWQJ352K)",
+  "gatekeeper": "PASS",
   "architecture": "arm64",
+  "owner_differential_acceptance": "NOT_GRANTED_BY_ENGINEERING",
+  "main_gate": {
+    "complete_pass": true,
+    "state": "COMPLETE_GREEN",
+    "counts": {
+      "passed": 1827,
+      "skipped": 1
+    },
+    "collected": 1828,
+    "safari": {
+      "measurements": 38,
+      "visible_start": 38,
+      "visible_finish": 38,
+      "errors": []
+    }
+  },
+  "at": "2026-11-06T03:27:36.772427+08:00",
+  "build_time_signing_metadata": "Source provenance preserves its original builder record; actual distribution signature is verified in this receipt and codesign/Gatekeeper.",
   "platform": "macOS",
   "status": "SIGNED_NOTARIZED_VALIDATED",
-  "gatekeeper": "PASS",
-  "app_notarization_id": "fce0c6a5-a64c-4345-8f2c-536ab273a215",
-  "dmg_notarization_id": "0461ae01-e86a-4230-a546-75fb48a59e10",
-  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.5",
-  "audio_verification": {
-    "packaging_negative_and_positive_tests": 9,
-    "real_clips_decoded_by_AVAudioPlayer": 8,
-    "standalone_and_embedded_equal": true,
-    "twos_audio_and_version_related_gate": {
-      "passed": 86,
-      "failed": 0,
-      "scope": "Packaged runtime, preserved installations, source distribution, documentation, signature order and Nyra integration."
-    },
-    "standalone_gui": "Tian preview, actual rest-on-recline, manual celebration, Close and Escape observed in isolated candidate.",
-    "embedded_gui": "Tian source selected in the actual bundled helper; WAV playback finished for an action, with no AVSpeech fallback.",
-    "voice_quality": "Owner listening, not an engineering assertion",
-    "prior_R4_UI": "OWNER_CONFIRMED_PASS_PRESERVED",
-    "full_historical_R4_suite": "Not rerun or counted as audio coverage."
+  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.6",
+  "publication_truth": "GitHub Release state is authoritative; a local receipt does not assert publication.",
+  "owner_acceptance": "NOT_GRANTED_BY_ENGINEERING",
+  "store_submission": "NOT_SUBMITTED",
+  "real_gui": {
+    "exact_mounted_dmg": "Both products launched from read-only mounted DMGs; normally quit.",
+    "standalone_and_embedded_nyra": "Exact pinned component, five-outfit controls, standing/reclining and bilingual playback/Close observed.",
+    "legacy_launcher_boundary": "An isolated environment bound to another app location refused reuse with DESKTOP_INSTALLATION_MISMATCH. No path-migration PASS is claimed. Existing Window > ChatGPT + Codex opened the paired workbench."
   },
-  "owner_audio_acceptance": "PENDING",
-  "voice_manifest_sha256": "975f2b6ac3aa75b4a093ef82af901ee487b23164dab67d4e31fcf4c815602d30"
+  "audio_verification": {
+    "chinese_bundled_recordings": 13,
+    "english_fixed_phrases": 13,
+    "english_source": "Installed local Samantha en-US verified; not bundled Tian English recordings",
+    "original_eight_chinese_clips": "BYTE_UNCHANGED",
+    "native_start_finish_callbacks": 26,
+    "voice_quality": "Subjective new-voice acceptance remains with Owner"
+  },
+  "wardrobe": {
+    "outfits": 5,
+    "new_outfits": [
+      "office_white",
+      "gala_red"
+    ],
+    "new_rgba_frames": 40,
+    "standing_and_reclining": true,
+    "new_directional_runs": "Two-frame loops; unsupported optional actions remain disabled"
+  },
+  "previous_owner_acceptance": "PRESERVED; no old business task replayed",
+  "embedded_nyra_source_commit": "1b712de7110feded54775b522448fe6c61dbc164",
+  "autosend_verification": {
+    "both_initiating_providers": "More than five complete real round trips each in dedicated engineering conversations",
+    "final_signed_candidate": "27 reconciled complete / 28 dispatched before Stop; stopped in-flight receipt retained; no next dispatch after reopen and refresh",
+    "native_stop_and_composer": "Real left/right native Stop, interrupted reply and replacement composer checks",
+    "owner_first_round_trigger": "NOT_REPRODUCED; do not assert a single proven cause for the original Owner incident"
+  }
 }

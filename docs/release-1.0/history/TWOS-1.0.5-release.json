@@ -1,0 +1,34 @@
+{
+  "product": "TWOS",
+  "version": "1.0.5",
+  "build": "101.53",
+  "source_commit": "1cfa198a73a6299fe0154305409915e7f2e49351",
+  "artifact": "Tianma-Work-OS-1.0.5-build-101.53.dmg",
+  "bytes": 193302359,
+  "sha256": "ef584c991d5c705d699974b422f7381e54d7b327fc885bb04a5bf97002e32ddf",
+  "signing_identity": "Developer ID Application: Jing Huang (BZJWQJ352K)",
+  "architecture": "arm64",
+  "platform": "macOS",
+  "status": "SIGNED_NOTARIZED_VALIDATED",
+  "gatekeeper": "PASS",
+  "app_notarization_id": "fce0c6a5-a64c-4345-8f2c-536ab273a215",
+  "dmg_notarization_id": "0461ae01-e86a-4230-a546-75fb48a59e10",
+  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.5",
+  "audio_verification": {
+    "packaging_negative_and_positive_tests": 9,
+    "real_clips_decoded_by_AVAudioPlayer": 8,
+    "standalone_and_embedded_equal": true,
+    "twos_audio_and_version_related_gate": {
+      "passed": 86,
+      "failed": 0,
+      "scope": "Packaged runtime, preserved installations, source distribution, documentation, signature order and Nyra integration."
+    },
+    "standalone_gui": "Tian preview, actual rest-on-recline, manual celebration, Close and Escape observed in isolated candidate.",
+    "embedded_gui": "Tian source selected in the actual bundled helper; WAV playback finished for an action, with no AVSpeech fallback.",
+    "voice_quality": "Owner listening, not an engineering assertion",
+    "prior_R4_UI": "OWNER_CONFIRMED_PASS_PRESERVED",
+    "full_historical_R4_suite": "Not rerun or counted as audio coverage."
+  },
+  "owner_audio_acceptance": "PENDING",
+  "voice_manifest_sha256": "975f2b6ac3aa75b4a093ef82af901ee487b23164dab67d4e31fcf4c815602d30"
+}

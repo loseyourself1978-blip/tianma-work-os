@@ -5,10 +5,16 @@ import hashlib
 from types import SimpleNamespace
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+import subprocess
+import sys
+import time
+import uuid
 
 import pytest
 
-from scripts.safari_geometry_bridge import browser_ready, valid_fixture
+from scripts.safari_geometry_bridge import browser_ready, valid_fixture, selected_browser, matching_browser
 from tests import test_vol19_fresh_install_first_run_ui as layout
 
 
@@ -100,3 +106,72 @@ def test_each_safari_fixture_waits_before_submission_without_replaying(tmp_path,
             layout._browser_geometry(tmp_path,surface='setup',width=390)
         assert not calls and clock[0]==60
         assert json.loads((tmp_path/'safari-setup-390.transport.json').read_text())['state']=='FAILED'
+
+
+@pytest.mark.parametrize('other_kind', ['chrome','hidden_safari','stale_safari'])
+def test_browser_readiness_is_per_client_not_the_last_browser_heartbeat(other_kind):
+    safari={'clientID':'safari','visibility':'visible','focused':True,'received_at':99,
+            'userAgent':'Version/27 Safari/625.1'}
+    other={**safari,'clientID':'other','received_at':100}
+    if other_kind=='chrome':other['userAgent']='Chrome/156 Safari/537.36'
+    elif other_kind=='hidden_safari':other['visibility']='hidden'
+    else:other['received_at']=95
+    browsers={'safari':safari,'other':other}
+    assert selected_browser(browsers,100)==safari
+    assert matching_browser(browsers,'safari',safari['userAgent'],100)
+    assert not matching_browser(browsers,'other',other['userAgent'],100)
+    assert not matching_browser(browsers,'safari',other['userAgent']+' changed',100)
+
+
+def test_http_measurement_cannot_be_claimed_or_finished_by_another_browser(tmp_path):
+    """SIMULATED HTTP clients exercise the transport race; not actual Safari proof."""
+    root=Path(__file__).resolve().parents[1]
+    evidence=tmp_path/'bridge'
+    with (tmp_path/'bridge.log').open('w') as log:
+        process=subprocess.Popen([sys.executable,str(root/'scripts/safari_geometry_bridge.py'),
+                                  '--evidence',str(evidence)],stdout=log,stderr=log)
+        try:
+            deadline=time.monotonic()+10
+            while not (evidence/'bridge.json').exists():
+                assert process.poll() is None
+                assert time.monotonic()<deadline
+                time.sleep(.02)
+            url=json.loads((evidence/'bridge.json').read_text())['url']
+            safari=str(uuid.uuid4());chrome=str(uuid.uuid4());other=str(uuid.uuid4())
+            safari_ua='Version/27 Safari/625.1';chrome_ua='Chrome/156 Safari/537.36'
+            def request(route,body=None,client=None,ua='TEST controller'):
+                headers={'User-Agent':ua}
+                if client:headers['X-TWOS-Browser']=client
+                if body is not None:headers['Content-Type']='application/json'
+                req=urllib.request.Request(url+route,data=None if body is None else json.dumps(body).encode(),headers=headers)
+                try:
+                    with urllib.request.urlopen(req,timeout=15) as response:return response.status,json.load(response)
+                except urllib.error.HTTPError as error:return error.code,json.load(error)
+            def ready(client,ua,visible=True):
+                return request('ready',{'clientID':client,'userAgent':ua,'visibility':'visible' if visible else 'hidden',
+                    'focused':visible,'at':time.time()*1000},client,ua)
+            assert ready(safari,safari_ua)[1]['ready']
+            assert not ready(chrome,chrome_ua)[1]['ready']
+            assert not ready(other,safari_ua,False)[1]['ready']
+            assert request('status')[1]['browser']['clientID']==safari
+            assert request('next',client=chrome,ua=chrome_ua)[0]==409
+            fixture={'html':'<p>TEST ONLY browser ownership</p>','width':390,'surface':'fixture'}
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                measurement=pool.submit(request,'measure',fixture)
+                status,job=request('next',client=safari,ua=safari_ua)
+                assert status==200 and job['clientID']==safari
+                assert ready(other,safari_ua)[1]['ready']
+                payload={'id':job['id'],'clientID':other,'userAgent':safari_ua,'geometry':{'innerWidth':999}}
+                assert request('result',payload,other,safari_ua)==(409,{'error':'WRONG_BROWSER_RESULT'})
+                payload.update(clientID=safari,geometry={'innerWidth':390})
+                assert request('result',payload,safari,safari_ua)==(200,{'recorded':True})
+                status,receipt=measurement.result(timeout=15)
+            assert status==200 and not receipt.get('error')
+            assert receipt['geometry']=={'innerWidth':390} and receipt['clientID']==safari
+            assert request('result',payload,safari,safari_ua)[0]==409
+            assert len(list(evidence.glob('*.html')))==1
+        finally:
+            process.terminate()
+            try:process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill();process.wait(timeout=5)

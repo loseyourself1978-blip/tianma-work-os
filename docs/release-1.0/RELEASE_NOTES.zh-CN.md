@@ -1,4 +1,4 @@
-# TWOS 1.0.6 / 101.54 — 候选更新
+# TWOS 1.0.6 / 101.54 — DeepSeek 接力与双语换装语音
 
 [DeepSeek 接力、五套服装与双语动作语音](AUTOSEND_AND_WARDROBE.zh-CN.md)
 

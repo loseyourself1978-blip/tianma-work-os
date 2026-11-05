@@ -1,11 +1,10 @@
 # Tianma Work OS 1.0
 
-夜璃会在合适的动作开始时播放内置的小田中文短句。侧卧时提醒休息，核验成功时说“欧耶！你好棒！”。默认静音；在声音面板中取消静音，打开“跟随动作说话”。点右上角“关闭”、按 Esc 或再点声音图标可收起面板。
+本版包含五套站姿／侧卧服装、13 段离线小田中文动作短句，以及 13 句使用本机女声的英文对应台词。声音默认静音；取消静音并开启动作语音后按实际动作播放，带冷却、不叠音。声音面板可通过关闭、Esc 或声音按钮收起。
 
-**TWOS 1.0.5 / build 101.53** · [下载与校验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.5) · [小田动作语音](docs/release-1.0/AUDIO_FOLLOWUP.zh-CN.md)
+**TWOS 1.0.6 / build 101.54** · [下载与校验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.6) · [本次增量](docs/release-1.0/AUTOSEND_AND_WARDROBE.zh-CN.md)
 
 
-正在验证 1.0.6 / 101.54 候选：[本轮增量](docs/release-1.0/AUTOSEND_AND_WARDROBE.zh-CN.md)。上方下载仍指向已发布的 1.0.5；未把候选写成已发行。
 
 [English](README.md) · [安装](docs/release-1.0/INSTALL.zh-CN.md) · [操作指南](docs/release-1.0/USER_GUIDE.zh-CN.md) · [当前发行状态](docs/CURRENT_DELIVERY.md)
 
@@ -15,11 +14,11 @@
 - 交接选定正文/附件，用 Steer 补充或可编辑 Queue 排队，查看真实工具、diff、错误和权限请求。
 - 打开成果网页、查看文件、另存副本或在 Finder 定位原文件。
 - 查看供应商额度窗口及独立标注的本任务用量、耗时、计划和有依据的估计。
-- 使用同包内置 **夜璃 Nyra**：三服装、站姿/侧卧动画、透明舞台；只读最小任务状态，不执行或批准工作。
+- 使用同包内置 **夜璃 Nyra**：五服装、站姿/侧卧动画、透明舞台；只读最小任务状态，不执行或批准工作。
 
 ## 下载与首次使用
 
-从上方链接下载 TWOS v1.0.5；打开 DMG 前核对 SHA256SUMS。匹配回执绑定源码、签名、公证和制品哈希。历史 v1.0.1 与 v1.0.0 保持不变。
+从上方链接下载 TWOS v1.0.6；打开 DMG 前核对 SHA256SUMS。匹配回执绑定源码、签名、公证和制品哈希。历史 v1.0.1 与 v1.0.0 保持不变。
 
 打开对应 DMG，拖入应用程序并启动。登录所选供应商官网，连接已安装/登录的官方本机 Codex，再创建或接续一个绑定目录的任务。Nyra 在同一 App 内，无需第二个桌宠安装包或首次联网下载画稿；普通安装无需 Python、Node 或终端。
 
