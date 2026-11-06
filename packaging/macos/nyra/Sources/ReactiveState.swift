@@ -53,6 +53,16 @@ struct PaneObservation: Codable, Equatable {
     let reason: String
     let fresh: Bool
 }
+struct TaskLabel: Codable, Equatable {
+    let side: String
+    let provider: String
+    let title: String
+    var text: String { provider + ": " + title }
+    static func visible(event:StatusEvent?,connected:Bool,lastReceipt:Double,now:Double,enabled:Bool)->[TaskLabel] {
+        guard enabled,connected,now>=lastReceipt,now-lastReceipt<=5 else{return []}
+        return (event?.task_labels ?? []).sorted{$0.side<$1.side}
+    }
+}
 struct StatusEvent: Decodable, Equatable {
     let schema_version: String
     let producer_instance_id: String
@@ -67,26 +77,38 @@ struct StatusEvent: Decodable, Equatable {
     let evidence_ref: String?
     let activity_side: String?
     var pane_observations: [PaneObservation]? = nil
+    var task_labels: [TaskLabel]? = nil
     static func decode(_ data: Data, simulation: Bool) throws -> StatusEvent {
         let required: Set<String> = ["schema_version","producer_instance_id","event_id","sequence","timestamp","session_id","task_id","state","source","simulation"]
         guard data.count <= 16384, let raw = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              required.isSubset(of: Set(raw.keys)), Set(raw.keys).isSubset(of: required.union(["evidence_ref","activity_side","pane_observations"])) else { throw PreviewError.invalidManifest }
+              required.isSubset(of: Set(raw.keys)), Set(raw.keys).isSubset(of: required.union(["evidence_ref","activity_side","pane_observations","task_labels"])) else { throw PreviewError.invalidManifest }
         let v = try JSONDecoder().decode(StatusEvent.self, from: data)
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let date = formatter.date(from: v.timestamp) ?? ISO8601DateFormatter().date(from: v.timestamp)
-        guard ["twos.nyra.status.v1","twos.nyra.status.v2","twos.nyra.status.v3"].contains(v.schema_version),
+        guard ["twos.nyra.status.v1","twos.nyra.status.v2","twos.nyra.status.v3","twos.nyra.status.v4"].contains(v.schema_version),
               v.activity_side.map({["left","right","both"].contains($0)}) ?? (v.schema_version == "twos.nyra.status.v1"), v.simulation == simulation, date != nil,
               [v.producer_instance_id,v.event_id,v.session_id].allSatisfy({ !$0.isEmpty && $0.count <= 128 }),
               v.task_id.map({ !$0.isEmpty && $0.count <= 128 }) ?? true,
               v.evidence_ref.map({ $0.count <= 128 }) ?? true,
               simulation ? v.source == "engineering_simulator" : ["twos_runtime","codex_adapter","web_handoff_adapter"].contains(v.source),
               v.state != .verified_success || (v.task_id != nil && !(v.evidence_ref ?? "").isEmpty) else { throw PreviewError.invalidManifest }
-        if v.schema_version=="twos.nyra.status.v3" {
+        if ["twos.nyra.status.v3","twos.nyra.status.v4"].contains(v.schema_version) {
             guard let panes=v.pane_observations,panes.count==2,Set(panes.map(\.side))==Set(["left","right"]),
                   panes.allSatisfy({$0.reason.range(of:"^[A-Z0-9_]{1,80}$",options:.regularExpression) != nil}),
                   let rawPanes=raw["pane_observations"] as? [[String:Any]],rawPanes.allSatisfy({Set($0.keys)==Set(["side","state","reason","fresh"])}) else{throw PreviewError.invalidManifest}
         } else if v.pane_observations != nil || v.state == .activity_unknown {throw PreviewError.invalidManifest}
+        if v.schema_version == "twos.nyra.status.v4" {
+            guard let labels=v.task_labels,labels.count<=2,Set(labels.map(\.side)).count==labels.count,
+                  let rawLabels=raw["task_labels"] as? [[String:Any]],
+                  rawLabels.allSatisfy({Set($0.keys)==Set(["side","provider","title"])}) else {throw PreviewError.invalidManifest}
+            for label in labels {
+                guard ["left","right"].contains(label.side),["ChatGPT","Claude","DeepSeek","Codex"].contains(label.provider),
+                      !label.title.isEmpty,label.title.count<=90,
+                      label.title.rangeOfCharacter(from:.controlCharacters)==nil,
+                      v.pane_observations?.contains(where:{$0.side==label.side && $0.fresh && [.running,.queued,.waiting_user].contains($0.state)})==true else {throw PreviewError.invalidManifest}
+            }
+        } else if v.task_labels != nil {throw PreviewError.invalidManifest}
         return v
     }
 }
@@ -398,4 +420,34 @@ private enum JSONEncoderForTest {
         if let evidence=e.evidence_ref { o["evidence_ref"]=evidence }
         return try JSONSerialization.data(withJSONObject:o)
     }
+}
+
+func runTaskLabelTests() throws {
+    func require(_ b:Bool)throws {if !b {throw PreviewError.invalidManifest}}
+    var raw:[String:Any]=["schema_version":"twos.nyra.status.v4","producer_instance_id":"TEST-PRODUCER","event_id":"TEST-EVENT","sequence":1,"timestamp":"2026-11-06T00:00:00Z","session_id":"TEST-SESSION","task_id":"TEST-TASK","state":"running","source":"twos_runtime","simulation":false,"activity_side":"both","pane_observations":[["side":"left","state":"running","reason":"TEST_ONLY","fresh":true],["side":"right","state":"running","reason":"TEST_ONLY","fresh":true]],"task_labels":[["side":"left","provider":"ChatGPT","title":"TEST ONLY Alpha"],["side":"right","provider":"Claude","title":"TEST ONLY Beta"]]]
+    func decode(_ r:[String:Any])throws->StatusEvent {try StatusEvent.decode(JSONSerialization.data(withJSONObject:r),simulation:false)}
+    let event=try decode(raw)
+    try require(TaskLabel.visible(event:event,connected:true,lastReceipt:10,now:12,enabled:true).map(\.text)==["ChatGPT: TEST ONLY Alpha","Claude: TEST ONLY Beta"])
+    for args in [(false,12.0,true),(true,16.0,true),(true,9.0,true),(true,12.0,false)] {
+        try require(TaskLabel.visible(event:event,connected:args.0,lastReceipt:10,now:args.1,enabled:args.2).isEmpty)
+    }
+    for labels in [
+        [["side":"left","provider":"ChatGPT","title":String(repeating:"x",count:91)]],
+        [["side":"left","provider":"ChatGPT","title":"bad\nlabel"]],
+        [["side":"left","provider":"Unknown","title":"TEST"]],
+        [["side":"left","provider":"ChatGPT","title":"TEST","body":"PRIVATE"]],
+        [["side":"left","provider":"ChatGPT","title":"ONE"],["side":"left","provider":"Claude","title":"TWO"]]
+    ] {
+        var bad=raw;bad["task_labels"]=labels
+        do {_=try decode(bad);throw NSError(domain:"bad labels accepted",code:1)}catch PreviewError.invalidManifest {}
+    }
+    for state in ["idle","activity_unknown","completed_unverified","failed","cancelled"] {
+        var bad=raw;bad["pane_observations"]=[["side":"left","state":state,"reason":"TEST_ONLY","fresh":true],["side":"right","state":"running","reason":"TEST_ONLY","fresh":true]]
+        do {_=try decode(bad);throw NSError(domain:"inactive label accepted",code:1)}catch PreviewError.invalidManifest {}
+    }
+    raw["task_labels"]=[];let hidden=try decode(raw);try require(hidden.task_labels?.isEmpty==true)
+    raw["schema_version"]="twos.nyra.status.v3"
+    do {_=try decode(raw);throw NSError(domain:"legacy label smuggling",code:1)}catch PreviewError.invalidManifest {}
+    raw.removeValue(forKey:"task_labels");try require(try decode(raw).task_labels==nil)
+    print("PASS: v4 local labels, both sides, exact fields, inactive rejection, stale/disconnected/hidden, legacy isolation")
 }

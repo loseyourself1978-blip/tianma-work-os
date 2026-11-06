@@ -7,8 +7,8 @@ import Darwin
 // A single, pull-only local snapshot. The endpoint is not a command channel.
 // Nyra's consumer is maintained separately; hiding/quitting it never affects work.
 final class NyraStatusProducer {
-    static let schemaVersion = "twos.nyra.status.v3"
-    static let schemaSHA256 = "dbdc1c228b9762fc1b8b3bcd8b89d91672f4ae5e0a7f552d9d1301b93dcde831"
+    static let schemaVersion = "twos.nyra.status.v4"
+    static let schemaSHA256 = "4e7d9433de4c807eb0e1e7f3a4ae51c3afd7a582769ba02fe02e43169a9e4226"
     static let states: Set<String> = ["idle", "queued", "running", "waiting_user", "partial", "failed", "completed_unverified", "verified_success", "cancelled", "disconnected", "activity_unknown"]
     let instance = UUID().uuidString
     let directory: URL
@@ -79,7 +79,7 @@ final class NyraStatusProducer {
     static func validID(_ value: String) -> Bool {
         !value.isEmpty && value.utf8.count <= 128 && value.range(of: "^[A-Za-z0-9_-]+$", options: .regularExpression) != nil
     }
-    func observe(session: String, task: String?, state: String, source: String, ownerEvidence: String? = nil, side: String? = nil, panes: [[String:Any]]? = nil) {
+    func observe(session: String, task: String?, state: String, source: String, ownerEvidence: String? = nil, side: String? = nil, panes: [[String:Any]]? = nil, labels: [[String:String]]? = nil) {
         dispatchPrecondition(condition: .onQueue(.main))
         guard Self.validID(session), task.map(Self.validID) ?? true, Self.states.contains(state),
               ["twos_runtime", "codex_adapter", "web_handoff_adapter"].contains(source),
@@ -90,6 +90,15 @@ final class NyraStatusProducer {
                 Set($0.keys)==Set(["side","state","reason","fresh"]) && Self.states.contains($0["state"] as? String ?? "") &&
                 ($0["reason"] as? String)?.range(of:"^[A-Z0-9_]{1,80}$",options:.regularExpression) != nil && $0["fresh"] is Bool
             }) else{return}
+        }
+        if let labels=labels {
+            guard let panes=panes,labels.count<=2,Set(labels.compactMap{$0["side"]}).count==labels.count,
+                  labels.allSatisfy({ label in
+                      Set(label.keys)==Set(["side","provider","title"]) &&
+                      ["ChatGPT","Claude","DeepSeek","Codex"].contains(label["provider"] ?? "") &&
+                      label["title"].map({!$0.isEmpty && $0.count<=90 && $0.rangeOfCharacter(from:.controlCharacters)==nil})==true &&
+                      panes.contains(where:{$0["side"] as? String==label["side"] && $0["fresh"] as? Bool==true && ["running","queued","waiting_user"].contains($0["state"] as? String ?? "")})
+                  }) else{return}
         }
         // Only the native result-confirmation path supplies an evidence ID.
         // Executor text and website replies have no acceptance authority.
@@ -107,9 +116,9 @@ final class NyraStatusProducer {
         if terminalTasks.count > 128 { terminalTasks = [key: (effective, effectiveSource, effectiveEvidence)] }
         if current["session_id"] as? String == session, current["task_id"] as? String == task,
            current["state"] as? String == effective, current["source"] as? String == effectiveSource,
-           current["evidence_ref"] as? String == effectiveEvidence, current["activity_side"] as? String == side, (current["pane_observations"] as? [[String:Any]]).map({NSArray(array:$0).isEqual(to:panes ?? [])}) ?? (panes == nil) { return }
+           current["evidence_ref"] as? String == effectiveEvidence, current["activity_side"] as? String == side, (current["pane_observations"] as? [[String:Any]]).map({NSArray(array:$0).isEqual(to:panes ?? [])}) ?? (panes == nil), (current["task_labels"] as? [[String:String]]).map({NSArray(array:$0).isEqual(to:labels ?? [])}) ?? (labels == nil) { return }
         sequence += 1
-        current = ["schema_version": panes != nil ? Self.schemaVersion : (side == nil ? "twos.nyra.status.v1" : "twos.nyra.status.v2"), "producer_instance_id": instance,
+        current = ["schema_version": labels != nil ? Self.schemaVersion : panes != nil ? "twos.nyra.status.v3" : (side == nil ? "twos.nyra.status.v1" : "twos.nyra.status.v2"), "producer_instance_id": instance,
                    "event_id": UUID().uuidString, "sequence": sequence,
                    "timestamp": ISO8601DateFormatter().string(from: Date()),
                    "session_id": session, "task_id": task as Any? ?? NSNull(),
@@ -117,6 +126,7 @@ final class NyraStatusProducer {
         if effective == "verified_success", let evidence = effectiveEvidence { current["evidence_ref"] = evidence }
         if let side=side { current["activity_side"]=side }
         if let panes=panes { current["pane_observations"]=panes }
+        if let labels=labels { current["task_labels"]=labels }
         let bytes = (try? JSONSerialization.data(withJSONObject: current, options: [.sortedKeys])) ?? Data()
         snapshotLock.lock(); wireSnapshot = bytes; snapshotLock.unlock()
     }
@@ -640,6 +650,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
     func refreshNyraStatus() {
         // Each selected pane is independently observed. No conversation body,
         // filename, account or credential enters the companion protocol.
+        // Owner-enabled task labels separately use bounded visible conversation titles.
         let now=ProcessInfo.processInfo.systemUptime
         for index in 0...1 {
             if kinds[index] == "Codex", let client=codex, let thread=client.threadID {
@@ -675,6 +686,13 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         }
         publishPaneActivity()
     }
+    static func companionTitle(_ title:String?) -> String? {
+        guard let title=title else{return nil}
+        let value=title.components(separatedBy:.whitespacesAndNewlines).filter{!$0.isEmpty}.joined(separator:" ")
+        guard !value.isEmpty,value.rangeOfCharacter(from:.controlCharacters)==nil,
+              !value.hasPrefix("/"),!value.hasPrefix("~"),!value.contains("://") else{return nil}
+        return String(value.prefix(90))
+    }
     func publishPaneActivity() {
         var aggregate=PaneActivity.aggregate(paneActivities)
         // Between confirmed replies and the next dispatch this is scheduling,
@@ -683,7 +701,18 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         let identity=(0...1).map { paneActivities[$0]?.session ?? "unknown" }.joined(separator:"|")
         let active=(0...1).compactMap { paneActivities[$0]?.task }.joined(separator:"|")
         let checks=(0...1).compactMap { paneActivities[$0]?.fresh == true ? paneActivities[$0]?.evidence : nil }.joined(separator:"|")
-        nyraStatus.observe(session:nyraStatus.alias(identity),task:active.isEmpty ? nil : nyraStatus.alias(active),state:aggregate.state,source:"twos_runtime",ownerEvidence:aggregate.state=="verified_success" && !checks.isEmpty ? nyraStatus.alias(checks) : nil,side:aggregate.side,panes:PaneActivity.observations(paneActivities))
+        // Only currently displayed, fresh active-pane titles. Never prompts,
+        // replies, attachments, URLs, account identity or historical titles.
+        let labels:[[String:String]]=(0...1).compactMap { index in
+            guard let activity=paneActivities[index],activity.fresh,["running","queued","waiting_user"].contains(activity.state) else{return nil}
+            let title:String?
+            if kinds[index]=="Codex",let client=codex {
+                title=client.threadRows.first(where:{$0["id"] as? String==client.threadID})?["name"] as? String
+            } else {title=webPanes[index]?.web.title}
+            let fallback=activity.state=="waiting_user" ? "等待你的操作 / Waiting for you" : "当前任务 / Current task"
+            return ["side":index==0 ? "left":"right","provider":kinds[index],"title":Self.companionTitle(title) ?? fallback]
+        }
+        nyraStatus.observe(session:nyraStatus.alias(identity),task:active.isEmpty ? nil : nyraStatus.alias(active),state:aggregate.state,source:"twos_runtime",ownerEvidence:aggregate.state=="verified_success" && !checks.isEmpty ? nyraStatus.alias(checks) : nil,side:aggregate.side,panes:PaneActivity.observations(paneActivities),labels:labels)
     }
     @discardableResult func persistWebTransfers() -> Bool {
         guard !webLedgerError else { return false }

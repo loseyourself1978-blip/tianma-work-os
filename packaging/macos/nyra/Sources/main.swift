@@ -77,6 +77,7 @@ final class ArtView: NSView {
         return alphaMask[(y*64+x)*4+3] > 16
     }
     var isRuntime = false
+    var onClick: (() -> Void)?
     var onDragEnd: (() -> Void)?
     var onZoom: ((CGFloat) -> Void)?
     var onMenu: ((NSEvent) -> Void)?
@@ -113,6 +114,7 @@ final class ArtView: NSView {
     }
     override func mouseUp(with event: NSEvent) {
         onInput?(didDrag ? "release" : "click")
+        if !didDrag {onClick?()}
         dragStartScreen = nil; dragStartOrigin = nil; lastDragScreen = nil; onDragEnd?()
     }
     override func rightMouseDown(with event: NSEvent) { onMenu?(event) }
@@ -124,8 +126,10 @@ final class ArtView: NSView {
 }
 
 final class StageView: NSView {
+    let taskLabel = TaskLabelButton()
     override var isOpaque: Bool { false }
     func visibleHit(_ point: NSPoint) -> Bool {
+        if !taskLabel.isHidden && taskLabel.frame.contains(point) {return true}
         if actions.contains(where: { !$0.isHidden && $0.frame.contains(point) }) { return true }
         if let wardrobe = wardrobe, !wardrobe.isHidden && wardrobe.frame.contains(point) { return true }
         return art.containsArt(art.convert(point,from:self))
@@ -167,7 +171,7 @@ final class StageView: NSView {
         controlsPlate.layer?.cornerRadius = 12
         // Keep the control backplate above animated artwork as well as above
         // the transparent stage; a large/dragged character must not mask labels.
-        for view in [art, controlsPlate, title, subtitle, note, truth, quality, boundary] as [NSView] { addSubview(view) }
+        for view in [art, controlsPlate, title, subtitle, note, truth, quality, boundary,taskLabel] as [NSView] { addSubview(view) }
         art.onDragEnd = nil
     }
     required init?(coder: NSCoder) { fatalError() }
@@ -178,6 +182,7 @@ final class StageView: NSView {
         controlsBackdrop = layout.backdrop
         controlsPlate.frame = controlsBackdrop
         art.frame = StageGeometry.art(in:bounds, below:controlsBackdrop)
+        taskLabel.frame=NSRect(x:safe.midX-min(240,safe.width/2-12),y:safe.minY+12,width:min(480,safe.width-24),height:56)
         title.frame = layout.title
         title.font = .systemFont(ofSize: 17, weight: .medium)
         subtitle.frame = layout.subtitle
@@ -256,9 +261,12 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let sideLabel = side == "left" ? " · 左侧 / Left" : side == "right" ? " · 右侧 / Right" : side == "both" ? " · 双侧 / Both" : ""
         panelView.detail.stringValue = reactive.label + sideLabel + missing
         stageView?.truth.stringValue = reactive.label + sideLabel + missing
+        refreshTaskLabels()
     }
     var images: [String: NSImage] = [:]
     var selected = 0
+    var showTaskLabels = true
+    var hostActivationPending = false
     var panel: PetPanel!
     var panelView: PanelView!
     var stage: NSWindow?
@@ -418,6 +426,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let specs: [(String, Selector, String)] = [
             ("tshirt", #selector(nextOutfit), "一键换装 / Next outfit · 全部已安装服装 / All installed outfits"),
             ("arrow.up.left.and.arrow.down.right", #selector(fullscreen), "透明舞台 / Transparent stage"),
+            ("text.bubble", #selector(toggleTaskLabels), "显示 / 隐藏当前任务 · Show / hide current tasks"),
             ("speaker.wave.2", #selector(showSound), "声音 · 动作语音 / 静音 / 音量"),
             ("play.fill", #selector(showAnimationMenu), "动作 / Actions"),
             ("minus", #selector(smaller), "缩小 / Smaller"),
@@ -429,6 +438,9 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         for b in panelView.controls { panelView.addSubview(b) }
         panelView.art.onInput = { [weak self] name in self?.receiveInput(name) }
         panelView.configureHub()
+        panelView.taskLabel.target=self;panelView.taskLabel.action=#selector(openTWOS)
+        panelView.art.onClick={ [weak self] in self?.openTWOS() }
+        panelView.art.setAccessibilityLabel("夜璃 · 点击返回 TWOS / Nyra · Click to return to TWOS")
         panelView.onStage = { [weak self] in self?.fullscreen() }
         let screen = currentScreen().visibleFrame
         panel.setFrameOrigin(NSPoint(x: screen.maxX-panel.frame.width-24, y: screen.minY+40))
@@ -450,7 +462,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let outfit = wardrobe.outfits[selected]
         let width = max(320, artHeight*CGFloat(outfit.width)/CGFloat(outfit.height)+70)
         let origin = panel.frame.origin
-        panel.setFrame(Geometry.clamp(NSRect(x: origin.x, y: origin.y, width: width, height: artHeight+52), to: available), display: true)
+        panel.setFrame(Geometry.clamp(NSRect(x: origin.x, y: origin.y, width: width, height: artHeight+84), to: available), display: true)
         panelView.needsLayout = true
         updateHitTesting()
     }
@@ -612,6 +624,8 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         stage!.setFrame(screen.frame,display:true)
         stageView?.needsLayout = true; stageView?.layoutSubtreeIfNeeded()
         panel.orderOut(nil); soundPopover?.close(); clearPointerState()
+        stageView?.taskLabel.target=self;stageView?.taskLabel.action=#selector(openTWOS)
+        stageView?.art.onClick={ [weak self] in self?.openTWOS() }
         stage!.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps:true)
         updateOutfit(); startHoverTimer(); rebuildMenu(); publishVisibility(); writePlaybackState("stage_opened")
     }
@@ -783,6 +797,8 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         menu.addItem(.separator())
         item("SIMULATION · 状态文字示例", nil).submenu = makeDemoMenu()
         item("动作试播 / Manual animation preview", nil).submenu = makeAnimationMenu()
+        let taskDisplay=item("显示当前任务 / Show current tasks",#selector(toggleTaskLabels));taskDisplay.state=showTaskLabels ? .on:.off
+        item("返回 TWOS / Return to TWOS",#selector(openTWOS))
         item("TWOS：\(live.connectionLabel)", nil)
         item("连接 TWOS 状态 / Connect read-only status…", #selector(configureBridge))
         item("断开 TWOS 状态 / Disconnect status", #selector(disconnectBridge))
@@ -799,7 +815,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let data: [String: Any] = ["interaction_version": 4, "outfit": wardrobe.outfits[selected].id, "height": desiredHeight,
                                    "x": panel.frame.minX, "y": panel.frame.minY,
                                    "muted": sound.isMuted, "volume": sound.volume, "language": sound.language,
-                                   "action_voice":sound.automatic,"voice_ids":sound.voiceIDs]
+                                   "action_voice":sound.automatic,"voice_ids":sound.voiceIDs,"show_task_labels":showTaskLabels]
         if let bytes = try? JSONSerialization.data(withJSONObject: data, options: [.prettyPrinted, .sortedKeys]) {
             try? bytes.write(to: prefsURL, options: .atomic)
         }
@@ -811,6 +827,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if let muted = prefs["muted"] as? Bool { sound.isMuted = muted }
         if let volume = prefs["volume"] as? Float { sound.volume = min(1,max(0,volume)) }
         if let language = prefs["language"] as? String, ["auto","zh","en"].contains(language) { sound.language = language }
+        if let value=prefs["show_task_labels"] as? Bool {showTaskLabels=value}
         if let automatic = prefs["action_voice"] as? Bool { sound.automatic = automatic }
         if let ids = prefs["voice_ids"] as? [String:String] { sound.voiceIDs = ids.filter { ["zh","en"].contains($0.key) } }
         if let height = prefs["height"] as? Double, height.isFinite { desiredHeight = min(max(height, 160), 1000) }
@@ -819,6 +836,32 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
             panel.setFrameOrigin(NSPoint(x: x, y: y))
         }
         clampPanel()
+    }
+    func refreshTaskLabels() {
+        guard panelView != nil else{return}
+        let labels=TaskLabel.visible(event:liveReducer.current,connected:liveReducer.connected,lastReceipt:liveReducer.lastReceipt,now:ProcessInfo.processInfo.systemUptime,enabled:showTaskLabels)
+        let title=labels.sorted{$0.side<$1.side}.map(\.text).joined(separator:"\n")
+        for button in [panelView.taskLabel,stageView?.taskLabel].compactMap({$0}) {
+            button.title=title;button.isHidden=title.isEmpty
+            button.setAccessibilityLabel(title.isEmpty ? "当前任务 / Current tasks" : title+" · 返回 TWOS / Return to TWOS")
+        }
+        panelView.needsLayout=true;stageView?.needsLayout=true
+    }
+    @objc func toggleTaskLabels() {
+        showTaskLabels.toggle();saveSettings();refreshTaskLabels();updateHitTesting();rebuildMenu()
+    }
+    @objc func openTWOS() {
+        guard !hostActivationPending else{return}
+        hostActivationPending=true
+        live.activateHost { [weak self] activated in
+            guard let self=self else{return};self.hostActivationPending=false
+            if activated {
+                if self.stage?.isVisible==true {self.backToDesktop()}
+            } else {
+                self.panelView.detail.stringValue="无法确认当前 TWOS · 请重新连接 / Reconnect to TWOS"
+                self.panelView.setHovered(true)
+            }
+        }
     }
     @objc func quit() { NSApp.terminate(nil) }
     func applicationWillTerminate(_ notification: Notification) {
@@ -846,6 +889,7 @@ if CommandLine.arguments.contains("--self-test") {
         try runActionVoiceTests()
         try runAudioStorageTests()
         try runReactiveTests()
+        try runTaskLabelTests()
         let library = try JSONDecoder().decode(R4Library.self,from:Data(contentsOf:Bundle.main.resourceURL!.appendingPathComponent("runtime/r4.json"))).validated()
         let manifestURL = Bundle.main.resourceURL!.appendingPathComponent("runtime/r4.json")
         let manifestObject = try JSONSerialization.jsonObject(with:Data(contentsOf:manifestURL)) as! [String:Any]

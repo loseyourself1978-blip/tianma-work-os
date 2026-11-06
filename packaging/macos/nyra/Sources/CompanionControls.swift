@@ -29,9 +29,21 @@ func orbitButton(_ symbol: String, title: String, target: AnyObject, action: Sel
     return b
 }
 
+final class TaskLabelButton: NSButton {
+    override func acceptsFirstMouse(for event:NSEvent?) -> Bool {true}
+    init() {
+        super.init(frame:.zero);isBordered=false;alignment = .left
+        font = .systemFont(ofSize:11,weight:.medium);contentTintColor = .white
+        cell?.wraps=true;cell?.truncatesLastVisibleLine=true
+        wantsLayer=true;layer?.backgroundColor=ink.withAlphaComponent(0.93).cgColor;layer?.cornerRadius=7
+        isHidden=true;toolTip="返回当前 TWOS / Return to current TWOS"
+    }
+    required init?(coder:NSCoder){fatalError()}
+}
 final class PanelView: NSView {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
     let art = ArtView()
+    let taskLabel = TaskLabelButton()
     let badge = text("夜璃 · Nyra", size: 11, color: violet)
     let detail = text("悬停 + 展开控制", size: 10, color: .white)
     var hub: OrbitButton!
@@ -43,7 +55,7 @@ final class PanelView: NSView {
     var onDragEnd: (() -> Void)?
     override init(frame: NSRect) {
         super.init(frame: frame)
-        for v in [art, badge, detail] as [NSView] { addSubview(v) }
+        for v in [art, badge, detail, taskLabel] as [NSView] { addSubview(v) }
         for label in [badge,detail] {
             label.drawsBackground = true; label.backgroundColor = ink.withAlphaComponent(0.90)
             label.wantsLayer = true; label.layer?.cornerRadius = 5
@@ -77,7 +89,8 @@ final class PanelView: NSView {
     }
     override func layout() {
         super.layout()
-        art.frame = NSRect(x: 8, y: 32, width: bounds.width-70, height: bounds.height-52)
+        art.frame = NSRect(x: 8, y: 64, width: bounds.width-70, height: bounds.height-84)
+        taskLabel.frame=NSRect(x:12,y:3,width:max(20,bounds.width-68),height:56)
         // Keep the expanded 36pt actions inside the panel at minimum scale.
         // The orbit radius is 67pt, so its center needs an 85pt lower inset.
         let center = NSPoint(x: bounds.width-89, y: min(145, max(86, bounds.height*0.38)))
@@ -88,9 +101,10 @@ final class PanelView: NSView {
         }
         stageButton?.frame = NSRect(x: bounds.width-43, y: 2, width: 36, height: 36)
         badge.frame = NSRect(x: 12, y: bounds.height-21, width: bounds.width-24, height: 18)
-        detail.frame = NSRect(x: 12, y: 3, width: max(20,bounds.width-98), height: 27)
+        detail.frame = NSRect(x:12,y:bounds.height-49,width:bounds.width-24,height:27)
     }
     func visibleHit(_ point: NSPoint) -> Bool {
+        if !taskLabel.isHidden && taskLabel.frame.contains(point) {return true}
         if let hub = hub, hub.frame.contains(point) { return true }
         if let stageButton = stageButton, !stageButton.isHidden && stageButton.frame.contains(point) { return true }
         if expanded && controls.contains(where: { $0.frame.contains(point) }) { return true }
@@ -145,6 +159,12 @@ func runInteractionTests() throws {
         panel.layoutSubtreeIfNeeded()
         try require(panel.controls.allSatisfy { panel.bounds.contains($0.frame) })
     }
+    panel.taskLabel.title="ChatGPT: TEST ONLY Alpha\nClaude: TEST ONLY Beta";panel.taskLabel.isHidden=false
+    panel.layoutSubtreeIfNeeded()
+    try require(panel.bounds.contains(panel.taskLabel.frame))
+    try require(panel.visibleHit(NSPoint(x:panel.taskLabel.frame.midX,y:panel.taskLabel.frame.midY)))
+    panel.taskLabel.isHidden=true
+    try require(!panel.visibleHit(NSPoint(x:20,y:5)))
     try runStageGeometryTests()
     print("PASS: language, alpha hit testing, hover stage click without resize, no resize grip/hit region, safe top toolbar fixtures")
 }

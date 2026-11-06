@@ -20,3 +20,6 @@ Automatic exchange saves only the explicitly authorized instructions/replies and
 
 
 [DeepSeek relay, five outfits and bilingual action voice](AUTOSEND_AND_WARDROBE.en.md)
+
+
+[Current candidate delta](CODEX_CONNECTION_AND_TASK_LABELS.en.md)

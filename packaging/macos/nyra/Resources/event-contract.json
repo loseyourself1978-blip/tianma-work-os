@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "TWOS Nyra minimal status event v3 — connection and pane observation",
+  "title": "TWOS Nyra status v4 — bounded local task labels",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -20,7 +20,8 @@
       "enum": [
         "twos.nyra.status.v1",
         "twos.nyra.status.v2",
-        "twos.nyra.status.v3"
+        "twos.nyra.status.v3",
+        "twos.nyra.status.v4"
       ]
     },
     "producer_instance_id": {
@@ -138,6 +139,40 @@
           }
         }
       }
+    },
+    "task_labels": {
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "side",
+          "provider",
+          "title"
+        ],
+        "properties": {
+          "side": {
+            "enum": [
+              "left",
+              "right"
+            ]
+          },
+          "provider": {
+            "enum": [
+              "ChatGPT",
+              "Claude",
+              "DeepSeek",
+              "Codex"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 90
+          }
+        }
+      }
     }
   },
   "allOf": [
@@ -187,6 +222,22 @@
         "required": [
           "activity_side",
           "pane_observations"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": "twos.nyra.status.v4"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "activity_side",
+          "pane_observations",
+          "task_labels"
         ]
       }
     }

@@ -14,7 +14,7 @@ from twos_runtime.models import Installation
 from tests.test_vol19_fresh_install_first_run import fresh_settings
 
 
-@pytest.mark.parametrize("version", ["1.0.1", "1.0.2", "1.0.3", "1.0.4", "1.0.5", "1.0.6"])
+@pytest.mark.parametrize("version", ["1.0.1", "1.0.2", "1.0.3", "1.0.4", "1.0.5", "1.0.6", "1.0.7"])
 def test_source_launcher_retains_compatible_binding_without_writes(tmp_path, version):
     data, runtime, logs = [tmp_path / x for x in ("data", "runtime", "logs")]
     data.mkdir()
@@ -30,7 +30,7 @@ def test_source_launcher_retains_compatible_binding_without_writes(tmp_path, ver
     assert INSTALLATION_COMPATIBLE_VERSIONS == bootstrap.INSTALLATION_COMPATIBLE_VERSIONS
 
 
-@pytest.mark.parametrize("version", ["1.0.1", "1.0.2", "1.0.3", "1.0.4", "1.0.5", "1.0.6"])
+@pytest.mark.parametrize("version", ["1.0.1", "1.0.2", "1.0.3", "1.0.4", "1.0.5", "1.0.6", "1.0.7"])
 def test_desktop_patch_retains_identity_and_rejects_invalid_version(tmp_path, version):
     data, runtime, logs = [tmp_path / x for x in ("data", "runtime", "logs")]
     data.mkdir()
@@ -51,7 +51,7 @@ def test_desktop_patch_retains_identity_and_rejects_invalid_version(tmp_path, ve
             assert (data / "installation.json").read_bytes() == unchanged
 
 
-@pytest.mark.parametrize("version", ["1.0.1", "1.0.2", "1.0.3", "1.0.4", "1.0.5", "1.0.6"])
+@pytest.mark.parametrize("version", ["1.0.1", "1.0.2", "1.0.3", "1.0.4", "1.0.5", "1.0.6", "1.0.7"])
 def test_retained_database_version_and_identity_are_not_rewritten(tmp_path, version):
     settings = fresh_settings(tmp_path)
     app = create_app(settings)
@@ -68,7 +68,7 @@ def test_retained_database_version_and_identity_are_not_rewritten(tmp_path, vers
     bootstrap.atomic_private_json(config_path, config)
     restarted = create_app(settings)
     with TestClient(restarted) as client:
-        assert client.get("/api/health").json()["version"] == "1.0.6"
+        assert client.get("/api/health").json()["version"] == "1.0.7"
         with restarted.state.session_factory() as session:
             rows = session.scalars(select(Installation)).all()
             assert len(rows) == 1

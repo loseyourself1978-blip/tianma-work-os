@@ -19,3 +19,6 @@
 实际完整门禁、候选身份、签名、公证与下载 hash 以匹配发行回执为准。模拟／真实 GUI／Owner 证据分开。 [R4](SIMPLIFIED_UX_R4.zh-CN.md) · [Verification](R4_VERIFICATION.zh-CN.md)
 
 当前仅支持 macOS Apple Silicon；Windows 开发中，无下载版本。旧发行与历史失败／PARTIAL 记录保留。
+
+
+[本轮候选差量](CODEX_CONNECTION_AND_TASK_LABELS.zh-CN.md)

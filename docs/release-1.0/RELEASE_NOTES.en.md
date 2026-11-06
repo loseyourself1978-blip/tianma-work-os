@@ -19,3 +19,6 @@ This does not replay the old Owner regression. Earlier Nyra/debate acceptance is
 The matching release receipt identifies the complete gate, candidate, signatures, notarization and downloaded hashes. Simulated, real GUI and Owner evidence remain separate. [R4](SIMPLIFIED_UX_R4.en.md) · [Verification](R4_VERIFICATION.en.md)
 
 macOS Apple Silicon only; Windows is in development with no download. Historical releases and original failure/PARTIAL records remain.
+
+
+[Current candidate delta](CODEX_CONNECTION_AND_TASK_LABELS.en.md)

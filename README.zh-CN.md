@@ -39,3 +39,6 @@ TWOS 使用官方 Codex App Server 协议实现客户端，不是嵌入官方 ma
 [详细操作指南](docs/OWNER_GUIDE.md) · [仓库地图](docs/REPOSITORY_MAP.md) · [原本机项目](docs/LEGACY_OWNER_GUIDE.md) · [高级源码安装](docs/ADVANCED_INSTALLATION.md)。旧设计和阶段记录不代表当前安装包或接受状态。
 
 </details>
+
+
+[本机热修复候选（尚未发布）](docs/release-1.0/CODEX_CONNECTION_AND_TASK_LABELS.zh-CN.md)

@@ -31,3 +31,6 @@ TWOS 1.0.6 / 101.54 · [本次增量](AUTOSEND_AND_WARDROBE.zh-CN.md)
 
 
 [DeepSeek 接力、五套服装与双语动作语音](AUTOSEND_AND_WARDROBE.zh-CN.md)
+
+
+[本轮候选差量](CODEX_CONNECTION_AND_TASK_LABELS.zh-CN.md)

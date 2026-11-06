@@ -20,3 +20,6 @@ Nyra 仅接收有界只读状态和不透明关联标识，不接收聊天、代
 
 
 [DeepSeek 接力、五套服装与双语动作语音](AUTOSEND_AND_WARDROBE.zh-CN.md)
+
+
+[本轮候选差量](CODEX_CONNECTION_AND_TASK_LABELS.zh-CN.md)

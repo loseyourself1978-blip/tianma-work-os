@@ -178,6 +178,14 @@ func runRenderer() {
       assert(Array.from($('threads').options).find(x=>x.value==='other-thread').textContent==='other-folder','unnamed conversation uses its actual folder instead of internal context');
       r('thread',{thread:{id:'fixture-thread',name:'Renamed travel task',cwd:'/synthetic/workspace'}});
       assert($('threads').selectedOptions[0].textContent==='Renamed travel task','a real updated name replaces the selected option label');
+      r('control',{connected:false,busy:false,connecting:true,connectionPhase:'handshake'});
+      assert($('connect').disabled&&!$('cancel-connection').hidden&&$('connection-status').textContent.includes('正在连接'),'connection returns a visible cancellable state');
+      r('control',{connected:false,busy:false,connecting:false,connectionPhase:'closing',connectionError:'cancelled'});
+      assert($('connect').disabled&&$('cancel-connection').hidden,'closing child cannot be replaced by another connect');
+      r('control',{connected:false,busy:false,connecting:false,connectionPhase:'disconnected',connectionError:'authentication_required'});
+      assert(!$('connect').disabled&&$('connection-status').textContent.includes('登录'),'authentication failure has explicit recovery');
+      r('control',{connected:true,busy:false,connectionPhase:'connected'});
+      assert(!$('disconnect').hidden&&!$('disconnect').disabled&&$('connection-status').hidden,'ready connection offers independent disconnect');
       r('control',{connected:true,busy:true,controllable:true,desktopRunning:false,historyReady:true,threadId:'fixture-thread'});
       $('draft').value='Continue';$('draft').dispatchEvent(new Event('input'));
       assert(!$('draft').disabled&&!$('model').disabled&&!$('send').disabled&&!$('next-turn').hidden,'running composer supports Steer and next-turn model choice');
@@ -369,7 +377,7 @@ func runRenderer() {
     """#
     client.web.evaluateJavaScript(script) { value, error in
         precondition(error == nil,"renderer: \(String(describing:error))")
-        precondition((value as? [String])?.count == 99, "all prior checks plus Nyra visibility and readonly connection checks must run")
+        precondition((value as? [String])?.count == 103, "all prior checks plus cancellable connection and lifecycle visibility checks must run")
         // Switching positions retains the very same native Codex connection.
         let instance=workbench.codex
         workbench.leftPicker.selectItem(at:1);workbench.changePane(workbench.leftPicker)

@@ -1,6 +1,6 @@
 # TWOS 1.0 · 安装与使用指南
 
-**适用：TWOS 1.0.6 / build 101.54，内置 Nyra 1.0.5 / build 105。** [English guide](OWNER_GUIDE_EN.md) · [实际交付与验证状态](CURRENT_DELIVERY.md)
+**适用：TWOS 1.0.7 / build 101.55，内置 Nyra 1.0.6 / build 106。** [English guide](OWNER_GUIDE_EN.md) · [实际交付与验证状态](CURRENT_DELIVERY.md)
 
 **安装与版本：使用本版双语指南中的 `START_HERE.html`、[发行回执](release-1.0/release.json)和实际 GitHub Release 状态。按匹配回执核对完整工程回归、签名和公证；Owner 差量接受单独记录。**
 在一个 macOS 窗口中，左侧官方 ChatGPT 网页用于讨论，右侧 TWOS Codex 客户端通过本机官方 App Server 执行。它使用官方执行协议，但不是把官方 Codex App 的整个图形界面嵌进网页。两侧账号语言设置相互独立。
@@ -13,9 +13,11 @@
 
 ## A · 本次升级差量验收
 
-本轮候选尚待最终发行核验。只按下方增量指南核对接力、新服装和双语声音；不重做旧业务，完成后不进入 B。
+TWOS 1.0.7 / 101.55 · Nyra 1.0.6 / 106
 
-[1.0.6 / 101.54](release-1.0/AUTOSEND_AND_WARDROBE.zh-CN.md)
+[Codex / Nyra](release-1.0/CODEX_CONNECTION_AND_TASK_LABELS.zh-CN.md)
+
+只核对连接与任务标签，完成后结束，不进入 B。
 
 ## B · 首次创建任务
 

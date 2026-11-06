@@ -4,6 +4,213 @@ import Darwin
 import CryptoKit
 import UniformTypeIdentifiers
 
+// MARK: - Asynchronous owned-child JSONL transport
+// All descriptor I/O, framing and JSON decoding run off the AppKit main queue.
+// Each chunk is scanned exactly once: a fragmented large line is never rescanned.
+final class CodexJSONLFramer {
+    var pending = Data()
+    let maximum = 24_000_000
+    func append(_ bytes: Data, consume: (Data) throws -> Void) throws {
+        var start = bytes.startIndex
+        try bytes.withUnsafeBytes { raw in
+            guard let base = raw.baseAddress else { return }
+            var offset = 0
+            while offset < raw.count {
+                guard let found = memchr(base.advanced(by: offset), 10, raw.count - offset) else { break }
+                let end = base.distance(to: UnsafeRawPointer(found))
+                let index = bytes.startIndex + end
+                guard pending.count + index - start <= maximum else { throw Failure.oversized }
+                pending.append(bytes[start..<index])
+                if !pending.isEmpty { try consume(pending) }
+                pending.removeAll(keepingCapacity: true)
+                start = index + 1; offset = end + 1
+            }
+        }
+        guard pending.count + bytes.endIndex - start <= maximum else { throw Failure.oversized }
+        pending.append(bytes[start..<bytes.endIndex])
+    }
+    enum Failure: Error { case oversized, malformed }
+}
+
+final class CodexPipeConnection {
+    let io = DispatchQueue(label: "twos.codex.transport", qos: .userInitiated)
+    let launch = DispatchQueue(label: "twos.codex.launch", qos: .userInitiated)
+    var onMessage: (([String: Any]) -> Void)?
+    var onLaunch: ((Process) -> Void)?
+    var onEnd: ((String) -> Void)?
+    // Diagnostics contain counts and fixed codes only, never raw stderr/auth data.
+    private(set) var stderrBytes = 0
+    private var stopped = false
+    private var launchFinished = false
+    private var reapCallback: (() -> Void)?
+    private var reapPolling = false
+    private var child: Process?
+    private var pipes: [Pipe] = []
+    private var readers: [DispatchSourceRead] = []
+    private var writer: DispatchSourceWrite?
+    private var writes: [Data] = []
+    private var writeOffset = 0
+    private var writeBytes = 0
+    private let framer = CodexJSONLFramer()
+    private var messages: [([String: Any], Int)] = []
+    private var messageBytes = 0
+    private var delivering = false
+    private var ending: String?
+    private var inputFD: Int32 = -1
+
+    func start(timeout: Double, configure: @escaping () throws -> Process) {
+        io.asyncAfter(deadline: .now() + timeout) { [weak self] in
+            guard let self = self, self.child == nil, !self.stopped else { return }
+            self.finish("startup_timeout")
+        }
+        launch.async { [self] in
+            do {
+                let process = try configure()
+                let stdin = Pipe(), stdout = Pipe(), stderr = Pipe()
+                process.standardInput = stdin; process.standardOutput = stdout; process.standardError = stderr
+                process.terminationHandler = { [weak self] process in
+                    self?.io.asyncAfter(deadline: .now() + 0.1) { [weak self] in self?.finish("process_exit_\(process.terminationStatus)") }
+                }
+                try process.run()
+                // Close the parent's copies of child-owned endpoints.
+                try? stdin.fileHandleForReading.close(); try? stdout.fileHandleForWriting.close(); try? stderr.fileHandleForWriting.close()
+                io.async { [self] in
+                    child = process; launchFinished = true; pipes = [stdin, stdout, stderr]
+                    guard !stopped else { closePipes(); stopOwnedChild(process); checkReaped(); return }
+                    inputFD = stdin.fileHandleForWriting.fileDescriptor
+                    _ = fcntl(inputFD, F_SETFL, fcntl(inputFD, F_GETFL) | O_NONBLOCK)
+                    _ = fcntl(inputFD, F_SETNOSIGPIPE, 1)
+                    attach(stdout.fileHandleForReading, errorStream: false)
+                    attach(stderr.fileHandleForReading, errorStream: true)
+                    DispatchQueue.main.async { [weak self] in self?.onLaunch?(process) }
+                    flush()
+                }
+            } catch {
+                io.async { [self] in launchFinished = true; finish((error as NSError).domain == "TWOSCodex" ? "executable_missing" : "launch_failed"); checkReaped() }
+            }
+        }
+    }
+    private func attach(_ handle: FileHandle, errorStream: Bool) {
+        let fd = handle.fileDescriptor
+        _ = fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK)
+        let source = DispatchSource.makeReadSource(fileDescriptor: fd, queue: io)
+        source.setEventHandler { [weak self] in
+            guard let self = self, !self.stopped else { return }
+            var bytes = [UInt8](repeating: 0, count: 65536)
+            // Bound each drain so cancellation/deadlines cannot starve behind a flood.
+            for _ in 0..<16 {
+                let count = Darwin.read(fd, &bytes, bytes.count)
+                if count == 0 {
+                    source.cancel()
+                    if !errorStream { self.finish(self.framer.pending.isEmpty ? "stdout_eof" : "truncated_jsonl") }
+                    return
+                }
+                if count < 0 {
+                    if errno == EINTR { continue }
+                    if errno != EAGAIN && errno != EWOULDBLOCK { self.finish("pipe_read_failed") }
+                    return
+                }
+                if errorStream { self.stderrBytes += count; continue }
+                do {
+                    try self.framer.append(Data(bytes.prefix(count))) { line in
+                        guard let value = try JSONSerialization.jsonObject(with: line) as? [String: Any] else { throw CodexJSONLFramer.Failure.malformed }
+                        guard self.messageBytes + line.count <= 48_000_000 else { throw CodexJSONLFramer.Failure.oversized }
+                        self.messages.append((value, line.count)); self.messageBytes += line.count
+                    }
+                    self.deliver()
+                } catch { self.finish("invalid_or_oversized_jsonl"); return }
+            }
+        }
+        source.setCancelHandler { try? handle.close() }
+        readers.append(source); source.resume()
+    }
+    func send(_ object: [String: Any]) {
+        io.async { [self] in
+            guard !stopped else { return }
+            guard let bytes = try? JSONSerialization.data(withJSONObject: object), writeBytes + bytes.count < 48_000_000 else { finish("outbound_limit"); return }
+            writes.append(bytes + Data([10])); writeBytes += bytes.count + 1; flush()
+        }
+    }
+    private func flush() {
+        guard !stopped, inputFD >= 0 else { return }
+        // Do not hold up stdout/stderr or deadlines when the child stops reading.
+        for _ in 0..<16 {
+            guard !writes.isEmpty else { return }
+            let data = writes[0]
+            let count = data.withUnsafeBytes { Darwin.write(inputFD, $0.baseAddress!.advanced(by: writeOffset), min(65536, data.count - writeOffset)) }
+            if count < 0 {
+                if errno == EINTR { continue }
+                if errno == EAGAIN || errno == EWOULDBLOCK {
+                    if writer == nil {
+                        let source = DispatchSource.makeWriteSource(fileDescriptor: inputFD, queue: io)
+                        source.setEventHandler { [weak self] in
+                            self?.writer?.cancel(); self?.writer = nil; self?.flush()
+                        }
+                        writer = source; source.resume()
+                    }
+                    return
+                }
+                finish("pipe_write_failed"); return
+            }
+            guard count > 0 else { finish("pipe_write_failed"); return }
+            writeOffset += count; writeBytes -= count
+            if writeOffset == data.count { writes.removeFirst(); writeOffset = 0 }
+        }
+        if !writes.isEmpty { io.async { [weak self] in self?.flush() } }
+    }
+    private func deliver() {
+        guard !delivering else { return }
+        guard !messages.isEmpty else {
+            if let reason = ending { ending = nil; DispatchQueue.main.async { [weak self] in self?.onEnd?(reason) } }
+            return
+        }
+        delivering = true
+        let batch = Array(messages.prefix(4)); messages.removeFirst(batch.count)
+        messageBytes -= batch.reduce(0) { $0 + $1.1 }
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            for (message, _) in batch { self.onMessage?(message) }
+            self.io.asyncAfter(deadline: .now() + 0.001) { [weak self] in self?.delivering = false; self?.deliver() }
+        }
+    }
+    func cancel(completion: (() -> Void)? = nil) {
+        io.async { [self] in reapCallback = completion; finish("cancelled", discard: true); checkReaped() }
+    }
+    private func checkReaped() {
+        guard !reapPolling else { return }
+        guard launchFinished, child?.isRunning != true else {
+            reapPolling = true
+            io.asyncAfter(deadline: .now() + 0.1) { [self] in reapPolling = false; checkReaped() }; return
+        }
+        if let callback = reapCallback { reapCallback = nil; DispatchQueue.main.async(execute: callback) }
+    }
+    private func finish(_ reason: String, discard: Bool = false) {
+        guard !stopped else { return }; stopped = true
+        if discard { messages.removeAll(); messageBytes = 0 }
+        ending = reason
+        writer?.cancel(); writer = nil
+        readers.forEach { $0.cancel() }; readers.removeAll()
+        if let input = pipes.first { try? input.fileHandleForWriting.close() }
+        inputFD = -1; writes.removeAll(); writeBytes = 0
+        if let child = child { stopOwnedChild(child) }
+        deliver()
+    }
+    private func closePipes() {
+        for pipe in pipes { try? pipe.fileHandleForReading.close(); try? pipe.fileHandleForWriting.close() }
+        pipes.removeAll()
+    }
+    private func stopOwnedChild(_ process: Process) {
+        // This Process object was created by this connection. Never find/kill by name.
+        io.asyncAfter(deadline: .now() + 1) {
+            guard process.isRunning else { return }; process.terminate()
+            self.io.asyncAfter(deadline: .now() + 2) {
+                if process.isRunning { _ = Darwin.kill(process.processIdentifier, SIGKILL) }
+            }
+        }
+    }
+}
+// MARK: - End asynchronous owned-child transport
+
 // These records belong to TWOS, not to Codex's internal database. A durable
 // intent is saved before every mutation; ambiguous delivery is never replayed.
 struct CodexDirectory: Codable, Equatable {
@@ -128,13 +335,22 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     var languageChanged: ((String) -> Bool)?
     var directoryChoiceGeneration = 0
     var process: Process?
-    var input: Pipe?
-    var output: Pipe?
-    var errors: Pipe?
+    var transport: CodexPipeConnection?
+    var closingTransport: CodexPipeConnection?
+    var connecting = false
+    var connectionPhase = "disconnected"
+    var connectionError = ""
+    var connectionModelsReady = false
+    var connectionThreadsReady = false
+    var connectionTimeout = 30.0
+    var requestTimeout = 40.0
+    // Internal injection for compiled fault tests, never supplied by a web page.
+    var connectionProcessFactory: (() throws -> Process)?
+    let fixtureFramer = CodexJSONLFramer()
+    let publicationQueue = DispatchQueue(label: "twos.codex.publication", qos: .userInitiated)
     var nyraAction: ((String) -> Void)?
     var statusMetadataChanged: (() -> Void)?
     var diagnosticTail = ""
-    var buffer = Data()
     var requestID = 0
     var lastRequestFailure: String?
     var requestMethods: [Int: String] = [:]
@@ -219,13 +435,19 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     func emit(_ kind: String, _ payload: [String: Any] = [:]) {
         let message: [String: Any] = ["kind": kind, "payload": payload]
         guard pageReady else { pendingUI.append(message); return }
-        guard let data = try? JSONSerialization.data(withJSONObject: message), let json = String(data: data, encoding: .utf8) else { return }
-        web.evaluateJavaScript("window.twosReceive(\(json))", completionHandler: nil)
+        let generation = transportGeneration
+        publicationQueue.async { [weak self] in
+            guard let data = try? JSONSerialization.data(withJSONObject: message), let json = String(data: data, encoding: .utf8) else { return }
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self, self.transportGeneration == generation else { return }
+                self.web.evaluateJavaScript("window.twosReceive(\(json))", completionHandler: nil)
+            }
+        }
     }
     func notice(_ text: String) { emit("notice", ["text": translate(text)]) }
     func controlState() {
         statusMetadataChanged?()
-        emit("control", ["connected": connected, "busy": isBusy, "awaitingTurn": startingTurn && turnID == nil, "desktopRunning": ownerDesktopRunning(), "threadId": threadID ?? "", "uncertain": uncertain, "historyReady": historyReady, "controllable": canControl, "controlVerified": threadID.map { controlledThreads.contains($0) } ?? false, "submitting": submissionPending, "mode": ledger.mode, "turnId": turnID ?? "", "nextModel": nextModel, "nextEffort": nextEffort, "stopRequested": stopRequested, "waitingRequests": approvals.count - answeredApprovals.count, "answeringRequests": answeredApprovals.count, "cwd": cwd ?? "", "actualModel": selected?["model"] ?? "", "permission": threadID.flatMap { ledger.bindings[$0]?.permission } ?? ""])
+        emit("control", ["connected": connected, "connecting": connecting, "connectionPhase": connectionPhase, "connectionError": connectionError, "busy": isBusy, "awaitingTurn": startingTurn && turnID == nil, "desktopRunning": ownerDesktopRunning(), "threadId": threadID ?? "", "uncertain": uncertain, "historyReady": historyReady, "controllable": canControl, "controlVerified": threadID.map { controlledThreads.contains($0) } ?? false, "submitting": submissionPending, "mode": ledger.mode, "turnId": turnID ?? "", "nextModel": nextModel, "nextEffort": nextEffort, "stopRequested": stopRequested, "waitingRequests": approvals.count - answeredApprovals.count, "answeringRequests": answeredApprovals.count, "cwd": cwd ?? "", "actualModel": selected?["model"] ?? "", "permission": threadID.flatMap { ledger.bindings[$0]?.permission } ?? ""])
     }
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.frameInfo.isMainFrame,
@@ -251,6 +473,8 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
             publishLanguage()
         case "directoryMode": directoryChoiceGeneration += 1; pendingDirectory = nil
         case "connect": connect()
+        case "cancelConnection": disconnect()
+        case "disconnect": disconnect()
         case "usage": refreshUsage()
         case "cancelUsage": usageGeneration += 1; usageReading = false; publishTelemetry()
         case "runStatus": refreshRunObservation()
@@ -401,21 +625,15 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     func releaseLock() { if lockFD >= 0 { flock(lockFD, LOCK_UN); Darwin.close(lockFD); lockFD = -1 } }
     func reconnect() {
         guard !isBusy else { reconcileDelivery(); return }
-        let child = process
-        if child?.isRunning == true {
-            notice("Closing this connection before reading the saved conversation again. No request will be resent.")
-            disconnect()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
-                guard child?.isRunning != true else { return }; self?.connect()
-            }
-        } else { connect() }
+        // Teardown is asynchronous. A fresh attempt is enabled only after the
+        // owned process has actually exited; no queue is resumed here.
+        if transport != nil || process?.isRunning == true { disconnect(); return }
+        connect()
     }
-    func connect() {
-        guard process?.isRunning != true else { listThreads(); return }
-        accountVerified = false; usageReading = false; usageGeneration += 1; usageRequestedAt = 0
+    static func configuredProcess() throws -> Process {
         let paths = ["/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex", "/Applications/Codex.app/Contents/Resources/codex"]
         guard let path = paths.first(where: { FileManager.default.isExecutableFile(atPath: $0) }) else {
-            notice("The installed Codex command could not be found. Install the official Codex App first."); return
+            throw NSError(domain: "TWOSCodex", code: 1, userInfo: [NSLocalizedDescriptionKey: "executable_missing"])
         }
         let child = Process(); child.executableURL = URL(fileURLWithPath: path)
         // This profile is passed only to this process. User config is not edited.
@@ -439,79 +657,104 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
         env.removeValue(forKey: "OPENAI_API_KEY"); env.removeValue(forKey: "CODEX_ACCESS_TOKEN")
         child.environment = env
         child.currentDirectoryURL = FileManager.default.temporaryDirectory
+        return child
+    }
+    func connect() {
+        guard !connecting, transport == nil, closingTransport == nil, process?.isRunning != true else { return }
         transportGeneration += 1; let generation = transportGeneration
-        input = Pipe(); output = Pipe(); buffer = Data()
-        child.standardInput = input; child.standardOutput = output
-        errors = Pipe(); diagnosticTail = ""; child.standardError = errors
-        errors!.fileHandleForReading.readabilityHandler = { [weak self] handle in
-            let data = handle.availableData
-            if data.isEmpty { handle.readabilityHandler = nil; return }
-            let text = String(decoding: data, as: UTF8.self)
-            DispatchQueue.main.async {
+        connecting = true; connected = false; connectionPhase = "starting"; connectionError = ""
+        connectionModelsReady = false; connectionThreadsReady = false
+        accountVerified = false; usageReading = false; usageGeneration += 1; usageRequestedAt = 0
+        historyReady = false; controlState()
+        let connection = CodexPipeConnection(); transport = connection
+        connection.onMessage = { [weak self, weak connection] value in
+            guard let self = self, self.transportGeneration == generation, self.transport === connection else { return }
+            self.accept(value)
+        }
+        connection.onEnd = { [weak self, weak connection] reason in
+            guard let self = self, self.transportGeneration == generation, self.transport === connection else { return }
+            self.endConnection(reason)
+        }
+        connection.onLaunch = { [weak self, weak connection] child in
+            guard let self = self, self.transportGeneration == generation, self.transport === connection else { return }
+            self.process = child; self.connectionPhase = "handshake"; self.controlState()
+            self.request("initialize", ["clientInfo": ["name": "twos_integrated_workbench", "title": "Tianma Work OS", "version": "1.0.7"], "capabilities": ["experimentalApi": true]]) { [weak self] result in
                 guard let self = self, self.transportGeneration == generation else { return }
-                let safe = text.split(separator: "\n").map { line in
-                    line.range(of: "(?i)(bearer |api.key|access.token|refresh.token|authorization)", options: .regularExpression) == nil ? String(line) : "[credential-related diagnostic omitted]"
-                }.joined(separator: "\n")
-                self.diagnosticTail = String((self.diagnosticTail + safe + "\n").suffix(6000))
-            }
-        }
-        output!.fileHandleForReading.readabilityHandler = { [weak self] handle in
-            let data = handle.availableData
-            if data.isEmpty { handle.readabilityHandler = nil; return }
-            DispatchQueue.main.async { guard self?.transportGeneration == generation else { return }; self?.receive(data) }
-        }
-        child.terminationHandler = { [weak self] ended in
-            DispatchQueue.main.async {
-                guard let self = self, self.process === ended else { return }
-                self.connected = false
-                self.usageReading = false; self.usageGeneration += 1; self.usageErrors["account"] = "network"; self.saveTelemetry(); self.publishTelemetry()
-                let unresolved = self.isBusy || self.uncertain
-                self.uncertain = unresolved; self.releaseLock()
-                self.turnID = nil; self.startingTurn = false; self.loadedThread = nil; self.controlledThreads.removeAll(); self.submissionPending = false
-                for item in self.ledger.submissions where !["completed", "failed", "interrupted", "cancelled", "rejected"].contains(item.state) { self.ledger.paused.insert(item.thread) }
-                self.persistLedger(); self.publishQueue()
-                self.callbacks.removeAll(); self.requestMethods.removeAll(); self.requestArguments.removeAll(); self.approvals.removeAll(); self.answeredApprovals.removeAll(); self.stopRequested = false; self.controlState()
-                self.emit("clearApprovals")
-                self.notice(unresolved ? "Codex disconnected during execution. The request will not be sent again automatically. Reconnect and inspect the saved conversation." : "Codex disconnected. Reconnect to view your saved conversations.")
-                if !self.diagnosticTail.isEmpty && ended.terminationStatus != 0 {
-                    self.emit("notice", ["text": self.translate("The local Codex service stopped. Expand the details for its reported cause."), "detail": self.diagnosticTail])
+                guard result != nil else { self.endConnection("handshake_failed"); return }
+                self.write(["method": "initialized"])
+                self.connectionPhase = "authentication"; self.controlState()
+                self.request("account/read", ["refreshToken": false]) { [weak self] account in
+                    guard let self = self, self.transportGeneration == generation else { return }
+                    guard let account = account else { self.endConnection("authentication_read_failed"); return }
+                    if account["requiresOpenaiAuth"] as? Bool != false && !(account["account"] is [String: Any]) {
+                        self.endConnection("authentication_required"); return
+                    }
+                    self.connected = true; self.connectionPhase = "catalogs"; self.controlState()
+                    self.listThreads()
+                    self.request("model/list", ["limit": 100]) { [weak self] result in
+                        guard let self = self, self.transportGeneration == generation else { return }
+                        guard let models = result?["data"] as? [[String: Any]] else { self.endConnection("model_list_failed"); return }
+                        self.modelCatalog = models; self.modelIDs = Set(models.compactMap { $0["model"] as? String })
+                        self.emit("models", ["items": models]); self.connectionModelsReady = true; self.finishConnection()
+                    }
                 }
             }
         }
-        process = child
-        do { try child.run() } catch { notice("Codex could not start. Your saved conversations have not been changed."); return }
-        request("initialize", ["clientInfo": ["name": "twos_integrated_workbench", "title": "Tianma Work OS", "version": "1.0.6"], "capabilities": ["experimentalApi": true]]) { [weak self] result in
-            guard let self = self else { return }
-            guard result != nil else { self.disconnect(); return }
-            self.write(["method": "initialized"]); self.connected = true; self.controlState(); self.listThreads(); self.refreshUsage()
-            if let id = self.threadID ?? self.restoringThread { self.selectThread(id) }
-            self.request("model/list", ["limit": 100]) { result in
-                let models = result?["data"] as? [[String: Any]] ?? []
-                self.modelCatalog = models; self.modelIDs = Set(models.compactMap { $0["model"] as? String })
-                self.emit("models", ["items": models])
+        connection.start(timeout: connectionTimeout, configure: connectionProcessFactory ?? Self.configuredProcess)
+        DispatchQueue.main.asyncAfter(deadline: .now() + connectionTimeout) { [weak self] in
+            guard let self = self, self.transportGeneration == generation, self.connecting else { return }
+            self.endConnection("connection_timeout_" + self.connectionPhase)
+        }
+    }
+    func finishConnection() {
+        guard connecting, connected, connectionModelsReady, connectionThreadsReady else { return }
+        connecting = false; connectionPhase = "connected"; controlState(); refreshUsage()
+        // Reading a selected conversation must never resume queued execution.
+        if let id = threadID ?? restoringThread { selectThread(id) }
+    }
+    func endConnection(_ reason: String) {
+        let connection = transport
+        transportGeneration += 1; selectionGeneration += 1; usageGeneration += 1
+        transport = nil
+        if let connection = connection { closingTransport = connection }
+        connected = false; connecting = false; connectionPhase = "disconnected"; connectionError = reason
+        accountVerified = false; usageReading = false; runReading = false; historyLoading = false; historyReady = false
+        let unresolved = isBusy || submissionPending || uncertain
+        uncertain = unresolved; releaseLock()
+        turnID = nil; startingTurn = false; loadedThread = nil; controlledThreads.removeAll(); submissionPending = false; creatingThread = false
+        for item in ledger.submissions where !["completed", "failed", "interrupted", "cancelled", "rejected"].contains(item.state) { ledger.paused.insert(item.thread) }
+        persistLedger(); publishQueue()
+        callbacks.removeAll(); requestMethods.removeAll(); requestArguments.removeAll()
+        approvals.removeAll(); answeredApprovals.removeAll(); stopRequested = false
+        emit("clearApprovals"); controlState(); publishTelemetry()
+        // No synchronous wait, and no replacement child until the old one is gone.
+        if let connection = connection {
+            connectionPhase = "closing"; controlState()
+            connection.cancel { [weak self, weak connection] in
+                guard let self = self, self.closingTransport === connection else { return }
+                self.closingTransport = nil; self.process = nil; self.connectionPhase = "disconnected"; self.controlState()
             }
         }
     }
-    func write(_ object: [String: Any]) {
-        guard let input = input, process?.isRunning == true, let bytes = try? JSONSerialization.data(withJSONObject: object) else { return }
-        do { try input.fileHandleForWriting.write(contentsOf: bytes + Data([10])) }
-        catch { notice("Codex did not receive the request. Inspect the conversation before retrying.") }
-    }
+    func write(_ object: [String: Any]) { transport?.send(object) }
     func request(_ method: String, _ params: [String: Any], completion: @escaping ([String: Any]?) -> Void) {
         requestID += 1; let id = requestID; let generation = transportGeneration; callbacks[id] = completion; requestMethods[id] = method; requestArguments[id] = params
         write(["id": id, "method": method, "params": params])
-        DispatchQueue.main.asyncAfter(deadline: .now() + 40) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + requestTimeout) { [weak self] in
             guard let self = self, self.transportGeneration == generation, let callback = self.callbacks.removeValue(forKey: id) else { return }
             if !method.hasPrefix("account/") { self.notice("Codex has not confirmed this request. Do not resend it until the conversation has been checked.") }
             self.lastRequestFailure = "timeout"; self.requestMethods.removeValue(forKey: id); self.requestArguments.removeValue(forKey: id); callback(nil)
         }
     }
+    // Synchronous injection used only by state-machine fixtures. Production
+    // decoding is performed by CodexPipeConnection on its private I/O queue.
     func receive(_ bytes: Data) {
-        buffer.append(bytes)
-        guard buffer.count <= 24_000_000 else { notice("A Codex event was too large to display. The saved conversation remains available."); buffer.removeAll(); uncertain = true; controlState(); return }
-        while let index = buffer.firstIndex(of: 10) {
-            let line = Data(buffer[..<index]); buffer.removeSubrange(...index)
-            guard let value = try? JSONSerialization.jsonObject(with: line) as? [String: Any] else { continue }
+        do { try fixtureFramer.append(bytes) { line in
+            guard let value = try JSONSerialization.jsonObject(with: line) as? [String: Any] else { throw CodexJSONLFramer.Failure.malformed }
+            accept(value)
+        } } catch { endConnection("invalid_or_oversized_jsonl") }
+    }
+    func accept(_ value: [String: Any]) {
             if value["method"] == nil, let id = value["id"] as? Int, let callback = callbacks.removeValue(forKey: id) {
                 let replyMethod = requestMethods.removeValue(forKey: id) ?? ""; requestArguments.removeValue(forKey: id); lastRequestFailure = nil
                 if let error = value["error"] as? [String: Any] {
@@ -519,29 +762,29 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
                     if !replyMethod.hasPrefix("account/") { emit("notice", ["text": translate("The local Codex service rejected this request. Saved work is retained."), "code": error["code"] as? Int ?? -1, "detail": error["message"] as? String ?? ""]) }
                     callback(nil)
                 } else { callback(value["result"] as? [String: Any] ?? [:]) }
-                continue
+                return
             }
-            guard let method = value["method"] as? String, let params = value["params"] as? [String: Any] else { continue }
-            if accountNotification(method, params) { continue }
+            guard let method = value["method"] as? String, let params = value["params"] as? [String: Any] else { return }
+            if accountNotification(method, params) { return }
             observeEvent(method, params, requestID: value["id"])
             let target = params["threadId"] as? String
             if let id = value["id"] {
                 guard target == threadID, !uncertain, activeSubmission != nil, let turn = params["turnId"] as? String, turn == turnID,
                       ["item/commandExecution/requestApproval", "item/fileChange/requestApproval", "item/permissions/requestApproval", "item/tool/requestUserInput"].contains(method) else {
-                    write(["id": id, "error": ["code": -32601, "message": "Request not supported by this client"]]); continue
+                    write(["id": id, "error": ["code": -32601, "message": "Request not supported by this client"]]); return
                 }
                 let key = UUID().uuidString
                 let duplicate = approvals.first { Self.sameRequestID($0.value["id"], id) }
-                if duplicate != nil { continue }
+                if duplicate != nil { return }
                 approvals[key] = ["id": id, "method": method, "params": params]
-                emit("approval", approvalPayload(key, approvals[key]!)); controlState(); continue
+                emit("approval", approvalPayload(key, approvals[key]!)); controlState(); return
             }
-            guard target == threadID else { continue }
+            guard target == threadID else { return }
             if method == "serverRequest/resolved" {
                 for (key, request) in approvals where Self.sameRequestID(request["id"], params["requestId"]) {
                     approvals.removeValue(forKey: key); answeredApprovals.remove(key); emit("answered", ["key": key])
                 }
-                controlState(); continue
+                controlState(); return
             }
             if method == "turn/started", let turn = params["turn"] as? [String: Any], let id = turn["id"] as? String,
                !startingTurn, turnID == nil, controlledThreads.contains(target ?? "") {
@@ -587,13 +830,13 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
                 activeSubmission = nil
                 lastHistoryTurn = id; turnID = nil; startingTurn = false; approvals.removeAll(); answeredApprovals.removeAll(); stopRequested = false; clearPending(); releaseLock(); controlState(); publishResult(); publishQueue()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in self?.dispatchNext() }
-                emit("turnCompleted", ["status": turn["status"] ?? "unknown", "error": turn["error"] ?? NSNull()]); continue
+                emit("turnCompleted", ["status": turn["status"] ?? "unknown", "error": turn["error"] ?? NSNull()]); return
             }
-            if let eventTurn = params["turnId"] as? String, eventTurn != turnID { continue }
+            if let eventTurn = params["turnId"] as? String, eventTurn != turnID { return }
             if method == "item/started" || method == "item/completed", let item = params["item"] as? [String: Any] {
                 if item["type"] as? String == "reasoning" {
                     rememberDisplayItem(["id": item["id"] ?? "", "type": "reasoning", "summary": item["summary"] ?? []])
-                    emit("summary", ["id": item["id"] ?? "", "summary": item["summary"] ?? []]); continue
+                    emit("summary", ["id": item["id"] ?? "", "summary": item["summary"] ?? []]); return
                 }
                 if method == "item/completed" {
                     for (key, request) in approvals where (request["params"] as? [String: Any])?["itemId"] as? String == item["id"] as? String {
@@ -605,23 +848,25 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
                     if item["phase"] as? String != "commentary" { candidateResult = text }
                 }
             }
-            if method.hasPrefix("item/reasoning/") && method != "item/reasoning/summaryTextDelta" { continue }
+            if method.hasPrefix("item/reasoning/") && method != "item/reasoning/summaryTextDelta" { return }
             if ["item/started", "item/completed", "item/agentMessage/delta", "item/commandExecution/outputDelta", "item/fileChange/outputDelta", "item/reasoning/summaryTextDelta", "turn/plan/updated", "turn/diff/updated", "item/mcpToolCall/progress", "error"].contains(method) {
                 rememberDisplayEvent(method, params)
                 emit("event", ["method": method, "params": params])
             }
-        }
     }
     func listThreads(older: Bool = false) {
         guard connected else { return }
         var params: [String: Any] = ["limit": 50, "sortKey": "updated_at", "useStateDbOnly": true]
         if older { guard let cursor = threadCursor else { return }; params["cursor"] = cursor }
         request("thread/list", params) { [weak self] result in
-            guard let self = self, let result = result else { return }
-            let rows = result["data"] as? [[String: Any]] ?? []
+            guard let self = self else { return }
+            guard let rows = result?["data"] as? [[String: Any]] else {
+                if self.connecting { self.endConnection("thread_list_failed") }; return
+            }
             if older { self.threadRows += rows } else { self.threadRows = rows }
-            self.threadCursor = result["nextCursor"] as? String
+            self.threadCursor = result?["nextCursor"] as? String
             self.emit("threads", ["items": self.threadRows, "more": self.threadCursor != nil])
+            if self.connecting { self.connectionThreadsReady = true; self.finishConnection() }
         }
     }
     func selectThread(_ id: String) {
@@ -760,9 +1005,7 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     }
     func disconnect() {
         guard !isBusy else { notice("Stop is a separate action. Finish or explicitly stop this turn before disconnecting."); return }
-        let child = process
-        try? input?.fileHandleForWriting.close()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { if child?.isRunning == true { child?.terminate() } }
+        endConnection("cancelled")
     }
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if action.request.url?.standardizedFileURL == resources.appendingPathComponent("native_codex/index.html").standardizedFileURL { decisionHandler(.allow); return }

@@ -38,3 +38,6 @@ The independent companion is maintained in [Nyra](https://github.com/loseyoursel
 [Detailed Owner Guide](docs/OWNER_GUIDE_EN.md) · [Repository map](docs/REPOSITORY_MAP.md) · [Original local projects](docs/LEGACY_OWNER_GUIDE.md) · [Advanced source installation](docs/ADVANCED_INSTALLATION.md). Historical designs and stage records do not describe the current installer or establish current acceptance.
 
 </details>
+
+
+[Local hotfix candidate (not published)](docs/release-1.0/CODEX_CONNECTION_AND_TASK_LABELS.en.md)

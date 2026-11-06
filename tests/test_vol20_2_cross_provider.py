@@ -302,6 +302,22 @@ if mode == "nyra_status" {
     precondition(Set(v3.keys)==Set(both.keys).union(["pane_observations"]))
     let decodedV3=try! StatusEvent.decode(JSONSerialization.data(withJSONObject:v3),simulation:false)
     precondition(decodedV3.pane_observations?.count==2 && decodedV3.activity_side=="left")
+    let labels=[["side":"left","provider":"ChatGPT","title":"TEST ONLY current title"]]
+    producer.observe(session:"BOTH-PANES",task:nil,state:"running",source:"twos_runtime",side:"left",panes:panes,labels:labels)
+    let v4=snapshot(producer)
+    precondition(v4["schema_version"] as? String=="twos.nyra.status.v4")
+    precondition(Set(v4.keys)==Set(v3.keys).union(["task_labels"]))
+    precondition(try! StatusEvent.decode(JSONSerialization.data(withJSONObject:v4),simulation:false).task_labels?.first?.title=="TEST ONLY current title")
+    producer.observe(session:"BOTH-PANES",task:nil,state:"running",source:"twos_runtime",side:"left",panes:panes,labels:labels)
+    precondition(snapshot(producer)["event_id"] as? String==v4["event_id"] as? String)
+    for invalid in [[["side":"right","provider":"Claude","title":"not active"]],[["side":"left","provider":"ChatGPT","title":"TEST","body":"FORBIDDEN"]]] {
+        producer.observe(session:"BOTH-PANES",task:nil,state:"running",source:"twos_runtime",side:"left",panes:panes,labels:invalid)
+        precondition(snapshot(producer)["event_id"] as? String==v4["event_id"] as? String)
+    }
+    precondition(IntegratedWorkbench.companionTitle("/private/file")==nil)
+    precondition(IntegratedWorkbench.companionTitle("https://private/path")==nil)
+    precondition(IntegratedWorkbench.companionTitle("TEST\n  ONLY")=="TEST ONLY")
+    precondition(IntegratedWorkbench.companionTitle(String(repeating:"中",count:100))?.count==90)
     print("NYRA_STATUS_PRIVACY_DEDUP_RECONNECT_TERMINAL_PASS");exit(0)
 }
 

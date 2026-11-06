@@ -43,3 +43,6 @@ Nyra 只读最小状态。空闲、运行、排队/等待、partial/失败/取�
 
 
 [DeepSeek 接力、五套服装与双语动作语音](AUTOSEND_AND_WARDROBE.zh-CN.md)
+
+
+[本轮候选差量](CODEX_CONNECTION_AND_TASK_LABELS.zh-CN.md)

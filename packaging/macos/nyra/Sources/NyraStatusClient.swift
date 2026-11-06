@@ -19,7 +19,7 @@ struct StatusEndpoint: Decodable {
 }
 enum BridgeError: Error { case unsafeEndpoint, wrongPeer, unavailable, truncated, invalidFrame }
 final class NyraStatusClient {
-    static let schemaHash = "dbdc1c228b9762fc1b8b3bcd8b89d91672f4ae5e0a7f552d9d1301b93dcde831"
+    static let schemaHash = "4e7d9433de4c807eb0e1e7f3a4ae51c3afd7a582769ba02fe02e43169a9e4226"
     var selection: BridgeSelection?
     private(set) var connectionLabel = "NOT_CONNECTED · 等待独立客户端授权"
     private var busy = false
@@ -56,14 +56,14 @@ final class NyraStatusClient {
         var bytes = [UInt8](repeating:0,count:Int(st.st_size)); let count = Darwin.read(fd,&bytes,bytes.count)
         guard count == bytes.count else { throw BridgeError.truncated }
         let e = try JSONDecoder().decode(StatusEndpoint.self,from:Data(bytes))
-        guard e.transport == "unix_snapshot_v1", ((e.schema_version == "twos.nyra.status.v3" && e.schema_sha256 == schemaHash) || (e.schema_version == "twos.nyra.status.v2" && e.schema_sha256 == "ef6797aa662f28dd36134ba476c5b1ae50c418fd1fa9636330d2cb76c0b59c81") || (e.schema_version == "twos.nyra.status.v1" && e.schema_sha256 == "7ce0d27865647a5ba9bfa44d2355cb3839a80b51348b195fadafc3d7544cc386")),
+        guard e.transport == "unix_snapshot_v1", ((e.schema_version == "twos.nyra.status.v4" && e.schema_sha256 == schemaHash) || (e.schema_version == "twos.nyra.status.v3" && e.schema_sha256 == "dbdc1c228b9762fc1b8b3bcd8b89d91672f4ae5e0a7f552d9d1301b93dcde831") || (e.schema_version == "twos.nyra.status.v2" && e.schema_sha256 == "ef6797aa662f28dd36134ba476c5b1ae50c418fd1fa9636330d2cb76c0b59c81") || (e.schema_version == "twos.nyra.status.v1" && e.schema_sha256 == "7ce0d27865647a5ba9bfa44d2355cb3839a80b51348b195fadafc3d7544cc386")),
               UUID(uuidString:e.producer_instance_id) != nil,
               e.socket == "/private/tmp/twos-nyra-status-" + e.producer_instance_id + "/status.sock" else { throw BridgeError.unsafeEndpoint }
         try securePath(URL(fileURLWithPath:e.socket).deletingLastPathComponent().path,mode:0o700,directory:true)
         try securePath(e.socket,mode:0o600,socket:true)
         return e
     }
-    static func verifyPeer(_ fd: Int32, selection: BridgeSelection) throws {
+    @discardableResult static func verifyPeer(_ fd: Int32, selection: BridgeSelection) throws -> NSRunningApplication {
         var uid: uid_t = 0; var gid: gid_t = 0; var pid: pid_t = 0; var count = socklen_t(MemoryLayout<pid_t>.size)
         guard getpeereid(fd,&uid,&gid) == 0, uid == getuid(), getsockopt(fd,SOL_LOCAL,LOCAL_PEERPID,&pid,&count) == 0,
               let app = NSRunningApplication(processIdentifier:pid), app.bundleIdentifier == selection.producerBundleID,
@@ -76,6 +76,7 @@ final class NyraStatusClient {
               SecCodeCopyStaticCode(live!,[],&liveStatic) == errSecSuccess,
               SecCodeCopySigningInformation(liveStatic!,[],&info) == errSecSuccess,
               (info as? [String:Any])?[kSecCodeInfoUnique as String] as? Data == selection.producerCodeHash else { throw BridgeError.wrongPeer }
+        return app
     }
     static func decodeLine(_ bytes: Data, instance: String) throws -> StatusEvent {
         guard bytes.count <= 16385, bytes.last == 10, bytes.dropLast().contains(10) == false else { throw BridgeError.truncated }
@@ -83,7 +84,8 @@ final class NyraStatusClient {
         guard event.producer_instance_id == instance else { throw BridgeError.invalidFrame }
         return event
     }
-    static func read(_ selection: BridgeSelection) throws -> StatusEvent {
+    static func read(_ selection: BridgeSelection) throws -> StatusEvent { try readAuthenticated(selection).0 }
+    static func readAuthenticated(_ selection: BridgeSelection) throws -> (StatusEvent,NSRunningApplication) {
         let endpoint = try readEndpoint(selection.endpoint)
         let fd = Darwin.socket(AF_UNIX,SOCK_STREAM,0); guard fd >= 0 else { throw BridgeError.unavailable }; defer { Darwin.close(fd) }
         var timeout = timeval(tv_sec:5,tv_usec:0)
@@ -100,7 +102,7 @@ final class NyraStatusClient {
             var error: Int32 = 0; var size = socklen_t(MemoryLayout<Int32>.size)
             guard getsockopt(fd,SOL_SOCKET,SO_ERROR,&error,&size) == 0, error == 0 else { throw BridgeError.unavailable }
         }
-        try verifyPeer(fd,selection:selection)
+        let peer=try verifyPeer(fd,selection:selection)
         _ = fcntl(fd,F_SETFL,0)
         var data = Data(); var chunk = [UInt8](repeating:0,count:4096)
         let deadline = ProcessInfo.processInfo.systemUptime + 5
@@ -108,9 +110,32 @@ final class NyraStatusClient {
             let n = Darwin.recv(fd,&chunk,chunk.count,0)
             guard n > 0 else { throw BridgeError.truncated }
             data.append(contentsOf:chunk.prefix(n))
-            if data.contains(10) { return try decodeLine(data,instance:endpoint.producer_instance_id) }
+            if data.contains(10) { return (try decodeLine(data,instance:endpoint.producer_instance_id),peer) }
         }
         throw BridgeError.truncated
+    }
+    // A user click only activates the freshly authenticated, already-running host.
+    // No launch URL, model request, command, or arbitrary application path is accepted.
+    private var activating = false
+    private var activationID: UUID?
+    func activateHost(_ completion: @escaping (Bool)->Void) {
+        guard !activating,let choice=selection else {completion(false);return}
+        activating=true;let token=generation;let attempt=UUID();activationID=attempt
+        DispatchQueue.main.asyncAfter(deadline:.now()+6) { [weak self] in
+            guard let self=self,self.activationID==attempt else{return}
+            self.activationID=nil;self.activating=false;completion(false)
+        }
+        DispatchQueue.global(qos:.utility).async {
+            let result=try? Self.readAuthenticated(choice)
+            DispatchQueue.main.async {
+                guard self.activationID==attempt else{return}
+                self.activationID=nil;self.activating=false
+                guard token==self.generation,let (_,peer)=result,!peer.isTerminated,
+                      peer.bundleIdentifier==choice.producerBundleID,
+                      peer.bundleURL?.standardizedFileURL==URL(fileURLWithPath:choice.producerApp).standardizedFileURL else {completion(false);return}
+                completion(peer.activate(options:[.activateAllWindows]))
+            }
+        }
     }
     func poll(selectionLoader: @escaping () throws -> BridgeSelection,
               _ completion: @escaping (Result<StatusEvent,Error>) -> Void) {
@@ -191,6 +216,7 @@ extension Companion {
             if previous != self.liveReducer.current || wasConnected != self.liveReducer.connected || previousLabel != self.live.connectionLabel {
                 self.reconcileAnimation(); self.writePlaybackState("status_snapshot"); self.rebuildMenu()
             }
+            self.refreshTaskLabels()
             // A live receipt heartbeat is separate from animation/state changes.
             self.publishVisibility(persistPreference:false,heartbeat:true)
         }
