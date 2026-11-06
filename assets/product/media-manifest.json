@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "updated_at": "2026-11-06T16:39:39.310547+08:00",
+  "public_download_version": "1.0.6",
+  "public_download_build": "101.54",
+  "interface": {
+    "version": "1.0.7",
+    "build": "101.55",
+    "status": "CANDIDATE_PREVIEW",
+    "source_commit": "5edbedba8342936bd3c2a0eb0e808d3cda7dfa32",
+    "path": "assets/product/twos-1.0.7-101.55.png",
+    "sha256": "5012fd320dc93840fe7bdacaef93e32370b364d600c6e7ea633c96702e99e988",
+    "width": 2880,
+    "height": 1772,
+    "kind": "REAL_MACOS_WINDOW_CAPTURE",
+    "privacy_review": "Signed-out provider, disconnected Codex; no account, private conversation or local path visible."
+  },
+  "nyra": {
+    "version": "1.0.6",
+    "build": "106",
+    "status": "CANDIDATE_ASSET_VERIFIED",
+    "source_commit": "18309c82bcc6c821ebde56c0591ae02240931c89",
+    "note": "These five outfit assets are unchanged from published Nyra 1.0.5, included in TWOS 1.0.6.",
+    "outfits": [
+      {
+        "id": "runtime-default",
+        "name": "Black & purple",
+        "path": "assets/product/runtime-default.png",
+        "sha256": "7780d8d9319a6578ba492e37dd122d7bfe2f559adfac5d053c62d73fa26ecd69",
+        "bytes": 930122,
+        "width": 1024,
+        "height": 1536,
+        "kind": "ACTUAL_RUNTIME_ASSET"
+      },
+      {
+        "id": "runtime-office",
+        "name": "Office",
+        "path": "assets/product/runtime-office.png",
+        "sha256": "e12414521cba25dc01077aeea97ed935d79035d80d6b23e4e0a516740b6d94d4",
+        "bytes": 669656,
+        "width": 1024,
+        "height": 1536,
+        "kind": "ACTUAL_RUNTIME_ASSET"
+      },
+      {
+        "id": "runtime-gala",
+        "name": "Gala",
+        "path": "assets/product/runtime-gala.png",
+        "sha256": "e390c578f481cd42caae6af08835c4c2a44e28afc4125aaa1ecb588fa749fce4",
+        "bytes": 1943846,
+        "width": 1024,
+        "height": 1536,
+        "kind": "ACTUAL_RUNTIME_ASSET"
+      },
+      {
+        "id": "runtime-office_white",
+        "name": "White blouse",
+        "path": "assets/product/runtime-office_white.png",
+        "sha256": "a824beab71303827b8c45dc7f3804a6922b518c619b9407d7d9da29c87dd0556",
+        "bytes": 1424177,
+        "width": 1024,
+        "height": 1536,
+        "kind": "ACTUAL_RUNTIME_ASSET"
+      },
+      {
+        "id": "runtime-gala_red",
+        "name": "Ruby gown",
+        "path": "assets/product/runtime-gala_red.png",
+        "sha256": "f4fab3c295c0716ed489ff9b12a0d66879e924d9db71e54c80df28d1eb088ca3",
+        "bytes": 1609996,
+        "width": 1024,
+        "height": 1536,
+        "kind": "ACTUAL_RUNTIME_ASSET"
+      }
+    ]
+  }
+}
