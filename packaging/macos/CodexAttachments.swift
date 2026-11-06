@@ -1,5 +1,6 @@
 import Foundation
 import PDFKit
+import Darwin
 
 enum CodexAttachmentFailure: String, Error {
     case unsupported, unreadable, tooLarge, encoding, malformed, encrypted, empty, unsafeArchive, tooComplex
@@ -95,21 +96,42 @@ enum CodexAttachmentParser {
         process.arguments = arguments + [file.path]
         if arguments.first == "-p", arguments.count == 2 { process.arguments = ["-p", file.path, arguments[1]] }
         process.standardOutput = pipe; process.standardError = FileHandle.nullDevice
-        let lock = NSLock(), group = DispatchGroup(); var data = Data(), overflow = false
-        try process.run(); group.enter()
-        DispatchQueue.global(qos: .utility).async {
-            while true {
-                let next = pipe.fileHandleForReading.availableData
-                if next.isEmpty { break }
-                lock.lock()
-                if data.count + next.count > limit { overflow = true; lock.unlock(); if process.isRunning { process.terminate() }; break }
-                data.append(next); lock.unlock()
+        // This parser runs on the attachment worker, never the connect/UI path.
+        // Do not wait for EOF or termination without a deadline. In particular,
+        // macOS unzip can deadlock in its SIGTERM handler while already exiting.
+        let fd = pipe.fileHandleForReading.fileDescriptor
+        defer {
+            try? pipe.fileHandleForReading.close()
+            try? pipe.fileHandleForWriting.close()
+            if process.isRunning {
+                // This exact owned child only expands bytes into a pipe. It
+                // never writes user files, so hard cancellation is safe.
+                kill(process.processIdentifier, SIGKILL)
+                let reapDeadline = ProcessInfo.processInfo.systemUptime + 0.5
+                while process.isRunning && ProcessInfo.processInfo.systemUptime < reapDeadline { Thread.sleep(forTimeInterval: 0.002) }
             }
-            group.leave()
         }
-        guard group.wait(timeout: .now() + 4) == .success else { if process.isRunning { process.terminate() }; throw CodexAttachmentFailure.tooComplex }
-        process.waitUntilExit(); lock.lock(); defer { lock.unlock() }
-        guard !overflow else { throw CodexAttachmentFailure.tooComplex }
+        let flags = fcntl(fd, F_GETFL)
+        guard flags >= 0, fcntl(fd, F_SETFL, flags | O_NONBLOCK) == 0 else { throw CodexAttachmentFailure.unreadable }
+        try process.run()
+        var data = Data(), eof = false
+        var buffer = [UInt8](repeating: 0, count: 65_536)
+        let deadline = ProcessInfo.processInfo.systemUptime + 4
+        while !eof || process.isRunning {
+            guard ProcessInfo.processInfo.systemUptime < deadline else { throw CodexAttachmentFailure.tooComplex }
+            if !eof {
+                let count = read(fd, &buffer, buffer.count)
+                if count > 0 {
+                    guard count <= limit - data.count else { throw CodexAttachmentFailure.tooComplex }
+                    data.append(contentsOf: buffer.prefix(count))
+                    continue
+                }
+                if count == 0 { eof = true }
+                else if errno == EINTR { continue }
+                else if errno != EAGAIN && errno != EWOULDBLOCK { throw CodexAttachmentFailure.unreadable }
+            }
+            if !eof || process.isRunning { Thread.sleep(forTimeInterval: 0.002) }
+        }
         guard process.terminationStatus == 0 else { throw CodexAttachmentFailure.malformed }
         return data
     }

@@ -7,11 +7,27 @@ from pathlib import Path
 import json
 import subprocess
 import sys
+import time
 import zipfile
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 pytestmark = pytest.mark.skipif(sys.platform != 'darwin', reason='Native macOS client')
+
+
+def test_expansion_rejection_has_bounded_child_lifecycle(r2_binary, tmp_path):
+    # Real OS unzip, not a parser mock. Repeated near-limit termination exposed
+    # an exit/SIGTERM race; a larger expansion must also remain bounded.
+    for index, size in enumerate([2_000_001, 2_000_001, 10_000_000]):
+        file = tmp_path / f'oversized-{index}.docx'
+        with zipfile.ZipFile(file, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr('[Content_Types].xml', '<Types/>')
+            archive.writestr('word/document.xml', '<doc><t>' + 'x' * size + '</t></doc>')
+        started = time.monotonic()
+        result = subprocess.run([str(r2_binary), str(tmp_path / f'runtime-{index}'), str(ROOT / 'static_cockpit'), 'parse', str(file)], capture_output=True, text=True, timeout=8)
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip() == 'ERROR:tooComplex'
+        assert time.monotonic() - started < 8
 
 def test_native_catalog_preserves_launcher_dictionary_contract():
     catalog=json.loads((ROOT/'static_cockpit/project_first/native_i18n.json').read_text())
