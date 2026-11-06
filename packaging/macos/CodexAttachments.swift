@@ -120,7 +120,7 @@ enum CodexAttachmentParser {
         while !eof || process.isRunning {
             guard ProcessInfo.processInfo.systemUptime < deadline else { throw CodexAttachmentFailure.tooComplex }
             if !eof {
-                let count = read(fd, &buffer, buffer.count)
+                let count = Darwin.read(fd, &buffer, buffer.count)
                 if count > 0 {
                     guard count <= limit - data.count else { throw CodexAttachmentFailure.tooComplex }
                     data.append(contentsOf: buffer.prefix(count))
