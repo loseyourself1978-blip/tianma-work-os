@@ -76,3 +76,16 @@ source, hashes, provenance, notarization receipts and original validation/failur
 records. Never apply this local retention policy to historical GitHub assets,
 installed Owner apps, browser profiles or unidentified directories. Record the
 exact removed paths and available space; no broad wildcard or Git clean.
+
+## Product-page media for every version
+
+Every release/iteration closeout must synchronize the public product page with
+the actual latest TWOS interface and all five Nyra outfits. Capture the real
+candidate in an isolated, non-sensitive window; never publish private accounts,
+history or paths. Use the exact pinned runtime outfit assets, label still images
+honestly, and record version/build/source/hash provenance. Reuse unchanged media
+only after comparison. Keep candidate previews distinct from published downloads.
+Follow `site/RELEASE_MEDIA.md` and run `site/verify_media.py` in the actual release
+source repository, then verify the deployed page and images over anonymous HTTPS.
+Do not close website work with missing/stale images or broaden binary-release
+authorization because a website update was requested.
