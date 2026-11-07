@@ -491,7 +491,8 @@ if ["paired_auto","paired_auto_navigation","paired_auto_late_navigation","paired
     work.webPanes[1]!.showNotice("Delivery unknown")
     work.webPanes[1]!.reconcileAccessNotice("idle")
     precondition(work.webPanes[1]!.notice.stringValue=="Delivery unknown","activity erased a delivery warning")
-    work.webPanes[0]!.showNotice("ChatGPT could not finish loading. Retry with ↻, or open this page in Safari. Your saved work is retained.")
+    work.webPanes[0]!.navigationFailed(NSError(domain:NSURLErrorDomain,code:NSURLErrorCannotConnectToHost))
+    precondition(!work.webPanes[0]!.notice.isHidden,"the actual navigation failure must be shown before recovery")
     work.webPanes[0]!.reconcileAccessNotice("idle")
     precondition(work.webPanes[0]!.notice.isHidden,"stale load warning remained over a usable composer")
     func begin(){

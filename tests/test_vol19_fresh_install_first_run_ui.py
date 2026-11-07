@@ -56,11 +56,11 @@ def _geometry_fixture(surface: str) -> str:
     page = _source(HTML)
     styles = _source(STYLES)
     page = page.replace(
-        '<link rel="stylesheet" href="/static_cockpit/vol12_static_mvp/styles.css?v=1.0.8">',
+        '<link rel="stylesheet" href="/static_cockpit/vol12_static_mvp/styles.css?v=1.0.9">',
         "<style>" + styles + "</style>",
     )
     page = page.replace(
-        '<script src="/static_cockpit/vol12_static_mvp/twos_command_center.js?v=1.0.8" defer></script>',
+        '<script src="/static_cockpit/vol12_static_mvp/twos_command_center.js?v=1.0.9" defer></script>',
         "",
     )
     page = page.replace(

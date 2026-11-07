@@ -689,7 +689,7 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
         connection.onLaunch = { [weak self, weak connection] child in
             guard let self = self, self.transportGeneration == generation, self.transport === connection else { return }
             self.process = child; self.connectionPhase = "handshake"; self.controlState()
-            self.request("initialize", ["clientInfo": ["name": "twos_integrated_workbench", "title": "Tianma Work OS", "version": "1.0.8"], "capabilities": ["experimentalApi": true]]) { [weak self] result in
+            self.request("initialize", ["clientInfo": ["name": "twos_integrated_workbench", "title": "Tianma Work OS", "version": "1.0.9"], "capabilities": ["experimentalApi": true]]) { [weak self] result in
                 guard let self = self, self.transportGeneration == generation else { return }
                 guard result != nil else { self.endConnection("handshake_failed"); return }
                 self.write(["method": "initialized"])

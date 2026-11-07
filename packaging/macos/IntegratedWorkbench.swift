@@ -225,6 +225,48 @@ final class NyraStatusProducer {
     }
 }
 
+// Validate before dismissing the sheet. A rejected address remains editable;
+// no route, draft, automatic exchange or browser is changed by Cancel.
+final class WebsiteAddressPrompt: NSObject {
+    let alert = NSAlert()
+    let field = NSTextField(frame: NSRect(x: 0, y: 52, width: 440, height: 28))
+    let errorLabel = NSTextField(wrappingLabelWithString: "")
+    let translate: (String) -> String
+    private var acceptedURL: URL?
+    private var finished = false
+    init(translate: @escaping (String) -> String) { self.translate = translate; super.init() }
+    func show(on window: NSWindow, current: String, completion: @escaping (URL?) -> Void) {
+        alert.messageText = translate("Open a website in this pane")
+        alert.informativeText = translate("Enter an HTTPS address, or an HTTP address on this Mac or your private network. HTTP is not encrypted. Nothing is sent to the other pane automatically.")
+        let content = NSView(frame: NSRect(x: 0, y: 0, width: 440, height: 84))
+        field.placeholderString = "https://… / http://192.168.…"; field.stringValue = current
+        field.setAccessibilityLabel(translate("Website address"))
+        errorLabel.frame = NSRect(x: 0, y: 0, width: 440, height: 44)
+        errorLabel.textColor = .systemRed; errorLabel.font = .systemFont(ofSize: 12)
+        errorLabel.isHidden = true; content.addSubview(field); content.addSubview(errorLabel)
+        alert.accessoryView = content
+        let open = alert.addButton(withTitle: translate("Open")); open.target = self; open.action = #selector(accept)
+        alert.addButton(withTitle: translate("Cancel"))
+        alert.window.initialFirstResponder = field
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard let self = self else { return }
+            self.finished = true
+            completion(response == .alertFirstButtonReturn ? self.acceptedURL : nil)
+        }
+    }
+    @objc func accept() {
+        guard !finished, let parent = alert.window.sheetParent else { return }
+        let input = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let url = IntegratedWorkbench.validWebsite(input) else {
+            errorLabel.stringValue = translate(IntegratedWorkbench.websiteInputError(input))
+            errorLabel.isHidden = false; alert.window.makeFirstResponder(field)
+            return
+        }
+        finished = true; acceptedURL = url
+        parent.endSheet(alert.window, returnCode: .alertFirstButtonReturn)
+    }
+}
+
 // A single app/window owns both panes. No foreign window positioning, capture,
 // screen mirror, remote-control service, or keyboard synthesis is involved.
 final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextViewDelegate {
@@ -241,6 +283,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
     var webPanes: [Int: NativeWorkbench] = [:]
     var webCache: [String: NativeWorkbench] = [:]
     var codex: NativeCodex?
+    var websitePrompt: WebsiteAddressPrompt?
     var kinds = ["ChatGPT", "Codex"]
     var urls = [NativeWorkbench.home.absoluteString, ""]
     let options = ["ChatGPT", "Codex", "Claude", "DeepSeek", "Website…"]
@@ -373,8 +416,17 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         guard let url = URL(string: raw), let host = url.host, !host.isEmpty, url.user == nil, url.password == nil,
               url.query == nil, url.fragment == nil else { return nil }
         if url.scheme == "https" { return url }
-        if url.scheme == "http" && ["localhost", "127.0.0.1", "[::1]"].contains(host) { return url }
+        if url.scheme == "http" && NativeWorkbench.isLocalDashboardHost(host) { return url }
         return nil
+    }
+    static func websiteInputError(_ raw: String) -> String {
+        guard !raw.isEmpty, let url = URL(string: raw), let host = url.host, !host.isEmpty else {
+            return "Enter a complete address starting with https:// or http://."
+        }
+        if url.user != nil || url.password != nil { return "Addresses containing a username or password cannot be opened here." }
+        if url.query != nil || url.fragment != nil { return "Open a page without query parameters or a fragment, then navigate within the site." }
+        if url.scheme == "http" { return "HTTP is supported only for localhost or a private IPv4 address (10.x, 172.16–31.x or 192.168.x). Use HTTPS for other sites." }
+        return "Only HTTPS websites and local HTTP dashboards can be opened here."
     }
     @objc func toggleNyra() {
         _ = nyraStatus
@@ -460,8 +512,25 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
     }
     @objc func changePane(_ sender: NSPopUpButton) {
         let index = sender.tag, next = options[sender.indexOfSelectedItem], previous = kinds[index]
-        pauseDialogue("Participant selection changed")
         if previous == "Codex", codex?.isBusy == true { sender.selectItem(at: options.firstIndex(of: previous)!); return }
+        if next == "Website…" {
+            sender.selectItem(at: options.firstIndex(of: previous) ?? 0)
+            guard websitePrompt == nil, let window = window, window.attachedSheet == nil else { return }
+            let prompt = WebsiteAddressPrompt(translate: translate); websitePrompt = prompt
+            prompt.show(on: window, current: previous == "Website…" ? urls[index] : "") { [weak self] url in
+                guard let self = self else { return }
+                self.websitePrompt = nil
+                guard let url = url, self.kinds[index] == previous,
+                      previous != "Codex" || self.codex?.isBusy != true else { return }
+                self.applyPaneSelection(index, next: next, website: url)
+            }
+            return
+        }
+        applyPaneSelection(index, next: next)
+    }
+    func applyPaneSelection(_ index: Int, next: String, website: URL? = nil) {
+        let previous = kinds[index]
+        pauseDialogue("Participant selection changed")
         if next == "Codex", kinds[1-index] == "Codex" {
             // Move the same live pane; never create another Codex connection.
             kinds[1-index] = previous; urls[1-index] = urls[index]
@@ -477,16 +546,8 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
             }
             (index == 0 ? rightPicker : leftPicker).selectItem(at: options.firstIndex(of: previous) ?? 0)
         }
-        if next == "Website…" {
-            let alert = NSAlert(); alert.messageText = translate("Open a website in this pane")
-            alert.informativeText = translate("Enter an HTTPS address, or a local dashboard address. Nothing is sent to the other pane automatically.")
-            let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 440, height: 28)); field.placeholderString = "https://…"; alert.accessoryView = field
-            alert.addButton(withTitle: translate("Open")); alert.addButton(withTitle: translate("Cancel"))
-            guard alert.runModal() == .alertFirstButtonReturn, let url = Self.validWebsite(field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)) else {
-                sender.selectItem(at: options.firstIndex(of: previous) ?? 0); return
-            }
-            urls[index] = url.absoluteString
-        } else if let url = defaults[next] { urls[index] = url }
+        if let website = website { urls[index] = website.absoluteString }
+        else if let url = defaults[next] { urls[index] = url }
         for pane in webCache.values {
             pane.web.evaluateJavaScript("window.twosTransferLease = Math.random().toString()", in: nil, in: NativeWorkbench.handoffWorld, completionHandler: nil)
         }
@@ -495,13 +556,14 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         }
         _ = persistWebTransfers()
         kinds[index] = next
+        (index == 0 ? leftPicker : rightPicker).selectItem(at: options.firstIndex(of: next) ?? 0)
         routeRevision = UUID().uuidString
-        rebuild(0); rebuild(1); refreshTargets(); save()
+        rebuild(0, navigateTo: index == 0 ? website : nil); rebuild(1, navigateTo: index == 1 ? website : nil); refreshTargets(); save()
     }
     func save() {
         try? NativeWorkbench.save(["kind0": kinds[0], "kind1": kinds[1], "url0": urls[0], "url1": urls[1]], at: preferences.appendingPathComponent("paired-workbench.json"))
     }
-    func rebuild(_ index: Int) {
+    func rebuild(_ index: Int, navigateTo: URL? = nil) {
         let host = split.arrangedSubviews[index]
         host.subviews.forEach { $0.removeFromSuperview() }
         let view: NSView
@@ -534,7 +596,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
             let pane = webPanes[index]!
             view = pane.paneView // Keep native navigation and transfer controls with the page.
             pane.window?.contentView = nil
-            pane.start(embedded: true)
+            pane.start(embedded: true, navigateTo: navigateTo)
             updateWebFileLabel(index)
         }
         view.translatesAutoresizingMaskIntoConstraints = false; host.addSubview(view)

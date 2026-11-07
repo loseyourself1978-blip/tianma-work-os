@@ -1,6 +1,6 @@
 # TWOS 1.0 · 安装与使用指南
 
-**适用：TWOS 1.0.8 / build 101.56，内置 Nyra 1.0.6 / build 106。** [English guide](OWNER_GUIDE_EN.md) · [实际交付与验证状态](CURRENT_DELIVERY.md)
+**适用：TWOS 1.0.9 / build 101.57，内置 Nyra 1.0.6 / build 106。** [English guide](OWNER_GUIDE_EN.md) · [实际交付与验证状态](CURRENT_DELIVERY.md)
 
 **安装与版本：使用本版双语指南中的 `START_HERE.html`、[发行回执](release-1.0/release.json)和实际 GitHub Release 状态。按匹配回执核对完整工程回归、签名和公证；Owner 差量接受单独记录。**
 在一个 macOS 窗口中，左侧官方 ChatGPT 网页用于讨论，右侧 TWOS Codex 客户端通过本机官方 App Server 执行。它使用官方执行协议，但不是把官方 Codex App 的整个图形界面嵌进网页。两侧账号语言设置相互独立。
@@ -13,11 +13,11 @@
 
 ## A · 本次升级增量验收
 
-TWOS 1.0.8 / 101.56 · Nyra 1.0.6 / 106 保持不变
+TWOS 1.0.9 / 101.57 候选 · Nyra 1.0.6 / 106 保持不变
 
-[长会话连接修复](release-1.0/CODEX_HISTORY_REPAIR.zh-CN.md)
+[网页地址与局域网打开修复](release-1.0/WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
 
-连接一次，确认原长会话显示消息历史；可按需展开历史活动。官方应用正在执行同一会话时不要再次发送。此处结束，升级完成后不必继续 B；不重复 Nyra 或已接受业务验收。
+安装匹配的已验证发行后，在需要的一侧选择“网站…”，输入完整 HTTPS 或私有局域网 HTTP 地址与端口，点击“打开”，确认该侧页面和地址正确。地址不支持时应保留输入并显示原因，取消应保留原面板。此处结束，升级完成后不必继续 B；不重复 Nyra、旧 Codex 任务或已接受业务验收。
 
 ## B · 首次创建任务
 

@@ -1,11 +1,11 @@
-# 安装 Tianma Work OS 1.0.8
+# 安装 Tianma Work OS 1.0.9
 
-TWOS 1.0.8 / 101.56 · [本次增量](CODEX_HISTORY_REPAIR.zh-CN.md)
+TWOS 1.0.9 / 101.57 · [本次增量](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
 
-[本次增量操作和准确边界](CODEX_HISTORY_REPAIR.zh-CN.md)。
+[本次增量操作和准确边界](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)。
 
 
-适用 TWOS 1.0.8 / build 101.56；公开下载以对应 GitHub Release 为准，源码、签名、公证及系统覆盖见配套发行回执。
+适用 TWOS 1.0.9 / build 101.57；公开下载以对应 GitHub Release 为准，源码、签名、公证及系统覆盖见配套发行回执。
 
 当前仅支持 macOS。Windows 版本开发中，尚无可下载版本。当前 TWOS 包为 Apple Silicon，工程实测为 macOS 27.0.1 / Safari 27.0.1。编译下限不代表所有旧系统都已测试，其他系统请先核对发行支持表。
 
@@ -31,4 +31,4 @@ TWOS 1.0.8 / 101.56 · [本次增量](CODEX_HISTORY_REPAIR.zh-CN.md)
 [English / 简体中文](INSTALL.en.md)
 
 
-[长会话 Codex 连接修复](CODEX_HISTORY_REPAIR.zh-CN.md)
+[长会话 Codex 连接修复](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)

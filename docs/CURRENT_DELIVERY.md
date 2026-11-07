@@ -1,5 +1,9 @@
 # TWOS delivery status
 
+Development candidate: **1.0.9 / 101.57**, Website navigation repair. Final matching package and complete gate are pending. [English delta](release-1.0/WEBSITE_NAVIGATION_FOLLOWUP.en.md) · [中文增量](release-1.0/WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md). No new Owner acceptance is asserted.
+
+## Preserved published release
+
 Verified distribution: **1.0.8 / 101.56**. [Matching GitHub Release](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.8) determines public availability.
 
 [English delta](release-1.0/CODEX_HISTORY_REPAIR.en.md) · [中文增量](release-1.0/CODEX_HISTORY_REPAIR.zh-CN.md)

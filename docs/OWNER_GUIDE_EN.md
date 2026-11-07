@@ -1,6 +1,6 @@
 # TWOS 1.0 · Installation and use
 
-**Applies to TWOS 1.0.8 / build 101.56, including Nyra 1.0.6 / build 106.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md)
+**Applies to TWOS 1.0.9 / build 101.57, including Nyra 1.0.6 / build 106.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md)
 
 **Installation and version: use `START_HERE.html` in this bilingual guide, the [release receipt](release-1.0/release.json), and the actual GitHub Release status. Use the matching receipt to verify the complete engineering gate, signing and notarization; Owner differential acceptance is separate.**
 Discuss on the official ChatGPT website in the left pane, execute with the local Codex service in the right pane, and return results to the original discussion. The right pane is TWOS's own client for the official App Server protocol; it does not embed the entire official Codex macOS interface.
@@ -13,11 +13,11 @@ After the final delivery receipt identifies the installer, double-click the DMG 
 
 ## A · This upgrade only
 
-TWOS 1.0.8 / 101.56 · Nyra 1.0.6 / 106
+TWOS 1.0.9 / 101.57 candidate · Nyra 1.0.6 / 106 is unchanged
 
-[Codex / Nyra](release-1.0/CODEX_HISTORY_REPAIR.en.md)
+[Website address and private-network navigation repair](release-1.0/WEBSITE_NAVIGATION_FOLLOWUP.en.md)
 
-Connect once and verify the existing long conversation loads. Optionally open Saved activity. Do not send to a conversation already active in the official app. End this upgrade check here; Nyra and accepted business tasks need no repeat.
+After installing the matching verified release, choose **Website…** on the intended side, enter a complete HTTPS or private-network HTTP address and port, then **Open**. Confirm that side loads the intended page and origin. Unsupported input must remain editable with a reason; Cancel must retain the original pane. End here. Do not repeat Nyra, old Codex tasks or accepted business tests.
 
 ## B · First task
 

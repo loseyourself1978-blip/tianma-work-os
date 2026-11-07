@@ -1,5 +1,7 @@
 # Tianma Work OS 1.0
 
+**Candidate in development: TWOS 1.0.9 / 101.57 — private-network Website Open repair. Full gate and release pending.** [Candidate delta](docs/release-1.0/WEBSITE_NAVIGATION_FOLLOWUP.en.md)
+
 **TWOS 1.0.8 / 101.56: repairs long-conversation Codex connection failures. Nyra 1.0.6 / 106 is unchanged.**
 
 This update repairs long-conversation history restoration in the local Codex client. Nyra’s existing task labels and click-to-return behavior remain unchanged.

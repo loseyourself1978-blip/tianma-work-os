@@ -1,4 +1,10 @@
-# TWOS 1.0.8 / 101.56 — Long-conversation connection repair
+# TWOS 1.0.9 / 101.57 — Website navigation candidate
+
+Opens explicitly selected private-network HTTP dashboards on either side and keeps rejected addresses editable with a specific error. Ports remain visible; Cancel retains the original pane and a new address takes precedence over stale saved navigation. Final matching package and complete gate are pending. Nyra 1.0.6 / 106 is unchanged.
+
+[Incremental guide](WEBSITE_NAVIGATION_FOLLOWUP.en.md)
+
+## TWOS 1.0.8 / 101.56 — Long-conversation connection repair
 
 Restores long conversations with paged message summaries, reads run metadata without full history, and loads saved activity only on request. Distinct bounded-buffer/protocol errors replace the generic connection error. The exact signed, notarized package passed the complete serial gate: 1860 passed, 1 existing historical skip, 0 failures, including 38 real Safari measurements. The affected long conversation was restored read-only in the final DMG app; saved activity, models, conversation selection and disconnect/reconnect were observed. One new isolated, harmless message returned PATCH_108_HISTORY_OK in one turn, after an upstream transient reconnect. No old task was replayed. Nyra 1.0.6 / 106 is unchanged. Owner acceptance remains separate.
 
@@ -34,3 +40,8 @@ macOS Apple Silicon only; Windows is in development with no download. Historical
 
 
 [Current update](CODEX_HISTORY_REPAIR.en.md)
+
+
+## Unreleased development follow-up
+
+[Website address validation and private-network navigation](WEBSITE_NAVIGATION_FOLLOWUP.en.md). Final package and matching complete regression remain pending; this entry is not a public release claim.

@@ -271,7 +271,7 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
         web.callAsyncJavaScript("window.twosHandoffNotice?.(text);",arguments:["text":translate(message)],in:nil,in:Self.handoffWorld,completionHandler:nil)
     }
     func reconcileAccessNotice(_ state:String) {
-        if ["idle","running"].contains(state),noticeMessage=="ChatGPT could not finish loading. Retry with ↻, or open this page in Safari. Your saved work is retained." {
+        if ["idle","running"].contains(state),noticeMessage=="This webpage could not finish loading. Check the address and network, then retry with ↻. Your saved work is retained." {
             noticeMessage="";notice.stringValue="";notice.isHidden=true
             return
         }
@@ -280,18 +280,27 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
             showNotice("Claude input is ready. Handoff sends only the instruction you select.")
         }
     }
-    func start(embedded: Bool = false) {
+    func start(embedded: Bool = false, navigateTo: URL? = nil) {
         if !embedded { showWindow(nil) }
+        if let requested = navigateTo {
+            guard Self.permitsNavigation(requested, serviceHome: serviceHome, isSubframe: false) else { return }
+            web.load(URLRequest(url: requested)); return
+        }
         guard web.url == nil else { return }
         let data = try? Data(contentsOf: preferences.appendingPathComponent(locationKey))
         let saved = data.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: String] }
         let restored = saved?["url"].flatMap(URL.init(string:)).flatMap { Self.restorableURL($0, service: serviceHome) }
         web.load(URLRequest(url: restored ?? serviceHome))
     }
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { refreshLanguage(); navigationReady?() }
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        if noticeMessage == "This webpage could not finish loading. Check the address and network, then retry with ↻. Your saved work is retained." {
+            noticeMessage = ""; notice.stringValue = ""; notice.isHidden = true
+        }
+        refreshLanguage(); navigationReady?()
+    }
     func updateNavigation() {
         navigationChanged?()
-        address.stringValue = web.url.map { ($0.scheme ?? "https") + "://" + ($0.host ?? "") } ?? serviceHome.absoluteString
+        address.stringValue = web.url.map(Self.displayOrigin) ?? Self.displayOrigin(serviceHome)
         backButton.isEnabled = web.canGoBack; forwardButton.isEnabled = web.canGoForward
         progress.doubleValue = web.estimatedProgress; progress.isHidden = !web.isLoading
         if !isPopup, let location = Self.restorableURL(web.url, service: serviceHome) {
@@ -456,12 +465,33 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
             completion(ok)
         }
     }
+    static func displayOrigin(_ url: URL) -> String {
+        let host = url.host ?? ""
+        let displayHost = host.contains(":") && !host.hasPrefix("[") ? "[" + host + "]" : host
+        return (url.scheme ?? "https") + "://" + displayHost + (url.port.map { ":" + String($0) } ?? "")
+    }
+    static func isLocalDashboardHost(_ host: String) -> Bool {
+        if ["localhost", "127.0.0.1", "::1", "[::1]"].contains(host.lowercased()) { return true }
+        // Only literal RFC 1918 IPv4 addresses, never DNS guesses, shortened
+        // numeric hosts or a suffix match. Opening a dashboard is not a scan.
+        let parts = host.split(separator: ".", omittingEmptySubsequences: false)
+        guard parts.count == 4 else { return false }
+        let bytes = parts.compactMap { part -> Int? in
+            guard !part.isEmpty, part.allSatisfy({ $0 >= "0" && $0 <= "9" }),
+                  let value = Int(part), (0...255).contains(value), String(value) == part else { return nil }
+            return value
+        }
+        guard bytes.count == 4 else { return false }
+        return bytes[0] == 10 || (bytes[0] == 172 && (16...31).contains(bytes[1])) || (bytes[0] == 192 && bytes[1] == 168)
+    }
     static func permitsNavigation(_ url: URL, serviceHome: URL, isSubframe: Bool) -> Bool {
         // srcdoc is an inline child document used by ordinary web content,
         // including security checks. Keep WebKit's origin/sandbox enforcement;
         // it must not become a top-level native-bridge or local-file entry.
         let inlineChild = isSubframe && url.absoluteString == "about:srcdoc"
-        let localPage = serviceHome.scheme == "http" && ["127.0.0.1", "localhost", "[::1]"].contains(serviceHome.host ?? "") && url.host == serviceHome.host && url.port == serviceHome.port && url.scheme == "http"
+        // HTTP is limited to the dashboard origin explicitly selected by the
+        // user. Other panes, hosts and ports do not inherit this permission.
+        let localPage = serviceHome.scheme == "http" && Self.isLocalDashboardHost(serviceHome.host ?? "") && url.host == serviceHome.host && url.port == serviceHome.port && url.scheme == "http" && url.user == nil && url.password == nil
         return url.scheme == "https" || localPage || url.absoluteString == "about:blank" || inlineChild
     }
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
@@ -482,7 +512,7 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { navigationFailed(error) }
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { navigationFailed(error) }
     func navigationFailed(_ error: Error) {
-        if (error as NSError).code != NSURLErrorCancelled { showNotice("ChatGPT could not finish loading. Retry with ↻, or open this page in Safari. Your saved work is retained.") }
+        if (error as NSError).code != NSURLErrorCancelled { showNotice("This webpage could not finish loading. Check the address and network, then retry with ↻. Your saved work is retained.") }
     }
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) { showNotice("The browser page stopped. Reload with ↻ to return to ChatGPT.") }
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,

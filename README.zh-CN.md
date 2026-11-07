@@ -1,5 +1,7 @@
 # Tianma Work OS 1.0
 
+**开发候选：TWOS 1.0.9 / 101.57，修复局域网网页打开。完整门禁与发布待完成。** [候选增量](docs/release-1.0/WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
+
 **TWOS 1.0.8 / 101.56：修复长会话导致的 Codex 连接失败；Nyra 1.0.6 / 106 未改动。**
 
 本次修复本机 Codex 的长会话历史恢复；夜璃既有只读任务标签与点击返回行为保持不变。

@@ -1659,6 +1659,44 @@
     "en-US": "Another installed Nyra is running. Quit that Nyra from its own menu, then use Show Nyra here. Existing tasks continue.",
     "zh-CN": "另一安装位置的夜璃正在运行。请从该夜璃自己的菜单正常退出，再在这里显示夜璃。现有任务会继续。"
   },
-  "Privacy policy": {"en-US": "Privacy policy", "zh-CN": "隐私政策"},
-  "Product support": {"en-US": "Product support", "zh-CN": "产品支持"}
+  "Privacy policy": {
+    "en-US": "Privacy policy",
+    "zh-CN": "隐私政策"
+  },
+  "Product support": {
+    "en-US": "Product support",
+    "zh-CN": "产品支持"
+  },
+  "Enter an HTTPS address, or an HTTP address on this Mac or your private network. HTTP is not encrypted. Nothing is sent to the other pane automatically.": {
+    "en-US": "Enter an HTTPS address, or an HTTP address on this Mac or your private network. HTTP is not encrypted. Nothing is sent to the other pane automatically.",
+    "zh-CN": "填写 HTTPS 地址，或本机／私有局域网的 HTTP 地址。HTTP 不加密。页面内容不会自动发送到另一侧。"
+  },
+  "Website address": {
+    "en-US": "Website address",
+    "zh-CN": "网站地址"
+  },
+  "Enter a complete address starting with https:// or http://.": {
+    "en-US": "Enter a complete address starting with https:// or http://.",
+    "zh-CN": "请输入以 https:// 或 http:// 开头的完整网址。"
+  },
+  "Addresses containing a username or password cannot be opened here.": {
+    "en-US": "Addresses containing a username or password cannot be opened here.",
+    "zh-CN": "不能在这里打开含用户名或密码的网址。"
+  },
+  "Open a page without query parameters or a fragment, then navigate within the site.": {
+    "en-US": "Open a page without query parameters or a fragment, then navigate within the site.",
+    "zh-CN": "请先打开不含查询参数或锚点的页面，再在站内导航。"
+  },
+  "HTTP is supported only for localhost or a private IPv4 address (10.x, 172.16–31.x or 192.168.x). Use HTTPS for other sites.": {
+    "en-US": "HTTP is supported only for localhost or a private IPv4 address (10.x, 172.16–31.x or 192.168.x). Use HTTPS for other sites.",
+    "zh-CN": "HTTP 仅支持 localhost 或私有 IPv4 地址（10.x、172.16–31.x、192.168.x）。其他网站请使用 HTTPS。"
+  },
+  "Only HTTPS websites and local HTTP dashboards can be opened here.": {
+    "en-US": "Only HTTPS websites and local HTTP dashboards can be opened here.",
+    "zh-CN": "这里只能打开 HTTPS 网站和本地 HTTP 看板。"
+  },
+  "This webpage could not finish loading. Check the address and network, then retry with ↻. Your saved work is retained.": {
+    "en-US": "This webpage could not finish loading. Check the address and network, then retry with ↻. Your saved work is retained.",
+    "zh-CN": "网页未能完成加载。请检查地址和网络，再点击 ↻ 重试。已保存的工作仍然保留。"
+  }
 }
