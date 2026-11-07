@@ -17,3 +17,11 @@ This is a release SOP, not a background automation. Website publication does not
 ## Current capture
 
 TWOS 1.0.7 / 101.55 is a clearly labelled candidate preview. The current download remains published TWOS 1.0.6 / 101.54. Nyra's five assets are byte-identical to published 1.0.5 / 105 and the 1.0.6 / 106 candidate. The capture shows signed-out ChatGPT and disconnected Codex; no model run was started to make this image.
+
+## Supported-service combinations — required from November 7, 2026
+
+Keep the public product page English-only. Capture actual supported combinations, including ChatGPT/DeepSeek, ChatGPT/Claude, DeepSeek/Codex and Claude/Codex; retain a current ChatGPT/Codex view and the five verified Nyra outfits. Do not manufacture conversations, quotas or successful runs for marketing. A signed-out/disconnected image must be labelled as a starting state. Inspect each saved window image before publication.
+
+Bind every combination to the exact candidate source, version, build, dimensions and image hash in the media manifest. Explain website reply exchange separately from authorized local Codex execution. Do not imply that all arbitrary models/websites support automatic exchange. Provider pages may contain their own untranslated legal labels; do not alter captured UI to conceal them.
+
+Current combination captures: final candidate 1.0.7 / 101.55, source `3e713ffa25e30c5e02219bc510dec9b7253bcf8d`, November 7, 2026. The public download remains 1.0.6. No model turn, login, task dispatch or authentication-data copy was performed to produce the new captures.

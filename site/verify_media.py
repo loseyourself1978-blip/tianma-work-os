@@ -37,7 +37,16 @@ def main():
     document.feed(html)
     images = {x['src'].removeprefix('./'): x for x in document.images}
     assert len(images) == len(document.images), 'Duplicate media entry'
-    for item in [interface] + outfits:
+    combinations = m.get('combinations', [])
+    assert {x['id'] for x in combinations} >= {
+        'chatgpt-deepseek', 'chatgpt-claude', 'deepseek-codex', 'claude-codex'
+    }, 'Required real service combinations missing'
+    for item in combinations:
+        assert item['kind'] == 'REAL_MACOS_WINDOW_CAPTURE'
+        assert item['version'] == interface['version'] and item['build'] == interface['build']
+        assert item['source_commit'] == interface['source_commit']
+        assert item['privacy_review'] and item['state']
+    for item in [interface] + outfits + combinations:
         path = (root / item['path']).resolve()
         assert path.is_relative_to(root) and path.is_file()
         data = path.read_bytes()
@@ -53,7 +62,7 @@ def main():
         assert 'candidate preview' in html.lower() and 'not yet a public release' in html
     print(json.dumps({'result': 'STATIC_PASS', 'interface': args.interface_version,
                       'build': args.interface_build, 'outfits': len(outfits),
-                      'images': len(images), 'gui_verified': False}))
+                      'images': len(images), 'combinations': len(combinations), 'gui_verified': False}))
 
 
 if __name__ == '__main__':
