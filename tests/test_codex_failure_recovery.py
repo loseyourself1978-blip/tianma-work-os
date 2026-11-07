@@ -25,7 +25,7 @@ def compiled_recovery(tmp_path_factory):
         'client.connectionProcessFactory = factory(mode)',
         'client.connectionProcessFactory = factory(mode == "auth_retry" ? "auth" : "no_handshake")',
     ).replace(
-        '["missing","auth","no_handshake","malformed","exit","eof","timeout"].contains(mode)',
+        '["missing","auth","no_handshake","malformed","oversized","exit","eof","timeout"].contains(mode)',
         '["auth_retry","handshake_retry"].contains(mode)',
     ).replace(
         'precondition(!client.connected && !client.connectionError.isEmpty)',

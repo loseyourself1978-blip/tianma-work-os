@@ -1,9 +1,7 @@
-# TWOS delivery status
+# Current delivery
 
-Verified distribution: **1.0.7 / 101.55**. [Matching GitHub Release](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.7) determines actual public availability.
+Development candidate: **1.0.8 / 101.56** — long-history Codex connection repair. Real protocol and isolated engineering UI checks passed; the final packaged complete gate is pending. Nyra stays 1.0.6 / 106.
 
-[English delta](release-1.0/CODEX_CONNECTION_AND_TASK_LABELS.en.md) · [中文增量](release-1.0/CODEX_CONNECTION_AND_TASK_LABELS.zh-CN.md)
+[English delta](release-1.0/CODEX_HISTORY_REPAIR.en.md) · [中文增量](release-1.0/CODEX_HISTORY_REPAIR.zh-CN.md)
 
-Developer ID signed, notarized and Gatekeeper-verified. Complete matching gate: 1852 passed, 1 existing historical skip, 0 failed; 38 real Safari measurements. Exact source and artifact hashes: [release receipt](release-1.0/release.json).
-
-Prior Owner acceptances preserved. New Owner acceptance is not granted by engineering. Mac App Store NOT_SUBMITTED. macOS Apple Silicon only; Windows in development, no download.
+Latest published binary remains [1.0.7 / 101.55](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.7). Its original receipt is preserved in [release.json](release-1.0/release.json); it does not validate the new candidate. No Owner acceptance is inferred. Mac App Store NOT_SUBMITTED. macOS Apple Silicon only; Windows in development, no download.

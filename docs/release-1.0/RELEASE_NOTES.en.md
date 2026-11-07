@@ -1,4 +1,10 @@
-# TWOS 1.0.7 / 101.55 — Local Codex connection and task labels
+# TWOS 1.0.8 / 101.56 — Long-conversation connection repair
+
+Candidate: restores long conversations with paged message summaries, reads run metadata without full history, and loads saved activity only on request. Distinct bounded-buffer/protocol errors replace the generic connection error. Final package regression and publication are pending; earlier release results are preserved below.
+
+[Delta guide](CODEX_HISTORY_REPAIR.en.md)
+
+## TWOS 1.0.7 / 101.55 — Local Codex connection and task labels
 
 Async process launch and incremental JSONL keep the UI responsive. Bounded deadlines, cancellation and generation IDs protect reconnect; connection alone never starts a task. Nyra shows/hides fresh task labels and returns to the authenticated host on click. The exact signed/notarized packages passed the complete gate: 1852 passed, 1 historical skip, 0 failures, including 38 actual Safari measurements. Real packaged Codex connection, response, disconnect and reconnect were observed. Web-provider task-label coverage is contract/fixture evidence, not a new live website-run acceptance. Owner acceptance remains separate.
 

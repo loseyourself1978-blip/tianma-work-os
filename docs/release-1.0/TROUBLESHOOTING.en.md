@@ -34,3 +34,5 @@ The read-only link is bound to the exact signed producer, including its applicat
 
 
 [Current candidate delta](CODEX_CONNECTION_AND_TASK_LABELS.en.md)
+
+- **Long-history connection error:** `invalid_or_oversized_jsonl` in 1.0.7 can indicate an oversized full-history response, not a login problem. See the [long-history follow-up](CODEX_CONNECTION_AND_TASK_LABELS.en.md#owner-follow-up-long-conversation-history). Preserve drafts and authentication.

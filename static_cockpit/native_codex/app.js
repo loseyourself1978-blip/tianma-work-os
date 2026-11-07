@@ -4,6 +4,7 @@
  const post=(action,extra={})=>window.webkit.messageHandlers.twosCodex.postMessage({action,...extra});
  let controllable=false, controlVerified=false, submitting=false, catalog=[], folderToken='', handoffHash='', composing=false, compositionEndedAt=-Infinity, desiredModel='', desiredEffort='';
  let connecting=false,connectionPhase='disconnected',connectionError='';
+ let historyActivity={};
  let retryNotice=false,nyraState={available:false},resultReceipt={};
  let businessResult='', transport='', awaitingTurn=false, stopRequested=false, waitingRequests=0, answeringRequests=0, actualCwd='', actualModel='', activeTurn='', queuePaused=false;
  const detailState=new Map(), threadRecords=new Map();
@@ -15,7 +16,18 @@
  }
  const markdown=x=>window.twosMarkdown(String(x??''));
  const summaryText=x=>(Array.isArray(x)?x:[]).map(v=>typeof v==='string'?v:v.text||'').join('\n');
+ function historyActivityLabels(){
+  $('history-scope').textContent=t('History opens as message summaries. Saved tool activity is loaded separately, five items per page. Live activity remains streamed.','历史先加载消息摘要；保存的工具活动按需读取，每页五项。实时活动仍持续显示。');
+  $('history-activity-title').textContent=t('Saved activity · read-only','历史活动 · 只读');
+  $('history-activity-help').textContent=t('Reads only the selected conversation. Each page replaces the previous page; no task is resumed or sent.','仅读取所选会话，每页替换上一页；不会恢复或发送任务。');
+  $('history-activity-load').textContent=t('Load recent items','读取最近活动');
+  $('history-activity-more').textContent=t('Older items','更早活动');
+  $('history-activity-load').disabled=$('history-activity-more').disabled=!connected||!!historyActivity.loading;
+  $('history-activity-more').hidden=!historyActivity.more;
+  $('history-activity-status').textContent=historyActivity.loading?t('Reading saved activity…','正在读取历史活动…'):historyActivity.error?t('Saved activity could not be read. The connection and message history are separate; retry explicitly if available.','历史活动读取失败。连接和消息历史独立保留；可用时请手动重试。'):historyActivity.entries?.length===0?t('No items in this page.','本页没有活动。'):'';
+ }
  function labels(){
+  historyActivityLabels();
   $('pet-control').textContent=nyraState.available?(nyraState.visible?t('Hide Nyra','隐藏夜璃 · Nyra'):t('Show Nyra','显示夜璃 · Nyra')):t('Nyra · view status','夜璃 · 查看状态');
   $('pet-control').setAttribute('aria-label',$('pet-control').textContent);
   $('pet-control').disabled=!!nyraState.pending;
@@ -57,6 +69,8 @@
   else if(connectionError){
     if(connectionError==='cancelled')message=t('Connection closed. Saved work is retained. Connect again when ready.','连接已关闭，原有记录已保留。需要时可再次连接。');
     else if(connectionError==='executable_missing')message=t('Official Codex executable not found. Open or install the official app, then connect again.','未找到官方 Codex 程序。请打开或安装官方应用后重新连接。');
+    else if(connectionError==='jsonl_frame_too_large'||connectionError==='jsonl_queue_limit')message=t('A Codex response exceeded the safe history buffer. This is not a login failure. Reconnect to read message summaries; no task will be resent.','Codex 响应超过安全历史缓冲上限，这不是登录失败。重新连接可读取消息摘要，不会重发任务。');
+    else if(connectionError==='invalid_jsonl'||connectionError==='truncated_jsonl')message=t('Codex returned an invalid or incomplete protocol message. Reconnect explicitly; no task will be resent.','Codex 返回了无效或不完整的协议消息。请手动重新连接，不会重发任务。');
     else if(connectionError.startsWith('authentication'))message=t('Codex authentication is unavailable. Sign in normally in the official app, then connect again.','Codex 登录状态不可用。请在官方应用正常登录后重新连接。');
     else message=t('Connection failed: ','连接失败：')+connectionError+t('. Check the official app, then connect again. Nothing is resent automatically.','。请检查官方应用后重新连接，不会自动重发任务。');
   }
@@ -64,6 +78,7 @@
   $('connect').disabled=busy||connecting||closing;
  }
  function updateControls(){
+  historyActivityLabels();
   const checked=!!resultReceipt.ownerResultConfirmed;
   $('result-confirmation').hidden=!resultReceipt.submissionID||transport!=='completed'||busy||uncertain;
   $('confirm-result').hidden=checked;
@@ -173,11 +188,11 @@
   if(fields.length<3||!visible.length||String(text).slice(0,fields[0].index).trim())return markdown(text);
   return '<section class="receipt"><dl>'+visible.map(f=>'<dt>'+esc(names[f[1]])+'</dt><dd>'+markdown(f[2]+f[3])+'</dd>').join('')+'</dl><details><summary>'+t('Full execution receipt','完整执行回执')+'</summary><pre>'+esc(text)+'</pre></details></section>';
  }
- function renderItem(item,prepend=false){
-  if(!item?.id)return;items.set(item.id,item);
-  let node=document.getElementById('item-'+item.id), fresh=!node;
-  if(fresh){node=document.createElement('article');node.id='item-'+item.id;node.className='message';}
-  node.querySelectorAll('details').forEach((d,i)=>detailState.set(selected+':'+item.id+':'+i,d.open));
+ function renderItem(item,prepend=false,container=$('timeline'),prefix='item-'){
+  if(!item?.id)return;if(prefix==='item-')items.set(item.id,item);
+  let node=document.getElementById(prefix+item.id), fresh=!node;
+  if(fresh){node=document.createElement('article');node.id=prefix+item.id;node.className='message';}
+  node.querySelectorAll('details').forEach((d,i)=>detailState.set(selected+':'+prefix+item.id+':'+i,d.open));
   node.className='message';node.dataset.status=item.status||'';
   const meta=item.status?'<span class="activity-status">'+esc(stateLabel(item.status))+'</span>':'';
   if(item.type==='userMessage'){
@@ -220,8 +235,8 @@
   if(['userMessage','agentMessage'].includes(item.type)){
    const actions=document.createElement('div');actions.className='message-actions';const copy=document.createElement('button');copy.textContent=t('Copy','复制');copy.onclick=()=>post('copy',{text:item.type==='agentMessage'?item.text:(item.content||[]).filter(x=>x.type==='text').map(x=>x.text).join('\n\n')});actions.append(copy);node.append(actions);
   }
-  node.querySelectorAll('details').forEach((d,i)=>{const key=selected+':'+item.id+':'+i;d.open=detailState.has(key)?detailState.get(key):(item.type==='reasoning'&&busy);d.ontoggle=()=>detailState.set(key,d.open);});
-  if(fresh){$('empty')?.remove();prepend?$('timeline').prepend(node):$('timeline').append(node);}
+  node.querySelectorAll('details').forEach((d,i)=>{const key=selected+':'+prefix+item.id+':'+i;d.open=detailState.has(key)?detailState.get(key):(item.type==='reasoning'&&busy);d.ontoggle=()=>detailState.set(key,d.open);});
+  if(fresh){if(prefix==='item-')$('empty')?.remove();prepend?container.prepend(node):container.append(node);}
  }
  const approvalRecords=new Map();
  function approval(p){
@@ -264,6 +279,7 @@
     next.querySelectorAll('input,textarea').forEach((x,i)=>{if(inputs[i]){x.value=inputs[i].value;x.checked=inputs[i].checked;}});
    }
    for(const item of items.values())renderItem(item);
+   for(const entry of historyActivity.entries||[])renderItem(entry.item,false,$('history-activity-items'),'saved-'+entry.turnId+'-');
 
    for(const button of document.querySelectorAll('[data-file]'))button.textContent=({view:t('View file','查看文件'),save:t('Save as…','另存为…'),reveal:t('Show in Finder','在 Finder 显示'),browser:t('Open webpage','打开网页')})[button.dataset.operation];
   }
@@ -312,7 +328,15 @@
   }else if(kind==='thread'){
    if(selected!==p.thread.id){$('session-details').open=false;$('session-technical').open=false;}
    window.twosTelemetry?.selectThread(p.thread.id);selected=p.thread.id;rememberThread(p.thread);selectThreadOption(selected);actualCwd=p.thread.cwd||'';actualModel=p.thread.model||'';$('cwd').textContent=actualCwd;$('cwd').title=actualCwd;if(catalog.length){fillModels('model',p.thread.model||'');fillEfforts('effort',$('model').value,p.thread.reasoningEffort||'');}
+   historyActivity={};$('saved-history').hidden=false;$('history-activity-items').replaceChildren();historyActivityLabels();
    $('timeline').replaceChildren();$('approvals').replaceChildren();$('artifact-panel').hidden=true;$('result-files').hidden=true;$('result-files').replaceChildren();$('latest').hidden=true;if($('artifact-view').open)$('artifact-view').close();items.clear();resultReceipt={};lastFinal='';businessResult='';transport='';resultAvailable=false;$('return').hidden=true;updateControls();
+  }else if(kind==='historyReadError'){
+   if(p.threadId!==selected)return;showNotice(t('Message history could not be read. Refresh this conversation to retry; sending stays blocked until history is reconciled.','消息历史读取失败。请刷新会话重试；完成对账前继续阻止发送。'));
+  }else if(kind==='historyActivity'){
+   if(p.threadId!==selected)return;
+   historyActivity=p.loading?{...historyActivity,loading:true}:p.error?{...historyActivity,loading:false,error:p.error}:p;
+   if(p.entries){$('history-activity-items').replaceChildren();for(const entry of [...p.entries].reverse())renderItem(entry.item,false,$('history-activity-items'),'saved-'+entry.turnId+'-');}
+   historyActivityLabels();
   }else if(kind==='history'){
    const turns=[...(p.turns||[])].reverse();const prior=[];
    if(p.older){prior.push(...$('timeline').children);$('timeline').replaceChildren();}
@@ -355,6 +379,7 @@
  $('pet-control').onclick=()=>{if(nyraState.available)post('nyra');const p=$('pet-info');p.hidden=!p.hidden;$('pet-control').setAttribute('aria-expanded',String(!p.hidden));};
  $('language').onchange=()=>post('language',{locale:$('language').value});
  $('connect').onclick=()=>{connecting=true;connectionPhase='starting';connectionError='';updateControls();post('connect');};$('cancel-connection').onclick=()=>post('cancelConnection');$('disconnect').onclick=()=>post('disconnect');$('reconnect').onclick=()=>post('reconnect');$('more-threads').onclick=()=>post('moreThreads');$('refresh').onclick=()=>post('refresh');$('threads').onchange=()=>{clearTimeout(draftTimer);post('draft',{threadId:selected,text:$('draft').value});post('select',{id:$('threads').value});};
+ $('history-activity-load').onclick=()=>post('historyActivity',{threadId:selected,older:false});$('history-activity-more').onclick=()=>post('historyActivity',{threadId:selected,older:true});
  $('workspace').onclick=()=>post('workspace');$('more').onclick=()=>post('more');$('return').onclick=()=>post('return');$('stop').onclick=()=>post('interrupt');
  $('draft').addEventListener('input',()=>{resizeDraft();updateControls();clearTimeout(draftTimer);draftTimer=setTimeout(()=>post('draft',{threadId:selected,text:$('draft').value}),180);});
  $('draft').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&!composing&&e.keyCode!==229&&performance.now()-compositionEndedAt>50){e.preventDefault();if(!$('send').disabled)$('composer').requestSubmit();}});

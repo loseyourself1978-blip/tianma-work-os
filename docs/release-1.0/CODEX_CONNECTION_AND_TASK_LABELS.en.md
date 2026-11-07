@@ -23,3 +23,13 @@ Nyra receives existing minimal activity metadata plus at most two bounded (90-ch
 macOS only; Windows remains in development with no download. Existing installed apps remain unchanged; historical source and build materials preserve rollback. Signature/notarization and final packaged GUI results are reported by the hotfix receipt, separately from automated fixtures and Owner acceptance.
 
 Oversized Office attachments are rejected within the local expansion/time bound. The fixed OS unzip child is read incrementally and reaped on rejection; no unbounded exit wait or stranded reader remains. This applies only to selected attachments and does not change file permissions or execute document content.
+
+## Owner follow-up: long conversation history
+
+The Owner reported `invalid_or_oversized_jsonl` in 1.0.7 after selecting a long development conversation. The earlier connection gate used short engineering history and a 4 MB fragmented fixture; it did not cover this long-history restore path. Its original results remain historical evidence, not proof that this case worked.
+
+The repaired client requests message summaries when opening a conversation. Run-status refresh requests turn metadata without items. **Saved activity → Load recent items / Older items** reads five stored items at a time, only when requested, without resuming the conversation or sending a task. Each activity page replaces the previous page. Live tool activity continues streaming. The service may not support saved-item paging for every conversation.
+
+Oversized responses and invalid protocol messages now have separate errors. The 24 MB single-message safety bound remains; it is not removed or increased to absorb unbounded full history. If an individual item exceeds that bound, reconnect explicitly to restore the summary view. Never clear authentication, drafts or conversation data to work around this error. The currently active official development conversation is inspected read-only and must not be controlled simultaneously from TWOS.
+
+Validation of the repair and its release status are recorded separately; this follow-up does not grant Owner acceptance.

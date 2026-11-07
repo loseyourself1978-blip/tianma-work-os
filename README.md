@@ -1,5 +1,7 @@
 # Tianma Work OS 1.0
 
+**Candidate in development: TWOS 1.0.8 / 101.56 fixes long-history connection failures. Final packaged regression is pending. The download below remains the last published release until verification and publication finish.**
+
 This update fixes local Codex connection freezes and adds bounded, read-only Nyra task labels with a click back to the authenticated running TWOS host.
 
 This version includes five standing/reclining outfits, 13 bundled Chinese Tian action recordings and 13 matching English phrases using an installed local female voice. Sound starts muted; unmute and enable Action voice for eligible transitions, with cooldown and no overlap. Close the panel with Close, Escape or Sound.

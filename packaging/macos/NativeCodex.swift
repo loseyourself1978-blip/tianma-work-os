@@ -29,7 +29,14 @@ final class CodexJSONLFramer {
         guard pending.count + bytes.endIndex - start <= maximum else { throw Failure.oversized }
         pending.append(bytes[start..<bytes.endIndex])
     }
-    enum Failure: Error { case oversized, malformed }
+    enum Failure: Error { case oversized, malformed, queueLimit }
+    static func failureCode(_ error: Error) -> String {
+        switch error {
+        case Failure.oversized: return "jsonl_frame_too_large"
+        case Failure.queueLimit: return "jsonl_queue_limit"
+        default: return "invalid_jsonl"
+        }
+    }
 }
 
 final class CodexPipeConnection {
@@ -114,11 +121,11 @@ final class CodexPipeConnection {
                 do {
                     try self.framer.append(Data(bytes.prefix(count))) { line in
                         guard let value = try JSONSerialization.jsonObject(with: line) as? [String: Any] else { throw CodexJSONLFramer.Failure.malformed }
-                        guard self.messageBytes + line.count <= 48_000_000 else { throw CodexJSONLFramer.Failure.oversized }
+                        guard self.messageBytes + line.count <= 48_000_000 else { throw CodexJSONLFramer.Failure.queueLimit }
                         self.messages.append((value, line.count)); self.messageBytes += line.count
                     }
                     self.deliver()
-                } catch { self.finish("invalid_or_oversized_jsonl"); return }
+                } catch { self.finish(CodexJSONLFramer.failureCode(error)); return }
             }
         }
         source.setCancelHandler { try? handle.close() }
@@ -375,6 +382,8 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     var threadRows: [[String: Any]] = []
     var historyLoading = false
     var historyReady = false
+    var historyActivityLoading = false
+    var historyActivityCursor: String?
     var approvals: [String: [String: Any]] = [:]
     var answeredApprovals = Set<String>()
     var stopRequested = false
@@ -478,6 +487,8 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
         case "usage": refreshUsage()
         case "cancelUsage": usageGeneration += 1; usageReading = false; publishTelemetry()
         case "runStatus": refreshRunObservation()
+        case "historyActivity":
+            if value["threadId"] as? String == threadID { loadHistoryActivity(older: value["older"] as? Bool == true) }
         case "reconnect":
             guard uncertain || !isBusy else { return }
             reconnect()
@@ -678,7 +689,7 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
         connection.onLaunch = { [weak self, weak connection] child in
             guard let self = self, self.transportGeneration == generation, self.transport === connection else { return }
             self.process = child; self.connectionPhase = "handshake"; self.controlState()
-            self.request("initialize", ["clientInfo": ["name": "twos_integrated_workbench", "title": "Tianma Work OS", "version": "1.0.7"], "capabilities": ["experimentalApi": true]]) { [weak self] result in
+            self.request("initialize", ["clientInfo": ["name": "twos_integrated_workbench", "title": "Tianma Work OS", "version": "1.0.8"], "capabilities": ["experimentalApi": true]]) { [weak self] result in
                 guard let self = self, self.transportGeneration == generation else { return }
                 guard result != nil else { self.endConnection("handshake_failed"); return }
                 self.write(["method": "initialized"])
@@ -718,7 +729,7 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
         transport = nil
         if let connection = connection { closingTransport = connection }
         connected = false; connecting = false; connectionPhase = "disconnected"; connectionError = reason
-        accountVerified = false; usageReading = false; runReading = false; historyLoading = false; historyReady = false
+        accountVerified = false; usageReading = false; runReading = false; historyLoading = false; historyReady = false; historyActivityLoading = false; historyActivityCursor = nil
         let unresolved = isBusy || submissionPending || uncertain
         uncertain = unresolved; releaseLock()
         turnID = nil; startingTurn = false; loadedThread = nil; controlledThreads.removeAll(); submissionPending = false; creatingThread = false
@@ -752,7 +763,7 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
         do { try fixtureFramer.append(bytes) { line in
             guard let value = try JSONSerialization.jsonObject(with: line) as? [String: Any] else { throw CodexJSONLFramer.Failure.malformed }
             accept(value)
-        } } catch { endConnection("invalid_or_oversized_jsonl") }
+        } } catch { endConnection(CodexJSONLFramer.failureCode(error)) }
     }
     func accept(_ value: [String: Any]) {
             if value["method"] == nil, let id = value["id"] as? Int, let callback = callbacks.removeValue(forKey: id) {
@@ -887,7 +898,7 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
                 }
             }
             self.displayItems.removeAll(); self.displayOrder.removeAll(); self.approvals.removeAll(); self.answeredApprovals.removeAll(); self.emit("clearApprovals")
-            self.selected = thread; self.lastResult = ""; self.resultSource = nil; self.historyCursor = nil; self.historyLoading = false; self.historyReady = false
+            self.selected = thread; self.lastResult = ""; self.resultSource = nil; self.historyCursor = nil; self.historyLoading = false; self.historyReady = false; self.historyActivityLoading = false; self.historyActivityCursor = nil; self.runReading = false
             self.uncertain = self.readMap("codex-pending.json")[id] != nil
             self.nextModel = self.ledger.settings?[id]?["model"] ?? thread["model"] as? String ?? ""; self.nextEffort = self.ledger.settings?[id]?["effort"] ?? thread["reasoningEffort"] as? String ?? ""
             self.saveDraft(self.draftText)
@@ -898,12 +909,16 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     func loadHistory(older: Bool) {
         guard let id = threadID, !historyLoading else { return }
         let generation = selectionGeneration; historyLoading = true
-        var params: [String: Any] = ["threadId": id, "limit": 10, "sortDirection": "desc", "itemsView": "full"]
+        // A turn count is not a byte bound: a single development turn can hold
+        // hundreds of MB of tool/image history. Never eagerly request full turns.
+        var params: [String: Any] = ["threadId": id, "limit": 10, "sortDirection": "desc", "itemsView": "summary"]
         if older { guard let cursor = historyCursor else { historyLoading = false; return }; params["cursor"] = cursor }
         request("thread/turns/list", params) { [weak self] result in
             guard let self = self, self.threadID == id, self.selectionGeneration == generation else { return }
             self.historyLoading = false
-            guard let result = result else { return }
+            guard let result = result, result["data"] is [[String: Any]] else {
+                self.emit("historyReadError", ["threadId": id]); self.controlState(); return
+            }
             self.historyCursor = result["nextCursor"] as? String
             var turns = result["data"] as? [[String: Any]] ?? []
             for n in turns.indices {
@@ -939,6 +954,33 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
             }
             self.reconcileObservations(thread: id, turns: turns)
             self.emit("history", ["turns": turns, "older": older, "more": self.historyCursor != nil]); self.publishDisplaySnapshot(); self.publishResult()
+        }
+    }
+    // Explicit, read-only item pages preserve access to saved tool activity
+    // without pulling every full turn during connection or status refresh.
+    func loadHistoryActivity(older: Bool) {
+        guard connected, let id = threadID, !historyActivityLoading else { return }
+        let generation = selectionGeneration
+        var params: [String: Any] = ["threadId": id, "limit": 5, "sortDirection": "desc"]
+        if older { guard let cursor = historyActivityCursor else { return }; params["cursor"] = cursor }
+        historyActivityLoading = true
+        emit("historyActivity", ["threadId": id, "loading": true])
+        request("thread/items/list", params) { [weak self] result in
+            guard let self = self, self.threadID == id, self.selectionGeneration == generation else { return }
+            self.historyActivityLoading = false
+            guard let entries = result?["data"] as? [[String: Any]] else {
+                self.emit("historyActivity", ["threadId": id, "error": "read_failed"]); return
+            }
+            self.historyActivityCursor = result?["nextCursor"] as? String
+            let safe = entries.compactMap { entry -> [String: Any]? in
+                guard let tid = entry["turnId"] as? String, var item = entry["item"] as? [String: Any] else { return nil }
+                if item["type"] as? String == "hookPrompt" { return nil }
+                if item["type"] as? String == "reasoning" {
+                    item = ["id": item["id"] ?? "", "type": "reasoning", "summary": item["summary"] ?? []]
+                }
+                return ["turnId": tid, "item": item]
+            }
+            self.emit("historyActivity", ["threadId": id, "entries": safe, "more": self.historyActivityCursor != nil])
         }
     }
     func sendTurn(_ raw: String, model: String?) {

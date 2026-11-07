@@ -1,6 +1,6 @@
 # TWOS 1.0 · 安装与使用指南
 
-**适用：TWOS 1.0.7 / build 101.55，内置 Nyra 1.0.6 / build 106。** [English guide](OWNER_GUIDE_EN.md) · [实际交付与验证状态](CURRENT_DELIVERY.md)
+**适用：TWOS 1.0.8 / build 101.56，内置 Nyra 1.0.6 / build 106。** [English guide](OWNER_GUIDE_EN.md) · [实际交付与验证状态](CURRENT_DELIVERY.md)
 
 **安装与版本：使用本版双语指南中的 `START_HERE.html`、[发行回执](release-1.0/release.json)和实际 GitHub Release 状态。按匹配回执核对完整工程回归、签名和公证；Owner 差量接受单独记录。**
 在一个 macOS 窗口中，左侧官方 ChatGPT 网页用于讨论，右侧 TWOS Codex 客户端通过本机官方 App Server 执行。它使用官方执行协议，但不是把官方 Codex App 的整个图形界面嵌进网页。两侧账号语言设置相互独立。
@@ -11,13 +11,13 @@
 
 取得最终交付回执列出的安装包后，**双击 DMG**，把 **Tianma Work OS** 拖入 **应用程序**。如需替换旧版，先让活动工作到达安全终态并正常退出旧 App。弹出安装盘，再从应用程序打开 TWOS；只处理 macOS 正常的应用启动提示，不关闭系统安全保护。首次使用的账号与模型连接步骤见[完整安装指南](release-1.0/INSTALL.zh-CN.md)。
 
-## A · 本次升级差量验收
+## A · 本次升级增量验收
 
-TWOS 1.0.7 / 101.55 · Nyra 1.0.6 / 106
+TWOS 1.0.8 / 101.56 · Nyra 1.0.6 / 106 保持不变
 
-[Codex / Nyra](release-1.0/CODEX_CONNECTION_AND_TASK_LABELS.zh-CN.md)
+[长会话连接修复](release-1.0/CODEX_HISTORY_REPAIR.zh-CN.md)
 
-只核对连接与任务标签，完成后结束，不进入 B。
+连接一次，确认原长会话显示消息历史；可按需展开历史活动。官方应用正在执行同一会话时不要再次发送。此处结束，升级完成后不必继续 B；不重复 Nyra 或已接受业务验收。
 
 ## B · 首次创建任务
 

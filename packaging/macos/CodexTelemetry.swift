@@ -309,9 +309,9 @@ extension NativeCodex {
     }
     func refreshRunObservation() {
         guard connected, let id = threadID, !runReading else { return }
-        runReading = true
-        request("thread/turns/list", ["threadId": id, "limit": 10, "sortDirection": "desc", "itemsView": "full"]) { [weak self] response in
-            guard let self = self else { return }; self.runReading = false
+        let generation = selectionGeneration; runReading = true
+        request("thread/turns/list", ["threadId": id, "limit": 10, "sortDirection": "desc", "itemsView": "notLoaded"]) { [weak self] response in
+            guard let self = self, self.threadID == id, self.selectionGeneration == generation else { return }; self.runReading = false
             if let turns = response?["data"] as? [[String: Any]] { self.reconcileObservations(thread: id, turns: turns) }
             else { self.usageErrors["run"] = Self.telemetryError(self.lastRequestFailure); self.publishTelemetry() }
         }

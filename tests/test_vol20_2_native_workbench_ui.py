@@ -186,6 +186,20 @@ func runRenderer() {
       assert(!$('connect').disabled&&$('connection-status').textContent.includes('登录'),'authentication failure has explicit recovery');
       r('control',{connected:true,busy:false,connectionPhase:'connected'});
       assert(!$('disconnect').hidden&&!$('disconnect').disabled&&$('connection-status').hidden,'ready connection offers independent disconnect');
+      r('control',{connected:true,busy:false,threadId:'fixture-thread'});
+      r('history',{turns:[{id:'saved-turn',items:[{id:'summary-message',type:'agentMessage',text:'TEST ONLY saved answer'}]}],more:true});
+      assert(!$('saved-history').hidden&&$('history-scope').textContent.includes('摘要')&&$('item-summary-message'),'summary scope and message are visible');
+      r('historyActivity',{threadId:'fixture-thread',loading:true});
+      assert($('history-activity-load').disabled&&$('history-activity-status').textContent.includes('正在'),'saved activity has a nonblocking loading state');
+      r('historyActivity',{threadId:'fixture-thread',entries:[{turnId:'saved-turn',item:{id:'tool-one',type:'commandExecution',command:'TEST ONLY command',aggregatedOutput:'TEST ONLY output'}}],more:true});
+      assert($('saved-saved-turn-tool-one')&&$('history-activity-items').textContent.includes('TEST ONLY output')&&!$('history-activity-more').hidden,'paged saved tool output remains available');
+      r('historyActivity',{threadId:'other-thread',entries:[],more:false});
+      assert($('saved-saved-turn-tool-one'),'late wrong-thread activity cannot clear the selected history');
+      r('locale',{zh:false});assert($('history-scope').textContent.includes('summaries'),'history explanation follows language without translating content');r('locale',{zh:true});
+      r('historyActivity',{threadId:'fixture-thread',error:'read_failed'});
+      assert(!$('history-activity-load').disabled&&$('history-activity-status').textContent.includes('失败')&&$('saved-saved-turn-tool-one'),'failed optional history preserves its previous page and allows explicit retry');
+      r('control',{connected:false,busy:false,connectionError:'jsonl_frame_too_large',threadId:'fixture-thread'});
+      assert($('connection-status').textContent.includes('缓冲')&&!$('connection-status').textContent.includes('请检查官方应用'),'oversized response is not reported as authentication trouble');
       r('control',{connected:true,busy:true,controllable:true,desktopRunning:false,historyReady:true,threadId:'fixture-thread'});
       $('draft').value='Continue';$('draft').dispatchEvent(new Event('input'));
       assert(!$('draft').disabled&&!$('model').disabled&&!$('send').disabled&&!$('next-turn').hidden,'running composer supports Steer and next-turn model choice');
@@ -377,7 +391,7 @@ func runRenderer() {
     """#
     client.web.evaluateJavaScript(script) { value, error in
         precondition(error == nil,"renderer: \(String(describing:error))")
-        precondition((value as? [String])?.count == 103, "all prior checks plus cancellable connection and lifecycle visibility checks must run")
+        precondition((value as? [String])?.count == 110, "all 103 prior checks plus seven saved-history/error visibility checks must run")
         // Switching positions retains the very same native Codex connection.
         let instance=workbench.codex
         workbench.leftPicker.selectItem(at:1);workbench.changePane(workbench.leftPicker)
