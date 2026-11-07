@@ -11,9 +11,22 @@ class Images(HTMLParser):
     def __init__(self):
         super().__init__()
         self.images = []
+        self.links = []
+        self.link_text = []
+        self.current_link = None
     def handle_starttag(self, tag, attrs):
         if tag == 'img':
             self.images.append(dict(attrs))
+        if tag == 'a':
+            self.current_link = dict(attrs)
+            self.current_link['text'] = ''
+            self.links.append(self.current_link)
+    def handle_data(self, data):
+        if self.current_link is not None:
+            self.current_link['text'] += data
+    def handle_endtag(self, tag):
+        if tag == 'a':
+            self.current_link = None
 
 
 def main():
@@ -60,6 +73,21 @@ def main():
     assert '/releases/tag/v' + m['public_download_version'] in html
     if interface['status'] == 'CANDIDATE_PREVIEW':
         assert 'candidate preview' in html.lower() and 'not yet a public release' in html
+    else:
+        release = json.loads((root.parent / 'docs/release-1.0/release.json').read_text())
+        assert release['version'] == m['public_download_version'] == interface['version']
+        assert release['build'] == m['public_download_build'] == interface['build']
+        assert release['source_commit'] == interface['source_commit']
+        assert release['sha256'] == m['public_artifact_sha256']
+        assert release['github_release'] == m['public_download_url']
+        downloads = [x for x in document.links if x['text'].strip().startswith('Download TWOS ')]
+        assert len(downloads) == 1, 'Expected exactly one primary download button'
+        assert downloads[0]['text'].strip() == 'Download TWOS ' + release['version']
+        assert downloads[0]['href'] == release['github_release'], 'Stale download destination'
+        assert 'Current public DMG: ' + release['version'] + ' · build ' + release['build'] in html
+        assert m['nyra']['source_commit'] == release['embedded_nyra_source_commit']
+        assert m['nyra']['version'] == release['embedded_nyra_version']
+        assert m['nyra']['build'] == release['embedded_nyra_build']
     print(json.dumps({'result': 'STATIC_PASS', 'interface': args.interface_version,
                       'build': args.interface_build, 'outfits': len(outfits),
                       'images': len(images), 'combinations': len(combinations), 'gui_verified': False}))

@@ -1,13 +1,13 @@
 {
   "product": "TWOS",
-  "version": "1.0.6",
-  "build": "101.54",
-  "source_commit": "d230018a5a44b9caddb02d0ff56a38024a740f50",
-  "artifact": "Tianma-Work-OS-1.0.6-build-101.54.dmg",
-  "bytes": 264486086,
-  "sha256": "4880e1c372186661a5968a4afed1fde6c0ba08e7fe5be69596846b9c84c18520",
-  "app_notarization_id": "2314aeea-0678-434f-88c3-3d98f1ec8475",
-  "dmg_notarization_id": "42c5fe6d-647e-42b6-893c-cbeafe231ce5",
+  "version": "1.0.7",
+  "build": "101.55",
+  "source_commit": "3e713ffa25e30c5e02219bc510dec9b7253bcf8d",
+  "artifact": "Tianma-Work-OS-1.0.7-build-101.55.dmg",
+  "bytes": 264436366,
+  "sha256": "dfab4718a0d345111fd54d5eb91ae3fdb4886003331dcc317e4dd6b21fb24af1",
+  "app_notarization_id": "838dfbf2-68e7-486d-833d-0a091b04c558",
+  "dmg_notarization_id": "76dd0429-d145-4989-9318-a2f3a84c93aa",
   "signing_identity": "Developer ID Application: Jing Huang (BZJWQJ352K)",
   "gatekeeper": "PASS",
   "architecture": "arm64",
@@ -16,10 +16,10 @@
     "complete_pass": true,
     "state": "COMPLETE_GREEN",
     "counts": {
-      "passed": 1827,
+      "passed": 1852,
       "skipped": 1
     },
-    "collected": 1828,
+    "collected": 1853,
     "safari": {
       "measurements": 38,
       "visible_start": 38,
@@ -27,43 +27,17 @@
       "errors": []
     }
   },
-  "at": "2026-11-06T03:27:36.772427+08:00",
+  "at": "2026-11-07T11:28:02.003938+08:00",
   "build_time_signing_metadata": "Source provenance preserves its original builder record; actual distribution signature is verified in this receipt and codesign/Gatekeeper.",
   "platform": "macOS",
   "status": "SIGNED_NOTARIZED_VALIDATED",
-  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.6",
-  "publication_truth": "GitHub Release state is authoritative; a local receipt does not assert publication.",
+  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.7",
+  "publication_truth": "GitHub Release state is authoritative; this build receipt alone does not assert publication.",
   "owner_acceptance": "NOT_GRANTED_BY_ENGINEERING",
   "store_submission": "NOT_SUBMITTED",
-  "real_gui": {
-    "exact_mounted_dmg": "Both products launched from read-only mounted DMGs; normally quit.",
-    "standalone_and_embedded_nyra": "Exact pinned component, five-outfit controls, standing/reclining and bilingual playback/Close observed.",
-    "legacy_launcher_boundary": "An isolated environment bound to another app location refused reuse with DESKTOP_INSTALLATION_MISMATCH. No path-migration PASS is claimed. Existing Window > ChatGPT + Codex opened the paired workbench."
-  },
-  "audio_verification": {
-    "chinese_bundled_recordings": 13,
-    "english_fixed_phrases": 13,
-    "english_source": "Installed local Samantha en-US verified; not bundled Tian English recordings",
-    "original_eight_chinese_clips": "BYTE_UNCHANGED",
-    "native_start_finish_callbacks": 26,
-    "voice_quality": "Subjective new-voice acceptance remains with Owner"
-  },
-  "wardrobe": {
-    "outfits": 5,
-    "new_outfits": [
-      "office_white",
-      "gala_red"
-    ],
-    "new_rgba_frames": 40,
-    "standing_and_reclining": true,
-    "new_directional_runs": "Two-frame loops; unsupported optional actions remain disabled"
-  },
   "previous_owner_acceptance": "PRESERVED; no old business task replayed",
-  "embedded_nyra_source_commit": "1b712de7110feded54775b522448fe6c61dbc164",
-  "autosend_verification": {
-    "both_initiating_providers": "More than five complete real round trips each in dedicated engineering conversations",
-    "final_signed_candidate": "27 reconciled complete / 28 dispatched before Stop; stopped in-flight receipt retained; no next dispatch after reopen and refresh",
-    "native_stop_and_composer": "Real left/right native Stop, interrupted reply and replacement composer checks",
-    "owner_first_round_trigger": "NOT_REPRODUCED; do not assert a single proven cause for the original Owner incident"
-  }
+  "embedded_nyra_version": "1.0.6",
+  "embedded_nyra_build": "106",
+  "embedded_nyra_source_commit": "18309c82bcc6c821ebde56c0591ae02240931c89",
+  "runtime_input_sha256": "1c868369b28cf4d7466cd99df9c40ed7a7283bf1d6d58a4e72ccfd23c3c46bcc"
 }

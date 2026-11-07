@@ -1,8 +1,10 @@
 # Tianma Work OS 1.0
 
+本次修复本机 Codex 连接卡住，并新增夜璃只读当前任务标签及点击返回已核验 TWOS 的入口。
+
 本版包含五套站姿／侧卧服装、13 段离线小田中文动作短句，以及 13 句使用本机女声的英文对应台词。声音默认静音；取消静音并开启动作语音后按实际动作播放，带冷却、不叠音。声音面板可通过关闭、Esc 或声音按钮收起。
 
-**TWOS 1.0.6 / build 101.54** · [下载与校验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.6) · [本次增量](docs/release-1.0/AUTOSEND_AND_WARDROBE.zh-CN.md)
+**TWOS 1.0.7 / build 101.55** · [下载与校验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.7) · [本次增量](docs/release-1.0/CODEX_CONNECTION_AND_TASK_LABELS.zh-CN.md)
 
 
 
@@ -18,7 +20,7 @@
 
 ## 下载与首次使用
 
-从上方链接下载 TWOS v1.0.6；打开 DMG 前核对 SHA256SUMS。匹配回执绑定源码、签名、公证和制品哈希。历史 v1.0.1 与 v1.0.0 保持不变。
+从上方链接下载 TWOS v1.0.7；打开 DMG 前核对 SHA256SUMS。匹配回执绑定源码、签名、公证和制品哈希。历史 v1.0.1 与 v1.0.0 保持不变。
 
 打开对应 DMG，拖入应用程序并启动。登录所选供应商官网，连接已安装/登录的官方本机 Codex，再创建或接续一个绑定目录的任务。Nyra 在同一 App 内，无需第二个桌宠安装包或首次联网下载画稿；普通安装无需 Python、Node 或终端。
 
@@ -28,7 +30,7 @@
 
 TWOS 使用官方 Codex App Server 协议实现客户端，不是嵌入官方 macOS Codex 整个 GUI。各供应商网页保留自己的登录、模型、用量与条款。网页返回代码不等于本机文件已生成，落盘需要独立明确授权。不会静默切换计费 API 或自动购买。
 
-只交接选定内容；选择目录不等于读取全部文件。Nyra 仅接收状态和不透明标识，不接收聊天、代码、账号或凭据。执行结束、业务验证和 Owner 接受分别记录。
+只交接选定内容；选择目录不等于读取全部文件。Nyra 仅接收最小状态、不透明标识及有长度上限的活动会话标题，不接收消息正文、代码、账号或凭据。执行结束、业务验证和 Owner 接受分别记录。
 
 [隐私权限](docs/release-1.0/PRIVACY_AND_PERMISSIONS.zh-CN.md) · [故障排查](docs/release-1.0/TROUBLESHOOTING.zh-CN.md) · [升级卸载](docs/release-1.0/UPGRADE_AND_UNINSTALL.zh-CN.md) · [更新说明](docs/release-1.0/RELEASE_NOTES.zh-CN.md) · [许可说明](LICENSE.zh-CN.md) · [资源与声音](ASSET_AND_VOICE_PROVENANCE.zh-CN.md)
 

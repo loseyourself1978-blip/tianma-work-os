@@ -1,11 +1,11 @@
-# Install Tianma Work OS 1.0.6
+# Install Tianma Work OS 1.0.7
 
-TWOS 1.0.6 / 101.54 · [This update](AUTOSEND_AND_WARDROBE.en.md)
+TWOS 1.0.7 / 101.55 · [This update](CODEX_CONNECTION_AND_TASK_LABELS.en.md)
 
-[Current incremental instructions and exact boundaries](AUTOSEND_AND_WARDROBE.en.md).
+[Current incremental instructions and exact boundaries](CODEX_CONNECTION_AND_TASK_LABELS.en.md).
 
 
-This guide applies to the joint TWOS/Nyra candidate, build 101.54. Its release receipt is the authority for publication, signatures and tested platforms. A local candidate is not a published release.
+This guide applies to TWOS 1.0.7 / 101.55. Download availability is determined by its matching GitHub Release. Consult the signed receipt for source, signature and tested platform details.
 
 Currently supports macOS only. A Windows version is in development; no downloadable build is available yet. The current TWOS package is Apple Silicon. Engineering testing uses macOS 27.0.1 / Safari 27.0.1. A binary deployment target does not prove testing on every older system; consult the release support matrix before installing elsewhere.
 
@@ -31,4 +31,4 @@ Advanced checksum check: run `shasum -a 256 -c SHA256SUMS` in the download folde
 [English / 简体中文](INSTALL.zh-CN.md)
 
 
-[DeepSeek relay, five outfits and bilingual action voice](AUTOSEND_AND_WARDROBE.en.md)
+[DeepSeek relay, five outfits and bilingual action voice](CODEX_CONNECTION_AND_TASK_LABELS.en.md)

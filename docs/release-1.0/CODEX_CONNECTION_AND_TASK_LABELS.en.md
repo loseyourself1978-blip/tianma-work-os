@@ -1,6 +1,6 @@
 # Local Codex connection and Nyra task labels
 
-Candidate: TWOS 1.0.7 / build 101.55; Nyra 1.0.6 / build 106. These are local candidates, not a published release or Owner acceptance.
+TWOS 1.0.7 / build 101.55; Nyra 1.0.6 / build 106. Use the matching GitHub Release for public downloads. Engineering validation and public availability do not grant Owner acceptance.
 
 ## A · Upgrade check — stop here afterward
 
@@ -20,6 +20,6 @@ Transport launch, reads, writes, JSONL framing and JSON decoding run away from t
 
 Nyra receives existing minimal activity metadata plus at most two bounded (90-character) active conversation titles over the authenticated local read-only socket. No prompt, response, attachment, path, account, credential or code is included. Titles stay in memory and are not written to playback/visibility diagnostics. Hiding labels hides their display; disconnecting the companion stops reads. Clicking the pet independently verifies the same signed running host; the status socket gains no command or execution permission.
 
-macOS only; Windows remains in development with no download. Existing installed apps and rollback installers remain unchanged. Signature/notarization and final packaged GUI results are reported by the hotfix receipt, separately from automated fixtures and Owner acceptance.
+macOS only; Windows remains in development with no download. Existing installed apps remain unchanged; historical source and build materials preserve rollback. Signature/notarization and final packaged GUI results are reported by the hotfix receipt, separately from automated fixtures and Owner acceptance.
 
 Oversized Office attachments are rejected within the local expansion/time bound. The fixed OS unzip child is read incrementally and reaped on rejection; no unbounded exit wait or stranded reader remains. This applies only to selected attachments and does not change file permissions or execute document content.

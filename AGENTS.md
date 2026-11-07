@@ -70,8 +70,8 @@ test cache, and do not discard original failure records to free space.
 
 Owner has also authorized timely cleanup of obsolete local installers. After
 verifying a replacement and checking that no process uses the old files, retain
-the current exact installer and one latest published rollback installer per
-product; remove only identified superseded local installation copies. Preserve
+the latest verified installer per product (older local installers require
+verified source-based recovery before removal); remove only identified superseded local installation copies. Preserve
 source, hashes, provenance, notarization receipts and original validation/failure
 records. Never apply this local retention policy to historical GitHub assets,
 installed Owner apps, browser profiles or unidentified directories. Record the
@@ -89,3 +89,31 @@ Follow `site/RELEASE_MEDIA.md` and run `site/verify_media.py` in the actual rele
 source repository, then verify the deployed page and images over anonymous HTTPS.
 Do not close website work with missing/stale images or broaden binary-release
 authorization because a website update was requested.
+
+
+## Release, website and local artifact consistency — mandatory closeout
+
+Owner policy updated November 7, 2026. For each authorized release, reconcile
+the published GitHub Release, product-page download button text and destination,
+visible version/build, current bilingual documentation, media manifest and the
+retained local installer. They must identify the same version, build, source and
+exact artifact SHA-256. Never rename an old binary or point a new button at an old
+or nonexistent download. Keep a pending candidate visibly separate until its
+release assets have been uploaded, downloaded and hash-verified, then published.
+Verify the deployed page and its links anonymously over HTTPS. Record the result
+before declaring closeout complete. Owner installation/acceptance is separate;
+do not replace the running Owner app automatically.
+
+Final handoffs use the public product page and GitHub download/release links,
+not local DMG paths. Keep only one latest verified local installer per product.
+Before removing an older local installer, verify its exact source commit, complete
+resources, dependency locks, build scripts/configuration and usable restoration
+materials; retain an uncertain item and record the reason. Source-based rollback
+does not promise byte-identical signatures or notarization on a rebuilt DMG.
+Preserve Git history/tags, historical GitHub assets, unique receipts and acceptance
+evidence. Check active process and mount references before exact-path removal.
+After each iteration remove confirmed disposable staging, download verification
+copies and test/compiler caches, recording exact paths and actual free bytes.
+Do not treat browser profiles, credentials, business data, the standard builder,
+or unidentified directories as cache. This supersedes the previous requirement
+to keep one older local rollback DMG when its rebuild materials are verified.

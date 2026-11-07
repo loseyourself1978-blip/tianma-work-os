@@ -1,4 +1,10 @@
-# TWOS 1.0.6 / 101.54 — DeepSeek 接力与双语换装语音
+# TWOS 1.0.7 / 101.55 — 本机 Codex 连接与任务标签
+
+异步进程启动与增量 JSONL 读取避免阻塞界面；有界超时、取消和连接代次保护重连，连接本身不启动任务。夜璃可显示／隐藏新鲜任务标签，点击返回已核验宿主。精确签名公证包的完整回归为 1852 通过、1 项历史跳过、0 失败，含 38 项真实 Safari 测量；已观察打包版真实 Codex 连接、回复、断开及重连。网页供应商任务标签为契约／fixture 覆盖，不冒充本轮新增真实网页任务验收。Owner 接受独立记录。
+
+[Delta guide](CODEX_CONNECTION_AND_TASK_LABELS.zh-CN.md)
+
+## TWOS 1.0.6 / 101.54 — DeepSeek 接力与双语换装语音
 
 [DeepSeek 接力、五套服装与双语动作语音](AUTOSEND_AND_WARDROBE.zh-CN.md)
 

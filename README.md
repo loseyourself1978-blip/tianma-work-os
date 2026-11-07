@@ -1,8 +1,10 @@
 # Tianma Work OS 1.0
 
+This update fixes local Codex connection freezes and adds bounded, read-only Nyra task labels with a click back to the authenticated running TWOS host.
+
 This version includes five standing/reclining outfits, 13 bundled Chinese Tian action recordings and 13 matching English phrases using an installed local female voice. Sound starts muted; unmute and enable Action voice for eligible transitions, with cooldown and no overlap. Close the panel with Close, Escape or Sound.
 
-**TWOS 1.0.6 / build 101.54** · [Download and verify](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.6) · [This update](docs/release-1.0/AUTOSEND_AND_WARDROBE.en.md)
+**TWOS 1.0.7 / build 101.55** · [Download and verify](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.7) · [This update](docs/release-1.0/CODEX_CONNECTION_AND_TASK_LABELS.en.md)
 
 
 [简体中文](README.zh-CN.md) · [Install](docs/release-1.0/INSTALL.en.md) · [User guide](docs/release-1.0/USER_GUIDE.en.md) · [Current release status](docs/CURRENT_DELIVERY.md)
@@ -17,7 +19,7 @@ Discuss a goal and execute it in one macOS workspace. TWOS pairs official ChatGP
 
 ## Download and first use
 
-Download TWOS v1.0.6 using the link above. Verify SHA256SUMS before opening its DMG. The matching receipt binds source, signatures, notarization and artifact hashes. Historical v1.0.1 and v1.0.0 remain unchanged.
+Download TWOS v1.0.7 using the link above. Verify SHA256SUMS before opening its DMG. The matching receipt binds source, signatures, notarization and artifact hashes. Historical v1.0.1 and v1.0.0 remain unchanged.
 
 Open the matching DMG, drag TWOS into Applications and open it. Sign into the chosen official provider website, connect your already installed/logged-in local Codex, then create or resume one folder-bound task. Nyra is inside the same app; no separate pet installer or first-run artwork download is required. Ordinary installation needs no Python, Node or terminal.
 
@@ -27,7 +29,7 @@ Currently supports macOS only. A Windows version is in development; no downloada
 
 TWOS implements a client using the official Codex App Server protocol; it does not embed the entire official macOS Codex UI. Provider webpages retain their own sign-in, model availability, usage and terms. Returned website code is not a local file until a separately authorized file-writing task creates it. No silent API billing switch or automatic purchase occurs.
 
-Only explicitly selected handoff content goes to its bound destination. Directory selection is not blanket permission to read every file. Nyra receives state/opaque IDs, not chats, code, accounts or credentials. Executor completion, business verification and Owner acceptance are separate facts.
+Only explicitly selected handoff content goes to its bound destination. Directory selection is not blanket permission to read every file. Nyra receives minimal state, opaque IDs and bounded active conversation titles, not prompt/response bodies, code, accounts or credentials. Executor completion, business verification and Owner acceptance are separate facts.
 
 [Privacy and permissions](docs/release-1.0/PRIVACY_AND_PERMISSIONS.en.md) · [Troubleshooting](docs/release-1.0/TROUBLESHOOTING.en.md) · [Upgrade/uninstall](docs/release-1.0/UPGRADE_AND_UNINSTALL.en.md) · [Release notes](docs/release-1.0/RELEASE_NOTES.en.md) · [Licensing](LICENSE) · [Resources and voice](ASSET_AND_VOICE_PROVENANCE.md)
 
@@ -40,4 +42,4 @@ The independent companion is maintained in [Nyra](https://github.com/loseyoursel
 </details>
 
 
-[Local hotfix candidate (not published)](docs/release-1.0/CODEX_CONNECTION_AND_TASK_LABELS.en.md)
+[Local Codex connection and task labels](docs/release-1.0/CODEX_CONNECTION_AND_TASK_LABELS.en.md)

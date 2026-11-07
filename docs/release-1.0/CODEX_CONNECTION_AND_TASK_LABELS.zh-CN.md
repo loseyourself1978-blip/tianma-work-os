@@ -1,6 +1,6 @@
 # 本机 Codex 连接与夜璃任务标签
 
-候选：TWOS 1.0.7 / build 101.55；Nyra 1.0.6 / build 106。当前为本机候选，不等于已发布或 Owner 接受。
+TWOS 1.0.7 / build 101.55；Nyra 1.0.6 / build 106。公开下载以对应 GitHub Release 为准；工程验证与公开发行不代签 Owner 接受。
 
 ## A · 升级差量检查——完成即结束
 
