@@ -45,4 +45,4 @@ The top **Language: English / 语言：简体中文** selector changes TWOS cont
 [DeepSeek relay, five outfits and bilingual action voice](AUTOSEND_AND_WARDROBE.en.md)
 
 
-[Current candidate delta](CODEX_CONNECTION_AND_TASK_LABELS.en.md)
+[Current update](CODEX_HISTORY_REPAIR.en.md)

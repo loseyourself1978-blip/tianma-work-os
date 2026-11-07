@@ -1,6 +1,6 @@
 # TWOS 1.0.8 / 101.56 — Long-conversation connection repair
 
-Candidate: restores long conversations with paged message summaries, reads run metadata without full history, and loads saved activity only on request. Distinct bounded-buffer/protocol errors replace the generic connection error. Final package regression and publication are pending; earlier release results are preserved below.
+Restores long conversations with paged message summaries, reads run metadata without full history, and loads saved activity only on request. Distinct bounded-buffer/protocol errors replace the generic connection error. The exact signed, notarized package passed the complete serial gate: 1860 passed, 1 existing historical skip, 0 failures, including 38 real Safari measurements. The affected long conversation was restored read-only in the final DMG app; saved activity, models, conversation selection and disconnect/reconnect were observed. One new isolated, harmless message returned PATCH_108_HISTORY_OK in one turn, after an upstream transient reconnect. No old task was replayed. Nyra 1.0.6 / 106 is unchanged. Owner acceptance remains separate.
 
 [Delta guide](CODEX_HISTORY_REPAIR.en.md)
 
@@ -33,4 +33,4 @@ The matching release receipt identifies the complete gate, candidate, signatures
 macOS Apple Silicon only; Windows is in development with no download. Historical releases and original failure/PARTIAL records remain.
 
 
-[Current candidate delta](CODEX_CONNECTION_AND_TASK_LABELS.en.md)
+[Current update](CODEX_HISTORY_REPAIR.en.md)

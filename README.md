@@ -1,12 +1,12 @@
 # Tianma Work OS 1.0
 
-**Candidate in development: TWOS 1.0.8 / 101.56 fixes long-history connection failures. Final packaged regression is pending. The download below remains the last published release until verification and publication finish.**
+**TWOS 1.0.8 / 101.56: repairs long-conversation Codex connection failures. Nyra 1.0.6 / 106 is unchanged.**
 
-This update fixes local Codex connection freezes and adds bounded, read-only Nyra task labels with a click back to the authenticated running TWOS host.
+This update repairs long-conversation history restoration in the local Codex client. Nyra’s existing task labels and click-to-return behavior remain unchanged.
 
 This version includes five standing/reclining outfits, 13 bundled Chinese Tian action recordings and 13 matching English phrases using an installed local female voice. Sound starts muted; unmute and enable Action voice for eligible transitions, with cooldown and no overlap. Close the panel with Close, Escape or Sound.
 
-**TWOS 1.0.7 / build 101.55** · [Download and verify](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.7) · [This update](docs/release-1.0/CODEX_CONNECTION_AND_TASK_LABELS.en.md)
+**TWOS 1.0.8 / build 101.56** · [Download and verify](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.8) · [This update](docs/release-1.0/CODEX_HISTORY_REPAIR.en.md)
 
 
 [简体中文](README.zh-CN.md) · [Install](docs/release-1.0/INSTALL.en.md) · [User guide](docs/release-1.0/USER_GUIDE.en.md) · [Current release status](docs/CURRENT_DELIVERY.md)
@@ -21,7 +21,7 @@ Discuss a goal and execute it in one macOS workspace. TWOS pairs official ChatGP
 
 ## Download and first use
 
-Download TWOS v1.0.7 using the link above. Verify SHA256SUMS before opening its DMG. The matching receipt binds source, signatures, notarization and artifact hashes. Historical v1.0.1 and v1.0.0 remain unchanged.
+Download TWOS v1.0.8 using the link above. Verify SHA256SUMS before opening its DMG. The matching receipt binds source, signatures, notarization and artifact hashes. Historical v1.0.1 and v1.0.0 remain unchanged.
 
 Open the matching DMG, drag TWOS into Applications and open it. Sign into the chosen official provider website, connect your already installed/logged-in local Codex, then create or resume one folder-bound task. Nyra is inside the same app; no separate pet installer or first-run artwork download is required. Ordinary installation needs no Python, Node or terminal.
 
@@ -44,4 +44,4 @@ The independent companion is maintained in [Nyra](https://github.com/loseyoursel
 </details>
 
 
-[Local Codex connection and task labels](docs/release-1.0/CODEX_CONNECTION_AND_TASK_LABELS.en.md)
+[Long-conversation Codex connection repair](docs/release-1.0/CODEX_HISTORY_REPAIR.en.md)

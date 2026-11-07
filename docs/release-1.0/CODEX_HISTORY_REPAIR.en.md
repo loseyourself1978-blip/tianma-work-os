@@ -1,6 +1,6 @@
 # Long-conversation connection repair
 
-TWOS 1.0.8 / 101.56 candidate; Nyra 1.0.6 / 106 unchanged. Final package and complete regression pending. GitHub Release state determines public availability.
+TWOS 1.0.8 / 101.56; Nyra 1.0.6 / 106 unchanged. The matching GitHub Release determines public download availability.
 
 ## Upgrade check
 
@@ -16,3 +16,13 @@ The repaired client requests message summaries when opening a conversation. Run-
 Oversized responses and invalid protocol messages now have separate errors. The 24 MB single-message safety bound remains; it is not removed or increased to absorb unbounded full history. If an individual item exceeds that bound, reconnect explicitly to restore the summary view. Never clear authentication, drafts or conversation data to work around this error. The currently active official development conversation is inspected read-only and must not be controlled simultaneously from TWOS.
 
 Validation of the repair and its release status are recorded separately; this follow-up does not grant Owner acceptance.
+
+## Matching validation
+
+The exact signed, notarized package passed the complete serial gate: 1860 passed, 1 existing historical skip, 0 failures, including 38 real Safari measurements. The affected long conversation was restored read-only in the final DMG app; saved activity, models, conversation selection and disconnect/reconnect were observed. One new isolated, harmless message returned PATCH_108_HISTORY_OK in one turn, after an upstream transient reconnect. No old task was replayed. Nyra 1.0.6 / 106 is unchanged. Owner acceptance remains separate.
+
+## Actual interface
+
+![TWOS 1.0.8 starting workspace](images/twos-1.0.8-101.56.png)
+
+Actual final-DMG starting screen with signed-out ChatGPT and disconnected Codex; no private conversation is shown. This image is interface evidence, not the long-history test result.

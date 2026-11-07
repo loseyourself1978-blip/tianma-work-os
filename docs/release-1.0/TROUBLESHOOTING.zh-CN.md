@@ -33,6 +33,6 @@ TWOS 1.0.6 / 101.54 · [本次增量](AUTOSEND_AND_WARDROBE.zh-CN.md)
 [DeepSeek 接力、五套服装与双语动作语音](AUTOSEND_AND_WARDROBE.zh-CN.md)
 
 
-[本轮候选差量](CODEX_CONNECTION_AND_TASK_LABELS.zh-CN.md)
+[本次更新](CODEX_HISTORY_REPAIR.zh-CN.md)
 
-- **长历史连接错误：** 1.0.7 的 `invalid_or_oversized_jsonl` 可能来自完整历史响应过大，并非登录问题。见[长会话追加说明](CODEX_CONNECTION_AND_TASK_LABELS.zh-CN.md)。保留草稿和登录数据。
+- **长历史连接错误：** 1.0.7 的 `invalid_or_oversized_jsonl` 可能来自完整历史响应过大，并非登录问题。见[长会话修复说明](CODEX_HISTORY_REPAIR.zh-CN.md)。保留草稿和登录数据。

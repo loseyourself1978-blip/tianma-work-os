@@ -1,0 +1,43 @@
+{
+  "product": "TWOS",
+  "version": "1.0.7",
+  "build": "101.55",
+  "source_commit": "3e713ffa25e30c5e02219bc510dec9b7253bcf8d",
+  "artifact": "Tianma-Work-OS-1.0.7-build-101.55.dmg",
+  "bytes": 264436366,
+  "sha256": "dfab4718a0d345111fd54d5eb91ae3fdb4886003331dcc317e4dd6b21fb24af1",
+  "app_notarization_id": "838dfbf2-68e7-486d-833d-0a091b04c558",
+  "dmg_notarization_id": "76dd0429-d145-4989-9318-a2f3a84c93aa",
+  "signing_identity": "Developer ID Application: Jing Huang (BZJWQJ352K)",
+  "gatekeeper": "PASS",
+  "architecture": "arm64",
+  "owner_differential_acceptance": "NOT_GRANTED_BY_ENGINEERING",
+  "main_gate": {
+    "complete_pass": true,
+    "state": "COMPLETE_GREEN",
+    "counts": {
+      "passed": 1852,
+      "skipped": 1
+    },
+    "collected": 1853,
+    "safari": {
+      "measurements": 38,
+      "visible_start": 38,
+      "visible_finish": 38,
+      "errors": []
+    }
+  },
+  "at": "2026-11-07T11:28:02.003938+08:00",
+  "build_time_signing_metadata": "Source provenance preserves its original builder record; actual distribution signature is verified in this receipt and codesign/Gatekeeper.",
+  "platform": "macOS",
+  "status": "SIGNED_NOTARIZED_VALIDATED",
+  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.7",
+  "publication_truth": "GitHub Release state is authoritative; this build receipt alone does not assert publication.",
+  "owner_acceptance": "NOT_GRANTED_BY_ENGINEERING",
+  "store_submission": "NOT_SUBMITTED",
+  "previous_owner_acceptance": "PRESERVED; no old business task replayed",
+  "embedded_nyra_version": "1.0.6",
+  "embedded_nyra_build": "106",
+  "embedded_nyra_source_commit": "18309c82bcc6c821ebde56c0591ae02240931c89",
+  "runtime_input_sha256": "1c868369b28cf4d7466cd99df9c40ed7a7283bf1d6d58a4e72ccfd23c3c46bcc"
+}

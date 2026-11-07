@@ -16,7 +16,7 @@ This is a release SOP, not a background automation. Website publication does not
 
 ## Current capture
 
-Current download and verified captures: TWOS 1.0.7 / 101.55. Nyra's five assets are byte-identical to published 1.0.5 / 105 and pinned 1.0.6 / 106 release. The capture shows signed-out ChatGPT and disconnected Codex; no model run was started to make this image.
+Current download and verified captures: TWOS 1.0.8 / 101.56. Nyra's five assets are byte-identical to published 1.0.5 / 105 and pinned 1.0.6 / 106 release. The capture shows signed-out ChatGPT and disconnected Codex; no model run was started to make this image.
 
 ## Supported-service combinations — required from November 7, 2026
 
@@ -24,7 +24,7 @@ Keep the public product page English-only. Capture actual supported combinations
 
 Bind every combination to the exact candidate source, version, build, dimensions and image hash in the media manifest. Explain website reply exchange separately from authorized local Codex execution. Do not imply that all arbitrary models/websites support automatic exchange. Provider pages may contain their own untranslated legal labels; do not alter captured UI to conceal them.
 
-Current combination captures: final candidate 1.0.7 / 101.55, source `3e713ffa25e30c5e02219bc510dec9b7253bcf8d`, November 7, 2026. The matching public download is 1.0.7. No model turn, login, task dispatch or authentication-data copy was performed to produce the new captures.
+Current combination captures: final DMG 1.0.8 / 101.56, source `10d9195a604900409b96e33d7299f5421a513a6e`, November 7, 2026. The matching public download is 1.0.8. No model turn, login, task dispatch or authentication-data copy was performed to produce the new captures.
 
 
 ## Release, website and local artifact consistency — mandatory closeout
