@@ -16,7 +16,7 @@ This is a release SOP, not a background automation. Website publication does not
 
 ## Current capture
 
-TWOS 1.0.7 / 101.55 is a clearly labelled candidate preview. The current download remains published TWOS 1.0.6 / 101.54. Nyra's five assets are byte-identical to published 1.0.5 / 105 and the 1.0.6 / 106 candidate. The capture shows signed-out ChatGPT and disconnected Codex; no model run was started to make this image.
+Current download and verified captures: TWOS 1.0.7 / 101.55. Nyra's five assets are byte-identical to published 1.0.5 / 105 and pinned 1.0.6 / 106 release. The capture shows signed-out ChatGPT and disconnected Codex; no model run was started to make this image.
 
 ## Supported-service combinations — required from November 7, 2026
 
@@ -24,4 +24,32 @@ Keep the public product page English-only. Capture actual supported combinations
 
 Bind every combination to the exact candidate source, version, build, dimensions and image hash in the media manifest. Explain website reply exchange separately from authorized local Codex execution. Do not imply that all arbitrary models/websites support automatic exchange. Provider pages may contain their own untranslated legal labels; do not alter captured UI to conceal them.
 
-Current combination captures: final candidate 1.0.7 / 101.55, source `3e713ffa25e30c5e02219bc510dec9b7253bcf8d`, November 7, 2026. The public download remains 1.0.6. No model turn, login, task dispatch or authentication-data copy was performed to produce the new captures.
+Current combination captures: final candidate 1.0.7 / 101.55, source `3e713ffa25e30c5e02219bc510dec9b7253bcf8d`, November 7, 2026. The matching public download is 1.0.7. No model turn, login, task dispatch or authentication-data copy was performed to produce the new captures.
+
+
+## Release, website and local artifact consistency — mandatory closeout
+
+Owner policy updated November 7, 2026. For each authorized release, reconcile
+the published GitHub Release, product-page download button text and destination,
+visible version/build, current bilingual documentation, media manifest and the
+retained local installer. They must identify the same version, build, source and
+exact artifact SHA-256. Never rename an old binary or point a new button at an old
+or nonexistent download. Keep a pending candidate visibly separate until its
+release assets have been uploaded, downloaded and hash-verified, then published.
+Verify the deployed page and its links anonymously over HTTPS. Record the result
+before declaring closeout complete. Owner installation/acceptance is separate;
+do not replace the running Owner app automatically.
+
+Final handoffs use the public product page and GitHub download/release links,
+not local DMG paths. Keep only one latest verified local installer per product.
+Before removing an older local installer, verify its exact source commit, complete
+resources, dependency locks, build scripts/configuration and usable restoration
+materials; retain an uncertain item and record the reason. Source-based rollback
+does not promise byte-identical signatures or notarization on a rebuilt DMG.
+Preserve Git history/tags, historical GitHub assets, unique receipts and acceptance
+evidence. Check active process and mount references before exact-path removal.
+After each iteration remove confirmed disposable staging, download verification
+copies and test/compiler caches, recording exact paths and actual free bytes.
+Do not treat browser profiles, credentials, business data, the standard builder,
+or unidentified directories as cache. This supersedes the previous requirement
+to keep one older local rollback DMG when its rebuild materials are verified.

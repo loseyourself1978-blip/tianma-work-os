@@ -1,12 +1,12 @@
 {
   "schema": 1,
-  "updated_at": "2026-11-07T09:45:37.739133+08:00",
-  "public_download_version": "1.0.6",
-  "public_download_build": "101.54",
+  "updated_at": "2026-11-07T11:50:47.128122+08:00",
+  "public_download_version": "1.0.7",
+  "public_download_build": "101.55",
   "interface": {
     "version": "1.0.7",
     "build": "101.55",
-    "status": "CANDIDATE_PREVIEW",
+    "status": "RELEASE_CAPTURE",
     "source_commit": "3e713ffa25e30c5e02219bc510dec9b7253bcf8d",
     "path": "assets/product/twos-1.0.7-101.55.png",
     "sha256": "63453f4a739e739d49635806ceccba71c75d29cdc3e6d44686546455d1bc1245",
@@ -19,9 +19,9 @@
   "nyra": {
     "version": "1.0.6",
     "build": "106",
-    "status": "CANDIDATE_ASSET_VERIFIED",
+    "status": "RELEASE_ASSET_VERIFIED",
     "source_commit": "18309c82bcc6c821ebde56c0591ae02240931c89",
-    "note": "These five outfit assets are unchanged from published Nyra 1.0.5, included in TWOS 1.0.6.",
+    "note": "Exact pinned Nyra 1.0.6 / 106 runtime artwork, unchanged from 1.0.5.",
     "outfits": [
       {
         "id": "runtime-default",
@@ -161,5 +161,7 @@
       "state": "SIGNED_OUT_PROVIDERS_AND_DISCONNECTED_CODEX",
       "privacy_review": "Saved image inspected: no account, private conversation, credential or personal path."
     }
-  ]
+  ],
+  "public_download_url": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.7",
+  "public_artifact_sha256": "dfab4718a0d345111fd54d5eb91ae3fdb4886003331dcc317e4dd6b21fb24af1"
 }
