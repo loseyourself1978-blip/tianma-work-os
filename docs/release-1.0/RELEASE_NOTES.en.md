@@ -1,8 +1,10 @@
-# TWOS 1.0.9 / 101.57 — Website navigation candidate
+# TWOS 1.0.9 / 101.57 — Website navigation repair
 
-Opens explicitly selected private-network HTTP dashboards on either side and keeps rejected addresses editable with a specific error. Ports remain visible; Cancel retains the original pane and a new address takes precedence over stale saved navigation. Final matching package and complete gate are pending. Nyra 1.0.6 / 106 is unchanged.
+Opens explicitly selected private-network HTTP dashboards on either side and keeps rejected addresses editable with a specific error. Ports remain visible; Cancel retains the original pane and a new address takes precedence over stale saved navigation. The final package and matching complete gate passed. Nyra 1.0.6 / 106 is unchanged.
 
 [Incremental guide](WEBSITE_NAVIGATION_FOLLOWUP.en.md)
+
+The matching signed package passed one complete serial gate: 1865 passed, 1 existing historical skip, 0 failures, including 38 real Safari measurements. Actual final-DMG UI checks cover both panes, explicit local/private HTTP navigation, editable invalid-input feedback, Cancel and saved state. No model task or old business execution was started for this repair. The preceding Codex connection repair and Nyra 1.0.6 / 106 remain unchanged. Owner acceptance is separate.
 
 ## TWOS 1.0.8 / 101.56 — Long-conversation connection repair
 
@@ -39,9 +41,4 @@ The matching release receipt identifies the complete gate, candidate, signatures
 macOS Apple Silicon only; Windows is in development with no download. Historical releases and original failure/PARTIAL records remain.
 
 
-[Current update](CODEX_HISTORY_REPAIR.en.md)
-
-
-## Unreleased development follow-up
-
-[Website address validation and private-network navigation](WEBSITE_NAVIGATION_FOLLOWUP.en.md). Final package and matching complete regression remain pending; this entry is not a public release claim.
+[Current update](WEBSITE_NAVIGATION_FOLLOWUP.en.md)

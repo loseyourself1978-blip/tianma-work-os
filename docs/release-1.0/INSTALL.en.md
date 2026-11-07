@@ -31,4 +31,4 @@ Advanced checksum check: run `shasum -a 256 -c SHA256SUMS` in the download folde
 [English / 简体中文](INSTALL.zh-CN.md)
 
 
-[Long-conversation Codex connection repair](WEBSITE_NAVIGATION_FOLLOWUP.en.md)
+[Website Open repair](WEBSITE_NAVIGATION_FOLLOWUP.en.md)

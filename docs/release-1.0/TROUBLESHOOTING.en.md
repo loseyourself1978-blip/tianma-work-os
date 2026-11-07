@@ -1,5 +1,7 @@
 # Troubleshooting
 
+[Current update: Website Open](WEBSITE_NAVIGATION_FOLLOWUP.en.md)
+
 TWOS 1.0.6 / 101.54 · [This update](AUTOSEND_AND_WARDROBE.en.md)
 
 [Current incremental instructions and exact boundaries](AUTOSEND_AND_WARDROBE.en.md).
@@ -33,11 +35,11 @@ The read-only link is bound to the exact signed producer, including its applicat
 [DeepSeek relay, five outfits and bilingual action voice](AUTOSEND_AND_WARDROBE.en.md)
 
 
-[Current update](CODEX_HISTORY_REPAIR.en.md)
+[Current update](WEBSITE_NAVIGATION_FOLLOWUP.en.md)
 
 - **Long-history connection error:** `invalid_or_oversized_jsonl` in 1.0.7 can indicate an oversized full-history response, not a login problem. See the [long-history follow-up](CODEX_HISTORY_REPAIR.en.md). Preserve drafts and authentication.
 
 
 ### Website Open silently closes in 1.0.8
 
-The private-network HTTP input rejection is being repaired; see the [candidate boundaries and exact steps](WEBSITE_NAVIGATION_FOLLOWUP.en.md). This is separate from Codex connection and does not require changing login data.
+The private-network HTTP input rejection is repaired in 1.0.9; see the [supported boundaries and exact steps](WEBSITE_NAVIGATION_FOLLOWUP.en.md). This is separate from Codex connection and does not require changing login data.

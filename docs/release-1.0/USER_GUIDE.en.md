@@ -1,5 +1,7 @@
 # Use TWOS 1.0.6
 
+[Current update: Website Open](WEBSITE_NAVIGATION_FOLLOWUP.en.md)
+
 TWOS 1.0.6 / 101.54 · [This update](AUTOSEND_AND_WARDROBE.en.md)
 
 [Current incremental instructions and exact boundaries](AUTOSEND_AND_WARDROBE.en.md).
@@ -45,4 +47,4 @@ The top **Language: English / 语言：简体中文** selector changes TWOS cont
 [DeepSeek relay, five outfits and bilingual action voice](AUTOSEND_AND_WARDROBE.en.md)
 
 
-[Current update](CODEX_HISTORY_REPAIR.en.md)
+[Current update](WEBSITE_NAVIGATION_FOLLOWUP.en.md)

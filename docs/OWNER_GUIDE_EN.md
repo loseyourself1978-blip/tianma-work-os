@@ -13,7 +13,7 @@ After the final delivery receipt identifies the installer, double-click the DMG 
 
 ## A · This upgrade only
 
-TWOS 1.0.9 / 101.57 candidate · Nyra 1.0.6 / 106 is unchanged
+TWOS 1.0.9 / 101.57 · Nyra 1.0.6 / 106 is unchanged
 
 [Website address and private-network navigation repair](release-1.0/WEBSITE_NAVIGATION_FOLLOWUP.en.md)
 

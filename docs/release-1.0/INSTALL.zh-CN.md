@@ -31,4 +31,4 @@ TWOS 1.0.9 / 101.57 · [本次增量](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
 [English / 简体中文](INSTALL.en.md)
 
 
-[长会话 Codex 连接修复](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
+[网页打开修复](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)

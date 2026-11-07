@@ -13,7 +13,7 @@
 
 ## A · 本次升级增量验收
 
-TWOS 1.0.9 / 101.57 候选 · Nyra 1.0.6 / 106 保持不变
+TWOS 1.0.9 / 101.57 · Nyra 1.0.6 / 106 保持不变
 
 [网页地址与局域网打开修复](release-1.0/WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
 

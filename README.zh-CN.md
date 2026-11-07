@@ -1,16 +1,12 @@
 # Tianma Work OS 1.0
 
-**开发候选：TWOS 1.0.9 / 101.57，修复局域网网页打开。完整门禁与发布待完成。** [候选增量](docs/release-1.0/WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
+**TWOS 1.0.9 / 101.57：修复私网网页打开及地址错误提示；Nyra 1.0.6 / 106 未改动。**
 
-**TWOS 1.0.8 / 101.56：修复长会话导致的 Codex 连接失败；Nyra 1.0.6 / 106 未改动。**
-
-本次修复本机 Codex 的长会话历史恢复；夜璃既有只读任务标签与点击返回行为保持不变。
+本次修复明确选择的私网网页打开及可编辑错误提示，保留原 Codex 历史修复；夜璃既有只读任务标签与点击返回行为保持不变。
 
 本版包含五套站姿／侧卧服装、13 段离线小田中文动作短句，以及 13 句使用本机女声的英文对应台词。声音默认静音；取消静音并开启动作语音后按实际动作播放，带冷却、不叠音。声音面板可通过关闭、Esc 或声音按钮收起。
 
-**TWOS 1.0.8 / build 101.56** · [下载与校验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.8) · [本次增量](docs/release-1.0/CODEX_HISTORY_REPAIR.zh-CN.md)
-
-
+**TWOS 1.0.9 / build 101.57** · [下载与校验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.9) · [本次更新](docs/release-1.0/WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
 
 [English](README.md) · [安装](docs/release-1.0/INSTALL.zh-CN.md) · [操作指南](docs/release-1.0/USER_GUIDE.zh-CN.md) · [当前发行状态](docs/CURRENT_DELIVERY.md)
 
@@ -24,7 +20,7 @@
 
 ## 下载与首次使用
 
-从上方链接下载 TWOS v1.0.8；打开 DMG 前核对 SHA256SUMS。匹配回执绑定源码、签名、公证和制品哈希。历史 v1.0.1 与 v1.0.0 保持不变。
+从上方链接下载 TWOS v1.0.9；打开 DMG 前核对 SHA256SUMS。匹配回执绑定源码、签名、公证和制品哈希。历史 v1.0.1 与 v1.0.0 保持不变。
 
 打开对应 DMG，拖入应用程序并启动。登录所选供应商官网，连接已安装/登录的官方本机 Codex，再创建或接续一个绑定目录的任务。Nyra 在同一 App 内，无需第二个桌宠安装包或首次联网下载画稿；普通安装无需 Python、Node 或终端。
 
@@ -45,6 +41,5 @@ TWOS 使用官方 Codex App Server 协议实现客户端，不是嵌入官方 ma
 [详细操作指南](docs/OWNER_GUIDE.md) · [仓库地图](docs/REPOSITORY_MAP.md) · [原本机项目](docs/LEGACY_OWNER_GUIDE.md) · [高级源码安装](docs/ADVANCED_INSTALLATION.md)。旧设计和阶段记录不代表当前安装包或接受状态。
 
 </details>
-
 
 [本次长会话连接修复](docs/release-1.0/CODEX_HISTORY_REPAIR.zh-CN.md)

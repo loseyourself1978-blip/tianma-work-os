@@ -1,4 +1,4 @@
-# TWOS 1.0.9 / 101.57 — Website address repair candidate
+# TWOS 1.0.9 / 101.57 — Website address repair
 
 The Owner reported that selecting **Website…**, entering a private-network HTTP address and clicking **Open** silently closed the address dialog on either side. In the installed 1.0.8 baseline, input validation accepted HTTP only on the local computer. The rejected address was handled like Cancel, before any WebKit navigation.
 
@@ -8,4 +8,14 @@ Choose **Website…** on the intended side → enter the complete address includ
 
 Addresses containing credentials, query parameters or fragments remain unsupported in the initial address sheet; the specific reason is displayed. Open the site without those parts and navigate within it. Public HTTP and non-HTTP(S) schemes remain blocked. This does not add automated handoff to arbitrary websites.
 
-Status: development implementation and limited isolated GUI checks; final packaged verification and the matching complete gate are still pending. The public download remains 1.0.8 until a verified successor is published. Do not replace an installed app with an engineering candidate. No new Owner acceptance is asserted.
+Status: signed, notarized and validated. The matching GitHub Release determines public download availability. Owner acceptance is not implied.
+
+## Matching validation
+
+The matching signed package passed one complete serial gate: 1865 passed, 1 existing historical skip, 0 failures, including 38 real Safari measurements. Actual final-DMG UI checks cover both panes, explicit local/private HTTP navigation, editable invalid-input feedback, Cancel and saved state. No model task or old business execution was started for this repair. The preceding Codex connection repair and Nyra 1.0.6 / 106 remain unchanged. Owner acceptance is separate.
+
+## Actual starting workspace
+
+![TWOS 1.0.9](images/twos-1.0.9-101.57.png)
+
+Final-DMG window: signed-out websites and disconnected Codex. No private page or conversation is pictured. This is a starting-state image, not a task-success receipt.
