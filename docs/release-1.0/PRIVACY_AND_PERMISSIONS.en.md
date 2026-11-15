@@ -2,7 +2,7 @@
 
 > **Development continuation — not yet published:** [Focus, compact task controls and shared left/right Codex navigation](FOCUS_AND_TASK_CONTROLS.en.md). The new user-control channel carries explicitly selected drafts/supplements; the original status channel remains read-only. Earlier read-only-only descriptions below refer to the released baseline, not the pending control-enabled build.
 
-TWOS 1.0.6 / 101.54 · [This update](AUTOSEND_AND_WARDROBE.en.md)
+TWOS 1.0.10 / 101.58 · [This update](FOCUS_AND_TASK_CONTROLS.en.md)
 
 [Current incremental instructions and exact boundaries](AUTOSEND_AND_WARDROBE.en.md).
 
@@ -24,6 +24,6 @@ Automatic exchange saves only the explicitly authorized instructions/replies and
 [DeepSeek relay, five outfits and bilingual action voice](AUTOSEND_AND_WARDROBE.en.md)
 
 
-[Current candidate delta](CODEX_CONNECTION_AND_TASK_LABELS.en.md)
+[Current candidate delta](FOCUS_AND_TASK_CONTROLS.en.md)
 
 Nyra’s task editor additionally keeps at most one local `task-input-recovery.json` in its application state directory before transmitting a draft/control operation. It contains only the explicitly entered text, a bounded task title/provider and opaque target identity; no attachments or credentials. The file is owner-only (0600), its directory is 0700, and a matching acknowledged save/delivery clears it. Retained recovery is displayed copy-only after reopening; it is never automatically sent. Discard requires an explicit local confirmation.

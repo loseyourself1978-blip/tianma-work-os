@@ -4,7 +4,7 @@
 
 [本次更新：网页打开](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
 
-TWOS 1.0.6 / 101.54 · [本次增量](AUTOSEND_AND_WARDROBE.zh-CN.md)
+TWOS 1.0.10 / 101.58 · [本次增量](FOCUS_AND_TASK_CONTROLS.zh-CN.md)
 
 [本次增量操作和准确边界](AUTOSEND_AND_WARDROBE.zh-CN.md)。
 

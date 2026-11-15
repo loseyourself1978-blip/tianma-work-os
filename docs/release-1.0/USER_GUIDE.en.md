@@ -1,10 +1,10 @@
-# Use TWOS 1.0.6
+# Use TWOS 1.0.10
 
 > **Development continuation — not yet published:** [Focus, compact task controls and shared left/right Codex navigation](FOCUS_AND_TASK_CONTROLS.en.md). The new user-control channel carries explicitly selected drafts/supplements; the original status channel remains read-only. Earlier read-only-only descriptions below refer to the released baseline, not the pending control-enabled build.
 
 [Current update: Website Open](WEBSITE_NAVIGATION_FOLLOWUP.en.md)
 
-TWOS 1.0.6 / 101.54 · [This update](AUTOSEND_AND_WARDROBE.en.md)
+TWOS 1.0.10 / 101.58 · [This update](FOCUS_AND_TASK_CONTROLS.en.md)
 
 [Current incremental instructions and exact boundaries](AUTOSEND_AND_WARDROBE.en.md).
 
@@ -21,7 +21,7 @@ Choose the path matching your situation; they are not one mandatory sequence.
 
 The service selectors bind the actual destination. Select only the intended text/attachments. A ready supported web target can submit with one click. Draft-only, login, challenge and uncertain delivery are explicit states; uncertain delivery must be reconciled rather than blindly resent. Web providers can return code but do not thereby create local files. A later Codex file-writing request is a separate handoff. TWOS uses native WKWebView and an App Server client, not an embedded official Codex macOS GUI.
 
-Expand actual tool activity, commands, output, diffs and approvals in the right pane. Usage separates account windows from locally observed task tokens. Elapsed time is observed run time, not billed compute time. ETA is a labelled local estimate or an explanation that evidence is insufficient. Completion of transport, business result, verification and Owner acceptance remain distinct.
+Expand actual tool activity, commands, output, diffs and approvals in whichever pane hosts Codex. Usage separates account windows from locally observed task tokens. Elapsed time is observed run time, not billed compute time. ETA is a labelled local estimate or an explanation that evidence is insufficient. Completion of transport, business result, verification and Owner acceptance remain distinct.
 
 A file card may offer **Open webpage** (trusted host opens the exact authorized file), **View file** (read), **Save as…** (choose a copy destination), or **Show in Finder** (locate the original). A one-file task correctly has one artifact. Untrusted HTML runs outside the authenticated product page/native bridge.
 
@@ -50,3 +50,7 @@ The top **Language: English / 语言：简体中文** selector changes TWOS cont
 
 
 [Current update](WEBSITE_NAVIGATION_FOLLOWUP.en.md)
+
+## Direct task controls
+
+Click the character once to restore the bound TWOS workbench. The compact task bubble has a direct pencil and Stop. The pencil opens a focused IME-capable editor; Enter sends, Shift+Enter inserts a line, Escape closes. Normal drafts are autosaved; a queued revision is saved only explicitly. A running owned Codex turn supports Steer; web tasks use send-after-completion. Target changes retain the input rather than redirecting it. Stop first fences future dispatch and then interrupts only the bound task. The display changes to Stopping immediately, and to Stopped only on confirmed cancellation. Failed confirmation remains visible. See the [incremental guide](FOCUS_AND_TASK_CONTROLS.en.md) for exact authority and recovery boundaries.

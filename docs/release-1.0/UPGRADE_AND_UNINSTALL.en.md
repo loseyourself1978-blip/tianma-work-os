@@ -2,7 +2,7 @@
 
 > **Development continuation — not yet published:** [Focus, compact task controls and shared left/right Codex navigation](FOCUS_AND_TASK_CONTROLS.en.md). The new user-control channel carries explicitly selected drafts/supplements; the original status channel remains read-only. Earlier read-only-only descriptions below refer to the released baseline, not the pending control-enabled build.
 
-TWOS 1.0.6 / 101.54 · [This update](AUTOSEND_AND_WARDROBE.en.md)
+TWOS 1.0.10 / 101.58 · [This update](FOCUS_AND_TASK_CONTROLS.en.md)
 
 [Current incremental instructions and exact boundaries](AUTOSEND_AND_WARDROBE.en.md).
 

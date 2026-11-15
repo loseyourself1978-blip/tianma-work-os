@@ -2,7 +2,7 @@
 
 > **开发接续——尚未公开发布：** [单击返回、紧凑任务控制及左右共用 Codex 导航](FOCUS_AND_TASK_CONTROLS.zh-CN.md)。新用户控制通道传递本人选定的草稿／补充；旧状态通道保持只读。下文仅只读的描述适用于已发布基线，不代表待交付控制版。
 
-TWOS 1.0.6 / 101.54 · [本次增量](AUTOSEND_AND_WARDROBE.zh-CN.md)
+TWOS 1.0.10 / 101.58 · [本次增量](FOCUS_AND_TASK_CONTROLS.zh-CN.md)
 
 [本次增量操作和准确边界](AUTOSEND_AND_WARDROBE.zh-CN.md)。
 
@@ -24,6 +24,6 @@ Nyra 状态通道仅接收有界只读状态和不透明关联标识，不接收
 [DeepSeek 接力、五套服装与双语动作语音](AUTOSEND_AND_WARDROBE.zh-CN.md)
 
 
-[本轮候选差量](CODEX_CONNECTION_AND_TASK_LABELS.zh-CN.md)
+[本轮候选差量](FOCUS_AND_TASK_CONTROLS.zh-CN.md)
 
 夜璃任务输入器在传输草稿或控制操作前，额外在自身应用状态目录保留最多一份 `task-input-recovery.json`。仅含明确输入的文字、有限任务标题／提供方及不透明目标标识，不含附件或凭据。文件仅当前用户可读写（0600），目录权限为 0700；匹配的保存／投递确认后清除。重开后保留的恢复文字只能查看复制，不会自动发出；丢弃需在本机明确确认。

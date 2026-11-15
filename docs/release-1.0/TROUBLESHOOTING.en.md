@@ -4,7 +4,7 @@
 
 [Current update: Website Open](WEBSITE_NAVIGATION_FOLLOWUP.en.md)
 
-TWOS 1.0.6 / 101.54 · [This update](AUTOSEND_AND_WARDROBE.en.md)
+TWOS 1.0.10 / 101.58 · [This update](FOCUS_AND_TASK_CONTROLS.en.md)
 
 [Current incremental instructions and exact boundaries](AUTOSEND_AND_WARDROBE.en.md).
 

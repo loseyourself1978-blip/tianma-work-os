@@ -1,10 +1,10 @@
-# 使用 TWOS 1.0.6
+# 使用 TWOS 1.0.10
 
 > **开发接续——尚未公开发布：** [单击返回、紧凑任务控制及左右共用 Codex 导航](FOCUS_AND_TASK_CONTROLS.zh-CN.md)。新用户控制通道传递本人选定的草稿／补充；旧状态通道保持只读。下文仅只读的描述适用于已发布基线，不代表待交付控制版。
 
 [本次更新：网页打开](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
 
-TWOS 1.0.6 / 101.54 · [本次增量](AUTOSEND_AND_WARDROBE.zh-CN.md)
+TWOS 1.0.10 / 101.58 · [本次增量](FOCUS_AND_TASK_CONTROLS.zh-CN.md)
 
 [本次增量操作和准确边界](AUTOSEND_AND_WARDROBE.zh-CN.md)。
 
@@ -50,3 +50,7 @@ Nyra 只读最小状态。空闲、运行、排队/等待、partial/失败/取�
 
 
 [本次更新](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
+
+## 直接任务控制
+
+单击人物返回准确绑定的 TWOS 工作台。紧凑任务气泡直接提供铅笔和停止。铅笔打开有键盘焦点且支持中文输入法的编辑器；Enter 发送、Shift+Enter 换行、Esc 关闭。普通草稿自动保存；排队内容的修订需明确保存。TWOS 控制的 Codex 活动轮次支持 Steer，网页任务采用完成后发送。目标变化保留输入，不改投其他任务。停止先禁止后续派发，再中断绑定任务，立即显示正在停止；只有确认取消才显示已停止，无法确认时保留具体反馈。权限与恢复边界见[差量指南](FOCUS_AND_TASK_CONTROLS.zh-CN.md)。
