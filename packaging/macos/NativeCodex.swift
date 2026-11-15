@@ -1892,6 +1892,19 @@ extension NativeCodex {
               completed.doubleValue >= ((turn["startedAt"] as? NSNumber)?.doubleValue ?? 0) else { return nil }
         return status
     }
+    func isCurrentDispatch(_ item: CodexSubmission) -> Bool {
+        guard item.thread == threadID, item.id == activeSubmission,
+              ["preparing", "sending", "accepted", "running"].contains(item.state),
+              ledger.bindings[item.thread]?.directory == item.directory,
+              !ledger.paused.contains(item.thread), !stoppedSubmissions.contains(item.id),
+              item.userStopRequested != true else { return false }
+        if let turn = turnID {
+            return item.turn == turn && controlledThreads.contains(item.thread)
+        }
+        // Local dispatch is still proving scope / awaiting the exact receipt.
+        // Keeping its pending identity grants no turn control and sends nothing.
+        return startingTurn && item.turn == nil
+    }
     func reconcileSavedInputs(_ turns: [[String: Any]]) {
         guard let id = threadID else { return }
         for turn in turns {
@@ -1900,6 +1913,11 @@ extension NativeCodex {
             let items = turn["items"] as? [[String: Any]] ?? []
             let clients = Set(items.filter { $0["type"] as? String == "userMessage" }.compactMap { $0["clientId"] as? String })
             for index in ledger.submissions.indices where ledger.submissions[index].thread == id && clients.contains(ledger.submissions[index].id) {
+                // A history request may predate this local dispatch, or observe
+                // queue consumption before its live turn event. Neither can
+                // invalidate the in-flight input nor assign control from history.
+                if terminal == nil, isCurrentDispatch(ledger.submissions[index]),
+                   ledger.submissions[index].turn == nil { continue }
                 ledger.submissions[index].turn = tid
                 ledger.submissions[index].state = terminal ?? (tid == turnID && controlledThreads.contains(id) ? "accepted" : "unknown")
                 if terminal == "completed" {
@@ -1908,9 +1926,14 @@ extension NativeCodex {
                 handoffChanged?(ledger.submissions[index])
             }
         }
-        let unresolved = ledger.submissions.contains { $0.thread == id && ["preparing", "sending", "accepted", "running", "unknown"].contains($0.state) && !($0.turn == turnID && turnID != nil && controlledThreads.contains(id) && $0.state != "unknown") }
+        let unresolved = ledger.submissions.contains {
+            $0.thread == id && ["preparing", "sending", "accepted", "running", "unknown"].contains($0.state) &&
+            !isCurrentDispatch($0) &&
+            !($0.turn == turnID && turnID != nil && controlledThreads.contains(id) && $0.state != "unknown")
+        }
         if unresolved { uncertain = true }
-        if !unresolved, readMap("codex-pending.json")[id]?.hasPrefix("client:") == true { clearPending() }
+        let liveDispatch = ledger.submissions.contains { isCurrentDispatch($0) }
+        if !unresolved, !liveDispatch, readMap("codex-pending.json")[id]?.hasPrefix("client:") == true { clearPending() }
         persistLedger(); publishQueue(); controlState()
     }
     func reconcileDelivery() {

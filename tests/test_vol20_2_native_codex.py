@@ -428,6 +428,49 @@ func acceptedColdInput(_ name: String) -> CodexSubmission {
 func exactQueue(_ record: CodexSubmission) -> [String: Any] {
     ["id":"saved-queue","clientUserMessageId":record.id,"input":record.input]
 }
+// A background history read may finish after the user starts a new delivery.
+// Its old page must not turn this client's in-flight request into an unknown
+// delivery and disable the exact-turn Steer/Stop controls for the entire run.
+for phase in ["preparing", "sending", "accepted", "running"] {
+    probe("history-overlaps-dispatch-"+phase,controlled:true)
+    client.loadHistory(older:false,background:true)
+    client.submitComposer(["text":"TEST ONLY delayed history","model":"model-a","effort":"low"])
+    let own=client.ledger.submissions.last!
+    if phase != "preparing" {
+        reply("thread/settings/update",[:]);reply("thread/read",["thread":verifiedThread()]);reply("thread/queue/list",["data":[]])
+    }
+    if ["accepted","running"].contains(phase) {
+        reply("thread/queue/add",["queuedSubmission":["id":"history-race-queue","clientUserMessageId":own.id]])
+    }
+    if phase == "running" {
+        event("turn/started",["threadId":id,"turn":["id":"history-race-turn"]])
+        event("item/started",["threadId":id,"turnId":"history-race-turn","item":["id":"history-race-user","type":"userMessage","clientId":own.id,"content":[]]])
+    }
+    let beforeHistory=client.requestID
+    let pendingBeforeHistory=client.readMap("codex-pending.json")[id]
+    reply("thread/turns/list",["data":[["id":"older-turn","status":"completed","completedAt":10,"items":[]]]])
+    precondition(!client.uncertain && client.activeSubmission==own.id,
+                 "stale history cannot invalidate this client's live "+phase+" delivery")
+    precondition(client.ledger.submissions.count==1 && client.requestID==beforeHistory,
+                 "history reconciliation neither replays delivery nor acquires new control")
+    precondition(client.readMap("codex-pending.json")[id]==pendingBeforeHistory,
+                 "old history preserves the exact in-flight recovery marker")
+    if phase == "accepted" {
+        client.reconcileSavedInputs([["id":"history-before-live-turn","status":"inProgress","items":[
+            ["id":"history-before-live-user","type":"userMessage","clientId":own.id]
+        ]]])
+        precondition(!client.uncertain && client.turnID==nil && client.ledger.submissions[0].turn==nil,
+                     "history may see consumption first, but cannot grant active-turn control")
+        precondition(client.readMap("codex-pending.json")[id]==pendingBeforeHistory,
+                     "history cannot erase a pending receipt before its live event")
+    }
+    if phase == "running" {
+        event("item/started",["threadId":id,"turnId":"history-race-turn","item":["id":"foreign-input","type":"userMessage","clientId":"another-client"]])
+        client.reconcileSavedInputs([])
+        precondition(client.uncertain && client.ledger.paused.contains(id),
+                     "keeping a live local request must never clear a foreign-writer conflict")
+    }
+}
 var cold=acceptedColdInput("cold-queue-start")
 precondition(cold.state == "accepted" && cold.turn == nil && client.startingTurn)
 let pendingCount=client.requestID

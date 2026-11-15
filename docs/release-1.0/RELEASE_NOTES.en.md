@@ -4,6 +4,8 @@ Candidate with Nyra 1.0.7 / 107. Final complete regression and publication are p
 
 [Incremental guide](FOCUS_AND_TASK_CONTROLS.en.md)
 
+Final-candidate testing also found and repaired a delayed-history/dispatch race that disabled exact-task controls until a run ended. The replacement package must pass real control checks and the complete gate before publication; earlier partial runs are not a release PASS.
+
 ## TWOS 1.0.9 / 101.57 — Website navigation repair
 
 > **Development continuation — not yet published:** [Focus, compact task controls and shared left/right Codex navigation](FOCUS_AND_TASK_CONTROLS.en.md). The new user-control channel carries explicitly selected drafts/supplements; the original status channel remains read-only. Earlier read-only-only descriptions below refer to the released baseline, not the pending control-enabled build.
