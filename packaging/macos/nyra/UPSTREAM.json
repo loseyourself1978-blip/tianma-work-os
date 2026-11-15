@@ -5,11 +5,11 @@
   "source": "Pinned Nyra release source",
   "scope": "sources and public runtime artwork/audio only; no account/state/preferences imported",
   "original_sha256": {
-    "Sources/CompanionControls.swift": "a8891beb9e2c845c4c0a17c1a4e48a898c8b828a79aafccc1b60f86e742be6e4",
-    "Sources/NyraAudio.swift": "75613a8dce1ffcc310fa703cb712b9a810d78df8f9243004129e01a053db9ee9",
-    "Sources/PreviewCore.swift": "19f9c12eb09e1d339ccee569acac55944dd3909457ec155adb0e7400ba99d7b1",
+    "Sources/CompanionControls.swift": "a4b5931a71ab012fc2b3734c07f4e24ea9cc8b9eddfa4b05f4135c77db76f457",
+    "Sources/NyraAudio.swift": "d4770ddb3e87d1d168600159f64d5184fa51181e7a203f031a109a3fa970abff",
+    "Sources/PreviewCore.swift": "4ae83fbd4af72d980cc4185f81505995c9a9bcc22019b96e0153befd86cc44af",
     "Sources/RuntimeAnimation.swift": "dab216f0904dabc7188ab9e173a56f94ce0265f6a59b7af15e50698caec007ac",
-    "Sources/main.swift": "24c11ca13750172816d411f8c8a7decd17180900918f971d5929b22467fcf193",
+    "Sources/main.swift": "0901f374e7ab31683f81455543f966691758f5f991e6bc286103092f47332782",
     "Resources/assets/gala-reference.png": "12d83211ad0016209df8d0d43ef18114d0847ed37e72cfc5f80a4eceb62bb7b4",
     "Resources/assets/office-reference.png": "6cbb69ca7540d2aa4c8a2a356453a9201decc864c27f687473b993df82b307bb",
     "Resources/assets/outfits.json": "8a2145be4c2e1f6715fe84e756b87b82e9d3e93de2babe2522a789d9cc86a905",
@@ -99,8 +99,8 @@
     "Resources/audio/outfit.wav": "3b6ac6a802dea4ad3ccaa647931d49d88485e2d234ad0659ba7939a1512a2d01",
     "Resources/audio/provenance.json": "0ade17752de274d17256c60f9122b3a15767cd2cb18ebc4a3b9ff7bfcee21bdd"
   },
-  "source_commit": "4f1f515a0ebe602b58eaf74e59ca4f4dbf21083e",
-  "source_snapshot": "36dbcff487f5f56479b40657df436766cdf5f531fdc220f4c91131adb2d5c74f",
+  "source_commit": "a897169abfae4eb4535940420097ff9dbdf621a1",
+  "source_snapshot": "08397324d353221c9e04e685fe409f2dd563c471541c9c9ce931070edd3d51c3",
   "event_schema": "twos.nyra.status.v4",
   "control_schema": "twos.nyra.control.v1",
   "source_clean": true

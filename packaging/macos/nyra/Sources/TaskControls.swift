@@ -70,7 +70,29 @@ final class CompanionTaskCard:NSObject {
     var onAction:((String)->Void)?
     var onFocus:((String)->Void)?
     var onAppend:(([String:Any])->Void)?
-    var onStop:(([String:Any])->Void)?
+    var onStop:(([String:Any],String)->Void)?
+    struct StopAttempt {
+        let id:String,target:String,started:Double,at:Double
+        var response:String?,error:String?,finished:Double?
+    }
+    var stopAttempt:StopAttempt?
+    var stopObservation:[String:Any] {
+        guard let attempt=stopAttempt else{return [:]}
+        var value:[String:Any]=["id":attempt.id,"target":attempt.target,"clickedAt":attempt.at,
+            "elapsedMs":Int(max(0,(attempt.finished ?? ProcessInfo.processInfo.systemUptime)-attempt.started)*1000),
+            "response":attempt.response ?? "awaiting_response"]
+        if let error=attempt.error{value["error"]=error}
+        return value
+    }
+    func finishStop(_ id:String,target:String,result:[String:Any]) {
+        // A late callback cannot change another task or a newer user action.
+        guard var attempt=stopAttempt,attempt.id==id,attempt.target==target else{return}
+        attempt.finished=ProcessInfo.processInfo.systemUptime
+        attempt.response=result["state"] as? String
+        attempt.error=result["error"] as? String
+        if attempt.response != "stopping" && attempt.error==nil {attempt.error="STOP_TERMINAL_NOT_CONFIRMED"}
+        stopAttempt=attempt;render();onAction?("stop_response")
+    }
     var task:[String:Any]?{rows.first{$0["target"] as? String==selected} ?? rows.first}
     override init(){
         super.init();panel.isReleasedWhenClosed=false;panel.isOpaque=false;panel.backgroundColor = .clear;panel.level = NSWindow.Level(rawValue:NSWindow.Level.floating.rawValue+1);panel.hidesOnDeactivate=false;panel.title="Nyra · Task controls"
@@ -118,13 +140,27 @@ final class CompanionTaskCard:NSObject {
     func render(){
         guard let task=task else{panel.orderOut(nil);return}
         let current=fresh && task["fresh"] as? Bool==true
-        let state=current ? Self.state(task["state"] as? String ?? "",zh:zh):(zh ? "状态待更新":"Status awaiting update")
+        let taskState=task["state"] as? String ?? ""
+        let terminal=["idle","completed_unverified","verified_success","partial","failed","cancelled"].contains(taskState)
+        let attempt=stopAttempt.flatMap{$0.target==task["target"] as? String ? $0:nil}
+        let stopping=attempt != nil && !terminal
+        var state=current ? Self.state(taskState,zh:zh):(zh ? "状态待更新":"Status awaiting update")
+        var stopDetail:String?
+        if current,stopping,let attempt=attempt {
+            if let error=attempt.error {
+                state=zh ? "停止未确认":"Stop unconfirmed"
+                stopDetail=CompanionControlText.error(error,zh:zh)
+            } else if ProcessInfo.processInfo.systemUptime-attempt.started>=12 {
+                state=zh ? "停止未确认":"Stop unconfirmed"
+                stopDetail=zh ? "尚未收到终态；请在 TWOS 核对，不会自动重试。":"No terminal state received. Check TWOS; no automatic retry."
+            } else {state=zh ? "正在停止…":"Stopping…"}
+        }
         title.title=task["title"] as? String ?? (zh ? "标题暂不可用":"Title unavailable");title.isHidden=false
         let side=task["side"] as? String=="left" ? (zh ? "左侧":"Left"):(zh ? "右侧":"Right")
         subtitle.title=side+" · "+(task["provider"] as? String ?? "")+" · "+state;subtitle.isHidden=false
         title.setAccessibilityLabel(title.title+(zh ? " · 返回 TWOS":" · Return to TWOS"))
         subtitle.setAccessibilityLabel(subtitle.title)
-        title.toolTip=title.title;subtitle.toolTip=task["reason"] as? String
+        title.toolTip=title.title;subtitle.toolTip=stopDetail ?? task["reason"] as? String
         expand.image=NSImage(systemSymbolName:expanded ? "chevron.up":"chevron.down",accessibilityDescription:zh ? (expanded ? "收起任务操作":"展开任务操作"):(expanded ? "Hide task controls":"Show task controls"))
         expand.setAccessibilityLabel(zh ? (expanded ? "收起任务操作":"展开任务操作"):(expanded ? "Hide task controls":"Show task controls"))
         append.title="";append.isBordered=false
@@ -134,7 +170,14 @@ final class CompanionTaskCard:NSObject {
         stop.image=NSImage(systemSymbolName:"stop.fill",accessibilityDescription:zh ? "停止":"Stop")
         stop.setAccessibilityLabel(zh ? "停止当前任务":"Stop current task")
         append.isEnabled=current && authorized && (task["canEdit"] as? Bool ?? task["canAppend"] as? Bool ?? false)
-        stop.isEnabled=current && authorized && task["canStop"] as? Bool==true
+        stop.isEnabled=current && authorized && task["canStop"] as? Bool==true && attempt==nil
+        stop.toolTip=stop.isEnabled ? (zh ? "停止已选任务及其待发队列":"Stop the selected task and its queued input") :
+            stopDetail ?? (!current ? (zh ? "状态待更新，请在 TWOS 核对":"Status awaiting update; check TWOS") :
+                terminal ? (zh ? "此执行已结束，无需再次停止":"This execution has ended; nothing remains to stop") :
+                stopping || taskState=="stopping" ? (zh ? "已请求停止，正在等待真实终态":"Stop requested; waiting for the actual terminal state") :
+                !authorized ? (zh ? "请在 TWOS 授权任务控制":"Authorize task controls in TWOS") :
+                (zh ? "此任务不能由 TWOS 停止，请在原控制端操作":"TWOS cannot stop this task; use its original controller"))
+        stop.setAccessibilityHelp(stop.toolTip)
         let unavailable = !current ? (zh ? "状态待更新；请回到 TWOS 核对连接":"Status awaiting update; check the connection in TWOS") : !authorized ? (zh ? "在 TWOS 连接并授权任务控制":"Connect and authorize task controls in TWOS") : (zh ? "此任务由原客户端控制；请在原客户端编辑":"This task belongs to its original controller; edit it there")
         append.toolTip=append.isEnabled ? (zh ? "打开已选任务的指令编辑器":"Open the selected task's input editor"):unavailable
         if !append.isEnabled {append.toolTip=unavailable}
@@ -159,7 +202,12 @@ final class CompanionTaskCard:NSObject {
     @objc func selectTask(){guard rows.indices.contains(picker.indexOfSelectedItem) else{return};selected=rows[picker.indexOfSelectedItem]["target"] as? String;render()}
     @objc func focus(){if let target=task?["target"] as? String{onFocus?(target)}}
     @objc func edit(){guard append.isEnabled,let task=task else{return};onAction?("append_clicked");onAppend?(task)}
-    @objc func stopTask(){if let task=task{stop.isEnabled=false;onStop?(task)}}
+    @objc func stopTask(){
+        guard stop.isEnabled,let task=task,let target=task["target"] as? String,let action=onStop else{return}
+        let id=UUID().uuidString
+        stopAttempt=StopAttempt(id:id,target:target,started:ProcessInfo.processInfo.systemUptime,at:Date().timeIntervalSince1970)
+        render();onAction?("stop_clicked");action(task,id)
+    }
     func position(anchor:NSRect,screen:NSScreen){
         lastAnchor=anchor;lastScreen=screen
         let safe=screen.visibleFrame.insetBy(dx:8,dy:8),size=panel.frame.size
@@ -412,11 +460,11 @@ extension Companion {
         editor.panel.setFrameOrigin(NSPoint(x:max(safe.minX,min(taskCard.panel.frame.midX-size.width/2,safe.maxX-size.width)),y:max(safe.minY,min(taskCard.panel.frame.maxY+6,safe.maxY-size.height))))
         editor.panel.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true);editor.panel.makeFirstResponder(editor.text);editor.load();writePlaybackState("task_editor_opened")
     }
-    func stopCompanionTask(_ task:[String:Any]){
+    func stopCompanionTask(_ task:[String:Any],actionID:String){
         guard let target=task["target"] as? String else{return}
         taskControl.request("stop",selection:live.selection,values:["target":target]){[weak self] result in
             guard let self=self else{return}
-            if let error=result["error"] as? String{self.taskCard.title.title=CompanionControlText.error(error,zh:self.taskControl.language=="zh");self.taskCard.title.toolTip=error}
+            self.taskCard.finishStop(actionID,target:target,result:result)
             self.refreshCompanionTasks()
         }
     }

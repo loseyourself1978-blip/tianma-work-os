@@ -736,6 +736,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
             "user_control_observation":["authorized":taskControl.authorized,"taskCount":taskControl.tasks.count,"receivedUptime":taskControl.received,"error":taskControl.error ?? "",
                 "bubbleExpanded":taskCard.expanded,"bubbleVisible":taskCard.panel.isVisible,
                 "selectedSide":taskCard.task?["side"] as? String ?? "", "appendEnabled":taskCard.append.isEnabled,
+                "stopEnabled":taskCard.stop.isEnabled,"stopAction":taskCard.stopObservation,
                 "editorVisible":taskEditor?.panel.isVisible ?? false,"editorKey":taskEditor?.panel.isKeyWindow ?? false,
                 "rows":taskControl.tasks.map{row in row.filter{["side","provider","target","scope","state","reason","fresh","canEdit","canAppend","canStop","canSteer"].contains($0.key)}}]]
         if let data = try? JSONSerialization.data(withJSONObject: state, options: [.sortedKeys]) {
@@ -864,7 +865,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         taskCard.onAction={ [weak self] in self?.writePlaybackState("task_card_"+$0) }
         taskCard.onFocus={ [weak self] in self?.focusCompanionTask($0) }
         taskCard.onAppend={ [weak self] in self?.showTaskEditor($0) }
-        taskCard.onStop={ [weak self] in self?.stopCompanionTask($0) }
+        taskCard.onStop={ [weak self] task,id in self?.stopCompanionTask(task,actionID:id) }
         // Older hosts remain visibly read-only; never invent control success.
         let legacy=taskControl.tasks.isEmpty ? (liveReducer.current?.task_labels ?? []):[]
         let legacyText=legacy.map(\.text).joined(separator:"\n")+(fresh ? "":" · 待更新 / Awaiting update")
