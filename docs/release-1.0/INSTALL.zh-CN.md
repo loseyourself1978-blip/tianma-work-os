@@ -1,13 +1,13 @@
-# 安装 Tianma Work OS 1.0.9
+# 安装 Tianma Work OS 1.0.10
 
 > **开发接续——尚未公开发布：** [单击返回、紧凑任务控制及左右共用 Codex 导航](FOCUS_AND_TASK_CONTROLS.zh-CN.md)。新用户控制通道传递本人选定的草稿／补充；旧状态通道保持只读。下文仅只读的描述适用于已发布基线，不代表待交付控制版。
 
-TWOS 1.0.9 / 101.57 · [本次增量](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
+TWOS 1.0.10 / 101.58 · [本次增量](FOCUS_AND_TASK_CONTROLS.zh-CN.md)
 
-[本次增量操作和准确边界](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)。
+[本次增量操作和准确边界](FOCUS_AND_TASK_CONTROLS.zh-CN.md)。
 
 
-适用 TWOS 1.0.9 / build 101.57；公开下载以对应 GitHub Release 为准，源码、签名、公证及系统覆盖见配套发行回执。
+适用 TWOS 1.0.10 / build 101.58；公开下载以对应 GitHub Release 为准，源码、签名、公证及系统覆盖见配套发行回执。
 
 当前仅支持 macOS。Windows 版本开发中，尚无可下载版本。当前 TWOS 包为 Apple Silicon，工程实测为 macOS 27.0.1 / Safari 27.0.1。编译下限不代表所有旧系统都已测试，其他系统请先核对发行支持表。
 
@@ -33,4 +33,4 @@ TWOS 1.0.9 / 101.57 · [本次增量](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
 [English / 简体中文](INSTALL.en.md)
 
 
-[网页打开修复](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
+[网页打开修复](FOCUS_AND_TASK_CONTROLS.zh-CN.md)

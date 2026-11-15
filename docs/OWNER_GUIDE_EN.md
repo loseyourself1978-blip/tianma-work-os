@@ -1,6 +1,6 @@
 # TWOS 1.0 · Installation and use
 
-**Applies to TWOS 1.0.9 / build 101.57, including Nyra 1.0.6 / build 106.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md)
+**Applies to TWOS 1.0.10 / build 101.58, including Nyra 1.0.7 / build 107.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md)
 
 **Installation and version: use `START_HERE.html` in this bilingual guide, the [release receipt](release-1.0/release.json), and the actual GitHub Release status. Use the matching receipt to verify the complete engineering gate, signing and notarization; Owner differential acceptance is separate.**
 Discuss on the official ChatGPT website in the left pane, execute with the local Codex service in the right pane, and return results to the original discussion. The right pane is TWOS's own client for the official App Server protocol; it does not embed the entire official Codex macOS interface.
@@ -13,11 +13,11 @@ After the final delivery receipt identifies the installer, double-click the DMG 
 
 ## A · This upgrade only
 
-TWOS 1.0.9 / 101.57 · Nyra 1.0.6 / 106 is unchanged
+TWOS 1.0.10 / 101.58 · Nyra 1.0.7 / 107 candidate; final complete regression and publication remain pending.
 
-[Website address and private-network navigation repair](release-1.0/WEBSITE_NAVIGATION_FOLLOWUP.en.md)
+[Focus, compact task controls and shared Codex navigation](release-1.0/FOCUS_AND_TASK_CONTROLS.en.md)
 
-After installing the matching verified release, choose **Website…** on the intended side, enter a complete HTTPS or private-network HTTP address and port, then **Open**. Confirm that side loads the intended page and origin. Unsupported input must remain editable with a reason; Cancel must retain the original pane. End here. Do not repeat Nyra, old Codex tasks or accepted business tests.
+After installing the matching verified release, inspect the Codex project/chat sidebar and recent history on either side. Click Nyra to return to the bound workbench; use the compact bubble’s pencil and Stop for the exact authorized task. Official-app active chats remain read-only. Supplement only work you actually intend to continue; do not replay an old task for this check. End here. Do not repeat accepted webpages, outfits, audio or business tasks.
 
 ## B · First task
 

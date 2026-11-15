@@ -1,4 +1,10 @@
-# TWOS 1.0.9 / 101.57 — Website navigation repair
+# TWOS 1.0.10 / 101.58 — Nyra focus and task controls
+
+Candidate with Nyra 1.0.7 / 107. Final complete regression and publication are pending. Shared left/right Codex project/chat navigation and bounded recent-history readback; compact Nyra input and exact-task controls on a separate authenticated channel. Source launcher, bundled legacy UI, native client identity and installer now use the same version. Existing acceptance and original failures are preserved.
+
+[Incremental guide](FOCUS_AND_TASK_CONTROLS.en.md)
+
+## TWOS 1.0.9 / 101.57 — Website navigation repair
 
 > **Development continuation — not yet published:** [Focus, compact task controls and shared left/right Codex navigation](FOCUS_AND_TASK_CONTROLS.en.md). The new user-control channel carries explicitly selected drafts/supplements; the original status channel remains read-only. Earlier read-only-only descriptions below refer to the released baseline, not the pending control-enabled build.
 

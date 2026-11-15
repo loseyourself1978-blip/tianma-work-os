@@ -55,12 +55,15 @@ def _headless_browser() -> Path:
 def _geometry_fixture(surface: str) -> str:
     page = _source(HTML)
     styles = _source(STYLES)
+    assert '<meta name="twos-version" content="1.0.10">' in page
+    assert 'styles.css?v=1.0.10' in page
+    assert 'twos_command_center.js?v=1.0.10' in page
     page = page.replace(
-        '<link rel="stylesheet" href="/static_cockpit/vol12_static_mvp/styles.css?v=1.0.9">',
+        '<link rel="stylesheet" href="/static_cockpit/vol12_static_mvp/styles.css?v=1.0.10">',
         "<style>" + styles + "</style>",
     )
     page = page.replace(
-        '<script src="/static_cockpit/vol12_static_mvp/twos_command_center.js?v=1.0.9" defer></script>',
+        '<script src="/static_cockpit/vol12_static_mvp/twos_command_center.js?v=1.0.10" defer></script>',
         "",
     )
     page = page.replace(
