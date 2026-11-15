@@ -267,6 +267,13 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var selected = 0
     var showTaskLabels = true
     var hostActivationPending = false
+    let taskControl=NyraControlClient()
+    let taskCard=CompanionTaskCard()
+    var taskEditor:CompanionTaskEditor?
+    var activationNotice:String?
+    var lastFocusMeasurement:[String:Any]=[:]
+    var focusMeasurements:[[String:Any]]=[]
+    var pointerMonitors:[Any]=[]
     var panel: PetPanel!
     var panelView: PanelView!
     var stage: NSWindow?
@@ -400,7 +407,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let item = NSMenuItem(); let appMenu = NSMenu()
         let quit = NSMenuItem(title: "退出 / Quit", action: #selector(quit), keyEquivalent: "q")
         quit.target = self; appMenu.addItem(quit); item.submenu = appMenu
-        menu.addItem(item); NSApp.mainMenu = menu
+        menu.addItem(item);CompanionEditorMenu.install(in:menu); NSApp.mainMenu = menu
     }
 
     func makePanel() {
@@ -439,7 +446,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         panelView.art.onInput = { [weak self] name in self?.receiveInput(name) }
         panelView.configureHub()
         panelView.taskLabel.target=self;panelView.taskLabel.action=#selector(openTWOS)
-        panelView.art.onClick={ [weak self] in self?.openTWOS() }
+        panelView.art.onClick={ [weak self] in self?.activationNotice=nil;self?.focusCompanionTask(source:"character") }
         panelView.art.setAccessibilityLabel("夜璃 · 点击返回 TWOS / Nyra · Click to return to TWOS")
         panelView.onStage = { [weak self] in self?.fullscreen() }
         let screen = currentScreen().visibleFrame
@@ -525,6 +532,11 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         reconcileAnimation()
     }
     func startHoverTimer() {
+        if pointerMonitors.isEmpty {
+            // Observe movement without injecting events or intercepting transparent pixels.
+            if let m=NSEvent.addGlobalMonitorForEvents(matching:.mouseMoved,handler:{[weak self] _ in self?.updateHitTesting()}){pointerMonitors.append(m)}
+            if let m=NSEvent.addLocalMonitorForEvents(matching:.mouseMoved,handler:{[weak self] event in self?.updateHitTesting();return event}){pointerMonitors.append(m)}
+        }
         hoverTimer?.invalidate()
         let t = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in self?.updateHitTesting() }
         t.tolerance = 0.03; hoverTimer = t; RunLoop.main.add(t, forMode: .common)
@@ -625,7 +637,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         stageView?.needsLayout = true; stageView?.layoutSubtreeIfNeeded()
         panel.orderOut(nil); soundPopover?.close(); clearPointerState()
         stageView?.taskLabel.target=self;stageView?.taskLabel.action=#selector(openTWOS)
-        stageView?.art.onClick={ [weak self] in self?.openTWOS() }
+        stageView?.art.onClick={ [weak self] in self?.activationNotice=nil;self?.focusCompanionTask(source:"stage_character") }
         stage!.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps:true)
         updateOutfit(); startHoverTimer(); rebuildMenu(); publishVisibility(); writePlaybackState("stage_opened")
     }
@@ -720,7 +732,12 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
             "manual_preview": reactive.debugTrial, "manual_preview_until": reactive.debugUntil,
             "timer_scheduled": frameTimer?.isValid == true,
             "reduce_motion": NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
-            "uptime": ProcessInfo.processInfo.systemUptime]
+            "uptime": ProcessInfo.processInfo.systemUptime,"focus_measurement":lastFocusMeasurement,"focus_measurements":focusMeasurements,
+            "user_control_observation":["authorized":taskControl.authorized,"taskCount":taskControl.tasks.count,"receivedUptime":taskControl.received,"error":taskControl.error ?? "",
+                "bubbleExpanded":taskCard.expanded,"bubbleVisible":taskCard.panel.isVisible,
+                "selectedSide":taskCard.task?["side"] as? String ?? "", "appendEnabled":taskCard.append.isEnabled,
+                "editorVisible":taskEditor?.panel.isVisible ?? false,"editorKey":taskEditor?.panel.isKeyWindow ?? false,
+                "rows":taskControl.tasks.map{row in row.filter{["side","provider","target","scope","state","reason","fresh","canEdit","canAppend","canStop","canSteer"].contains($0.key)}}]]
         if let data = try? JSONSerialization.data(withJSONObject: state, options: [.sortedKeys]) {
             try? data.write(to: stateDirectory.appendingPathComponent("playback-state.json"), options: .atomic)
         }
@@ -798,6 +815,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         item("SIMULATION · 状态文字示例", nil).submenu = makeDemoMenu()
         item("动作试播 / Manual animation preview", nil).submenu = makeAnimationMenu()
         let taskDisplay=item("显示当前任务 / Show current tasks",#selector(toggleTaskLabels));taskDisplay.state=showTaskLabels ? .on:.off
+        item("追加／编辑任务指令 / Append or edit task input…",#selector(editTaskFromMenu))
         item("返回 TWOS / Return to TWOS",#selector(openTWOS))
         item("TWOS：\(live.connectionLabel)", nil)
         item("连接 TWOS 状态 / Connect read-only status…", #selector(configureBridge))
@@ -839,30 +857,33 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     func refreshTaskLabels() {
         guard panelView != nil else{return}
-        let labels=TaskLabel.visible(event:liveReducer.current,connected:liveReducer.connected,lastReceipt:liveReducer.lastReceipt,now:ProcessInfo.processInfo.systemUptime,enabled:showTaskLabels)
-        let title=labels.sorted{$0.side<$1.side}.map(\.text).joined(separator:"\n")
+        let now=ProcessInfo.processInfo.systemUptime
+        let fresh=liveReducer.connected && taskControl.error==nil && taskControl.received>0 && now-taskControl.received<=5
+        // Retain the last real rows on short outages; disable stale actions.
+        taskCard.update(taskControl.tasks,fresh:fresh,authorized:taskControl.authorized,zh:taskControl.language=="zh")
+        taskCard.onAction={ [weak self] in self?.writePlaybackState("task_card_"+$0) }
+        taskCard.onFocus={ [weak self] in self?.focusCompanionTask($0) }
+        taskCard.onAppend={ [weak self] in self?.showTaskEditor($0) }
+        taskCard.onStop={ [weak self] in self?.stopCompanionTask($0) }
+        // Older hosts remain visibly read-only; never invent control success.
+        let legacy=taskControl.tasks.isEmpty ? (liveReducer.current?.task_labels ?? []):[]
+        let legacyText=legacy.map(\.text).joined(separator:"\n")+(fresh ? "":" · 待更新 / Awaiting update")
         for button in [panelView.taskLabel,stageView?.taskLabel].compactMap({$0}) {
-            button.title=title;button.isHidden=title.isEmpty
-            button.setAccessibilityLabel(title.isEmpty ? "当前任务 / Current tasks" : title+" · 返回 TWOS / Return to TWOS")
+            button.isHidden = !showTaskLabels || legacy.isEmpty;button.title=legacyText
         }
-        panelView.needsLayout=true;stageView?.needsLayout=true
+        if showTaskLabels,!taskControl.tasks.isEmpty,(panel.isVisible || stage?.isVisible==true) {
+            let art=stage?.isVisible==true ? stageView!.art:panelView.art
+            if let window=art.window,let screen=window.screen {
+                let anchor=window.convertToScreen(art.convert(art.drawingRect,to:nil))
+                taskCard.position(anchor:anchor,screen:screen);if !taskCard.panel.isVisible{taskCard.panel.orderFrontRegardless()}
+            }
+        } else {taskCard.panel.orderOut(nil)}
+        if let notice=activationNotice{panelView.detail.stringValue=notice}
     }
     @objc func toggleTaskLabels() {
         showTaskLabels.toggle();saveSettings();refreshTaskLabels();updateHitTesting();rebuildMenu()
     }
-    @objc func openTWOS() {
-        guard !hostActivationPending else{return}
-        hostActivationPending=true
-        live.activateHost { [weak self] activated in
-            guard let self=self else{return};self.hostActivationPending=false
-            if activated {
-                if self.stage?.isVisible==true {self.backToDesktop()}
-            } else {
-                self.panelView.detail.stringValue="无法确认当前 TWOS · 请重新连接 / Reconnect to TWOS"
-                self.panelView.setHovered(true)
-            }
-        }
-    }
+    @objc func openTWOS() {activationNotice=nil;focusCompanionTask(source:"menu_or_legacy_label")}
     @objc func quit() { NSApp.terminate(nil) }
     func applicationWillTerminate(_ notification: Notification) {
         stopFrameTimer(); frameImages.removeAll(); hoverTimer?.invalidate(); hoverTimer = nil; sound.stop()
@@ -870,7 +891,8 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if let observer = screenObserver { NotificationCenter.default.removeObserver(observer) }
         if let observer = connectionObserver { DistributedNotificationCenter.default().removeObserver(observer); connectionObserver=nil }
         if let observer = motionObserver { NSWorkspace.shared.notificationCenter.removeObserver(observer) }
-        livePollTimer?.invalidate(); live.stop()
+        livePollTimer?.invalidate(); live.stop();taskControl.reset();taskCard.panel.orderOut(nil);taskEditor?.panel.orderOut(nil)
+        pointerMonitors.forEach{NSEvent.removeMonitor($0)};pointerMonitors.removeAll()
         if let observer = sleepObserver { NSWorkspace.shared.notificationCenter.removeObserver(observer) }
         if let observer = wakeObserver { NSWorkspace.shared.notificationCenter.removeObserver(observer) }
         restoreDesktopPlacement(); saveSettings()

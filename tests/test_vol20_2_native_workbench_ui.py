@@ -172,12 +172,27 @@ func runRenderer() {
       r('locale',{zh:true});r('models',{items:[{model:'model-a',displayName:'Model A'},{model:'model-b',displayName:'Model B',supportedReasoningEfforts:[{reasoningEffort:'low'},{reasoningEffort:'high'}],defaultReasoningEffort:'low'}]});
       r('threads',{items:[{id:'fixture-thread',name:'Travel task',cwd:'/synthetic/workspace'}]});
       r('thread',{thread:{id:'fixture-thread',cwd:'/synthetic/workspace'}});
-      assert($('threads').selectedOptions[0].textContent==='Travel task','thread/read without a name keeps the list name and real ID');
+      assert($('current-chat').textContent==='Travel task'&&document.querySelector('[data-chat-id="fixture-thread"]').getAttribute('aria-current')==='page','thread/read without a name keeps the list name and real ID');
       r('threads',{items:[{id:'other-thread',cwd:'/synthetic/other-folder',preview:'TWOS controller-verified execution context / internal scope'}]});
-      assert($('threads').value==='fixture-thread'&&$('threads').selectedOptions[0].textContent==='Travel task','refresh with the selected conversation outside the page retains its label');
-      assert(Array.from($('threads').options).find(x=>x.value==='other-thread').textContent==='other-folder','unnamed conversation uses its actual folder instead of internal context');
+      assert($('current-chat').textContent==='Travel task'&&document.querySelector('[data-chat-id="fixture-thread"]').getAttribute('aria-current')==='page','refresh with the selected conversation outside the page retains its label');
+      assert(document.querySelector('[data-chat-id="other-thread"]').textContent==='other-folder','unnamed conversation uses its actual folder instead of internal context');
       r('thread',{thread:{id:'fixture-thread',name:'Renamed travel task',cwd:'/synthetic/workspace'}});
-      assert($('threads').selectedOptions[0].textContent==='Renamed travel task','a real updated name replaces the selected option label');
+      assert($('current-chat').textContent==='Renamed travel task','a real updated name replaces the selected option label');
+      assert(!$('threads')&&$('conversation-navigation').tagName==='NAV','sidebar replaces the dropdown, not a duplicate hidden control');
+      r('projects',{items:[{id:'fixture-project',name:'Project <safe>',roots:[{path:'/synthetic/workspace'}]}]});
+      document.querySelector('[data-project-id="fixture-project"]').click();
+      assert(document.querySelector('.project-group .chat-link').dataset.chatId==='fixture-thread','project folder fallback retains exact chat identity');
+      assert(document.querySelector('.project-name').textContent.includes('<safe>')&&!document.querySelector('.project-name safe'),'project labels are safe text');
+      const focusedProject=document.querySelector('.project-name');focusedProject.focus();
+      r('nyra',{available:true,visible:true,binding:'CONNECTED_READONLY'});
+      assert(document.querySelector('.project-name')===focusedProject&&document.activeElement===focusedProject,'independent pet updates retain sidebar node identity and keyboard focus');
+      r('nyra',{available:false}); // Restore the original unbundled fixture for its later boundary checks.
+      $('conversation-search').value='other-folder';$('conversation-search').dispatchEvent(new Event('input'));
+      assert(!document.querySelector('[data-chat-id="fixture-thread"]')&&document.querySelector('[data-chat-id="other-thread"]'),'search filters displayed chats without changing selected target');
+      assert($('current-chat').textContent==='Renamed travel task','filtering does not select a different conversation');
+      $('conversation-search').value='';$('conversation-search').dispatchEvent(new Event('input'));
+      $('navigation-toggle').click();assert(document.body.classList.contains('navigation-collapsed'),'sidebar can be collapsed without losing the workspace');
+      $('navigation-toggle').click();assert(!document.body.classList.contains('navigation-collapsed'),'sidebar returns independently of chat selection');
       r('control',{connected:false,busy:false,connecting:true,connectionPhase:'handshake'});
       assert($('connect').disabled&&!$('cancel-connection').hidden&&$('connection-status').textContent.includes('正在连接'),'connection returns a visible cancellable state');
       r('control',{connected:false,busy:false,connecting:false,connectionPhase:'closing',connectionError:'cancelled'});
@@ -187,6 +202,13 @@ func runRenderer() {
       r('control',{connected:true,busy:false,connectionPhase:'connected'});
       assert(!$('disconnect').hidden&&!$('disconnect').disabled&&$('connection-status').hidden,'ready connection offers independent disconnect');
       r('control',{connected:true,busy:false,threadId:'fixture-thread'});
+      r('recentHistory',{threadId:'fixture-thread',entries:[{item:{id:'fresh-answer',type:'agentMessage',text:'TEST ONLY initial'}}]});
+      r('recentHistory',{threadId:'fixture-thread',entries:[{item:{id:'fresh-answer',type:'agentMessage',text:'TEST ONLY newer public reply'}}]});
+      assert(document.querySelectorAll('#item-fresh-answer').length===1&&$('item-fresh-answer').textContent.includes('newer public reply'),'read-only polling updates the exact message without duplicates');
+      r('recentHistory',{threadId:'other-thread',entries:[{item:{id:'wrong-chat',type:'agentMessage',text:'wrong target'}}]});
+      assert(!$('item-wrong-chat'),'late item pages from another selected chat are ignored');
+      r('historySync',{threadId:'fixture-thread',scope:'recent_readonly',at:1});
+      assert(!$('history-sync').hidden&&$('history-sync').textContent.includes('原客户端控制'),'fresh history does not claim active execution control');
       r('history',{turns:[{id:'saved-turn',items:[{id:'summary-message',type:'agentMessage',text:'TEST ONLY saved answer'}]}],more:true});
       assert(!$('saved-history').hidden&&$('history-scope').textContent.includes('摘要')&&$('item-summary-message'),'summary scope and message are visible');
       r('historyActivity',{threadId:'fixture-thread',loading:true});
@@ -200,6 +222,8 @@ func runRenderer() {
       assert(!$('history-activity-load').disabled&&$('history-activity-status').textContent.includes('失败')&&$('saved-saved-turn-tool-one'),'failed optional history preserves its previous page and allows explicit retry');
       r('control',{connected:false,busy:false,connectionError:'jsonl_frame_too_large',threadId:'fixture-thread'});
       assert($('connection-status').textContent.includes('缓冲')&&!$('connection-status').textContent.includes('请检查官方应用'),'oversized response is not reported as authentication trouble');
+      r('control',{connected:true,busy:true,activityUnverified:true,controllable:true,historyReady:true,threadId:'fixture-thread'});
+      assert($('status').textContent.includes('状态待核验')&&!$('status').textContent.includes('正在执行'),'interrupted service does not claim confirmed execution');
       r('control',{connected:true,busy:true,controllable:true,desktopRunning:false,historyReady:true,threadId:'fixture-thread'});
       $('draft').value='Continue';$('draft').dispatchEvent(new Event('input'));
       assert(!$('draft').disabled&&!$('model').disabled&&!$('send').disabled&&!$('next-turn').hidden,'running composer supports Steer and next-turn model choice');
@@ -252,6 +276,25 @@ func runRenderer() {
       assert($('item-file-diff').querySelector('[data-operation=browser]')&&$('item-file-diff').textContent.includes('+actual change'),'real diff and artifact actions coexist');
       r('event',{method:'item/started',params:{item:{id:'tool-activity',type:'mcpToolCall',server:'fixture',tool:'check',status:'inProgress',arguments:{test:true}}}});
       assert($('item-tool-activity').textContent.includes('fixture')&&$('item-tool-activity').textContent.includes('进行中'),'public tool activity visible');
+      r('event',{method:'item/started',params:{turnId:'stop-target',item:{id:'stop-tool',type:'commandExecution',command:'TEST ONLY sleep',status:'inProgress'}}});
+      r('event',{method:'item/started',params:{turnId:'other-turn',item:{id:'other-tool',type:'commandExecution',command:'TEST ONLY other',status:'inProgress'}}});
+      r('turnCompleted',{turnId:'stop-target',status:'interrupted'});
+      assert($('item-stop-tool').textContent.includes('工具终态未回报')&&!$('item-stop-tool').textContent.includes('进行中'),'terminal turn removes false tool-running claim without inventing a tool completion');
+      assert($('item-other-tool').textContent.includes('进行中'),'late terminal event never changes another turn');
+      r('event',{method:'item/started',params:{turnId:'stop-target',item:{id:'stop-tool',type:'commandExecution',command:'TEST ONLY sleep',status:'inProgress'}}});
+      assert($('item-stop-tool').dataset.status==='terminal_unconfirmed','late in-progress item cannot reopen the stopped turn');
+      const restoredTool={id:'observer-tool',type:'commandExecution',command:'TEST ONLY observer',status:'inProgress',twosTurnId:'observed-turn'};
+      r('displaySnapshot',{items:[restoredTool]});
+      r('historyActivity',{threadId:'fixture-thread',entries:[{turnId:'observed-turn',item:restoredTool}],more:false});
+      r('history',{threadId:'fixture-thread',background:true,turns:[{id:'observed-turn',status:'interrupted',items:[]}]});
+      assert($('item-observer-tool').dataset.status==='inProgress','raw reader interrupted projection is not a confirmed terminal');
+      r('history',{threadId:'fixture-thread',background:true,turns:[{id:'observed-turn',status:'interrupted',twosConfirmedTerminal:'interrupted',items:[]}]});
+      assert($('item-observer-tool').dataset.status==='terminal_unconfirmed','confirmed summary terminal updates already-rendered exact-turn tools');
+      assert($('saved-observed-turn-observer-tool').dataset.status==='terminal_unconfirmed','saved activity follows the same confirmed terminal');
+      r('displaySnapshot',{items:[restoredTool]});
+      assert($('item-observer-tool').dataset.status==='terminal_unconfirmed','display replay cannot restore false running after a confirmed stop');
+      r('event',{method:'item/completed',params:{turnId:'observed-turn',item:{...restoredTool,status:'completed',exitCode:0}}});
+      assert($('item-observer-tool').dataset.status==='completed','a real tool completion remains distinguishable from an unreported tool terminal');
       r('event',{method:'item/completed',params:{item:{id:'context-input',type:'userMessage',content:[{type:'text',text:'TWOS controller-verified execution context / path context'},{type:'text',text:'Visible business instruction'}]}}});
       assert($('item-context-input').querySelector('details')&&!$('item-context-input').querySelector('details').open&&$('item-context-input').textContent.includes('Visible business instruction'),'technical context is collapsed while full business message stays visible');
       r('approval',{key:'request-one',method:'item/tool/requestUserInput',params:{threadId:'fixture-thread',turnId:'same-turn',itemId:'question',questions:[{id:'choice',question:'Choose test scope',options:[{label:'Local',description:'Existing scope'}]}]}});
@@ -391,7 +434,7 @@ func runRenderer() {
     """#
     client.web.evaluateJavaScript(script) { value, error in
         precondition(error == nil,"renderer: \(String(describing:error))")
-        precondition((value as? [String])?.count == 110, "all 103 prior checks plus seven saved-history/error visibility checks must run")
+        precondition((value as? [String])?.count == 130, "all 125 prior checks plus five restored-history terminal checks must run")
         // Switching positions retains the very same native Codex connection.
         let instance=workbench.codex
         workbench.leftPicker.selectItem(at:1);workbench.changePane(workbench.leftPicker)

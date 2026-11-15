@@ -49,6 +49,28 @@ func select(_ tid: String) {
 }
 select(foreign)
 precondition(!client.canControl && client.historyReady)
+// Project/navigation and polling are read-only even while the official writer is elsewhere.
+let projectID=UUID().uuidString
+client.listProjects()
+precondition(request("project/list").1["limit"] as? Int == 50)
+reply("project/list",["data":[["id":projectID,"name":"TEST ONLY","roots":[["path":root.path]]]],"nextCursor":"projects-next"])
+precondition(client.projectRows.count==1 && client.projectCursor=="projects-next")
+client.listProjectThreads(projectID)
+precondition(request("thread/list").1["projectId"] as? String == projectID)
+reply("thread/list",["data":[["id":foreign,"name":"TEST ONLY chat","projectId":projectID]]])
+precondition(request("thread/list").1["cwd"] as? String == root.path)
+reply("thread/list",["data":[["id":foreign,"cwd":root.path]]])
+precondition(client.projectChatRows[projectID]?.count==1,"duplicates across metadata aliases are not duplicate chats")
+let beforeInvalidProject=client.requestID
+client.listProjectThreads("untrusted-project")
+precondition(client.requestID==beforeInvalidProject,"page cannot invent an unlisted project filter")
+client.historyCursor="keep-older-page";client.saveDraft("TEST ONLY retained draft")
+client.loadHistory(older:false,background:true)
+precondition(request("thread/turns/list").1["itemsView"] as? String == "summary")
+reply("thread/turns/list",["data":[["id":"observer-turn","status":"interrupted","items":[]]],"nextCursor":"new-cursor"])
+precondition(client.historyCursor=="keep-older-page" && client.draftText=="TEST ONLY retained draft" && !client.canControl)
+precondition(client.historyCheckedAt>0 && client.confirmedHistoryTerminal(["id":"observer-turn","status":"interrupted"])==nil,"reader projection cannot stop the official writer")
+client.saveDraft("")
 let originalRequests = client.requestID
 client.sendTurn("Never execute an unbound official App thread", model:"model-a")
 precondition(client.requestID == originalRequests && !client.isBusy)
@@ -314,10 +336,11 @@ client.interrupt();precondition(client.requestID == stopCount)
 reply("turn/interrupt",[:]);precondition(client.stopRequested && client.isBusy,"stop acknowledgement is not terminal")
 event("turn/completed",["threadId":id,"turn":["id":"parity-turn","status":"interrupted"]])
 precondition(!client.stopRequested && !client.isBusy)
-client.rememberDisplayEvent("item/started",["item":["id":"cmd","type":"commandExecution","command":"check","cwd":workspace.path]])
+client.rememberDisplayEvent("item/started",["turnId":"display-origin","item":["id":"cmd","type":"commandExecution","command":"check","cwd":workspace.path]])
 client.rememberDisplayEvent("item/commandExecution/outputDelta",["itemId":"cmd","delta":"Actual output"])
 client.rememberDisplayEvent("item/reasoning/summaryTextDelta",["itemId":"reason","summaryIndex":2,"delta":"Public fragment"])
 precondition(client.displayItems["cmd"]?["aggregatedOutput"] as? String == "Actual output")
+precondition(client.displayItems["cmd"]?["twosTurnId"] as? String == "display-origin","display replay must retain the original turn across output deltas")
 precondition((client.displayItems["reason"]?["summary"] as? [String])?.last == "Public fragment")
 client.rememberDisplayItem(["id":"reason","type":"reasoning","summary":["Public only"],"content":["SECRET_INTERNAL_REASONING"]])
 client.publishDisplaySnapshot()
@@ -508,6 +531,51 @@ precondition(client.ledger.submissions[0].state == "completed" && !client.uncert
 client.completedTurns.insert("observed-turn");projected["status"]="interrupted";projected["completedAt"]=NSNull()
 client.reconcileSavedInputs([projected])
 precondition(client.ledger.submissions[0].state == "completed","stale observer projection cannot reverse a live terminal event")
+
+
+for stage in ["settings", "metadata", "queue-list", "queue-add"] {
+    probe("stop-race-"+stage,controlled:true)
+    client.submitComposer(["text":"TEST ONLY stop race","model":"model-a","effort":"low"])
+    if stage != "settings" {reply("thread/settings/update",[:])}
+    if ["queue-list","queue-add"].contains(stage) {reply("thread/read",["thread":verifiedThread()])}
+    if stage == "queue-add" {reply("thread/queue/list",["data":[]])}
+    let item=client.ledger.submissions.last!;client.interrupt()
+    if stage == "settings" {reply("thread/settings/update",[:])}
+    if stage == "metadata" {reply("thread/read",["thread":verifiedThread()])}
+    if stage == "queue-list" {reply("thread/queue/list",["data":[]])}
+    if stage == "queue-add" {
+        reply("thread/queue/add",["queuedSubmission":["id":"stopped-queue","clientUserMessageId":item.id]])
+        precondition(request("thread/queue/delete").1["queuedSubmissionId"] as? String == "stopped-queue")
+        reply("thread/queue/delete",["deleted":true])
+    }
+    precondition(client.ledger.paused.contains(id) && client.ledger.submissions.last?.state=="cancelled")
+    precondition(client.ledger.submissions.last?.userStopRequested==true && !client.requestMethods.values.contains("thread/queue/start"))
+}
+cold=acceptedColdInput("stop-during-queue-start")
+reply("thread/read",["thread":verifiedThread()]);reply("thread/queue/list",["data":[exactQueue(cold)]])
+client.interrupt();reply("thread/queue/start",["turn":["id":"stopped-inflight-turn","status":"inProgress"]])
+precondition(client.stopRequested && request("turn/interrupt").1["turnId"] as? String=="stopped-inflight-turn")
+reply("turn/interrupt",[:]);precondition(client.stopRequested,"acknowledgment is not a terminal stop")
+event("turn/completed",["threadId":id,"turn":["id":"stopped-inflight-turn","status":"interrupted"]])
+precondition(!client.isBusy && client.ledger.paused.contains(id))
+probe("readonly-tail");client.ledger.bindings.removeAll();client.pageReady=true;client.tailTurn="active-official-turn"
+client.refreshRecentActivityIfDue()
+precondition(request("thread/items/list").1["sortDirection"] as? String=="desc")
+reply("thread/items/list",["data":[["turnId":"active-official-turn","item":["id":"latest-item","type":"agentMessage","text":"TEST ONLY"]]]])
+precondition(client.tailAnchor=="latest-item")
+client.tailAfter=0;client.refreshRecentActivityIfDue()
+let anchor=request("thread/items/list").1["cursor"] as! [String:String]
+precondition(anchor==["type":"item","itemId":"latest-item"] && request("thread/items/list").1["sortDirection"] as? String=="asc")
+reply("thread/items/list",["data":[["turnId":"active-official-turn","item":["id":"next-item","type":"agentMessage","text":"TEST ONLY newer"]]]])
+precondition(request("thread/items/list").1["sortDirection"] as? String=="desc")
+reply("thread/items/list",["data":[["turnId":"active-official-turn","item":["id":"next-item","type":"agentMessage","text":"TEST ONLY newer complete"]]]])
+precondition(client.tailAnchor=="next-item" && !client.tailLoading && !client.canControl && client.turnID==nil)
+let scrubbed=NativeCodex.safeHistoryEntries([["turnId":"t","item":["id":"r","type":"reasoning","summary":[],"content":["TEST ONLY hidden"],"encryptedContent":"TEST ONLY"]]])
+precondition((scrubbed[0]["item"] as! [String:Any])["content"]==nil && (scrubbed[0]["item"] as! [String:Any])["encryptedContent"]==nil)
+client.tailAfter=0;client.refreshRecentActivityIfDue();client.selectionGeneration+=1;client.tailAnchor="different-selection"
+reply("thread/items/list",["data":[["turnId":"active-official-turn","item":["id":"stale","type":"agentMessage","text":"TEST ONLY stale"]]]])
+precondition(client.tailAnchor=="different-selection","late history callbacks cannot update a different selection")
+client.pageReady=false
 
 print("NATIVE_CONTEXT_STATE_PASS")
 exit(0)

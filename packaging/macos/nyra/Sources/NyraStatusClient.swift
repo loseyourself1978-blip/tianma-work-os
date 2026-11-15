@@ -16,6 +16,8 @@ struct StatusEndpoint: Decodable {
     let producer_instance_id: String
     let schema_version: String
     let schema_sha256: String
+    var control_protocol: String?
+    var control_socket: String?
 }
 enum BridgeError: Error { case unsafeEndpoint, wrongPeer, unavailable, truncated, invalidFrame }
 final class NyraStatusClient {
@@ -63,19 +65,30 @@ final class NyraStatusClient {
         try securePath(e.socket,mode:0o600,socket:true)
         return e
     }
+    private static let peerCacheLock=NSLock()
+    private static var peerCache:[pid_t:(stamp:String,at:Double)]=[:]
     @discardableResult static func verifyPeer(_ fd: Int32, selection: BridgeSelection) throws -> NSRunningApplication {
         var uid: uid_t = 0; var gid: gid_t = 0; var pid: pid_t = 0; var count = socklen_t(MemoryLayout<pid_t>.size)
         guard getpeereid(fd,&uid,&gid) == 0, uid == getuid(), getsockopt(fd,SOL_LOCAL,LOCAL_PEERPID,&pid,&count) == 0,
               let app = NSRunningApplication(processIdentifier:pid), app.bundleIdentifier == selection.producerBundleID,
               app.bundleURL?.standardizedFileURL == URL(fileURLWithPath:selection.producerApp).standardizedFileURL,
-              let exe = Bundle(path:selection.producerApp)?.executableURL, app.executableURL?.standardizedFileURL == exe.standardizedFileURL,
-              try codeHash(URL(fileURLWithPath:selection.producerApp)) == selection.producerCodeHash else { throw BridgeError.wrongPeer }
+              let exe = Bundle(path:selection.producerApp)?.executableURL, app.executableURL?.standardizedFileURL == exe.standardizedFileURL else { throw BridgeError.wrongPeer }
+        var stamp="\(pid)|\(app.launchDate?.timeIntervalSince1970 ?? 0)|\(selection.producerApp)|\(selection.producerCodeHash.base64EncodedString())"
+        for path in [selection.producerApp,exe.path,selection.producerApp+"/Contents/_CodeSignature/CodeResources"] {
+            var st=stat();guard lstat(path,&st)==0 else{throw BridgeError.wrongPeer}
+            stamp += "|\(st.st_dev):\(st.st_ino):\(st.st_size):\(st.st_mtimespec.tv_sec):\(st.st_mtimespec.tv_nsec):\(st.st_ctimespec.tv_sec):\(st.st_ctimespec.tv_nsec)"
+        }
+        let now=ProcessInfo.processInfo.systemUptime
+        peerCacheLock.lock();let cached=peerCache[pid];peerCacheLock.unlock()
+        if let cached=cached,cached.stamp==stamp,now-cached.at<30 {return app}
+        guard try codeHash(URL(fileURLWithPath:selection.producerApp))==selection.producerCodeHash else{throw BridgeError.wrongPeer}
         var live: SecCode?; var liveStatic: SecStaticCode?; var info: CFDictionary?
         guard SecCodeCopyGuestWithAttributes(nil,[kSecGuestAttributePid as String:pid] as CFDictionary,[],&live) == errSecSuccess,
               SecCodeCheckValidity(live!,[],nil) == errSecSuccess,
               SecCodeCopyStaticCode(live!,[],&liveStatic) == errSecSuccess,
               SecCodeCopySigningInformation(liveStatic!,[],&info) == errSecSuccess,
               (info as? [String:Any])?[kSecCodeInfoUnique as String] as? Data == selection.producerCodeHash else { throw BridgeError.wrongPeer }
+        peerCacheLock.lock();if peerCache.count>8{peerCache.removeAll()};peerCache[pid]=(stamp,now);peerCacheLock.unlock()
         return app
     }
     static func decodeLine(_ bytes: Data, instance: String) throws -> StatusEvent {
@@ -216,7 +229,7 @@ extension Companion {
             if previous != self.liveReducer.current || wasConnected != self.liveReducer.connected || previousLabel != self.live.connectionLabel {
                 self.reconcileAnimation(); self.writePlaybackState("status_snapshot"); self.rebuildMenu()
             }
-            self.refreshTaskLabels()
+            self.refreshTaskLabels();self.refreshCompanionTasks()
             // A live receipt heartbeat is separate from animation/state changes.
             self.publishVisibility(persistPreference:false,heartbeat:true)
         }
@@ -235,7 +248,7 @@ extension Companion {
                 _ = try NyraStatusClient.read(choice)
                 DispatchQueue.main.async {
                     guard let self=self else{return}
-                    self.live.stop();self.live.selection=choice;self.liveReducer.disconnect()
+                    self.taskControl.reset();self.live.stop();self.live.selection=choice;self.liveReducer.disconnect()
                     try? Data(nonce.utf8).write(to:accepted,options:.atomic)
                     try? FileManager.default.setAttributes([.posixPermissions:0o600],ofItemAtPath:accepted.path)
                     try? FileManager.default.removeItem(at:root.appendingPathComponent("status-disconnected"))
@@ -246,7 +259,7 @@ extension Companion {
     }
     @objc func configureBridge() {
         if isBundled {
-            live.stop(); liveReducer.disconnect(); live.selection = nil
+            taskControl.reset();live.stop(); liveReducer.disconnect(); live.selection = nil
             try? FileManager.default.removeItem(at:stateDirectory.appendingPathComponent("status-disconnected"))
             startLivePolling()
             return
@@ -260,7 +273,7 @@ extension Companion {
             _ = try NyraStatusClient.readEndpoint(endpoint.path)
             guard let bundle = Bundle(url:producer), let id = bundle.bundleIdentifier, id.hasPrefix("com.tianma.") else { throw BridgeError.wrongPeer }
             let choice = BridgeSelection(endpoint:endpoint.path,producerApp:producer.standardizedFileURL.path,producerBundleID:id,producerCodeHash:try NyraStatusClient.codeHash(producer))
-            live.stop(); liveReducer.disconnect(); live.selection = choice
+            taskControl.reset();live.stop(); liveReducer.disconnect(); live.selection = choice
             try JSONEncoder().encode(choice).write(to:bridgeURL,options:.atomic)
             try FileManager.default.setAttributes([.posixPermissions:0o600],ofItemAtPath:bridgeURL.path)
             try? FileManager.default.removeItem(at:stateDirectory.appendingPathComponent("status-disconnected"))
@@ -268,7 +281,7 @@ extension Companion {
         } catch { let alert = NSAlert(); alert.messageText = "接口身份或权限不符合要求"; alert.informativeText = "请由 TWOS 工程提供并授权独立 Nyra 的只读接口。夜璃不会绕过 helper 身份限制。"; alert.runModal() }
     }
     @objc func disconnectBridge() {
-        live.stop(); live.selection = nil; liveReducer.disconnect()
+        taskControl.reset();live.stop(); live.selection = nil; liveReducer.disconnect()
         try? FileManager.default.removeItem(at:bridgeURL)
         livePollTimer?.invalidate(); livePollTimer = nil
         try? Data().write(to:stateDirectory.appendingPathComponent("status-disconnected"),options:.atomic)

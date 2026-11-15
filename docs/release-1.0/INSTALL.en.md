@@ -1,5 +1,7 @@
 # Install Tianma Work OS 1.0.9
 
+> **Development continuation — not yet published:** [Focus, compact task controls and shared left/right Codex navigation](FOCUS_AND_TASK_CONTROLS.en.md). The new user-control channel carries explicitly selected drafts/supplements; the original status channel remains read-only. Earlier read-only-only descriptions below refer to the released baseline, not the pending control-enabled build.
+
 TWOS 1.0.9 / 101.57 · [This update](WEBSITE_NAVIGATION_FOLLOWUP.en.md)
 
 [Current incremental instructions and exact boundaries](WEBSITE_NAVIGATION_FOLLOWUP.en.md).

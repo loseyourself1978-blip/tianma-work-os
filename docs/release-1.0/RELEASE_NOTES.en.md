@@ -1,5 +1,7 @@
 # TWOS 1.0.9 / 101.57 — Website navigation repair
 
+> **Development continuation — not yet published:** [Focus, compact task controls and shared left/right Codex navigation](FOCUS_AND_TASK_CONTROLS.en.md). The new user-control channel carries explicitly selected drafts/supplements; the original status channel remains read-only. Earlier read-only-only descriptions below refer to the released baseline, not the pending control-enabled build.
+
 Opens explicitly selected private-network HTTP dashboards on either side and keeps rejected addresses editable with a specific error. Ports remain visible; Cancel retains the original pane and a new address takes precedence over stale saved navigation. The final package and matching complete gate passed. Nyra 1.0.6 / 106 is unchanged.
 
 [Incremental guide](WEBSITE_NAVIGATION_FOLLOWUP.en.md)

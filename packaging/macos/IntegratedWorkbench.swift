@@ -24,6 +24,10 @@ final class NyraStatusProducer {
     private var current: [String: Any] = [:]
     private var terminalTasks: [String: (state: String, source: String, evidence: String?)] = [:]
     private var authorizedStandalone: (path:String, hash:Data)?
+    private var standaloneControls = false
+    private var verifiedPeers: [pid_t:(stamp:String,at:Double)] = [:]
+    var controlServer: NyraControlServer?
+    var controlHandler: (([String:Any], @escaping ([String:Any])->Void)->Void)?
     init(directory: URL, helper: URL) {
         self.directory = directory; self.helper = helper
         do {
@@ -31,7 +35,7 @@ final class NyraStatusProducer {
             let attrs = try nativePathMetadata(directory.path)
             guard attrs.st_uid == getuid(), attrs.st_mode & 0o777 == 0o700 else { throw CocoaError(.fileWriteNoPermission) }
             if let saved=NativeNyra.readVisibility(directory.appendingPathComponent("authorized-consumer.json")),
-               let path=saved["path"] as? String,let encoded=saved["hash"] as? String,let hash=Data(base64Encoded:encoded) {authorizedStandalone=(path,hash)}
+               let path=saved["path"] as? String,let encoded=saved["hash"] as? String,let hash=Data(base64Encoded:encoded) {authorizedStandalone=(path,hash);standaloneControls=saved["userControls"] as? Bool == true}
             // No state/body on disk. An endpoint is a capability locator, not
             // authorization: every connection is separately authenticated.
             // AF_UNIX avoids a public/loopback port and carries peer credentials.
@@ -55,16 +59,24 @@ final class NyraStatusProducer {
             guard bound == 0, chmod(path, 0o600) == 0, listen(socketFD, 4) == 0,
                   fcntl(socketFD, F_SETFL, O_NONBLOCK) == 0 else { throw CocoaError(.fileWriteUnknown) }
             let file = directory.appendingPathComponent("endpoint.json")
-            let bytes = try JSONSerialization.data(withJSONObject: ["transport":"unix_snapshot_v1", "socket":path, "producer_instance_id":instance, "schema_version":Self.schemaVersion, "schema_sha256":Self.schemaSHA256])
+            let bytes = try JSONSerialization.data(withJSONObject: ["transport":"unix_snapshot_v1", "socket":path, "producer_instance_id":instance, "schema_version":Self.schemaVersion, "schema_sha256":Self.schemaSHA256, "control_protocol":"twos.nyra.control.v1", "control_socket":root.appendingPathComponent("control.sock").path])
             try bytes.write(to: file, options: .atomic)
             try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
             let source = DispatchSource.makeReadSource(fileDescriptor: socketFD, queue: socketQueue)
             source.setEventHandler { [weak self] in self?.acceptSnapshots() }
             socketSource = source; source.resume()
+            controlServer = try NyraControlServer(root:root,instance:instance,authenticate:{ [weak self] pid,uid,method in
+                guard let self=self,self.accepts(pid:pid,uid:uid) else{return false}
+                return ["focus","inspect"].contains(method) || self.canUserControl(pid)
+            },handle:{ [weak self] request,reply in
+                guard let handler=self?.controlHandler else{reply(["error":"HOST_NOT_READY"]);return}
+                handler(request,reply)
+            })
         } catch { endpointError = "LOCAL_STATUS_ENDPOINT_UNAVAILABLE" }
         observe(session: "unselected", task: nil, state: "idle", source: "twos_runtime")
     }
     deinit {
+        controlServer?.stop()
         socketSource?.cancel()
         if socketFD >= 0 { Darwin.close(socketFD) }
         if let root = socketDirectory {
@@ -166,15 +178,15 @@ final class NyraStatusProducer {
               (Bundle(url:url)?.object(forInfoDictionaryKey:"NyraVisibilityProtocol") as? Int ?? 0)>=2,
               let hash=NativeNyra.signedCodeHash(url) else {throw CocoaError(.fileReadNoPermission)}
         let file=directory.appendingPathComponent("authorized-consumer.json")
-        try JSONSerialization.data(withJSONObject:["path":url.path,"hash":hash.base64EncodedString()]).write(to:file,options:.atomic)
+        try JSONSerialization.data(withJSONObject:["path":url.path,"hash":hash.base64EncodedString(),"userControls":true]).write(to:file,options:.atomic)
         try FileManager.default.setAttributes([.posixPermissions:0o600],ofItemAtPath:file.path)
-        snapshotLock.lock();authorizedStandalone=(url.path,hash);snapshotLock.unlock()
+        snapshotLock.lock();authorizedStandalone=(url.path,hash);standaloneControls=true;snapshotLock.unlock()
     }
     func accepts(pid: pid_t, uid: uid_t) -> Bool {
         snapshotLock.lock();let approved=authorizedStandalone;snapshotLock.unlock()
         guard uid==getuid(),let app=NSRunningApplication(processIdentifier:pid),let path=app.bundleURL else{return false}
         let isEmbedded=app.bundleIdentifier=="com.tianma.workos.nyra" && path.standardizedFileURL==helper.standardizedFileURL
-        let isStandalone=app.bundleIdentifier==NativeNyra.standaloneID && approved?.path==path.path && NativeNyra.compatibleStandalone(app) && approved?.hash==NativeNyra.signedCodeHash(path)
+        let isStandalone=app.bundleIdentifier==NativeNyra.standaloneID && approved?.path==path.path
         guard isEmbedded || isStandalone else{return false}
         let selected=isEmbedded ? helper : path
         guard uid == getuid(),
@@ -182,6 +194,15 @@ final class NyraStatusProducer {
               let executable = Bundle(url: selected)?.executableURL,
               app.executableURL?.standardizedFileURL == executable.standardizedFileURL,
               selected.resolvingSymlinksInPath() == selected.standardizedFileURL else { return false }
+        let paths=[selected.path,executable.path,selected.appendingPathComponent("Contents/_CodeSignature/CodeResources").path]
+        var stamp="\(pid)|\(app.launchDate?.timeIntervalSince1970 ?? 0)|\(selected.path)|\(approved?.hash.base64EncodedString() ?? "embedded")"
+        for path in paths { var st=stat();guard lstat(path,&st)==0 else{return false};stamp += "|\(st.st_dev):\(st.st_ino):\(st.st_size):\(st.st_mtimespec.tv_sec):\(st.st_mtimespec.tv_nsec):\(st.st_ctimespec.tv_sec):\(st.st_ctimespec.tv_nsec)" }
+        let now=ProcessInfo.processInfo.systemUptime
+        snapshotLock.lock();let cached=verifiedPeers[pid];snapshotLock.unlock()
+        if let cached=cached,cached.stamp==stamp,now-cached.at<30 {return true}
+        if isStandalone {
+            guard NativeNyra.compatibleStandalone(app),approved?.hash==NativeNyra.signedCodeHash(path) else{return false}
+        }
         // Bind the live peer to the signed helper inside THIS app, not a name,
         // distributed notification or a mutable boolean supplied by a caller.
         var disk: SecStaticCode?; var live: SecCode?
@@ -195,7 +216,15 @@ final class NyraStatusProducer {
               SecCodeCopySigningInformation(liveStatic!, [], &b) == errSecSuccess,
               let expected = (a as? [String: Any])?[kSecCodeInfoUnique as String] as? Data,
               let actual = (b as? [String: Any])?[kSecCodeInfoUnique as String] as? Data else { return false }
-        return actual == expected
+        guard actual == expected else{return false}
+        snapshotLock.lock();if verifiedPeers.count>16 {verifiedPeers.removeAll()}
+        verifiedPeers[pid]=(stamp,now);snapshotLock.unlock();return true
+    }
+    func canUserControl(_ pid:pid_t)->Bool {
+        guard let app=NSRunningApplication(processIdentifier:pid),let path=app.bundleURL else{return false}
+        if app.bundleIdentifier=="com.tianma.workos.nyra",path.standardizedFileURL==helper.standardizedFileURL{return true}
+        snapshotLock.lock();defer{snapshotLock.unlock()}
+        return standaloneControls && authorizedStandalone?.path==path.path
     }
     private func acceptSnapshots() {
         dispatchPrecondition(condition: .onQueue(socketQueue))
@@ -300,6 +329,9 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
     var paneActivities: [Int:PaneActivity] = [:]
     var paneObservationPending = Set<Int>()
     var paneActivityRunIDs: [Int:String] = [:]
+    var paneActivityTokens: [Int:String] = [:]
+    var nyraTaskRows: [Int:[String:Any]] = [:]
+    var nyraStops: [Int:(task:String?,at:Double)] = [:]
     var dialogue: PairedDialogue?
     var dialogueTickInFlight = false
     var dialogueNavigationReads: [String:Int] = [:]
@@ -326,11 +358,11 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
     let nyraButton = NSButton(title: "Nyra", target: nil, action: nil)
     var nyraStatusWindow: NSWindow?
     var nyraStatusText: NSTextField?
+    let nyraAuthorizeControlsButton=NSButton(title:"",target:nil,action:nil)
     let nyraConnectionButton = NSButton(title:"Nyra status",target:nil,action:nil)
     lazy var nyraStatus = NyraStatusProducer(directory: preferences.appendingPathComponent("nyra-status"), helper: Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/TWOS Nyra.app"))
-    lazy var nyra = NativeNyra(stateRoot: preferences.appendingPathComponent("nyra"), producerInstance: { [weak self] in self?.nyraStatus.instance }, authorizeConsumer:{ [weak self] app in
-        guard let self=self else{throw CocoaError(.fileReadUnknown)}
-        try self.nyraStatus.authorizeStandalone(app)
+    lazy var nyra = NativeNyra(stateRoot: preferences.appendingPathComponent("nyra"), producerInstance: { [weak self] in self?.nyraStatus.instance }, authorizeConsumer:{ [producer=nyraStatus] app in
+        try producer.authorizeStandalone(app)
     }) { [weak self] state in
         guard let self = self else { return }
         let visible = state["visible"] as? Bool == true
@@ -406,6 +438,10 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
             split.topAnchor.constraint(equalTo: bar.bottomAnchor), split.leadingAnchor.constraint(equalTo: win.contentView!.leadingAnchor),
             split.trailingAnchor.constraint(equalTo: win.contentView!.trailingAnchor), split.bottomAnchor.constraint(equalTo: win.contentView!.bottomAnchor)])
         for _ in 0...1 { split.addArrangedSubview(NSView()) }
+        nyraStatus.controlHandler = { [weak self] request,reply in
+            guard let self=self else{reply(["error":"HOST_CLOSED"]);return}
+            self.handleNyraControl(request,reply:reply)
+        }
         rebuild(0); rebuild(1); refreshTargets(); nyra.refresh(); win.center()
         let statusTimer = Timer(timeInterval: 2, repeats: true) { [weak self] _ in self?.refreshNyraStatus();self?.nyra.refresh();self?.tickDialogue();self?.refreshAutomaticReplyState() }
         nyraObservationTimer = statusTimer; RunLoop.main.add(statusTimer, forMode: .common)
@@ -452,11 +488,18 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
             w.isReleasedWhenClosed=false;w.delegate=self
             let text=NSTextField(wrappingLabelWithString:"");text.isSelectable=true;text.font = .monospacedSystemFont(ofSize:13,weight:.regular);text.translatesAutoresizingMaskIntoConstraints=false
             w.contentView!.addSubview(text)
+            nyraAuthorizeControlsButton.target=self;nyraAuthorizeControlsButton.action=#selector(authorizeNyraUserControls)
+            nyraAuthorizeControlsButton.translatesAutoresizingMaskIntoConstraints=false;w.contentView!.addSubview(nyraAuthorizeControlsButton)
             NSLayoutConstraint.activate([text.leadingAnchor.constraint(equalTo:w.contentView!.leadingAnchor,constant:20),text.trailingAnchor.constraint(equalTo:w.contentView!.trailingAnchor,constant:-20),text.topAnchor.constraint(equalTo:w.contentView!.topAnchor,constant:20)])
+            NSLayoutConstraint.activate([nyraAuthorizeControlsButton.trailingAnchor.constraint(equalTo:w.contentView!.trailingAnchor,constant:-20),nyraAuthorizeControlsButton.bottomAnchor.constraint(equalTo:w.contentView!.bottomAnchor,constant:-16)])
             nyraStatusWindow=w;nyraStatusText=text
         }
         updateNyraStatusView(nyra.snapshot());nyra.refresh()
         nyraStatusWindow?.center();nyraStatusWindow?.makeKeyAndOrderFront(nil)
+    }
+    @objc func authorizeNyraUserControls(){
+        guard let app=nyra.standalone else{return}
+        nyra.connectStandalone(app)
     }
     func updateNyraStatusView(_ state:[String:Any]) {
         guard let text=nyraStatusText else{return}
@@ -476,7 +519,12 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         lines.append(translate("Frames displayed")+": "+value("frameCount")+" · "+translate("Animation timer")+": "+value("frameTimer"))
         if state["reduceMotion"] as? Bool == true {lines.append(translate("Reduced motion is enabled. Animation is intentionally still."))}
         if let reason=state["reason"] as? String {lines.append(translate(reason))}
-        lines.append(translate("Connection, observed activity and rendered animation are separate. No chat or files are shared."))
+        let zh=translate("Back") != "Back"
+        lines.append(zh ? "状态、活动和动画分别核验。状态通道不共享聊天正文；主动追加／编辑通过单独已认证控制通道传递所选输入。":"Connection, activity and animation are checked separately. Status excludes chat bodies; explicit append/edit actions carry the selected input over a separate authenticated control channel.")
+        let standalone=nyra.standalone
+        nyraAuthorizeControlsButton.title=zh ? "启用夜璃任务控制…":"Enable Nyra task controls…"
+        nyraAuthorizeControlsButton.isHidden=standalone.map{nyraStatus.canUserControl($0.processIdentifier)} ?? true
+        nyraAuthorizeControlsButton.isEnabled=state["pending"] as? Bool != true
         text.stringValue=lines.joined(separator:"\n\n")
     }
     func refreshLanguage() {
@@ -716,8 +764,10 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         let now=ProcessInfo.processInfo.systemUptime
         for index in 0...1 {
             if kinds[index] == "Codex", let client=codex, let thread=client.threadID {
-                let run=client.telemetry.runs.values.filter { $0.thread==thread }.max { $0.lastActivity<$1.lastActivity }
-                var state=client.connected && !client.uncertain ? "idle" : "activity_unknown"
+                let run=client.telemetry.runs.values.filter {
+                    $0.thread==thread && (client.canControl || client.tailTurn==nil || $0.turn==client.tailTurn)
+                }.max { $0.lastActivity<$1.lastActivity }
+                var state=client.connected && !client.uncertain && client.canControl ? "idle" : "activity_unknown"
                 var evidence:String?
                 if let run=run { state=NyraStatusProducer.codexState(run:run,online:client.connected && !client.uncertain,business:client.observedSubmission(for:run)?.businessResult) }
                 if let run=run,run.state=="completed",client.connected && !client.uncertain,
@@ -725,7 +775,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
                     state="verified_success";evidence=nyraStatus.alias(check.id)
                 }
                 if run?.terminal != false, client.ledger.submissions.contains(where:{$0.thread==thread && $0.turn==nil && ["queued","preparing","sending","accepted"].contains($0.state)}) { state="queued" }
-                paneActivities[index]=PaneActivity(session:nyraStatus.alias(thread),task:run?.turn,state:state == "disconnected" ? "activity_unknown" : state,at:now,evidence:evidence,reason:client.connected && !client.uncertain ? "CODEX_STATE_OBSERVED" : "CODEX_CONNECTION_UNAVAILABLE")
+                paneActivities[index]=PaneActivity(session:nyraStatus.alias(thread),task:run?.turn,state:state == "disconnected" ? "activity_unknown" : state,at:now,evidence:evidence,reason:!client.connected || client.uncertain ? "CODEX_CONNECTION_UNAVAILABLE" : run != nil || client.canControl ? "CODEX_STATE_OBSERVED" : "EXTERNAL_RUN_STATE_NOT_EXPOSED")
             } else if let pane=webPanes[index], kinds[index] != "Codex", let source=NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome) {
                 let session=nyraStatus.alias(kinds[index]+"|"+source.absoluteString)
                 if paneActivities[index]?.session != session { paneActivityRunIDs.removeValue(forKey:index);paneActivities[index]=PaneActivity(session:session,task:nil,state:"activity_unknown",at:now,reason:"PAGE_UNAVAILABLE") }
@@ -739,7 +789,9 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
                     let state=["idle","running","waiting_user"].contains(observed) ? observed : "activity_unknown"
                     let reported=value["reason"] as? String ?? "OBSERVER_UNAVAILABLE"
                     let reason=reported.range(of:"^[A-Z0-9_]{1,80}$",options:.regularExpression) != nil ? reported : "OBSERVER_UNAVAILABLE"
-                    if state=="running",self.paneActivities[index]?.state != "running" { self.paneActivityRunIDs[index]=UUID().uuidString }
+                    let activityID=value["activityID"] as? String ?? ""
+                    if state=="running",!activityID.isEmpty {self.paneActivityRunIDs[index]=self.nyraStatus.alias(session+"|"+activityID)}
+                    self.paneActivityTokens[index]=activityID
                     if state=="idle" {self.paneActivityRunIDs.removeValue(forKey:index)}
                     self.paneActivities[index]=PaneActivity(session:session,task:self.paneActivityRunIDs[index],state:state,at:ProcessInfo.processInfo.systemUptime,reason:reason)
                     self.publishPaneActivity()
@@ -774,6 +826,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
             let fallback=activity.state=="waiting_user" ? "等待你的操作 / Waiting for you" : "当前任务 / Current task"
             return ["side":index==0 ? "left":"right","provider":kinds[index],"title":Self.companionTitle(title) ?? fallback]
         }
+        _ = nyraPublicTasks()
         nyraStatus.observe(session:nyraStatus.alias(identity),task:active.isEmpty ? nil : nyraStatus.alias(active),state:aggregate.state,source:"twos_runtime",ownerEvidence:aggregate.state=="verified_success" && !checks.isEmpty ? nyraStatus.alias(checks) : nil,side:aggregate.side,panes:PaneActivity.observations(paneActivities),labels:labels)
     }
     @discardableResult func persistWebTransfers() -> Bool {
@@ -844,6 +897,12 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         if historyButtons.count > 3 { historyButtons[3].0.isEnabled = onTarget && record.state == "reply" && record.result != nil }
         handoffDetail.string = record.provider + " · " + translate(record.statusLabel) + "\n\n" + record.source + "\n→ " + (record.resolvedURL ?? record.targetURL) + "\n\nID: " + record.id + "\nSHA-256: " + record.hash + "\n\n" + translate("Selected content") + "\n" + record.text + "\n\n" + translate("Website reply") + "\n" + (record.result ?? "—")
         if let inspection = record.inspection { handoffDetail.string = translate("Delivery check") + ": " + translate(inspection) + "\n\n" + handoffDetail.string }
+    }
+    func companionTargetMatches(_ r: WebHandoffReceipt) -> Bool {
+        guard let target=r.nyraTarget else{return true}
+        guard let task=nyraTask(r.targetPane) else{return false}
+        return task["target"] as? String==target && task["fresh"] as? Bool==true &&
+            r.nyraActivity==paneActivityTokens[r.targetPane]
     }
     func currentTargetMatches(_ r: WebHandoffReceipt) -> Bool {
         guard kinds[r.targetPane] == r.provider, let pane = webPanes[r.targetPane] else { return false }
@@ -969,7 +1028,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
     func submitWebTransfer(_ id: String, target: NativeWorkbench) {
         guard let i = webTransfers.firstIndex(where: { $0.id == id }), webTransfers[i].state == "preparing" else { return }
         let record = webTransfers[i]
-        guard kinds[record.targetPane] == record.provider, webPanes[record.targetPane] === target,
+        guard companionTargetMatches(record), kinds[record.targetPane] == record.provider, webPanes[record.targetPane] === target,
               NativeWorkbench.restorableURL(target.web.url, service: target.serviceHome)?.absoluteString == record.targetURL else {
             webTransfers[i].state = "target_changed"; _ = persistWebTransfers(); publishWebTransfer(id); return
         }
@@ -1042,7 +1101,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         transferTimers[id] = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self, weak target] timer in
             guard let self = self, let target = target, let i = self.webTransfers.firstIndex(where: { $0.id == id }), self.webTransfers[i].state == "queued", self.activeWebQueues.contains(id) else { timer.invalidate(); return }
             let record = self.webTransfers[i]; reads += 1
-            guard reads <= 100, self.kinds[record.targetPane] == record.provider, self.webPanes[record.targetPane] === target,
+            guard reads <= 100, self.companionTargetMatches(record), self.kinds[record.targetPane] == record.provider, self.webPanes[record.targetPane] === target,
                   NativeWorkbench.restorableURL(target.web.url, service: target.serviceHome)?.absoluteString == record.targetURL else {
                 timer.invalidate(); self.activeWebQueues.remove(id); self.webTransfers[i].state = "queue_paused"; if self.persistWebTransfers() { self.publishWebTransfer(id) }; return
             }
@@ -1110,6 +1169,8 @@ struct WebHandoffReceipt: Codable {
     let targetURL: String
     let binding: String
     var dialogueID: String?
+    var nyraTarget: String?
+    var nyraActivity: String?
     var files: [WebTransferFile]?
     var resolvedURL: String?
     var resumeDraft: Bool?
@@ -1147,6 +1208,7 @@ struct WebHandoffReceipt: Codable {
     }
     func request(inspectOnly: Bool) -> [String: Any] {
         var value: [String: Any] = ["id": id, "text": text, "hash": hash, "provider": provider, "targetURL": resolvedURL ?? targetURL, "inspectOnly": inspectOnly, "draftOnly": false, "resumeDraft": resumeDraft == true]
+        if let activity=nyraActivity {value["expectedActivity"]=activity}
         // Reconciliation needs the original attachment identity to distinguish
         // website-added file captions from the exact submitted body. Metadata
         // only: observing delivery never rereads or uploads file bytes.
@@ -1165,6 +1227,22 @@ struct WebHandoffReceipt: Codable {
 final class NativeNyra: NSObject {
     let stateRoot: URL
     var isolated: Bool { CommandLine.arguments.contains("--diagnostic-root") }
+    // Diagnostic sessions may select one exact signed standalone candidate.
+    // They must never discover or write to the Owner's normal Nyra profile.
+    static func diagnosticStandaloneURL(_ arguments: [String]) -> URL? {
+        guard let rootIndex=arguments.firstIndex(of:"--diagnostic-root"),rootIndex+1<arguments.count,
+              arguments[rootIndex+1].hasPrefix("/"),
+              !arguments[rootIndex+1].split(separator:"/").contains(".."),
+              let index=arguments.firstIndex(of:"--diagnostic-nyra-app"),index+1<arguments.count else{return nil}
+        let path=arguments[index+1]
+        guard path.hasPrefix("/"),!path.split(separator:"/").contains(".."),path.hasSuffix(".app") else{return nil}
+        return URL(fileURLWithPath:path,isDirectory:true).standardizedFileURL
+    }
+    var diagnosticStandaloneURL: URL? { Self.diagnosticStandaloneURL(CommandLine.arguments) }
+    var standaloneStateRoot: URL {
+        isolated ? stateRoot.deletingLastPathComponent().appendingPathComponent("standalone-nyra",isDirectory:true)
+                 : FileManager.default.urls(for:.applicationSupportDirectory,in:.userDomainMask)[0].appendingPathComponent("Nyra")
+    }
     static let standaloneID = "com.tianma.nyra"
     static func compatibleStandalone(_ app: NSRunningApplication) -> Bool {
         guard app.bundleIdentifier == standaloneID, let url = app.bundleURL,
@@ -1182,13 +1260,50 @@ final class NativeNyra: NSObject {
               SecCodeCopySigningInformation(code,[],&info)==errSecSuccess else{return nil}
         return (info as? [String:Any])?[kSecCodeInfoUnique as String] as? Data
     }
+    private var standaloneCache:NSRunningApplication?
+    private var standaloneCheckKey=""
+    private var standaloneCheckedAt=0.0
+    private var standaloneChecking=false
+    private var standaloneGeneration=0
+    private var authorizationGeneration=0
+    private var authorizationPending=false
+    private var authorizedVisibilityRequest:Bool?
+    var standaloneCandidates:[NSRunningApplication] {
+        if isolated && diagnosticStandaloneURL == nil {return []}
+        return NSRunningApplication.runningApplications(withBundleIdentifier:Self.standaloneID).filter {
+            !$0.isTerminated && (!isolated || $0.bundleURL?.standardizedFileURL == diagnosticStandaloneURL)
+        }
+    }
+    func discoverStandalone() {
+        let candidates=standaloneCandidates
+        let key=candidates.map{"\($0.processIdentifier)|\($0.launchDate?.timeIntervalSince1970 ?? 0)|\($0.bundleURL?.path ?? "")"}.joined(separator:";")
+        let now=ProcessInfo.processInfo.systemUptime
+        if key != standaloneCheckKey {
+            standaloneGeneration+=1;standaloneChecking=false;standaloneCache=nil;standaloneCheckedAt=0;standaloneCheckKey=key
+        }
+        guard !candidates.isEmpty else{standaloneCache=nil;return}
+        guard !standaloneChecking,now-standaloneCheckedAt>=10 else{return}
+        standaloneChecking=true;let generation=standaloneGeneration
+        DispatchQueue.global(qos:.utility).async{[weak self] in
+            // Strict signature validation can read the whole bundle. Never do it
+            // in a computed UI property or a mouse/visibility callback.
+            let selected=candidates.first{Self.compatibleStandalone($0)}
+            DispatchQueue.main.async{
+                guard let self=self,self.standaloneGeneration==generation else{return}
+                self.standaloneChecking=false;self.standaloneCheckedAt=ProcessInfo.processInfo.systemUptime
+                self.standaloneCache=selected?.isTerminated==false ? selected:nil
+                self.refresh()
+            }
+        }
+    }
     var standalone: NSRunningApplication? {
-        guard !isolated else { return nil }
-        return NSRunningApplication.runningApplications(withBundleIdentifier:Self.standaloneID).first { !$0.isTerminated && Self.compatibleStandalone($0) }
+        guard let cached=standaloneCache,!cached.isTerminated,
+              !isolated || cached.bundleURL?.standardizedFileURL == diagnosticStandaloneURL else{return nil}
+        return cached
     }
     var targetURL: URL? { standalone?.bundleURL ?? helperURL }
     var targetStateRoot: URL {
-        standalone != nil ? FileManager.default.urls(for:.applicationSupportDirectory,in:.userDomainMask)[0].appendingPathComponent("Nyra") : stateRoot
+        standalone != nil ? standaloneStateRoot : stateRoot
     }
     var targetProcesses: [NSRunningApplication] {
         if let app = standalone { return [app] }
@@ -1242,7 +1357,7 @@ final class NativeNyra: NSObject {
     }
     private func emitSnapshot() {
         var state = snapshot()
-        state["pending"] = pending || stateReadInFlight || state["pending"] as? Bool == true
+        state["pending"] = pending || authorizationPending || stateReadInFlight || (standaloneChecking && standaloneCache==nil) || state["pending"] as? Bool == true
         changed(state)
     }
     var helperURL: URL? {
@@ -1280,6 +1395,7 @@ final class NativeNyra: NSObject {
         }
     }
     private func observedSnapshot() -> [String: Any] {
+        if !standaloneCandidates.isEmpty,standalone==nil {return ["available":false,"observed":false,"binding":"NOT_CONNECTED","reason":standaloneChecking ? "NYRA_CHECKING_IDENTITY":"NYRA_VERSION_OR_IDENTITY_UNVERIFIED"]}
         guard let helper = targetURL else { return ["available": false, "visible": false, "reason": "NYRA_HELPER_NOT_BUNDLED", "binding": "NOT_CONNECTED"] }
         // Another installed copy is not our hidden pet. Do not present a Show
         // action that Launch Services could redirect to that unrelated process.
@@ -1287,12 +1403,13 @@ final class NativeNyra: NSObject {
         // No helper means there is no live visibility evidence to read. Besides
         // rejecting old state from another build, this avoids an unnecessary
         // Downloads/TCC file prompt on workbench startup in engineering profiles.
-        guard targetProcesses
+        let observedProcesses=targetProcesses
+        guard observedProcesses
             .contains(where: { !$0.isTerminated && $0.bundleURL?.standardizedFileURL == helper.standardizedFileURL }) else {
             return ["available": true, "visible": false, "observed": false, "binding": "NOT_CONNECTED"]
         }
         guard let state = visibilityCache, let pid = state["pid"] as? Int32,
-              let process = NSRunningApplication(processIdentifier: pid), !process.isTerminated,
+              let process = observedProcesses.first(where:{$0.processIdentifier==pid}), !process.isTerminated,
               process.bundleURL?.standardizedFileURL == helper.standardizedFileURL,
               state["bundle"] as? String == helper.path else { return ["available": true, "visible": false, "observed": false, "binding": "NOT_CONNECTED"] }
         let now=ProcessInfo.processInfo.systemUptime
@@ -1309,6 +1426,7 @@ final class NativeNyra: NSObject {
         return result
     }
     func refresh() {
+        discoverStandalone()
         if controlFailure == "NYRA_OPEN_TARGET_MISMATCH" && !otherEmbeddedHelper { controlFailure=nil }
         // Observe the actual selected component, including a compatible signed
         // standalone. Looking only at helperURL leaves standalone state unread.
@@ -1325,35 +1443,56 @@ final class NativeNyra: NSObject {
         setVisible(!(state["visible"] as? Bool == true))
     }
     func connectStandalone(_ app:NSRunningApplication) {
-        let alert=NSAlert();alert.messageText="连接夜璃只读状态 / Connect Nyra read-only status"
-        alert.informativeText="将当前 TWOS 的左右侧活动关联到已经运行的夜璃。只共享状态和不透明标识，不共享聊天、文件或账户，也不授予执行或批准权限。\nConnect this TWOS's two-pane activity to the running Nyra. Only minimal state and opaque IDs are shared. No chat, files, account data, execution or approval rights."
-        alert.addButton(withTitle:"连接 / Connect");alert.addButton(withTitle:"仅显示或隐藏 / Visibility only")
+        guard !authorizationPending else{return}
+        let alert=NSAlert();alert.messageText="连接夜璃并授权任务控制 / Connect Nyra and authorize task controls"
+        alert.informativeText="将当前 TWOS 的左右侧活动关联到已经运行的夜璃。共享状态和简短任务标题；允许你在夜璃中主动追加、编辑未发送指令及停止准确任务。不会自动批准或扩大目录权限。\nConnect this TWOS's two-pane activity to the running Nyra. Share minimal status and short task titles, and enable your explicit append/edit/stop actions for bound tasks. No autonomous execution, approval or expanded workspace access."
+        alert.addButton(withTitle:"连接并授权 / Connect and authorize");alert.addButton(withTitle:"仅显示或隐藏 / Visibility only")
         guard alert.runModal() == .alertFirstButtonReturn else{return}
-        do {
-            guard let target=app.bundleURL,(Bundle(url:target)?.object(forInfoDictionaryKey:"NyraVisibilityProtocol") as? Int ?? 0)>=2,
-                  let ownHash=Self.signedCodeHash(Bundle.main.bundleURL),let ownID=Bundle.main.bundleIdentifier else{throw CocoaError(.fileReadNoPermission)}
-            try authorizeConsumer(app)
-            let root=targetStateRoot;try NativeWorkbench.safeDirectory(root)
-            let selection:[String:Any]=["endpoint":stateRoot.deletingLastPathComponent().appendingPathComponent("nyra-status/endpoint.json").path,"producerApp":Bundle.main.bundleURL.path,"producerBundleID":ownID,"producerCodeHash":ownHash.base64EncodedString(),"connection_nonce":UUID().uuidString]
-            let file=root.appendingPathComponent("bridge-selection.json")
-            try JSONSerialization.data(withJSONObject:selection).write(to:file,options:.atomic)
-            try FileManager.default.setAttributes([.posixPermissions:0o600],ofItemAtPath:file.path)
-            // Notification is a refresh hint only. Nyra still validates both
-            // file permissions and the live signed socket peer before trusting it.
-            DistributedNotificationCenter.default().postNotificationName(Notification.Name("com.tianma.nyra.connection.refresh"),object:target.path,userInfo:nil,deliverImmediately:true)
-            controlFailure=nil
-            refresh()
-        } catch {controlFailure="NYRA_CONNECTION_UNAVAILABLE_OR_UPDATE_REQUIRED";refresh()}
+        guard let target=app.bundleURL,let ownID=Bundle.main.bundleIdentifier else{controlFailure="NYRA_CONNECTION_UNAVAILABLE_OR_UPDATE_REQUIRED";refresh();return}
+        authorizationGeneration+=1;let generation=authorizationGeneration
+        authorizationPending=true;emitSnapshot()
+        let root=standaloneStateRoot
+        let endpoint=stateRoot.deletingLastPathComponent().appendingPathComponent("nyra-status/endpoint.json").path
+        let ownApp=Bundle.main.bundleURL,authorize=authorizeConsumer
+        DispatchQueue.global(qos:.userInitiated).async{[weak self] in
+            let failure:String?
+            do {
+                guard !app.isTerminated,(Bundle(url:target)?.object(forInfoDictionaryKey:"NyraVisibilityProtocol") as? Int ?? 0)>=2,
+                      let ownHash=Self.signedCodeHash(ownApp) else{throw CocoaError(.fileReadNoPermission)}
+                try authorize(app)
+                guard !app.isTerminated else{throw CocoaError(.fileReadNoPermission)}
+                try NativeWorkbench.safeDirectory(root)
+                let selection:[String:Any]=["endpoint":endpoint,"producerApp":ownApp.path,"producerBundleID":ownID,"producerCodeHash":ownHash.base64EncodedString(),"connection_nonce":UUID().uuidString]
+                let file=root.appendingPathComponent("bridge-selection.json")
+                try JSONSerialization.data(withJSONObject:selection).write(to:file,options:.atomic)
+                try FileManager.default.setAttributes([.posixPermissions:0o600],ofItemAtPath:file.path)
+                failure=nil
+            } catch {failure="NYRA_CONNECTION_UNAVAILABLE_OR_UPDATE_REQUIRED"}
+            DispatchQueue.main.async {
+                guard let self=self,self.authorizationGeneration==generation else{return}
+                self.authorizationPending=false;self.controlFailure=failure
+                if failure==nil,!app.isTerminated {
+                    // Hint only: the consumer still authenticates the exact live peer.
+                    DistributedNotificationCenter.default().postNotificationName(Notification.Name("com.tianma.nyra.connection.refresh"),object:target.path,userInfo:nil,deliverImmediately:true)
+                }
+                self.refresh()
+                let desired=self.authorizedVisibilityRequest;self.authorizedVisibilityRequest=nil
+                if failure==nil,!app.isTerminated,self.standalone?.processIdentifier==app.processIdentifier,let desired=desired {self.setVisible(desired)}
+            }
+        }
     }
+
     func setVisible(_ desired: Bool) {
-        guard !pending, let helper = targetURL else { refresh(); return }
+        if authorizationPending {authorizedVisibilityRequest=desired;return}
+        guard !pending,let helper = targetURL else { refresh(); return }
+        guard standaloneCandidates.isEmpty || standalone != nil else{refresh();return}
         guard !otherEmbeddedHelper else { refresh(); return }
         // Refuse to redirect an already running helper from another installation
         // or profile. A compatible standalone may be shown but is not rebound.
         let running = targetProcesses
         if !isolated {
             let conflicts = NSWorkspace.shared.runningApplications.filter { app in
-                !app.isTerminated && ["com.tianma.nyra","local.nyra.companion.preview"].contains(app.bundleIdentifier ?? "") && !Self.compatibleStandalone(app)
+                !app.isTerminated && ["com.tianma.nyra","local.nyra.companion.preview"].contains(app.bundleIdentifier ?? "") && app.processIdentifier != standalone?.processIdentifier
             }
             if !conflicts.isEmpty {
                 changed(["available":false,"reason":"NYRA_VERSION_CONFLICT","binding":"NOT_CONNECTED"]); return
@@ -1385,6 +1524,290 @@ final class NativeNyra: NSObject {
                 else if app?.bundleURL?.standardizedFileURL != helper.standardizedFileURL {self.controlFailure="NYRA_OPEN_TARGET_MISMATCH"}
                 self.refresh()
             }
+        }
+    }
+}
+
+// Separate authenticated user-action channel; status.sock remains pull-only.
+final class NyraControlServer {
+    final class Connection {
+        let fd:Int32; let token=UUID();let lock=NSLock();var live=true
+        var source:DispatchSourceRead?
+        init(_ fd:Int32){self.fd=fd}
+        func invalidate(){lock.lock();live=false;lock.unlock()}
+        func valid()->Bool{lock.lock();defer{lock.unlock()};return live}
+    }
+    let instance:String
+    let queue=DispatchQueue(label:"com.tianma.nyra.user-controls",qos:.userInitiated)
+    let authenticate:(pid_t,uid_t,String)->Bool
+    let handle:([String:Any],@escaping([String:Any])->Void)->Void
+    var listener:Int32 = -1
+    var source:DispatchSourceRead?
+    let path:String
+    var clients:[Int32:Connection]=[:]
+    var replies:[String:[String:Any]]=[:]
+    var pending=Set<String>()
+    init(root:URL,instance:String,authenticate:@escaping(pid_t,uid_t,String)->Bool,handle:@escaping([String:Any],@escaping([String:Any])->Void)->Void)throws {
+        self.instance=instance;self.authenticate=authenticate;self.handle=handle
+        path=root.appendingPathComponent("control.sock").path
+        listener=socket(AF_UNIX,SOCK_STREAM,0)
+        guard listener>=0 else{throw CocoaError(.fileWriteUnknown)}
+        var address=sockaddr_un();address.sun_family=sa_family_t(AF_UNIX);address.sun_len=UInt8(MemoryLayout<sockaddr_un>.size)
+        guard path.utf8.count+1<=MemoryLayout.size(ofValue:address.sun_path) else{Darwin.close(listener);throw CocoaError(.fileWriteInvalidFileName)}
+        withUnsafeMutableBytes(of:&address.sun_path){b in path.utf8CString.withUnsafeBytes{b.copyMemory(from:$0)}}
+        let result=withUnsafePointer(to:&address){$0.withMemoryRebound(to:sockaddr.self,capacity:1){Darwin.bind(listener,$0,socklen_t(MemoryLayout<sockaddr_un>.size))}}
+        guard result==0,chmod(path,0o600)==0,listen(listener,4)==0,fcntl(listener,F_SETFL,O_NONBLOCK)==0 else{Darwin.close(listener);throw CocoaError(.fileWriteUnknown)}
+        let read=DispatchSource.makeReadSource(fileDescriptor:listener,queue:queue)
+        read.setEventHandler{[weak self] in self?.accept()};source=read;read.resume()
+    }
+    func stop(){source?.cancel();source=nil;queue.async{[self] in for c in Array(clients.values){closeClient(c)};if listener>=0{Darwin.close(listener);listener = -1};unlink(path)}}
+    func closeClient(_ c:Connection){guard clients[c.fd] === c else{return};clients.removeValue(forKey:c.fd);c.invalidate();c.source?.cancel();c.source=nil}
+    func send(_ value:[String:Any],to c:Connection){
+        guard clients[c.fd] === c,let data=try? JSONSerialization.data(withJSONObject:value),data.count<=240_000 else{closeClient(c);return}
+        let bytes=data+Data([10]);var offset=0
+        func drain(){
+            guard self.clients[c.fd] === c else{return}
+            let n=bytes.withUnsafeBytes{Darwin.send(c.fd,$0.baseAddress!.advanced(by:offset),bytes.count-offset,MSG_DONTWAIT|MSG_NOSIGNAL)}
+            if n>0{offset+=n}
+            if offset==bytes.count{self.closeClient(c)}
+            else if n<0 && errno != EAGAIN && errno != EWOULDBLOCK{self.closeClient(c)}
+            else{self.queue.asyncAfter(deadline:.now()+0.01){drain()}}
+        }
+        drain()
+    }
+    func accept(){
+        for _ in 0..<4 {
+            let fd=Darwin.accept(listener,nil,nil);guard fd>=0 else{return}
+            guard clients.count<8 else{Darwin.close(fd);continue}
+            var noSignal:Int32=1
+            guard fcntl(fd,F_SETFL,O_NONBLOCK)==0,setsockopt(fd,SOL_SOCKET,SO_NOSIGPIPE,&noSignal,socklen_t(MemoryLayout<Int32>.size))==0 else{Darwin.close(fd);continue}
+            let c=Connection(fd),read=DispatchSource.makeReadSource(fileDescriptor:fd,queue:queue)
+            var bytes=Data(),handled=false
+            read.setCancelHandler{Darwin.close(fd)}
+            read.setEventHandler{[weak self,weak c] in
+                guard let self=self,let c=c,!handled else{return}
+                var buffer=[UInt8](repeating:0,count:8192)
+                while true {
+                    let n=recv(fd,&buffer,buffer.count,0)
+                    if n<0 && (errno==EAGAIN || errno==EWOULDBLOCK){return}
+                    guard n>0 else{self.closeClient(c);return}
+                    bytes.append(contentsOf:buffer.prefix(n))
+                    guard bytes.count<=240_000 else{self.closeClient(c);return}
+                    if let newline=bytes.firstIndex(of:10){
+                        handled=true
+                        guard newline==bytes.count-1,let request=(try? JSONSerialization.jsonObject(with:bytes.dropLast())) as? [String:Any] else{self.closeClient(c);return}
+                        self.dispatch(request,c:c);return
+                    }
+                }
+            }
+            c.source=read;clients[fd]=c;read.resume()
+            queue.asyncAfter(deadline:.now()+4){[weak self,weak c] in guard let c=c else{return};self?.closeClient(c)}
+        }
+    }
+    func dispatch(_ request:[String:Any],c:Connection){
+        var uid:uid_t=0,gid:gid_t=0,pid:pid_t=0;var size=socklen_t(MemoryLayout<pid_t>.size)
+        guard getpeereid(c.fd,&uid,&gid)==0,getsockopt(c.fd,SOL_LOCAL,LOCAL_PEERPID,&pid,&size)==0,
+              request["protocol"] as? String=="twos.nyra.control.v1",request["hostInstance"] as? String==instance,
+              let consumer=request["consumerInstance"] as? String,UUID(uuidString:consumer) != nil,
+              let id=request["requestID"] as? String,UUID(uuidString:id) != nil,
+              let issued=request["issuedUptime"] as? Double,issued.isFinite,abs(ProcessInfo.processInfo.systemUptime-issued)<4,
+              let method=request["method"] as? String,["focus","inspect","draft","submit","editQueue","stop"].contains(method),
+              authenticate(pid,uid,method) else{send(["requestID":request["requestID"] as? String ?? "","hostInstance":instance,"error":"CONTROL_NOT_AUTHORIZED_OR_STALE"],to:c);return}
+        let mutation=["submit","editQueue","stop"].contains(method) || (method=="draft" && request["text"] != nil)
+        let key="\(pid)|\(consumer)|\(id)"
+        if let response=replies[key]{send(response,to:c);return}
+        guard !pending.contains(key) else{send(["requestID":id,"hostInstance":instance,"error":"REQUEST_IN_FLIGHT"],to:c);return}
+        guard !mutation || replies.count+pending.count<4096 else{send(["requestID":id,"hostInstance":instance,"error":"CONTROL_RECEIPT_LIMIT_RECONNECT_HOST"],to:c);return}
+        if mutation{pending.insert(key)}
+        var bound=request;bound["_userControls"]=authenticate(pid,uid,"submit")
+        DispatchQueue.main.async{[weak self,weak c] in
+            guard let self=self,let c=c else{return}
+            guard c.valid(),abs(ProcessInfo.processInfo.systemUptime-issued)<4 else{
+                self.queue.async{self.pending.remove(key);self.closeClient(c)};return
+            }
+            self.handle(bound){response in
+                self.queue.async{
+                    if mutation {guard self.pending.remove(key) != nil else{return}}
+                    var result=response;result["requestID"]=id;result["hostInstance"]=self.instance
+                    if mutation{self.replies[key]=result}
+                    self.send(result,to:c)
+                }
+            }
+        }
+    }
+}
+
+// User actions are bound to one displayed task and reused execution pipelines.
+// This metadata endpoint never returns prompts, accounts, paths or attachments.
+extension IntegratedWorkbench {
+    func nyraTask(_ index:Int)->[String:Any]? {
+        guard let activity=paneActivities[index], ["ChatGPT","Claude","DeepSeek","Codex"].contains(kinds[index]) else{return nil}
+        let active=["running","queued","waiting_user"].contains(activity.state)
+        let previous=nyraTaskRows[index]
+        if (!activity.fresh || ["PAGE_UNAVAILABLE","CODEX_CONNECTION_UNAVAILABLE"].contains(activity.reason)),
+           var retained=previous,retained["provider"] as? String==kinds[index],retained["session"] as? String==activity.session {
+            retained["fresh"]=false;retained["state"]="activity_unknown";retained["reason"]=activity.reason
+            retained["canAppend"]=false;retained["canEdit"]=false;retained["canStop"]=false;retained["canSteer"]=false
+            return retained
+        }
+        let previousRun=previous?["run"] as? String
+        let hadRun=previous?["session"] as? String==activity.session && previousRun != nil && previousRun != "pending"
+        // A provider login/landing page or mere waiting input is not a task.
+        // Keep an actual ended run, and an owned Codex chat for draft editing.
+        guard activity.task != nil || hadRun ||
+            (kinds[index]=="Codex" && codex?.historyReady==true && (codex?.tailTurn != nil || codex?.canControl==true)) else{return nil}
+        let title:String?
+        var scope="", owned=false, draftOwned=false, stopping=false
+        if kinds[index]=="Codex",let client=codex {
+            title=client.threadRows.first(where:{$0["id"] as? String==client.threadID})?["name"] as? String
+            if let thread=client.threadID,let binding=client.ledger.bindings[thread] {
+                scope=String(describing:binding.directory)
+                owned=client.connected && !client.uncertain && client.controlledThreads.contains(thread)
+                draftOwned=client.connected && !client.uncertain && client.canControl && (!active || owned)
+            }
+            stopping=client.stopRequested
+        } else {
+            title=webPanes[index]?.web.title
+            owned=activity.fresh && activity.reason != "PAGE_UNAVAILABLE" && !(paneActivityTokens[index] ?? "").isEmpty
+            draftOwned=owned
+            stopping=nyraStops[index].map{$0.task==activity.task && ProcessInfo.processInfo.systemUptime-$0.at<12} ?? false
+        }
+        let run=activity.task ?? (previous?["run"] as? String ?? "pending")
+        let target=nyraStatus.alias("control|\(index)|\(kinds[index])|\(routeRevision)|\(activity.session)|\(run)|\(scope)")
+        let fresh=activity.fresh && activity.state != "activity_unknown"
+        let selectionScope=nyraStatus.alias("selection|\(index)|\(kinds[index])|\(routeRevision)|\(activity.session)|\(scope)")
+        var value:[String:Any] = ["side":index==0 ? "left":"right","provider":kinds[index],"target":target,"scope":selectionScope,
+            "title":Self.companionTitle(title) ?? "Title unavailable / 标题暂不可用", "state":activity.state,
+            "reason":activity.reason,"fresh":fresh,"canAppend":fresh && active && owned && !stopping,
+            "canEdit":fresh && draftOwned && !stopping,
+            "canStop":fresh && active && owned && !stopping,
+            "canSteer":fresh && activity.state=="running" && owned && kinds[index]=="Codex" && codex?.turnID != nil,
+            "session":activity.session,"run":run]
+        if stopping {value["state"]="stopping";value["canAppend"]=false;value["canEdit"]=false;value["canStop"]=false}
+        if let stop=nyraStops[index],stop.task==activity.task,ProcessInfo.processInfo.systemUptime-stop.at>=12,active {
+            value["state"]="stop_unconfirmed";value["reason"]="STOP_TERMINAL_NOT_CONFIRMED"
+        }
+        return value
+    }
+    func nyraPublicTasks()->[[String:Any]] {
+        (0...1).compactMap {index in
+            guard var task=nyraTask(index) else{nyraTaskRows.removeValue(forKey:index);return nil}
+            nyraTaskRows[index]=task
+            task.removeValue(forKey:"session");task.removeValue(forKey:"run")
+            return task
+        }
+    }
+    func handleNyraControl(_ request:[String:Any],reply:@escaping([String:Any])->Void) {
+        dispatchPrecondition(condition:.onQueue(.main))
+        guard let issued=request["issuedUptime"] as? Double,abs(ProcessInfo.processInfo.systemUptime-issued)<4 else{reply(["error":"STALE_ACTION"]);return}
+        let method=request["method"] as? String ?? ""
+        if method=="inspect" {
+            reply(["tasks":nyraPublicTasks(),"userControls":request["_userControls"] as? Bool==true,"language":translate("Back")=="Back" ? "en":"zh"]);return
+        }
+        var index:Int?
+        if let target=request["target"] as? String {
+            index=(0...1).first{nyraTask($0)?["target"] as? String==target}
+            guard index != nil else{reply(["error":"TASK_CHANGED_DRAFT_RETAINED"]);return}
+        }
+        if method=="focus" {focusNyraWorkbench(index,reply:reply);return}
+        guard request["_userControls"] as? Bool==true else{reply(["error":"CONTROL_NOT_AUTHORIZED"]);return}
+        guard let index=index,let task=nyraTask(index) else{reply(["error":"TASK_CHANGED_DRAFT_RETAINED"]);return}
+        if kinds[index]=="Codex",let client=codex,(!client.connected || client.uncertain) {reply(["error":"HOST_CONNECTION_STATE_UNCONFIRMED_DRAFT_RETAINED"]);return}
+        guard task["fresh"] as? Bool==true else{reply(["error":"TASK_OBSERVATION_STALE_DRAFT_RETAINED"]);return}
+        if method=="stop" {stopNyraTask(index,task:task,reply:reply);return}
+        guard ["draft","submit","editQueue"].contains(method),let target=task["target"] as? String else{reply(["error":"UNSUPPORTED_CONTROL"]);return}
+        let text=request["text"] as? String
+        guard text.map({$0.utf8.count<=64_000}) ?? true else{reply(["error":"TEXT_LIMIT_64000_BYTES"]);return}
+        if kinds[index]=="Codex",let client=codex,let thread=client.threadID {
+            guard client.connected,!client.uncertain else{reply(["error":"HOST_CONNECTION_STATE_UNCONFIRMED_DRAFT_RETAINED"]);return}
+            guard task["canEdit"] as? Bool==true,let binding=client.ledger.bindings[thread],client.validBinding(binding) else{reply(["error":"TASK_NOT_CONTROLLED_BY_TWOS"]);return}
+            if let queueID=request["queueID"] as? String {
+                guard let item=client.ledger.submissions.first(where:{$0.id==queueID && $0.thread==thread && $0.state=="queued"}) else{reply(["error":"INPUT_ALREADY_DISPATCHED"]);return}
+                if method=="draft",text==nil {reply(["text":item.text,"revision":NativeCodex.digest(Data(item.text.utf8)),"queueID":queueID]);return}
+                guard method=="editQueue",let text=text,request["revision"] as? String==NativeCodex.digest(Data(item.text.utf8)) else{reply(["error":"DRAFT_CHANGED"]);return}
+                guard client.editQueue(["id":queueID,"text":text]) else{reply(["error":"QUEUE_EDIT_NOT_SAVED"]);return};reply(["state":"edited","text":text,"revision":NativeCodex.digest(Data(text.utf8))]);return
+            }
+            let revision=NativeCodex.digest(Data(client.draftText.utf8))
+            if method=="draft",text==nil {
+                var result:[String:Any] = ["text":client.draftText,"revision":revision,"canSubmit":task["canAppend"] as? Bool==true,"mode":client.ledger.mode=="steer" ? "steer":"queue",
+                       "queue":client.ledger.submissions.filter{$0.thread==thread && $0.state=="queued"}.map{["id":$0.id,"label":"Pending input / 待发指令"]}]
+                if let receipt=request["receipt"] as? String {
+                    guard let record=client.ledger.submissions.first(where:{$0.id==receipt && $0.thread==thread}) else{reply(["error":"RECEIPT_NOT_FOUND"]);return}
+                    result["receiptState"]=record.state
+                }
+                reply(result);return
+            }
+            guard let text=text,request["revision"] as? String==revision else{reply(["error":"DRAFT_CHANGED"]);return}
+            if method=="draft" {guard client.saveDraft(text) else{reply(["error":"DRAFT_NOT_SAVED"]);return};client.emitDraft();reply(["state":"saved","revision":NativeCodex.digest(Data(text.utf8))]);return}
+            guard method=="submit",task["canAppend"] as? Bool==true,client.controlledThreads.contains(thread),client.draftAttachments.isEmpty else{reply(["error":"REVIEW_TASK_OR_ATTACHMENTS_IN_TWOS"]);return}
+            let mode=request["mode"] as? String ?? "queue"
+            guard ["steer","queue"].contains(mode),mode != "steer" || task["canSteer"] as? Bool==true else{reply(["error":"STEER_UNAVAILABLE_NO_RESTART"]);return}
+            let current=client.ledger.submissions.first{$0.id==client.activeSubmission}
+            guard let item=client.makeSubmission(text:text,model:mode=="steer" ? current?.model ?? client.nextModel:client.nextModel,
+                effort:mode=="steer" ? current?.effort ?? client.nextEffort:client.nextEffort,mode:mode),
+                mode != "steer" || current?.turn==client.turnID else{reply(["error":"INPUT_NOT_ACCEPTED_REVIEW_TWOS"]);return}
+            guard client.acceptSubmission(item) else{reply(["error":"RECEIPT_NOT_SAVED"]);return}
+            if mode=="steer" {client.steer(item)} else {client.acknowledge(item)}
+            reply(["state":mode=="steer" ? "sending":"queued","receipt":item.id]);return
+        }
+        guard let pane=webPanes[index],let url=NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome) else{reply(["error":"PAGE_UNAVAILABLE"]);return}
+        let queueID=request["queueID"] as? String
+        let saved=webTransfers.firstIndex{r in r.nyraTarget==target && r.targetPane==index && r.provider==kinds[index] && (queueID.map{$0==r.id} ?? (r.state=="nyra_draft"))}
+        if method=="draft",text==nil {
+            let body=saved.map{webTransfers[$0].text} ?? ""
+            reply(["text":body,"revision":NativeCodex.digest(Data(body.utf8)),"canSubmit":task["canAppend"] as? Bool==true,"mode":"queue",
+                "queue":webTransfers.filter{$0.nyraTarget==target && $0.state=="queued" && $0.mayHaveSent != true}.map{["id":$0.id,"label":"Pending input / 待发指令"]}]);return
+        }
+        guard let text=text,request["revision"] as? String==NativeCodex.digest(Data((saved.map{webTransfers[$0].text} ?? "").utf8)),
+              saved.map({webTransfers[$0].mayHaveSent != true && ["nyra_draft","queued"].contains(webTransfers[$0].state)}) ?? (queueID==nil) else{reply(["error":"DRAFT_CHANGED_OR_ALREADY_SENT"]);return}
+        guard method=="draft" || (task["canAppend"] as? Bool==true && request["mode"] as? String=="queue" && !text.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty) else{reply(["error":"WEBSITE_SUPPORTS_SEND_AFTER_COMPLETION_ONLY"]);return}
+        var record=WebHandoffReceipt(source:url.absoluteString,message:"nyra-user-"+(request["requestID"] as? String ?? UUID().uuidString),text:text,hash:NativeCodex.digest(Data(text.utf8)),provider:kinds[index],targetPane:index,targetURL:url.absoluteString,binding:routeSignature(1-index))
+        record.nyraTarget=target;record.nyraActivity=paneActivityTokens[index];record.files=[];record.state=method=="draft" ? "nyra_draft":"queued"
+        if let saved=saved {record.id=webTransfers[saved].id;record.createdAt=webTransfers[saved].createdAt;webTransfers[saved]=record} else{webTransfers.append(record)}
+        guard persistWebTransfers() else{reply(["error":"RECEIPT_NOT_SAVED"]);return}
+        if record.state=="queued" {observeQueuedTransfer(record.id,target:pane)}
+        reply(["state":record.state=="nyra_draft" ? "saved":record.state,"revision":record.hash,"receipt":record.id])
+    }
+    func focusNyraWorkbench(_ index:Int?,reply:@escaping([String:Any])->Void) {
+        guard let window=window else{reply(["error":"WORKBENCH_WINDOW_MISSING"]);return}
+        // Restore THIS controller, never resolve an application by display name.
+        NSApp.unhide(nil);if window.isMiniaturized {window.deminiaturize(nil)}
+        let old=window.collectionBehavior
+        if !old.contains(.canJoinAllSpaces) {window.collectionBehavior.insert(.moveToActiveSpace)}
+        window.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)
+        if let index=index {
+            if let pane=webPanes[index] {window.makeFirstResponder(pane.web)}
+            else if split.arrangedSubviews.indices.contains(index) {window.makeFirstResponder(split.arrangedSubviews[index])}
+        }
+        let started=ProcessInfo.processInfo.systemUptime
+        func observe(){
+            let visible=NSApp.isActive && window.isVisible && !window.isMiniaturized && window.isKeyWindow && window.occlusionState.contains(.visible)
+            if visible || ProcessInfo.processInfo.systemUptime-started>=0.8 {
+                window.collectionBehavior=old
+                reply(visible ? ["state":"visible","elapsedMs":Int((ProcessInfo.processInfo.systemUptime-started)*1000)] : ["error":"WINDOW_FOCUS_NOT_CONFIRMED"])
+            } else {DispatchQueue.main.asyncAfter(deadline:.now()+0.04){observe()}}
+        }
+        observe()
+    }
+    func stopNyraTask(_ index:Int,task:[String:Any],reply:@escaping([String:Any])->Void) {
+        guard task["canStop"] as? Bool==true else{reply(["error":"STOP_UNAVAILABLE_OR_PENDING"]);return}
+        if kinds[index]=="Codex",let client=codex,let thread=client.threadID,client.controlledThreads.contains(thread) {
+            client.interrupt()
+            reply(["state":client.stopRequested ? "stopping":"stop_unconfirmed","receipt":nyraStatus.alias(client.turnID ?? thread)]);return
+        }
+        guard let pane=webPanes[index],let url=NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome),let target=task["target"] as? String else{reply(["error":"PAGE_UNAVAILABLE"]);return}
+        stopDialogueFromPane(index,source:url)
+        // Revoke asynchronous pre-send work even when no automatic relay exists.
+        // Already sent requests remain uncertain/sent; this never claims recall.
+        pane.web.evaluateJavaScript("window.twosTransferLease = crypto.randomUUID()",in:nil,in:NativeWorkbench.handoffWorld,completionHandler:nil)
+        for i in webTransfers.indices where webTransfers[i].targetPane==index && currentTargetMatches(webTransfers[i]) && webTransfers[i].mayHaveSent != true && ["preparing","queued","queue_paused","busy"].contains(webTransfers[i].state) {
+            let id=webTransfers[i].id;activeWebQueues.remove(id);transferTimers.removeValue(forKey:id)?.invalidate();webTransfers[i].state="cancelled"
+        }
+        guard persistWebTransfers() else{reply(["error":"STOP_QUEUE_REVOCATION_NOT_SAVED"]);return}
+        nyraStops[index]=(paneActivities[index]?.task,ProcessInfo.processInfo.systemUptime)
+        pane.stopFromCompanion(url:url,activity:paneActivityTokens[index] ?? "",stillBound:{[weak self] in self?.nyraTask(index)?["target"] as? String==target}){[weak self] result in
+            if result != "stopping" {self?.nyraStops.removeValue(forKey:index)}
+            reply(result=="stopping" ? ["state":"stopping"]:["error":result])
         }
     }
 }

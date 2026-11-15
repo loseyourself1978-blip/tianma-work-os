@@ -1,5 +1,7 @@
 # Tianma Work OS 1.0
 
+> **Development continuation — not yet published:** [Shared Codex navigation and Nyra task controls](docs/release-1.0/FOCUS_AND_TASK_CONTROLS.en.md). Final packaged verification is pending. Public download links below still identify the verified release.
+
 **TWOS 1.0.9 / 101.57: repairs private-network Website Open and visible address errors. Nyra 1.0.6 / 106 is unchanged.**
 
 This update makes Website Open work for explicitly selected private-network dashboards, with editable errors and exact host/port boundaries. The preceding Codex history repair is preserved. Nyra’s existing task labels and click-to-return behavior remain unchanged.
@@ -16,7 +18,7 @@ Discuss a goal and execute it in one macOS workspace. TWOS pairs official ChatGP
 - Send selected instructions and attachments. Continue with Steer or an editable Queue; inspect real tool activity, diffs, errors and permission requests.
 - Open a produced webpage, view a file, save a copy, or reveal the original in Finder.
 - See service-provided quota windows and separately labelled local task usage, elapsed time, plan progress and evidence-based estimates.
-- Show **Nyra**, the bundled local companion, with five outfits, standing/reclining animation and a transparent stage. Nyra observes minimal read-only state; it cannot execute or approve tasks.
+- Show **Nyra**, the bundled local companion, with five outfits, standing/reclining animation and a transparent stage. Nyra observes a read-only status channel. The pending control-enabled build adds explicit user actions through a separate authenticated TWOS channel; Nyra cannot independently execute or approve tasks.
 
 ## Download and first use
 

@@ -283,6 +283,7 @@ struct CodexSubmission: Codable {
     var queuedSubmission: String?
     var result: String?
     var error: String?
+    var userStopRequested: Bool?
     var sourceContentHash: String?
     var supersedes: String?
     var returnState: String?
@@ -367,6 +368,8 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     var turnID: String?
     var startingTurn = false
     var loadedThread: String?
+    var dispatchGeneration = 0
+    var stoppedSubmissions = Set<String>()
     var selectionGeneration = 0
     var transportGeneration = 0
     var completedTurns = Set<String>()
@@ -380,6 +383,20 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     var lastHistoryTurn: String?
     var threadCursor: String?
     var threadRows: [[String: Any]] = []
+    var projectRows: [[String: Any]] = []
+    var projectCursor: String?
+    var projectsLoading = false
+    var projectChatLoading = Set<String>()
+    var projectChatRows: [String: [[String: Any]]] = [:]
+    var projectChatCursors: [String: [String: String]] = [:]
+    var threadsLoading = false
+    var tailTurn: String?
+    var tailAnchor: String?
+    var tailCursor: String?
+    var tailLoading = false
+    var tailAfter: Double = 0
+    var historyCheckedAt: Double = 0
+    var historyPollAfter: Double = 0
     var historyLoading = false
     var historyReady = false
     var historyActivityLoading = false
@@ -456,7 +473,9 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     func notice(_ text: String) { emit("notice", ["text": translate(text)]) }
     func controlState() {
         statusMetadataChanged?()
-        emit("control", ["connected": connected, "connecting": connecting, "connectionPhase": connectionPhase, "connectionError": connectionError, "busy": isBusy, "awaitingTurn": startingTurn && turnID == nil, "desktopRunning": ownerDesktopRunning(), "threadId": threadID ?? "", "uncertain": uncertain, "historyReady": historyReady, "controllable": canControl, "controlVerified": threadID.map { controlledThreads.contains($0) } ?? false, "submitting": submissionPending, "mode": ledger.mode, "turnId": turnID ?? "", "nextModel": nextModel, "nextEffort": nextEffort, "stopRequested": stopRequested, "waitingRequests": approvals.count - answeredApprovals.count, "answeringRequests": answeredApprovals.count, "cwd": cwd ?? "", "actualModel": selected?["model"] ?? "", "permission": threadID.flatMap { ledger.bindings[$0]?.permission } ?? ""])
+        let run=telemetry.runs.values.first{$0.thread==threadID && $0.turn==turnID}
+        let activityUnverified=run?.serviceInterrupted==true || run?.state=="unverified"
+        emit("control", ["connected": connected, "connecting": connecting, "connectionPhase": connectionPhase, "connectionError": connectionError, "busy": isBusy, "activityUnverified":activityUnverified, "awaitingTurn": startingTurn && turnID == nil, "desktopRunning": ownerDesktopRunning(), "threadId": threadID ?? "", "uncertain": uncertain, "historyReady": historyReady, "controllable": canControl, "controlVerified": threadID.map { controlledThreads.contains($0) } ?? false, "submitting": submissionPending, "mode": ledger.mode, "turnId": turnID ?? "", "nextModel": nextModel, "nextEffort": nextEffort, "stopRequested": stopRequested, "waitingRequests": approvals.count - answeredApprovals.count, "answeringRequests": answeredApprovals.count, "cwd": cwd ?? "", "actualModel": selected?["model"] ?? "", "permission": threadID.flatMap { ledger.bindings[$0]?.permission } ?? ""])
     }
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.frameInfo.isMainFrame,
@@ -473,6 +492,7 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
             if connected {
                 emit("models", ["items": modelCatalog])
                 emit("threads", ["items": threadRows, "more": threadCursor != nil])
+                emit("projects", ["items": projectRows, "more": projectCursor != nil])
                 if let thread = selected { emit("thread", ["thread": thread]); emitDraft(); loadHistory(older: false) }
                 publishQueue(); publishAttachments(); publishDisplaySnapshot()
                 for (key, request) in approvals { emit("approval", approvalPayload(key, request)) }
@@ -492,7 +512,9 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
         case "reconnect":
             guard uncertain || !isBusy else { return }
             reconnect()
-        case "refresh": if connected && !isBusy { listThreads(); if let id = threadID { selectThread(id) } }; controlState()
+        case "refresh": if connected && !isBusy { listThreads(); listProjects(); loadHistory(older: false, background: historyReady) }; controlState()
+        case "moreProjects": listProjects(older: true)
+        case "projectThreads": if let id = value["id"] as? String { listProjectThreads(id, older: value["older"] as? Bool == true) }
         case "moreThreads": listThreads(older: true)
         case "select": if let id = value["id"] as? String { selectThread(id) }
         case "send": submitComposer(value)
@@ -550,15 +572,16 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
         do { try NativeWorkbench.save(value, at: preferences.appendingPathComponent(name)); return true }
         catch { notice("The draft could not be saved. Keep this window open and copy it before quitting."); return false }
     }
-    func saveDraft(_ text: String) {
+    @discardableResult func saveDraft(_ text: String) -> Bool {
         draftText = text
         var value = ["text": text, "thread": threadID ?? ""]
         if let sourceURL = sourceURL { value["source"] = sourceURL.absoluteString }
-        saveMap(value, "codex-draft.json")
+        var saved = saveMap(value, "codex-draft.json")
         if let id = threadID, let bytes = try? JSONSerialization.data(withJSONObject: value), let encoded = String(data: bytes, encoding: .utf8) {
             var drafts = readMap("codex-thread-drafts.json"); drafts[id] = encoded
-            saveMap(drafts, "codex-thread-drafts.json")
+            saved = saveMap(drafts, "codex-thread-drafts.json") && saved
         }
+        return saved
     }
     func restoreDraft() {
         let value = readMap("codex-draft.json")
@@ -675,6 +698,7 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
         transportGeneration += 1; let generation = transportGeneration
         connecting = true; connected = false; connectionPhase = "starting"; connectionError = ""
         connectionModelsReady = false; connectionThreadsReady = false
+        projectsLoading = false; projectChatLoading.removeAll(); threadsLoading = false; historyPollAfter = 0; tailLoading = false; tailTurn = nil; tailAnchor = nil; tailCursor = nil
         accountVerified = false; usageReading = false; usageGeneration += 1; usageRequestedAt = 0
         historyReady = false; controlState()
         let connection = CodexPipeConnection(); transport = connection
@@ -719,13 +743,13 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     }
     func finishConnection() {
         guard connecting, connected, connectionModelsReady, connectionThreadsReady else { return }
-        connecting = false; connectionPhase = "connected"; controlState(); refreshUsage()
+        connecting = false; connectionPhase = "connected"; controlState(); refreshUsage(); listProjects()
         // Reading a selected conversation must never resume queued execution.
         if let id = threadID ?? restoringThread { selectThread(id) }
     }
     func endConnection(_ reason: String) {
         let connection = transport
-        transportGeneration += 1; selectionGeneration += 1; usageGeneration += 1
+        transportGeneration += 1; dispatchGeneration += 1; selectionGeneration += 1; usageGeneration += 1
         transport = nil
         if let connection = connection { closingTransport = connection }
         connected = false; connecting = false; connectionPhase = "disconnected"; connectionError = reason
@@ -816,6 +840,7 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
                 if let clientID = item["clientId"] as? String, let record = ledger.submissions.first(where: { $0.id == clientID && $0.thread == threadID }) {
                     if record.id == activeSubmission { bindOrigin(eventTurn) }
                     changeSubmission(clientID) { $0.turn = eventTurn; $0.state = $0.mode == "steer" ? "accepted" : "running" }
+                    if (stoppedSubmissions.contains(clientID) || record.userStopRequested == true), record.id == activeSubmission { requestInterrupt(record.thread, turn: eventTurn) }
                 } else {
                     uncertain = true; pendingSource = nil
                     if let target = target { ledger.paused.insert(target) }; persistLedger()
@@ -841,7 +866,7 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
                 activeSubmission = nil
                 lastHistoryTurn = id; turnID = nil; startingTurn = false; approvals.removeAll(); answeredApprovals.removeAll(); stopRequested = false; clearPending(); releaseLock(); controlState(); publishResult(); publishQueue()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in self?.dispatchNext() }
-                emit("turnCompleted", ["status": turn["status"] ?? "unknown", "error": turn["error"] ?? NSNull()]); return
+                emit("turnCompleted", ["turnId":id,"status": turn["status"] ?? "unknown", "error": turn["error"] ?? NSNull()]); return
             }
             if let eventTurn = params["turnId"] as? String, eventTurn != turnID { return }
             if method == "item/started" || method == "item/completed", let item = params["item"] as? [String: Any] {
@@ -866,11 +891,14 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
             }
     }
     func listThreads(older: Bool = false) {
-        guard connected else { return }
+        guard connected, !threadsLoading else { return }
+        let connection = transportGeneration
         var params: [String: Any] = ["limit": 50, "sortKey": "updated_at", "useStateDbOnly": true]
         if older { guard let cursor = threadCursor else { return }; params["cursor"] = cursor }
+        threadsLoading = true
         request("thread/list", params) { [weak self] result in
-            guard let self = self else { return }
+            guard let self = self, self.transportGeneration == connection else { return }
+            self.threadsLoading = false
             guard let rows = result?["data"] as? [[String: Any]] else {
                 if self.connecting { self.endConnection("thread_list_failed") }; return
             }
@@ -879,6 +907,67 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
             self.emit("threads", ["items": self.threadRows, "more": self.threadCursor != nil])
             if self.connecting { self.connectionThreadsReady = true; self.finishConnection() }
         }
+    }
+    // Public protocol metadata only. Folder aliases are identified as such in
+    // the view; they do not grant project membership or task permissions.
+    func listProjects(older: Bool = false) {
+        guard connected, !projectsLoading else { return }
+        var params: [String: Any] = ["limit": 50, "sortKey": "position"]
+        if older { guard let cursor = projectCursor else { return }; params["cursor"] = cursor }
+        let connection = transportGeneration; projectsLoading = true
+        request("project/list", params) { [weak self] result in
+            guard let self = self, self.transportGeneration == connection else { return }
+            self.projectsLoading = false
+            guard let rows = result?["data"] as? [[String: Any]] else {
+                self.emit("projects", ["items": self.projectRows, "more": false, "error": "project_metadata_unavailable"]); return
+            }
+            if older { self.projectRows = Self.uniqueRows(self.projectRows + rows) } else { self.projectRows = rows }
+            self.projectCursor = result?["nextCursor"] as? String
+            self.emit("projects", ["items": self.projectRows, "more": self.projectCursor != nil])
+        }
+    }
+    static func uniqueRows(_ rows: [[String: Any]]) -> [[String: Any]] {
+        var seen = Set<String>()
+        return rows.filter { row in guard let id = row["id"] as? String else { return false }; return seen.insert(id).inserted }
+    }
+    func listProjectThreads(_ id: String, older: Bool = false) {
+        guard connected, !projectChatLoading.contains(id), let project = projectRows.first(where: { $0["id"] as? String == id }) else { return }
+        let roots = (project["roots"] as? [[String: Any]] ?? []).compactMap { $0["path"] as? String }
+        // Bound each page. No directory is opened and no chat body is requested.
+        var queries: [(String, [String: Any])] = [("project", ["projectId": id])]
+        for root in Array(Set(roots)).sorted().prefix(8) { queries.append(("cwd:" + root, ["cwd": root])) }
+        if older { queries = queries.filter { projectChatCursors[id]?[$0.0] != nil } }
+        guard !queries.isEmpty else { return }
+        let connection = transportGeneration
+        projectChatLoading.insert(id)
+        var rows = older ? projectChatRows[id] ?? [] : []
+        var cursors = older ? projectChatCursors[id] ?? [:] : [:]
+        var failed = false
+        func next(_ index: Int) {
+            guard self.connected, self.transportGeneration == connection else { return }
+            guard index < queries.count else {
+                self.projectChatLoading.remove(id)
+                self.projectChatRows[id] = Self.uniqueRows(rows); self.projectChatCursors[id] = cursors
+                self.emit("projectThreads", ["id": id, "items": self.projectChatRows[id] ?? [], "more": !cursors.isEmpty, "error": failed ? "project_chats_read_failed" : ""]); return
+            }
+            let (key, filter) = queries[index]
+            var params: [String: Any] = ["limit": 50, "sortKey": "updated_at", "useStateDbOnly": true]
+            params.merge(filter) { _, new in new }
+            if older { params["cursor"] = cursors[key] }
+            self.request("thread/list", params) { result in
+                guard self.transportGeneration == connection else { return }
+                if let data = result?["data"] as? [[String: Any]] { rows += data; cursors[key] = result?["nextCursor"] as? String }
+                else { failed = true }
+                next(index + 1)
+            }
+        }
+        next(0)
+    }
+    func refreshSavedHistoryIfDue() {
+        let now = Date().timeIntervalSince1970
+        guard connected, pageReady, historyReady, !isBusy, !submissionPending, !historyLoading,
+              threadID != nil, now >= historyPollAfter else { return }
+        loadHistory(older: false, background: true)
     }
     func selectThread(_ id: String) {
         guard connected, !isBusy, !submissionPending, UUID(uuidString: id) != nil else {
@@ -898,6 +987,7 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
                 }
             }
             self.displayItems.removeAll(); self.displayOrder.removeAll(); self.approvals.removeAll(); self.answeredApprovals.removeAll(); self.emit("clearApprovals")
+            self.historyCheckedAt = 0; self.historyPollAfter = 0; self.tailTurn = nil; self.tailAnchor = nil; self.tailCursor = nil; self.tailLoading = false; self.tailAfter = 0
             self.selected = thread; self.lastResult = ""; self.resultSource = nil; self.historyCursor = nil; self.historyLoading = false; self.historyReady = false; self.historyActivityLoading = false; self.historyActivityCursor = nil; self.runReading = false
             self.uncertain = self.readMap("codex-pending.json")[id] != nil
             self.nextModel = self.ledger.settings?[id]?["model"] ?? thread["model"] as? String ?? ""; self.nextEffort = self.ledger.settings?[id]?["effort"] ?? thread["reasoningEffort"] as? String ?? ""
@@ -906,9 +996,10 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
             self.emit("thread", ["thread": thread]); self.emitDraft(); self.publishResult(); self.controlState(); self.loadHistory(older: false)
         }
     }
-    func loadHistory(older: Bool) {
-        guard let id = threadID, !historyLoading else { return }
+    func loadHistory(older: Bool, background: Bool = false) {
+        guard connected, let id = threadID, !historyLoading else { return }
         let generation = selectionGeneration; historyLoading = true
+        historyPollAfter = Date().timeIntervalSince1970 + 10
         // A turn count is not a byte bound: a single development turn can hold
         // hundreds of MB of tool/image history. Never eagerly request full turns.
         var params: [String: Any] = ["threadId": id, "limit": 10, "sortDirection": "desc", "itemsView": "summary"]
@@ -917,9 +1008,11 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
             guard let self = self, self.threadID == id, self.selectionGeneration == generation else { return }
             self.historyLoading = false
             guard let result = result, result["data"] is [[String: Any]] else {
-                self.emit("historyReadError", ["threadId": id]); self.controlState(); return
+                self.historyPollAfter = Date().timeIntervalSince1970 + 30
+                self.emit("historySync", ["threadId": id, "at": self.historyCheckedAt, "error": "read_failed"])
+                if !background { self.emit("historyReadError", ["threadId": id]) }; self.controlState(); return
             }
-            self.historyCursor = result["nextCursor"] as? String
+            if !background { self.historyCursor = result["nextCursor"] as? String }
             var turns = result["data"] as? [[String: Any]] ?? []
             for n in turns.indices {
                 var items = turns[n]["items"] as? [[String: Any]] ?? []
@@ -927,9 +1020,15 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
                     items[i] = ["id": items[i]["id"] ?? "", "type": "reasoning", "summary": items[i]["summary"] ?? []]
                 }
                 turns[n]["items"] = items
+                // A reader may project a live official turn as interrupted.
+                // Publish the checked terminal separately from that raw status.
+                if let terminal = self.confirmedHistoryTerminal(turns[n]) { turns[n]["twosConfirmedTerminal"] = terminal }
+                else { turns[n]["twosConfirmedTerminal"] = NSNull() }
             }
             if !older {
                 self.lastHistoryTurn = turns.first?["id"] as? String
+                let openTurn = turns.first.flatMap { self.confirmedHistoryTerminal($0) == nil ? $0["id"] as? String : nil }
+                if self.tailTurn != openTurn { self.tailTurn = openTurn; self.tailAnchor = nil; self.tailCursor = nil; self.tailAfter = 0 }
                 let pending = self.readMap("codex-pending.json")[id]
                 if let pending = pending {
                     let candidate = pending.hasPrefix("unconfirmed:") ? turns.first : turns.first(where: { $0["id"] as? String == pending })
@@ -953,8 +1052,56 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
                 }
             }
             self.reconcileObservations(thread: id, turns: turns)
-            self.emit("history", ["turns": turns, "older": older, "more": self.historyCursor != nil]); self.publishDisplaySnapshot(); self.publishResult()
+            self.historyCheckedAt = Date().timeIntervalSince1970
+            self.emit("historySync", ["threadId": id, "at": self.historyCheckedAt, "source": "thread/turns/list · summary", "scope": self.canControl ? "controlled" : "saved_readonly"])
+            self.emit("history", ["threadId": id, "turns": turns, "older": older, "background": background, "more": self.historyCursor != nil]); self.publishDisplaySnapshot(); self.publishResult(); self.refreshRecentActivityIfDue()
         }
+    }
+    static func safeHistoryEntries(_ entries: [[String: Any]]) -> [[String: Any]] {
+        entries.compactMap { entry in
+            guard let turn = entry["turnId"] as? String, var item = entry["item"] as? [String: Any] else { return nil }
+            guard ["userMessage", "agentMessage", "reasoning", "commandExecution", "fileChange", "mcpToolCall", "dynamicToolCall", "webSearch", "imageView", "plan"].contains(item["type"] as? String ?? "") else { return nil }
+            if item["type"] as? String == "reasoning" { item = ["id": item["id"] ?? "", "type": "reasoning", "summary": item["summary"] ?? []] }
+            return ["turnId": turn, "item": item]
+        }
+    }
+    func refreshRecentActivityIfDue() {
+        guard connected, pageReady, historyReady, !canControl, !tailLoading, !historyLoading,
+              let id = threadID, let turn = tailTurn, Date().timeIntervalSince1970 >= tailAfter else { return }
+        let generation = selectionGeneration, connection = transportGeneration
+        tailLoading = true; tailAfter = Date().timeIntervalSince1970 + 3
+        // Item anchors are exclusive. Read forward from our last exact item;
+        // never scan a complete long turn or infer completion from its projection.
+        func read(head: Bool, page: Int) {
+            guard self.threadID == id, self.selectionGeneration == generation, self.transportGeneration == connection else { return }
+            guard self.tailTurn == turn else { self.tailLoading = false; return }
+            var params: [String: Any] = ["threadId": id, "turnId": turn, "limit": head ? 10 : 5, "sortDirection": head ? "desc" : "asc"]
+            if !head {
+                if let cursor = self.tailCursor { params["cursor"] = cursor }
+                else if let anchor = self.tailAnchor { params["cursor"] = ["type": "item", "itemId": anchor] }
+            }
+            self.request("thread/items/list", params) { result in
+                guard self.threadID == id, self.selectionGeneration == generation, self.transportGeneration == connection else { return }
+                guard self.tailTurn == turn else { self.tailLoading = false; return }
+                guard let rows = result?["data"] as? [[String: Any]], rows.allSatisfy({ $0["turnId"] as? String == turn }) else {
+                    self.tailLoading = false; self.tailAfter = Date().timeIntervalSince1970 + 30
+                    self.emit("historySync", ["threadId": id, "at": self.historyCheckedAt, "error": "recent_activity_read_failed"]); return
+                }
+                let chronological = head ? Array(rows.reversed()) : rows
+                self.emit("recentHistory", ["threadId": id, "turnId": turn, "entries": Self.safeHistoryEntries(chronological)])
+                if head {
+                    if self.tailAnchor == nil { self.tailAnchor = (rows.first?["item"] as? [String: Any])?["id"] as? String }
+                } else {
+                    if let last = (rows.last?["item"] as? [String: Any])?["id"] as? String { self.tailAnchor = last }
+                    self.tailCursor = result?["nextCursor"] as? String
+                    if self.tailCursor != nil, page < 3 { read(head: false, page: page + 1); return }
+                    if self.tailCursor == nil { read(head: true, page: page + 1); return }
+                }
+                self.tailLoading = false; self.historyCheckedAt = Date().timeIntervalSince1970
+                self.emit("historySync", ["threadId": id, "at": self.historyCheckedAt, "source": "thread/items/list", "scope": "recent_readonly", "catchingUp": self.tailCursor != nil])
+            }
+        }
+        read(head: tailAnchor == nil, page: 0)
     }
     // Explicit, read-only item pages preserve access to saved tool activity
     // without pulling every full turn during connection or status refresh.
@@ -986,14 +1133,53 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     func sendTurn(_ raw: String, model: String?) {
         submitComposer(["text": raw, "model": model ?? nextModel, "effort": nextEffort, "mode": ledger.mode])
     }
+    @discardableResult func revokeFutureInputs(_ id: String) -> Bool {
+        guard id == threadID, ledger.bindings[id] != nil else { return false }
+        dispatchGeneration += 1; ledger.paused.insert(id)
+        for i in ledger.submissions.indices where ledger.submissions[i].thread == id {
+            if ["queued", "preparing"].contains(ledger.submissions[i].state) {
+                stoppedSubmissions.insert(ledger.submissions[i].id); ledger.submissions[i].userStopRequested = true; ledger.submissions[i].state = "cancelled"
+            } else if ["sending", "accepted", "running"].contains(ledger.submissions[i].state) {
+                stoppedSubmissions.insert(ledger.submissions[i].id); ledger.submissions[i].userStopRequested = true
+            }
+        }
+        let saved = persistLedger(); publishQueue(); return saved
+    }
     func interrupt() {
-        guard connected, !uncertain, !stopRequested, activeSubmission != nil,
-              let id = threadID, controlledThreads.contains(id), let turn = turnID else { return }
+        guard connected, !uncertain, !stopRequested, let id = threadID, controlledThreads.contains(id) else { return }
+        // Future dispatch is revoked before asking the actual active turn to stop.
+        guard revokeFutureInputs(id) else { notice("The queue stop could not be saved. The task stop is not confirmed."); return }
+        if let turn = turnID, activeSubmission != nil { requestInterrupt(id, turn: turn) }
+        else { controlState() }
+    }
+    func requestInterrupt(_ id: String, turn: String) {
+        let stoppedOwnedTurn = ledger.submissions.contains {
+            $0.id == activeSubmission && $0.thread == id && $0.turn == turn &&
+            ($0.userStopRequested == true || stoppedSubmissions.contains($0.id))
+        }
+        guard connected, (!uncertain || stoppedOwnedTurn), !stopRequested, threadID == id,
+              turnID == turn, controlledThreads.contains(id) else { return }
         stopRequested = true; controlState()
         request("turn/interrupt", ["threadId": id, "turnId": turn]) { [weak self] result in
             guard let self = self, self.threadID == id, self.turnID == turn else { return }
             if result == nil { self.stopRequested = false; self.notice("Stop has not been confirmed. Inspect the current turn before trying again.") }
             self.controlState() // Only turn/completed confirms the terminal state.
+        }
+    }
+    func withdrawStoppedQueue(_ item: CodexSubmission, queueID: String) {
+        guard connected, threadID == item.thread, controlledThreads.contains(item.thread), stoppedSubmissions.contains(item.id) else { return }
+        request("thread/queue/delete", ["threadId": item.thread, "queuedSubmissionId": queueID]) { [weak self] result in
+            guard let self = self, self.threadID == item.thread else { return }
+            if result?["deleted"] as? Bool == true, self.turnID == nil {
+                self.changeSubmission(item.id) { $0.state = "cancelled" }
+                self.startingTurn = false; self.submissionPending = false; self.activeSubmission = nil; self.clearPending()
+            } else if let turn = self.turnID, self.ledger.submissions.first(where: { $0.id == item.id })?.turn == turn {
+                self.requestInterrupt(item.thread, turn: turn)
+            } else {
+                self.uncertain = true
+                self.changeSubmission(item.id) { $0.error = "Stop requested while delivery was in flight. Inspect the exact receipt; it is not safe to replay." }
+            }
+            self.ledger.paused.insert(item.thread); self.persistLedger(); self.controlState()
         }
     }
     static func sameRequestID(_ a: Any?, _ b: Any?) -> Bool {
@@ -1465,9 +1651,18 @@ extension NativeCodex {
               validateModel(item.model, effort: item.effort, attachments: item.attachments) else { return }
         submissionPending = true; startingTurn = true; activeSubmission = item.id
         guard changeSubmission(item.id, { $0.state = "preparing" }) else { startingTurn = false; submissionPending = false; activeSubmission = nil; controlState(); return }
+        let dispatch = dispatchGeneration
+        func stillAllowed() -> Bool {
+            guard self.dispatchGeneration == dispatch, self.threadID == id, !self.ledger.paused.contains(id),
+                  !self.stoppedSubmissions.contains(item.id) else {
+                if self.activeSubmission == item.id && self.turnID == nil { self.startingTurn = false; self.submissionPending = false; self.activeSubmission = nil; self.controlState() }
+                return false
+            }
+            return true
+        }
         controlState()
         ensureControl { [weak self] ok in
-            guard let self = self else { return }
+            guard let self = self, stillAllowed() else { return }
             guard ok, self.threadID == id else {
                 self.startingTurn = false; self.submissionPending = false; self.activeSubmission = nil
                 self.ledger.paused.insert(id); self.changeSubmission(item.id) { $0.state = "queued" }; self.controlState(); return
@@ -1475,6 +1670,7 @@ extension NativeCodex {
             var settings: [String: Any] = ["threadId": id, "model": item.model, "summary": "auto"]
             if !item.effort.isEmpty { settings["effort"] = item.effort }
             self.request("thread/settings/update", settings) { result in
+                guard stillAllowed() else { return }
                 guard result != nil, self.validBinding(binding) else {
                     self.startingTurn = false; self.submissionPending = false; self.ledger.paused.insert(id)
                     self.changeSubmission(item.id) { $0.state = "queued" }; self.controlState(); return
@@ -1483,6 +1679,7 @@ extension NativeCodex {
                 // to the official durable queue. No other queued input is
                 // exposed to the service until a successful terminal event.
                 self.request("thread/read", ["threadId": id, "includeTurns": false]) { verified in
+                    guard stillAllowed() else { return }
                     guard let thread = verified?["thread"] as? [String: Any], self.scopeMatches(thread, binding: binding), self.threadID == id,
                           thread["model"] as? String == item.model,
                           item.effort.isEmpty || thread["reasoningEffort"] as? String == item.effort,
@@ -1493,6 +1690,7 @@ extension NativeCodex {
                     }
                     self.selected = thread
                     self.request("thread/queue/list", ["threadId": id]) { queue in
+                        guard stillAllowed() else { return }
                         guard let entries = queue?["data"] as? [[String: Any]], entries.isEmpty else {
                             self.startingTurn = false; self.submissionPending = false; self.activeSubmission = nil; self.ledger.paused.insert(id)
                             self.changeSubmission(item.id) { $0.state = "queued"; $0.error = "An existing official queue entry needs control verification. Nothing was added." }
@@ -1516,6 +1714,9 @@ extension NativeCodex {
                             self.changeSubmission(item.id) { record in
                                 record.queuedSubmission = qid
                                 if record.state == "sending" { record.state = "accepted" }
+                            }
+                            if self.dispatchGeneration != dispatch || self.stoppedSubmissions.contains(item.id) {
+                                self.stoppedSubmissions.insert(item.id); self.withdrawStoppedQueue(item, queueID: qid); return
                             }
                             self.acknowledge(item)
                             if self.turnID == nil, !self.completedTurns.contains(self.ledger.submissions.first(where: { $0.id == item.id })?.turn ?? "") { self.startAcceptedQueue(item.id) }
@@ -1551,13 +1752,14 @@ extension NativeCodex {
         return left == right
     }
     func startAcceptedQueue(_ submissionID: String, recovering: Bool = false) {
-        guard connected, !submissionPending, turnID == nil,
+        guard connected, !submissionPending, turnID == nil, !stoppedSubmissions.contains(submissionID),
               let item = ledger.submissions.first(where: { $0.id == submissionID && $0.thread == threadID }),
-              item.turn == nil, ["accepted", "unknown"].contains(item.state),
+              item.turn == nil, item.userStopRequested != true, ["accepted", "unknown"].contains(item.state),
               let queueID = item.queuedSubmission,
               let binding = ledger.bindings[item.thread], binding.directory == item.directory,
               validBinding(binding), item.dispatchContext != nil,
               (recovering ? !isBusy : (!uncertain && activeSubmission == item.id)) else { return }
+        let dispatch = dispatchGeneration
         submissionPending = true; startingTurn = true; activeSubmission = item.id
         controlState()
         func fail(_ reason: String) {
@@ -1577,10 +1779,18 @@ extension NativeCodex {
             }
             self.controlState()
         }
+        func allowed() -> Bool {
+            guard self.dispatchGeneration == dispatch, !self.stoppedSubmissions.contains(item.id) else {
+                if self.activeSubmission == item.id && self.turnID == nil { self.submissionPending = false; self.withdrawStoppedQueue(item, queueID: queueID) }
+                return false
+            }
+            return true
+        }
         ensureControl { [weak self] ok in
-            guard let self = self else { return }
+            guard let self = self, allowed() else { return }
             guard ok else { fail("The saved queued input could not acquire this conversation's control. Nothing was resent."); return }
             self.request("thread/read", ["threadId": item.thread, "includeTurns": false]) { verified in
+                guard allowed() else { return }
                 // An automatic drain may have won the race. Its real events
                 // already own the turn; never start an additional one.
                 if self.turnID != nil || self.completedTurns.contains(self.ledger.submissions.first(where: { $0.id == item.id })?.turn ?? "") { self.submissionPending = false; self.controlState(); return }
@@ -1605,6 +1815,7 @@ extension NativeCodex {
                     fail("The saved queue's folder, model or idle state could not be verified. No new turn was requested."); return
                 }
                 self.request("thread/queue/list", ["threadId": item.thread]) { queue in
+                    guard allowed() else { return }
                     if self.turnID != nil || self.completedTurns.contains(self.ledger.submissions.first(where: { $0.id == item.id })?.turn ?? "") { self.submissionPending = false; self.controlState(); return }
                     guard let entries = queue?["data"] as? [[String: Any]], self.threadID == item.thread,
                           self.ledger.bindings[item.thread]?.directory == binding.directory, self.validBinding(binding) else {
@@ -1631,7 +1842,10 @@ extension NativeCodex {
                                 self.turnID = turnID; self.startingTurn = false; self.bindOrigin(turnID); self.markPending(turnID)
                                 self.changeSubmission(item.id) { $0.turn = turnID; $0.state = "running" }
                             }
-                            self.ledger.paused.remove(item.thread); self.persistLedger(); self.controlState()
+                            if self.dispatchGeneration != dispatch || self.stoppedSubmissions.contains(item.id) {
+                                self.stoppedSubmissions.insert(item.id); self.requestInterrupt(item.thread, turn: turnID)
+                            } else { self.ledger.paused.remove(item.thread) }
+                            self.persistLedger(); self.controlState()
                         } else if self.turnID != nil || self.completedTurns.contains(self.ledger.submissions.first(where: { $0.id == item.id })?.turn ?? "") {
                             self.controlState() // An actual started/completed event won the race.
                         } else if self.lastRequestFailure != nil {
@@ -1645,16 +1859,18 @@ extension NativeCodex {
             }
         }
     }
-    func editQueue(_ value: [String: Any]) {
+    @discardableResult func editQueue(_ value: [String: Any]) -> Bool {
         guard let id = value["id"] as? String, let text = value["text"] as? String, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, text.utf8.count <= 200_000,
               let item = ledger.submissions.first(where: { $0.id == id && $0.thread == threadID }), item.state == "queued" else {
-            notice("This input has already been dispatched or is a bound handoff. It was not edited."); return
+            notice("This input has already been dispatched or is a bound handoff. It was not edited."); return false
         }
-        guard let index = ledger.submissions.firstIndex(where: { $0.id == id }) else { return }
+        guard let index = ledger.submissions.firstIndex(where: { $0.id == id }) else { return false }
         var revised = CodexSubmission(id: UUID().uuidString, thread: item.thread, directory: item.directory, text: text, attachments: item.attachments, model: item.model, effort: item.effort, mode: item.mode, createdAt: Date().timeIntervalSince1970, source: item.source, message: item.message, instructionHash: item.source == nil ? nil : Self.digest(Data(text.utf8)), state: "queued")
         revised.sourceContentHash = item.sourceContentHash ?? item.instructionHash; revised.supersedes = id
+        let saved = ledger
         ledger.submissions[index].state = "cancelled"; ledger.submissions.insert(revised, at: index + 1)
-        if persistLedger() { handoffChanged?(revised); publishQueue() }
+        if persistLedger() { handoffChanged?(revised); publishQueue(); return true }
+        ledger = saved; return false
     }
     func deleteQueue(_ id: String) {
         guard let item = ledger.submissions.first(where: { $0.id == id && $0.thread == threadID }), item.state == "queued" else {
@@ -1713,17 +1929,18 @@ extension NativeCodex {
 // Display state is a projection of public service events, never a second
 // execution engine. Official saved history remains the source after reconnect.
 extension NativeCodex {
-    func rememberDisplayItem(_ raw: [String: Any]) {
+    func rememberDisplayItem(_ raw: [String: Any], turnID: String? = nil) {
         guard let id = raw["id"] as? String, let type = raw["type"] as? String else { return }
         var item = raw
         if type == "reasoning" { item = ["id": id, "type": type, "summary": raw["summary"] ?? []] }
         if type == "hookPrompt" { return }
+        if let turn = turnID ?? displayItems[id]?["twosTurnId"] as? String { item["twosTurnId"] = turn }
         if displayItems[id] == nil { displayOrder.append(id) }
         displayItems[id] = item
         if displayOrder.count > 400 { displayItems.removeValue(forKey: displayOrder.removeFirst()) }
     }
     func rememberDisplayEvent(_ method: String, _ p: [String: Any]) {
-        if let item = p["item"] as? [String: Any] { rememberDisplayItem(item); return }
+        if let item = p["item"] as? [String: Any] { rememberDisplayItem(item, turnID: p["turnId"] as? String); return }
         let id = p["itemId"] as? String ?? ""
         if method == "turn/plan/updated" || method == "turn/diff/updated" {
             let turn = p["turnId"] as? String ?? ""
@@ -1745,7 +1962,7 @@ extension NativeCodex {
             item["type"] = method.contains("commandExecution") ? "commandExecution" : "fileChange"
             item["aggregatedOutput"] = (item["aggregatedOutput"] as? String ?? "") + (p["delta"] as? String ?? "")
         } else if method == "item/mcpToolCall/progress" { item["type"] = "mcpToolCall"; item["progress"] = p["message"] ?? "" }
-        rememberDisplayItem(item)
+        rememberDisplayItem(item, turnID: p["turnId"] as? String)
     }
     func publishDisplaySnapshot() {
         emit("displaySnapshot", ["items": displayOrder.compactMap { displayItems[$0] }])

@@ -140,6 +140,8 @@ extension NativeCodex {
         observationTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             self.tickObservations()
+            self.refreshSavedHistoryIfDue()
+            self.refreshRecentActivityIfDue()
             let now = Date().timeIntervalSince1970
             if self.connected && now >= self.usageRetryAfter && (now - self.usageRequestedAt >= 300 || self.quotaResetNeedsRead(now: now)) { self.refreshUsage() }
             self.publishTelemetry()
@@ -263,6 +265,7 @@ extension NativeCodex {
             telemetry.runs[key] = CodexRunObservation(thread: thread, turn: tid, started: turn["startedAt"] as? Double, lastActivity: now)
         }
         guard var run = telemetry.runs[key], !run.terminal else { return }
+        let wasInterrupted=run.serviceInterrupted==true
         run.lastActivity = now
         if method == "error" { run.serviceInterrupted = true; run.offlineUnknown = true }
         else if method.hasPrefix("item/") || method == "turn/plan/updated" { run.serviceInterrupted = false }
@@ -291,6 +294,7 @@ extension NativeCodex {
         if method == "serverRequest/resolved", let rid = p["requestId"] { run.requests.removeValue(forKey: String(describing: rid)) }
         if method == "turn/plan/updated" { run.planUpdate(p["plan"] as? [[String: Any]] ?? []) }
         telemetry.runs[key] = run
+        if wasInterrupted != (run.serviceInterrupted==true) {controlState()}
         if !method.hasSuffix("Delta") && !method.hasSuffix("/delta") { saveTelemetry(); publishTelemetry() }
     }
     func reconcileObservations(thread: String, turns: [[String: Any]]) {

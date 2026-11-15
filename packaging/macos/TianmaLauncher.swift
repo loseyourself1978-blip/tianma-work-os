@@ -397,7 +397,7 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
         guard let source = Self.restorableURL(web.url, service: serviceHome),
               let file = handoffResources?.appendingPathComponent("native_codex/provider_dom.js"),
               let script = try? String(contentsOf: file, encoding: .utf8) else { completion(["state":"unknown","reason":"PAGE_UNAVAILABLE"]); return }
-        web.callAsyncJavaScript(script + "\nreturn window.twosProviderDOM?." + (seedOnly ? "seedSnapshot()" : (includeReply ? (latestOnly ? "resolvedLatest()" : "selectedOrLatest()") : "observe()")) + ";", arguments: [:], in: nil, in: Self.handoffWorld) { [weak self] result in
+        web.callAsyncJavaScript(script + (seedOnly ? "\nreturn window.twosProviderDOM?.seedSnapshot();" : (includeReply ? (latestOnly ? "\nreturn window.twosProviderDOM?.resolvedLatest();" : "\nreturn window.twosProviderDOM?.selectedOrLatest();") : "\nconst observer=window.twosProviderDOM;return observer ? {...observer.observe(),activityID:observer.activityIdentity()} : null;")), arguments: [:], in: nil, in: Self.handoffWorld) { [weak self] result in
             guard let self = self, Self.restorableURL(self.web.url, service:self.serviceHome) == source else { completion(["state":"unknown","reason":"CONVERSATION_CHANGED"]); return }
             if case .success(let value) = result, let value = value as? [String:Any] { completion(value) }
             else { completion(["state":"unknown","reason":"OBSERVER_UNAVAILABLE"]) }
@@ -433,6 +433,24 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
                             "reason": "WEB_OPERATION_FAILED · \(failure.code) · " + String(detail.prefix(240)),
                             "scriptError": failure.userInfo["WKJavaScriptExceptionMessage"] as? String ?? "WEB_OPERATION_FAILED"])
             }
+        }
+    }
+    func stopFromCompanion(url:URL,activity:String,stillBound:@escaping()->Bool,completion:@escaping(String)->Void) {
+        guard stillBound(),Self.restorableURL(web.url,service:serviceHome)==url else{completion("TASK_CHANGED");return}
+        // Only the trusted host can request this action in the isolated world.
+        // Site controls and permissions remain unchanged; no arbitrary JS arrives over IPC.
+        let script = """
+        if(location.href!==expected || !window.twosProviderDOM)return 'TASK_CHANGED';
+        if(!activity || window.twosProviderDOM.activityIdentity()!==activity)return 'TASK_CHANGED';
+        const state=window.twosProviderDOM.observe();
+        if(state.state!=='running')return 'STOP_STATE_NOT_RUNNING';
+        const buttons=[...document.querySelectorAll('button,[role=button]')].filter(e=>window.twosProviderDOM.isStop(e));
+        if(buttons.length!==1)return 'STOP_CONTROL_UNAVAILABLE_OR_AMBIGUOUS';
+        buttons[0].click();return 'stopping';
+        """
+        web.callAsyncJavaScript(script,arguments:["expected":url.absoluteString,"activity":activity],in:nil,in:Self.handoffWorld){[weak self] result in
+            guard let self=self,stillBound(),Self.restorableURL(self.web.url,service:self.serviceHome)==url else{completion("STOP_RECEIPT_TARGET_CHANGED");return}
+            if case .success(let value)=result,let status=value as? String {completion(status)} else{completion("STOP_UNCONFIRMED")}
         }
     }
     func placeDraft(_ text: String, expectedSource: URL, completion: @escaping (Bool) -> Void) {

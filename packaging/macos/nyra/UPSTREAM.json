@@ -1,8 +1,8 @@
 {
   "name": "夜璃 · Nyra",
-  "version": "0.3.0",
-  "build": "3",
-  "source": "Owner-authorized completed Nyra R3 local project",
+  "version": "1.0.7",
+  "build": "107",
+  "source": "Pinned Nyra release source",
   "scope": "sources and public runtime artwork/audio only; no account/state/preferences imported",
   "original_sha256": {
     "Sources/CompanionControls.swift": "a8891beb9e2c845c4c0a17c1a4e48a898c8b828a79aafccc1b60f86e742be6e4",
@@ -98,5 +98,10 @@
     "Resources/audio/open.wav": "1c525f712a0f9251225882b24bb3ee31a2c0a602a73d8623814d136ca072309c",
     "Resources/audio/outfit.wav": "3b6ac6a802dea4ad3ccaa647931d49d88485e2d234ad0659ba7939a1512a2d01",
     "Resources/audio/provenance.json": "0ade17752de274d17256c60f9122b3a15767cd2cb18ebc4a3b9ff7bfcee21bdd"
-  }
+  },
+  "source_commit": "4f1f515a0ebe602b58eaf74e59ca4f4dbf21083e",
+  "source_snapshot": "36dbcff487f5f56479b40657df436766cdf5f531fdc220f4c91131adb2d5c74f",
+  "event_schema": "twos.nyra.status.v4",
+  "control_schema": "twos.nyra.control.v1",
+  "source_clean": true
 }

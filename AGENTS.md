@@ -117,3 +117,19 @@ copies and test/compiler caches, recording exact paths and actual free bytes.
 Do not treat browser profiles, credentials, business data, the standard builder,
 or unidentified directories as cache. This supersedes the previous requirement
 to keep one older local rollback DMG when its rebuild materials are verified.
+
+## Task estimates and progress — mandatory SOP
+
+At the beginning of every task, give an evidence-based completion-time range,
+its main assumptions, and the current stage. During work, report completed
+requirements, current activity, remaining stages and a revised estimate when
+evidence changes. Distinguish active engineering time from Owner-input and
+external-service waits. Use measured or countable progress where available;
+never invent a percentage or a precise completion time. Explain blockers
+promptly and continue independent authorized work. At closeout reconcile the
+actual outcome and any remaining action against the original scope.
+
+
+## Nyra interaction baseline
+
+Owner policy updated November 12, 2026: comparable Nyra task-bubble and input interactions default to the official Codex pet pattern, using observed public behavior as the reference. Keep direct actions discoverable and avoid extra expand/append/configuration steps unless the Owner explicitly requests them or a verified interface/permission boundary requires them. Preserve exact task binding, IME/drafts, send/stop integrity and disclose actual capability differences; matching appearance never implies embedded official UI or control authority.

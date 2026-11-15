@@ -49,6 +49,14 @@
   /^(?:Stopped thinking|已停止思考)[。.]?$/i.test(e.textContent.trim())&&Boolean(anchor.compareDocumentPosition(e)&Node.DOCUMENT_POSITION_FOLLOWING)&&
   (!before||Boolean(e.compareDocumentPosition(before)&Node.DOCUMENT_POSITION_FOLLOWING)));
  const latestUser=()=>users().sort((a,b)=>a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING?-1:1).at(-1);
+ // Opaque identity for the currently rendered user turn. No message text
+ // leaves the observer. A remounted unidentified turn fails closed for controls.
+ function activityIdentity(){
+  const user=latestUser();if(!user)return '';
+  const key=sourceKey(user);if(key)return 'public:'+key;
+  const ids=window.twosActivityIdentities ||= new WeakMap();
+  if(!ids.has(user))ids.set(user,crypto.randomUUID());return 'rendered:'+ids.get(user);
+ }
  // One scoped control resolver feeds activity, native Stop and dispatch.
  // Prefer accessible semantics. The two unlabeled 16px controls below were
  // observed in the isolated DeepSeek client on 2026-11-05; an unknown icon
@@ -233,7 +241,7 @@
   }
   return resolvedLatest();
  }
- window.twosProviderDOM={observe,latest,resolvedLatest,seedSnapshot,selectedOrLatest,replies,text,navigationSafety,composerSelection,replyState,identity,isStop,deepSeekControl,interrupted,speaker,headings,stoppedAfter};
+ window.twosProviderDOM={activityIdentity,observe,latest,resolvedLatest,seedSnapshot,selectedOrLatest,replies,text,navigationSafety,composerSelection,replyState,identity,isStop,deepSeekControl,interrupted,speaker,headings,stoppedAfter};
  // Only a genuine user activation of a recognized native Stop control signals
  // the host. Isolated-world handler + native frame/origin checks stay in force.
  if(!window.twosNativeStopListener){

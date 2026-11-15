@@ -11,6 +11,7 @@ return await (async () => {
  if((location.hostname!==host&&!localFixture)||location.origin!==origin||(!request.inspectOnly&&clean(location.href)!==original))return {state:request.inspectOnly?'unknown':'target_changed'};
  const lease=window.twosTransferLease;
  const same=()=>window.twosTransferLease===lease&&location.origin===origin;
+ const targetCurrent=()=>same()&&clean(location.href)===original&&(!request.expectedActivity||window.twosProviderDOM?.activityIdentity()===request.expectedActivity);
  const visible=el=>Boolean(el?.getClientRects().length)&&getComputedStyle(el).visibility!=='hidden';
  const normalize=s=>(s||'').replace(/\r\n?/g,'\n').trim();
  const plain=el=>{const copy=el.cloneNode(true);copy.querySelectorAll('button,[role=button],[data-twos-native-card],textarea,[contenteditable=true]').forEach(x=>x.remove());copy.querySelectorAll('h1,h2,h3,h4,h5,h6,[role=heading]').forEach(x=>{if(window.twosProviderDOM?.speaker(x)==='user')x.remove();});return copy.textContent||'';};
@@ -131,6 +132,7 @@ return await (async () => {
  if(request.inspectOnly)return {state:'unknown',reason:'EXACT_RECEIPT_NOT_FOUND · SEND_CONTROL_SHAPE '+JSON.stringify(sendShape())+(request.files?.length?' · UPLOAD_CONTROL_SHAPE '+JSON.stringify(uploadShape()):'')};
  // An old draft may have been manually submitted outside TWOS. Losing that
  // draft is not proof of non-delivery: reconcile rather than recreate/resend.
+ if(!targetCurrent())return {state:'target_changed',reason:'BOUND_TASK_CHANGED'};
  if(request.resumeDraft&&!value().trim())return {state:'unknown'};
  if(busy())return {state:'busy'};
  if(value().trim()&&!(request.resumeDraft&&normalize(value())===normalize(prompt)))return {state:'draft_conflict'};
@@ -168,7 +170,7 @@ return await (async () => {
  };
  if(!request.files?.length&&attachmentChips().length)return {state:'draft_conflict',reason:'EXISTING_WEBSITE_ATTACHMENTS_PRESERVED'};
  if(request.preflightOnly)return {state:'ready'};
- if(!same()||clean(location.href)!==original)return {state:'target_changed'};
+ if(!targetCurrent())return {state:'target_changed'};
  // Keep the exact marked body as a recoverable draft while uploads settle.
  input.focus();
  if(input instanceof HTMLTextAreaElement){Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(input,prompt);input.dispatchEvent(new Event('input',{bubbles:true}));}
@@ -180,13 +182,13 @@ return await (async () => {
  // Wait for the exact frozen body, never normalize away a content difference.
  const draftDeadline=performance.now()+2000;let stableDraft=0;
  while(performance.now()<draftDeadline){
-  if(!same()||clean(location.href)!==original)return {state:'target_changed'};
+  if(!targetCurrent())return {state:'target_changed'};
   stableDraft=bindExactComposer()?stableDraft+1:0;
   if(stableDraft>=2)break;
   await new Promise(r=>setTimeout(r,50));
  }
  if(stableDraft<2)return {state:'draft',reason:'EXACT_DRAFT_NOT_CONFIRMED_NO_MESSAGE_SENT'};
- if(!same()||clean(location.href)!==original)return {state:"target_changed"};
+ if(!targetCurrent())return {state:"target_changed"};
  // Exact native-selected bytes only. File objects use the website's standard
  // file-input/change path, never a private upload endpoint or filename proxy.
  if(request.files?.length){
@@ -216,7 +218,7 @@ return await (async () => {
    let inputs=uploadInputs();
    const controlDeadline=performance.now()+2500;let openedMenu=false;
    while(inputs.length!==1&&performance.now()<controlDeadline){
-    if(!same()||clean(location.href)!==original)return {state:'target_changed'};
+    if(!targetCurrent())return {state:'target_changed'};
     // ChatGPT's supported Add files menu may mount its native file input
     // lazily on a new chat. Open only the verified local composer menu, never
     // the file-picker action, history, a connector or a private upload API.
@@ -236,14 +238,14 @@ return await (async () => {
     if(bytes.length!==f.size||hash!==f.hash)return {state:'unsupported',reason:'ATTACHMENT_BYTES_CHANGED'};
     transfer.items.add(new File([bytes],f.name,{type:f.mime}));
    }
-   if(!same()||clean(location.href)!==original)return {state:'target_changed'};
+   if(!targetCurrent())return {state:'target_changed'};
    if(!bindExactComposer()||!inputs[0].isConnected||uploadInputs().length!==1||uploadInputs()[0]!==inputs[0])return {state:'draft',reason:'UPLOAD_CONTROL_CHANGED_NO_MESSAGE_SENT'};
    inputs[0].files=transfer.files;inputs[0].dispatchEvent(new Event('change',{bubbles:true}));
    window.twosUploadReceipts.set(request.id,manifest);
   }
   let uploaded=false;
   for(let n=0;n<80;n++){
-   if(!same()||clean(location.href)!==original)return {state:'unknown',reason:'ATTACHMENT_TARGET_CHANGED'};
+   if(!targetCurrent())return {state:'unknown',reason:'ATTACHMENT_TARGET_CHANGED'};
    if(!bindExactComposer()){await new Promise(r=>setTimeout(r,100));continue;}
    const nodes=chips().filter(e=>!chips().some(other=>other!==e&&other.contains(e)));
    const available=new Set(nodes),remaining=[];
@@ -278,7 +280,7 @@ return await (async () => {
  const sendDeadline=performance.now()+8000;
  while(performance.now()<sendDeadline){
   await new Promise(r=>setTimeout(r,100));
-  if(!same()||clean(location.href)!==original)return {state:'target_changed'};
+  if(!targetCurrent())return {state:'target_changed'};
   if(!bindExactComposer())return {state:'draft',reason:'EXACT_DRAFT_CHANGED_NO_MESSAGE_SENT'};
   const candidates=[...document.querySelectorAll('button,[role=button]')].filter(e=>visible(e)&&!e.disabled&&e.getAttribute('aria-disabled')!=='true'&&!e.closest('[inert],[aria-hidden=true],[data-twos-native-card],[data-message-author-role],[data-is-streaming],.font-claude-response')&&isSendControl(e));
   const scoped=composerScopes.map(root=>candidates.filter(e=>root.contains(e))).find(items=>items.length);

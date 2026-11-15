@@ -1,0 +1,66 @@
+{
+  "protocol": "twos.nyra.control.v1",
+  "transport": "private authenticated Unix socket; separate from status.sock",
+  "maximum_frame_bytes": 240000,
+  "deadline_seconds": 4,
+  "peer_checks": [
+    "same user",
+    "exact selected signed application and running PID",
+    "launch identity and code/resource stamp",
+    "host instance",
+    "consumer instance",
+    "request UUID",
+    "monotonic freshness",
+    "current opaque task target",
+    "existing workspace and execution ownership"
+  ],
+  "request_fields": [
+    "protocol",
+    "hostInstance",
+    "consumerInstance",
+    "requestID",
+    "issuedUptime",
+    "method",
+    "target",
+    "text",
+    "revision",
+    "queueID",
+    "mode",
+    "receipt"
+  ],
+  "methods": {
+    "inspect": "Read at most two minimal task rows and current capabilities; no task content.",
+    "focus": "Restore and confirm the selected running host workbench; no execution.",
+    "draft": "Read or save only the selected task composer draft, using a revision compare-and-swap. An optional receipt ID reads that same task thread's submission state without sending or replaying it.",
+    "submit": "A user-clicked supplement through the existing TWOS queue or supported turn/steer.",
+    "editQueue": "Revise only a matching unsent queue item; preserve delivered history.",
+    "stop": "Revoke the matching future queue/relay before interrupting only its exact execution."
+  },
+  "limits": {
+    "text_utf8_bytes": 64000,
+    "tasks": 2,
+    "title_characters": 90,
+    "concurrent_clients": 8,
+    "retained_mutation_receipts": 4096
+  },
+  "status_channel": "Unchanged twos.nyra.status.v4 read-only snapshots; never accepts control requests.",
+  "side_effects": "inspect/focus/draft-save do not create model turns. submit is explicit user input. stop never rolls back completed effects.",
+  "disclosure": "The control channel carries text deliberately typed by the user and selected draft text. No approval, shell, file upload, credential, arbitrary recipient or expanded scope capabilities exist.",
+  "old_clients": "Old status readers remain read-only. Standalone controls require explicit authorization in TWOS; old standalone grants remain status-only.",
+  "recovery": "No automatic replay on timeout/restart. A request ID is deduplicated for the current host lifetime; uncertain dispatch needs controller reconciliation.",
+  "task_capabilities": {
+    "scope": "Opaque stable selected conversation identity; not a path or account",
+    "target": "Exact instance, conversation and turn binding; frozen by editor",
+    "canEdit": "May open/save this bound draft; does not imply send or execution authority",
+    "canAppend": "May submit a supplement to the actual controlled run",
+    "canSteer": "Supported same active turn only",
+    "canStop": "May request stop for this exact owned activity"
+  },
+  "receipt_observation": {
+    "field": "receiptState",
+    "scope": "A submission in the exact current bound thread only; not an arbitrary delivery lookup",
+    "deadline_seconds": 4,
+    "retries": "Read-only bounded observation while sending; never resubmit an uncertain mutation",
+    "success_semantics": "Accepted/running/completed confirms controller receipt progression, not business acceptance."
+  }
+}

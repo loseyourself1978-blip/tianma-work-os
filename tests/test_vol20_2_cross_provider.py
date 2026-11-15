@@ -32,6 +32,56 @@ def cross_harness(tmp_path_factory):
 var fixtureNyraConflict=false
 let app=NSApplication.shared
 let mode=CommandLine.arguments[1], prefs=URL(fileURLWithPath:CommandLine.arguments[2]), base=URL(string:CommandLine.arguments[3])!, resources=URL(fileURLWithPath:CommandLine.arguments[4])
+if mode == "nyra_diagnostic_scope" {
+    let baseArgs=["fixture","--diagnostic-root","/private/tmp/TEST-ONLY-NYRA-PROFILE"]
+    precondition(NativeNyra.diagnosticStandaloneURL(["fixture","--diagnostic-nyra-app","/private/tmp/Nyra.app"]) == nil)
+    precondition(NativeNyra.diagnosticStandaloneURL(baseArgs) == nil)
+    for invalid in ["relative/Nyra.app","/private/tmp/../Nyra.app","/private/tmp/Nyra"] {
+        precondition(NativeNyra.diagnosticStandaloneURL(baseArgs+["--diagnostic-nyra-app",invalid]) == nil)
+    }
+    let selected=NativeNyra.diagnosticStandaloneURL(baseArgs+["--diagnostic-nyra-app","/private/tmp/TEST ONLY Nyra.app"])
+    precondition(selected?.path == "/private/tmp/TEST ONLY Nyra.app")
+    print("PASS isolated candidate selector requires an explicit absolute profile and exact app path; no authorization or model call")
+    exit(0)
+}
+if mode == "nyra_task_metadata" {
+    try! NativeWorkbench.safeDirectory(prefs)
+    try! NativeWorkbench.save(["kind0":"ChatGPT","kind1":"Claude","url0":base.absoluteString,"url1":base.absoluteString],at:prefs.appendingPathComponent("paired-workbench.json"))
+    let work=IntegratedWorkbench(preferences:prefs,resources:resources,translate:{$0},openProjects:{fatalError("no business action")})
+    let now=ProcessInfo.processInfo.systemUptime
+    work.paneActivities[0]=PaneActivity(session:"test-chat",task:nil,state:"waiting_user",at:now,reason:"LOGIN_REQUIRED")
+    precondition(work.nyraTask(0)==nil,"login/waiting without an observed run is not a task")
+    work.paneActivityTokens[0]="test-activity"
+    work.paneActivities[0]=PaneActivity(session:"test-chat",task:"test-turn-1",state:"running",at:now,reason:"GENERATION_CONTROL")
+    let first=work.nyraTask(0)!
+    precondition(first["canAppend"] as? Bool==true && first["canEdit"] as? Bool==true)
+    _=work.nyraPublicTasks()
+    work.paneActivities[0]=PaneActivity(session:"test-chat",task:nil,state:"idle",at:now,reason:"GENERATION_ENDED")
+    let ended=work.nyraTask(0)!
+    precondition(ended["target"] as? String==first["target"] as? String && ended["canEdit"] as? Bool==true && ended["canAppend"] as? Bool==false)
+    work.paneActivities[0]=PaneActivity(session:"test-chat",task:"test-turn-2",state:"running",at:now,reason:"GENERATION_CONTROL")
+    let next=work.nyraTask(0)!
+    precondition(first["scope"] as? String==next["scope"] as? String && first["target"] as? String != next["target"] as? String)
+    work.paneActivities[0]=PaneActivity(session:"other-chat",task:nil,state:"activity_unknown",at:now,reason:"PAGE_UNAVAILABLE")
+    precondition(work.nyraTask(0)==nil,"old task must not leak across a changed conversation")
+    // A transient connection failure is not a loss of authorization. Preserve
+    // the input and return the specific state gap, without attempting a send.
+    work.kinds[0]="Codex"
+    work.codex=NativeCodex(resources:resources,preferences:prefs,translate:{$0})
+    work.codex!.selected=["id":"test-local-chat"];work.codex!.connected=false;work.codex!.uncertain=true
+    work.paneActivities[0]=PaneActivity(session:"test-local-chat",task:"test-local-turn",state:"running",at:ProcessInfo.processInfo.systemUptime,reason:"TEST_ONLY")
+    let disconnectedTarget=work.nyraTask(0)!["target"] as! String
+    var controlReply=[String:Any]()
+    let control:[String:Any]=["method":"submit","target":disconnectedTarget,"_userControls":true,"issuedUptime":ProcessInfo.processInfo.systemUptime,"text":"TEST ONLY"]
+    work.handleNyraControl(control){controlReply=$0}
+    precondition(controlReply["error"] as? String=="HOST_CONNECTION_STATE_UNCONFIRMED_DRAFT_RETAINED")
+    var unauthorized=control;unauthorized["_userControls"]=false
+    work.handleNyraControl(unauthorized){controlReply=$0}
+    precondition(controlReply["error"] as? String=="CONTROL_NOT_AUTHORIZED")
+    precondition(work.codex!.ledger.submissions.isEmpty)
+    precondition(work.webTransfers.isEmpty && work.dialogue==nil)
+    print("NYRA_TASK_METADATA_SCOPE_EDIT_NO_PHANTOM_PASS");exit(0)
+}
 if mode == "launcher_language" {
     try! NativeWorkbench.safeDirectory(prefs)
     try! NativeWorkbench.save(["kind0":"ChatGPT","kind1":"Claude","url0":base.absoluteString,"url1":base.absoluteString],at:prefs.appendingPathComponent("paired-workbench.json"))
@@ -720,8 +770,9 @@ func probe(){
         b.web.callAsyncJavaScript(actualSetup,arguments:["prompt":"[TWOS handoff "+id+"]\n"+(request["text"] as! String)],in:nil,in:NativeWorkbench.handoffWorld) { _ in
             var req=request
             if mode=="origin" {req["targetURL"]="https://evil.test/"}
+            if mode=="nyra_task_changed" {req["expectedActivity"]="public:another-task"}
             b.webTransfer(req) { response in
-                let expected=["challenge":"verification","existing":"draft_conflict","busy":"busy","origin":"target_changed","draft":"draft","cancel":"target_changed","preflight":"ready","readiness":"input_ready","inspect_missing":"unknown","chatgpt_bubble_changed":"unknown","claude_markup_changed":"unknown","chatgpt_markup_changed":"unknown","resume_missing":"unknown","deepseek_streaming":"sent","claude_streaming":"sent","claude_interrupted":"generation_stopped","chatgpt_interrupted":"generation_stopped","upload_corrupt":"unsupported","upload_foreign":"draft_conflict","upload_foreign_image":"draft_conflict","upload_changed_input":"draft","upload_no_control":"unsupported","upload_ambiguous_control":"unsupported","send_ambiguous_control":"draft","send_changed_draft":"draft","upload_switch":"unknown"][mode] ?? "reply"
+                let expected=["nyra_task_changed":"target_changed","challenge":"verification","existing":"draft_conflict","busy":"busy","origin":"target_changed","draft":"draft","cancel":"target_changed","preflight":"ready","readiness":"input_ready","inspect_missing":"unknown","chatgpt_bubble_changed":"unknown","claude_markup_changed":"unknown","chatgpt_markup_changed":"unknown","resume_missing":"unknown","deepseek_streaming":"sent","claude_streaming":"sent","claude_interrupted":"generation_stopped","chatgpt_interrupted":"generation_stopped","upload_corrupt":"unsupported","upload_foreign":"draft_conflict","upload_foreign_image":"draft_conflict","upload_changed_input":"draft","upload_no_control":"unsupported","upload_ambiguous_control":"unsupported","send_ambiguous_control":"draft","send_changed_draft":"draft","upload_switch":"unknown"][mode] ?? "reply"
                 if mode=="claude_markup" {precondition((response["reply"] as? String)?.contains("TEST/FIXTURE response") == true && (response["reply"] as? String)?.contains("PROGRESS") == false && (response["reply"] as? String)?.contains("待办 ✓") == true,"final body must exclude public progress but preserve code") }
                 if mode=="chatgpt_file_reference" {precondition((response["reply"] as? String)?.contains("TEST-FILE.txt") == true && (response["reply"] as? String)?.contains("Copy table") == false,"inline file label is content; toolbar action is not: \(response)")}
                 if mode=="claude_chrome" {precondition(response["reply"] as? String=="TEST/FIXTURE response","UI chrome is not answer text")}
@@ -776,7 +827,7 @@ probe();DispatchQueue.main.asyncAfter(deadline:.now()+20){fatalError("fixture ti
     assert run.returncode==0,run.stderr
     return binary
 
-@pytest.mark.parametrize('mode',['deepseek_intent','deepseek_adapter','launcher_language','nyra_visibility_controls','simplified_r4_policy','simplified_r4_auto_legacy','simplified_r4_auto_stopped_unknown','simplified_r4_auto_stopped_same','simplified_r4_auto_stopped_other','simplified_r4_auto_left','simplified_r4_auto_right','simplified_r4_auto_manual','simplified_r4_auto_stream','simplified_r4_auto_empty','simplified_r4_auto_wait_stop','simplified_r4_auto_reconcile','simplified_r4_auto_reconcile_stop','owner_r3_policy','paired_attachment_scope_ui','auxiliary_window_close','history_restore','paired_policy','paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_hydration','paired_auto_late_changed','paired_auto_late_unrestorable','paired_recovery','upload_exact','upload_async_input','upload_changed_input','upload_delayed_control','upload_menu_control','upload_scoped_control','upload_nearest_control','upload_directory_control','upload_accessibility_hidden_input','upload_hidden_other_control','upload_ambiguous_control','upload_transient_duplicate','upload_remounted_composer','send_delayed_control','send_ambiguous_control','send_changed_draft','upload_same_name','upload_history','upload_claude_labels','upload_chatgpt_cards','upload_chatgpt_renamed','upload_foreign_image','upload_corrupt','upload_foreign','upload_no_control','upload_switch','nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','chatgpt_interrupted','chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble','claude','claude_streaming','claude_interrupted','claude_chrome','chatgpt_file_reference','claude_markup','claude_markup_changed','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
+@pytest.mark.parametrize('mode',['nyra_diagnostic_scope','nyra_task_metadata','nyra_task_changed','deepseek_intent','deepseek_adapter','launcher_language','nyra_visibility_controls','simplified_r4_policy','simplified_r4_auto_legacy','simplified_r4_auto_stopped_unknown','simplified_r4_auto_stopped_same','simplified_r4_auto_stopped_other','simplified_r4_auto_left','simplified_r4_auto_right','simplified_r4_auto_manual','simplified_r4_auto_stream','simplified_r4_auto_empty','simplified_r4_auto_wait_stop','simplified_r4_auto_reconcile','simplified_r4_auto_reconcile_stop','owner_r3_policy','paired_attachment_scope_ui','auxiliary_window_close','history_restore','paired_policy','paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_hydration','paired_auto_late_changed','paired_auto_late_unrestorable','paired_recovery','upload_exact','upload_async_input','upload_changed_input','upload_delayed_control','upload_menu_control','upload_scoped_control','upload_nearest_control','upload_directory_control','upload_accessibility_hidden_input','upload_hidden_other_control','upload_ambiguous_control','upload_transient_duplicate','upload_remounted_composer','send_delayed_control','send_ambiguous_control','send_changed_draft','upload_same_name','upload_history','upload_claude_labels','upload_chatgpt_cards','upload_chatgpt_renamed','upload_foreign_image','upload_corrupt','upload_foreign','upload_no_control','upload_switch','nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','chatgpt_interrupted','chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble','claude','claude_streaming','claude_interrupted','claude_chrome','chatgpt_file_reference','claude_markup','claude_markup_changed','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
 def test_exact_target_single_dispatch_and_preflight(cross_harness,tmp_path,mode):
     class Fixture(BaseHTTPRequestHandler):
         def do_GET(self):

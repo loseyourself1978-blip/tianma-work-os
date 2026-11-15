@@ -1,5 +1,7 @@
 # 使用 TWOS 1.0.6
 
+> **开发接续——尚未公开发布：** [单击返回、紧凑任务控制及左右共用 Codex 导航](FOCUS_AND_TASK_CONTROLS.zh-CN.md)。新用户控制通道传递本人选定的草稿／补充；旧状态通道保持只读。下文仅只读的描述适用于已发布基线，不代表待交付控制版。
+
 [本次更新：网页打开](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
 
 TWOS 1.0.6 / 101.54 · [本次增量](AUTOSEND_AND_WARDROBE.zh-CN.md)
