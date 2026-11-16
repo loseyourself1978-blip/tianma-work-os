@@ -16,7 +16,7 @@ This is a release SOP, not a background automation. Website publication does not
 
 ## Current capture
 
-Current download and verified captures: TWOS 1.0.9 / 101.57. Nyra's five assets are byte-identical to published 1.0.5 / 105 and pinned 1.0.6 / 106 release. The capture shows signed-out ChatGPT and disconnected Codex; no model run was started to make this image.
+Current download: TWOS1.0.10 /101.58, with Nyra1.0.7 /107. The six real macOS starting-state images retain their original November15 capture provenance. Ten render inputs are byte-identical between capture source9cfc6f5 and release runtime70272fe; the live reconciliation/version delta does not change that disconnected view. The manifest preserves each full original capture object and separately binds the reused image to the current interface source. All five runtime portraits match the pinned final component by SHA-256. This is verified unchanged-media reuse, not a claim that six new captures were taken from70272fe.
 
 ## Supported-service combinations — required from November 7, 2026
 
@@ -24,7 +24,7 @@ Keep the public product page English-only. Capture actual supported combinations
 
 Bind every combination to the exact candidate source, version, build, dimensions and image hash in the media manifest. Explain website reply exchange separately from authorized local Codex execution. Do not imply that all arbitrary models/websites support automatic exchange. Provider pages may contain their own untranslated legal labels; do not alter captured UI to conceal them.
 
-Current combination captures: final DMG 1.0.9 / 101.57, source `8c5a5106fc2d53ff474d278cd2ee78057882cfa8`, November 7, 2026. The matching public download is 1.0.9. No model turn, login, task dispatch or authentication-data copy was performed to produce the new captures.
+Current combination images show real signed-out/disconnected starting states. Original source, date and image hashes remain in the manifest. No model turn, login, task dispatch or authentication-data copy was performed for marketing.
 
 
 ## Release, website and local artifact consistency — mandatory closeout

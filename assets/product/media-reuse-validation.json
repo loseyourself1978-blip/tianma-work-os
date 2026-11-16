@@ -1,0 +1,78 @@
+{
+  "checked_at": "2026-11-16T17:06:32.615469+08:00",
+  "captured_source": "9cfc6f5b7aba6321d94c108d1ea7a3e4a9d9e2cd",
+  "candidate_source": "70272fe9820b3b668b770960d42c15204a7d1da1",
+  "unchanged_render_inputs": {
+    "static_cockpit/native_codex/app.js": {
+      "same": true,
+      "sha256": "1a7e1d464cfe852f7e1458e55f43dd6bbb81399a8e6b7014b3b4f76916c821c5"
+    },
+    "static_cockpit/native_codex/handoff.js": {
+      "same": true,
+      "sha256": "636a3a6be84ba0d3bb3caeef9cabf4893bba12d53a898338cf76d12be207811d"
+    },
+    "static_cockpit/native_codex/index.html": {
+      "same": true,
+      "sha256": "883b2ad90f6a4901166bcc904317d5e4d7a2dbceefd91aa7eaf7f480ef1913eb"
+    },
+    "static_cockpit/native_codex/provider_dom.js": {
+      "same": true,
+      "sha256": "88082dc110a358b000ebb54d468c3a89687eebbc4d6d03e41621ed55587e6bd8"
+    },
+    "static_cockpit/native_codex/style.css": {
+      "same": true,
+      "sha256": "530ddf88f622c91cad6b0c1466becf4a5111fe01f973ebfd598be3e4d473bb38"
+    },
+    "static_cockpit/native_codex/telemetry.js": {
+      "same": true,
+      "sha256": "fa797c270a1d2748784d97d69734ffaa07e3576fd9be19bb723f859a7baaec41"
+    },
+    "static_cockpit/native_codex/web_handoff.js": {
+      "same": true,
+      "sha256": "431018c2e8b05126ba7639b7e1d596a3ea0690b6409fe67f7a5a11561dacc3c7"
+    },
+    "packaging/macos/IntegratedWorkbench.swift": {
+      "same": true,
+      "sha256": "2f06661d02aacb4331cc64618872bb3e9352b9b84fca0878e017b4f4b00307b6"
+    },
+    "packaging/macos/TianmaLauncher.swift": {
+      "same": true,
+      "sha256": "72c398459462f523c1ef6356f4800598339a317c38191126c439cccff9543dba"
+    },
+    "packaging/macos/PairedWorkflow.swift": {
+      "same": true,
+      "sha256": "910bcf7010aa17da0ee5ad1436c83955f1e2530d0b3bf52042d11218434d3376"
+    }
+  },
+  "native_delta_review": "Initialize client version corrected to1.0.10 and live/history reconciliation amended. No disconnected starting-state layout change. No live task success is claimed from these starting-state images.",
+  "five_runtime_portraits": [
+    {
+      "id": "runtime-default",
+      "sha256": "7780d8d9319a6578ba492e37dd122d7bfe2f559adfac5d053c62d73fa26ecd69",
+      "same": true
+    },
+    {
+      "id": "runtime-office",
+      "sha256": "e12414521cba25dc01077aeea97ed935d79035d80d6b23e4e0a516740b6d94d4",
+      "same": true
+    },
+    {
+      "id": "runtime-gala",
+      "sha256": "e390c578f481cd42caae6af08835c4c2a44e28afc4125aaa1ecb588fa749fce4",
+      "same": true
+    },
+    {
+      "id": "runtime-office_white",
+      "sha256": "a824beab71303827b8c45dc7f3804a6922b518c619b9407d7d9da29c87dd0556",
+      "same": true
+    },
+    {
+      "id": "runtime-gala_red",
+      "sha256": "f4fab3c295c0716ed489ff9b12a0d66879e924d9db71e54c80df28d1eb088ca3",
+      "same": true
+    }
+  ],
+  "image_hashes_preserved": true,
+  "reuse_decision": "REUSE_UNCHANGED_STARTING_STATE_MEDIA_WITH_ORIGINAL_CAPTURE_PROVENANCE",
+  "scope": "Starting-state screenshot reuse only. Original capture provenance is retained inside each media entry. No new six-combination capture is asserted."
+}
