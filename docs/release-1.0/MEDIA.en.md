@@ -1,3 +1,13 @@
+# Current actual interface: compact task bubble
+
+This November 16, 2026 capture shows the final TWOS 1.0.10 / 101.58 bundled Nyra 1.0.7 / 107 in isolated engineering sample P. It shows the pre-Stop Running state, a truncated non-sensitive test title and direct pencil/Stop controls. It is not a terminal-Stop screenshot or complete acceptance evidence. The subsequent physical click and terminal receipt are documented separately. A viewer background behind transparent pixels is not an opaque stage fill.
+
+![Final candidate two-line task bubble](images/focus-task-bubble-1.0.7.png)
+
+No new video was recorded for this increment. Historical recordings demonstrate only their labelled versions, not the new task controls.
+
+---
+
 # November 5 candidate: five outfits and action voice
 
 Actual embedded Nyra 1.0.5 / 105 in the Developer ID TWOS 1.0.6 / 101.54 candidate. These images show real selected outfits and the closable voice panel, not a full workflow acceptance. The panes were awaiting engineering login, so activity observation is explicitly unknown. Transparent PNG pixels may be shown on a dark background by a viewer; that is not an opaque stage fill. No new video was recorded for this increment. Earlier media below remains version-labelled history.

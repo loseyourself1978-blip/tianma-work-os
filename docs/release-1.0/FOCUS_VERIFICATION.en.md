@@ -1,0 +1,30 @@
+# Focus and task controls — verification scope
+
+TWOS 1.0.10 / 101.58; Nyra 1.0.7 / 107. Runtime sources: TWOS `70272fe9820b3b668b770960d42c15204a7d1da1`, Nyra `a897169abfae4eb4535940420097ff9dbdf621a1`. Documentation commits may follow these runtime commits. Exact artifact hashes, signature and notarization identities are in the matching release receipt.
+
+## Findings and changes
+
+- The previous character-click path asked the application to activate without proving that the correct workbench was visible. Pointer hit testing was timer-driven, so fast entry could precede its next update. Mouse-movement updates now supplement the timer. A separate authenticated host request restores the exact workbench and confirms active, visible, unminimized and key state. Signature and endpoint work stays off the interaction thread. The existing first-mouse implementation was retained; adding it again was not treated as a repair.
+- The previous read-only label supplied no task-control interface, and the character panel could not receive keyboard focus. The new two-line bubble has direct pencil and Stop controls. Its separate key-capable editor locks the task identity, supports IME and native editing commands, retains drafts/recovery, and edits only unsent queue entries.
+- Real candidate testing exposed a delayed history-page response classifying a newly dispatched, locally owned input as an unknown delivery. Reconciliation now preserves the exact in-flight identity while retaining the fences for foreign, uncertain, scope-changed and stopped work.
+- Earlier physical Stop reports N/O remain failures; the exact original click path was not fully established. Confirmed feedback defects included normal polling erasing the in-flight state and re-enabling controls. Stop now has a request/target-bound attempt, immediate persistent Stopping, duplicate protection, a bounded unconfirmed state, and terminal-only Stopped. No automatic retry is introduced.
+- Saved turn summaries alone did not provide current public messages for an active official chat. Bounded current-item pages and stable item identities update the read-only view. Both panes now share project/chat navigation instead of the chat dropdown. Unsupported official project metadata uses a labelled folder fallback; TWOS does not impersonate the complete official UI or take over its active session.
+
+## Automated evidence
+
+One complete serial TWOS gate: 1873 passed, one explicitly retained historical skip, zero failures; all 38 actual Safari measurements began and ended visible. Runtime and frozen input hashes were unchanged throughout that run. Release documents and receipts are subsequently updated and checked separately; they are not represented as inputs to that earlier run. Earlier failed/partial batches are not added to this result.
+
+The separate Nyra production AppKit/control suite passed 19 tests in 15.838 seconds against the final control source. Those tests use a synthetic service boundary: they cover correlation, stale responses, first mouse, editor recovery and Stop feedback, but are not a substitute for the physical interactions below. The embedded and standalone candidates contain the same 15 Swift source files and 189 resource files, verified by hashes. Each new App/DMG was separately signed, notarized and checked by Gatekeeper. Read-only mounted DMG inventories matched the signed applications.
+
+## Actual interaction evidence and limits
+
+| Interaction | Recorded outcome | Scope limit |
+|---|---|---|
+| Character click from another app | Owner reported 20 physical clicks, all returning to TWOS. Eleven time-correlated records include ten confirmed at 5–267 ms and one unconfirmed at 2,977 ms. | Not 20 individually measured subsecond results; Space/multiple-display variants were not individually labelled. |
+| Direct input and Chinese IME | Owner entered Chinese through the real editor; later compact-editor checks verified paste, autosave, close/reopen and retained failed-send text. | IME and positive pending edit were observed on earlier engineering candidates; their exact source-based and automated coverage is retained. |
+| Steer / Queue / pending edit | A Chinese supplement remained on the same turn. One queued successor ran once. A separate positive queue edit dispatched only the edited text; original unsent snapshots had no turn. Editing after dispatch was refused and text retained. | Dedicated non-sensitive engineering tasks only; no old business task was replayed. |
+| Final embedded physical Stop | Owner clicked sample P's bubble and reported a visible response. The authenticated control acknowledgment took 15 ms; the exact task subsequently reached cancelled, the GUI displayed Stopped/conversation saved, and future dispatch remained paused with an empty queue. | 15 ms measures acknowledgment, not cancellation. Final tool exit status was not reported and is not fabricated. This closes this exact Stop regression, not overall Owner acceptance. |
+| Local Codex and either-side sidebar | A harmless new message returned `FINAL_SIGNED_CODEX_OK` once. ChatGPT remained responsive. Disconnect/reconnect retained history without resending; moving Codex between panes retained the same sidebar and result. | Actual official protocol and packaged UI; no claim to control an official-app-owned active run. |
+| Standalone / embedded | Standalone authenticated GUI operation was observed after an explicit control grant. Exact final sources/resources match the embedded version; final physical Stop evidence is from the embedded version. | Standalone GUI observation predates the final feedback-only refinement; do not describe it as a second final physical Stop run. |
+
+Original failures, partial gates and accepted historical business results remain preserved privately. Public records omit private account data, instruction bodies and local workspace paths. New Owner acceptance is not granted by engineering. macOS Apple Silicon only; Windows is in development and has no download. App Store submission is not part of this release.

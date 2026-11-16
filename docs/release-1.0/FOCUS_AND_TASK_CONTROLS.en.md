@@ -1,10 +1,10 @@
 # Nyra focus, task controls and the shared Codex workspace
 
-Candidate: TWOS 1.0.10 / 101.58 and Nyra 1.0.7 / 107. Work order: TWOS-NYRA-FOCUS-AND-TASK-CONTROLS-R1. **Development change: final packaged GUI verification and release are still pending.** This document does not change the current public download or grant Owner acceptance.
+TWOS 1.0.10 / 101.58; Nyra 1.0.7 / 107. See the [verification record](FOCUS_VERIFICATION.en.md) for engineering results, actual interaction coverage and limitations. The matching GitHub Release determines public availability; Owner acceptance is separate.
 
 ## Upgrade check
 
-Use the matching verified release once it is published. Existing accepted business tasks do not need to be recreated.
+Use the matching verified release linked in the release receipt. Existing accepted business tasks do not need to be recreated.
 
 1. Select Codex in either pane. The same project/chat sidebar, conversation stream and composer are used on either side. Choose a chat in the sidebar; the chat dropdown is removed. The sidebar can collapse in a narrow pane. Model, reasoning and input-mode selectors keep their existing purposes.
 2. The official connection supplies project and chat metadata. Where app project membership is not exposed, a folder-based grouping is labelled as such. This is a TWOS client of the official protocol, not an embedded copy of the whole Codex application. Reading history does not transfer control of an official application's active run.
@@ -23,7 +23,7 @@ The existing status socket remains read-only. The separate authenticated user-co
 
 Status snapshots do not contain prompts, code, files, accounts or credentials. The user-control channel necessarily carries the particular draft and supplement that the user chooses to edit/send, up to 64,000 UTF-8 bytes. TWOS stores these in its existing local draft/queue/receipt system and passes them only through the original authorized provider pipeline. No automatic approval, shell command, file access, arbitrary recipient or expanded directory permission is granted to Nyra. Metadata diagnostics omit titles and instruction bodies. Showing the card can reveal a bounded conversation title on screen; hide task labels before screen sharing if desired.
 
-All I/O and signature verification are off the UI thread. A four-second bounded request lease is revoked on timeout or connection reset; delayed authentication cannot send a new action afterward. Mutating request IDs are deduplicated for the host lifetime. Reopening or reconnecting never replays an uncertain operation. After an explicit send, a bounded read-only check observes that same task’s receipt; it does not send again. Closing during autosave keeps the frozen editor until the save is confirmed. An unconfirmed send retains its text and disables resubmission.
+Task-control I/O and peer signature verification run off the UI thread. A four-second bounded request lease is revoked on timeout or connection reset; delayed authentication cannot send a new action afterward. Mutating request IDs are deduplicated for the host lifetime. Reopening or reconnecting never replays an uncertain operation. After an explicit send, a bounded read-only check observes that same task’s receipt; it does not send again. Closing during autosave keeps the frozen editor until the save is confirmed. An unconfirmed send retains its text and disables resubmission.
 
 ## Troubleshooting
 

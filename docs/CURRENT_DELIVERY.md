@@ -1,9 +1,11 @@
 # TWOS delivery status
 
-Verified distribution: **1.0.9 / 101.57**. [Matching GitHub Release](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.9) determines public availability.
+Verified distribution candidate: **1.0.10 / 101.58**. [Matching GitHub Release](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.10) determines actual public availability; this document alone does not assert publication.
 
-[English delta](release-1.0/WEBSITE_NAVIGATION_FOLLOWUP.en.md) · [中文增量](release-1.0/WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
+[English delta](release-1.0/FOCUS_AND_TASK_CONTROLS.en.md) · [中文差量](release-1.0/FOCUS_AND_TASK_CONTROLS.zh-CN.md)
 
-The matching signed package passed one complete serial gate: 1865 passed, 1 existing historical skip, 0 failures, including 38 real Safari measurements. Actual final-DMG UI checks cover both panes, explicit local/private HTTP navigation, editable invalid-input feedback, Cancel and saved state. No model task or old business execution was started for this repair. The preceding Codex connection repair and Nyra 1.0.6 / 106 remain unchanged. Owner acceptance is separate.
+One complete serial TWOS gate: 1873 passed, one explicitly retained historical skip, zero failures; all 38 actual Safari measurements began and ended visible. Runtime and frozen input hashes were unchanged throughout that run. Release documents and receipts are subsequently updated and checked separately; they are not represented as inputs to that earlier run. Earlier failed/partial batches are not added to this result.
 
-Developer ID signed, notarized and Gatekeeper verified. Exact source and artifact hashes: [release receipt](release-1.0/release.json). Original Owner failure and prior release receipt remain preserved. Apple Silicon macOS only; Windows in development with no download. Mac App Store NOT_SUBMITTED.
+[Actual GUI scope and limits](release-1.0/FOCUS_VERIFICATION.en.md) · [真实核验范围](release-1.0/FOCUS_VERIFICATION.zh-CN.md). Developer ID signed, notarized and Gatekeeper verified. Exact source and artifact hashes: [release receipt](release-1.0/release.json). Original failures and previous Owner acceptances are preserved; new Owner acceptance remains separate.
+
+macOS Apple Silicon only. Windows is in development with no download. Mac App Store NOT_SUBMITTED.

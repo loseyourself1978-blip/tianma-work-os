@@ -1,12 +1,12 @@
 # 故障排查
 
-> **开发接续——尚未公开发布：** [单击返回、紧凑任务控制及左右共用 Codex 导航](FOCUS_AND_TASK_CONTROLS.zh-CN.md)。新用户控制通道传递本人选定的草稿／补充；旧状态通道保持只读。下文仅只读的描述适用于已发布基线，不代表待交付控制版。
+> **当前控制版：** [单击返回、紧凑任务控制及左右共用 Codex 导航](FOCUS_AND_TASK_CONTROLS.zh-CN.md)。状态通道保持只读；独立认证控制通道只传递用户主动选定的草稿或动作。旧独立版只读授权不会自动获得控制权。历史版本中仅只读的描述不适用于这个新增控制通道。
 
-[本次更新：网页打开](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
+[本次更新：聚焦与任务控制](FOCUS_AND_TASK_CONTROLS.zh-CN.md)
 
 TWOS 1.0.10 / 101.58 · [本次增量](FOCUS_AND_TASK_CONTROLS.zh-CN.md)
 
-[本次增量操作和准确边界](AUTOSEND_AND_WARDROBE.zh-CN.md)。
+[本次增量操作和准确边界](FOCUS_AND_TASK_CONTROLS.zh-CN.md)。
 
 
 - **系统阻止安装：** 核对对应 Release、哈希和签名回执，不关闭 Gatekeeper、不移除隔离标记。未公证工程候选不等于面向新手的正式安装路径。
@@ -37,7 +37,7 @@ TWOS 1.0.10 / 101.58 · [本次增量](FOCUS_AND_TASK_CONTROLS.zh-CN.md)
 [DeepSeek 接力、五套服装与双语动作语音](AUTOSEND_AND_WARDROBE.zh-CN.md)
 
 
-[本次更新](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
+[本次更新](FOCUS_AND_TASK_CONTROLS.zh-CN.md)
 
 - **长历史连接错误：** 1.0.7 的 `invalid_or_oversized_jsonl` 可能来自完整历史响应过大，并非登录问题。见[长会话修复说明](CODEX_HISTORY_REPAIR.zh-CN.md)。保留草稿和登录数据。
 

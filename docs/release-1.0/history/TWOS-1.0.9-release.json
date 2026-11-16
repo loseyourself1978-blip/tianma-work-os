@@ -1,0 +1,49 @@
+{
+  "product": "TWOS",
+  "version": "1.0.9",
+  "build": "101.57",
+  "source_commit": "8c5a5106fc2d53ff474d278cd2ee78057882cfa8",
+  "runtime_input_sha256": "e69829e2d92899266fae067ac41fbf859de6ee3a579cb09e1aec089cbcd4d98f",
+  "artifact": "Tianma-Work-OS-1.0.9-build-101.57.dmg",
+  "sha256": "8680489ba3ea0b53a76bc5f8df56bd2108cab9da9ad06c0173d9633afcc58485",
+  "bytes": 264413605,
+  "signature": "Developer ID Application: Jing Huang (BZJWQJ352K)",
+  "app_notarization_id": "6b6b0d95-1926-4b8e-b200-e943c48f833f",
+  "dmg_notarization_id": "b2b793b6-ab56-444d-8bcc-0863f4a97698",
+  "gatekeeper": "PASS",
+  "regression": "COMPLETE_GREEN",
+  "final_packaged_gui": "PASS",
+  "public_release": "PENDING_DRAFT_UPLOAD_DOWNLOAD_VERIFY_AND_PUBLICATION",
+  "owner_acceptance": "NOT_GRANTED_BY_ENGINEERING",
+  "at": "2026-11-08T00:03:52.945933+08:00",
+  "signing_identity": "Developer ID Application: Jing Huang (BZJWQJ352K)",
+  "main_gate": {
+    "exit_code": 0,
+    "collected": 1866,
+    "counts": {
+      "passed": 1865,
+      "skipped": 1
+    },
+    "duration_seconds": 6606.167195796967,
+    "runtime_changed": [],
+    "changed_inputs": [],
+    "frozen_count": 506,
+    "safari": {
+      "measurements": 38,
+      "visible_start": 38,
+      "visible_finish": 38,
+      "errors": []
+    },
+    "complete_pass": true
+  },
+  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.9",
+  "platform": "macOS",
+  "architecture": "arm64",
+  "status": "SIGNED_NOTARIZED_VALIDATED",
+  "store_submission": "NOT_SUBMITTED",
+  "previous_owner_acceptance": "PRESERVED; no old business task replayed",
+  "embedded_nyra_version": "1.0.6",
+  "embedded_nyra_build": "106",
+  "embedded_nyra_source_commit": "18309c82bcc6c821ebde56c0591ae02240931c89",
+  "publication_truth": "GitHub Release state determines public availability. This receipt alone does not assert publication."
+}

@@ -1,14 +1,12 @@
 # Tianma Work OS 1.0
 
-> **开发接续——尚未公开发布：** [左右共用 Codex 导航与 Nyra 任务控制](docs/release-1.0/FOCUS_AND_TASK_CONTROLS.zh-CN.md)。最终打包验证未完成；下方公开下载仍指向已核验发行版。
+**TWOS 1.0.10 / 101.58：左右共用 Codex 项目／会话导航与直接 Nyra 任务控制。内置 Nyra 1.0.7 / 107。**
 
-**TWOS 1.0.9 / 101.57：修复私网网页打开及地址错误提示；Nyra 1.0.6 / 106 未改动。**
-
-本次修复明确选择的私网网页打开及可编辑错误提示，保留原 Codex 历史修复；夜璃既有只读任务标签与点击返回行为保持不变。
+在任意一侧选择 Codex，使用相同的项目／会话侧栏与最新公开消息读回。单击 Nyra 返回绑定工作台，用紧凑气泡编辑草稿、补充同一轮、排队或停止准确任务。最终候选中发现的迟到历史／派发竞态已修复。原私网网页导航与已接受业务保留。
 
 本版包含五套站姿／侧卧服装、13 段离线小田中文动作短句，以及 13 句使用本机女声的英文对应台词。声音默认静音；取消静音并开启动作语音后按实际动作播放，带冷却、不叠音。声音面板可通过关闭、Esc 或声音按钮收起。
 
-**TWOS 1.0.9 / build 101.57** · [下载与校验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.9) · [本次更新](docs/release-1.0/WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
+**TWOS 1.0.10 / build 101.58** · [下载与校验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.10) · [本次更新](docs/release-1.0/FOCUS_AND_TASK_CONTROLS.zh-CN.md)
 
 [English](README.md) · [安装](docs/release-1.0/INSTALL.zh-CN.md) · [操作指南](docs/release-1.0/USER_GUIDE.zh-CN.md) · [当前发行状态](docs/CURRENT_DELIVERY.md)
 
@@ -18,11 +16,11 @@
 - 交接选定正文/附件，用 Steer 补充或可编辑 Queue 排队，查看真实工具、diff、错误和权限请求。
 - 打开成果网页、查看文件、另存副本或在 Finder 定位原文件。
 - 查看供应商额度窗口及独立标注的本任务用量、耗时、计划和有依据的估计。
-- 使用同包内置 **夜璃 Nyra**：五服装、站姿/侧卧动画、透明舞台；状态通道只读；待交付控制版经另一个已认证 TWOS 通道提供用户主动操作，Nyra 不自行执行或批准工作。
+- 使用同包内置 **夜璃 Nyra**：五服装、站姿/侧卧动画、透明舞台；状态通道只读，独立认证 TWOS 通道提供用户主动操作，Nyra 不自行执行或批准工作。
 
 ## 下载与首次使用
 
-从上方链接下载 TWOS v1.0.9；打开 DMG 前核对 SHA256SUMS。匹配回执绑定源码、签名、公证和制品哈希。历史 v1.0.1 与 v1.0.0 保持不变。
+从上方链接下载 TWOS v1.0.10；打开 DMG 前核对 SHA256SUMS。匹配回执绑定源码、签名、公证和制品哈希。历史 v1.0.1 与 v1.0.0 保持不变。
 
 打开对应 DMG，拖入应用程序并启动。登录所选供应商官网，连接已安装/登录的官方本机 Codex，再创建或接续一个绑定目录的任务。Nyra 在同一 App 内，无需第二个桌宠安装包或首次联网下载画稿；普通安装无需 Python、Node 或终端。
 
@@ -32,7 +30,7 @@
 
 TWOS 使用官方 Codex App Server 协议实现客户端，不是嵌入官方 macOS Codex 整个 GUI。各供应商网页保留自己的登录、模型、用量与条款。网页返回代码不等于本机文件已生成，落盘需要独立明确授权。不会静默切换计费 API 或自动购买。
 
-只交接选定内容；选择目录不等于读取全部文件。Nyra 仅接收最小状态、不透明标识及有长度上限的活动会话标题，不接收消息正文、代码、账号或凭据。执行结束、业务验证和 Owner 接受分别记录。
+只交接选定内容；选择目录不等于读取全部文件。Nyra 只读状态通道接收最小状态、不透明标识及有长度上限的活动会话标题，不接收消息正文、代码、账号或凭据。明确编辑和发送仅通过独立认证控制通道传递用户选定的草稿或补充。执行结束、业务验证和 Owner 接受分别记录。
 
 [隐私权限](docs/release-1.0/PRIVACY_AND_PERMISSIONS.zh-CN.md) · [故障排查](docs/release-1.0/TROUBLESHOOTING.zh-CN.md) · [升级卸载](docs/release-1.0/UPGRADE_AND_UNINSTALL.zh-CN.md) · [更新说明](docs/release-1.0/RELEASE_NOTES.zh-CN.md) · [许可说明](LICENSE.zh-CN.md) · [资源与声音](ASSET_AND_VOICE_PROVENANCE.zh-CN.md)
 
@@ -44,4 +42,4 @@ TWOS 使用官方 Codex App Server 协议实现客户端，不是嵌入官方 ma
 
 </details>
 
-[本次长会话连接修复](docs/release-1.0/CODEX_HISTORY_REPAIR.zh-CN.md)
+[此前长会话连接修复](docs/release-1.0/CODEX_HISTORY_REPAIR.zh-CN.md)

@@ -13,7 +13,7 @@
 
 ## A · 本次升级增量验收
 
-TWOS 1.0.10 / 101.58 · Nyra 1.0.7 / 107 候选；最终完整回归及公开发行仍待完成。
+TWOS 1.0.10 / 101.58 · Nyra 1.0.7 / 107。匹配工程回归、真实操作范围与限制见[核验记录](release-1.0/FOCUS_VERIFICATION.zh-CN.md)；公开可下载状态以对应 GitHub Release 为准。
 
 [聚焦返回、紧凑任务控制与两侧 Codex 导航](release-1.0/FOCUS_AND_TASK_CONTROLS.zh-CN.md)
 

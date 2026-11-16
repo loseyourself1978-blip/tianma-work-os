@@ -1,14 +1,15 @@
-# TWOS 1.0.10 / 101.58 — Nyra focus and task controls
+# TWOS 1.0.10 / 101.58 — Focus and direct task controls
 
-Candidate with Nyra 1.0.7 / 107. Final complete regression and publication are pending. Shared left/right Codex project/chat navigation and bounded recent-history readback; compact Nyra input and exact-task controls on a separate authenticated channel. Source launcher, bundled legacy UI, native client identity and installer now use the same version. Existing acceptance and original failures are preserved.
+A character click restores the authenticated, exact TWOS workbench. A compact translucent task bubble provides direct input and Stop. Input supports IME, drafts, same-turn Steer and queued supplements; only unsent text can be revised. Stop fences future dispatch before waiting for confirmed cancellation. Either Codex pane uses the same project/chat sidebar and bounded current public-history reads; official-app controlled runs remain read-only. Five outfits, voice, website navigation and previous acceptance are preserved.
+
+One complete serial TWOS gate: 1873 passed, one explicitly retained historical skip, zero failures; all 38 actual Safari measurements began and ended visible. Runtime and frozen input hashes were unchanged throughout that run. Release documents and receipts are subsequently updated and checked separately; they are not represented as inputs to that earlier run. Earlier failed/partial batches are not added to this result.
+
+See the [verification record](FOCUS_VERIFICATION.en.md) for actual interaction coverage, limits, retained failures and the standalone/bundled relationship. This does not grant Owner acceptance.
 
 [Incremental guide](FOCUS_AND_TASK_CONTROLS.en.md)
 
-Final-candidate testing also found and repaired a delayed-history/dispatch race that disabled exact-task controls until a run ended. The replacement package must pass real control checks and the complete gate before publication; earlier partial runs are not a release PASS.
-
 ## TWOS 1.0.9 / 101.57 — Website navigation repair
 
-> **Development continuation — not yet published:** [Focus, compact task controls and shared left/right Codex navigation](FOCUS_AND_TASK_CONTROLS.en.md). The new user-control channel carries explicitly selected drafts/supplements; the original status channel remains read-only. Earlier read-only-only descriptions below refer to the released baseline, not the pending control-enabled build.
 
 Opens explicitly selected private-network HTTP dashboards on either side and keeps rejected addresses editable with a specific error. Ports remain visible; Cancel retains the original pane and a new address takes precedence over stale saved navigation. The final package and matching complete gate passed. Nyra 1.0.6 / 106 is unchanged.
 

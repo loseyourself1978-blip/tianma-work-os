@@ -13,7 +13,7 @@ After the final delivery receipt identifies the installer, double-click the DMG 
 
 ## A · This upgrade only
 
-TWOS 1.0.10 / 101.58 · Nyra 1.0.7 / 107 candidate; final complete regression and publication remain pending.
+TWOS 1.0.10 / 101.58 · Nyra 1.0.7 / 107. See the [verification record](release-1.0/FOCUS_VERIFICATION.en.md) for the matching gate, real interactions and limitations; the GitHub Release determines public availability.
 
 [Focus, compact task controls and shared Codex navigation](release-1.0/FOCUS_AND_TASK_CONTROLS.en.md)
 

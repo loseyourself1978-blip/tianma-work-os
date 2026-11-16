@@ -1,12 +1,12 @@
 # 使用 TWOS 1.0.10
 
-> **开发接续——尚未公开发布：** [单击返回、紧凑任务控制及左右共用 Codex 导航](FOCUS_AND_TASK_CONTROLS.zh-CN.md)。新用户控制通道传递本人选定的草稿／补充；旧状态通道保持只读。下文仅只读的描述适用于已发布基线，不代表待交付控制版。
+> **当前控制版：** [单击返回、紧凑任务控制及左右共用 Codex 导航](FOCUS_AND_TASK_CONTROLS.zh-CN.md)。状态通道保持只读；独立认证控制通道只传递用户主动选定的草稿或动作。旧独立版只读授权不会自动获得控制权。历史版本中仅只读的描述不适用于这个新增控制通道。
 
-[本次更新：网页打开](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
+[本次更新：聚焦与任务控制](FOCUS_AND_TASK_CONTROLS.zh-CN.md)
 
 TWOS 1.0.10 / 101.58 · [本次增量](FOCUS_AND_TASK_CONTROLS.zh-CN.md)
 
-[本次增量操作和准确边界](AUTOSEND_AND_WARDROBE.zh-CN.md)。
+[本次增量操作和准确边界](FOCUS_AND_TASK_CONTROLS.zh-CN.md)。
 
 
 按当前场景选择一条路径，不把三种场景串成必做流程。
@@ -49,7 +49,7 @@ Nyra 只读最小状态。空闲、运行、排队/等待、partial/失败/取�
 [DeepSeek 接力、五套服装与双语动作语音](AUTOSEND_AND_WARDROBE.zh-CN.md)
 
 
-[本次更新](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)
+[本次更新](FOCUS_AND_TASK_CONTROLS.zh-CN.md)
 
 ## 直接任务控制
 
