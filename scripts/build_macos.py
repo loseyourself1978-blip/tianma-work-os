@@ -35,7 +35,10 @@ def source_inputs(root):
     result = []
     for folder in ("twos_runtime", "static_cockpit", "packaging/macos"):
         for path in sorted((root / folder).rglob("*")):
-            if path.is_file() and not path.is_symlink() and "__pycache__" not in path.parts and path.suffix in {".py", ".js", ".html", ".css", ".svg", ".png", ".ico", ".swift", ".lock", ".json", ".md", ".txt", ".wav"}:
+            # The pinned English voice includes upstream notices without a .txt
+            # suffix. Freeze those exact public resources with the audio bytes.
+            voice_notice = path.parent == root / "packaging/macos/nyra/Resources/audio/tiny-voca-f2-en" and path.name in {"LICENSE", "LICENSE.cmudict", "LICENSE.homograph-data"}
+            if path.is_file() and not path.is_symlink() and "__pycache__" not in path.parts and (voice_notice or path.suffix in {".py", ".js", ".html", ".css", ".svg", ".png", ".ico", ".swift", ".lock", ".json", ".md", ".txt", ".wav"}):
                 result.append(path.relative_to(root).as_posix())
     result += ["scripts/twos_bootstrap.py", "scripts/build_macos.py", "scripts/sign_macos.py", "scripts/build_nyra.py"]
     return sorted(result)
