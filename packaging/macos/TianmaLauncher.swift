@@ -127,6 +127,19 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
         return clean.url
     }
 
+    // Anonymous ChatGPT replies use /uc/<id>. Observe their current activity
+    // without adding a restorable location, handoff target or control grant.
+    static func activityURL(_ url: URL?, service: URL = home) -> URL? {
+        if let restored = restorableURL(url, service: service) { return restored }
+        guard let url = url, service.scheme == "https", service.host == "chatgpt.com",
+              url.scheme == service.scheme, url.host == service.host, url.port == service.port,
+              url.user == nil, url.password == nil,
+              url.path.range(of: "^/uc/[A-Za-z0-9-]+/?$", options: .regularExpression) != nil,
+              var clean = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return nil }
+        clean.query = nil; clean.fragment = nil
+        return clean.url
+    }
+
     static func safeDirectory(_ directory: URL) throws {
         var cursor = directory
         while cursor.path != "/" {
@@ -393,12 +406,14 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
             else { handler(text, source) }
         }
     }
-    func providerSnapshot(includeReply: Bool = false, latestOnly: Bool = false, seedOnly: Bool = false, completion: @escaping ([String: Any]) -> Void) {
-        guard let source = Self.restorableURL(web.url, service: serviceHome),
+    func providerSnapshot(includeReply: Bool = false, latestOnly: Bool = false, seedOnly: Bool = false, activityOnly: Bool = false, completion: @escaping ([String: Any]) -> Void) {
+        let location: (URL?) -> URL? = { activityOnly ? Self.activityURL($0, service: self.serviceHome) : Self.restorableURL($0, service: self.serviceHome) }
+        guard !activityOnly || (!includeReply && !latestOnly && !seedOnly),
+              let source = location(web.url),
               let file = handoffResources?.appendingPathComponent("native_codex/provider_dom.js"),
               let script = try? String(contentsOf: file, encoding: .utf8) else { completion(["state":"unknown","reason":"PAGE_UNAVAILABLE"]); return }
         web.callAsyncJavaScript(script + (seedOnly ? "\nreturn window.twosProviderDOM?.seedSnapshot();" : (includeReply ? (latestOnly ? "\nreturn window.twosProviderDOM?.resolvedLatest();" : "\nreturn window.twosProviderDOM?.selectedOrLatest();") : "\nconst observer=window.twosProviderDOM;return observer ? {...observer.observe(),activityID:observer.activityIdentity()} : null;")), arguments: [:], in: nil, in: Self.handoffWorld) { [weak self] result in
-            guard let self = self, Self.restorableURL(self.web.url, service:self.serviceHome) == source else { completion(["state":"unknown","reason":"CONVERSATION_CHANGED"]); return }
+            guard let self = self, location(self.web.url) == source else { completion(["state":"unknown","reason":"CONVERSATION_CHANGED"]); return }
             if case .success(let value) = result, let value = value as? [String:Any] { completion(value) }
             else { completion(["state":"unknown","reason":"OBSERVER_UNAVAILABLE"]) }
         }

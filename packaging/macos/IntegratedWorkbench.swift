@@ -184,6 +184,14 @@ final class NyraStatusProducer {
         if !run.requests.isEmpty { return "waiting_user" }
         return "running"
     }
+    static func codexObservationReason(run: CodexRunObservation?, online: Bool, canControl: Bool) -> String {
+        if !online { return "CODEX_CONNECTION_UNAVAILABLE" }
+        if let run=run, !run.terminal {
+            if run.serviceInterrupted == true { return "CODEX_SERVICE_INTERRUPTED" }
+            if run.state == "unverified" { return "CODEX_RUN_UNCONFIRMED" }
+        }
+        return run != nil || canControl ? "CODEX_STATE_OBSERVED" : "EXTERNAL_RUN_STATE_NOT_EXPOSED"
+    }
     func authorizeStandalone(_ app:NSRunningApplication) throws {
         guard NativeNyra.compatibleStandalone(app),let url=app.bundleURL,
               (Bundle(url:url)?.object(forInfoDictionaryKey:"NyraVisibilityProtocol") as? Int ?? 0)>=2,
@@ -787,15 +795,15 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
                     state="verified_success";evidence=nyraStatus.alias(check.id)
                 }
                 if run?.terminal != false, client.ledger.submissions.contains(where:{$0.thread==thread && $0.turn==nil && ["queued","preparing","sending","accepted"].contains($0.state)}) { state="queued" }
-                paneActivities[index]=PaneActivity(session:nyraStatus.alias(thread),task:run?.turn,state:state == "disconnected" ? "activity_unknown" : state,at:now,evidence:evidence,reason:!client.connected || client.uncertain ? "CODEX_CONNECTION_UNAVAILABLE" : run != nil || client.canControl ? "CODEX_STATE_OBSERVED" : "EXTERNAL_RUN_STATE_NOT_EXPOSED")
-            } else if let pane=webPanes[index], kinds[index] != "Codex", let source=NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome) {
+                paneActivities[index]=PaneActivity(session:nyraStatus.alias(thread),task:run?.turn,state:state == "disconnected" ? "activity_unknown" : state,at:now,evidence:evidence,reason:NyraStatusProducer.codexObservationReason(run:run,online:client.connected && !client.uncertain,canControl:client.canControl))
+            } else if let pane=webPanes[index], kinds[index] != "Codex", let source=NativeWorkbench.activityURL(pane.web.url,service:pane.serviceHome) {
                 let session=nyraStatus.alias(kinds[index]+"|"+source.absoluteString)
                 if paneActivities[index]?.session != session { paneActivityRunIDs.removeValue(forKey:index);paneActivities[index]=PaneActivity(session:session,task:nil,state:"activity_unknown",at:now,reason:"PAGE_UNAVAILABLE") }
                 guard !paneObservationPending.contains(index) else {continue}
                 paneObservationPending.insert(index)
-                pane.providerSnapshot { [weak self,weak pane] value in
+                pane.providerSnapshot(activityOnly:true) { [weak self,weak pane] value in
                     guard let self=self else{return};self.paneObservationPending.remove(index)
-                    guard let pane=pane,self.webPanes[index] === pane,self.kinds[index] != "Codex",NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome)==source else{return}
+                    guard let pane=pane,self.webPanes[index] === pane,self.kinds[index] != "Codex",NativeWorkbench.activityURL(pane.web.url,service:pane.serviceHome)==source else{return}
                     let observed=value["state"] as? String ?? "unknown"
                     pane.reconcileAccessNotice(observed)
                     let state=["idle","running","waiting_user"].contains(observed) ? observed : "activity_unknown"
@@ -1683,7 +1691,8 @@ extension IntegratedWorkbench {
             stopping=client.stopRequested
         } else {
             title=webPanes[index]?.web.title
-            owned=activity.fresh && activity.reason != "PAGE_UNAVAILABLE" && !(paneActivityTokens[index] ?? "").isEmpty
+            let supportsControls=webPanes[index].flatMap{NativeWorkbench.restorableURL($0.web.url,service:$0.serviceHome)} != nil
+            owned=supportsControls && activity.fresh && activity.reason != "PAGE_UNAVAILABLE" && !(paneActivityTokens[index] ?? "").isEmpty
             draftOwned=owned
             stopping=nyraStops[index].map{$0.task==activity.task && ProcessInfo.processInfo.systemUptime-$0.at<12} ?? false
         }

@@ -33,6 +33,13 @@ if mode == "boundary" {
     }
     precondition(NativeWorkbench.restorableURL(URL(string:"https://chatgpt.com/c/abc-def?code=private#token"))!.absoluteString == "https://chatgpt.com/c/abc-def")
     precondition(NativeWorkbench.restorableURL(URL(string:"https://chatgpt.com/g/g-test/project"))!.absoluteString == "https://chatgpt.com/g/g-test/project")
+    let anonymous = URL(string:"https://chatgpt.com/uc/abc-def?code=private#token")!
+    precondition(NativeWorkbench.activityURL(anonymous)!.absoluteString == "https://chatgpt.com/uc/abc-def")
+    precondition(NativeWorkbench.restorableURL(anonymous) == nil, "activity must not widen persistence or task control")
+    for url in ["http://chatgpt.com/uc/abc", "https://chatgpt.com.evil.test/uc/abc", "https://user:pass@chatgpt.com/uc/abc", "https://chatgpt.com:444/uc/abc", "https://chatgpt.com/uc/abc/extra", "https://chatgpt.com/uc/", "https://chatgpt.com/auth/callback"] {
+        precondition(NativeWorkbench.activityURL(URL(string:url)) == nil, url)
+    }
+    precondition(NativeWorkbench.activityURL(anonymous,service:remote) == nil)
     try NativeWorkbench.save(["url":"https://chatgpt.com/c/synthetic"], at: root.appendingPathComponent("saved.json"))
     let attributes = try FileManager.default.attributesOfItem(atPath:root.appendingPathComponent("saved.json").path)
     precondition((attributes[.posixPermissions] as! NSNumber).intValue == 0o600)
@@ -42,11 +49,31 @@ if mode == "boundary" {
     catch {precondition(!FileManager.default.fileExists(atPath:root.appendingPathComponent("child").path))}
     print("BROWSER_BOUNDARY_PASS"); exit(0)
 }
-let browser = NativeWorkbench(preferences:root, translate:{$0},openProjects:{fatalError("legacy projects unexpectedly started")})
+let browser = NativeWorkbench(preferences:root, translate:{$0},openProjects:{fatalError("legacy projects unexpectedly started")},handoffResources:mode == "anonymousActivity" ? URL(fileURLWithPath:CommandLine.arguments[3]) : nil)
 precondition(browser.profilePersistent)
-precondition(browser.web.configuration.userContentController.userScripts.isEmpty)
+precondition(browser.web.configuration.userContentController.userScripts.isEmpty == (mode != "anonymousActivity"))
 precondition(browser.web.customUserAgent == WKWebView().customUserAgent) // Match untouched platform default, which can be an empty string.
 precondition(browser.web.url == nil) // No load, model call or service is required by initialization.
+if mode == "anonymousActivity" {
+    // Local HTML through the actual isolated WebKit observer. No provider call.
+    browser.web.loadHTMLString("<main><div data-message-author-role='user' data-message-id='TEST-ONLY'>private test prompt</div><button data-testid='stop-button'>Stop generating</button><textarea></textarea></main>",baseURL:URL(string:"https://chatgpt.com/uc/test-only"))
+    func checkActivity() {
+        browser.providerSnapshot(activityOnly:true) { value in
+            guard value["state"] as? String == "running" else {DispatchQueue.main.asyncAfter(deadline:.now()+0.1,execute:checkActivity);return}
+            precondition(value["text"] == nil && value["reply"] == nil, "activity channel must not expose content")
+            browser.providerSnapshot { ordinary in
+                precondition(ordinary["reason"] as? String == "PAGE_UNAVAILABLE")
+                browser.web.evaluateJavaScript("document.querySelector('button').remove()") { _,_ in
+                    browser.providerSnapshot(activityOnly:true) { idle in
+                        precondition(idle["state"] as? String == "idle")
+                        print("ANONYMOUS_ACTIVITY_READONLY_PASS");exit(0)
+                    }
+                }
+            }
+        }
+    }
+    checkActivity();DispatchQueue.main.asyncAfter(deadline:.now()+12){fatalError("anonymous activity not observed")};app.run();exit(0)
+}
 if mode == "srcdoc" {
     // Real WebKit engine, synthetic inline document; no remote site or model.
     browser.web.loadHTMLString("<iframe srcdoc=\"<p id='proof'>INLINE_CHILD_OK</p>\"></iframe>",baseURL:nil)
@@ -85,7 +112,7 @@ app.run()
 
 
 def run(harness, mode, root):
-    result = subprocess.run([str(harness),mode,str(root)],capture_output=True,text=True,timeout=30)
+    result = subprocess.run([str(harness),mode,str(root),str(ROOT/'static_cockpit')],capture_output=True,text=True,timeout=30)
     assert result.returncode == 0, result.stderr
     return result.stdout
 
@@ -106,6 +133,10 @@ def test_actual_webkit_cookie_store_survives_process_restart_and_isolates_profil
 
 def test_inline_child_document_loads_with_production_navigation_policy(harness,tmp_path):
     assert 'INLINE_CHILD_WEBKIT_PASS' in run(harness,'srcdoc',tmp_path/'profile')
+
+
+def test_anonymous_activity_is_observed_without_enabling_handoff_or_persistence(harness,tmp_path):
+    assert 'ANONYMOUS_ACTIVITY_READONLY_PASS' in run(harness,'anonymousActivity',tmp_path/'profile')
 
 
 def test_native_browser_has_no_foreign_window_or_clipboard_controller():

@@ -10,6 +10,9 @@ The compact bubble shows current observed work only: a bounded task title, provi
 
 Hover reveals the existing pencil and Stop controls. For two tasks, the selector identifies the action target; a line click focuses that exact task when its binding is available. If the target cannot be verified, a short notice explains that it needs an update; the action is not silently redirected. Ended owned drafts remain accessible from Nyra's edit-input menu without an idle bubble. Explicitly hiding task labels remains respected.
 
+
+Anonymous ChatGPT `/uc/…` conversations can supply read-only activity. This does not make them saved handoff targets or grant edit/stop rights. The current-page observer reports activity only, without reading reply text. Codex observation reasons distinguish a lost connection, an interrupted service stream and an unconfirmed run; these do not imply idle or successful completion.
+
 ## Return with one character click
 
 Clicking the character requests the exact authenticated running TWOS workbench, even when there is no task or editing permission. A drag only moves Nyra. Task controls do not trigger character focus. Host restoration checks that the intended window is visible, not minimized, active and key; an activation API returning true alone is insufficient.

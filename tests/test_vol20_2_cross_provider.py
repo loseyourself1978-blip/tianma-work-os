@@ -48,6 +48,9 @@ if mode == "nyra_task_metadata" {
     try! NativeWorkbench.safeDirectory(prefs)
     try! NativeWorkbench.save(["kind0":"ChatGPT","kind1":"Claude","url0":base.absoluteString,"url1":base.absoluteString],at:prefs.appendingPathComponent("paired-workbench.json"))
     let work=IntegratedWorkbench(preferences:prefs,resources:resources,translate:{$0},openProjects:{fatalError("no business action")})
+    let loadedBy=Date(timeIntervalSinceNow:3)
+    while work.webPanes[0]?.web.url == nil && Date()<loadedBy {RunLoop.current.run(until:Date(timeIntervalSinceNow:0.02))}
+    precondition(work.webPanes[0].flatMap{NativeWorkbench.restorableURL($0.web.url,service:$0.serviceHome)} != nil)
     let now=ProcessInfo.processInfo.systemUptime
     work.paneActivities[0]=PaneActivity(session:"test-chat",task:nil,state:"waiting_user",at:now,reason:"LOGIN_REQUIRED")
     precondition(work.nyraTask(0)==nil,"login/waiting without an observed run is not a task")
@@ -320,7 +323,16 @@ if mode == "nyra_status" {
     producer.observe(session:"SESSION-A",task:"TASK-1",state:"running",source:"codex_adapter")
     producer.observe(session:"SESSION-A",task:"TASK-1",state:"completed_unverified",source:"codex_adapter")
     precondition(snapshot(producer)["event_id"] as? String == checked["event_id"] as? String)
-    var run=CodexRunObservation(thread:"T",turn:"R",lastActivity:1);run.state="completed"
+    var run=CodexRunObservation(thread:"T",turn:"R",lastActivity:1)
+    precondition(NyraStatusProducer.codexState(run:run,online:true,business:nil)=="running")
+    run.serviceInterrupted=true
+    precondition(NyraStatusProducer.codexState(run:run,online:true,business:nil)=="disconnected")
+    precondition(NyraStatusProducer.codexObservationReason(run:run,online:true,canControl:true)=="CODEX_SERVICE_INTERRUPTED")
+    precondition(NyraStatusProducer.codexObservationReason(run:run,online:false,canControl:true)=="CODEX_CONNECTION_UNAVAILABLE")
+    run.serviceInterrupted=false;run.state="unverified"
+    precondition(NyraStatusProducer.codexObservationReason(run:run,online:true,canControl:true)=="CODEX_RUN_UNCONFIRMED")
+    run.state="completed"
+    precondition(NyraStatusProducer.codexObservationReason(run:run,online:true,canControl:true)=="CODEX_STATE_OBSERVED")
     for business in ["reported_pass","unverified"] { precondition(NyraStatusProducer.codexState(run:run,online:true,business:business)=="completed_unverified") }
     precondition(NyraStatusProducer.codexState(run:run,online:true,business:"partial")=="partial")
     precondition(NyraStatusProducer.webState("reply")=="completed_unverified")
