@@ -1,6 +1,6 @@
 # English action voice — tiny-voca F2
 
-Candidate: Nyra 1.0.8 / 108, standalone and embedded in TWOS 1.0.11 / 101.59. Publication and actual playback validation are recorded separately in the final release receipt.
+Matching pair: Nyra 1.0.8 / 108, standalone and embedded in TWOS 1.0.11 / 101.59. Publication and actual playback validation are recorded separately in the final release receipt.
 
 Chinese remains the same 13 Tian / Xiaotian 1413 recordings. English now defaults to 13 offline recordings generated with tiny-voca F2 (American English), matching the same actions: greeting, rest, work, confirmation, celebration, encouragement, outfit, wave, idle, reading, movement, jump and settling.
 

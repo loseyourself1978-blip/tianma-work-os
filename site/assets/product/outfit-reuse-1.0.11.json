@@ -1,0 +1,42 @@
+{
+  "at": 1794900596.5764968,
+  "twos_source": "4f29264ea9d156a671ef4d512f22430d3f875c19",
+  "nyra_source": "bb60b2000b8d5a25c7234c7e1741b111d66d346c",
+  "outfits": [
+    {
+      "id": "runtime-default",
+      "source_asset": "runtime-default.png",
+      "runtime_sha256": "7780d8d9319a6578ba492e37dd122d7bfe2f559adfac5d053c62d73fa26ecd69",
+      "site_sha256": "7780d8d9319a6578ba492e37dd122d7bfe2f559adfac5d053c62d73fa26ecd69",
+      "same": true
+    },
+    {
+      "id": "runtime-office",
+      "source_asset": "runtime-office.png",
+      "runtime_sha256": "e12414521cba25dc01077aeea97ed935d79035d80d6b23e4e0a516740b6d94d4",
+      "site_sha256": "e12414521cba25dc01077aeea97ed935d79035d80d6b23e4e0a516740b6d94d4",
+      "same": true
+    },
+    {
+      "id": "runtime-gala",
+      "source_asset": "runtime-gala.png",
+      "runtime_sha256": "e390c578f481cd42caae6af08835c4c2a44e28afc4125aaa1ecb588fa749fce4",
+      "site_sha256": "e390c578f481cd42caae6af08835c4c2a44e28afc4125aaa1ecb588fa749fce4",
+      "same": true
+    },
+    {
+      "id": "runtime-office_white",
+      "source_asset": "runtime-office_white.png",
+      "runtime_sha256": "a824beab71303827b8c45dc7f3804a6922b518c619b9407d7d9da29c87dd0556",
+      "site_sha256": "a824beab71303827b8c45dc7f3804a6922b518c619b9407d7d9da29c87dd0556",
+      "same": true
+    },
+    {
+      "id": "runtime-gala_red",
+      "source_asset": "runtime-gala_red.png",
+      "runtime_sha256": "f4fab3c295c0716ed489ff9b12a0d66879e924d9db71e54c80df28d1eb088ca3",
+      "site_sha256": "f4fab3c295c0716ed489ff9b12a0d66879e924d9db71e54c80df28d1eb088ca3",
+      "same": true
+    }
+  ]
+}

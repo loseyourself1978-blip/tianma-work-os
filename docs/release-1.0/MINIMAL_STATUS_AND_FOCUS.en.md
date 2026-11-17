@@ -1,8 +1,8 @@
 # Nyra: minimal activity and return to TWOS
 
-Candidate identity: 1.0.11 / build 101.59. Not yet published.
+TWOS 1.0.11 / 101.59. Public availability is determined by the matching GitHub Release.
 
-Candidate amendment: NYRA-MINIMAL-STATUS-FOCUS-AND-R0-BOUNDARIES-R1. Verification and publication are pending; this is not a new public download or an Owner acceptance receipt.
+> **Current update: minimal activity bubble, independent host focus and offline English voice.** [Instructions](MINIMAL_STATUS_AND_FOCUS.en.md) · [Actual verification and limits](MINIMAL_STATUS_VERIFICATION.en.md). The default bubble closes when no work is active; task mutations still require their separate authorization.
 
 ## What appears below Nyra
 
@@ -33,8 +33,7 @@ The status channel contains bounded on-screen titles and minimal state/opaque ID
 
 ## Verification boundary
 
-A new candidate still requires real left/right/both activity and terminal hiding, control-outage behavior, host restart, and twenty real single-click observations with scene and latency. The warm target is at most one second, not an asserted test result. Full-screen/Space/multiple-display coverage must state what was actually observed. Prior click or protocol PASS evidence cannot replace the new candidate's GUI evidence.
-
+See the [verification record](MINIMAL_STATUS_VERIFICATION.en.md) for final-package activity/hiding, control outage, restart and click evidence. Of 24 actual character-click records, 23 confirmed visibility in 13–661 ms; one was unconfirmed after 1,423 ms. The Owner reported all displayed. This does not claim every click was subsecond or unmeasured scenes passed.
 
 ## English voice update
 

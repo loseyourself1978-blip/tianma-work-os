@@ -1,10 +1,11 @@
 # Upgrade and uninstall
 
-> **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](FOCUS_AND_TASK_CONTROLS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
+> **Current update: minimal activity bubble, independent host focus and offline English voice.** [Instructions](MINIMAL_STATUS_AND_FOCUS.en.md) · [Actual verification and limits](MINIMAL_STATUS_VERIFICATION.en.md). The default bubble closes when no work is active; task mutations still require their separate authorization.
+> **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](MINIMAL_STATUS_AND_FOCUS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
 
-TWOS 1.0.10 / 101.58 · [This update](FOCUS_AND_TASK_CONTROLS.en.md)
+TWOS 1.0.11 / 101.59 · [This update](MINIMAL_STATUS_AND_FOCUS.en.md)
 
-[Current incremental instructions and exact boundaries](FOCUS_AND_TASK_CONTROLS.en.md).
+[Current incremental instructions and exact boundaries](MINIMAL_STATUS_AND_FOCUS.en.md).
 
 
 Finish or explicitly stop your own active work. Quit TWOS normally, then replace its application with the verified release. Do not edit the running bundle. Existing local environments, directory authorizations, drafts and provider website stores are not release assets and must not be copied into a public package.

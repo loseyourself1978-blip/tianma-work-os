@@ -1,14 +1,14 @@
-# Use TWOS 1.0.10
+# Use TWOS 1.0.11
 
-> Unreleased candidate amendment: [minimal activity display and independent host focus](MINIMAL_STATUS_AND_FOCUS.en.md). Verification and publication are pending; published-version guidance below is retained for reference.
+> **Current update: minimal activity bubble, independent host focus and offline English voice.** [Instructions](MINIMAL_STATUS_AND_FOCUS.en.md) · [Actual verification and limits](MINIMAL_STATUS_VERIFICATION.en.md). The default bubble closes when no work is active; task mutations still require their separate authorization.
 
-> **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](FOCUS_AND_TASK_CONTROLS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
+> **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](MINIMAL_STATUS_AND_FOCUS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
 
-[Current update: focus and task controls](FOCUS_AND_TASK_CONTROLS.en.md)
+[Current update: focus and task controls](MINIMAL_STATUS_AND_FOCUS.en.md)
 
-TWOS 1.0.10 / 101.58 · [This update](FOCUS_AND_TASK_CONTROLS.en.md)
+TWOS 1.0.11 / 101.59 · [This update](MINIMAL_STATUS_AND_FOCUS.en.md)
 
-[Current incremental instructions and exact boundaries](FOCUS_AND_TASK_CONTROLS.en.md).
+[Current incremental instructions and exact boundaries](MINIMAL_STATUS_AND_FOCUS.en.md).
 
 
 Choose the path matching your situation; they are not one mandatory sequence.
@@ -39,7 +39,7 @@ Nyra plays 13 short bundled Chinese Tian recordings or 13 corresponding bundled 
 
 [English / 简体中文](USER_GUIDE.zh-CN.md)
 
-[Current verification / 本版验证](DEEPSEEK_R1_VERIFICATION.en.md)
+[Current verification / 本版验证](MINIMAL_STATUS_VERIFICATION.en.md)
 
 ## Workbench language and Nyra visibility
 
@@ -51,10 +51,10 @@ The top **Language: English / 语言：简体中文** selector changes TWOS cont
 [DeepSeek relay, five outfits and bilingual action voice](AUTOSEND_AND_WARDROBE.en.md)
 
 
-[Current update](FOCUS_AND_TASK_CONTROLS.en.md)
+[Current update](MINIMAL_STATUS_AND_FOCUS.en.md)
 
 ## Direct task controls
 
-Click the character once to restore the bound TWOS workbench. The compact task bubble has a direct pencil and Stop. The pencil opens a focused IME-capable editor; Enter sends, Shift+Enter inserts a line, Escape closes. Normal drafts are autosaved; a queued revision is saved only explicitly. A running owned Codex turn supports Steer; web tasks use send-after-completion. Target changes retain the input rather than redirecting it. Stop first fences future dispatch and then interrupts only the bound task. The display changes to Stopping immediately, and to Stopped only on confirmed cancellation. Failed confirmation remains visible. See the [incremental guide](FOCUS_AND_TASK_CONTROLS.en.md) for exact authority and recovery boundaries.
+Click the character once to restore the bound TWOS workbench. The bubble defaults to current task/status only; its right-hand on-demand entry exposes the existing pencil and Stop actions. The pencil opens a focused IME-capable editor; Enter sends, Shift+Enter inserts a line, Escape closes. Normal drafts are autosaved; a queued revision is saved only explicitly. A running owned Codex turn supports Steer; web tasks use send-after-completion. Target changes retain the input rather than redirecting it. Stop first fences future dispatch and then interrupts only the bound task. An active stop request shows Stopping; a confirmed terminal closes the default activity bubble. Inspect the actual final result or an unconfirmed stop in TWOS. See the [incremental guide](MINIMAL_STATUS_AND_FOCUS.en.md) for exact authority and recovery boundaries.
 
 [English action voice: tiny-voca F2](ENGLISH_VOICE.en.md)

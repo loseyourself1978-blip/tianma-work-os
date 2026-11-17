@@ -1,0 +1,22 @@
+{
+  "twos_version": "1.0.11",
+  "twos_build": "101.59",
+  "twos_source": "4f29264ea9d156a671ef4d512f22430d3f875c19",
+  "nyra_version": "1.0.8",
+  "nyra_build": "108",
+  "nyra_source": "bb60b2000b8d5a25c7234c7e1741b111d66d346c",
+  "captured_date": "2026-11-17",
+  "privacy_review": "Actual saved windows visually inspected; non-sensitive isolated engineering activity or signed-out starting state, no private account/history/credentials/paths",
+  "images": {
+    "images/minimal-task-bubble-1.0.8.png": {
+      "sha256": "a2a708557dd3dfb9d3e6de7c0200ce9423a226c5ba6e85e2f0a953a1f1cc914e",
+      "bytes": 25079,
+      "scope": "Real embedded helper with both sides active; original window-only capture, not terminal-state evidence"
+    },
+    "images/minimal-workspace-1.0.11.png": {
+      "sha256": "407ad310cdc783ca7cf45deada9bb1a7818073961974a56a5242a0171e16b6c6",
+      "bytes": 337171,
+      "scope": "Signed-out/disconnected starting view; no provider call or task dispatch"
+    }
+  }
+}

@@ -1,8 +1,8 @@
 # TWOS 1.0 · Installation and use
 
-> The current development candidate is 1.0.11 / 101.59. It is unpublished; real GUI verification and the complete gate remain pending. See [activity display and host focus](release-1.0/MINIMAL_STATUS_AND_FOCUS.en.md). The 101.58 records below retain their original validation scope.
+See [current activity/focus instructions](release-1.0/MINIMAL_STATUS_AND_FOCUS.en.md) and the [actual verification scope](release-1.0/MINIMAL_STATUS_VERIFICATION.en.md).
 
-**Applies to TWOS 1.0.10 / build 101.58, including Nyra 1.0.7 / build 107.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md)
+**Applies to TWOS 1.0.11 / build 101.59, including Nyra 1.0.8 / build 108.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md)
 
 **Installation and version: use `START_HERE.html` in this bilingual guide, the [release receipt](release-1.0/release.json), and the actual GitHub Release status. Use the matching receipt to verify the complete engineering gate, signing and notarization; Owner differential acceptance is separate.**
 Discuss on the official ChatGPT website in the left pane, execute with the local Codex service in the right pane, and return results to the original discussion. The right pane is TWOS's own client for the official App Server protocol; it does not embed the entire official Codex macOS interface.
@@ -15,9 +15,9 @@ After the final delivery receipt identifies the installer, double-click the DMG 
 
 ## A · This upgrade only
 
-TWOS 1.0.10 / 101.58 · Nyra 1.0.7 / 107. See the [verification record](release-1.0/FOCUS_VERIFICATION.en.md) for the matching gate, real interactions and limitations; the GitHub Release determines public availability.
+TWOS 1.0.11 / 101.59 · Nyra 1.0.8 / 108. See the [verification record](release-1.0/MINIMAL_STATUS_VERIFICATION.en.md) for the matching gate, real interactions and limitations; the GitHub Release determines public availability.
 
-[Focus, compact task controls and shared Codex navigation](release-1.0/FOCUS_AND_TASK_CONTROLS.en.md)
+[Focus, compact task controls and shared Codex navigation](release-1.0/MINIMAL_STATUS_AND_FOCUS.en.md)
 
 After installing the matching verified release, inspect the Codex project/chat sidebar and recent history on either side. Click Nyra to return to the bound workbench; use the compact bubble’s pencil and Stop for the exact authorized task. Official-app active chats remain read-only. Supplement only work you actually intend to continue; do not replay an old task for this check. End here. Do not repeat accepted webpages, outfits, audio or business tasks.
 

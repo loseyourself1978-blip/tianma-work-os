@@ -1,4 +1,14 @@
-# TWOS 1.0.10 / 101.58 — Focus and direct task controls
+# TWOS 1.0.11 / 101.59 — Minimal status and independent return
+
+Show a compact bubble only for current observed work and close it when no task is active. Character return uses a separate authenticated host-only path, independent of task/edit authority. Explain old-installation mismatches, observe anonymous ChatGPT activity and replace generic page titles with honest activity labels. Add 13 offline tiny-voca F2 English cues while retaining the 13 Chinese Tian recordings byte for byte.
+
+> **Current update: minimal activity bubble, independent host focus and offline English voice.** [Instructions](MINIMAL_STATUS_AND_FOCUS.en.md) · [Actual verification and limits](MINIMAL_STATUS_VERIFICATION.en.md). The default bubble closes when no work is active; task mutations still require their separate authorization.
+
+One complete matching serial TWOS gate: 1,879 passed, one explicitly retained historical skip, zero failures. All 38 actual Safari measurements began and ended visible. Runtime and frozen input hashes were unchanged. Earlier partial/failure runs are preserved and are not combined into this result. Duration: 6482 seconds.
+
+---
+
+## TWOS 1.0.10 / 101.58 — Focus and direct task controls
 
 > Unreleased candidate amendment: [minimal activity display and independent host focus](MINIMAL_STATUS_AND_FOCUS.en.md). Verification and publication are pending; published-version guidance below is retained for reference.
 

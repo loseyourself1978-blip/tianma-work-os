@@ -1,4 +1,18 @@
-# Current actual interface: compact task bubble
+# Current actual interface: active status and workbench
+
+Captured November 17, 2026 from final signed TWOS 1.0.11 / 101.59 with embedded Nyra 1.0.8 / 108. Both ChatGPT and Codex were actually active in isolated, non-sensitive engineering tasks. This is the original bubble-window capture, with titles truncated by the product; it does not prove task completion or Owner acceptance. The bubble closes when inactive and controls remain on demand. A viewer background behind transparent pixels is not a stage fill.
+
+![Actual two-sided activity bubble in this version](images/minimal-task-bubble-1.0.8.png)
+
+The following fresh isolated view uses the same signed TWOS: websites are signed out and Codex disconnected, with no private accounts or tasks. See the [product page](https://loseyourself1978-blip.github.io/tianma-work-os/) for the other real combinations and all five pinned runtime outfits.
+
+![Actual TWOS 1.0.11 starting interface](images/minimal-workspace-1.0.11.png)
+
+[Actual coverage and limits](MINIMAL_STATUS_VERIFICATION.en.md) · [Image provenance and hashes](MINIMAL_MEDIA_PROVENANCE.json). No new video was recorded; the media below retains its historical version labels.
+
+---
+
+# November 16, 2026 historical interface: compact task bubble
 
 This November 16, 2026 capture shows the final TWOS 1.0.10 / 101.58 bundled Nyra 1.0.7 / 107 in isolated engineering sample P. It shows the pre-Stop Running state, a truncated non-sensitive test title and direct pencil/Stop controls. It is not a terminal-Stop screenshot or complete acceptance evidence. The subsequent physical click and terminal receipt are documented separately. A viewer background behind transparent pixels is not an opaque stage fill.
 

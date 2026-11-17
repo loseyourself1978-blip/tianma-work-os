@@ -1,19 +1,19 @@
-# 使用 TWOS 1.0.10
+# 使用 TWOS 1.0.11
 
-> 未发布候选差量：[简洁任务展示与独立宿主聚焦](MINIMAL_STATUS_AND_FOCUS.zh-CN.md)。验证和发布尚未完成，下方已发布版本说明保留供对照。
+> **本轮差量：简洁活动气泡、独立宿主聚焦及英文离线语音。** [操作说明](MINIMAL_STATUS_AND_FOCUS.zh-CN.md) · [实际核验与限制](MINIMAL_STATUS_VERIFICATION.zh-CN.md)。无活动时默认收起；修改操作仍需单独授权。
 
-> **当前控制版：** [单击返回、紧凑任务控制及左右共用 Codex 导航](FOCUS_AND_TASK_CONTROLS.zh-CN.md)。状态通道保持只读；独立认证控制通道只传递用户主动选定的草稿或动作。旧独立版只读授权不会自动获得控制权。历史版本中仅只读的描述不适用于这个新增控制通道。
+> **当前控制版：** [单击返回、紧凑任务控制及左右共用 Codex 导航](MINIMAL_STATUS_AND_FOCUS.zh-CN.md)。状态通道保持只读；独立认证控制通道只传递用户主动选定的草稿或动作。旧独立版只读授权不会自动获得控制权。历史版本中仅只读的描述不适用于这个新增控制通道。
 
-[本次更新：聚焦与任务控制](FOCUS_AND_TASK_CONTROLS.zh-CN.md)
+[本次更新：聚焦与任务控制](MINIMAL_STATUS_AND_FOCUS.zh-CN.md)
 
-TWOS 1.0.10 / 101.58 · [本次增量](FOCUS_AND_TASK_CONTROLS.zh-CN.md)
+TWOS 1.0.11 / 101.59 · [本次增量](MINIMAL_STATUS_AND_FOCUS.zh-CN.md)
 
-[本次增量操作和准确边界](FOCUS_AND_TASK_CONTROLS.zh-CN.md)。
+[本次增量操作和准确边界](MINIMAL_STATUS_AND_FOCUS.zh-CN.md)。
 
 
 按当前场景选择一条路径，不把三种场景串成必做流程。
 
-**升级增量：** 使用上方本次增量入口，只检查 DeepSeek 接力连续性、新服装及双语声音。保留 Claude 登录、日常换装和透明素材等已接受工作；完成后结束，不再进入首次任务流程。
+**升级增量：** 使用上方本次增量入口，只检查当前活动气泡、单击返回及英文动作声音；无需重测已接受的 DeepSeek 接力或服装。保留 Claude 登录、日常换装和透明素材等已接受工作；完成后结束，不再进入首次任务流程。
 
 **首次任务：** 按[安装指南](INSTALL.zh-CN.md)确认目录，再明确发送一次完整指令。
 
@@ -51,10 +51,10 @@ Nyra 只读最小状态。空闲、运行、排队/等待、partial/失败/取�
 [DeepSeek 接力、五套服装与双语动作语音](AUTOSEND_AND_WARDROBE.zh-CN.md)
 
 
-[本次更新](FOCUS_AND_TASK_CONTROLS.zh-CN.md)
+[本次更新](MINIMAL_STATUS_AND_FOCUS.zh-CN.md)
 
 ## 直接任务控制
 
-单击人物返回准确绑定的 TWOS 工作台。紧凑任务气泡直接提供铅笔和停止。铅笔打开有键盘焦点且支持中文输入法的编辑器；Enter 发送、Shift+Enter 换行、Esc 关闭。普通草稿自动保存；排队内容的修订需明确保存。TWOS 控制的 Codex 活动轮次支持 Steer，网页任务采用完成后发送。目标变化保留输入，不改投其他任务。停止先禁止后续派发，再中断绑定任务，立即显示正在停止；只有确认取消才显示已停止，无法确认时保留具体反馈。权限与恢复边界见[差量指南](FOCUS_AND_TASK_CONTROLS.zh-CN.md)。
+单击人物返回准确绑定的 TWOS 工作台。气泡默认只显示当前任务／状态；从右侧按需入口可使用已有铅笔和停止操作。铅笔打开有键盘焦点且支持中文输入法的编辑器；Enter 发送、Shift+Enter 换行、Esc 关闭。普通草稿自动保存；排队内容的修订需明确保存。TWOS 控制的 Codex 活动轮次支持 Steer，网页任务采用完成后发送。目标变化保留输入，不改投其他任务。停止先禁止后续派发，再中断绑定任务，活动中的停止请求显示正在停止；确认终态后默认气泡收起。真实结果或未确认停止的具体反馈在 TWOS 中查看。权限与恢复边界见[差量指南](MINIMAL_STATUS_AND_FOCUS.zh-CN.md)。
 
 [英文动作语音：tiny-voca F2](ENGLISH_VOICE.zh-CN.md)

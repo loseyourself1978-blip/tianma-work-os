@@ -1,14 +1,14 @@
 # Tianma Work OS 1.0
 
-> Unreleased candidate amendment: [minimal activity display and independent host focus](docs/release-1.0/MINIMAL_STATUS_AND_FOCUS.en.md). Verification and publication are pending; published-version guidance below is retained for reference.
+**Current update:** show current task activity only and close the bubble when inactive. Character return is independent of task-control permission. Chinese Tian is unchanged; English uses offline tiny-voca F2 cues. [Actual verification and limits](docs/release-1.0/MINIMAL_STATUS_VERIFICATION.en.md).
 
-**TWOS 1.0.10 / 101.58: shared Codex projects/chats and direct Nyra task controls. Includes Nyra 1.0.7 / 107.**
+**TWOS 1.0.11 / 101.59: shared Codex projects/chats and direct Nyra task controls. Includes Nyra 1.0.8 / 108.**
 
 Select Codex on either side for the same project/chat sidebar and current conversation readback. Click Nyra to return to the bound workbench; use its compact task bubble to edit a draft, steer an owned turn, queue a supplement or stop the exact task. The delayed-history dispatch race discovered during final-candidate testing is repaired. Existing private-network navigation and accepted business results remain preserved.
 
 This version includes five standing/reclining outfits, 13 bundled Chinese Tian action recordings and 13 matching offline tiny-voca F2 American English recordings. Sound starts muted; unmute and enable Action voice for eligible transitions, with cooldown and no overlap. Close the panel with Close, Escape or Sound.
 
-**TWOS 1.0.10 / build 101.58** · [Download and verify](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.10) · [This update](docs/release-1.0/FOCUS_AND_TASK_CONTROLS.en.md)
+**TWOS 1.0.11 / build 101.59** · [Download and verify](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.11) · [This update](docs/release-1.0/MINIMAL_STATUS_AND_FOCUS.en.md)
 
 [简体中文](README.zh-CN.md) · [Install](docs/release-1.0/INSTALL.en.md) · [User guide](docs/release-1.0/USER_GUIDE.en.md) · [Current release status](docs/CURRENT_DELIVERY.md)
 
@@ -22,7 +22,7 @@ Discuss a goal and execute it in one macOS workspace. TWOS pairs official ChatGP
 
 ## Download and first use
 
-Download TWOS v1.0.10 using the link above. Verify SHA256SUMS before opening its DMG. The matching receipt binds source, signatures, notarization and artifact hashes. Historical v1.0.1 and v1.0.0 remain unchanged.
+Download TWOS v1.0.11 using the link above. Verify SHA256SUMS before opening its DMG. The matching receipt binds source, signatures, notarization and artifact hashes. Historical v1.0.1 and v1.0.0 remain unchanged.
 
 Open the matching DMG, drag TWOS into Applications and open it. Sign into the chosen official provider website, connect your already installed/logged-in local Codex, then create or resume one folder-bound task. Nyra is inside the same app; no separate pet installer or first-run artwork download is required. Ordinary installation needs no Python, Node or terminal.
 

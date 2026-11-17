@@ -1,14 +1,14 @@
 # Troubleshooting
 
-> Unreleased candidate amendment: [minimal activity display and independent host focus](MINIMAL_STATUS_AND_FOCUS.en.md). Verification and publication are pending; published-version guidance below is retained for reference.
+> **Current update: minimal activity bubble, independent host focus and offline English voice.** [Instructions](MINIMAL_STATUS_AND_FOCUS.en.md) · [Actual verification and limits](MINIMAL_STATUS_VERIFICATION.en.md). The default bubble closes when no work is active; task mutations still require their separate authorization.
 
-> **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](FOCUS_AND_TASK_CONTROLS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
+> **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](MINIMAL_STATUS_AND_FOCUS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
 
-[Current update: focus and task controls](FOCUS_AND_TASK_CONTROLS.en.md)
+[Current update: focus and task controls](MINIMAL_STATUS_AND_FOCUS.en.md)
 
-TWOS 1.0.10 / 101.58 · [This update](FOCUS_AND_TASK_CONTROLS.en.md)
+TWOS 1.0.11 / 101.59 · [This update](MINIMAL_STATUS_AND_FOCUS.en.md)
 
-[Current incremental instructions and exact boundaries](FOCUS_AND_TASK_CONTROLS.en.md).
+[Current incremental instructions and exact boundaries](MINIMAL_STATUS_AND_FOCUS.en.md).
 
 
 - **macOS blocks installation:** verify the exact release and hash/signature receipt. Do not disable Gatekeeper or remove quarantine. An unnotarized engineering candidate is not the default public installation path.
@@ -39,7 +39,7 @@ The read-only link is bound to the exact signed producer, including its applicat
 [DeepSeek relay, five outfits and bilingual action voice](AUTOSEND_AND_WARDROBE.en.md)
 
 
-[Current update](FOCUS_AND_TASK_CONTROLS.en.md)
+[Current update](MINIMAL_STATUS_AND_FOCUS.en.md)
 
 - **Long-history connection error:** `invalid_or_oversized_jsonl` in 1.0.7 can indicate an oversized full-history response, not a login problem. See the [long-history follow-up](CODEX_HISTORY_REPAIR.en.md). Preserve drafts and authentication.
 
@@ -52,3 +52,7 @@ The private-network HTTP input rejection is repaired in 1.0.9; see the [supporte
 ## English voice update
 
 English uses 13 bundled tiny-voca F2 offline cues; Chinese Tian and explicit imports are preserved. See [voice details](ENGLISH_VOICE.en.md). No task text, synthesis service or model runtime is added.
+
+## Current status / return troubleshooting
+
+The bubble shows observed replying, execution, queueing or waiting-for-action work, then closes on confirmed idle or terminal state. An observation gap is briefly unconfirmed, never an indefinitely running old task. If an old engineering Nyra occupies the singleton, quit it through its own menu and use Show Nyra in the intended TWOS. Do not delete profiles or force-stop other apps. Character return needs no edit grant; unavailable edit/Stop actions require checking the exact task and current permission. Choose tiny-voca F2 for English; Chinese Tian is unchanged and sound still starts muted.

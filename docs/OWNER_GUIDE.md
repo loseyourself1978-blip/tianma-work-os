@@ -1,8 +1,8 @@
 # TWOS 1.0 · 安装与使用指南
 
-> 本轮候选为 1.0.11 / 101.59；尚未发布，尚未完成真实界面与完整回归。新行为见 [任务显示与返回工作台](release-1.0/MINIMAL_STATUS_AND_FOCUS.zh-CN.md)。以下 101.58 记录保留其原验收范围。
+本轮默认任务展示与返回方式见[差量说明](release-1.0/MINIMAL_STATUS_AND_FOCUS.zh-CN.md)，实测范围见[核验记录](release-1.0/MINIMAL_STATUS_VERIFICATION.zh-CN.md)。
 
-**适用：TWOS 1.0.10 / build 101.58，内置 Nyra 1.0.7 / build 107。** [English guide](OWNER_GUIDE_EN.md) · [实际交付与验证状态](CURRENT_DELIVERY.md)
+**适用：TWOS 1.0.11 / build 101.59，内置 Nyra 1.0.8 / build 108。** [English guide](OWNER_GUIDE_EN.md) · [实际交付与验证状态](CURRENT_DELIVERY.md)
 
 **安装与版本：使用本版双语指南中的 `START_HERE.html`、[发行回执](release-1.0/release.json)和实际 GitHub Release 状态。按匹配回执核对完整工程回归、签名和公证；Owner 差量接受单独记录。**
 在一个 macOS 窗口中，左侧官方 ChatGPT 网页用于讨论，右侧 TWOS Codex 客户端通过本机官方 App Server 执行。它使用官方执行协议，但不是把官方 Codex App 的整个图形界面嵌进网页。两侧账号语言设置相互独立。
@@ -15,9 +15,9 @@
 
 ## A · 本次升级增量验收
 
-TWOS 1.0.10 / 101.58 · Nyra 1.0.7 / 107。匹配工程回归、真实操作范围与限制见[核验记录](release-1.0/FOCUS_VERIFICATION.zh-CN.md)；公开可下载状态以对应 GitHub Release 为准。
+TWOS 1.0.11 / 101.59 · Nyra 1.0.8 / 108。匹配工程回归、真实操作范围与限制见[核验记录](release-1.0/MINIMAL_STATUS_VERIFICATION.zh-CN.md)；公开可下载状态以对应 GitHub Release 为准。
 
-[聚焦返回、紧凑任务控制与两侧 Codex 导航](release-1.0/FOCUS_AND_TASK_CONTROLS.zh-CN.md)
+[聚焦返回、紧凑任务控制与两侧 Codex 导航](release-1.0/MINIMAL_STATUS_AND_FOCUS.zh-CN.md)
 
 安装匹配的已验证发行后，确认任意一侧的 Codex 项目／会话侧栏可用、最新历史可读；单击 Nyra 返回已绑定工作台，使用小气泡上的铅笔与停止操作准确任务。官方 App 正在控制的会话仍只读。仅在确有新工作时使用追加，不为验收重放旧任务。此处结束，升级完成后不必继续 B；原网页、换装、声音与业务接受保持。
 
