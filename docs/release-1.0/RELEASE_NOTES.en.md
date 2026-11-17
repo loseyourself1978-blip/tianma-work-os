@@ -1,5 +1,7 @@
 # TWOS 1.0.10 / 101.58 — Focus and direct task controls
 
+> Unreleased candidate amendment: [minimal activity display and independent host focus](MINIMAL_STATUS_AND_FOCUS.en.md). Verification and publication are pending; published-version guidance below is retained for reference.
+
 A character click restores the authenticated, exact TWOS workbench. A compact translucent task bubble provides direct input and Stop. Input supports IME, drafts, same-turn Steer and queued supplements; only unsent text can be revised. Stop fences future dispatch before waiting for confirmed cancellation. Either Codex pane uses the same project/chat sidebar and bounded current public-history reads; official-app controlled runs remain read-only. Five outfits, voice, website navigation and previous acceptance are preserved.
 
 One complete serial TWOS gate: 1873 passed, one explicitly retained historical skip, zero failures; all 38 actual Safari measurements began and ended visible. Runtime and frozen input hashes were unchanged throughout that run. Release documents and receipts are subsequently updated and checked separately; they are not represented as inputs to that earlier run. Earlier failed/partial batches are not added to this result.

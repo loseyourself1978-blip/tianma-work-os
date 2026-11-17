@@ -1,5 +1,7 @@
 # TWOS 1.0 · 安装与使用指南
 
+> 本轮候选为 1.0.11 / 101.59；尚未发布，尚未完成真实界面与完整回归。新行为见 [任务显示与返回工作台](release-1.0/MINIMAL_STATUS_AND_FOCUS.zh-CN.md)。以下 101.58 记录保留其原验收范围。
+
 **适用：TWOS 1.0.10 / build 101.58，内置 Nyra 1.0.7 / build 107。** [English guide](OWNER_GUIDE_EN.md) · [实际交付与验证状态](CURRENT_DELIVERY.md)
 
 **安装与版本：使用本版双语指南中的 `START_HERE.html`、[发行回执](release-1.0/release.json)和实际 GitHub Release 状态。按匹配回执核对完整工程回归、签名和公证；Owner 差量接受单独记录。**

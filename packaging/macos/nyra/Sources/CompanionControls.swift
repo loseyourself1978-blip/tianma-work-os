@@ -81,7 +81,8 @@ final class PanelView: NSView {
     func refreshVisibility() {
         hub?.alphaValue = hovered || expanded ? 1 : 0.52
         controls.forEach { $0.isHidden = !expanded }
-        badge.isHidden = !hovered && !expanded; detail.isHidden = badge.isHidden
+        // Diagnostics belong to TWOS status, never a persistent character overlay.
+        badge.isHidden=true;detail.isHidden=true
         // Do not remove the first-mouse target while a press is tracking.
         let showHoverControls = hovered || expanded || NSEvent.pressedMouseButtons != 0
         stageButton?.isHidden = !showHoverControls

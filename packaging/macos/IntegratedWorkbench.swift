@@ -27,6 +27,7 @@ final class NyraStatusProducer {
     private var standaloneControls = false
     private var verifiedPeers: [pid_t:(stamp:String,at:Double)] = [:]
     var controlServer: NyraControlServer?
+    var focusServer: NyraControlServer?
     var controlHandler: (([String:Any], @escaping ([String:Any])->Void)->Void)?
     init(directory: URL, helper: URL) {
         self.directory = directory; self.helper = helper
@@ -59,12 +60,21 @@ final class NyraStatusProducer {
             guard bound == 0, chmod(path, 0o600) == 0, listen(socketFD, 4) == 0,
                   fcntl(socketFD, F_SETFL, O_NONBLOCK) == 0 else { throw CocoaError(.fileWriteUnknown) }
             let file = directory.appendingPathComponent("endpoint.json")
-            let bytes = try JSONSerialization.data(withJSONObject: ["transport":"unix_snapshot_v1", "socket":path, "producer_instance_id":instance, "schema_version":Self.schemaVersion, "schema_sha256":Self.schemaSHA256, "control_protocol":"twos.nyra.control.v1", "control_socket":root.appendingPathComponent("control.sock").path])
+            let bytes = try JSONSerialization.data(withJSONObject: ["transport":"unix_snapshot_v1", "socket":path, "producer_instance_id":instance, "schema_version":Self.schemaVersion, "schema_sha256":Self.schemaSHA256, "control_protocol":"twos.nyra.control.v1", "control_socket":root.appendingPathComponent("control.sock").path, "focus_protocol":"twos.nyra.focus.v1", "focus_socket":root.appendingPathComponent("focus.sock").path])
             try bytes.write(to: file, options: .atomic)
             try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
             let source = DispatchSource.makeReadSource(fileDescriptor: socketFD, queue: socketQueue)
             source.setEventHandler { [weak self] in self?.acceptSnapshots() }
             socketSource = source; source.resume()
+            // Host focus is independent of task inspection, drafts and grants.
+            // It retains the same signed same-user peer identity checks, and
+            // cannot accept a task target or a mutation on this socket.
+            focusServer = try NyraControlServer(root:root,instance:instance,focusOnly:true,authenticate:{[weak self] pid,uid,method in
+                method=="focus" && self?.accepts(pid:pid,uid:uid)==true
+            },handle:{[weak self] request,reply in
+                guard let handler=self?.controlHandler else{reply(["error":"HOST_NOT_READY"]);return}
+                handler(request,reply)
+            })
             controlServer = try NyraControlServer(root:root,instance:instance,authenticate:{ [weak self] pid,uid,method in
                 guard let self=self,self.accepts(pid:pid,uid:uid) else{return false}
                 return ["focus","inspect"].contains(method) || self.canUserControl(pid)
@@ -76,6 +86,7 @@ final class NyraStatusProducer {
         observe(session: "unselected", task: nil, state: "idle", source: "twos_runtime")
     }
     deinit {
+        focusServer?.stop()
         controlServer?.stop()
         socketSource?.cancel()
         if socketFD >= 0 { Darwin.close(socketFD) }
@@ -519,6 +530,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         lines.append(translate("Frames displayed")+": "+value("frameCount")+" · "+translate("Animation timer")+": "+value("frameTimer"))
         if state["reduceMotion"] as? Bool == true {lines.append(translate("Reduced motion is enabled. Animation is intentionally still."))}
         if let reason=state["reason"] as? String {lines.append(translate(reason))}
+        if let code=state["interactionError"] as? String {lines.append(translate("Nyra status")+": "+code)}
         let zh=translate("Back") != "Back"
         lines.append(zh ? "状态、活动和动画分别核验。状态通道不共享聊天正文；主动追加／编辑通过单独已认证控制通道传递所选输入。":"Connection, activity and animation are checked separately. Status excludes chat bodies; explicit append/edit actions carry the selected input over a separate authenticated control channel.")
         let standalone=nyra.standalone
@@ -1419,7 +1431,7 @@ final class NativeNyra: NSObject {
         var result: [String:Any] = ["available": true, "visible": state["visible"] as? Bool ?? false, "pending": state["pending"] as? Bool ?? false,
                 "observed": true, "binding": connected ? "CONNECTED_READONLY" : "NOT_CONNECTED", "updatedAt": state["updatedAt"] ?? NSNull(),"fresh":fresh,"heartbeatAge":age as Any? ?? NSNull(),"consumerPID":pid]
         if !fresh {result["reason"]="NYRA_HEARTBEAT_STALE"}
-        for key in ["consumerInstance","animation","frameAsset","frameCount","frameTimer","reduceMotion","lastStateChangeAt","paneObservations","taskState","activitySide"] {result[key]=state[key]}
+        for key in ["consumerInstance","animation","frameAsset","frameCount","frameTimer","reduceMotion","lastStateChangeAt","paneObservations","taskState","activitySide","interactionError"] {result[key]=state[key]}
         let snapshotAge=(state["lastSnapshotUptime"] as? Double).flatMap { $0 > 0 ? now-$0 : nil }
         if let age=snapshotAge {result["snapshotAge"]=max(0,age)}
         result["paneObservations"]=Self.currentPaneObservations(state["paneObservations"] as? [[String:Any]] ?? [],connected:connected,snapshotAge:snapshotAge)
@@ -1544,12 +1556,14 @@ final class NyraControlServer {
     var listener:Int32 = -1
     var source:DispatchSourceRead?
     let path:String
+    let focusOnly:Bool
     var clients:[Int32:Connection]=[:]
     var replies:[String:[String:Any]]=[:]
     var pending=Set<String>()
-    init(root:URL,instance:String,authenticate:@escaping(pid_t,uid_t,String)->Bool,handle:@escaping([String:Any],@escaping([String:Any])->Void)->Void)throws {
+    init(root:URL,instance:String,focusOnly:Bool=false,authenticate:@escaping(pid_t,uid_t,String)->Bool,handle:@escaping([String:Any],@escaping([String:Any])->Void)->Void)throws {
         self.instance=instance;self.authenticate=authenticate;self.handle=handle
-        path=root.appendingPathComponent("control.sock").path
+        self.focusOnly=focusOnly
+        path=root.appendingPathComponent(focusOnly ? "focus.sock":"control.sock").path
         listener=socket(AF_UNIX,SOCK_STREAM,0)
         guard listener>=0 else{throw CocoaError(.fileWriteUnknown)}
         var address=sockaddr_un();address.sun_family=sa_family_t(AF_UNIX);address.sun_len=UInt8(MemoryLayout<sockaddr_un>.size)
@@ -1607,11 +1621,12 @@ final class NyraControlServer {
     func dispatch(_ request:[String:Any],c:Connection){
         var uid:uid_t=0,gid:gid_t=0,pid:pid_t=0;var size=socklen_t(MemoryLayout<pid_t>.size)
         guard getpeereid(c.fd,&uid,&gid)==0,getsockopt(c.fd,SOL_LOCAL,LOCAL_PEERPID,&pid,&size)==0,
-              request["protocol"] as? String=="twos.nyra.control.v1",request["hostInstance"] as? String==instance,
+              request["protocol"] as? String==(focusOnly ? "twos.nyra.focus.v1":"twos.nyra.control.v1"),request["hostInstance"] as? String==instance,
               let consumer=request["consumerInstance"] as? String,UUID(uuidString:consumer) != nil,
               let id=request["requestID"] as? String,UUID(uuidString:id) != nil,
               let issued=request["issuedUptime"] as? Double,issued.isFinite,abs(ProcessInfo.processInfo.systemUptime-issued)<4,
               let method=request["method"] as? String,["focus","inspect","draft","submit","editQueue","stop"].contains(method),
+              !focusOnly || (method=="focus" && Set(request.keys).isSubset(of:["protocol","hostInstance","consumerInstance","requestID","method","issuedUptime"])),
               authenticate(pid,uid,method) else{send(["requestID":request["requestID"] as? String ?? "","hostInstance":instance,"error":"CONTROL_NOT_AUTHORIZED_OR_STALE"],to:c);return}
         let mutation=["submit","editQueue","stop"].contains(method) || (method=="draft" && request["text"] != nil)
         let key="\(pid)|\(consumer)|\(id)"
@@ -1619,7 +1634,7 @@ final class NyraControlServer {
         guard !pending.contains(key) else{send(["requestID":id,"hostInstance":instance,"error":"REQUEST_IN_FLIGHT"],to:c);return}
         guard !mutation || replies.count+pending.count<4096 else{send(["requestID":id,"hostInstance":instance,"error":"CONTROL_RECEIPT_LIMIT_RECONNECT_HOST"],to:c);return}
         if mutation{pending.insert(key)}
-        var bound=request;bound["_userControls"]=authenticate(pid,uid,"submit")
+        var bound=request;bound["_userControls"] = !focusOnly && authenticate(pid,uid,"submit")
         DispatchQueue.main.async{[weak self,weak c] in
             guard let self=self,let c=c else{return}
             guard c.valid(),abs(ProcessInfo.processInfo.systemUptime-issued)<4 else{
@@ -1677,7 +1692,7 @@ extension IntegratedWorkbench {
         let fresh=activity.fresh && activity.state != "activity_unknown"
         let selectionScope=nyraStatus.alias("selection|\(index)|\(kinds[index])|\(routeRevision)|\(activity.session)|\(scope)")
         var value:[String:Any] = ["side":index==0 ? "left":"right","provider":kinds[index],"target":target,"scope":selectionScope,
-            "title":Self.companionTitle(title) ?? "Title unavailable / 标题暂不可用", "state":activity.state,
+            "title":Self.companionTitle(title) ?? (activity.state=="waiting_user" ? "等待你的操作 / Waiting for you":"当前任务 / Current task"), "state":activity.state,
             "reason":activity.reason,"fresh":fresh,"canAppend":fresh && active && owned && !stopping,
             "canEdit":fresh && draftOwned && !stopping,
             "canStop":fresh && active && owned && !stopping,
@@ -1702,7 +1717,11 @@ extension IntegratedWorkbench {
         guard let issued=request["issuedUptime"] as? Double,abs(ProcessInfo.processInfo.systemUptime-issued)<4 else{reply(["error":"STALE_ACTION"]);return}
         let method=request["method"] as? String ?? ""
         if method=="inspect" {
-            reply(["tasks":nyraPublicTasks(),"userControls":request["_userControls"] as? Bool==true,"language":translate("Back")=="Back" ? "en":"zh"]);return
+            let session=(0...1).map { paneActivities[$0]?.session ?? "unknown" }.joined(separator:"|")
+            let active=(0...1).compactMap { paneActivities[$0]?.task }.joined(separator:"|")
+            reply(["tasks":nyraPublicTasks(),"userControls":request["_userControls"] as? Bool==true,
+                   "statusSession":nyraStatus.alias(session),"statusTask":active.isEmpty ? "":nyraStatus.alias(active),
+                   "language":translate("Back")=="Back" ? "en":"zh"]);return
         }
         var index:Int?
         if let target=request["target"] as? String {

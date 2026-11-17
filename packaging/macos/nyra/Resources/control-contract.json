@@ -29,7 +29,7 @@
     "receipt"
   ],
   "methods": {
-    "inspect": "Read at most two minimal task rows and current capabilities; no task content.",
+    "inspect": "Read at most two minimal task rows, capabilities and opaque statusSession/statusTask binding; no task content.",
     "focus": "Restore and confirm the selected running host workbench; no execution.",
     "draft": "Read or save only the selected task composer draft, using a revision compare-and-swap. An optional receipt ID reads that same task thread's submission state without sending or replaying it.",
     "submit": "A user-clicked supplement through the existing TWOS queue or supported turn/steer.",
@@ -62,5 +62,21 @@
     "deadline_seconds": 4,
     "retries": "Read-only bounded observation while sending; never resubmit an uncertain mutation",
     "success_semantics": "Accepted/running/completed confirms controller receipt progression, not business acceptance."
-  }
+  },
+  "host_focus": {
+    "protocol": "twos.nyra.focus.v1",
+    "transport": "separate authenticated focus.sock; status.sock remains pull-only",
+    "method": "focus",
+    "fields": [
+      "protocol",
+      "hostInstance",
+      "consumerInstance",
+      "requestID",
+      "issuedUptime",
+      "method"
+    ],
+    "permissions": "Exact signed same-user selected peer; no task target, draft, execution or control grant required. Mutation and extra fields rejected.",
+    "fallback": "Older host without focus endpoint: bounded original control focus with no task target; never claims window success on activate alone."
+  },
+  "status_action_binding": "Bubble actions require matching host instance and read-only session/task frame; absent older-host metadata never grants a guessed target."
 }

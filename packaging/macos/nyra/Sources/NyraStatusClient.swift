@@ -18,6 +18,8 @@ struct StatusEndpoint: Decodable {
     let schema_sha256: String
     var control_protocol: String?
     var control_socket: String?
+    var focus_protocol: String?
+    var focus_socket: String?
 }
 enum BridgeError: Error { case unsafeEndpoint, wrongPeer, unavailable, truncated, invalidFrame }
 final class NyraStatusClient {
@@ -150,7 +152,7 @@ final class NyraStatusClient {
             }
         }
     }
-    func poll(selectionLoader: @escaping () throws -> BridgeSelection,
+    func poll(selectionLoader: @escaping () throws -> BridgeSelection, refreshBundledIdentity: Bool = false,
               _ completion: @escaping (Result<StatusEvent,Error>) -> Void) {
         guard !busy else { return }
         busy = true; let token = generation; let existing = selection
@@ -159,9 +161,20 @@ final class NyraStatusClient {
         DispatchQueue.global(qos:.utility).async {
             var resolved: BridgeSelection?
             let result = Result { () throws -> StatusEvent in
-                let choice = try existing ?? selectionLoader()
+                var choice = try existing ?? selectionLoader()
                 resolved = choice
-                return try Self.read(choice)
+                do {return try Self.read(choice)} catch {
+                    // Only the signed embedded helper can refresh its fixed
+                    // parent after a same-installation upgrade. Never discover
+                    // another path or silently reauthorize a standalone consumer.
+                    guard refreshBundledIdentity,existing != nil else{throw error}
+                    let refreshed=try selectionLoader()
+                    guard refreshed.producerApp==choice.producerApp,
+                          refreshed.producerBundleID==choice.producerBundleID,
+                          refreshed.endpoint==choice.endpoint else{throw BridgeError.wrongPeer}
+                    choice=refreshed
+                    let event=try Self.read(choice);resolved=choice;return event
+                }
             }
             DispatchQueue.main.async {
                 self.busy = false; guard token == self.generation else { return }
@@ -201,13 +214,20 @@ extension Companion {
         live.poll(selectionLoader: {
             if bundled { return try Companion.bundledStatusSelection(helper:helper,stateDirectory:stateRoot) }
             return try NyraStatusClient.readSelection(savedSelection.path)
-        }) { [weak self] result in
+        },refreshBundledIdentity:bundled) { [weak self] result in
             guard let self = self else { return }
             switch result {
             case .success(let event):
                 let decision = self.liveReducer.receive(event,now:ProcessInfo.processInfo.systemUptime)
                 self.live.markConnected(decision.accepted)
                 if decision.accepted {
+                    if previous?.producer_instance_id != event.producer_instance_id {
+                        self.taskControl.reset();self.hostFocus.reset()
+                        self.activationNotice=nil;self.panelView.hub?.toolTip=nil
+                        self.operationPopover?.close();self.operationPopover=nil
+                    }
+                    // A healthy status heartbeat does not confirm a separate
+                    // focus/control action; its feedback has its own expiry.
                     self.demo = .none
                     if [.failed,.cancelled,.partial,.completed_unverified,.disconnected,.activity_unknown].contains(event.state),
                        previous?.state != event.state, self.sound.lastOrigin == "action" { self.sound.stop() }

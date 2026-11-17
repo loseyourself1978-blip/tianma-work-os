@@ -3,12 +3,12 @@ import AppKit
 enum CompanionControlText {
     static func error(_ code:String,zh:Bool)->String {
         let values:[String:[String]]=[
-            "connection":["连接已变化；输入仍保留。回到 TWOS 核对原任务。","The connection changed. Your input is retained; check the original task in TWOS."],
+            "connection":["连接暂不可用，请在 TWOS 查看状态。","Connection unavailable. Check status in TWOS."],
             "changed":["任务或草稿已变化；没有改发。请回到 TWOS 核对。","The task or draft changed. Nothing was redirected; review it in TWOS."],
             "readonly":["此任务不能由 TWOS 控制，请在原控制端操作。","TWOS cannot control this task. Use its original controller."],
             "unknown":["操作结果尚未确认；请回到 TWOS 核对，不要重复发送。","The result is unconfirmed. Check TWOS before sending again."],
             "saving":["草稿未保存；输入仍保留，请检查本机存储。","The draft was not saved. Your input is retained; check local storage."],
-            "stale":["任务状态待更新；输入仍保留，请在 TWOS 核对。","Task state needs an update. Your input is retained; review it in TWOS."],
+            "stale":["任务状态待更新，请在 TWOS 核对。","Task state needs an update. Check TWOS."],
             "focus":["尚未确认工作台已显示，请从 Dock 打开已连接的 TWOS。","The workbench is not confirmed visible. Open the connected TWOS from the Dock."],
             "pending":["上一个操作仍在处理，请稍候。","The previous operation is still pending."],
             "unsupported":["当前版本不支持此操作，请在 TWOS 中继续。","This operation is unavailable in the current version. Continue in TWOS."]]
@@ -54,9 +54,20 @@ final class CompanionTaskPicker:NSPopUpButton {
     override func acceptsFirstMouse(for event:NSEvent?)->Bool {true}
     override var needsPanelToBecomeKey:Bool {false}
 }
+final class CompanionTaskBackdrop:NSVisualEffectView {
+    var hover:((Bool)->Void)?
+    private var tracking:NSTrackingArea?
+    override func updateTrackingAreas(){
+        if let tracking=tracking{removeTrackingArea(tracking)}
+        let value=NSTrackingArea(rect:bounds,options:[.mouseEnteredAndExited,.activeAlways,.inVisibleRect],owner:self,userInfo:nil)
+        addTrackingArea(value);tracking=value;super.updateTrackingAreas()
+    }
+    override func mouseEntered(with event:NSEvent){hover?(true)}
+    override func mouseExited(with event:NSEvent){hover?(false)}
+}
 final class CompanionTaskCard:NSObject {
     let panel=CompanionTaskPanel(contentRect:NSRect(x:0,y:0,width:300,height:64),styleMask:[.borderless,.nonactivatingPanel],backing:.buffered,defer:false)
-    let backdrop=NSVisualEffectView()
+    let backdrop=CompanionTaskBackdrop()
     let picker=CompanionTaskPicker(frame:.zero,pullsDown:false)
     let title=TaskLabelButton()
     let subtitle=TaskLabelButton()
@@ -64,11 +75,13 @@ final class CompanionTaskCard:NSObject {
     let append=CompanionActionButton(title:"",target:nil,action:nil)
     let stop=CompanionActionButton(title:"",target:nil,action:nil)
     var expanded=false
+    var hovered=false
     var lastAnchor:NSRect?,lastScreen:NSScreen?
     var rows:[[String:Any]]=[]
     var selected:String?
     var onAction:((String)->Void)?
     var onFocus:((String)->Void)?
+    var onFocusUnavailable:(()->Void)?
     var onAppend:(([String:Any])->Void)?
     var onStop:(([String:Any],String)->Void)?
     struct StopAttempt {
@@ -101,6 +114,7 @@ final class CompanionTaskCard:NSObject {
         backdrop.material = .popover;backdrop.blendingMode = .behindWindow;backdrop.state = .active
         backdrop.wantsLayer=true;backdrop.layer?.cornerRadius=30;backdrop.layer?.masksToBounds=true
         backdrop.layer?.borderWidth=0.5;backdrop.layer?.borderColor=NSColor.separatorColor.cgColor;panel.contentView=backdrop
+        backdrop.hover={[weak self] value in self?.hovered=value;self?.layout()}
         picker.target=self;picker.action=#selector(selectTask)
         for label in [title,subtitle] {
             label.target=self;label.action=#selector(focus);label.layer?.backgroundColor=NSColor.clear.cgColor
@@ -108,6 +122,7 @@ final class CompanionTaskCard:NSObject {
             label.cell?.truncatesLastVisibleLine=true;label.contentTintColor = .labelColor
         }
         title.font = .systemFont(ofSize:13,weight:.semibold);subtitle.font = .systemFont(ofSize:11)
+        title.action=#selector(focusFirst);subtitle.action=#selector(focusSecond)
         subtitle.contentTintColor = .secondaryLabelColor
         expand.isBordered=false;expand.target=self;expand.action=#selector(toggleExpanded)
         append.target=self;append.action=#selector(edit);stop.target=self;stop.action=#selector(stopTask)
@@ -158,6 +173,16 @@ final class CompanionTaskCard:NSObject {
         title.title=task["title"] as? String ?? (zh ? "标题暂不可用":"Title unavailable");title.isHidden=false
         let side=task["side"] as? String=="left" ? (zh ? "左侧":"Left"):(zh ? "右侧":"Right")
         subtitle.title=side+" · "+(task["provider"] as? String ?? "")+" · "+state;subtitle.isHidden=false
+        if rows.count==2 && !expanded {
+            func line(_ row:[String:Any])->String {
+                let side=row["side"] as? String=="left" ? (zh ? "左":"L"):(zh ? "右":"R")
+                let state=row["fresh"] as? Bool==true ? Self.state(row["state"] as? String ?? "",zh:zh):(zh ? "待确认":"Checking")
+                // Keep state ahead of the title so truncation cannot hide it.
+                return side+" · "+state+" · "+(row["provider"] as? String ?? "")+": "+(row["title"] as? String ?? "")
+            }
+            title.title=line(rows[0]);subtitle.title=line(rows[1])
+        }
+        title.font = .systemFont(ofSize:rows.count==2 && !expanded ? 11:13,weight:.semibold)
         title.setAccessibilityLabel(title.title+(zh ? " · 返回 TWOS":" · Return to TWOS"))
         subtitle.setAccessibilityLabel(subtitle.title)
         title.toolTip=title.title;subtitle.toolTip=stopDetail ?? task["reason"] as? String
@@ -179,7 +204,7 @@ final class CompanionTaskCard:NSObject {
                 (zh ? "此任务不能由 TWOS 停止，请在原控制端操作":"TWOS cannot stop this task; use its original controller"))
         stop.setAccessibilityHelp(stop.toolTip)
         let unavailable = !current ? (zh ? "状态待更新；请回到 TWOS 核对连接":"Status awaiting update; check the connection in TWOS") : !authorized ? (zh ? "在 TWOS 连接并授权任务控制":"Connect and authorize task controls in TWOS") : (zh ? "此任务由原客户端控制；请在原客户端编辑":"This task belongs to its original controller; edit it there")
-        append.toolTip=append.isEnabled ? (zh ? "打开已选任务的指令编辑器":"Open the selected task's input editor"):unavailable
+        append.toolTip=append.isEnabled ? side+" · "+(task["provider"] as? String ?? "")+" · "+(task["title"] as? String ?? ""):unavailable
         if !append.isEnabled {append.toolTip=unavailable}
         layout()
     }
@@ -187,20 +212,31 @@ final class CompanionTaskCard:NSObject {
         let height:CGFloat=expanded && rows.count>1 ? 100:64
         if panel.frame.height != height {panel.setContentSize(NSSize(width:300,height:height))}
         backdrop.layer?.cornerRadius=expanded ? 20:30
-        let controlsWidth:CGFloat=rows.count>1 ? 86:62
+        let reveal=hovered || expanded
+        let controlsWidth:CGFloat=reveal ? (rows.count>1 ? 86:62):(rows.count>1 ? 28:0)
         title.frame=NSRect(x:14,y:height-29,width:272-controlsWidth,height:20)
         subtitle.frame=NSRect(x:14,y:height-49,width:272-controlsWidth,height:18)
         expand.isHidden=rows.count<2;expand.frame=NSRect(x:270,y:height-47,width:24,height:30)
         picker.isHidden = !expanded || rows.count<2;picker.frame=NSRect(x:12,y:8,width:276,height:26)
-        // Editing and stopping are direct actions, never hidden behind expansion.
-        append.isHidden=false;stop.isHidden=false
+        // Default is two lines only. Hover reveals the existing direct actions;
+        // no configuration panel or extra confirmation is required.
+        append.isHidden = !reveal;stop.isHidden = !reveal
         append.frame=NSRect(x:300-controlsWidth,y:height-47,width:28,height:30)
         stop.frame=NSRect(x:330-controlsWidth,y:height-47,width:28,height:30)
         if let anchor=lastAnchor,let screen=lastScreen{position(anchor:anchor,screen:screen)}
     }
     @objc func toggleExpanded(){expanded.toggle();render();onAction?(expanded ? "expanded":"collapsed")}
     @objc func selectTask(){guard rows.indices.contains(picker.indexOfSelectedItem) else{return};selected=rows[picker.indexOfSelectedItem]["target"] as? String;render()}
-    @objc func focus(){if let target=task?["target"] as? String{onFocus?(target)}}
+    func focusRow(_ row:[String:Any]?){
+        if let target=row?["target"] as? String{onFocus?(target)}else{onFocusUnavailable?()}
+    }
+    @objc func focus(){focusRow(task)}
+    @objc func focusFirst(){
+        if rows.count==2 && !expanded {focusRow(rows[0])} else{focus()}
+    }
+    @objc func focusSecond(){
+        if rows.count==2 && !expanded {focusRow(rows[1])} else{focus()}
+    }
     @objc func edit(){guard append.isEnabled,let task=task else{return};onAction?("append_clicked");onAppend?(task)}
     @objc func stopTask(){
         guard stop.isEnabled,let task=task,let target=task["target"] as? String,let action=onStop else{return}
@@ -431,13 +467,50 @@ final class CompanionTaskEditor:NSObject,NSTextViewDelegate,NSWindowDelegate {
 }
 
 extension Companion {
+    var companionChinese:Bool {
+        taskControl.received>0 && taskControl.error==nil ? taskControl.language=="zh" :
+            NyraAudio.resolveLanguage(sound.language,preferred:Locale.preferredLanguages)=="zh"
+    }
+    func showOperationNotice(_ code:String){
+        activationNotice=code;activationNoticeExpires=ProcessInfo.processInfo.systemUptime+5
+        let message=CompanionControlText.error(code,zh:companionChinese)
+        panelView.hub?.toolTip=message
+        operationPopover?.close()
+        let popover=NSPopover(),controller=NSViewController()
+        controller.view=NSView(frame:NSRect(x:0,y:0,width:280,height:48))
+        let label=NSTextField(wrappingLabelWithString:message);label.frame=NSRect(x:10,y:8,width:260,height:32)
+        label.font = .systemFont(ofSize:11);controller.view.addSubview(label)
+        popover.contentViewController=controller;popover.behavior = .transient;operationPopover=popover
+        if let hub=panelView.hub,hub.window?.isVisible==true{popover.show(relativeTo:hub.bounds,of:hub,preferredEdge:.minY)}
+        DispatchQueue.main.asyncAfter(deadline:.now()+5){[weak self,weak popover] in
+            popover?.close()
+            if self?.operationPopover === popover {self?.operationPopover=nil;self?.activationNotice=nil;self?.panelView.hub?.toolTip=nil}
+        }
+        publishVisibility(persistPreference:false,heartbeat:true)
+    }
     @objc func editTaskFromMenu(){
         guard taskCard.append.isEnabled,let task=taskCard.task else {
-            activationNotice=taskCard.append.toolTip ?? CompanionControlText.error("TASK_UNAVAILABLE_OR_READ_ONLY",zh:taskControl.language=="zh")
-            panelView.setHovered(true);refreshTaskLabels();return
+            // Ended owned tasks remain editable on demand, without showing an
+            // idle bubble. The editor still freezes and revalidates its target.
+            if taskControl.error==nil,taskControl.authorized,taskControl.hostInstance==liveReducer.current?.producer_instance_id,
+               ProcessInfo.processInfo.systemUptime-taskControl.received<=5 {
+                let editable=taskControl.tasks.filter{$0["fresh"] as? Bool==true && $0["canEdit"] as? Bool==true}
+                if editable.count==1 {showTaskEditor(editable[0]);return}
+                if editable.count>1 {
+                    let menu=NSMenu()
+                    for row in editable {
+                        let side=row["side"] as? String=="left" ? (companionChinese ? "左侧":"Left"):(companionChinese ? "右侧":"Right")
+                        let item=NSMenuItem(title:side+" · "+(row["provider"] as? String ?? "")+" · "+(row["title"] as? String ?? ""),action:#selector(editSelectedTask(_:)),keyEquivalent:"")
+                        item.target=self;item.representedObject=row;menu.addItem(item)
+                    }
+                    menu.popUp(positioning:nil,at:NSEvent.mouseLocation,in:nil);return
+                }
+            }
+            showOperationNotice("TASK_UNAVAILABLE_OR_READ_ONLY");return
         }
         showTaskEditor(task)
     }
+    @objc func editSelectedTask(_ sender:NSMenuItem){if let row=sender.representedObject as? [String:Any]{showTaskEditor(row)}}
     func refreshCompanionTasks(){
         guard let selection=live.selection else{return}
         taskControl.inspect(selection:selection){[weak self] in self?.refreshTaskLabels()}
@@ -473,13 +546,15 @@ extension Companion {
             recordFocusMeasurement(start:ProcessInfo.processInfo.systemUptime,source:source,result:["error":"FOCUS_REQUEST_PENDING"]);return
         };hostActivationPending=true
         let start=ProcessInfo.processInfo.systemUptime
-        taskControl.request("focus",selection:live.selection,values:target.map{["target":$0]} ?? [:]){[weak self] result in
+        let client=target==nil ? hostFocus:taskControl
+        client.request(target==nil ? "focusHost":"focus",selection:live.selection,values:target.map{["target":$0]} ?? [:]){[weak self] result in
             guard let self=self else{return};self.hostActivationPending=false
             if result["state"] as? String=="visible" {
+                self.activationNotice=nil;self.panelView.hub?.toolTip=nil
+                self.operationPopover?.close();self.operationPopover=nil
                 if self.stage?.isVisible==true{self.backToDesktop()}
             } else {
-                self.activationNotice=CompanionControlText.error(result["error"] as? String ?? "WINDOW_FOCUS_NOT_CONFIRMED",zh:self.taskControl.language=="zh")
-                self.panelView.setHovered(true)
+                self.showOperationNotice(result["error"] as? String ?? "WINDOW_FOCUS_NOT_CONFIRMED")
             }
             self.recordFocusMeasurement(start:start,source:source,result:result);self.refreshTaskLabels()
         }

@@ -1,5 +1,7 @@
 # TWOS 1.0 · Installation and use
 
+> The current development candidate is 1.0.11 / 101.59. It is unpublished; real GUI verification and the complete gate remain pending. See [activity display and host focus](release-1.0/MINIMAL_STATUS_AND_FOCUS.en.md). The 101.58 records below retain their original validation scope.
+
 **Applies to TWOS 1.0.10 / build 101.58, including Nyra 1.0.7 / build 107.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md)
 
 **Installation and version: use `START_HERE.html` in this bilingual guide, the [release receipt](release-1.0/release.json), and the actual GitHub Release status. Use the matching receipt to verify the complete engineering gate, signing and notarization; Owner differential acceptance is separate.**

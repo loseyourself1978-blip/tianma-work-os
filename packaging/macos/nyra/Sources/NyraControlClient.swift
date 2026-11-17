@@ -25,9 +25,12 @@ final class NyraControlClient {
     var language="en"
     var authorized=false
     var error:String?
+    var hostInstance:String?
+    var statusSession:String?
+    var statusTask:String?
     func reset(){
         generation+=1;activeMethods.values.forEach{$0.cancel()};activeMethods.removeAll()
-        tasks=[];received=0;authorized=false;inspecting=false;error=nil
+        tasks=[];received=0;authorized=false;inspecting=false;error=nil;hostInstance=nil;statusSession=nil;statusTask=nil
     }
     func request(_ method:String,selection:BridgeSelection?,values:[String:Any]=[:],completion:@escaping([String:Any])->Void) {
         guard let selection=selection else{completion(["error":"HOST_NOT_CONNECTED"]);return}
@@ -65,6 +68,9 @@ final class NyraControlClient {
                 ($0["title"] as? String).map{!$0.isEmpty && $0.count<=90 && $0.rangeOfCharacter(from:.controlCharacters)==nil} == true
             }) {
                 self.tasks=rows;self.received=ProcessInfo.processInfo.systemUptime;self.error=nil
+                self.hostInstance=value["hostInstance"] as? String
+                self.statusSession=value["statusSession"] as? String
+                self.statusTask=value["statusTask"] as? String
                 self.authorized=value["userControls"] as? Bool==true;self.language=value["language"] as? String=="zh" ? "zh":"en"
             } else{self.error="INVALID_CONTROL_SNAPSHOT";self.authorized=false}
             completion()
@@ -75,8 +81,13 @@ final class NyraControlClient {
         guard lease.valid else{throw Failure.deadline}
         let endpoint=try NyraStatusClient.readEndpoint(selection.endpoint)
         guard lease.valid else{throw Failure.deadline}
-        guard endpoint.control_protocol=="twos.nyra.control.v1",let path=endpoint.control_socket,
-              path=="/private/tmp/twos-nyra-status-"+endpoint.producer_instance_id+"/control.sock" else{throw Failure.controlUnavailable}
+        let dedicatedFocus=method=="focusHost" && endpoint.focus_protocol=="twos.nyra.focus.v1"
+        let wireMethod=method=="focusHost" ? "focus":method
+        let wireProtocol=dedicatedFocus ? "twos.nyra.focus.v1":"twos.nyra.control.v1"
+        guard (dedicatedFocus || endpoint.control_protocol=="twos.nyra.control.v1"),
+              let path=dedicatedFocus ? endpoint.focus_socket:endpoint.control_socket,
+              path=="/private/tmp/twos-nyra-status-"+endpoint.producer_instance_id+(dedicatedFocus ? "/focus.sock":"/control.sock"),
+              method != "focusHost" || values.isEmpty else{throw Failure.controlUnavailable}
         try NyraStatusClient.securePath(path,mode:0o600,socket:true)
         let fd=socket(AF_UNIX,SOCK_STREAM,0);guard fd>=0 else{throw Failure.controlUnavailable};defer{Darwin.close(fd)}
         var noSignal:Int32=1
@@ -94,14 +105,14 @@ final class NyraControlClient {
         guard getsockopt(fd,SOL_SOCKET,SO_ERROR,&err,&size)==0,err==0 else{throw Failure.controlUnavailable}
         let peer=try NyraStatusClient.verifyPeer(fd,selection:selection)
         guard lease.valid else{throw Failure.deadline}
-        if method=="focus" {
+        if wireMethod=="focus" {
             // Public cooperative activation, only after exact live-peer validation.
             // The host still restores and confirms its actual workbench window.
             DispatchQueue.main.async {try? lease.whileValid {if !peer.isTerminated { _ = peer.activate(options:[.activateAllWindows]) }}}
         }
         var request=values
-        request["protocol"]="twos.nyra.control.v1";request["hostInstance"]=endpoint.producer_instance_id
-        request["consumerInstance"]=consumer;request["requestID"]=id;request["method"]=method
+        request["protocol"]=wireProtocol;request["hostInstance"]=endpoint.producer_instance_id
+        request["consumerInstance"]=consumer;request["requestID"]=id;request["method"]=wireMethod
         request["issuedUptime"]=ProcessInfo.processInfo.systemUptime
         let bytes=try JSONSerialization.data(withJSONObject:request)+Data([10]);guard bytes.count<=240_000 else{throw Failure.invalidResponse}
         let deadline=lease.deadline

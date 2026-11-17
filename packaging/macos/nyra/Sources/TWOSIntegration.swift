@@ -53,6 +53,7 @@ extension Companion {
         state["frameCount"]=displayedFrames[activeSetKey+":"+animationName,default:0]
         state["frameTimer"]=frameTimer?.isValid == true
         state["reduceMotion"]=NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        if let notice=activationNotice,ProcessInfo.processInfo.systemUptime<activationNoticeExpires {state["interactionError"]=String(notice.prefix(100))}
         state["lastSnapshotUptime"]=liveReducer.lastReceipt
         state["lastStateChangeAt"]=liveReducer.current?.timestamp ?? ""
         if let observations=liveReducer.current?.pane_observations,let data=try? JSONEncoder().encode(observations),let array=try? JSONSerialization.jsonObject(with:data) {state["paneObservations"]=array}

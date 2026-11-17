@@ -1,5 +1,6 @@
 # Tianma Work OS 1.0
 
+> Unreleased candidate amendment: [minimal activity display and independent host focus](docs/release-1.0/MINIMAL_STATUS_AND_FOCUS.en.md). Verification and publication are pending; published-version guidance below is retained for reference.
 
 **TWOS 1.0.10 / 101.58: shared Codex projects/chats and direct Nyra task controls. Includes Nyra 1.0.7 / 107.**
 

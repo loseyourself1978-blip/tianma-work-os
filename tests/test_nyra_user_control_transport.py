@@ -31,8 +31,9 @@ final class NyraControlServer {
 ''' + transport + r'''
 let root=URL(fileURLWithPath:CommandLine.arguments[1]),instance=CommandLine.arguments[2]
 let readonly=CommandLine.arguments[3]=="readonly"
+let focusOnly=CommandLine.arguments[3]=="focusOnly"
 var mutations=0,ticks=0
-let server=try NyraControlServer(root:root,instance:instance,authenticate:{pid,uid,method in
+let server=try NyraControlServer(root:root,instance:instance,focusOnly:focusOnly,authenticate:{pid,uid,method in
     pid>0 && uid==geteuid() && (!readonly || ["focus","inspect"].contains(method))
 },handle:{request,reply in
     let method=request["method"] as! String
@@ -98,4 +99,41 @@ def test_bounded_control_socket_identity_replay_and_cleanup(control_binary,polic
         process.terminate()
         try:process.wait(timeout=5)
         except subprocess.TimeoutExpired:process.kill();process.wait(timeout=5)
+        shutil.rmtree(root)
+
+
+def test_host_focus_is_independent_and_cannot_mutate_or_select_tasks(control_binary):
+    root = Path(tempfile.mkdtemp(prefix='twos-focus-fixture-', dir='/private/tmp'))
+    host, consumer = str(uuid.uuid4()), str(uuid.uuid4())
+    process = subprocess.Popen([str(control_binary), str(root), host, 'focusOnly'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    try:
+        start = json.loads(process.stdout.readline())
+        clock = time.monotonic()
+        assert Path(start['path']).name == 'focus.sock'
+        assert not (root / 'control.sock').exists()
+        def exchange(**changes):
+            payload = dict(protocol='twos.nyra.focus.v1', hostInstance=host, consumerInstance=consumer,
+                           requestID=str(uuid.uuid4()), method='focus', issuedUptime=start['uptime']+time.monotonic()-clock)
+            payload.update(changes)
+            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+                client.settimeout(5)
+                client.connect(start['path'])
+                client.sendall(json.dumps(payload).encode()+b'\n')
+                data = b''
+                while b'\n' not in data:
+                    part = client.recv(8192)
+                    if not part:
+                        break
+                    data += part
+            return json.loads(data)
+        focused = exchange()
+        assert focused['state'] == 'TEST_ONLY' and focused['userControls'] is False
+        for fields in [dict(method='submit'), dict(method='stop'), dict(method='draft'),
+                       dict(target='a'*64), dict(text='TEST ONLY'), dict(revision='draft'),
+                       dict(hostInstance=str(uuid.uuid4())), dict(protocol='twos.nyra.control.v1')]:
+            assert 'error' in exchange(**fields)
+        assert exchange()['mutations'] == 0
+    finally:
+        process.terminate()
+        process.wait(timeout=5)
         shutil.rmtree(root)

@@ -268,9 +268,13 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var showTaskLabels = true
     var hostActivationPending = false
     let taskControl=NyraControlClient()
+    let hostFocus=NyraControlClient()
+    var taskPresentation=TaskPresentation()
     let taskCard=CompanionTaskCard()
     var taskEditor:CompanionTaskEditor?
     var activationNotice:String?
+    var activationNoticeExpires:Double=0
+    var operationPopover:NSPopover?
     var lastFocusMeasurement:[String:Any]=[:]
     var focusMeasurements:[[String:Any]]=[]
     var pointerMonitors:[Any]=[]
@@ -859,27 +863,29 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func refreshTaskLabels() {
         guard panelView != nil else{return}
         let now=ProcessInfo.processInfo.systemUptime
-        let fresh=liveReducer.connected && taskControl.error==nil && taskControl.received>0 && now-taskControl.received<=5
-        // Retain the last real rows on short outages; disable stale actions.
-        taskCard.update(taskControl.tasks,fresh:fresh,authorized:taskControl.authorized,zh:taskControl.language=="zh")
+        let controlsFresh=taskControl.error==nil && taskControl.received>0 && now-taskControl.received<=5 &&
+            TaskPresentation.controlsMatch(event:liveReducer.current,host:taskControl.hostInstance,
+                session:taskControl.statusSession,task:taskControl.statusTask)
+        let rows=taskPresentation.rows(event:liveReducer.current,connected:liveReducer.connected,
+            lastReceipt:liveReducer.lastReceipt,now:now,controls:taskControl.tasks,controlsFresh:controlsFresh)
+        taskCard.update(rows,fresh:true,authorized:controlsFresh && taskControl.authorized,zh:companionChinese)
         taskCard.onAction={ [weak self] in self?.writePlaybackState("task_card_"+$0) }
         taskCard.onFocus={ [weak self] in self?.focusCompanionTask($0) }
+        taskCard.onFocusUnavailable={ [weak self] in self?.showOperationNotice("TASK_OBSERVATION_STALE") }
         taskCard.onAppend={ [weak self] in self?.showTaskEditor($0) }
         taskCard.onStop={ [weak self] task,id in self?.stopCompanionTask(task,actionID:id) }
-        // Older hosts remain visibly read-only; never invent control success.
-        let legacy=taskControl.tasks.isEmpty ? (liveReducer.current?.task_labels ?? []):[]
-        let legacyText=legacy.map(\.text).joined(separator:"\n")+(fresh ? "":" · 待更新 / Awaiting update")
+        // One bounded, two-line bubble. No legacy overlay or terminal task card.
         for button in [panelView.taskLabel,stageView?.taskLabel].compactMap({$0}) {
-            button.isHidden = !showTaskLabels || legacy.isEmpty;button.title=legacyText
+            button.isHidden=true;button.title=""
         }
-        if showTaskLabels,!taskControl.tasks.isEmpty,(panel.isVisible || stage?.isVisible==true) {
+        if showTaskLabels,!rows.isEmpty,(panel.isVisible || stage?.isVisible==true) {
             let art=stage?.isVisible==true ? stageView!.art:panelView.art
             if let window=art.window,let screen=window.screen {
                 let anchor=window.convertToScreen(art.convert(art.drawingRect,to:nil))
                 taskCard.position(anchor:anchor,screen:screen);if !taskCard.panel.isVisible{taskCard.panel.orderFrontRegardless()}
             }
         } else {taskCard.panel.orderOut(nil)}
-        if let notice=activationNotice{panelView.detail.stringValue=notice}
+        if activationNotice != nil && now>=activationNoticeExpires {activationNotice=nil;panelView.hub?.toolTip=nil}
     }
     @objc func toggleTaskLabels() {
         showTaskLabels.toggle();saveSettings();refreshTaskLabels();updateHitTesting();rebuildMenu()
@@ -892,7 +898,7 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if let observer = screenObserver { NotificationCenter.default.removeObserver(observer) }
         if let observer = connectionObserver { DistributedNotificationCenter.default().removeObserver(observer); connectionObserver=nil }
         if let observer = motionObserver { NSWorkspace.shared.notificationCenter.removeObserver(observer) }
-        livePollTimer?.invalidate(); live.stop();taskControl.reset();taskCard.panel.orderOut(nil);taskEditor?.panel.orderOut(nil)
+        livePollTimer?.invalidate(); live.stop();taskControl.reset();hostFocus.reset();taskCard.panel.orderOut(nil);taskEditor?.panel.orderOut(nil)
         pointerMonitors.forEach{NSEvent.removeMonitor($0)};pointerMonitors.removeAll()
         if let observer = sleepObserver { NSWorkspace.shared.notificationCenter.removeObserver(observer) }
         if let observer = wakeObserver { NSWorkspace.shared.notificationCenter.removeObserver(observer) }

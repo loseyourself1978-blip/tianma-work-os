@@ -1,5 +1,7 @@
 # Nyra 单击返回、任务控制及左右共用 Codex 界面
 
+> 未发布候选差量：[简洁任务展示与独立宿主聚焦](MINIMAL_STATUS_AND_FOCUS.zh-CN.md)。验证和发布尚未完成，下方已发布版本说明保留供对照。
+
 TWOS 1.0.10 / 101.58；Nyra 1.0.7 / 107。工程验证、真实操作覆盖和限制见[核验记录](FOCUS_VERIFICATION.zh-CN.md)。公开可下载状态以对应 GitHub Release 为准；Owner 接受独立记录。
 
 ## 升级差量操作

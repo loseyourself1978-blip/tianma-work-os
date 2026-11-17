@@ -1,5 +1,7 @@
 # Nyra focus, task controls and the shared Codex workspace
 
+> Unreleased candidate amendment: [minimal activity display and independent host focus](MINIMAL_STATUS_AND_FOCUS.en.md). Verification and publication are pending; published-version guidance below is retained for reference.
+
 TWOS 1.0.10 / 101.58; Nyra 1.0.7 / 107. See the [verification record](FOCUS_VERIFICATION.en.md) for engineering results, actual interaction coverage and limitations. The matching GitHub Release determines public availability; Owner acceptance is separate.
 
 ## Upgrade check
