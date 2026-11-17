@@ -943,13 +943,15 @@ if CommandLine.arguments.contains("--self-test") {
 } else if CommandLine.arguments.contains("--verify-bundled-voice") {
     do {
         let audio = NyraAudio()
-        audio.language = "zh"
-        guard audio.usesBundledVoice else { throw PreviewError.invalidManifest }
-        for cue in VoiceCue.allCases {
-            let decoded = try AVAudioPlayer(data:audio.bundledData(cue))
-            guard decoded.numberOfChannels == 1, decoded.duration.isFinite,
-                  decoded.duration > 0, decoded.duration <= 120 else { throw PreviewError.invalidManifest }
-            print("Tian 1413: \(cue.rawValue) \(decoded.duration)s")
+        for language in ["zh", "en"] {
+            audio.language = language
+            guard audio.usesBundledVoice else { throw PreviewError.invalidManifest }
+            for cue in VoiceCue.allCases {
+                let decoded = try AVAudioPlayer(data:audio.bundledData(cue))
+                guard decoded.numberOfChannels == 1, decoded.duration.isFinite,
+                      decoded.duration > 0, decoded.duration <= 120 else { throw PreviewError.invalidManifest }
+                print("\(audio.bundledName): \(cue.rawValue) \(decoded.duration)s")
+            }
         }
     } catch { fputs("FAIL: \(error)\n", stderr); exit(1) }
 } else {

@@ -6,7 +6,7 @@
 
 在任意一侧选择 Codex，使用相同的项目／会话侧栏与最新公开消息读回。单击 Nyra 返回绑定工作台，用紧凑气泡编辑草稿、补充同一轮、排队或停止准确任务。最终候选中发现的迟到历史／派发竞态已修复。原私网网页导航与已接受业务保留。
 
-本版包含五套站姿／侧卧服装、13 段离线小田中文动作短句，以及 13 句使用本机女声的英文对应台词。声音默认静音；取消静音并开启动作语音后按实际动作播放，带冷却、不叠音。声音面板可通过关闭、Esc 或声音按钮收起。
+本版包含五套站姿／侧卧服装、13 段离线小田中文动作短句，以及 13 段 tiny-voca F2 美式女声英文对应录音。声音默认静音；取消静音并开启动作语音后按实际动作播放，带冷却、不叠音。声音面板可通过关闭、Esc 或声音按钮收起。
 
 **TWOS 1.0.10 / build 101.58** · [下载与校验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.10) · [本次更新](docs/release-1.0/FOCUS_AND_TASK_CONTROLS.zh-CN.md)
 
@@ -45,3 +45,5 @@ TWOS 使用官方 Codex App Server 协议实现客户端，不是嵌入官方 ma
 </details>
 
 [此前长会话连接修复](docs/release-1.0/CODEX_HISTORY_REPAIR.zh-CN.md)
+
+[英文动作语音：tiny-voca F2](docs/release-1.0/ENGLISH_VOICE.zh-CN.md)

@@ -14,7 +14,7 @@ struct BundledVoicePack: Decodable {
     let language: String
     let clips: [String:Clip]
 
-    static func read(_ root: URL) throws -> BundledVoicePack {
+    static func read(_ root: URL, language: String = "zh") throws -> BundledVoicePack {
         let file = root.appendingPathComponent("manifest.json")
         guard root.resolvingSymlinksInPath().standardizedFileURL.path == root.standardizedFileURL.path,
               file.resolvingSymlinksInPath().path == file.path else { throw PreviewError.invalidManifest }
@@ -22,9 +22,12 @@ struct BundledVoicePack: Decodable {
         let data = try reader.read(upToCount:32_768) ?? Data()
         guard data.count < 32_768 else { throw PreviewError.invalidManifest }
         let pack = try JSONDecoder().decode(Self.self,from:data)
-        guard pack.schema == 1, pack.voice_id == "ttsmaker:1413:default", pack.language == "zh",
-              pack.display_name == "小田 / Tian",
-              Set(VoiceCue.originalRecordedCues.map(\.rawValue)).isSubset(of:Set(pack.clips.keys)),
+        let expected = language == "zh" ? ("ttsmaker:1413:default", "小田 / Tian") : ("tiny-voca:F2:en-US", "tiny-voca F2")
+        let required = language == "zh" ? VoiceCue.originalRecordedCues : Set(VoiceCue.allCases)
+        guard ["zh", "en"].contains(language), pack.schema == 1,
+              pack.voice_id == expected.0, pack.language == language,
+              pack.display_name == expected.1,
+              Set(required.map(\.rawValue)).isSubset(of:Set(pack.clips.keys)),
               Set(pack.clips.keys).isSubset(of:Set(VoiceCue.allCases.map(\.rawValue))) else { throw PreviewError.invalidManifest }
         return pack
     }

@@ -1,0 +1,130 @@
+{
+  "schema": 1,
+  "voice_id": "tiny-voca:F2:en-US",
+  "display_name": "tiny-voca F2",
+  "language": "en",
+  "locale": "en-US",
+  "source": "Locally generated fixed English action cues; no user task text",
+  "source_url": "https://huggingface.co/n4ze3m/tiny-voca",
+  "license": "Apache-2.0",
+  "license_url": "https://huggingface.co/n4ze3m/tiny-voca/blob/d94d2a0338fd1e0eab7dd896ec0ad23d8cdf7c14/LICENSE",
+  "model_revision": "d94d2a0338fd1e0eab7dd896ec0ad23d8cdf7c14",
+  "model_sha256": "fe6d918791a15b82e37465981d7f27a070e46b46635e5a3482fc8dff87a1ae46",
+  "source_commits": {
+    "dizione": "8cd889e4de7be6bd1dd2e6891344a0729fa14dd4",
+    "tiny_voca": "b510350aaf6839aca2f2a413223fab2ac973332c"
+  },
+  "phonemizer_identity": {
+    "version": 4,
+    "built": {
+      "lexicon.tsv": "3fc930345c6b3cabc533981c4b212fa309eec83913fcdbd42919338270d64b06",
+      "align.json": "864763dbd558a864950266b2c30627f1cad203e75062ee842ee63c653e823b75",
+      "g2p.json": "c518fd839ea0109c0b2b4f778c17506bf0d7653557b8b8c97a4c8dd9883d4432",
+      "g2p.npz": "eb3fd519ff00e72d850928d2fccb968adc36134bca2f3bda09de7e794c2ed01b",
+      "homographs.json": "9c3a96fcdf79fa27d1b3686dc6a507c37e4f754966928608ee9ddb617ba39192"
+    },
+    "tables": "87507dbc849ea8d851dd5cc8ba1e8a18b981d3ecae6ef256147f5d9df3ec0386",
+    "code": "89bfd90457b07d1d58a17a90b1ca30eec46944def6d9eb5db88a7a9354cba54b",
+    "fingerprint": "93227aecaddebb7f6fdfd6c4b016d70312a6dd068cb7fb274b5805c7886c5ab8"
+  },
+  "generation_settings": {
+    "voice": "F2",
+    "speed": 0.95,
+    "pitch_shift": 0,
+    "pitch_range": 1,
+    "sample_rate": 24000,
+    "channels": 1,
+    "pcm_bits": 16,
+    "runtime": "onnxruntime 1.23.2",
+    "numpy": "2.3.5",
+    "seed": 20261117,
+    "peak_limit": 0.97
+  },
+  "generated_at": "2026-11-17T12:02:28.639454+08:00",
+  "test_only": false,
+  "clips": {
+    "welcome": {
+      "file": "welcome.wav",
+      "text": "Hi! I'm right here with you.",
+      "sha256": "21c1ecec6eb8151cb18bc8f245b96ef74a00b8dec51301da20a9b4d4410086f7",
+      "duration_seconds": 2.2293333333333334
+    },
+    "rest": {
+      "file": "rest.wav",
+      "text": "Feeling tired? Have a sip of water and take a little break.",
+      "sha256": "65d2e02b37d9e3293f012be7d1763c3692b8d8eeb634c637c33195956559dbd9",
+      "duration_seconds": 3.7866666666666666
+    },
+    "working": {
+      "file": "working.wav",
+      "text": "Let's get started! I'm cheering you on.",
+      "sha256": "424cbc0f9f43718e7591de3c597c3832df55213884c18eb8b9fd5cba97fbdf65",
+      "duration_seconds": 2.624
+    },
+    "waiting": {
+      "file": "waiting.wav",
+      "text": "Your confirmation is needed. I'll wait right here.",
+      "sha256": "d943a669a5e4dc51c2091b043223f38ad03a30a18145735a4bd14e98bda32903",
+      "duration_seconds": 3.36
+    },
+    "success": {
+      "file": "success.wav",
+      "text": "Yay! You did great!",
+      "sha256": "289645c42a10f69832c40a5a8dc1c5a19148066ff4c9176ed6cf2d3067e03a6b",
+      "duration_seconds": 1.4933333333333334
+    },
+    "sad": {
+      "file": "sad.wav",
+      "text": "Don't worry. Let's take it one step at a time.",
+      "sha256": "47a39064c869f61cd6b87fa838e9cdc897ec0b810ba6390130b9e4927beb907a",
+      "duration_seconds": 3.018666666666667
+    },
+    "outfit": {
+      "file": "outfit.wav",
+      "text": "All dressed up! How do I look?",
+      "sha256": "07fad7a4e63f41d8e1dd002d25455fe315a6befc6c927cbea97a31ea69ce33ae",
+      "duration_seconds": 1.984
+    },
+    "wave": {
+      "file": "wave.wav",
+      "text": "Hey! I'm here.",
+      "sha256": "644ce8db10026b04f6c544b481314691b723c5bc7aee118598b8a2d7cde69f5e",
+      "duration_seconds": 1.248
+    },
+    "idle": {
+      "file": "idle.wav",
+      "text": "I'm right here, whenever you need me.",
+      "sha256": "54c12fdab1ee6fe3335878ae405388b67aea7aa1f26050f3d13071fe2931c46c",
+      "duration_seconds": 2.2186666666666666
+    },
+    "reading": {
+      "file": "reading.wav",
+      "text": "Let's enjoy a little quiet reading together.",
+      "sha256": "a2ca4153ac77c354df59bb67127445f611b01e38472bb997731f0bdf376f1c9a",
+      "duration_seconds": 2.7626666666666666
+    },
+    "moving": {
+      "file": "moving.wav",
+      "text": "Let's go! I'm right with you.",
+      "sha256": "0a3e4edde2436392897abac9da2d5ff2dbe9b65460215d6c4e3f323accf5479c",
+      "duration_seconds": 2.1013333333333333
+    },
+    "jumping": {
+      "file": "jumping.wav",
+      "text": "Up we go! Time for a little stretch.",
+      "sha256": "4679bdc4445ada4bc6e83a3037d1df08f6ca4b63d7e78fe1e20d54b4a769b2f5",
+      "duration_seconds": 2.5493333333333332
+    },
+    "settling": {
+      "file": "settling.wav",
+      "text": "There we are. Nice and steady.",
+      "sha256": "3dea21f773cf051f1e3570e1bf04f478864c646ab04da5e2d59bac0198740beb",
+      "duration_seconds": 2.3573333333333335
+    }
+  },
+  "licenses": {
+    "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "LICENSE.cmudict": "bd4ce8e44170a5f9f481310ca85c51de3c4f851a65e679b40e603b143bd3542a",
+    "LICENSE.homograph-data": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  }
+}

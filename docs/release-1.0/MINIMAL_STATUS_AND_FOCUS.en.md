@@ -31,3 +31,8 @@ The status channel contains bounded on-screen titles and minimal state/opaque ID
 ## Verification boundary
 
 A new candidate still requires real left/right/both activity and terminal hiding, control-outage behavior, host restart, and twenty real single-click observations with scene and latency. The warm target is at most one second, not an asserted test result. Full-screen/Space/multiple-display coverage must state what was actually observed. Prior click or protocol PASS evidence cannot replace the new candidate's GUI evidence.
+
+
+## English voice update
+
+English uses 13 bundled tiny-voca F2 offline cues; Chinese Tian and explicit imports are preserved. See [voice details](ENGLISH_VOICE.en.md). No task text, synthesis service or model runtime is added.

@@ -6,7 +6,7 @@
 
 Select Codex on either side for the same project/chat sidebar and current conversation readback. Click Nyra to return to the bound workbench; use its compact task bubble to edit a draft, steer an owned turn, queue a supplement or stop the exact task. The delayed-history dispatch race discovered during final-candidate testing is repaired. Existing private-network navigation and accepted business results remain preserved.
 
-This version includes five standing/reclining outfits, 13 bundled Chinese Tian action recordings and 13 matching English phrases using an installed local female voice. Sound starts muted; unmute and enable Action voice for eligible transitions, with cooldown and no overlap. Close the panel with Close, Escape or Sound.
+This version includes five standing/reclining outfits, 13 bundled Chinese Tian action recordings and 13 matching offline tiny-voca F2 American English recordings. Sound starts muted; unmute and enable Action voice for eligible transitions, with cooldown and no overlap. Close the panel with Close, Escape or Sound.
 
 **TWOS 1.0.10 / build 101.58** · [Download and verify](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.10) · [This update](docs/release-1.0/FOCUS_AND_TASK_CONTROLS.en.md)
 
@@ -45,3 +45,5 @@ The independent companion is maintained in [Nyra](https://github.com/loseyoursel
 </details>
 
 [Long-conversation Codex connection repair](docs/release-1.0/CODEX_HISTORY_REPAIR.en.md)
+
+[English action voice: tiny-voca F2](docs/release-1.0/ENGLISH_VOICE.en.md)

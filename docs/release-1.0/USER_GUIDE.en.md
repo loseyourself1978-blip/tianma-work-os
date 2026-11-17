@@ -35,7 +35,7 @@ Black & purple, Office, Gala, White blouse and Ruby gown support standing and re
 
 Nyra consumes minimal read-only state. Idle, running, queued/waiting, partial/failure/cancellation and disconnected remain distinguishable. Unverified completion does not celebrate. An explicitly checked, exactly bound result may trigger one celebration, without changing an earlier executor PARTIAL report or granting overall product acceptance. Reconnection does not replay celebrations.
 
-Nyra plays 13 short bundled Chinese Tian recordings or 13 corresponding English phrases with an installed local female voice. Eligible action transitions include idle, reading, work, rest and verified success; cooldown prevents repetitive speech. Sound starts muted. Unmute and enable Action voice in Sound; close the panel with Close, Escape or Sound again.
+Nyra plays 13 short bundled Chinese Tian recordings or 13 corresponding bundled tiny-voca F2 American English recordings. Eligible action transitions include idle, reading, work, rest and verified success; cooldown prevents repetitive speech. Sound starts muted. Unmute and enable Action voice in Sound; close the panel with Close, Escape or Sound again.
 
 [English / 简体中文](USER_GUIDE.zh-CN.md)
 
@@ -56,3 +56,5 @@ The top **Language: English / 语言：简体中文** selector changes TWOS cont
 ## Direct task controls
 
 Click the character once to restore the bound TWOS workbench. The compact task bubble has a direct pencil and Stop. The pencil opens a focused IME-capable editor; Enter sends, Shift+Enter inserts a line, Escape closes. Normal drafts are autosaved; a queued revision is saved only explicitly. A running owned Codex turn supports Steer; web tasks use send-after-completion. Target changes retain the input rather than redirecting it. Stop first fences future dispatch and then interrupts only the bound task. The display changes to Stopping immediately, and to Stopped only on confirmed cancellation. Failed confirmation remains visible. See the [incremental guide](FOCUS_AND_TASK_CONTROLS.en.md) for exact authority and recovery boundaries.
+
+[English action voice: tiny-voca F2](ENGLISH_VOICE.en.md)

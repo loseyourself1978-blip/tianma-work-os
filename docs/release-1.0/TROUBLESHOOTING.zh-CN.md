@@ -47,3 +47,8 @@ TWOS 1.0.10 / 101.58 · [本次增量](FOCUS_AND_TASK_CONTROLS.zh-CN.md)
 ### 1.0.8 点击网页“打开”后没有变化
 
 局域网 HTTP 输入被静默拒绝的问题已在 1.0.9 修复，见[支持边界和准确步骤](WEBSITE_NAVIGATION_FOLLOWUP.zh-CN.md)。它与 Codex 连接问题分开，不需要修改登录数据。
+
+
+## 英文语音更新
+
+英文使用 13 段 tiny-voca F2 离线短句，中文小田与明确导入音频保留。详见[语音说明](ENGLISH_VOICE.zh-CN.md)。不新增任务朗读、联网合成或模型运行时。

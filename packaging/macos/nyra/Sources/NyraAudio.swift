@@ -19,10 +19,14 @@ final class NyraAudio: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDeleg
     var customDirectory: URL?
     var legacyDirectory: URL?
     var bundledVoiceRoot = Bundle.main.resourceURL?.appendingPathComponent("audio/tian-1413-zh")
-    var usesBundledVoice: Bool { resolvedLanguage == "zh" && (voiceIDs["zh"] ?? "").isEmpty }
+    var bundledEnglishVoiceRoot = Bundle.main.resourceURL?.appendingPathComponent("audio/tiny-voca-f2-en")
+    var selectedBundledRoot: URL? { resolvedLanguage == "zh" ? bundledVoiceRoot : bundledEnglishVoiceRoot }
+    var bundledName: String { resolvedLanguage == "zh" ? "小田 / Tian" : "tiny-voca F2" }
+    var bundledIdentifier: String { resolvedLanguage == "zh" ? "ttsmaker:1413:default" : "tiny-voca:F2:en-US" }
+    var usesBundledVoice: Bool { ["zh", "en"].contains(resolvedLanguage) && (voiceIDs[resolvedLanguage] ?? "").isEmpty }
     func bundledData(_ cue: VoiceCue) throws -> Data {
-        guard let root = bundledVoiceRoot else { throw PreviewError.invalidManifest }
-        return try BundledVoicePack.read(root).data(cue,root:root)
+        guard let root = selectedBundledRoot else { throw PreviewError.invalidManifest }
+        return try BundledVoicePack.read(root,language:resolvedLanguage).data(cue,root:root)
     }
     private(set) var lastResult = "尚未播放 / Not played"
     private(set) var lastCue = ""
@@ -89,10 +93,10 @@ final class NyraAudio: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDeleg
     }
     var sourceLabel: String {
         if usesBundledVoice {
-            guard let root = bundledVoiceRoot, (try? BundledVoicePack.read(root)) != nil else {
-                return "小田资源不可用；请检查安装包 / Tian recordings unavailable"
+            guard let root = selectedBundledRoot, (try? BundledVoicePack.read(root,language:resolvedLanguage)) != nil else {
+                return bundledName + " · 资源不可用；请检查安装包 / Recordings unavailable"
             }
-            return "小田 / Tian · 中文 · 内置离线短句 / Bundled offline cues"
+            return bundledName + (resolvedLanguage == "zh" ? " · 中文" : " · English (US)") + " · 内置离线短句 / Bundled offline cues"
         }
         guard let voice = voice else { return "所选女声未安装；请选择可用声线 / Selected voice unavailable" }
         return (voiceSelectionUnavailable ? "原声线不可用，使用已安装声线 / Saved voice unavailable; using installed voice · " : "本机女声 / Local female voice · ") + "\(voice.name) · \(voice.language)" + (voice.quality.rawValue > 1 ? " · 高质量 / Enhanced" : "")
@@ -100,7 +104,7 @@ final class NyraAudio: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDeleg
     var isPlaying: Bool { activeUtterance != nil || speech.isSpeaking || player?.isPlaying == true || effect?.isPlaying == true }
     var snapshot: [String: Any] {
         ["muted":isMuted,"automatic":automatic,"volume":volume,"language":language,"resolved_language":resolvedLanguage,
-         "voice_identifier":usesBundledVoice ? "ttsmaker:1413:default" : (voice?.identifier ?? ""),"source":sourceLabel,"result":lastResult,"speaking":speech.isSpeaking,
+         "voice_identifier":usesBundledVoice ? bundledIdentifier : (voice?.identifier ?? ""),"source":sourceLabel,"result":lastResult,"speaking":speech.isSpeaking,
          "audio_playing":player?.isPlaying == true || effect?.isPlaying == true,"cue":lastCue,"origin":lastOrigin,
          "playback_count":playbackCount,"speech_start_count":speechStartCount,"custom_exclusive_voice_produced":false,"bundled_voice_selected":usesBundledVoice]
     }
@@ -142,9 +146,9 @@ final class NyraAudio: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDeleg
                 player = try AVAudioPlayer(data:data)
                 guard let player = player, player.duration.isFinite, player.duration > 0, player.duration <= 120 else { throw PreviewError.invalidManifest }
                 player.volume = volume; player.delegate = self
-                if player.play() { playbackCount += 1; lastResult = "正在播放小田 / Playing Tian" }
-                else { lastResult = "小田短句播放失败 / Tian playback failed" }
-            } catch { lastResult = "小田短句缺失或损坏；未改播其他声线 / Tian cue missing or damaged" }
+                if player.play() { playbackCount += 1; lastResult = "正在播放 / Playing · " + bundledName }
+                else { lastResult = bundledName + " · 短句播放失败 / Cue playback failed" }
+            } catch { lastResult = bundledName + " · 短句缺失或损坏；未改播其他声线 / Cue missing or damaged" }
         } else if let voice = voice {
             let words = AVSpeechUtterance(string:cue.phrase(resolvedLanguage))
             words.voice = voice; words.volume = volume
@@ -232,7 +236,7 @@ final class AudioSettingsController: NSViewController {
     }
     override func viewDidAppear() { super.viewDidAppear(); view.window?.makeFirstResponder(view) }
     func reloadVoices() {
-        voiceChoice.removeAllItems(); voiceChoice.addItem(withTitle:audio.resolvedLanguage == "zh" ? "小田 · 内置短句 / Tian · bundled cues" : "本机女声（自动） / Local female voice (auto)")
+        voiceChoice.removeAllItems(); voiceChoice.addItem(withTitle:audio.resolvedLanguage == "zh" ? "小田 · 内置短句 / Tian · bundled cues" : "tiny-voca F2 · English (US) · bundled cues")
         voiceChoice.lastItem?.representedObject = ""
         for voice in audio.voices {
             voiceChoice.addItem(withTitle:"\(voice.name) · \(voice.language)" + (voice.quality.rawValue > 1 ? " · Enhanced" : ""))
@@ -358,7 +362,28 @@ func runAudioStorageTests() throws {
     audio.voiceIDs["zh"] = "TEST-system-voice"
     try require(!audio.usesBundledVoice)
     audio.voiceIDs["zh"] = ""
-    audio.language = "en"; try require(!audio.usesBundledVoice)
+    audio.language = "en"; try require(audio.usesBundledVoice && audio.bundledIdentifier == "tiny-voca:F2:en-US")
+    // English must never resolve Chinese bytes, even if a root is misbound.
+    audio.bundledEnglishVoiceRoot = bundled
+    do { _ = try audio.bundledData(.rest); throw NSError(domain:"TEST accepted Chinese for English",code:1) }
+    catch is PreviewError {}
+    let english = root.appendingPathComponent("TEST-English")
+    try FileManager.default.createDirectory(at:english,withIntermediateDirectories:true)
+    var englishClips: [String:Any] = [:]
+    for cue in VoiceCue.allCases {
+        try wave.write(to:english.appendingPathComponent(cue.rawValue+".wav"))
+        englishClips[cue.rawValue] = ["file":cue.rawValue+".wav","sha256":digest,"text":cue.phrase("en")]
+    }
+    func writeEnglish() throws {
+        try JSONSerialization.data(withJSONObject:["schema":1,"voice_id":"tiny-voca:F2:en-US","display_name":"tiny-voca F2","language":"en","clips":englishClips]).write(to:english.appendingPathComponent("manifest.json"))
+    }
+    try writeEnglish(); audio.bundledEnglishVoiceRoot = english
+    for cue in VoiceCue.allCases { try require(try audio.bundledData(cue) == wave) }
+    audio.voiceIDs["en"] = "TEST-saved-English-voice"; try require(!audio.usesBundledVoice)
+    audio.voiceIDs["en"] = ""
+    englishClips["idle"] = nil; try writeEnglish()
+    do { _ = try audio.bundledData(.rest); throw NSError(domain:"TEST accepted incomplete English",code:1) }
+    catch is PreviewError {}
     audio.language = "zh"
     try Data("damaged".utf8).write(to:bundled.appendingPathComponent("rest.wav"))
     do { _ = try audio.bundledData(.rest); throw NSError(domain:"TEST accepted bad digest",code:1) }

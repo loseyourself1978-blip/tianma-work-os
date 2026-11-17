@@ -31,3 +31,8 @@ Automatic exchange saves only the explicitly authorized instructions/replies and
 Nyra’s task editor additionally keeps at most one local `task-input-recovery.json` in its application state directory before transmitting a draft/control operation. It contains only the explicitly entered text, a bounded task title/provider and opaque target identity; no attachments or credentials. The file is owner-only (0600), its directory is 0700, and a matching acknowledged save/delivery clears it. Retained recovery is displayed copy-only after reopening; it is never automatically sent. Discard requires an explicit local confirmation.
 
 The authenticated control channel also returns up to two bound task summaries: provider, side, a title of at most 90 characters, state/freshness, available actions and opaque correlation IDs. A summary may retain an ended or stale task for result inspection or draft recovery. It does not return raw workspace paths, accounts, complete conversations or attachment contents.
+
+
+## English voice update
+
+English uses 13 bundled tiny-voca F2 offline cues; Chinese Tian and explicit imports are preserved. See [voice details](ENGLISH_VOICE.en.md). No task text, synthesis service or model runtime is added.

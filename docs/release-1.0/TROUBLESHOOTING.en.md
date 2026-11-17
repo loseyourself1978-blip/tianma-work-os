@@ -47,3 +47,8 @@ The read-only link is bound to the exact signed producer, including its applicat
 ### Website Open silently closes in 1.0.8
 
 The private-network HTTP input rejection is repaired in 1.0.9; see the [supported boundaries and exact steps](WEBSITE_NAVIGATION_FOLLOWUP.en.md). This is separate from Codex connection and does not require changing login data.
+
+
+## English voice update
+
+English uses 13 bundled tiny-voca F2 offline cues; Chinese Tian and explicit imports are preserved. See [voice details](ENGLISH_VOICE.en.md). No task text, synthesis service or model runtime is added.
