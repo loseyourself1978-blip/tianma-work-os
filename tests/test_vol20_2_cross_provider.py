@@ -380,6 +380,12 @@ if mode == "nyra_status" {
     precondition(IntegratedWorkbench.companionTitle("https://private/path")==nil)
     precondition(IntegratedWorkbench.companionTitle("TEST\n  ONLY")=="TEST ONLY")
     precondition(IntegratedWorkbench.companionTitle(String(repeating:"中",count:100))?.count==90)
+    precondition(IntegratedWorkbench.companionTaskTitle("ChatGPT: Chat, Work, Create & Code with AI",provider:"ChatGPT",state:"running",english:true)=="Replying")
+    precondition(IntegratedWorkbench.companionTaskTitle("ChatGPT",provider:"ChatGPT",state:"running",english:false)=="正在回复")
+    precondition(IntegratedWorkbench.companionTaskTitle("Claude",provider:"Claude",state:"queued",english:true)=="Queued task")
+    precondition(IntegratedWorkbench.companionTaskTitle(nil,provider:"DeepSeek",state:"waiting_user",english:false)=="等待你的操作")
+    precondition(IntegratedWorkbench.companionTaskTitle("ChatGPT integration notes",provider:"ChatGPT",state:"running",english:true)=="ChatGPT integration notes")
+    precondition(IntegratedWorkbench.companionTaskTitle("Codex",provider:"Codex",state:"running",english:true)=="Codex")
     print("NYRA_STATUS_PRIVACY_DEDUP_RECONNECT_TERMINAL_PASS");exit(0)
 }
 

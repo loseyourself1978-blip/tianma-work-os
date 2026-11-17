@@ -827,6 +827,19 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
               !value.hasPrefix("/"),!value.hasPrefix("~"),!value.contains("://") else{return nil}
         return String(value.prefix(90))
     }
+    static func companionTaskTitle(_ title:String?,provider:String,state:String,english:Bool)->String {
+        let clean=companionTitle(title)
+        let generic=clean.map { value in
+            let key=value.lowercased()
+            return provider != "Codex" && (key==provider.lowercased() ||
+                (provider=="ChatGPT" && key=="chatgpt: chat, work, create & code with ai"))
+        } ?? true
+        if !generic,let clean=clean {return clean}
+        if state=="waiting_user" {return english ? "Waiting for you":"等待你的操作"}
+        if state=="queued" {return english ? "Queued task":"待执行任务"}
+        if state=="running" {return english ? (provider=="Codex" ? "Current task":"Replying"):(provider=="Codex" ? "当前任务":"正在回复")}
+        return english ? "Title unavailable":"标题暂不可用"
+    }
     func publishPaneActivity() {
         var aggregate=PaneActivity.aggregate(paneActivities)
         // Between confirmed replies and the next dispatch this is scheduling,
@@ -843,8 +856,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
             if kinds[index]=="Codex",let client=codex {
                 title=client.threadRows.first(where:{$0["id"] as? String==client.threadID})?["name"] as? String
             } else {title=webPanes[index]?.web.title}
-            let fallback=activity.state=="waiting_user" ? "等待你的操作 / Waiting for you" : "当前任务 / Current task"
-            return ["side":index==0 ? "left":"right","provider":kinds[index],"title":Self.companionTitle(title) ?? fallback]
+            return ["side":index==0 ? "left":"right","provider":kinds[index],"title":Self.companionTaskTitle(title,provider:kinds[index],state:activity.state,english:translate("Back")=="Back")]
         }
         _ = nyraPublicTasks()
         nyraStatus.observe(session:nyraStatus.alias(identity),task:active.isEmpty ? nil : nyraStatus.alias(active),state:aggregate.state,source:"twos_runtime",ownerEvidence:aggregate.state=="verified_success" && !checks.isEmpty ? nyraStatus.alias(checks) : nil,side:aggregate.side,panes:PaneActivity.observations(paneActivities),labels:labels)
@@ -1701,7 +1713,7 @@ extension IntegratedWorkbench {
         let fresh=activity.fresh && activity.state != "activity_unknown"
         let selectionScope=nyraStatus.alias("selection|\(index)|\(kinds[index])|\(routeRevision)|\(activity.session)|\(scope)")
         var value:[String:Any] = ["side":index==0 ? "left":"right","provider":kinds[index],"target":target,"scope":selectionScope,
-            "title":Self.companionTitle(title) ?? (activity.state=="waiting_user" ? "等待你的操作 / Waiting for you":"当前任务 / Current task"), "state":activity.state,
+            "title":Self.companionTaskTitle(title,provider:kinds[index],state:activity.state,english:translate("Back")=="Back"), "state":activity.state,
             "reason":activity.reason,"fresh":fresh,"canAppend":fresh && active && owned && !stopping,
             "canEdit":fresh && draftOwned && !stopping,
             "canStop":fresh && active && owned && !stopping,

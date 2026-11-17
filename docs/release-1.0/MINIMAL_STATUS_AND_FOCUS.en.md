@@ -39,3 +39,5 @@ A new candidate still requires real left/right/both activity and terminal hiding
 ## English voice update
 
 English uses 13 bundled tiny-voca F2 offline cues; Chinese Tian and explicit imports are preserved. See [voice details](ENGLISH_VOICE.en.md). No task text, synthesis service or model runtime is added.
+
+Generic provider landing-page titles are not task names. When a current activity has no specific title, Nyra uses a localized activity placeholder; it never generates a summary or borrows an earlier message.
