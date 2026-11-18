@@ -14,6 +14,8 @@ def integrated_harness(tmp_path_factory):
     root=tmp_path_factory.mktemp('integrated-webkit')
     code=(ROOT/'packaging/macos/TianmaLauncher.swift').read_text().split('// The only child runtime',1)[0]
     code+='\n'+(ROOT/'packaging/macos/CodexAttachments.swift').read_text()+'\n'+(ROOT/'packaging/macos/CodexTelemetry.swift').read_text()+'\n'+(ROOT/'packaging/macos/NativeCodex.swift').read_text()+'\n'+(ROOT/'packaging/macos/IntegratedWorkbench.swift').read_text()+'\n'+(ROOT/'packaging/macos/PairedWorkflow.swift').read_text()
+    for name in ['TeamReport.swift','TeamRun.swift','TeamWorkspace.swift']:
+        code+='\n'+(ROOT/'packaging/macos'/name).read_text()
     code+=r'''
 let app = NSApplication.shared
 let root = URL(fileURLWithPath:CommandLine.arguments[1])
@@ -21,7 +23,9 @@ let base = URL(string:CommandLine.arguments[2])!
 let resources = URL(fileURLWithPath:CommandLine.arguments[3])
 try NativeWorkbench.save(["kind0":"Website…","kind1":"Codex","url0":base.absoluteString,"url1":""],at:root.appendingPathComponent("paired-workbench.json"))
 let workbench = IntegratedWorkbench(preferences:root, resources:resources, translate:{$0}, openProjects:{fatalError("legacy was launched")})
+workbench.codex!.connectionProcessFactory = { throw NSError(domain:"TestOnly",code:1) }
 workbench.start()
+precondition(workbench.codex!.transportGeneration > 0, "restoring a visible Codex pane starts the connection")
 let browser = workbench.webPanes[0]!
 let client = workbench.codex!
 var polls = 0
@@ -194,13 +198,13 @@ func runRenderer() {
       $('navigation-toggle').click();assert(document.body.classList.contains('navigation-collapsed'),'sidebar can be collapsed without losing the workspace');
       $('navigation-toggle').click();assert(!document.body.classList.contains('navigation-collapsed'),'sidebar returns independently of chat selection');
       r('control',{connected:false,busy:false,connecting:true,connectionPhase:'handshake'});
-      assert($('connect').disabled&&!$('cancel-connection').hidden&&$('connection-status').textContent.includes('正在连接'),'connection returns a visible cancellable state');
+      assert($('retry-connection').hidden&&!$('cancel-connection').hidden&&$('connection-status').textContent.includes('正在连接'),'connection returns a visible cancellable state');
       r('control',{connected:false,busy:false,connecting:false,connectionPhase:'closing',connectionError:'cancelled'});
-      assert($('connect').disabled&&$('cancel-connection').hidden,'closing child cannot be replaced by another connect');
+      assert($('retry-connection').hidden&&$('cancel-connection').hidden,'closing child cannot be replaced by another connect');
       r('control',{connected:false,busy:false,connecting:false,connectionPhase:'disconnected',connectionError:'authentication_required'});
-      assert(!$('connect').disabled&&$('connection-status').textContent.includes('登录'),'authentication failure has explicit recovery');
+      assert(!$('retry-connection').hidden&&$('connection-status').textContent.includes('登录'),'authentication failure has explicit recovery');
       r('control',{connected:true,busy:false,connectionPhase:'connected'});
-      assert(!$('disconnect').hidden&&!$('disconnect').disabled&&$('connection-status').hidden,'ready connection offers independent disconnect');
+      assert(!$('connect')&&!$('disconnect')&&$('retry-connection').hidden&&$('connection-feedback').hidden,'connected view has no redundant connection controls');
       r('control',{connected:true,busy:false,threadId:'fixture-thread'});
       r('recentHistory',{threadId:'fixture-thread',entries:[{item:{id:'fresh-answer',type:'agentMessage',text:'TEST ONLY initial'}}]});
       r('recentHistory',{threadId:'fixture-thread',entries:[{item:{id:'fresh-answer',type:'agentMessage',text:'TEST ONLY newer public reply'}}]});
@@ -359,7 +363,7 @@ func runRenderer() {
       r('queue',{paused:true,items:[]});assert($('queue-panel').hidden,'an empty paused queue never offers a meaningless continue action');
 
       // R2: real WebKit rendering with explicitly synthetic service metadata.
-      r('locale',{zh:false});assert($('language').value==='en-US'&&$('directory-mode').options[1].textContent.includes('Existing project'),'language entry and directory modes visible');
+      r('locale',{zh:false});assert(document.documentElement.lang==='en-US' && !$('language')&&$('directory-mode').options[1].textContent.includes('Existing project'),'language entry and directory modes visible');
       $('draft').value='用户正文 untouched';r('locale',{zh:true});assert($('draft').value==='用户正文 untouched','language never translates or clears the draft');
       r('telemetry',{connected:true,accountVerified:true,now:1000,authentication:'chatgpt',plan:'pro',limitsUpdated:990,usageUpdated:990,errors:{},observedTurns:2,observedTools:3,limits:{rateLimits:{primary:{usedPercent:80}},rateLimitsByLimitId:{codex:{primary:{usedPercent:12,windowDurationMins:10080,resetsAt:2000},secondary:null,credits:{balance:'0',hasCredits:false,unlimited:false}},other:{primary:{usedPercent:30,windowDurationMins:300,resetsAt:2000}}}},usage:{summary:{lifetimeTokens:100},dailyUsageBuckets:[]}});
       assert($('usage-windows').children.length===2&&!$('usage-windows').textContent.includes('80%'),'quota buckets do not double-count legacy mirror');
@@ -393,15 +397,9 @@ func runRenderer() {
       r('telemetry',{...sample,run:{state:'running',elapsed:260,lastActivity:999,eta:{available:true,low:120,high:300,samples:3,confidence:'low',updated:999},workload:{available:true,remainingPercent:40,basis:'equal_plan_items',planVersion:2,updated:999}}});
       assert($('run-eta-value').textContent.includes('2分')&&$('run-work').textContent==='40%（估算）'&&$('run-metrics').children.length===3,'ETA elapsed workload are primary parallel fields');
       assert($('run-detail').textContent.includes('等权')&&$('run-scope').textContent.includes('仅当前执行'),'work scope and non-time basis are visible');
-      $('pet-control').click();assert(!$('pet-info').hidden&&$('pet-control').getAttribute('aria-expanded')==='true'&&$('pet-reason').textContent.includes('暂不可用'),'unbundled Nyra explains unavailable without a fake toggle');
-      r('locale',{zh:false});assert($('pet-control').textContent.includes('view status')&&$('elapsed-label').textContent==='Elapsed'&&$('work-label').textContent==='Work remaining','new controls support English');
-      $('pet-control').click();r('locale',{zh:true});assert($('pet-info').hidden,'pet disclosure closes without controlling model or floating state');
-      r('nyra',{available:true,visible:false,observed:true});assert($('pet-control').textContent.includes('显示夜璃'),'actual helper state shows show action');
-      r('nyra',{available:true,visible:true,observed:true});assert($('pet-control').textContent.includes('隐藏夜璃')&&$('pet-binding').textContent.includes('尚未关联'),'actual visibility does not imply run binding');
-      r('nyra',{available:true,visible:true,observed:true,binding:'CONNECTED_READONLY'});assert($('pet-binding').textContent.includes('只读任务状态')&&$('pet-binding').textContent.includes('不代表执行或验收'),'observed same-instance readonly connection never claims acceptance');
-      r('nyra',{available:true,visible:true,observed:true,binding:'NOT_CONNECTED'});assert($('pet-binding').textContent.includes('尚未关联'),'disconnect removes stale connected label');
-      r('nyra',{available:true,visible:true,pending:true});assert($('pet-control').disabled,'pending control cannot double-toggle');
-      r('nyra',{available:false,reason:'NYRA_HELPER_NOT_BUNDLED'});
+      assert(!$('pet-control')&&!$('language-label')&&!$('pet-info'),'shared settings live only in the workbench toolbar');
+      r('locale',{zh:false});assert($('elapsed-label').textContent==='Elapsed'&&$('work-label').textContent==='Work remaining','pane follows English from the global picker');
+      r('locale',{zh:true});
       r('event',{method:'item/completed',params:{item:{id:'image-name',type:'userMessage',content:[{type:'text',text:'Image attachment supplied next: 图A.png\nSource SHA256: abc'}]}}});assert($('item-image-name').querySelector('summary').textContent==='图片 · 图A.png'&&!$('item-image-name').querySelector('details').open,'image transport label is localized and collapsed');
       window.twosTelemetry.selectThread('new-empty');assert($('run-compact').textContent.includes('暂无已观测运行')&&!$('run-detail').textContent.includes('model-a'),'switching clears the previous thread observation immediately');
       $('folder-path').textContent='/old-folder';r('newTask',{});assert($('folder-path').textContent===''&&$('confirm-folder').disabled,'new task never keeps the previous directory preview');
@@ -434,10 +432,12 @@ func runRenderer() {
     """#
     client.web.evaluateJavaScript(script) { value, error in
         precondition(error == nil,"renderer: \(String(describing:error))")
-        precondition((value as? [String])?.count == 130, "all 125 prior checks plus five restored-history terminal checks must run")
+        precondition((value as? [String])?.count == 124, "all current workbench interaction checks must run")
         // Switching positions retains the very same native Codex connection.
         let instance=workbench.codex
+        let oldGeneration = client.transportGeneration
         workbench.leftPicker.selectItem(at:1);workbench.changePane(workbench.leftPicker)
+        precondition(client.transportGeneration > oldGeneration, "explicitly selecting left Codex retries the failed startup")
         precondition(workbench.codex === instance && workbench.codex!.web.window === workbench.window)
         precondition(workbench.kinds == ["Codex","Website…"] && workbench.webPanes[1] === browser, "moving panes must keep the original browser context")
         let movedLocation = root.appendingPathComponent("paired-location-1-127.0.0.1.json")

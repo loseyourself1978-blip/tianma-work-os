@@ -1,3 +1,9 @@
+# TWOS 1.0.12 / 101.60 · AI Team release candidate
+
+Create a named chat from the AI Team button at the top of the workbench. Choose the Planner, Builder and Reviewer, approve their scope, then select a message to inspect progress and files. Start another task from the left sidebar. Existing writable folders are supported. Each chat publishes into its own delivery folder after independent review, verification and attributable model receipts. Earlier engineering chats can be imported for read-only browsing. The isolated engineering host uses its own Nyra instance. [Operation and acceptance guide](AI_TEAM.en.md).
+
+---
+
 # TWOS 1.0.11 / 101.59 — Minimal status and independent return
 
 Show a compact bubble only for current observed work and close it when no task is active. Character return uses a separate authenticated host-only path, independent of task/edit authority. Explain old-installation mismatches, observe anonymous ChatGPT activity and replace generic page titles with honest activity labels. Add 13 offline tiny-voca F2 English cues while retaining the 13 Chinese Tian recordings byte for byte.

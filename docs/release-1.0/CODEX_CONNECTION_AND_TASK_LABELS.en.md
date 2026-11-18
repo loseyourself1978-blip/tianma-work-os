@@ -4,7 +4,7 @@ TWOS 1.0.7 / build 101.55; Nyra 1.0.6 / build 106. Use the matching GitHub Relea
 
 ## A · Upgrade check — stop here afterward
 
-In TWOS, choose Codex and click **Connect local Codex** once. The connecting stage remains visible and **Cancel connection** works while startup is pending. Model and conversation lists appear after authentication and catalogs are confirmed. A connection does not send a task. Select the intended existing conversation and inspect its folder before any explicit Send. **Disconnect** and a later explicit connection preserve drafts and history; uncertain execution is reconciled, never replayed.
+In TWOS, select **Codex** on either side to connect automatically. The connecting stage remains visible and **Cancel connection** works while startup is pending. Model and conversation lists appear after authentication and catalogs are confirmed. A connection does not send a task. Select the intended existing conversation and inspect its folder before any explicit Send. After a failure, **Retry connection** preserves drafts and history; uncertain execution is reconciled, never replayed.
 
 Nyra displays up to two current task labels below the character, for example `ChatGPT: your conversation title` and `Claude: your conversation title`. Only fresh active, queued or waiting panes appear. The title is the selected conversation's visible title, not an AI-generated summary. When unavailable, the label says Current task / Waiting for you. Labels disappear when idle or stale.
 

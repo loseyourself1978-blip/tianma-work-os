@@ -241,7 +241,18 @@
   }
   return resolvedLatest();
  }
- window.twosProviderDOM={activityIdentity,observe,latest,resolvedLatest,seedSnapshot,selectedOrLatest,replies,text,navigationSafety,composerSelection,replyState,identity,isStop,deepSeekControl,interrupted,speaker,headings,stoppedAfter};
+ function teamModel(){
+  if(!composerSelection().element)return '';
+  const p=selectedProvider();
+  const selectors=['button[data-testid="model-selector-dropdown"]','button[data-testid="model-switcher-dropdown-button"]','button[data-testid="model-selector"]','button[aria-label^="Model:" i]','button[aria-label^="模型"]'];
+  const buttons=all(selectors.join(',')).filter(e=>!e.closest(history));
+  if(buttons.length!==1)return '';
+  const b=buttons[0], label=(b.getAttribute('aria-label')||'').replace(/^(?:select |choose )?model\s*[:：]?\s*|^(?:选择)?模型\s*[:：]?\s*/i,'').trim();
+  const names=[label,b.innerText.trim()];
+  const pattern=p==='Claude'?/\b(opus|sonnet|haiku)\b/i:p==='ChatGPT'?/\b(gpt[- ]?\d|o\d\b)/i:p==='DeepSeek'?/deepseek[- ]?(?:v|r)\d/i:null;
+  return pattern?names.find(v=>v.length<=100 && pattern.test(v))||'':'';
+ }
+ window.twosProviderDOM={teamModel,activityIdentity,observe,latest,resolvedLatest,seedSnapshot,selectedOrLatest,replies,text,navigationSafety,composerSelection,replyState,identity,isStop,deepSeekControl,interrupted,speaker,headings,stoppedAfter};
  // Only a genuine user activation of a recognized native Stop control signals
  // the host. Isolated-world handler + native frame/origin checks stay in force.
  if(!window.twosNativeStopListener){

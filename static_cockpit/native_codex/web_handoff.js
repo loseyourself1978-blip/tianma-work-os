@@ -11,7 +11,27 @@ return await (async () => {
  if((location.hostname!==host&&!localFixture)||location.origin!==origin||(!request.inspectOnly&&clean(location.href)!==original))return {state:request.inspectOnly?'unknown':'target_changed'};
  const lease=window.twosTransferLease;
  const same=()=>window.twosTransferLease===lease&&location.origin===origin;
- const targetCurrent=()=>same()&&clean(location.href)===original&&(!request.expectedActivity||window.twosProviderDOM?.activityIdentity()===request.expectedActivity);
+ const teamModelMatches=()=>{
+  if(!request.expectedReviewModel)return true;
+  const label=window.twosProviderDOM?.teamModel?.();
+  if(!label)return false;
+  return Array.isArray(request.allowedTeamSelections)
+    ? request.allowedTeamSelections.includes(label.trim().toLowerCase())
+    : label===request.expectedReviewModel;
+ };
+ const targetCurrent=()=>same()&&teamModelMatches()&&clean(location.href)===original&&(!request.expectedActivity||window.twosProviderDOM?.activityIdentity()===request.expectedActivity);
+ // A provider may briefly remove its selector during an effort change. Wait
+ // only for that same dialog/document and recheck the complete target.
+ let pickerDeadline=0;
+ const waitForTeamPicker=async()=>{
+  if(!request.expectedReviewModel||!same()||clean(location.href)!==original||window.twosProviderDOM?.teamModel?.())return false;
+  if(!pickerDeadline)pickerDeadline=performance.now()+3000;
+  while(performance.now()<pickerDeadline && same() && clean(location.href)===original){
+   await new Promise(resolve=>setTimeout(resolve,75));
+   if(window.twosProviderDOM?.teamModel?.())return targetCurrent();
+  }
+  return false;
+ };
  const visible=el=>Boolean(el?.getClientRects().length)&&getComputedStyle(el).visibility!=='hidden';
  const normalize=s=>(s||'').replace(/\r\n?/g,'\n').trim();
  const plain=el=>{const copy=el.cloneNode(true);copy.querySelectorAll('button,[role=button],[data-twos-native-card],textarea,[contenteditable=true]').forEach(x=>x.remove());copy.querySelectorAll('h1,h2,h3,h4,h5,h6,[role=heading]').forEach(x=>{if(window.twosProviderDOM?.speaker(x)==='user')x.remove();});return copy.textContent||'';};
@@ -33,7 +53,11 @@ return await (async () => {
  }
  if(request.readinessOnly)return {state:'input_ready'};
  let input=fields[0];const value=()=>input instanceof HTMLTextAreaElement?input.value:input.innerText;
- const prompt='[TWOS handoff '+request.id+']\n'+request.text;
+ // Claude's rich-text composer can expand paragraph breaks. Keep the full
+ // Team instruction in a single JSON-encoded line; old receipts retain their wire format.
+ const marker='[TWOS handoff '+request.id+']';
+ const prompt=request.teamReview && request.teamWireVersion===1
+   ? marker+' '+JSON.stringify({instruction:request.text}) : marker+'\n'+request.text;
  // Read-only control metadata for an unavailable upload path. Never include
  // values, filenames, page text, URLs, credentials or arbitrary DOM dumps.
  const uploadShape=()=>[...document.querySelectorAll('input[type=file]')].slice(0,12).map((e,index)=>{
@@ -125,14 +149,35 @@ return await (async () => {
    try{controls.forEach(([e,s])=>e.setAttribute('style',(s||'')+';display:none!important'));reply=window.twosProviderDOM?.text?window.twosProviderDOM.text(last):(last.innerText||'');}
    finally{controls.forEach(([e,s])=>s===null?e.removeAttribute('style'):e.setAttribute('style',s));}
   }
+  if(request.teamReview && settled && last){
+   // The review protocol requests one fenced JSON object. Syntax highlighting
+   // and the language label are presentation; the provider's code node has the original bytes.
+   const bodies=[...last.querySelectorAll('.standard-markdown')].filter(visible);
+   const root=bodies.length===1?bodies[0]:last;
+   const codes=[...root.querySelectorAll('pre code')].filter(visible);
+   if(codes.length===1){
+    const code=codes[0].textContent.trim();
+    // Never discard a second verdict, conflicting prose, or another code block.
+    if(reply.trim()===code || /^json$/i.test(reply.slice(0,reply.lastIndexOf(code)).trim()) && reply.trimEnd().endsWith(code))reply=code;
+   }
+  }
   if(new TextEncoder().encode(reply).length>200000)return {state:'unknown',reason:'REPLY_TOO_LARGE'};
-  return {state:settled&&reply.trim()?'reply':'sent',conversationURL:clean(location.href),attachments:request.files?.map(({id,name,mime,size,hash})=>({id,name,mime,size,hash}))||[],...(reply?{reply,replyMessage:window.twosProviderDOM?.identity(last)||'rendered-answer'}:{})};
+  // Only provider-owned message metadata on the matched outer turn is evidence.
+  // Do not read model names from markdown, the selected composer, or model prose.
+  const envelope=request.teamReview && last && last.closest('[data-message-id],[data-testid="assistant-message"]');
+  const reported=envelope && !envelope.closest('.standard-markdown,.markdown,[contenteditable=true]') &&
+      (envelope.getAttribute('data-model-id') || envelope.getAttribute('data-model'));
+  const modelEvidence=typeof reported==='string' && /^[a-zA-Z0-9 ._-]{1,100}$/.test(reported) ? {reportedModel:reported} : {};
+  const teamActivity=request.teamReview && !nextUser && messages().at(-1)===user ? window.twosProviderDOM?.activityIdentity() : null;
+  const replyID=reply?window.twosProviderDOM?.identity(last):'';
+  if(request.teamReview && reply && !replyID)return {state:'sent',conversationURL:clean(location.href)};
+  return {...modelEvidence,...(request.teamReview && !nextUser && (busy() || claudeStreaming) ? {teamGenerating:true}:{}),...(teamActivity?{teamActivity}:{}),state:settled&&reply.trim()?'reply':'sent',conversationURL:clean(location.href),attachments:request.files?.map(({id,name,mime,size,hash})=>({id,name,mime,size,hash}))||[],...(reply?{reply,replyMessage:replyID||'rendered-answer'}:{})};
  };
  const existing=result();if(existing)return existing;
  if(request.inspectOnly)return {state:'unknown',reason:'EXACT_RECEIPT_NOT_FOUND · SEND_CONTROL_SHAPE '+JSON.stringify(sendShape())+(request.files?.length?' · UPLOAD_CONTROL_SHAPE '+JSON.stringify(uploadShape()):'')};
  // An old draft may have been manually submitted outside TWOS. Losing that
  // draft is not proof of non-delivery: reconcile rather than recreate/resend.
- if(!targetCurrent())return {state:'target_changed',reason:'BOUND_TASK_CHANGED'};
+ if(!targetCurrent() && !(await waitForTeamPicker()))return {state:'target_changed',reason:'BOUND_TASK_CHANGED'};
  if(request.resumeDraft&&!value().trim())return {state:'unknown'};
  if(busy())return {state:'busy'};
  if(value().trim()&&!(request.resumeDraft&&normalize(value())===normalize(prompt)))return {state:'draft_conflict'};
@@ -170,7 +215,7 @@ return await (async () => {
  };
  if(!request.files?.length&&attachmentChips().length)return {state:'draft_conflict',reason:'EXISTING_WEBSITE_ATTACHMENTS_PRESERVED'};
  if(request.preflightOnly)return {state:'ready'};
- if(!targetCurrent())return {state:'target_changed'};
+ if(!targetCurrent() && !(await waitForTeamPicker()))return {state:'target_changed'};
  // Keep the exact marked body as a recoverable draft while uploads settle.
  input.focus();
  if(input instanceof HTMLTextAreaElement){Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(input,prompt);input.dispatchEvent(new Event('input',{bubbles:true}));}
@@ -182,13 +227,13 @@ return await (async () => {
  // Wait for the exact frozen body, never normalize away a content difference.
  const draftDeadline=performance.now()+2000;let stableDraft=0;
  while(performance.now()<draftDeadline){
-  if(!targetCurrent())return {state:'target_changed'};
+  if(!targetCurrent() && !(await waitForTeamPicker()))return {state:'target_changed'};
   stableDraft=bindExactComposer()?stableDraft+1:0;
   if(stableDraft>=2)break;
   await new Promise(r=>setTimeout(r,50));
  }
  if(stableDraft<2)return {state:'draft',reason:'EXACT_DRAFT_NOT_CONFIRMED_NO_MESSAGE_SENT'};
- if(!targetCurrent())return {state:"target_changed"};
+ if(!targetCurrent() && !(await waitForTeamPicker()))return {state:"target_changed"};
  // Exact native-selected bytes only. File objects use the website's standard
  // file-input/change path, never a private upload endpoint or filename proxy.
  if(request.files?.length){
@@ -218,7 +263,7 @@ return await (async () => {
    let inputs=uploadInputs();
    const controlDeadline=performance.now()+2500;let openedMenu=false;
    while(inputs.length!==1&&performance.now()<controlDeadline){
-    if(!targetCurrent())return {state:'target_changed'};
+    if(!targetCurrent() && !(await waitForTeamPicker()))return {state:'target_changed'};
     // ChatGPT's supported Add files menu may mount its native file input
     // lazily on a new chat. Open only the verified local composer menu, never
     // the file-picker action, history, a connector or a private upload API.
@@ -238,14 +283,14 @@ return await (async () => {
     if(bytes.length!==f.size||hash!==f.hash)return {state:'unsupported',reason:'ATTACHMENT_BYTES_CHANGED'};
     transfer.items.add(new File([bytes],f.name,{type:f.mime}));
    }
-   if(!targetCurrent())return {state:'target_changed'};
+   if(!targetCurrent() && !(await waitForTeamPicker()))return {state:'target_changed'};
    if(!bindExactComposer()||!inputs[0].isConnected||uploadInputs().length!==1||uploadInputs()[0]!==inputs[0])return {state:'draft',reason:'UPLOAD_CONTROL_CHANGED_NO_MESSAGE_SENT'};
    inputs[0].files=transfer.files;inputs[0].dispatchEvent(new Event('change',{bubbles:true}));
    window.twosUploadReceipts.set(request.id,manifest);
   }
   let uploaded=false;
   for(let n=0;n<80;n++){
-   if(!targetCurrent())return {state:'unknown',reason:'ATTACHMENT_TARGET_CHANGED'};
+   if(!targetCurrent() && !(await waitForTeamPicker()))return {state:'unknown',reason:'ATTACHMENT_TARGET_CHANGED'};
    if(!bindExactComposer()){await new Promise(r=>setTimeout(r,100));continue;}
    const nodes=chips().filter(e=>!chips().some(other=>other!==e&&other.contains(e)));
    const available=new Set(nodes),remaining=[];
@@ -280,13 +325,14 @@ return await (async () => {
  const sendDeadline=performance.now()+8000;
  while(performance.now()<sendDeadline){
   await new Promise(r=>setTimeout(r,100));
-  if(!targetCurrent())return {state:'target_changed'};
+  if(!targetCurrent() && !(await waitForTeamPicker()))return {state:'target_changed'};
   if(!bindExactComposer())return {state:'draft',reason:'EXACT_DRAFT_CHANGED_NO_MESSAGE_SENT'};
   const candidates=[...document.querySelectorAll('button,[role=button]')].filter(e=>visible(e)&&!e.disabled&&e.getAttribute('aria-disabled')!=='true'&&!e.closest('[inert],[aria-hidden=true],[data-twos-native-card],[data-message-author-role],[data-is-streaming],.font-claude-response')&&isSendControl(e));
   const scoped=composerScopes.map(root=>candidates.filter(e=>root.contains(e))).find(items=>items.length);
   const buttons=scoped||candidates;
   const deepSeekControl=deepSeekSend();if(!buttons.length&&deepSeekControl)buttons.push(deepSeekControl);
   if(buttons.length!==1)continue;
+  const selectedAtSend=request.expectedReviewModel?{selectedAtSend:window.twosProviderDOM.teamModel()}:{};
   buttons[0].click(); // Exactly one real website control; never guess Enter or another icon.
   // WebKit can throttle timers in a background pane. Bound elapsed time as
   // well as poll count; forty delayed callbacks must not turn a five-second
@@ -294,11 +340,11 @@ return await (async () => {
   const receiptDeadline=performance.now()+5000;
   for(let j=0;j<40;j++){
    await new Promise(r=>setTimeout(r,125));
-   if(!same())return {state:'unknown'};
-   const confirmed=result();if(confirmed)return confirmed;
+   if(!same())return {state:'unknown',...selectedAtSend};
+   const confirmed=result();if(confirmed)return {...confirmed,...selectedAtSend};
    if(performance.now()>=receiptDeadline)break;
   }
-  return {state:'unknown'};
+  return {state:'unknown',...selectedAtSend};
  }
  return {state:'draft',reason:'EXACT_SEND_CONTROL_NOT_READY_NO_MESSAGE_SENT · SEND_CONTROL_SHAPE '+JSON.stringify(sendShape())};
 })();

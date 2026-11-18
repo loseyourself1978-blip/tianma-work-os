@@ -1,8 +1,10 @@
 # TWOS 1.0 · Installation and use
 
+**1.0.12 / 101.60 candidate.** [Open the AI Team guide](release-1.0/AI_TEAM.en.md) for the new workspace and delivery workflow.
+
 See [current activity/focus instructions](release-1.0/MINIMAL_STATUS_AND_FOCUS.en.md) and the [actual verification scope](release-1.0/MINIMAL_STATUS_VERIFICATION.en.md).
 
-**Applies to TWOS 1.0.11 / build 101.59, including Nyra 1.0.8 / build 108.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md)
+**Applies to TWOS 1.0.11 / build 101.59, including Nyra 1.0.8 / build 108.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md) · [AI Team engineering guide and checks](release-1.0/AI_TEAM.en.md)
 
 **Installation and version: use `START_HERE.html` in this bilingual guide, the [release receipt](release-1.0/release.json), and the actual GitHub Release status. Use the matching receipt to verify the complete engineering gate, signing and notarization; Owner differential acceptance is separate.**
 Discuss on the official ChatGPT website in the left pane, execute with the local Codex service in the right pane, and return results to the original discussion. The right pane is TWOS's own client for the official App Server protocol; it does not embed the entire official Codex macOS interface.
@@ -25,7 +27,7 @@ After installing the matching verified release, inspect the Codex project/chat s
 
 **Entry condition:** You actually need a new execution conversation. For an existing one use C.
 
-1. Sign into the existing ChatGPT account on the left and choose **Connect local Codex** on the right. It uses the official local tool's existing login. The integrated workbench does not require TWOS registration or an iCloud mail password. Old accounts/projects remain under **Original TWOS projects**.
+1. Sign into the existing ChatGPT account on the left and select **Codex** on either side to connect automatically. It uses the official local tool's existing login. The integrated workbench does not require TWOS registration or an iCloud mail password. Old accounts/projects remain under **Original TWOS projects**.
 2. Select **New task / conversation**, then a folder mode:
 
 | Mode | Supported action | Boundary |
@@ -46,7 +48,7 @@ An empty ordinary folder can hold a webpage task without git init. **Open worksp
 
 **Entry condition:** The original discussion and Codex conversation already exist.
 
-1. Reopen normally, connect local Codex, select the original visible conversation name and check its displayed directory. Valid bindings are reused without choosing a folder again.
+1. Reopen normally, select Codex, select the original visible conversation name and check its displayed directory. Valid bindings are reused without choosing a folder again.
 2. For ambiguous names, use **Conversation details → Technical identifiers** to verify thread/turn. Do not infer identity from list position or an identical folder.
 3. Inspect the current task, draft and queued inputs. Use **Refresh run status** or connection verification when control is uncertain. Official Codex and TWOS may read shared history without sharing active execution control; do not start the same work from both clients.
 4. Keep typing in the persistent composer. **Enter sends; Shift+Enter adds a line.** Enter during Chinese IME composition must not send. **Steer** supplements the current turn without stopping/restarting it. **Queue** waits for the preceding turn; pending inputs can be edited or deleted. Changing model/reasoning affects the next turn, never silently changes the active turn or directory.

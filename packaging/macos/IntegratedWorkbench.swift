@@ -204,7 +204,7 @@ final class NyraStatusProducer {
     func accepts(pid: pid_t, uid: uid_t) -> Bool {
         snapshotLock.lock();let approved=authorizedStandalone;snapshotLock.unlock()
         guard uid==getuid(),let app=NSRunningApplication(processIdentifier:pid),let path=app.bundleURL else{return false}
-        let isEmbedded=app.bundleIdentifier=="com.tianma.workos.nyra" && path.standardizedFileURL==helper.standardizedFileURL
+        let isEmbedded=app.bundleIdentifier==NativeNyra.embeddedID && path.standardizedFileURL==helper.standardizedFileURL
         let isStandalone=app.bundleIdentifier==NativeNyra.standaloneID && approved?.path==path.path
         guard isEmbedded || isStandalone else{return false}
         let selected=isEmbedded ? helper : path
@@ -241,7 +241,7 @@ final class NyraStatusProducer {
     }
     func canUserControl(_ pid:pid_t)->Bool {
         guard let app=NSRunningApplication(processIdentifier:pid),let path=app.bundleURL else{return false}
-        if app.bundleIdentifier=="com.tianma.workos.nyra",path.standardizedFileURL==helper.standardizedFileURL{return true}
+        if app.bundleIdentifier==NativeNyra.embeddedID,path.standardizedFileURL==helper.standardizedFileURL{return true}
         snapshotLock.lock();defer{snapshotLock.unlock()}
         return standaloneControls && authorizedStandalone?.path==path.path
     }
@@ -325,6 +325,8 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
     var languageChanged: ((String) -> Bool)?
     var toolbarTitle: NSTextField?
     let languagePicker = NSPopUpButton(frame: .zero, pullsDown: false)
+    let teamButton = NSButton(title:"AI Team",target:nil,action:nil)
+    var teamPanel: TeamWorkspace?
     let split = NSSplitView()
     let leftPicker = NSPopUpButton(frame: .zero, pullsDown: false)
     let rightPicker = NSPopUpButton(frame: .zero, pullsDown: false)
@@ -389,7 +391,6 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         self.nyraButton.isEnabled = state["pending"] as? Bool != true
         self.nyraButton.toolTip = state["reason"] as? String
         self.nyraButton.setAccessibilityLabel(self.nyraButton.title)
-        self.codex?.emit("nyra", state)
         self.updateNyraStatusView(state)
     }
 
@@ -446,7 +447,8 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         handoffHistoryButton.title = translate("Handoff history")
         handoffHistoryButton.target = self; handoffHistoryButton.action = #selector(showWebHistory)
         dialogueButton.title=translate("Automatic exchange");dialogueButton.target=self;dialogueButton.action=#selector(showDialogue)
-        let bar = NSStackView(views: [leftPicker, title, spacer, languagePicker, nyraButton, rightPicker]); bar.spacing = 10
+        teamButton.target=self; teamButton.action = #selector(toggleTeam)
+        let bar = NSStackView(views: [leftPicker, title, teamButton, spacer, languagePicker, nyraButton, rightPicker]); bar.spacing = 10
         bar.edgeInsets = NSEdgeInsets(top: 10, left: 14, bottom: 10, right: 14)
         bar.translatesAutoresizingMaskIntoConstraints = false
         split.isVertical = true; split.dividerStyle = .thin; split.translatesAutoresizingMaskIntoConstraints = false
@@ -482,6 +484,23 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         if url.query != nil || url.fragment != nil { return "Open a page without query parameters or a fragment, then navigate within the site." }
         if url.scheme == "http" { return "HTTP is supported only for localhost or a private IPv4 address (10.x, 172.16–31.x or 192.168.x). Use HTTPS for other sites." }
         return "Only HTTPS websites and local HTTP dashboards can be opened here."
+    }
+    @objc func toggleTeam() {
+        guard let root=resources,let container=window?.contentView else {return}
+        if teamPanel == nil {
+            let panel=TeamWorkspace(root:root,preferences:preferences,translate:translate)
+            teamPanel=panel
+            panel.web.translatesAutoresizingMaskIntoConstraints=false
+            container.addSubview(panel.web)
+            NSLayoutConstraint.activate([panel.web.topAnchor.constraint(equalTo:split.topAnchor),
+                panel.web.leadingAnchor.constraint(equalTo:split.leadingAnchor),panel.web.trailingAnchor.constraint(equalTo:split.trailingAnchor),
+                panel.web.bottomAnchor.constraint(equalTo:split.bottomAnchor)])
+        }
+        split.isHidden.toggle()
+        teamPanel?.web.isHidden = !split.isHidden
+        leftPicker.isHidden=split.isHidden;rightPicker.isHidden=split.isHidden
+        teamButton.title=split.isHidden ? (translate("Back")=="Back" ? "Back to workspace" : "返回双栏工作台") : "AI Team"
+        if split.isHidden {teamPanel?.present()}
     }
     @objc func toggleNyra() {
         _ = nyraStatus
@@ -549,6 +568,9 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
     }
     func refreshLanguage() {
         languagePicker.selectItem(at: translate("Back") == "Back" ? 0 : 1)
+        codex?.publishLanguage()
+        teamButton.title=split.isHidden ? (translate("Back")=="Back" ? "Back to workspace" : "返回双栏工作台") : "AI Team"
+        teamPanel?.publish()
         nyra.refresh()
         nyraConnectionButton.title=translate("Nyra status")
         refreshDialogueUI()
@@ -565,6 +587,9 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
     }
     func start() {
         showWindow(nil); NSApp.activate(ignoringOtherApps: true)
+        if kinds.contains("Codex"), let client = codex, client.transportGeneration == 0 {
+            client.connect()
+        }
         split.adjustSubviews()
         if split.bounds.width > 0 { split.setPosition(split.bounds.width * 0.52, ofDividerAt: 0) }
     }
@@ -627,6 +652,11 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         (index == 0 ? leftPicker : rightPicker).selectItem(at: options.firstIndex(of: next) ?? 0)
         routeRevision = UUID().uuidString
         rebuild(0, navigateTo: index == 0 ? website : nil); rebuild(1, navigateTo: index == 1 ? website : nil); refreshTargets(); save()
+        if next == "Codex" {
+            codex?.connectSelectedPane()
+        } else if !kinds.contains("Codex") {
+            codex?.connectAfterClosing = false
+        }
     }
     func save() {
         try? NativeWorkbench.save(["kind0": kinds[0], "kind1": kinds[1], "url0": urls[0], "url1": urls[1]], at: preferences.appendingPathComponent("paired-workbench.json"))
@@ -639,11 +669,6 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
             if codex == nil, let resource = resources {
                 codex = NativeCodex(resources: resource, preferences: preferences, translate: translate)
                 codex?.statusMetadataChanged = { [weak self] in self?.refreshNyraStatus() }
-                codex?.nyraAction = { [weak self] action in if action == "toggle" { self?.nyra.toggle() } else { self?.nyra.refresh() } }
-                codex?.languageChanged = { [weak self] locale in
-                    guard let self = self, self.languageChanged?(locale) == true else { return false }
-                    self.refreshLanguage(); return true
-                }
                 codex?.returnResult = { [weak self] text, source in self?.bringBack(text, source: source) }
                 codex?.handoffChanged = { [weak self] record in
                     self?.webCache.values.forEach { $0.showHandoffProgress(record.card) }
@@ -1203,6 +1228,7 @@ struct WebHandoffReceipt: Codable {
     var dialogueID: String?
     var nyraTarget: String?
     var nyraActivity: String?
+    var teamWireVersion: Int?
     var files: [WebTransferFile]?
     var resolvedURL: String?
     var resumeDraft: Bool?
@@ -1241,6 +1267,7 @@ struct WebHandoffReceipt: Codable {
     func request(inspectOnly: Bool) -> [String: Any] {
         var value: [String: Any] = ["id": id, "text": text, "hash": hash, "provider": provider, "targetURL": resolvedURL ?? targetURL, "inspectOnly": inspectOnly, "draftOnly": false, "resumeDraft": resumeDraft == true]
         if let activity=nyraActivity {value["expectedActivity"]=activity}
+        if let version=teamWireVersion {value["teamWireVersion"]=version}
         // Reconciliation needs the original attachment identity to distinguish
         // website-added file captions from the exact submitted body. Metadata
         // only: observing delivery never rereads or uploads file bytes.
@@ -1258,7 +1285,10 @@ struct WebHandoffReceipt: Codable {
 // signed standalone Nyra. A standalone display is not claimed as a task binding.
 final class NativeNyra: NSObject {
     let stateRoot: URL
-    var isolated: Bool { CommandLine.arguments.contains("--diagnostic-root") }
+    static let teamHostID = "com.tianma.workos.acceptance.team-chat"
+    static var isTeamHost: Bool { Bundle.main.bundleIdentifier == teamHostID }
+    static var embeddedID: String { isTeamHost ? teamHostID + ".nyra" : "com.tianma.workos.nyra" }
+    var isolated: Bool { Self.isTeamHost || CommandLine.arguments.contains("--diagnostic-root") }
     // Diagnostic sessions may select one exact signed standalone candidate.
     // They must never discover or write to the Owner's normal Nyra profile.
     static func diagnosticStandaloneURL(_ arguments: [String]) -> URL? {
@@ -1339,13 +1369,13 @@ final class NativeNyra: NSObject {
     }
     var targetProcesses: [NSRunningApplication] {
         if let app = standalone { return [app] }
-        return NSRunningApplication.runningApplications(withBundleIdentifier:"com.tianma.workos.nyra").filter {
+        return NSRunningApplication.runningApplications(withBundleIdentifier:Self.embeddedID).filter {
             !$0.isTerminated && (!isolated || $0.bundleURL?.standardizedFileURL == helperURL?.standardizedFileURL)
         }
     }
     var otherEmbeddedHelper: Bool {
         guard standalone == nil, let expected = helperURL else { return false }
-        return NSRunningApplication.runningApplications(withBundleIdentifier:"com.tianma.workos.nyra").contains {
+        return NSRunningApplication.runningApplications(withBundleIdentifier:Self.embeddedID).contains {
             !$0.isTerminated && $0.bundleURL?.standardizedFileURL != expected.standardizedFileURL
         }
     }
@@ -1413,7 +1443,10 @@ final class NativeNyra: NSObject {
     func snapshot() -> [String: Any] {
         var state=observedSnapshot()
         if state["observed"] as? Bool == true && state["fresh"] as? Bool == true { controlFailure=nil }
-        if let error=controlFailure {state["reason"]=error;state["available"]=false}
+        if let error=controlFailure {
+            state["reason"]=error
+            if error != "NYRA_VISIBILITY_UNCONFIRMED" {state["available"]=false}
+        }
         return state
     }
     // Pane freshness belongs to this authenticated producer's recent snapshot,
@@ -1514,6 +1547,32 @@ final class NativeNyra: NSObject {
         }
     }
 
+    private func awaitVisibility(of app: NSRunningApplication, desired: Bool) {
+        pending = true
+        controlFailure = nil
+        let deadline = ProcessInfo.processInfo.systemUptime + 5
+        func check() {
+            let sameTarget = !app.isTerminated
+                && app.bundleURL?.standardizedFileURL == targetURL?.standardizedFileURL
+                && targetProcesses.contains { $0.processIdentifier == app.processIdentifier }
+            guard sameTarget, !otherEmbeddedHelper, ProcessInfo.processInfo.systemUptime < deadline else {
+                pending = false
+                controlFailure = "NYRA_VISIBILITY_UNCONFIRMED"
+                refresh()
+                return
+            }
+            let observation = observedSnapshot()
+            if observation["consumerPID"] as? Int32 == app.processIdentifier,
+               observation["fresh"] as? Bool == true {
+                pending = false
+                setVisible(desired)
+                return
+            }
+            refresh()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: check)
+        }
+        check()
+    }
     func setVisible(_ desired: Bool) {
         if authorizationPending {authorizedVisibilityRequest=desired;return}
         guard !pending,let helper = targetURL else { refresh(); return }
@@ -1534,8 +1593,9 @@ final class NativeNyra: NSObject {
             changed(["available": false, "reason": "NYRA_OTHER_INSTALLATION_RUNNING", "binding": "NOT_CONNECTED"]); return
         }
         let state = snapshot()
-        if !running.isEmpty && state["observed"] as? Bool != true {
-            changed(["available": false, "reason": "NYRA_OTHER_INSTALLATION_RUNNING", "binding": "NOT_CONNECTED"]); return
+        if let exact = running.first, state["fresh"] as? Bool != true {
+            awaitVisibility(of: exact, desired: desired)
+            return
         }
         if state["observed"] as? Bool == true && state["visible"] as? Bool == desired { refresh(); return }
         controlFailure=nil;pending = true; refresh()
@@ -1548,7 +1608,8 @@ final class NativeNyra: NSObject {
         if standalone == nil {
             options.environment = ["TWOS_NYRA_STATE_ROOT":stateRoot.path,"NYRA_ISOLATED_ENGINEERING":isolated ? "1" : "0"]
         }
-        let url = URL(string: desired ? "twos-nyra://visibility/show" : "twos-nyra://visibility/hide")!
+        let scheme = Self.isTeamHost && standalone == nil ? "twos-team-nyra" : "twos-nyra"
+        let url = URL(string: scheme + "://visibility/" + (desired ? "show" : "hide"))!
         NSWorkspace.shared.open([url], withApplicationAt: helper, configuration: options) { [weak self] app, error in
             DispatchQueue.main.async {
                 guard let self = self else { return }; self.pending = false

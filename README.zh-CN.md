@@ -1,5 +1,7 @@
 # Tianma Work OS 1.0
 
+**AI Team 发行候选 · 1.0.12 / 101.60。** [团队群聊、交付目录与核验](docs/release-1.0/AI_TEAM.zh-CN.md)。下方下载按钮指向当前公开版本。
+
 **当前差量：** 只显示正在进行的任务／状态，无任务即收起；人物返回独立于任务控制权限。中文小田保持不变，英文使用 tiny-voca F2 离线短句。[实际核验与限制](docs/release-1.0/MINIMAL_STATUS_VERIFICATION.zh-CN.md)。
 
 **TWOS 1.0.11 / 101.59：左右共用 Codex 项目／会话导航与直接 Nyra 任务控制。内置 Nyra 1.0.8 / 108。**
@@ -10,7 +12,7 @@
 
 **TWOS 1.0.11 / build 101.59** · [下载与校验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.11) · [本次更新](docs/release-1.0/MINIMAL_STATUS_AND_FOCUS.zh-CN.md)
 
-[English](README.md) · [安装](docs/release-1.0/INSTALL.zh-CN.md) · [操作指南](docs/release-1.0/USER_GUIDE.zh-CN.md) · [当前发行状态](docs/CURRENT_DELIVERY.md)
+[English](README.md) · [安装](docs/release-1.0/INSTALL.zh-CN.md) · [操作指南](docs/release-1.0/USER_GUIDE.zh-CN.md) · [当前发行状态](docs/CURRENT_DELIVERY.md) · [AI Team 工程版指南](docs/release-1.0/AI_TEAM.zh-CN.md)
 
 在一个 macOS 工作区中讨论目标、交接指令并执行。TWOS 将 ChatGPT、DeepSeek、Claude 官网与本机 Codex 客户端配对，把明确内容交给选定目标，再将结果带回原讨论。
 

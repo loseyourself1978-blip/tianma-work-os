@@ -1,8 +1,10 @@
 # TWOS 1.0 · 安装与使用指南
 
+**1.0.12 / 101.60 候选版。** [AI Team 指南](release-1.0/AI_TEAM.zh-CN.md)包含新版入口、群聊和交付步骤。
+
 本轮默认任务展示与返回方式见[差量说明](release-1.0/MINIMAL_STATUS_AND_FOCUS.zh-CN.md)，实测范围见[核验记录](release-1.0/MINIMAL_STATUS_VERIFICATION.zh-CN.md)。
 
-**适用：TWOS 1.0.11 / build 101.59，内置 Nyra 1.0.8 / build 108。** [English guide](OWNER_GUIDE_EN.md) · [实际交付与验证状态](CURRENT_DELIVERY.md)
+**适用：TWOS 1.0.11 / build 101.59，内置 Nyra 1.0.8 / build 108。** [English guide](OWNER_GUIDE_EN.md) · [实际交付与验证状态](CURRENT_DELIVERY.md) · [AI Team 工程版操作与验收](release-1.0/AI_TEAM.zh-CN.md)
 
 **安装与版本：使用本版双语指南中的 `START_HERE.html`、[发行回执](release-1.0/release.json)和实际 GitHub Release 状态。按匹配回执核对完整工程回归、签名和公证；Owner 差量接受单独记录。**
 在一个 macOS 窗口中，左侧官方 ChatGPT 网页用于讨论，右侧 TWOS Codex 客户端通过本机官方 App Server 执行。它使用官方执行协议，但不是把官方 Codex App 的整个图形界面嵌进网页。两侧账号语言设置相互独立。
@@ -25,7 +27,7 @@ TWOS 1.0.11 / 101.59 · Nyra 1.0.8 / 108。匹配工程回归、真实操作范�
 
 **进入条件：** 确实需要一个新的执行会话。已有有效会话请使用 C。
 
-1. 左侧登录现有 ChatGPT 账号；右侧 **连接本机 Codex / Connect local Codex** 使用本机官方工具已有登录。新工作台不要求先注册 TWOS 或配置 iCloud 邮件。旧账号和项目通过 **原有 TWOS 项目 / Original TWOS projects** 进入。
+1. 左侧登录现有 ChatGPT 账号；任一侧选择 **Codex** 会自动连接，并使用本机官方工具已有登录。新工作台不要求先注册 TWOS 或配置 iCloud 邮件。旧账号和项目通过 **原有 TWOS 项目 / Original TWOS projects** 进入。
 2. 点 **新建任务 / 会话 / New task / conversation**，选择目录模式：
 
 | 模式 | 可以做什么 | 不会做什么 |
@@ -46,7 +48,7 @@ TWOS 1.0.11 / 101.59 · Nyra 1.0.8 / 108。匹配工程回归、真实操作范�
 
 **进入条件：** 原讨论和 Codex 会话已存在，不是新任务。
 
-1. 正常重开 TWOS 后连接本机 Codex。选择原会话名称，核对下方实际目录。已有有效绑定直接复用，不重新选择目录。
+1. 正常重开 TWOS 后，在任一侧选择 Codex。选择原会话名称，核对下方实际目录。已有有效绑定直接复用，不重新选择目录。
 2. 如有同名项，展开 **会话详情 / Conversation details**，再在 **技术标识 / Technical identifiers** 核对 thread/turn；不要按列表顺序或相同目录猜会话。
 3. 查看当前工作、草稿和后续队列。活动执行控制不明时先 **刷新状态 / Refresh run status** 或连接核验；不要从官方 Codex App 和 TWOS 同时启动同一任务。共享历史不等于共享活动控制权。
 4. 在底部继续输入。**Enter 发送，Shift+Enter 换行**；中文输入法正在选字时 Enter 不发送。**补充当前 · Steer** 进入当前轮，不停止重跑；**排队 · Queue** 等前一轮结束，未派发时可编辑或删除。模型/推理档位变化对下一轮生效，不改变活动轮次。

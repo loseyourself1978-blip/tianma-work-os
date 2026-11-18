@@ -1,5 +1,7 @@
 # Tianma Work OS 1.0
 
+**AI Team release candidate · 1.0.12 / 101.60.** [Group chats, delivery folders and verification](docs/release-1.0/AI_TEAM.en.md). The download below is the current public version.
+
 **Current update:** show current task activity only and close the bubble when inactive. Character return is independent of task-control permission. Chinese Tian is unchanged; English uses offline tiny-voca F2 cues. [Actual verification and limits](docs/release-1.0/MINIMAL_STATUS_VERIFICATION.en.md).
 
 **TWOS 1.0.11 / 101.59: shared Codex projects/chats and direct Nyra task controls. Includes Nyra 1.0.8 / 108.**
@@ -10,7 +12,7 @@ This version includes five standing/reclining outfits, 13 bundled Chinese Tian a
 
 **TWOS 1.0.11 / build 101.59** · [Download and verify](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.11) · [This update](docs/release-1.0/MINIMAL_STATUS_AND_FOCUS.en.md)
 
-[简体中文](README.zh-CN.md) · [Install](docs/release-1.0/INSTALL.en.md) · [User guide](docs/release-1.0/USER_GUIDE.en.md) · [Current release status](docs/CURRENT_DELIVERY.md)
+[简体中文](README.zh-CN.md) · [Install](docs/release-1.0/INSTALL.en.md) · [User guide](docs/release-1.0/USER_GUIDE.en.md) · [Current release status](docs/CURRENT_DELIVERY.md) · [AI Team engineering guide](docs/release-1.0/AI_TEAM.en.md)
 
 Discuss a goal and execute it in one macOS workspace. TWOS pairs official ChatGPT, DeepSeek or Claude webpages with a local Codex client, binds handoffs to the selected destination, and brings results back to the discussion.
 

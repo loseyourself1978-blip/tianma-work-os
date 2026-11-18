@@ -13,7 +13,7 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[1]
 DEST = ROOT / 'packaging/macos/Xcode'
 SOURCES = ['CodexAttachments.swift', 'CodexTelemetry.swift', 'NativeCodex.swift',
-           'IntegratedWorkbench.swift', 'PairedWorkflow.swift', 'TianmaLauncher.swift']
+           'TeamReport.swift', 'TeamRun.swift', 'TeamWorkspace.swift', 'IntegratedWorkbench.swift', 'PairedWorkflow.swift', 'TianmaLauncher.swift']
 
 
 def generate():

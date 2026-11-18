@@ -4,14 +4,23 @@ import Foundation
 // Shared 1.0 adapter. Only the nested helper auto-selects its signed parent;
 // standalone Nyra keeps explicit read-only endpoint selection.
 extension Companion {
+    static let teamHostID = "com.tianma.workos.acceptance.team-chat"
+    static let teamHelperID = teamHostID + ".nyra"
+    static func hostID(for helperID: String?) -> String? {
+        switch helperID {
+        case "com.tianma.workos.nyra": return "com.tianma.workos"
+        case teamHelperID: return teamHostID
+        default: return nil
+        }
+    }
     static func bundledStatusSelection(helper: URL, stateDirectory: URL) throws -> BridgeSelection {
         let helper = helper.standardizedFileURL
         let parent = helper.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        guard Bundle(url:helper)?.bundleIdentifier == "com.tianma.workos.nyra",
+        guard let expectedHost = hostID(for: Bundle(url: helper)?.bundleIdentifier),
               helper == parent.appendingPathComponent("Contents/Helpers/TWOS Nyra.app"),
               helper.resolvingSymlinksInPath() == helper,
               let producer = Bundle(url:parent), let id = producer.bundleIdentifier,
-              id == "com.tianma.workos", stateDirectory.lastPathComponent == "nyra" else { throw BridgeError.wrongPeer }
+              id == expectedHost, stateDirectory.lastPathComponent == "nyra" else { throw BridgeError.wrongPeer }
         let endpoint = stateDirectory.deletingLastPathComponent().appendingPathComponent("nyra-status/endpoint.json")
         _ = try NyraStatusClient.readEndpoint(endpoint.path)
         return BridgeSelection(endpoint:endpoint.path,producerApp:parent.path,producerBundleID:id,
@@ -21,7 +30,8 @@ extension Companion {
     // Visibility only; URLs cannot supply task states, execute code or select
     // an arbitrary endpoint. Repeated show/hide is idempotent.
     func application(_ application: NSApplication, open urls: [URL]) {
-        for url in urls where ["twos-nyra","nyra"].contains(url.scheme ?? "") && url.host == "visibility" && url.query == nil && url.fragment == nil {
+        let schemes = Bundle.main.bundleIdentifier == Self.teamHelperID ? ["twos-team-nyra"] : ["twos-nyra", "nyra"]
+        for url in urls where schemes.contains(url.scheme ?? "") && url.host == "visibility" && url.query == nil && url.fragment == nil {
             guard panel != nil else {
                 if url.path == "/show" { launchVisibility = true }
                 else if url.path == "/hide" { launchVisibility = false }

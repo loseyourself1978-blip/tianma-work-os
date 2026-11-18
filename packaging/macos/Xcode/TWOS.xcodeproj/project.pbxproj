@@ -43,6 +43,39 @@
 			<key>sourceTree</key>
 			<string>&lt;group&gt;</string>
 		</dict>
+		<key>9E291840436D5DEBA454F892</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>../TeamReport.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>8343DD81F74853E69A215577</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>../TeamRun.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>0CA6AD02F6C01ADE5C4E55F7</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>../TeamWorkspace.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
 		<key>CC722508D54F6C501F36558B</key>
 		<dict>
 			<key>isa</key>
@@ -113,6 +146,9 @@
 				<string>5E8CADF5988618552FEF0F2C</string>
 				<string>DF996F1DF243DFAE8A37D95D</string>
 				<string>BAA84DFBB286FA980FA1C888</string>
+				<string>9E291840436D5DEBA454F892</string>
+				<string>8343DD81F74853E69A215577</string>
+				<string>0CA6AD02F6C01ADE5C4E55F7</string>
 				<string>CC722508D54F6C501F36558B</string>
 				<string>A580C675297EDA5802A20907</string>
 				<string>82DF9BEB98DE3088A17A6C12</string>
@@ -161,6 +197,9 @@
 				<string>$(SRCROOT)/../CodexAttachments.swift</string>
 				<string>$(SRCROOT)/../CodexTelemetry.swift</string>
 				<string>$(SRCROOT)/../NativeCodex.swift</string>
+				<string>$(SRCROOT)/../TeamReport.swift</string>
+				<string>$(SRCROOT)/../TeamRun.swift</string>
+				<string>$(SRCROOT)/../TeamWorkspace.swift</string>
 				<string>$(SRCROOT)/../IntegratedWorkbench.swift</string>
 				<string>$(SRCROOT)/../PairedWorkflow.swift</string>
 				<string>$(SRCROOT)/../TianmaLauncher.swift</string>
@@ -176,7 +215,7 @@
 			<key>shellScript</key>
 			<string>set -eu
 mkdir -p "$DERIVED_FILE_DIR"
-cat "$SRCROOT/../CodexAttachments.swift" "$SRCROOT/../CodexTelemetry.swift" "$SRCROOT/../NativeCodex.swift" "$SRCROOT/../IntegratedWorkbench.swift" "$SRCROOT/../PairedWorkflow.swift" "$SRCROOT/../TianmaLauncher.swift" &gt; "$DERIVED_FILE_DIR/main.swift"
+cat "$SRCROOT/../CodexAttachments.swift" "$SRCROOT/../CodexTelemetry.swift" "$SRCROOT/../NativeCodex.swift" "$SRCROOT/../TeamReport.swift" "$SRCROOT/../TeamRun.swift" "$SRCROOT/../TeamWorkspace.swift" "$SRCROOT/../IntegratedWorkbench.swift" "$SRCROOT/../PairedWorkflow.swift" "$SRCROOT/../TianmaLauncher.swift" &gt; "$DERIVED_FILE_DIR/main.swift"
 </string>
 		</dict>
 		<key>74623FF5E5FC95FA917449BA</key>

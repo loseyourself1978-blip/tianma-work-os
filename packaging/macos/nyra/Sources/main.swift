@@ -306,8 +306,8 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var launchVisibility: Bool?
     let consumerInstance = UUID().uuidString
     var lastPublishedVisibility: [String:Any] = [:]
-    var isBundled: Bool { Bundle.main.bundleIdentifier == "com.tianma.workos.nyra" }
-    var isolated: Bool { Bundle.main.bundleIdentifier == "com.tianma.nyra.joint.engineering" || CommandLine.arguments.contains("--diagnostic-root") || ProcessInfo.processInfo.environment["NYRA_ISOLATED_ENGINEERING"] == "1" }
+    var isBundled: Bool { Self.hostID(for: Bundle.main.bundleIdentifier) != nil }
+    var isolated: Bool { Bundle.main.bundleIdentifier == Self.teamHelperID || Bundle.main.bundleIdentifier == "com.tianma.nyra.joint.engineering" || CommandLine.arguments.contains("--diagnostic-root") || ProcessInfo.processInfo.environment["NYRA_ISOLATED_ENGINEERING"] == "1" }
     var stateDirectory: URL {
         if let i = CommandLine.arguments.firstIndex(of:"--diagnostic-root"), i+1 < CommandLine.arguments.count {
             let value = CommandLine.arguments[i+1]
@@ -315,6 +315,10 @@ final class Companion: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         if isBundled, let raw = ProcessInfo.processInfo.environment["TWOS_NYRA_STATE_ROOT"], raw.hasPrefix("/"), !raw.contains("/../") {
             return URL(fileURLWithPath:raw,isDirectory:true).standardizedFileURL
+        }
+        if Bundle.main.bundleIdentifier == Self.teamHelperID {
+            return FileManager.default.urls(for:.applicationSupportDirectory,in:.userDomainMask)[0]
+                .appendingPathComponent("TWOS AI Team Acceptance/nyra", isDirectory:true)
         }
         if Bundle.main.bundleIdentifier == "com.tianma.nyra.joint.engineering" {
             return FileManager.default.temporaryDirectory.appendingPathComponent("Nyra-Joint-Engineering-" + String(getuid()),isDirectory:true)

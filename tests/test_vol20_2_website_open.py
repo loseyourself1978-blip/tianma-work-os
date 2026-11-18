@@ -13,7 +13,7 @@ pytestmark = pytest.mark.skipif(sys.platform != 'darwin', reason='AppKit/WebKit 
 def website_harness(tmp_path_factory):
     root = tmp_path_factory.mktemp('website-open')
     code = (ROOT/'packaging/macos/TianmaLauncher.swift').read_text().split('// The only child runtime', 1)[0]
-    for name in ['CodexAttachments.swift','CodexTelemetry.swift','NativeCodex.swift','IntegratedWorkbench.swift','PairedWorkflow.swift']:
+    for name in ['CodexAttachments.swift','CodexTelemetry.swift','NativeCodex.swift','TeamReport.swift', 'TeamRun.swift', 'TeamWorkspace.swift', 'IntegratedWorkbench.swift','PairedWorkflow.swift']:
         code += '\n' + (ROOT/'packaging/macos'/name).read_text()
     code += r'''
 let app = NSApplication.shared

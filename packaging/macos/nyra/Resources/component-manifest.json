@@ -3,8 +3,8 @@
   "version": "1.0.8",
   "build": "108",
   "source_commit": "bb60b2000b8d5a25c7234c7e1741b111d66d346c",
-  "source_clean": true,
-  "source_snapshot": "df513ca6751cdc364c9541fc22cc10448be1cd7f04a153784574bfbde5e5e101",
+  "source_clean": false,
+  "source_snapshot": "14cdfa728bb4a13d6d87805bfa43bde7e57840a821c33d5a8b0bc4a65bfe84d8",
   "event_schema": "twos.nyra.status.v4",
   "event_schema_sha256": "4e7d9433de4c807eb0e1e7f3a4ae51c3afd7a582769ba02fe02e43169a9e4226",
   "control_schema": "twos.nyra.control.v1",
@@ -22,10 +22,10 @@
     "Sources/RuntimeAnimation.swift": "dab216f0904dabc7188ab9e173a56f94ce0265f6a59b7af15e50698caec007ac",
     "Sources/SingleInstance.swift": "4e8599939ebe35396c70f904b3cd2e86d111a07b64365d4c268ae5ce36a25bc9",
     "Sources/StageGeometry.swift": "f52ae9a8b810f04716269c908657e0826ece4d47aa230f2da46dc5b7f0c32942",
-    "Sources/TWOSIntegration.swift": "8ef7dcfcaf406cd18bc1e7de03f56438f5429ed2e6749c117524a61a1c3bd5aa",
+    "Sources/TWOSIntegration.swift": "f4bc7f63c58eb09815fc3ff7051025736e19642a658fe750b9132bc8a5aaa17b",
     "Sources/TaskControls.swift": "9761630ad75ac7b553edb91c7732b99b9f236157918bfbf3ddddc0d0cd93ef74",
     "Sources/TaskPresentation.swift": "8020b31e28425f3ac48ca91e87dfd203f4b0bb25fa9c17d7e46f9ead56a9d6b0",
-    "Sources/main.swift": "898ec8aca4e638223dd07108760f262b0aae2d8ebc2a09932afbf7ee22f66f61",
+    "Sources/main.swift": "bb1ff32c3409c78e740d5e3405bf8799a328392f7b7b5ff2266207f0bb610fd4",
     "assets/runtime-default.png": "7780d8d9319a6578ba492e37dd122d7bfe2f559adfac5d053c62d73fa26ecd69",
     "assets/runtime-gala.png": "e390c578f481cd42caae6af08835c4c2a44e28afc4125aaa1ecb588fa749fce4",
     "assets/runtime-gala_red.png": "f4fab3c295c0716ed489ff9b12a0d66879e924d9db71e54c80df28d1eb088ca3",
@@ -446,5 +446,6 @@
     "runtime/recline_office_white/nyra_office_white_recline_workblink.png": "ae2cd4e963a77d06ce4dfcbd8e3fc28049a48bfa462df92703eb1dba1f7d8de3",
     "runtime/standalone_r3.json": "fa9b9976328d74079ebdc544f5a94c06a3c42cfeefb4ff15464f573964a8868e"
   },
-  "engineering": false
+  "engineering": false,
+  "upstream_source_snapshot": "df513ca6751cdc364c9541fc22cc10448be1cd7f04a153784574bfbde5e5e101"
 }

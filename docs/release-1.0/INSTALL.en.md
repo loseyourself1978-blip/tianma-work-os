@@ -1,5 +1,7 @@
 # Install Tianma Work OS 1.0.11
 
+**1.0.12 / 101.60 candidate.** [Open the AI Team guide](AI_TEAM.en.md) for the new workspace and delivery workflow.
+
 > **Current update: minimal activity bubble, independent host focus and offline English voice.** [Instructions](MINIMAL_STATUS_AND_FOCUS.en.md) · [Actual verification and limits](MINIMAL_STATUS_VERIFICATION.en.md). The default bubble closes when no work is active; task mutations still require their separate authorization.
 > **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](MINIMAL_STATUS_AND_FOCUS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
 
@@ -17,7 +19,7 @@ Currently supports macOS only. A Windows version is in development; no downloada
 3. Eject the DMG, then open TWOS from Applications. Follow the normal macOS first-launch prompt. A security/signature failure is a reason to stop and consult Troubleshooting, not to disable Gatekeeper.
 4. The paired workbench opens. If the launcher appears, choose **Window → ChatGPT + Codex**. Use the visible top **Language: English / 语言：简体中文** selector for TWOS controls. This does not change the provider website's account language.
 5. Sign into ChatGPT, DeepSeek or Claude directly on the chosen provider's official webpage. TWOS ships no provider accounts or credentials. A provider may require you to complete ordinary login or a human challenge.
-6. For local execution choose Codex on the right and **Connect local Codex**. Install and sign into the official local Codex application beforehand; TWOS uses its supported App Server connection. Account/model availability and charges follow your provider plan.
+6. For local execution select **Codex** on either side to connect automatically. Install and sign into the official local Codex application beforehand; TWOS uses its supported App Server connection. Account/model availability and charges follow your provider plan.
 7. Choose **New task / conversation**. Select **Independent task: empty folder** or **Existing project: preserve folder contents**. Choose/create the intended directory, review its canonical path and access scope, then confirm. Selecting a folder alone does not run a model.
 8. Discuss a small non-sensitive goal on the left. Review its complete instruction and intended target. Click **Send to Codex** to deliver it to the bound conversation. Address real permission requests in the right pane. Existing conversations with valid bindings can be resumed without creating another folder.
 9. Inspect the returned result and file cards. **Open webpage**, **View file**, **Save as…**, and **Show in Finder** have different purposes. Opening a file does not certify its function.

@@ -12,7 +12,7 @@ pytestmark=pytest.mark.skipif(sys.platform!='darwin',reason='macOS WebKit')
 def cross_harness(tmp_path_factory):
     root=tmp_path_factory.mktemp('cross-provider-harness')
     code=(ROOT/'packaging/macos/TianmaLauncher.swift').read_text().split('let app = NSApplication.shared\nlet delegate = Launcher()',1)[0]
-    for name in ('CodexAttachments.swift','CodexTelemetry.swift','NativeCodex.swift','IntegratedWorkbench.swift','PairedWorkflow.swift'):
+    for name in ('CodexAttachments.swift','CodexTelemetry.swift','NativeCodex.swift','TeamReport.swift', 'TeamRun.swift', 'TeamWorkspace.swift', 'IntegratedWorkbench.swift','PairedWorkflow.swift'):
         code+='\n'+(ROOT/'packaging/macos'/name).read_text()
     # Fixture-only target/process lookup: exercise the production refresh and
     # asynchronous read path with a selected standalone and no bundled helper.
@@ -127,6 +127,14 @@ if mode == "nyra_visibility_controls" {
     settle();precondition(work.nyraButton.title=="Hide Nyra" && work.nyra.snapshot()["observed"] as? Bool==true,"initial visibility: \(work.nyraButton.title); snapshot=\(work.nyra.snapshot()); process=\(String(describing:NSRunningApplication.current.bundleURL)); expected=\(Bundle.main.bundleURL); inFlight=\(work.nyra.stateReadInFlight)")
     visible=false;settle();precondition(work.nyraButton.title=="Show Nyra")
     visible=true;settle();precondition(work.nyraButton.title=="Hide Nyra","manual visibility changes must update the actual top button")
+    let normalReader=work.nyra.visibilityReader
+    work.nyra.visibilityReader={_ in nil};settle()
+    work.nyra.setVisible(true)
+    precondition(work.nyra.pending && work.nyra.snapshot()["reason"] as? String != "NYRA_OTHER_INSTALLATION_RUNNING")
+    work.nyra.visibilityReader=normalReader
+    let heartbeatDeadline=Date().addingTimeInterval(3)
+    while work.nyra.pending && Date()<heartbeatDeadline {RunLoop.current.run(until:Date().addingTimeInterval(0.02))}
+    settle();precondition(!work.nyra.pending && work.nyraButton.title=="Hide Nyra")
     fixtureNyraConflict=true;settle()
     precondition(work.nyraButton.title=="Nyra · view status" && work.nyra.snapshot()["reason"] as? String=="NYRA_OTHER_INSTALLATION_RUNNING")
     work.nyra.setVisible(false);precondition(!work.nyra.pending,"conflicting helper must not receive a URL or launch")
@@ -732,6 +740,31 @@ func probe(){
     b.web.evaluateJavaScript("document.getElementById('draft') != null") { ready,error in
         guard ready as? Bool == true else { DispatchQueue.main.asyncAfter(deadline:.now()+0.05,execute:probe);return }
         guard !started else{return};started=true
+        if mode == "team_model_picker" {
+            let observer=try! String(contentsOf:resources.appendingPathComponent("native_codex/provider_dom.js"))
+            let probe = """
+            const b=document.createElement('button');
+            b.setAttribute('data-testid','model-selector');
+            document.body.prepend(b);
+            const cases=[['Claude','Opus 5.5'],['ChatGPT','GPT-6.2'],['DeepSeek','DeepSeek-V3.2']];
+            for(const [service, label] of cases){
+              document.documentElement.dataset.twosFixtureProvider=service;
+              b.textContent=label;
+              if(window.twosProviderDOM.teamModel()!==label)return 'missing '+service;
+            }
+            b.textContent='DeepThink';
+            if(window.twosProviderDOM.teamModel())return 'mode accepted as model';
+            b.textContent='DeepSeek-V3.2';
+            const other=b.cloneNode(true);document.body.prepend(other);
+            if(window.twosProviderDOM.teamModel())return 'ambiguous selector accepted';
+            return 'matched';
+            """
+            b.web.callAsyncJavaScript(observer+"\n"+probe,arguments:[:],in:nil,in:NativeWorkbench.handoffWorld){ result in
+                guard case .success(let value)=result, value as? String=="matched" else {print("Model selector failed",result);exit(2)}
+                print("TEAM_MODEL_SELECTION_PASS");exit(0)
+            }
+            return
+        }
         if mode == "deepseek_adapter" {
             let api=try! String(contentsOf:resources.appendingPathComponent("native_codex/provider_dom.js"))
             let cases=try! String(contentsOf:resources.deletingLastPathComponent().appendingPathComponent("tests/fixtures/deepseek_controls.js"))
@@ -771,6 +804,11 @@ func probe(){
         case "upload_directory_control": setup="document.getElementById('draft-area').insertAdjacentHTML('beforeend','<input type=file multiple webkitdirectory>')"
         case "upload_ambiguous_control": setup="document.querySelector('input[type=file]').insertAdjacentHTML('afterend','<input type=file multiple>')"
         case "upload_transient_duplicate": setup="const f=document.querySelector('input[type=file]');const duplicate=f.cloneNode();f.after(duplicate);setTimeout(()=>duplicate.remove(),600)"
+        case "claude_group_effort", "claude_group_model_change":
+            request["expectedReviewModel"]="Opus 5.5 超高"
+            request["allowedTeamSelections"]=["opus 5.5 超高","opus 5.5 中等"]
+            let after = mode == "claude_group_effort" ? "Opus 5.5 中等" : "Sonnet 5.5 中等"
+            setup="document.documentElement.dataset.twosFixtureProvider='Claude';const picker=document.createElement('button');picker.dataset.testid='model-selector-dropdown';picker.innerText='Opus 5.5 超高';document.body.prepend(picker);document.getElementById('draft').addEventListener('input',()=>{picker.innerText='\(after)'},{once:true})"
         case "send_delayed_control": setup="const b=document.getElementById('send');b.disabled=true;setTimeout(()=>b.disabled=false,2800)"
         case "send_ambiguous_control": setup="document.getElementById('send').insertAdjacentHTML('afterend','<button aria-label=Send onclick=window.unexpectedSend=true>Send</button>')"
         case "send_changed_draft": setup="const b=document.getElementById('send');b.disabled=true;document.getElementById('draft').addEventListener('input',()=>setTimeout(()=>{document.getElementById('draft').value='USER CHANGED DRAFT';b.disabled=false},350))"
@@ -784,22 +822,30 @@ func probe(){
         case "cancel": setup="document.getElementById('draft').addEventListener('input',()=>{window.twosTransferLease='changed';})"
         default: setup="void(0)"
         }
+        if mode == "claude_team_wire" {
+            request["teamReview"] = true
+            request["teamWireVersion"] = 1
+        }
         let actualSetup = mode == "resume_exact" ? "document.getElementById('draft').value=prompt" : setup
         b.web.callAsyncJavaScript(actualSetup,arguments:["prompt":"[TWOS handoff "+id+"]\n"+(request["text"] as! String)],in:nil,in:NativeWorkbench.handoffWorld) { _ in
             var req=request
             if mode=="origin" {req["targetURL"]="https://evil.test/"}
             if mode=="nyra_task_changed" {req["expectedActivity"]="public:another-task"}
             b.webTransfer(req) { response in
-                let expected=["nyra_task_changed":"target_changed","challenge":"verification","existing":"draft_conflict","busy":"busy","origin":"target_changed","draft":"draft","cancel":"target_changed","preflight":"ready","readiness":"input_ready","inspect_missing":"unknown","chatgpt_bubble_changed":"unknown","claude_markup_changed":"unknown","chatgpt_markup_changed":"unknown","resume_missing":"unknown","deepseek_streaming":"sent","claude_streaming":"sent","claude_interrupted":"generation_stopped","chatgpt_interrupted":"generation_stopped","upload_corrupt":"unsupported","upload_foreign":"draft_conflict","upload_foreign_image":"draft_conflict","upload_changed_input":"draft","upload_no_control":"unsupported","upload_ambiguous_control":"unsupported","send_ambiguous_control":"draft","send_changed_draft":"draft","upload_switch":"unknown"][mode] ?? "reply"
+                let expected=["claude_group_model_change":"target_changed","nyra_task_changed":"target_changed","challenge":"verification","existing":"draft_conflict","busy":"busy","origin":"target_changed","draft":"draft","cancel":"target_changed","preflight":"ready","readiness":"input_ready","inspect_missing":"unknown","chatgpt_bubble_changed":"unknown","claude_markup_changed":"unknown","chatgpt_markup_changed":"unknown","resume_missing":"unknown","deepseek_streaming":"sent","claude_streaming":"sent","claude_interrupted":"generation_stopped","chatgpt_interrupted":"generation_stopped","upload_corrupt":"unsupported","upload_foreign":"draft_conflict","upload_foreign_image":"draft_conflict","upload_changed_input":"draft","upload_no_control":"unsupported","upload_ambiguous_control":"unsupported","send_ambiguous_control":"draft","send_changed_draft":"draft","upload_switch":"unknown"][mode] ?? "reply"
+                if mode=="claude_group_effort" {precondition(response["selectedAtSend"] as? String=="Opus 5.5 中等")}
                 if mode=="claude_markup" {precondition((response["reply"] as? String)?.contains("TEST/FIXTURE response") == true && (response["reply"] as? String)?.contains("PROGRESS") == false && (response["reply"] as? String)?.contains("待办 ✓") == true,"final body must exclude public progress but preserve code") }
                 if mode=="chatgpt_file_reference" {precondition((response["reply"] as? String)?.contains("TEST-FILE.txt") == true && (response["reply"] as? String)?.contains("Copy table") == false,"inline file label is content; toolbar action is not: \(response)")}
                 if mode=="claude_chrome" {precondition(response["reply"] as? String=="TEST/FIXTURE response","UI chrome is not answer text")}
-                precondition(response["state"] as? String == expected,"\(mode): \(response)")
+                if mode=="claude_team_wire" {
+                    // A renderer without a public message ID completes its causal hash asynchronously.
+                    precondition(["sent","reply"].contains(response["state"] as? String ?? ""))
+                } else { precondition(response["state"] as? String == expected,"\(mode): \(response)") }
                 b.web.evaluateJavaScript("JSON.stringify({previewActivations:window.previewActivations||0,sends:window.sends,draft:document.getElementById('draft').value,inlineCode:document.querySelectorAll('[data-testid=user-message] code').length})") { value,_ in
                     let facts=try! JSONSerialization.jsonObject(with:Data((value as! String).utf8)) as! [String:Any]
                     if mode=="chatgpt_file_reference" {precondition(facts["previewActivations"] as? Int==0,"reading must not open a file")}
                     if mode.contains("markup") {precondition(facts["inlineCode"] as? Int==2,"fixture must actually render both inline code fragments")}
-                    let sends = ["upload_accessibility_hidden_input","upload_hidden_other_control","upload_transient_duplicate","upload_remounted_composer","send_delayed_control","upload_exact","upload_async_input","upload_delayed_control","upload_menu_control","upload_scoped_control","upload_nearest_control","upload_directory_control","upload_same_name","upload_history","upload_claude_labels","upload_chatgpt_cards","upload_chatgpt_renamed","send","spa","deepseek_shape","deepseek_streaming","chatgpt_semantic","chatgpt_interrupted","chatgpt_bubble","chatgpt_bubble_changed","chatgpt_markup","chatgpt_markup_changed","upload_chatgpt_bubble","claude","claude_streaming","claude_interrupted","claude_chrome","chatgpt_file_reference","claude_markup","claude_markup_changed","resume_exact"].contains(mode)
+                    let sends = ["upload_accessibility_hidden_input","upload_hidden_other_control","upload_transient_duplicate","upload_remounted_composer","send_delayed_control","upload_exact","upload_async_input","upload_delayed_control","upload_menu_control","upload_scoped_control","upload_nearest_control","upload_directory_control","upload_same_name","upload_history","upload_claude_labels","upload_chatgpt_cards","upload_chatgpt_renamed","send","spa","deepseek_shape","deepseek_streaming","chatgpt_semantic","chatgpt_interrupted","chatgpt_bubble","chatgpt_bubble_changed","chatgpt_markup","chatgpt_markup_changed","upload_chatgpt_bubble","claude","claude_team_wire","claude_group_effort","claude_streaming","claude_interrupted","claude_chrome","chatgpt_file_reference","claude_markup","claude_markup_changed","resume_exact"].contains(mode)
                     precondition(facts["sends"] as? Int == (sends ? 1:0),"side effect")
                     if mode=="existing" {precondition(facts["draft"] as? String == "KEEP EXISTING")}
                     if mode=="send_changed_draft" {precondition(facts["draft"] as? String == "USER CHANGED DRAFT")}
@@ -810,11 +856,15 @@ func probe(){
                             func reconcile() {
                                 b.webTransfer(inspect) { duplicate in
                                     precondition(duplicate["state"] as? String == (["chatgpt_bubble_changed","claude_markup_changed","chatgpt_markup_changed"].contains(mode) ? "unknown":["claude_interrupted","chatgpt_interrupted"].contains(mode) ? "generation_stopped":"reply"))
+                                    if mode=="claude_team_wire" {
+                                        precondition((duplicate["replyMessage"] as? String)?.hasPrefix("rendered-turn-v2:")==true && duplicate["reply"] as? String=="TEST/FIXTURE response")
+                                    }
                                     b.web.evaluateJavaScript("window.sends") { value,_ in precondition(value as? Int==1);print("CROSS_SEND_ONCE_PASS");exit(0) }
                                 }
                             }
                             if ["deepseek_streaming","claude_streaming"].contains(mode) { b.web.evaluateJavaScript("window.finishStream()") { _,_ in reconcile() } }
                             else if mode=="claude_chrome" { b.web.evaluateJavaScript("document.querySelector('[role=toolbar]').textContent='3 minutes ago'") { _,_ in reconcile() } }
+                            else if mode=="claude_team_wire" { DispatchQueue.main.asyncAfter(deadline:.now()+0.2) {reconcile()} }
                             else { reconcile() }
                         }else{print("CROSS_\(mode)_PASS");exit(0)}
                     }
@@ -845,7 +895,7 @@ probe();DispatchQueue.main.asyncAfter(deadline:.now()+20){fatalError("fixture ti
     assert run.returncode==0,run.stderr
     return binary
 
-@pytest.mark.parametrize('mode',['nyra_diagnostic_scope','nyra_task_metadata','nyra_task_changed','deepseek_intent','deepseek_adapter','launcher_language','nyra_visibility_controls','simplified_r4_policy','simplified_r4_auto_legacy','simplified_r4_auto_stopped_unknown','simplified_r4_auto_stopped_same','simplified_r4_auto_stopped_other','simplified_r4_auto_left','simplified_r4_auto_right','simplified_r4_auto_manual','simplified_r4_auto_stream','simplified_r4_auto_empty','simplified_r4_auto_wait_stop','simplified_r4_auto_reconcile','simplified_r4_auto_reconcile_stop','owner_r3_policy','paired_attachment_scope_ui','auxiliary_window_close','history_restore','paired_policy','paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_hydration','paired_auto_late_changed','paired_auto_late_unrestorable','paired_recovery','upload_exact','upload_async_input','upload_changed_input','upload_delayed_control','upload_menu_control','upload_scoped_control','upload_nearest_control','upload_directory_control','upload_accessibility_hidden_input','upload_hidden_other_control','upload_ambiguous_control','upload_transient_duplicate','upload_remounted_composer','send_delayed_control','send_ambiguous_control','send_changed_draft','upload_same_name','upload_history','upload_claude_labels','upload_chatgpt_cards','upload_chatgpt_renamed','upload_foreign_image','upload_corrupt','upload_foreign','upload_no_control','upload_switch','nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','chatgpt_interrupted','chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble','claude','claude_streaming','claude_interrupted','claude_chrome','chatgpt_file_reference','claude_markup','claude_markup_changed','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
+@pytest.mark.parametrize('mode',['nyra_diagnostic_scope','nyra_task_metadata','nyra_task_changed','deepseek_intent','deepseek_adapter','team_model_picker','launcher_language','nyra_visibility_controls','simplified_r4_policy','simplified_r4_auto_legacy','simplified_r4_auto_stopped_unknown','simplified_r4_auto_stopped_same','simplified_r4_auto_stopped_other','simplified_r4_auto_left','simplified_r4_auto_right','simplified_r4_auto_manual','simplified_r4_auto_stream','simplified_r4_auto_empty','simplified_r4_auto_wait_stop','simplified_r4_auto_reconcile','simplified_r4_auto_reconcile_stop','owner_r3_policy','paired_attachment_scope_ui','auxiliary_window_close','history_restore','paired_policy','paired_auto','paired_auto_navigation','paired_auto_late_navigation','paired_auto_late_hydration','paired_auto_late_changed','paired_auto_late_unrestorable','paired_recovery','upload_exact','upload_async_input','upload_changed_input','upload_delayed_control','upload_menu_control','upload_scoped_control','upload_nearest_control','upload_directory_control','upload_accessibility_hidden_input','upload_hidden_other_control','upload_ambiguous_control','upload_transient_duplicate','upload_remounted_composer','send_delayed_control','send_ambiguous_control','send_changed_draft','upload_same_name','upload_history','upload_claude_labels','upload_chatgpt_cards','upload_chatgpt_renamed','upload_foreign_image','upload_corrupt','upload_foreign','upload_no_control','upload_switch','nyra_selected_target','nyra_selection_async','owner_result_binding','one_click','nyra_socket_queue','nyra_file_wait','nyra_status','ledger','nyra_lifecycle','states','queue_dispatch','send','spa','deepseek_shape','deepseek_streaming','chatgpt_semantic','chatgpt_interrupted','chatgpt_bubble','chatgpt_bubble_changed','chatgpt_markup','chatgpt_markup_changed','upload_chatgpt_bubble','claude','claude_team_wire','claude_group_effort','claude_group_model_change','claude_streaming','claude_interrupted','claude_chrome','chatgpt_file_reference','claude_markup','claude_markup_changed','preflight','readiness','inspect_missing','resume_missing','resume_exact','challenge','existing','busy','origin','draft','cancel'])
 def test_exact_target_single_dispatch_and_preflight(cross_harness,tmp_path,mode):
     class Fixture(BaseHTTPRequestHandler):
         def do_GET(self):
@@ -859,6 +909,12 @@ if(TEST_MODE==='deepseek_shape'||TEST_MODE==='deepseek_streaming'){document.docu
 if(TEST_MODE==='deepseek_streaming')document.getElementById('send').setAttribute('aria-label','Stop generating');
 window.finishStream=()=>{document.getElementById('send').setAttribute('aria-label','Send');const idle=document.createElement('div');idle.setAttribute('role','button');idle.className='ds-button--primary ds-button--circle ds-button--disabled';idle.innerHTML='<svg width=16 height=16><path d="M8.3125 0.980206C8.66767 1.05312 8.97902 1.2042 9.2627 1.43235C9.48724 1.613 9.73029 1.85795 9.97949 2.10716L14.707 6.8347L13.293 8.24876L9 3.95579V15.0417H7V3.95579L2.70703 8.24876L1.29297 6.8347L6.02051 2.10716C6.26971 1.85795 6.51277 1.613 6.7373 1.43235C6.97662 1.23988 7.28445 1.04404 7.6875 0.980206C7.8973 0.947029 8.1031 0.955183 8.3125 0.980206Z"></path></svg>';document.getElementById('draft').after(idle);};if(TEST_MODE==='deepseek_shape')window.finishStream();
 if(TEST_MODE.startsWith('claude')){document.documentElement.dataset.twosFixtureProvider='Claude';delete user.dataset.role;delete reply.dataset.role;user.dataset.testid='user-message';reply.className='font-claude-response';reply.dataset.isStreaming=TEST_MODE==='claude_streaming'?'true':'false';window.finishStream=()=>{reply.dataset.isStreaming='false';};}
+if(TEST_MODE==='claude_team_wire'){
+ const wire=user.textContent;const body=wire.slice(wire.indexOf('] ')+2);
+ if(wire.includes(String.fromCharCode(10))||JSON.parse(body).instruction!=='TEST/FIXTURE 非敏感 <script>文字</scr'+'ipt>'+String.fromCharCode(10)+'line two'){
+   user.textContent='Invalid Team wire';
+ }
+}
 if(TEST_MODE.includes('markup')){
  document.documentElement.dataset.twosFixtureProvider=TEST_MODE.startsWith('claude')?'Claude':'ChatGPT';user.dataset.testid='user-message';
  const source=user.textContent;user.textContent='';let end=0;

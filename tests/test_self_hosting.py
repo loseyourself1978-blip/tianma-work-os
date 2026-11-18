@@ -169,7 +169,7 @@ if sys.argv[1:] == [
         message = json.loads(line)
         method = message.get("method")
         if method == "initialize":
-            assert message["params"]["clientInfo"]["version"] == "1.0.11"
+            assert message["params"]["clientInfo"]["version"] == "1.0.12"
             print(json.dumps({
                 "id": message["id"],
                 "result": {

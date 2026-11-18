@@ -654,6 +654,9 @@ final class Launcher: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let args = CommandLine.arguments
         if let index = args.firstIndex(of: "--diagnostic-root"), index + 1 < args.count {
             diagnosticRoot = args[index + 1]
+        } else if Bundle.main.bundleIdentifier == "com.tianma.workos.acceptance.team-chat" {
+            diagnosticRoot = FileManager.default.homeDirectoryForCurrentUser
+                .appendingPathComponent("Library/Application Support/TWOS AI Team Acceptance").path
         }
         preferencesURL = diagnosticRoot.map { URL(fileURLWithPath: $0) }
             ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/Tianma Work OS Preferences")
@@ -1170,7 +1173,7 @@ final class Launcher: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        if nativeWorkbench?.codex?.isBusy == true {
+        if nativeWorkbench?.codex?.isBusy == true || nativeWorkbench?.teamPanel?.hasActiveCodexTurn == true {
             let alert = NSAlert(); alert.messageText = localized("Codex is still working")
             alert.informativeText = localized("Return to the workbench and finish or stop the current turn before quitting.")
             alert.addButton(withTitle: localized("Return to workbench")); alert.runModal(); return .terminateCancel

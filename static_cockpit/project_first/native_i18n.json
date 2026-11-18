@@ -1655,6 +1655,10 @@
     "en-US": "The previous delivery is still generating or cannot be confirmed. Nothing was resent. Try auto-send again after it finishes; details are in More.",
     "zh-CN": "上次投递仍在生成或尚无法确认，没有重新发送。完成后可再次勾选自动发送；详情见“更多”。"
   },
+  "NYRA_VISIBILITY_UNCONFIRMED": {
+    "en-US": "TWOS could not confirm this Nyra window’s visibility. Check its status and try again.",
+    "zh-CN": "TWOS 暂未收到这个夜璃窗口的新状态。请查看状态后重试。"
+  },
   "NYRA_OTHER_INSTALLATION_RUNNING": {
     "en-US": "Another installed Nyra is running. Quit that Nyra from its own menu, then use Show Nyra here. Existing tasks continue.",
     "zh-CN": "另一安装位置的夜璃正在运行。请从该夜璃自己的菜单正常退出，再在这里显示夜璃。现有任务会继续。"

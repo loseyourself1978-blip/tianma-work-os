@@ -5,7 +5,7 @@
  let controllable=false, controlVerified=false, submitting=false, catalog=[], folderToken='', handoffHash='', composing=false, compositionEndedAt=-Infinity, desiredModel='', desiredEffort='';
  let connecting=false,connectionPhase='disconnected',connectionError='';
  let historyActivity={};
- let retryNotice=false,nyraState={available:false},resultReceipt={};
+ let retryNotice=false,resultReceipt={};
  let businessResult='', transport='', activityUnverified=false, awaitingTurn=false, stopRequested=false, waitingRequests=0, answeringRequests=0, actualCwd='', actualModel='', activeTurn='', queuePaused=false;
  const detailState=new Map(), threadRecords=new Map(), itemTurns=new Map(), terminalTurns=new Map();
  let projectRows=[], visibleThreads=[], projectThreads=new Map(), openProjects=new Set(), navigationError='', historySync={}, navigationSignature='';
@@ -29,17 +29,11 @@
  }
  function labels(){
   historyActivityLabels();
-  $('pet-control').textContent=nyraState.available?(nyraState.visible?t('Hide Nyra','隐藏夜璃 · Nyra'):t('Show Nyra','显示夜璃 · Nyra')):t('Nyra · view status','夜璃 · 查看状态');
-  $('pet-control').setAttribute('aria-label',$('pet-control').textContent);
-  $('pet-control').disabled=!!nyraState.pending;
-  $('pet-heading').textContent=t('Nyra · TWOS companion','夜璃 · TWOS 官方桌宠');
-  $('pet-reason').textContent=nyraState.available?t('Hover over Nyra and open + for the control ring: drag, resize, outfits, actions, fullscreen and sound.','悬停夜璃并打开＋控制环：拖动、缩放、换装、动作、全屏与声音。'):t('The Nyra helper is not available here. No visibility change is claimed.','此实例的夜璃辅助程序暂不可用，未宣称改变显示状态。')+(nyraState.reason?' · '+nyraState.reason:'');
-  $('pet-binding').textContent=(nyraState.binding==='CONNECTED_READONLY'?t('Connected to this TWOS instance: read-only task status. ','已连接此 TWOS 实例：只读任务状态。'):t('Task status is not connected. ','尚未关联任务状态。'))+t('Task-card append/edit/stop uses a separate authenticated user-control channel when authorized. Show/hide does not call a model; animations do not prove execution or acceptance.','获准的任务卡追加／编辑／停止使用单独的已认证用户控制通道。显隐不调用模型，动画不代表执行或验收。');
   for(const [id,en,cn] of [['refresh','Refresh','刷新会话'],['draft','Message','消息'],['model','Model','模型'],['effort','Reasoning level','推理档位'],['mode','Input mode','输入模式'],['timeline','Conversation','对话'],['telemetry','Usage and run observations','用量与运行观测'],['result-files','Workspace files','工作目录文件']])$(id).setAttribute('aria-label',t(en,cn));
 
-  $('workbench-title').textContent='Codex';$('binding').textContent=t('Local workspace','本机工作区');$('connect').textContent=t('Connect local Codex','连接本机 Codex');
+  $('workbench-title').textContent='Codex';$('binding').textContent=t('Local workspace','本机工作区');$('retry-connection').textContent=t('Retry connection','重新连接');
   $('workspace').textContent=t('Open workspace','打开工作目录');$('more-threads').textContent=t('More','更多会话');$('reconnect').textContent=t('Reconnect and inspect','重新连接并查看');$('details-label').textContent=t('Details','消息详情');
-  navigationLabels();$('empty')&&($('empty').textContent=t('Connect to choose an existing local conversation. Selecting a conversation does not execute it.','连接后选择已有本机会话。选择会话不会开始执行。'));
+  navigationLabels();$('empty')&&($('empty').textContent=t('Choose a local conversation when it appears. Selecting a conversation does not execute it.','会话列表就绪后即可选择。选择会话不会开始执行。'));
   $('draft').placeholder=t('Ask Codex to do something…','让 Codex 做点什么…');$('stop').textContent=t('Stop','停止');$('send').textContent='↑';
   $('send').setAttribute('aria-label',t('Send','发送'));$('attach').setAttribute('aria-label',t('Add files or images','添加文件或图片'));
   $('keyboard-help').textContent=t('Enter to send · Shift+Enter for a new line','Enter 发送 · Shift+Enter 换行');$('latest').textContent=t('↓ Latest messages','↓ 回到最新消息');$('notice-close').setAttribute('aria-label',t('Dismiss notice','收起提示'));
@@ -62,7 +56,6 @@
  function connectionStatus(){
   const closing=connectionPhase==='closing';
   $('cancel-connection').hidden=!connecting;$('cancel-connection').textContent=t('Cancel connection','取消连接');
-  $('disconnect').hidden=!connected||connecting;$('disconnect').disabled=busy||submitting;$('disconnect').textContent=t('Disconnect','断开连接');
   const phases={starting:t('Starting the local process','正在启动本机进程'),handshake:t('Waiting for App Server handshake','等待 App Server 握手'),authentication:t('Checking existing authentication','核对现有登录状态'),catalogs:t('Loading models and conversations','正在读取模型与会话列表')};
   let message='';
   if(connecting)message=t('Connecting to local Codex… ','正在连接本机 Codex… ')+(phases[connectionPhase]||'');
@@ -75,8 +68,8 @@
     else if(connectionError.startsWith('authentication'))message=t('Codex authentication is unavailable. Sign in normally in the official app, then connect again.','Codex 登录状态不可用。请在官方应用正常登录后重新连接。');
     else message=t('Connection failed: ','连接失败：')+connectionError+t('. Check the official app, then connect again. Nothing is resent automatically.','。请检查官方应用后重新连接，不会自动重发任务。');
   }
-  $('connection-status').hidden=!message;$('connection-status').textContent=message;
-  $('connect').disabled=busy||connecting||closing;
+  $('connection-feedback').hidden=!message;$('connection-status').hidden=!message;$('connection-status').textContent=message;
+  $('retry-connection').hidden=!connectionError||connected||connecting||closing||uncertain;
  }
  function updateControls(){
   historyActivityLabels();
@@ -86,7 +79,7 @@
   $('result-confirmation-note').textContent=checked?t('Your check is recorded for this result. The executor report is preserved.','已记录你对本次结果的确认，执行器原回报保留。'):t('Optional, after you have checked the result. Does not start another run.','检查结果后可选确认，不会开始新的执行。');
   const available=id=>catalog.some(x=>x.model===$(id).value&&!x.hidden);
   $('send').disabled=!connected||!selected||!historyReady||!controllable||uncertain||submitting||(awaitingTurn&&$('mode').value==='steer')||!available('model')||(!$('draft').value.trim()&&!$('attachments').children.length);
-  document.querySelectorAll('[data-chat-id]').forEach(b=>b.disabled=busy||submitting||connecting);updateHistorySync();$('model').disabled=false;$('connect').hidden=connected;$('connect').disabled=busy;$('refresh').disabled=busy||submitting||connecting;$('reconnect').hidden=!uncertain;$('stop').hidden=!busy||uncertain||awaitingTurn;$('stop').disabled=stopRequested;$('stop').textContent=stopRequested?t('Stopping…','正在停止…'):t('Stop','停止');$('return').hidden=!resultAvailable;
+  document.querySelectorAll('[data-chat-id]').forEach(b=>b.disabled=busy||submitting||connecting);updateHistorySync();$('model').disabled=false;$('refresh').disabled=busy||submitting||connecting;$('reconnect').hidden=!uncertain;$('stop').hidden=!busy||uncertain||awaitingTurn;$('stop').disabled=stopRequested;$('stop').textContent=stopRequested?t('Stopping…','正在停止…'):t('Stop','停止');$('return').hidden=!resultAvailable;
   $('draft').disabled=false;$('workspace').hidden=!selected;$('files').hidden=!selected||!controllable;$('session-details').hidden=!selected;$('new-task').disabled=!connected||connecting;
   $('next-turn').hidden=!busy;$('next-turn').textContent=t('Model and reasoning changes apply to the next turn. Steer keeps this turn’s settings.','模型和推理档位变更在下一轮生效；Steer 保持当前轮设置。');
   $('status').textContent=stopRequested?t('Stop requested · waiting for the actual turn to end','已请求停止 · 等待当前轮实际结束'):waitingRequests?t('Waiting for your decision','等待你的决定'):answeringRequests?t('Response sent · waiting for service confirmation','回答已发送 · 等待服务确认'):uncertain?t('Delivery needs verification · input retained','送达状态待核验 · 输入已保留'):activityUnverified?t('Service connection interrupted · task state needs verification; no automatic restart','服务连接中断 · 任务状态待核验，不会自动重启'):awaitingTurn?t('Input accepted · waiting for the actual turn to start','输入已接收 · 等待实际轮次开始'):busy?t('Codex is working · you can keep typing','Codex 正在执行 · 可以继续输入'):selected&&!controllable?t('History only · control is not shared with the official App. Create an independent task to work here.','仅查看历史 · 未取得官方 App 会话控制权。可新建独立任务在此执行。'):outcomeLabel()?outcomeLabel():selected?(controlVerified?t('Folder-bound task · execution controlled by this connection','目录已绑定 · 本连接控制执行'):t('Folder confirmed · control will be verified before sending','目录已确认 · 发送前核验执行控制权')):'';
@@ -343,11 +336,10 @@
   $('approvals').append(box);
  }
  window.twosReceive=({kind,payload:p})=>{
-  if(kind==='nyra'){nyraState=p;labels();return;}
   if(kind==='telemetry'){window.twosTelemetry.receive(p);return;}
   if(kind==='attachmentParsing'){$('attachment-parsing').hidden=!p.parsing;$('attachment-parsing').textContent=t('Reading locally, not sent: ','正在本机读取，尚未发送：')+p.name;return;}
   if(kind==='locale'){
-   const old=zh;zh=p.zh;window.twosTelemetry.language(zh);$('language').value=zh?'zh-CN':'en-US';document.documentElement.lang=zh?'zh-CN':'en-US';labels();
+   const old=zh;zh=p.zh;window.twosTelemetry.language(zh);document.documentElement.lang=zh?'zh-CN':'en-US';labels();
    // Translate only TWOS controls, never message text, paths or filenames.
    const localize=text=>{for(const [key,v] of Object.entries(p.catalog||{}))if(text===key||text===v[old?'zh-CN':'en-US'])return v[zh?'zh-CN':'en-US']||key;return text;};
    $('notice-text').textContent=localize($('notice-text').textContent);
@@ -463,9 +455,7 @@
    if(nearEnd)$('timeline').scrollTop=$('timeline').scrollHeight;updateScroll();
   }
  };
- $('pet-control').onclick=()=>{if(nyraState.available)post('nyra');const p=$('pet-info');p.hidden=!p.hidden;$('pet-control').setAttribute('aria-expanded',String(!p.hidden));};
- $('language').onchange=()=>post('language',{locale:$('language').value});
- $('connect').onclick=()=>{connecting=true;connectionPhase='starting';connectionError='';updateControls();post('connect');};$('cancel-connection').onclick=()=>post('cancelConnection');$('disconnect').onclick=()=>post('disconnect');$('reconnect').onclick=()=>post('reconnect');$('more-threads').onclick=()=>post('moreThreads');$('refresh').onclick=()=>post('refresh');$('more-projects').onclick=()=>post('moreProjects');$('conversation-search').oninput=renderNavigation;
+ $('retry-connection').onclick=()=>post('connect');$('cancel-connection').onclick=()=>post('cancelConnection');$('reconnect').onclick=()=>post('reconnect');$('more-threads').onclick=()=>post('moreThreads');$('refresh').onclick=()=>post('refresh');$('more-projects').onclick=()=>post('moreProjects');$('conversation-search').oninput=renderNavigation;
  $('navigation-toggle').onclick=()=>{const open=$('navigation-toggle').getAttribute('aria-expanded')!=='true';$('navigation-toggle').setAttribute('aria-expanded',String(open));document.body.classList.toggle('navigation-collapsed',!open);};
  $('history-activity-load').onclick=()=>post('historyActivity',{threadId:selected,older:false});$('history-activity-more').onclick=()=>post('historyActivity',{threadId:selected,older:true});
  $('workspace').onclick=()=>post('workspace');$('more').onclick=()=>post('more');$('return').onclick=()=>post('return');$('stop').onclick=()=>post('interrupt');

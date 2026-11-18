@@ -3,7 +3,7 @@
 import argparse, hashlib, json, plistlib, shutil, subprocess
 from pathlib import Path
 
-def build(source, destination, cache):
+def build(source, destination, cache, *, team_companion=False):
     source, destination, cache = map(Path, (source, destination, cache))
     manifest = json.loads((source/'Resources/component-manifest.json').read_text())
     if manifest.get('product') != 'Nyra' or manifest.get('event_schema') != 'twos.nyra.status.v4':
@@ -29,10 +29,12 @@ def build(source, destination, cache):
         target = contents/'Resources'/name
         target.parent.mkdir(parents=True,exist_ok=True)
         shutil.copy2(source/'Resources'/name,target)
-    (contents/'Info.plist').write_bytes(plistlib.dumps(dict(CFBundleName='TWOS · 夜璃 Nyra',CFBundleDisplayName='TWOS · 夜璃 Nyra',CFBundleIdentifier='com.tianma.workos.nyra',CFBundleExecutable='TWOSNyra',CFBundlePackageType='APPL',CFBundleShortVersionString=manifest['version'],CFBundleVersion=manifest['build'],LSMinimumSystemVersion='13.0',LSUIElement=True,NSHighResolutionCapable=True,NSPrincipalClass='NSApplication',LSMultipleInstancesProhibited=True,NyraVisibilityProtocol=2,CFBundleURLTypes=[dict(CFBundleURLName='TWOS Nyra visibility',CFBundleURLSchemes=['nyra','twos-nyra'])])))
+    helper_id = 'com.tianma.workos.acceptance.team-chat.nyra' if team_companion else 'com.tianma.workos.nyra'
+    schemes = ['twos-team-nyra'] if team_companion else ['nyra', 'twos-nyra']
+    (contents/'Info.plist').write_bytes(plistlib.dumps(dict(CFBundleName='TWOS · 夜璃 Nyra',CFBundleDisplayName='TWOS · 夜璃 Nyra',CFBundleIdentifier=helper_id,CFBundleExecutable='TWOSNyra',CFBundlePackageType='APPL',CFBundleShortVersionString=manifest['version'],CFBundleVersion=manifest['build'],LSMinimumSystemVersion='13.0',LSUIElement=True,NSHighResolutionCapable=True,NSPrincipalClass='NSApplication',LSMultipleInstancesProhibited=True,NyraVisibilityProtocol=2,CFBundleURLTypes=[dict(CFBundleURLName='TWOS Nyra visibility',CFBundleURLSchemes=schemes)])))
     cache.mkdir(parents=True,exist_ok=True)
     subprocess.run(['xcrun','swiftc','-swift-version','5','-O','-target','arm64-apple-macos13.0','-module-cache-path',str(cache),'-framework','AppKit','-framework','AVFoundation',*[str(p) for p in sorted((source/'Sources').glob('*.swift'))],'-o',str(contents/'MacOS/TWOSNyra')],check=True)
     subprocess.run(['codesign','--force','--sign','-',str(destination)],check=True)
     subprocess.run(['codesign','--verify','--deep','--strict',str(destination)],check=True)
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--source',required=True);p.add_argument('--destination',required=True);p.add_argument('--cache',required=True);a=p.parse_args();build(a.source,a.destination,a.cache)
+    p=argparse.ArgumentParser();p.add_argument('--source',required=True);p.add_argument('--destination',required=True);p.add_argument('--cache',required=True);p.add_argument('--team-companion',action='store_true');a=p.parse_args();build(a.source,a.destination,a.cache,team_companion=a.team_companion)

@@ -291,6 +291,7 @@ struct CodexSubmission: Codable {
     // never used as a substitute for the native permission profile or lease.
     var dispatchContext: String?
     var retryOf: String?
+    var reroutedModel: String?
     var ownerResultCheck: CodexOwnerResultCheck? = nil
     var validOwnerResultCheck: CodexOwnerResultCheck? {
         guard state == "completed", let turn = turn, let result = result, !result.isEmpty,
@@ -340,7 +341,6 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     let preferences: URL
     let translate: (String) -> String
     var returnResult: ((String, URL) -> Void)?
-    var languageChanged: ((String) -> Bool)?
     var directoryChoiceGeneration = 0
     var process: Process?
     var transport: CodexPipeConnection?
@@ -356,7 +356,6 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     var connectionProcessFactory: (() throws -> Process)?
     let fixtureFramer = CodexJSONLFramer()
     let publicationQueue = DispatchQueue(label: "twos.codex.publication", qos: .userInitiated)
-    var nyraAction: ((String) -> Void)?
     var statusMetadataChanged: (() -> Void)?
     var diagnosticTail = ""
     var requestID = 0
@@ -371,6 +370,7 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     var dispatchGeneration = 0
     var stoppedSubmissions = Set<String>()
     var selectionGeneration = 0
+    var connectAfterClosing = false
     var transportGeneration = 0
     var completedTurns = Set<String>()
     var pendingSource: URL?
@@ -413,6 +413,7 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     var pageReady = false
     var pendingUI: [[String: Any]] = []
     var modelIDs = Set<String>()
+    var teamSession = false
     var modelCatalog: [[String: Any]] = []
     var ledger = CodexLedger()
     var ledgerReadable = true
@@ -481,10 +482,12 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
         guard message.frameInfo.isMainFrame,
               message.frameInfo.request.url?.standardizedFileURL == resources.appendingPathComponent("native_codex/index.html").standardizedFileURL,
               let value = message.body as? [String: Any], let action = value["action"] as? String else { return }
+        // Team authorization is the only composer for this client. Its native
+        // approval window can answer the current tool request but cannot start
+        // another turn, switch scopes, drain a queue, or change the roster.
+        if teamSession && !["ready","answer","copy"].contains(action) {return}
         switch action {
-        case "nyra": nyraAction?("toggle")
         case "ready":
-            nyraAction?("status")
             pageReady = true
             let queued = pendingUI; pendingUI = []
             for event in queued { emit(event["kind"] as! String, event["payload"] as? [String: Any] ?? [:]) }
@@ -497,9 +500,6 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
                 publishQueue(); publishAttachments(); publishDisplaySnapshot()
                 for (key, request) in approvals { emit("approval", approvalPayload(key, request)) }
             }
-        case "language":
-            guard let locale = value["locale"] as? String, ["zh-CN", "en-US"].contains(locale), languageChanged?(locale) == true else { return }
-            publishLanguage()
         case "directoryMode": directoryChoiceGeneration += 1; pendingDirectory = nil
         case "connect": connect()
         case "cancelConnection": disconnect()
@@ -687,11 +687,20 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
             }
             child.arguments![index] = table + "}"
         }
+        child.arguments! += ["-c", "permissions.twos-team-review.filesystem={\":root\"=\"deny\",\":minimal\"=\"read\",\":workspace_roots\"={\".\"=\"read\"}}",
+                             "-c", "permissions.twos-team-review.network.enabled=false"]
         var env = ProcessInfo.processInfo.environment
         env.removeValue(forKey: "OPENAI_API_KEY"); env.removeValue(forKey: "CODEX_ACCESS_TOKEN")
         child.environment = env
         child.currentDirectoryURL = FileManager.default.temporaryDirectory
         return child
+    }
+    func connectSelectedPane() {
+        if closingTransport != nil {
+            connectAfterClosing = true
+        } else {
+            connect()
+        }
     }
     func connect() {
         guard !connecting, transport == nil, closingTransport == nil, process?.isRunning != true else { return }
@@ -713,7 +722,7 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
         connection.onLaunch = { [weak self, weak connection] child in
             guard let self = self, self.transportGeneration == generation, self.transport === connection else { return }
             self.process = child; self.connectionPhase = "handshake"; self.controlState()
-            self.request("initialize", ["clientInfo": ["name": "twos_integrated_workbench", "title": "Tianma Work OS", "version": "1.0.11"], "capabilities": ["experimentalApi": true]]) { [weak self] result in
+            self.request("initialize", ["clientInfo": ["name": "twos_integrated_workbench", "title": "Tianma Work OS", "version": "1.0.12"], "capabilities": ["experimentalApi": true]]) { [weak self] result in
                 guard let self = self, self.transportGeneration == generation else { return }
                 guard result != nil else { self.endConnection("handshake_failed"); return }
                 self.write(["method": "initialized"])
@@ -724,8 +733,11 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
                     if account["requiresOpenaiAuth"] as? Bool != false && !(account["account"] is [String: Any]) {
                         self.endConnection("authentication_required"); return
                     }
+                    if self.teamSession, (account["account"] as? [String:Any])?["type"] as? String != "chatgpt" {
+                        self.endConnection("included_plan_required"); return
+                    }
                     self.connected = true; self.connectionPhase = "catalogs"; self.controlState()
-                    self.listThreads()
+                    if self.teamSession {self.connectionThreadsReady=true} else {self.listThreads()}
                     self.request("model/list", ["limit": 100]) { [weak self] result in
                         guard let self = self, self.transportGeneration == generation else { return }
                         guard let models = result?["data"] as? [[String: Any]] else { self.endConnection("model_list_failed"); return }
@@ -743,7 +755,8 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     }
     func finishConnection() {
         guard connecting, connected, connectionModelsReady, connectionThreadsReady else { return }
-        connecting = false; connectionPhase = "connected"; controlState(); refreshUsage(); listProjects()
+        connecting = false; connectionPhase = "connected"; controlState()
+        if !teamSession {refreshUsage(); listProjects()}
         // Reading a selected conversation must never resume queued execution.
         if let id = threadID ?? restoringThread { selectThread(id) }
     }
@@ -768,6 +781,10 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
             connection.cancel { [weak self, weak connection] in
                 guard let self = self, self.closingTransport === connection else { return }
                 self.closingTransport = nil; self.process = nil; self.connectionPhase = "disconnected"; self.controlState()
+                if self.connectAfterClosing {
+                    self.connectAfterClosing = false
+                    self.connect()
+                }
             }
         }
     }
@@ -815,6 +832,10 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
                 emit("approval", approvalPayload(key, approvals[key]!)); controlState(); return
             }
             guard target == threadID else { return }
+            if method == "model/rerouted", let eventTurn=params["turnId"] as? String, eventTurn==turnID,
+               let active=activeSubmission {
+                _ = changeSubmission(active) { $0.reroutedModel = params["toModel"] as? String ?? "UNKNOWN" }
+            }
             if method == "serverRequest/resolved" {
                 for (key, request) in approvals where Self.sameRequestID(request["id"], params["requestId"]) {
                     approvals.removeValue(forKey: key); answeredApprovals.remove(key); emit("answered", ["key": key])
@@ -891,7 +912,7 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
             }
     }
     func listThreads(older: Bool = false) {
-        guard connected, !threadsLoading else { return }
+        guard connected, !teamSession, !threadsLoading else { return }
         let connection = transportGeneration
         var params: [String: Any] = ["limit": 50, "sortKey": "updated_at", "useStateDbOnly": true]
         if older { guard let cursor = threadCursor else { return }; params["cursor"] = cursor }
@@ -911,7 +932,7 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     // Public protocol metadata only. Folder aliases are identified as such in
     // the view; they do not grant project membership or task permissions.
     func listProjects(older: Bool = false) {
-        guard connected, !projectsLoading else { return }
+        guard connected, !teamSession, !projectsLoading else { return }
         var params: [String: Any] = ["limit": 50, "sortKey": "position"]
         if older { guard let cursor = projectCursor else { return }; params["cursor"] = cursor }
         let connection = transportGeneration; projectsLoading = true
@@ -1200,7 +1221,7 @@ final class NativeCodex: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
                 return canonical == binding.directory.path || canonical.hasPrefix(binding.directory.path + "/")
             }
         } ?? false
-        let expanded = !scopeValid || !extra.isEmpty || p["networkApprovalContext"] as? [String: Any] != nil || method == "item/permissions/requestApproval"
+        let expanded = root?.permission == "twos-team-review" || !scopeValid || !extra.isEmpty || p["networkApprovalContext"] as? [String: Any] != nil || method == "item/permissions/requestApproval"
         let offered = p["availableDecisions"] as? [Any] ?? ["accept", "decline", "cancel"]
         let decisions = offered.compactMap { $0 as? String }.filter { ["accept", "decline", "cancel"].contains($0) && (!expanded || $0 != "accept") }
         return ["key": key, "method": method, "params": p, "decisions": decisions, "scopeExpansion": expanded, "answering": answeredApprovals.contains(key)]
@@ -1348,7 +1369,7 @@ extension NativeCodex {
         emit("directory", ["token": token, "path": directory.path, "create": create, "isolated": directory.isolated,
             "scope": translate("Read and write this folder only. Sensitive configuration folders remain excluded. Business network access is disabled; model connection uses your existing login. No Git initialization.")])
     }
-    func confirmDirectory(token: String, model: String, effort: String) {
+    func confirmDirectory(token: String, model: String, effort: String, reviewOnly: Bool = false, onCreated: ((CodexBinding) -> Void)? = nil) {
         guard connected, !isBusy, !creatingThread, ledgerReadable, let pending = pendingDirectory, pending.token == token,
               validateModel(model, effort: effort, attachments: []) else { return }
         creatingThread = true
@@ -1365,6 +1386,9 @@ extension NativeCodex {
         } catch { creatingThread = false; pendingDirectory = nil; notice("Folder confirmation failed. No execution session was created. Review the folder again."); return }
         pendingDirectory = nil
         var params: [String: Any] = ["cwd": directory.path, "runtimeWorkspaceRoots": [directory.path], "permissions": "twos-integrated", "approvalPolicy": "on-request", "approvalsReviewer": "user", "model": model, "allowProviderModelFallback": false, "historyMode": "paginated", "environments": [["environmentId": "local", "cwd": directory.path, "runtimeWorkspaceRoots": [directory.path]]], "threadSource": "twos_confirmed_directory"]
+        let permission = teamSession && reviewOnly ? "twos-team-review" : "twos-integrated"
+        params["permissions"] = permission
+        if teamSession {params["modelProvider"]="openai"}
         if !effort.isEmpty { params["config"] = ["model_reasoning_effort": effort] }
         request("thread/start", params) { [weak self] result in
             guard let self = self else { return }; self.creatingThread = false
@@ -1375,8 +1399,9 @@ extension NativeCodex {
             }
             guard let thread = result["thread"] as? [String: Any], let id = thread["id"] as? String,
                   result["cwd"] as? String == directory.path, result["model"] as? String == model,
+                  !self.teamSession || result["modelProvider"] as? String == "openai",
                   result["runtimeWorkspaceRoots"] as? [String] == [directory.path],
-                  (result["activePermissionProfile"] as? [String: Any])?["id"] as? String == "twos-integrated",
+                  (result["activePermissionProfile"] as? [String: Any])?["id"] as? String == permission,
                   thread["historyMode"] as? String == "paginated", thread["canAcceptDirectInput"] as? Bool == true else {
                 let thread = result["thread"] as? [String: Any] ?? [:]
                 let facts: [String: Any] = ["expectedCwd": directory.path, "returnedCwd": result["cwd"] ?? NSNull(), "threadId": thread["id"] ?? NSNull(),
@@ -1386,7 +1411,7 @@ extension NativeCodex {
                 self.emit("directoryCleared")
                 self.emit("notice", ["text": self.translate("Codex did not confirm the requested folder, permissions and model. No work was sent. Inspect the service response before creating another task."), "detail": detail]); return
             }
-            let binding = CodexBinding(thread: id, directory: directory, permission: "twos-integrated", createdAt: Date().timeIntervalSince1970)
+            let binding = CodexBinding(thread: id, directory: directory, permission: permission, createdAt: Date().timeIntervalSince1970)
             self.ledger.bindings[id] = binding
             guard self.persistLedger() else { return }
             if self.threadID != nil { self.saveDraft(self.draftText) }
@@ -1395,6 +1420,7 @@ extension NativeCodex {
             self.nextModel = model; self.nextEffort = effort; self.draftText = ""; self.sourceURL = nil
             self.saveDraft(""); self.emit("thread", ["thread": thread]); self.emitDraft(); self.emit("directoryConfirmed"); self.controlState(); self.publishQueue(); self.publishAttachments()
             self.request("thread/name/set", ["threadId": id, "name": URL(fileURLWithPath: directory.path).lastPathComponent]) { _ in self.listThreads() }
+            onCreated?(binding)
             if self.handoffCandidate != nil { self.showHandoff() }
         }
     }
@@ -1495,7 +1521,7 @@ extension NativeCodex {
         if !isBusy { dispatchNext() }
     }
     func makeSubmission(text: String, model: String, effort: String, mode: String, source: String? = nil, message: String? = nil, instructionHash: String? = nil) -> CodexSubmission? {
-        guard let id = threadID, let binding = ledger.bindings[id], binding.thread == id, binding.permission == "twos-integrated" else {
+        guard let id = threadID, let binding = ledger.bindings[id], binding.thread == id, (binding.permission == "twos-integrated" || (teamSession && binding.permission == "twos-team-review")) else {
             notice("No confirmed task folder is available. Choose and confirm a task folder before sending; nothing was started."); return nil
         }
         guard cwd == binding.directory.path else {
@@ -1602,6 +1628,11 @@ extension NativeCodex {
     func dispatchContext(_ item: CodexSubmission, binding: CodexBinding) -> String {
         // JSON quoting keeps even unusual folder names unambiguous. Only this
         // delivery's scope is included; no account or unrelated project data.
+        if teamSession {
+            // Role input already carries the approved goal and frozen data. Do not
+            // ask a reviewer to inspect the filesystem or write deliverables.
+            return "TWOS team operation " + item.id + ". Return your public task result as requested. The platform publishes the files. No tools or shell are needed."
+        }
         let scope: [String: Any] = ["delivery_id": item.id, "thread_id": item.thread,
             "canonical_cwd": binding.directory.path, "allowed_write_root": binding.directory.path,
             "permission_profile": binding.permission, "directory_device": binding.directory.device,
@@ -1647,7 +1678,7 @@ extension NativeCodex {
     func dispatchNext() {
         guard connected, !isBusy, !submissionPending, !uncertain, let id = threadID, !ledger.paused.contains(id),
               let item = ledger.submissions.first(where: { $0.thread == id && $0.state == "queued" }),
-              let binding = ledger.bindings[id], binding.thread == id, binding.permission == "twos-integrated", item.directory == binding.directory, validBinding(binding),
+              let binding = ledger.bindings[id], binding.thread == id, (binding.permission == "twos-integrated" || (teamSession && binding.permission == "twos-team-review")), item.directory == binding.directory, validBinding(binding),
               validateModel(item.model, effort: item.effort, attachments: item.attachments) else { return }
         submissionPending = true; startingTurn = true; activeSubmission = item.id
         guard changeSubmission(item.id, { $0.state = "preparing" }) else { startingTurn = false; submissionPending = false; activeSubmission = nil; controlState(); return }
@@ -1967,7 +1998,7 @@ extension NativeCodex {
         let id = p["itemId"] as? String ?? ""
         if method == "turn/plan/updated" || method == "turn/diff/updated" {
             let turn = p["turnId"] as? String ?? ""
-            if method == "turn/plan/updated" { rememberDisplayItem(["id": "plan-" + turn, "type": "plan", "steps": p["plan"] ?? [], "explanation": p["explanation"] ?? ""]) }
+            if method == "turn/plan/updated" { rememberDisplayItem(["id": "plan-" + turn, "type": "plan", "steps": p["plan"] ?? [], "explanation": p["explanation"] ?? ""], turnID: turn) }
             else { rememberDisplayItem(["id": "diff-" + turn, "type": "fileChange", "changes": [["path": "", "diff": p["diff"] ?? ""]]]) }
             return
         }

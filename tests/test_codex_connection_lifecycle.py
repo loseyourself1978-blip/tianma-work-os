@@ -146,6 +146,9 @@ if ["cancel","cancel_launch","stale","retry"].contains(mode) {
 }
 client.disconnect();spin(6){client.closingTransport == nil}
 precondition(client.process == nil && client.callbacks.isEmpty && client.turnID == nil)
+// A missing executable can return before the second timer deadline. Keep
+// sampling the same main run loop through the second heartbeat in that case.
+spin(0.35){ticks>=2}
 precondition(ticks>=2 && maximumGap<0.35,"main run loop stalled: \(maximumGap)")
 print("CONNECTION_PASS \(mode) ticks=\(ticks) max_gap=\(maximumGap)")
 exit(0)
