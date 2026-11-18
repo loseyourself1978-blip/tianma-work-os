@@ -1,16 +1,13 @@
-# Install Tianma Work OS 1.0.11
+# Install Tianma Work OS 1.0.12
 
-**1.0.12 / 101.60 candidate.** [Open the AI Team guide](AI_TEAM.en.md) for the new workspace and delivery workflow.
+[AI Team group chats, files and acceptance](AI_TEAM.en.md)
 
-> **Current update: minimal activity bubble, independent host focus and offline English voice.** [Instructions](MINIMAL_STATUS_AND_FOCUS.en.md) · [Actual verification and limits](MINIMAL_STATUS_VERIFICATION.en.md). The default bubble closes when no work is active; task mutations still require their separate authorization.
 > **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](MINIMAL_STATUS_AND_FOCUS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
 
-TWOS 1.0.11 / 101.59 · [This update](MINIMAL_STATUS_AND_FOCUS.en.md)
-
-[Current incremental instructions and exact boundaries](MINIMAL_STATUS_AND_FOCUS.en.md).
+TWOS 1.0.12 / 101.60 · [This update](AI_TEAM.en.md)
 
 
-This guide applies to TWOS 1.0.11 / 101.59. Download availability is determined by its matching GitHub Release. Consult the signed receipt for source, signature and tested platform details.
+This guide applies to TWOS 1.0.12 / 101.60. Download availability is determined by its matching GitHub Release. Consult the signed receipt for source, signature and tested platform details.
 
 Currently supports macOS only. A Windows version is in development; no downloadable build is available yet. The current TWOS package is Apple Silicon. Engineering testing uses macOS 27.0.1 / Safari 27.0.1. A binary deployment target does not prove testing on every older system; consult the release support matrix before installing elsewhere.
 

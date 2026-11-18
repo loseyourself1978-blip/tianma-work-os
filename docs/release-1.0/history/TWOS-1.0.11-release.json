@@ -1,0 +1,87 @@
+{
+  "source_commit": "4f29264ea9d156a671ef4d512f22430d3f875c19",
+  "artifact": "Tianma-Work-OS-1.0.11.dmg",
+  "sha256": "326f13b3925b3d8300328855aac74e213b2e4deb7cdc6f1912af43f3cc064240",
+  "signing_identity": "Developer ID Application: Jing Huang (BZJWQJ352K)",
+  "app_notarization_id": "b8130e16-19eb-456f-9da3-0e45deb02fbd",
+  "dmg_notarization_id": "cba67e96-ec0e-47b7-b1ec-60585ba1c359",
+  "gatekeeper": "PASS",
+  "owner_acceptance": "NOT_GRANTED_BY_ENGINEERING",
+  "product": "TWOS",
+  "version": "1.0.11",
+  "build": "101.59",
+  "bytes": 265885409,
+  "platform": "macOS",
+  "architecture": "arm64",
+  "declared_minimum_macos": "13.0",
+  "tested_macos": "27.0.1",
+  "tested_safari": "27.0.1",
+  "status": "SIGNED_NOTARIZED_VALIDATED",
+  "main_gate": {
+    "complete_pass": true,
+    "counts": {
+      "passed": 1879,
+      "skipped": 1
+    },
+    "duration_seconds": 6482.455846786499,
+    "safari": {
+      "measurements": 38,
+      "visible_start": 38,
+      "visible_finish": 38,
+      "errors": []
+    },
+    "changed_inputs": [],
+    "runtime_changed": []
+  },
+  "main_gate_source_head": "4f29264ea9d156a671ef4d512f22430d3f875c19",
+  "post_gate_documentation_scope": "Release documentation, receipts and website updated after the frozen complete gate; guide/package links, media and unchanged runtime input hashes checked separately. These checks are not another complete gate.",
+  "nyra_full_suite": {
+    "passed": 34,
+    "failed": 0,
+    "scope": "one complete standalone run; original sandbox-limited attempt preserved"
+  },
+  "signed_candidate_compatibility": {
+    "passed": 34,
+    "failed": 0
+  },
+  "final_packaged_gui": "SCOPED_ACTUAL_EVIDENCE_WITH_DOCUMENTED_LIMITS",
+  "verification_document": "MINIMAL_STATUS_VERIFICATION.en.md",
+  "prior_owner_acceptance": "PRESERVED; no accepted business task replayed",
+  "store_submission": "NOT_SUBMITTED",
+  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.11",
+  "publication_truth": "The matching GitHub Release determines actual public availability; this receipt alone does not publish an asset.",
+  "at": "2026-11-17T17:32:43.363338+08:00",
+  "focus_scope": {
+    "recorded_physical_clicks": 24,
+    "confirmed_records": 23,
+    "confirmed_latency_ms_range": [
+      13,
+      661
+    ],
+    "median_confirmed_ms": 58,
+    "unconfirmed_records": 1,
+    "unconfirmed_elapsed_ms": 1423,
+    "owner_report": "all requested clicks returned",
+    "scope": "matching final embedded and standalone pair; not 24/24 confirmed; per-click scene labels and multi-display/Space/fullscreen not independently verified"
+  },
+  "activity_scope": {
+    "embedded": "actual right/both and terminal-hide",
+    "standalone": "actual left and idle-hide",
+    "control_outage": "trusted status remained visible for eight seconds",
+    "service_interruption": "unknown bounded, recovery and true terminal observed",
+    "owner_business_replayed": false
+  },
+  "voice": {
+    "chinese": "13 unchanged Tian/Xiaotian1413 recordings",
+    "english": "13 tiny-voca F2 American English offline WAV cues",
+    "all_action_decodes": 26,
+    "model_runtime_in_app": false,
+    "task_text_synthesis": false,
+    "owner_voice_preference_acceptance": "NOT_GRANTED"
+  },
+  "runtime_input_sha256": "f8603ab6487a913dab348e4c04dfcc41d9255b09836401b25e1d150b2db63ac1",
+  "embedded_nyra_version": "1.0.8",
+  "embedded_nyra_build": "108",
+  "embedded_nyra_source_commit": "bb60b2000b8d5a25c7234c7e1741b111d66d346c",
+  "embedded_nyra_resource_manifest_sha256": "77b38a2a995e29fdf67c7fa32be40c1f71bcdc20a7e2ff571524a14a14b1bca8"
+}

@@ -1,12 +1,12 @@
 # Privacy, permissions and cost
 
-> **Current update: minimal activity bubble, independent host focus and offline English voice.** [Instructions](MINIMAL_STATUS_AND_FOCUS.en.md) · [Actual verification and limits](MINIMAL_STATUS_VERIFICATION.en.md). The default bubble closes when no work is active; task mutations still require their separate authorization.
+[AI Team group chats, files and acceptance](AI_TEAM.en.md)
+
+Approval identifies the services that will receive the goal, selected CSV and task inputs. The reviewer receives the frozen report. Chats, role replies, receipts and output locations are stored locally. Importing an older group copies its saved task record for reading. Login data and task-control grants stay in the original profile.
 
 > **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](MINIMAL_STATUS_AND_FOCUS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
 
-TWOS 1.0.11 / 101.59 · [This update](MINIMAL_STATUS_AND_FOCUS.en.md)
-
-[Current incremental instructions and exact boundaries](MINIMAL_STATUS_AND_FOCUS.en.md).
+TWOS 1.0.12 / 101.60 · [This update](AI_TEAM.en.md)
 
 
 TWOS hosts official provider websites and a local Codex App Server client. Each provider applies its own account, retention, plan and usage terms. TWOS does not merge all visible services into one quota pool or silently switch billing paths. No credits, resets or subscriptions are purchased automatically.

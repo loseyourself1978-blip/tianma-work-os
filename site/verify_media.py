@@ -59,7 +59,16 @@ def main():
         assert item['version'] == interface['version'] and item['build'] == interface['build']
         assert item['source_commit'] == interface['source_commit']
         assert item['privacy_review'] and item['state']
-    for item in [interface] + outfits + combinations:
+    team = m.get('ai_team', [])
+    if tuple(int(v) for v in interface['version'].split('.')) >= (1, 0, 12):
+        assert team, 'Current AI Team setup and saved group screenshots required'
+    if team:
+        assert [x['id'] for x in team] == ['team-setup', 'team-group']
+        for item in team:
+            assert all(item[k] == interface[k] for k in ['version', 'build', 'source_commit'])
+            assert item['privacy_review']
+        assert team[1]['kind'] == 'REAL_MACOS_WINDOW_DETAIL' and team[1]['state'] == 'READONLY_SYNTHETIC_HISTORY'
+    for item in [interface] + outfits + combinations + team:
         path = (root / item['path']).resolve()
         assert path.is_relative_to(root) and path.is_file()
         data = path.read_bytes()

@@ -1,11 +1,7 @@
 # TWOS delivery status
 
-Matching signed distribution: **1.0.11 / 101.59**. [GitHub Release](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.11) determines actual public availability; this document alone does not publish an asset.
+[TWOS 1.0.12 / build 101.60](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.12) includes AI Team group chats, scoped delivery folders and the bundled Nyra 1.0.8. Select AI Team in the top toolbar to open a saved chat or start a task.
 
-[English instructions](release-1.0/MINIMAL_STATUS_AND_FOCUS.en.md) · [中文说明](release-1.0/MINIMAL_STATUS_AND_FOCUS.zh-CN.md)
+The complete serial gate on the signed app recorded 1,889 passes, one historical upgrade skip and zero failures. All 38 actual Safari geometry measurements completed with the page visible. The original synthetic group completed three roles and an independent review. Its final export is pending attributable model receipts.
 
-One complete matching serial TWOS gate: 1,879 passed, one explicitly retained historical skip, zero failures. All 38 actual Safari measurements began and ended visible. Runtime and frozen input hashes were unchanged. Earlier partial/failure runs are preserved and are not combined into this result. Duration: 6482 seconds.
-
-[Actual verification and limits](release-1.0/MINIMAL_STATUS_VERIFICATION.en.md) · [真实核验与限制](release-1.0/MINIMAL_STATUS_VERIFICATION.zh-CN.md). Source, signing, notarization and hashes: [release receipt](release-1.0/release.json). Prior failures/acceptance remain preserved; new Owner acceptance is separate.
-
-macOS Apple Silicon. Windows has no download. Mac App Store NOT_SUBMITTED. AI Team R1 is not implemented by this increment.
+[English operation guide](release-1.0/AI_TEAM.en.md) · [中文操作指南](release-1.0/AI_TEAM.zh-CN.md) · [Verification](release-1.0/AI_TEAM_VERIFICATION.en.md) · [核验与限制](release-1.0/AI_TEAM_VERIFICATION.zh-CN.md) · [Signed release receipt](release-1.0/release.json).

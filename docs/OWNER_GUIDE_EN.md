@@ -1,10 +1,10 @@
 # TWOS 1.0 · Installation and use
 
-**1.0.12 / 101.60 candidate.** [Open the AI Team guide](release-1.0/AI_TEAM.en.md) for the new workspace and delivery workflow.
+**1.0.12 / 101.60.** [Open the AI Team guide](release-1.0/AI_TEAM.en.md) for the new workspace and delivery workflow.
 
 See [current activity/focus instructions](release-1.0/MINIMAL_STATUS_AND_FOCUS.en.md) and the [actual verification scope](release-1.0/MINIMAL_STATUS_VERIFICATION.en.md).
 
-**Applies to TWOS 1.0.11 / build 101.59, including Nyra 1.0.8 / build 108.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md) · [AI Team engineering guide and checks](release-1.0/AI_TEAM.en.md)
+**Applies to TWOS 1.0.12 / build 101.60, including Nyra 1.0.8 / build 108.** [中文指南](OWNER_GUIDE.md) · [Actual delivery and validation status](CURRENT_DELIVERY.md) · [AI Team guide and checks](release-1.0/AI_TEAM.en.md)
 
 **Installation and version: use `START_HERE.html` in this bilingual guide, the [release receipt](release-1.0/release.json), and the actual GitHub Release status. Use the matching receipt to verify the complete engineering gate, signing and notarization; Owner differential acceptance is separate.**
 Discuss on the official ChatGPT website in the left pane, execute with the local Codex service in the right pane, and return results to the original discussion. The right pane is TWOS's own client for the official App Server protocol; it does not embed the entire official Codex macOS interface.
@@ -17,7 +17,7 @@ After the final delivery receipt identifies the installer, double-click the DMG 
 
 ## A · This upgrade only
 
-TWOS 1.0.11 / 101.59 · Nyra 1.0.8 / 108. See the [verification record](release-1.0/MINIMAL_STATUS_VERIFICATION.en.md) for the matching gate, real interactions and limitations; the GitHub Release determines public availability.
+TWOS 1.0.12 / 101.60 · Nyra 1.0.8 / 108. See the [verification record](CURRENT_DELIVERY.md) for the matching gate, real interactions and limitations; the GitHub Release determines public availability.
 
 [Focus, compact task controls and shared Codex navigation](release-1.0/MINIMAL_STATUS_AND_FOCUS.en.md)
 

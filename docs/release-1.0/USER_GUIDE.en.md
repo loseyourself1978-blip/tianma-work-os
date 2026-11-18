@@ -1,16 +1,11 @@
-# Use TWOS 1.0.11
+# Use TWOS 1.0.12
 
-**1.0.12 / 101.60 candidate.** [Open the AI Team guide](AI_TEAM.en.md) for the new workspace and delivery workflow.
-
-> **Current update: minimal activity bubble, independent host focus and offline English voice.** [Instructions](MINIMAL_STATUS_AND_FOCUS.en.md) · [Actual verification and limits](MINIMAL_STATUS_VERIFICATION.en.md). The default bubble closes when no work is active; task mutations still require their separate authorization.
+[AI Team group chats, files and acceptance](AI_TEAM.en.md)
 
 > **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](MINIMAL_STATUS_AND_FOCUS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
 
-[Current update: focus and task controls](MINIMAL_STATUS_AND_FOCUS.en.md)
 
-TWOS 1.0.11 / 101.59 · [This update](MINIMAL_STATUS_AND_FOCUS.en.md)
-
-[Current incremental instructions and exact boundaries](MINIMAL_STATUS_AND_FOCUS.en.md).
+TWOS 1.0.12 / 101.60 · [This update](AI_TEAM.en.md)
 
 
 Choose the path matching your situation; they are not one mandatory sequence.

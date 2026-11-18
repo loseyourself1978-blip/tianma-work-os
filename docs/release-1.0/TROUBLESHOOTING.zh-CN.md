@@ -1,14 +1,13 @@
 # 故障排查
 
-> **本轮差量：简洁活动气泡、独立宿主聚焦及英文离线语音。** [操作说明](MINIMAL_STATUS_AND_FOCUS.zh-CN.md) · [实际核验与限制](MINIMAL_STATUS_VERIFICATION.zh-CN.md)。无活动时默认收起；修改操作仍需单独授权。
+[AI Team 群聊、交付文件与验收](AI_TEAM.zh-CN.md)
+
+**交付待核对型号。** 打开原群聊，点 **核对原模型回执**。右栏可查看冻结报告和独立审核。提供方未给出逐次回执时，正式交付保持待核对。同型号调整思考强度只影响后续派发。
 
 > **当前控制版：** [单击返回、紧凑任务控制及左右共用 Codex 导航](MINIMAL_STATUS_AND_FOCUS.zh-CN.md)。状态通道保持只读；独立认证控制通道只传递用户主动选定的草稿或动作。旧独立版只读授权不会自动获得控制权。历史版本中仅只读的描述不适用于这个新增控制通道。
 
-[本次更新：聚焦与任务控制](MINIMAL_STATUS_AND_FOCUS.zh-CN.md)
 
-TWOS 1.0.11 / 101.59 · [本次增量](MINIMAL_STATUS_AND_FOCUS.zh-CN.md)
-
-[本次增量操作和准确边界](MINIMAL_STATUS_AND_FOCUS.zh-CN.md)。
+TWOS 1.0.12 / 101.60 · [本次增量](AI_TEAM.zh-CN.md)
 
 
 - **系统阻止安装：** 核对对应 Release、哈希和签名回执，不关闭 Gatekeeper、不移除隔离标记。未公证工程候选不等于面向新手的正式安装路径。

@@ -1,18 +1,18 @@
 # Tianma Work OS 1.0
 
-**AI Team 发行候选 · 1.0.12 / 101.60。** [团队群聊、交付目录与核验](docs/release-1.0/AI_TEAM.zh-CN.md)。下方下载按钮指向当前公开版本。
+**AI Team 群聊 · 1.0.12 / 101.60。** 为任务选择规划、制作、审核成员。点击群聊消息即可查看该次指派、公开进展和交付文件。[操作与验收指南](docs/release-1.0/AI_TEAM.zh-CN.md)。
 
-**当前差量：** 只显示正在进行的任务／状态，无任务即收起；人物返回独立于任务控制权限。中文小田保持不变，英文使用 tiny-voca F2 离线短句。[实际核验与限制](docs/release-1.0/MINIMAL_STATUS_VERIFICATION.zh-CN.md)。
+首个模板可将区域销售 CSV 制成离线网页和摘要。每次正式交付使用独立子目录。本次工程样例的数值复算和独立审核已完成，因缺少各次调用的实际型号回执，正式交付仍待核对。
 
-**TWOS 1.0.11 / 101.59：左右共用 Codex 项目／会话导航与直接 Nyra 任务控制。内置 Nyra 1.0.8 / 108。**
+**TWOS 1.0.12 / 101.60：左右共用 Codex 项目／会话导航与直接 Nyra 任务控制。内置 Nyra 1.0.8 / 108。**
 
 在任意一侧选择 Codex，使用相同的项目／会话侧栏与最新公开消息读回。单击 Nyra 返回绑定工作台，用紧凑气泡编辑草稿、补充同一轮、排队或停止准确任务。最终候选中发现的迟到历史／派发竞态已修复。原私网网页导航与已接受业务保留。
 
 本版包含五套站姿／侧卧服装、13 段离线小田中文动作短句，以及 13 段 tiny-voca F2 美式女声英文对应录音。声音默认静音；取消静音并开启动作语音后按实际动作播放，带冷却、不叠音。声音面板可通过关闭、Esc 或声音按钮收起。
 
-**TWOS 1.0.11 / build 101.59** · [下载与校验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.11) · [本次更新](docs/release-1.0/MINIMAL_STATUS_AND_FOCUS.zh-CN.md)
+**TWOS 1.0.12 / build 101.60** · [下载与校验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.12) · [本次更新](docs/release-1.0/AI_TEAM.zh-CN.md)
 
-[English](README.md) · [安装](docs/release-1.0/INSTALL.zh-CN.md) · [操作指南](docs/release-1.0/USER_GUIDE.zh-CN.md) · [当前发行状态](docs/CURRENT_DELIVERY.md) · [AI Team 工程版指南](docs/release-1.0/AI_TEAM.zh-CN.md)
+[English](README.md) · [安装](docs/release-1.0/INSTALL.zh-CN.md) · [操作指南](docs/release-1.0/USER_GUIDE.zh-CN.md) · [当前发行状态](docs/CURRENT_DELIVERY.md) · [AI Team指南](docs/release-1.0/AI_TEAM.zh-CN.md)
 
 在一个 macOS 工作区中讨论目标、交接指令并执行。TWOS 将 ChatGPT、DeepSeek、Claude 官网与本机 Codex 客户端配对，把明确内容交给选定目标，再将结果带回原讨论。
 
@@ -24,7 +24,7 @@
 
 ## 下载与首次使用
 
-从上方链接下载 TWOS v1.0.11；打开 DMG 前核对 SHA256SUMS。匹配回执绑定源码、签名、公证和制品哈希。历史 v1.0.1 与 v1.0.0 保持不变。
+从上方链接下载 TWOS v1.0.12；打开 DMG 前核对 SHA256SUMS。匹配回执绑定源码、签名、公证和制品哈希。历史 v1.0.1 与 v1.0.0 保持不变。
 
 打开对应 DMG，拖入应用程序并启动。登录所选供应商官网，连接已安装/登录的官方本机 Codex，再创建或接续一个绑定目录的任务。Nyra 在同一 App 内，无需第二个桌宠安装包或首次联网下载画稿；普通安装无需 Python、Node 或终端。
 

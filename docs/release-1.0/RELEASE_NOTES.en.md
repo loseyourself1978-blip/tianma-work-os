@@ -1,6 +1,10 @@
-# TWOS 1.0.12 / 101.60 · AI Team release candidate
+# TWOS 1.0.12 / 101.60 · AI Team group chats
 
 Create a named chat from the AI Team button at the top of the workbench. Choose the Planner, Builder and Reviewer, approve their scope, then select a message to inspect progress and files. Start another task from the left sidebar. Existing writable folders are supported. Each chat publishes into its own delivery folder after independent review, verification and attributable model receipts. Earlier engineering chats can be imported for read-only browsing. The isolated engineering host uses its own Nyra instance. [Operation and acceptance guide](AI_TEAM.en.md).
+
+Actual run: Codex planned, Claude built the report and Codex reviewed the frozen version. Independent calculation and the review agreed on 178.20. Per-operation model receipts were unavailable for all three turns. That chat retains its report and review with formal export pending.
+
+[Release verification and limitations](AI_TEAM_VERIFICATION.en.md).
 
 ---
 
