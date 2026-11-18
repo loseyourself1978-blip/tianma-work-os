@@ -70,19 +70,24 @@ def test_subprocess_response_applies_exact_patch_and_runs_real_deterministic_tes
     if app:
         from twos_runtime.iteration_candidate import run_regression
         assert run_regression(root,Path(app))=={'tests_run':1,'passed':True,'failures':0,'errors':0,'sandbox':'read-only-no-network'}
-        # Real sandbox negative checks use a public test file, never credentials.
+        # Keep an unrelated synthetic input adjacent to the candidate, including
+        # when the checkout lives under a user home and the candidate is temporary.
+        sibling = tmp_path / 'other-workspace.txt'
+        sibling.write_text('Unrelated synthetic workspace')
         extra='''
     def test_security(self):
         import socket, subprocess
         with self.assertRaises(PermissionError):
             Path(PUBLIC_TEST_FILE).read_bytes()
         with self.assertRaises(PermissionError):
+            Path(SIBLING_TEST_FILE).read_bytes()
+        with self.assertRaises(PermissionError):
             Path(__file__).write_text("forbidden")
         with self.assertRaises(PermissionError):
             socket.create_connection(("127.0.0.1",9),timeout=1)
         with self.assertRaises(PermissionError):
             subprocess.run(["/bin/echo","forbidden"],check=True)
-'''.replace('PUBLIC_TEST_FILE',repr(str(Path(__file__).resolve())))
+'''.replace('PUBLIC_TEST_FILE',repr(str(Path(__file__).resolve()))).replace('SIBLING_TEST_FILE',repr(str(sibling)))
         with (root/studio.REGRESSION).open('a') as stream:stream.write(extra)
         assert run_regression(root,Path(app))['tests_run']==2
 

@@ -28,14 +28,29 @@ def bundle_path():
 
 
 def run_regression(root,app,*,expect_pass=True):
+    root=Path(root).resolve(strict=True)
+    app=Path(app).resolve(strict=True)
     executable=app/'Contents/Resources/engine/twos-service'
-    # Sandbox only the untrusted candidate regression. No network or writes,
-    # and no access to private user roots except this candidate and shipped code.
-    # macOS must stat each selected path's ancestors before launching the frozen
-    # binary. Allow metadata only, never parent directory contents/user files.
-    ancestors=sorted({str(p) for target in (root,app) for p in target.parents})
-    traversal=' (allow file-read-metadata '+''.join('(literal '+json.dumps(p)+')' for p in ancestors)+')'
-    profile='(version 1) (allow default) (deny network*) (deny file-write*) (deny file-read* (subpath "/Users"))'+traversal+' (allow file-read* (subpath '+json.dumps(str(root))+') (subpath '+json.dumps(str(app))+')) (deny process-exec) (allow process-exec (literal '+json.dumps(str(executable))+'))'
+    # The checkout, selected workspace and unrelated data can be on any volume.
+    # Grant content reads only to the reviewed candidate, the packaged runtime
+    # and the system files needed to start it. Ancestor traversal is metadata-only.
+    runtime_directories = (
+        "/System/Library", "/usr/lib", "/usr/share", "/Library/Apple/System/Library",
+        "/private/var/db/dyld",
+    )
+    # Darwin reads the root directory during bootstrap. A literal rule has no descendants.
+    runtime_files = ("/", "/dev/null", "/dev/random", "/dev/urandom", "/private/etc/localtime")
+    ancestors = sorted({str(p) for target in (root, app) for p in target.parents})
+    def rules(kind, paths):
+        return " ".join(f"({kind} {json.dumps(str(path))})" for path in paths)
+    profile = " ".join((
+        "(version 1) (allow default)",
+        "(deny network*) (deny file-write*) (deny file-read*) (deny process-exec)",
+        "(allow file-read-metadata " + rules("literal", ancestors) + ")",
+        "(allow file-read* " + rules("subpath", (*runtime_directories, root, app))
+            + " " + rules("literal", runtime_files) + ")",
+        "(allow process-exec " + rules("literal", (executable,)) + ")",
+    ))
     try:
         r=subprocess.run(['/usr/bin/sandbox-exec','-p',profile,str(executable),'--twos-iteration-check',str(root)],
             cwd=root,capture_output=True,timeout=35,env={'PATH':'/usr/bin:/bin','HOME':str(root),'PYTHONDONTWRITEBYTECODE':'1'})
