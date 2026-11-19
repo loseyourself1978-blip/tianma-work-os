@@ -55,3 +55,5 @@ The top **Language: English / 语言：简体中文** selector changes TWOS cont
 Click the character once to restore the bound TWOS workbench. The bubble defaults to current task/status only; its right-hand on-demand entry exposes the existing pencil and Stop actions. The pencil opens a focused IME-capable editor; Enter sends, Shift+Enter inserts a line, Escape closes. Normal drafts are autosaved; a queued revision is saved only explicitly. A running owned Codex turn supports Steer; web tasks use send-after-completion. Target changes retain the input rather than redirecting it. Stop first fences future dispatch and then interrupts only the bound task. An active stop request shows Stopping; a confirmed terminal closes the default activity bubble. Inspect the actual final result or an unconfirmed stop in TWOS. See the [incremental guide](MINIMAL_STATUS_AND_FOCUS.en.md) for exact authority and recovery boundaries.
 
 [English action voice: tiny-voca F2](ENGLISH_VOICE.en.md)
+
+[AI Team candidate guide for 1.0.13](AI_TEAM_R2.en.md)

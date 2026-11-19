@@ -12,7 +12,7 @@ pytestmark=pytest.mark.skipif(sys.platform!='darwin',reason='macOS WebKit')
 def cross_harness(tmp_path_factory):
     root=tmp_path_factory.mktemp('cross-provider-harness')
     code=(ROOT/'packaging/macos/TianmaLauncher.swift').read_text().split('let app = NSApplication.shared\nlet delegate = Launcher()',1)[0]
-    for name in ('CodexAttachments.swift','CodexTelemetry.swift','NativeCodex.swift','TeamReport.swift', 'TeamRun.swift', 'TeamWorkspace.swift', 'IntegratedWorkbench.swift','PairedWorkflow.swift'):
+    for name in ('CodexAttachments.swift','CodexTelemetry.swift','NativeCodex.swift','TeamReport.swift', 'TeamRun.swift', 'TeamConversation.swift', 'TeamArtifacts.swift', 'TeamWorkspace.swift', 'TeamChatWorkspace.swift', 'IntegratedWorkbench.swift','PairedWorkflow.swift'):
         code+='\n'+(ROOT/'packaging/macos'/name).read_text()
     # Fixture-only target/process lookup: exercise the production refresh and
     # asynchronous read path with a selected standalone and no bundled helper.

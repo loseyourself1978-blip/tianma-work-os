@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 pytestmark = pytest.mark.skipif(sys.platform != "darwin", reason="Production Swift/macOS file publication")
 
 
-def test_approved_team_freeze_review_delivery(tmp_path):
+def team_model_source():
     src = ROOT / "packaging/macos"
     # These two values are supplied to the pure state machine by the existing
     # native transport; use the actual serialized types and digest algorithm.
@@ -22,7 +22,12 @@ def test_approved_team_freeze_review_delivery(tmp_path):
     swift += "enum NativeCodex { " + next(s.strip() for s in native.splitlines() if "static func digest(_ bytes:" in s) + " }\n"
     swift += paired[paired.index("struct WebTransferFile:"):paired.index("    static func read(")] + "}\n"
     swift += integrated[integrated.index("struct WebHandoffReceipt:"):integrated.index("// Visibility control uses")]
-    swift += (src / "TeamReport.swift").read_text() + "\n" + (src / "TeamRun.swift").read_text()
+    swift += "\n".join((src / n).read_text() for n in ("TeamReport.swift","TeamRun.swift","TeamConversation.swift","TeamArtifacts.swift"))
+    return swift
+
+
+def test_approved_team_freeze_review_delivery(tmp_path):
+    swift = team_model_source()
     swift += r'''
 let path=CommandLine.arguments[1]
 var st=stat();precondition(lstat(path,&st)==0)
@@ -203,3 +208,112 @@ print(name)
         data = (result / name).read_bytes()
         assert hashlib.sha256(data).hexdigest() == digest
         assert "区域销售" in data.decode()
+
+def test_generic_chat_rounds_recipient_snapshots_and_output_conflicts(tmp_path):
+    source = tmp_path / "main.swift"
+    source.write_text(team_model_source() + r'''
+let url=URL(fileURLWithPath:CommandLine.arguments[1])
+var st=stat();precondition(lstat(url.path,&st)==0)
+let folder=CodexDirectory(path:url.path,device:UInt64(st.st_dev),inode:UInt64(st.st_ino),isolated:false)
+let members=zip(TeamConversation.slots,TeamConversation.portraits).map { slot,name in
+    TeamMember(role:slot,product:slot=="Reviewer" ? "Claude":"Codex",provider:slot=="Reviewer" ? "Anthropic":"OpenAI",model:slot+"Model",displayName:name.capitalized,duties:[slot])
+}
+try TeamConversation.checkedRoster(members)
+precondition((try? TeamConversation.checkedRoster(members+[members[0]]))==nil)
+func room()->TeamRun {
+    var r=TeamRun(id:UUID().uuidString,created:0,goal:"",csv:"",folder:folder,members:members)
+    r.conversation=TeamConversation();return r
+}
+func deliver(_ r:inout TeamRun,_ obj:[String:Any],actual:String?=nil)throws {
+    let prompt=try r.prompt(),a=try r.begin(prompt)
+    precondition((try? r.begin(prompt))==nil)
+    let text=String(decoding:try JSONSerialization.data(withJSONObject:obj),as:UTF8.self)
+    try r.receive(id:a.id,text:text,actual:actual ?? a.memberSnapshot!.model,source:"fixture",thread:"isolated-"+r.id,turn:a.id)
+    precondition((try? r.receive(id:a.id,text:text,actual:"stale",source:"fixture",thread:"other",turn:a.id))==nil)
+}
+func submit(_ r:inout TeamRun,_ body:String,_ recipients:[String]=[])throws {
+    var c=r.conversation!;var draft=c.draft;draft.text=body;draft.recipients=recipients
+    try c.submit(draft,members:r.members,language:"en")
+    try c.submit(draft,members:r.members,language:"en")
+    draft.text+=" changed";precondition((try? c.submit(draft,members:r.members,language:"en"))==nil)
+    r.conversation=c;r.selectNextChatStep()
+}
+var a=room(),b=room()
+try submit(&a,"Explain the difference between grouping and sorting")
+try deliver(&a,["mode":"answer","text":"Grouping collects equal keys."])
+precondition(a.state=="completed" && a.conversation!.output==nil && a.conversation!.revisions.isEmpty)
+try submit(&a,"@ here is plain text, contact user@example.invalid.",["Builder","Tester"])
+precondition(a.conversation!.queue.map(\.member)==["Builder","Tester"])
+a.members[1].displayName="New name"
+precondition(a.conversation!.inputs.last!.members[1].displayName=="Kai")
+try deliver(&a,["text":"Reply one"]);try deliver(&a,["text":"Reply two"])
+try submit(&b,"Build a brief");precondition(b.conversation!.inputs.count==1 && b.id != a.id)
+let plan:[String:Any]=["mode":"plan","text":"Write and inspect the brief.","requirements":["All four sections"],"builder":"Builder","reviewer":"Reviewer"]
+try deliver(&b,plan)
+for i in 0..<4 {
+    try deliver(&b,["text":"Work in progress \(i)","files":["brief.md":"Section \(i)"]])
+    let v=b.conversation!.revisions.last!
+    try deliver(&b,["text":"Missing section \(i)","digest":v.digest,"verdict":"revise","blocking":[["requirement":"All four sections","location":"brief.md","evidence":"Missing \(i)","fix":"Add section \(i)"]]])
+    precondition(b.state=="running" && b.next=="Builder")
+}
+try deliver(&b,["text":"All sections written","files":["brief.md":"One Two Three Four"]])
+let v=b.conversation!.revisions.last!
+try deliver(&b,["text":"Four sections present","digest":v.digest,"verdict":"approve","blocking":[]])
+precondition(b.state=="awaitingOwner" && b.conversation!.revisions.count==5)
+let captured=try TeamFiles.bytes(b)
+var restored=try JSONDecoder().decode(TeamRun.self,from:captured)
+precondition(restored.conversation!.revisions.last!.digest==v.digest)
+try submit(&restored,"Why these sections?");try deliver(&restored,["mode":"answer","text":"Because they address the request."])
+precondition(restored.conversation!.revisions.count==5)
+restored.conversation!.stoppedByUser=true
+precondition(!TeamConversation.authorizesNewRound("Do not continue") && !TeamConversation.authorizesNewRound("为什么不继续") && !TeamConversation.authorizesNewRound("不要继续"))
+try submit(&restored,"Why did you stop?");try deliver(&restored,plan)
+precondition(restored.conversation!.queue.isEmpty && restored.conversation!.stoppedByUser)
+try submit(&restored,"Please resume and add an appendix");try deliver(&restored,plan)
+precondition(!restored.conversation!.stoppedByUser && restored.next=="Builder")
+// A change between addressing a message and sending cannot redirect it to a replacement.
+var changed=room()
+try submit(&changed,"Both members should read this",["Builder","Tester"])
+var removed=changed.members;removed.removeAll{$0.role=="Builder"}
+changed.conversation!.draft.recipients=["Builder"]
+try changed.updateChatRoster(removed)
+precondition(changed.conversation!.undelivered?.map(\.member)==["Builder"])
+precondition(changed.conversation!.queue.map(\.member)==["Tester"] && changed.conversation!.draft.recipients==["Builder"])
+try deliver(&changed,["text":"Received by Tester only"])
+precondition(changed.attempts.map(\.role)==["Tester"])
+var broken=room();try submit(&broken,"Prepare the same outline");try deliver(&broken,plan)
+let finding=["requirement":"All four sections","location":"brief.md","evidence":"Section four missing","fix":"Add section four"]
+func unchanged(_ r:inout TeamRun)throws{
+    try deliver(&r,["text":"Three sections","files":["brief.md":"one two three"]])
+    let rev=r.conversation!.revisions.last!
+    try deliver(&r,["text":"The last section is missing","verdict":"revise","digest":rev.digest,"blocking":[finding]])
+}
+try unchanged(&broken);try unchanged(&broken)
+precondition(broken.conversation!.queue.first?.kind=="strategy")
+var strategy=plan;strategy["text"]="Inspect the source for section four before rebuilding."
+try deliver(&broken,strategy);try unchanged(&broken)
+precondition(broken.state=="paused" && broken.conversation!.issue!.contains("Section four missing"))
+try submit(&broken,"Use the provided fourth section and continue");try deliver(&broken,strategy)
+precondition(broken.state=="running" && broken.next=="Builder")
+let first=try TeamArtifacts.stage("one",path:"output/brief.md",in:folder,previous:nil)
+try TeamArtifacts.commit(first,in:folder);try TeamArtifacts.commit(first,in:folder)
+let visible=try TeamArtifacts.visible("output/brief.md",owner:first.file,in:folder)
+precondition((try? TeamArtifacts.stage("different room",path:"output/brief.md",in:folder,previous:nil))==nil)
+let second=try TeamArtifacts.stage("two",path:"output/brief.md",in:folder,previous:first.file)
+try TeamArtifacts.commit(second,in:folder);try TeamArtifacts.commit(second,in:folder)
+try Data("Owner's external edit".utf8).write(to:visible)
+precondition((try? TeamArtifacts.visible("output/brief.md",owner:second.file,in:folder))==nil)
+precondition((try? TeamArtifacts.stage("overwrite",path:"output/brief.md",in:folder,previous:second.file))==nil)
+for name in ["../brief","/absolute",".hidden","a/../b","a//b"] {
+    precondition((try? TeamArtifacts.validate([name:"data"]))==nil)
+}
+precondition((try? TeamArtifacts.validate(["Readme.md":"A","README.md":"B"]))==nil)
+print("PASS generic discussion, addressed delivery, idempotence, six members, isolated rooms, four revisions, current evidence, continue, stop, recover, direct output and external-edit protection")
+''')
+    binary = tmp_path / "r2-chat"
+    subprocess.run(["xcrun","swiftc","-module-cache-path",str(tmp_path/"cache"),str(source),"-o",str(binary)], check=True, timeout=150)
+    output=tmp_path/"chosen folder";output.mkdir()
+    result=subprocess.run([str(binary),str(output)],capture_output=True,text=True,timeout=30)
+    assert result.returncode==0, result.stderr
+    assert "four revisions" in result.stdout
+    assert (output/"output/brief.md").read_text()=="Owner's external edit"

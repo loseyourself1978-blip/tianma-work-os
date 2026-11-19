@@ -241,7 +241,7 @@
   }
   return resolvedLatest();
  }
- function teamModel(){
+ function teamModel(allowMode=false){
   if(!composerSelection().element)return '';
   const p=selectedProvider();
   const selectors=['button[data-testid="model-selector-dropdown"]','button[data-testid="model-switcher-dropdown-button"]','button[data-testid="model-selector"]','button[aria-label^="Model:" i]','button[aria-label^="模型"]'];
@@ -250,7 +250,10 @@
   const b=buttons[0], label=(b.getAttribute('aria-label')||'').replace(/^(?:select |choose )?model\s*[:：]?\s*|^(?:选择)?模型\s*[:：]?\s*/i,'').trim();
   const names=[label,b.innerText.trim()];
   const pattern=p==='Claude'?/\b(opus|sonnet|haiku)\b/i:p==='ChatGPT'?/\b(gpt[- ]?\d|o\d\b)/i:p==='DeepSeek'?/deepseek[- ]?(?:v|r)\d/i:null;
-  return pattern?names.find(v=>v.length<=100 && pattern.test(v))||'':'';
+  const model=pattern?names.find(v=>v.length<=100 && pattern.test(v))||'':'';
+  if(model||!allowMode)return model;
+  // A visible mode pins a selection, but does not identify the model that answered.
+  return names.find(v=>v && v.length<=100 && !/[\r\n]/.test(v) && !/^(model|select model|选择模型|模型)$/i.test(v))||'';
  }
  window.twosProviderDOM={teamModel,activityIdentity,observe,latest,resolvedLatest,seedSnapshot,selectedOrLatest,replies,text,navigationSafety,composerSelection,replyState,identity,isStop,deepSeekControl,interrupted,speaker,headings,stoppedAfter};
  // Only a genuine user activation of a recognized native Stop control signals

@@ -1,0 +1,45 @@
+{
+  "source": "Original image generated for TWOS AI Team on 2026-11-19. Six 3D office portraits, cropped from a single 3 by 2 atlas and downsampled with Lanczos.",
+  "sourceSHA256": "96eb6eb2682fa63e9d0c39e4384a6030584525602b764b9a9861d0b237261e18",
+  "portraits": [
+    {
+      "id": "ada",
+      "file": "ada.png",
+      "pixels": 192,
+      "sha256": "ae490a1e22b4d4f7b9436e8d34effc86b796404fd838285487e2b9b3db0d4c6d",
+      "sourceSHA256": "517d4a5d7c04c31d1cea8bacd00f623134505454a13bbdd359bc1110c2de903b"
+    },
+    {
+      "id": "kai",
+      "file": "kai.png",
+      "pixels": 192,
+      "sha256": "00a304811d31ba10e8a21f8583ce9623beb4a0726254f7d812b83b21e2fc2161"
+    },
+    {
+      "id": "ren",
+      "file": "ren.png",
+      "pixels": 192,
+      "sha256": "5ce3fcfa3aced2fe905b5903f2efbf9828a21c9a245f9bdb5ff9a399017ad41f",
+      "sourceSHA256": "517d4a5d7c04c31d1cea8bacd00f623134505454a13bbdd359bc1110c2de903b"
+    },
+    {
+      "id": "mira",
+      "file": "mira.png",
+      "pixels": 192,
+      "sha256": "2a60183b9fa45c1c0845acaaf7bf455873ad3be8851f6acfb46cd043c916758a"
+    },
+    {
+      "id": "sol",
+      "file": "sol.png",
+      "pixels": 192,
+      "sha256": "8ddc84150d269e2be1f962de3ef18c2cf2128e4e5a3ca56da95c1b72718ec762",
+      "sourceSHA256": "517d4a5d7c04c31d1cea8bacd00f623134505454a13bbdd359bc1110c2de903b"
+    },
+    {
+      "id": "lou",
+      "file": "lou.png",
+      "pixels": 192,
+      "sha256": "b107392ca5ed1413c1c781ee6f6c2836fd4f5f50e9a37c7c7cef9b4d203d6841"
+    }
+  ]
+}

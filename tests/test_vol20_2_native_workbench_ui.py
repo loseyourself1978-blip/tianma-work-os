@@ -14,7 +14,7 @@ def integrated_harness(tmp_path_factory):
     root=tmp_path_factory.mktemp('integrated-webkit')
     code=(ROOT/'packaging/macos/TianmaLauncher.swift').read_text().split('// The only child runtime',1)[0]
     code+='\n'+(ROOT/'packaging/macos/CodexAttachments.swift').read_text()+'\n'+(ROOT/'packaging/macos/CodexTelemetry.swift').read_text()+'\n'+(ROOT/'packaging/macos/NativeCodex.swift').read_text()+'\n'+(ROOT/'packaging/macos/IntegratedWorkbench.swift').read_text()+'\n'+(ROOT/'packaging/macos/PairedWorkflow.swift').read_text()
-    for name in ['TeamReport.swift','TeamRun.swift','TeamWorkspace.swift']:
+    for name in ['TeamReport.swift','TeamRun.swift','TeamConversation.swift', 'TeamArtifacts.swift', 'TeamWorkspace.swift', 'TeamChatWorkspace.swift']:
         code+='\n'+(ROOT/'packaging/macos'/name).read_text()
     code+=r'''
 let app = NSApplication.shared

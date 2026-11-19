@@ -326,7 +326,7 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
     var toolbarTitle: NSTextField?
     let languagePicker = NSPopUpButton(frame: .zero, pullsDown: false)
     let teamButton = NSButton(title:"AI Team",target:nil,action:nil)
-    var teamPanel: TeamWorkspace?
+    var teamPanel: TeamChatWorkspace?
     let split = NSSplitView()
     let leftPicker = NSPopUpButton(frame: .zero, pullsDown: false)
     let rightPicker = NSPopUpButton(frame: .zero, pullsDown: false)
@@ -488,7 +488,20 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
     @objc func toggleTeam() {
         guard let root=resources,let container=window?.contentView else {return}
         if teamPanel == nil {
-            let panel=TeamWorkspace(root:root,preferences:preferences,translate:translate)
+            let panel=TeamChatWorkspace(root:root,preferences:preferences,translate:translate)
+            panel.leftSelection = { [weak self] done in
+                guard let self, let service=self.kinds.first else {done("Codex","","");return}
+                if service=="Codex",let client=self.codex {done(service,client.nextModel,client.nextEffort);return}
+                guard TeamMember.homes[service] != nil,let left=self.webPanes[0],left.web.url?.host==left.serviceHome.host else {
+                    done(TeamMember.services.contains(service) ? service:"Codex","","");return
+                }
+                var completed=false
+                func finish(_ model:String) {guard !completed else{return};completed=true;done(service,model,"")}
+                DispatchQueue.main.asyncAfter(deadline:.now()+1){finish("")}
+                left.web.callAsyncJavaScript("return window.twosProviderDOM?.teamModel?.(true) || ''",arguments:[:],in:nil,in:NativeWorkbench.handoffWorld){result in
+                    if case .success(let value)=result {finish(value as? String ?? "")} else {finish("")}
+                }
+            }
             teamPanel=panel
             panel.web.translatesAutoresizingMaskIntoConstraints=false
             container.addSubview(panel.web)
@@ -1877,6 +1890,8 @@ extension IntegratedWorkbench {
         if !old.contains(.canJoinAllSpaces) {window.collectionBehavior.insert(.moveToActiveSpace)}
         window.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)
         if let index=index {
+            // A pane task card identifies a particular pane even when the group chat is in front.
+            if split.isHidden, teamPanel != nil { toggleTeam() }
             if let pane=webPanes[index] {window.makeFirstResponder(pane.web)}
             else if split.arrangedSubviews.indices.contains(index) {window.makeFirstResponder(split.arrangedSubviews[index])}
         }

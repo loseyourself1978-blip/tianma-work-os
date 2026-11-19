@@ -1,8 +1,10 @@
 import Foundation
 
 struct TeamMember: Codable, Equatable {
-  let role: String, product: String, provider: String, model: String
+  let role: String
+  var product: String, provider: String, model: String
   var displayName: String? = nil
+  var duties: [String]? = nil, effort: String? = nil
 }
 extension TeamMember {
   static let roles = ["Planner", "Builder", "Reviewer"]
@@ -44,7 +46,8 @@ struct TeamAttempt: Codable {
   var clientID: String?, thread: String?, turn: String?, model: String?, source: String?,
     resultHash: String?
   var promptText: String?, replyText: String?, finished: Double?, activity: [TeamActivity]?
-  var observedWebSelection: String?
+  var assignment: TeamAssignment?, memberSnapshot: TeamMember?
+  var observedWebSelection: String?, transportState: String?
   var state = "intent"
   var web: WebHandoffReceipt?
 }
@@ -54,8 +57,11 @@ struct TeamVersion: Codable {
   var unstructuredReview: String?
 }
 struct TeamRun: Codable {
-  let id: String, created: Double, goal: String, csv: String, folder: CodexDirectory
-  let members: [TeamMember]
+  let id: String, created: Double
+  var goal: String
+  let csv: String, folder: CodexDirectory
+  var members: [TeamMember]
+  var conversation: TeamConversation?
   var memberSelections: [String: String]?
   var state = "running", next = "Planner", reason = "", owner = "pending", comment = ""
   var plan: TeamPlan?, versions: [TeamVersion] = [], attempts: [TeamAttempt] = []
@@ -133,8 +139,9 @@ struct TeamRun: Codable {
     guard let a = attempts.last, ["intent", "sent", "unknown"].contains(a.state) else { return nil }
     return a
   }
-  var expired: Bool { Date().timeIntervalSince1970 - created >= 2700 }
+  var expired: Bool { conversation == nil && Date().timeIntervalSince1970 - created >= 2700 }
   func prompt() throws -> String {
+    if let c=conversation, let step=c.queue.first { return try c.prompt(for:step,members:members) }
     let instructions: String
     let facts = "Approved goal:\n\(goal)\nSource CSV:\n\(csv)"
     let pair = #"{"en":"English text","zh":"简体中文文本"}"#
@@ -175,6 +182,14 @@ struct TeamRun: Codable {
       + notes
   }
   mutating func begin(_ prompt: String) throws -> TeamAttempt {
+    if var c=conversation {
+      guard state=="running",pending==nil,!c.queue.isEmpty else {throw TeamError.wrongVersion}
+      let s=c.queue.removeFirst()
+      guard s.member==next,let m=members.first(where:{$0.role==s.member}) else {throw TeamError.memberUnavailable}
+      let a=TeamAttempt(id:UUID().uuidString,role:s.member,version:c.revisions.count,inputHash:NativeCodex.digest(Data(prompt.utf8)),
+        started:Date().timeIntervalSince1970,promptText:prompt,assignment:s,memberSnapshot:m)
+      attempts.append(a);conversation=c;return a
+    }
     guard state == "running", pending == nil, !expired, attempts.count < 7,
       versions.count < 3 || next == "Reviewer"
     else { throw TeamError.budgetExceeded }
@@ -201,6 +216,7 @@ struct TeamRun: Codable {
     attempts[i].finished = Date().timeIntervalSince1970
     attempts[i].replyText = text
     attempts[i].resultHash = NativeCodex.digest(Data(text.utf8))
+    if conversation != nil {try receiveChat(attempts[i],text);return}
     switch a.role {
     case "Planner":
       let p = try a.web == nil ? TeamFiles.decode(TeamPlan.self, text) : TeamFiles.decodeWebContent(TeamPlan.self, text)

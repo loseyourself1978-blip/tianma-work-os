@@ -3,6 +3,7 @@ import Foundation
 
 enum TeamError: String, Error {
   case invalidInput, invalidReply, invalidReport, invalidReview, missingIdentity, wrongVersion
+  case outputNeeded, attachmentUnsupported, invalidRoster, contextTooLarge, fileConflict, memberUnavailable
   case budgetExceeded, changedDirectory, alreadyExported, storage, busy, unavailable
 }
 
@@ -166,7 +167,7 @@ enum TeamFiles {
   static func taskDirectory(parent: CodexDirectory, role: String, operation: String) throws
     -> CodexDirectory
   {
-    guard TeamMember.roles.contains(role), UUID(uuidString: operation) != nil else {
+    guard TeamConversation.slots.contains(role), UUID(uuidString: operation) != nil else {
       throw TeamError.invalidInput
     }
     let fd = try openFolder(parent)

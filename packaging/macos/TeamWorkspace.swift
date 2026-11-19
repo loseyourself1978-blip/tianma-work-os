@@ -5,6 +5,8 @@ import WebKit
 // A dedicated local view owns the team's sessions. The two ordinary panes keep
 // their views, drafts and permissions while the owner changes views.
 final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
+  let managed: Bool
+  var roomChanged: (() -> Void)?
   let web: WKWebView
   private let root: URL, directory: URL, page: URL
   private let translate: (String) -> String
@@ -41,7 +43,8 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
   }
   private var codexWindow: NSWindow?
   private var timer: Timer?, lock: Int32 = -1
-  private var run: TeamRun?, proposed: TeamRun?, selectedFolder: CodexDirectory?
+  private(set) var run: TeamRun?
+  private var proposed: TeamRun?, selectedFolder: CodexDirectory?
   private var notice = "", checking = false, picker = false
   private var creating: String?, pollCount = 0, storageOK = true, loaded = false
   private var usageAttempt: String?, usageFirstCheck: Date?, usageGeneration: Int?
@@ -51,11 +54,12 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
   private var lastPayload: Data?
   private var observationDeadline: Date?, terminationObserver: NSObjectProtocol?
 
-  init(root: URL, preferences: URL, translate: @escaping (String) -> String) {
+  init(root: URL, preferences: URL, translate: @escaping (String) -> String, managed: Bool = false, initialRecord:TeamRun?=nil) {
+    self.managed = managed
     self.preferences = preferences
     self.root = root
     self.translate = translate
-    directory = preferences.appendingPathComponent("team-r1")
+    directory = managed ? preferences : preferences.appendingPathComponent("team-r1")
     let productProfile = preferences.lastPathComponent == "Tianma Work OS Preferences"
     let support = productProfile ? preferences.deletingLastPathComponent()
       : FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support")
@@ -67,7 +71,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       .filter { $0.standardizedFileURL.path != current }
       .map { $0.appendingPathComponent("team-r1") }
       .filter { FileManager.default.fileExists(atPath: $0.path) }
-    page = root.appendingPathComponent("ai_team/index.html")
+    page = root.appendingPathComponent("ai_team/legacy.html")
     let config = WKWebViewConfiguration()
     config.websiteDataStore = .nonPersistent()
     web = WKWebView(frame: .zero, configuration: config)
@@ -94,12 +98,12 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
           }
         }
       }
-      loadHistory(from: [directory], importing: false)
+      if !managed {loadHistory(from: [directory], importing: false)}
       let head = directory.appendingPathComponent("current")
       if FileManager.default.fileExists(atPath: head.path) {
         let id = try String(contentsOf: head, encoding: .utf8)
         guard UUID(uuidString: id) != nil else { throw TeamError.storage }
-        run = try readRun(id)
+        if managed,let initialRecord,initialRecord.id==id {run=initialRecord} else {run = try readRun(id)}
         guard let current = run, current.id == id else { throw TeamError.storage }
         remember(current)
         if current.pendingDecision != nil {
@@ -118,11 +122,11 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     terminationObserver = NotificationCenter.default.addObserver(
       forName: NSApplication.willTerminateNotification, object: nil, queue: .main
     ) { [weak self] _ in self?.shutdown() }
-    web.loadFileURL(page, allowingReadAccessTo: page.deletingLastPathComponent())
+    if !managed { web.loadFileURL(page, allowingReadAccessTo: page.deletingLastPathComponent()) }
   }
   func shutdown() {
     draftSave?.cancel()
-    if storageOK && lock >= 0 { writeSetupDraft() }
+    if !managed && storageOK && lock >= 0 { writeSetupDraft() }
     evidenceCheck = nil
     timer?.invalidate()
     timer = nil
@@ -182,7 +186,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     }
   }
   private func readRun(_ id: String) throws -> TeamRun { try Self.readRecord(id, from: directory) }
-  private static func readRecord(_ id: String, from directory: URL) throws -> TeamRun {
+  static func readRecord(_ id: String, from directory: URL) throws -> TeamRun {
     guard UUID(uuidString: id) != nil else { throw TeamError.storage }
     let path = directory.appendingPathComponent(id + ".json").path
     let fd = open(path, O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOFOLLOW)
@@ -191,7 +195,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     defer { try? h.close() }
     var st = stat()
     guard fstat(fd, &st) == 0, st.st_mode & S_IFMT == S_IFREG, st.st_uid == getuid(),
-      st.st_size <= 16_777_216, let bytes = try h.readToEnd()
+      st.st_size <= 134_217_728, let bytes = try h.readToEnd()
     else { throw TeamError.storage }
     let r = try JSONDecoder().decode(TeamRun.self, from: bytes)
     guard r.id == id else { throw TeamError.storage }
@@ -320,6 +324,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       && ["accepted", "changes", "blocked", "stopped"].contains(run.state)
   }
   func publish() {
+    if managed {roomChanged?();return}
     guard loaded else { return }
     var data: [String: Any] = [
       "zh": translate("Back") != "Back", "sample": TeamFiles.sample,
@@ -403,7 +408,9 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     run?.recordState()
     guard let r = run else { throw TeamError.storage }
     do {
-      try TeamFiles.bytes(r).write(
+      let bytes=try TeamFiles.bytes(r)
+      guard bytes.count<=134_217_728 else {throw TeamError.storage}
+      try bytes.write(
         to: directory.appendingPathComponent(r.id + ".json"), options: .atomic)
       try Data(r.id.utf8).write(to: directory.appendingPathComponent("current"), options: .atomic)
       remember(r)
@@ -780,8 +787,8 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     }
     inspecting.insert(key)
     pane.web.callAsyncJavaScript(
-      "return window.twosProviderDOM?.teamModel?.() || ''",
-      arguments: [:], in: nil, in: NativeWorkbench.handoffWorld
+      "return window.twosProviderDOM?.teamModel?.(allowMode) || ''",
+      arguments: ["allowMode":managed], in: nil, in: NativeWorkbench.handoffWorld
     ) { [weak self, weak pane] result in
       guard let self = self else { return }
       self.inspecting.remove(key)
@@ -809,7 +816,14 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
   }
   private func tick() {
     pollCount += 1
-    if pollCount.isMultiple(of: 3), run == nil || run.map({ ["running", "paused"].contains($0.state) }) == true {
+    if managed {
+      refreshSupplements()
+      if run?.pending==nil, !["running","stopping"].contains(run?.state ?? ""), !codex.connecting,
+         inspecting.isEmpty,observingWeb==nil {
+        timer?.invalidate();timer=nil;publish();return
+      }
+    }
+    if !managed, pollCount.isMultiple(of: 3), run == nil || run.map({ ["running", "paused"].contains($0.state) }) == true {
       for role in TeamMember.roles { inspectModel(role, memberService(role)) }
     }
     if let id = observingWeb, run?.state == "paused", let a = run?.pending, a.id == id {
@@ -852,15 +866,22 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       guard let member = r.members.first(where: { $0.role == role }) else {
         throw TeamError.unavailable
       }
-      if role == "Reviewer" {
+      if managed {
+        guard prepareRoomStep(&r,member:member),let latest=run else{return}
+        r=latest
+      }
+      if !managed, role == "Reviewer" {
         guard let version = r.versions.last else { throw TeamError.wrongVersion }
         _ = try freeze(version, run: r)
       }
       if member.service != "Codex" {
         guard !inspecting.contains(channelKey(role, member.service)) else { return }
+        let expectedStep = r.conversation?.queue.first?.id
         inspectModel(role, member.service) { [weak self] m in
           guard let self = self, self.run?.id == r.id, self.run?.state == "running",
-            self.run?.next == role, self.run?.pending == nil
+            self.run?.next == role, self.run?.pending == nil,
+            self.run?.conversation?.queue.first?.id == expectedStep,
+            self.run?.members.first(where: { $0.role == role }) == member
           else { return }
           if m.isEmpty {
             let key = r.id + "/" + role + "/" + member.service
@@ -896,7 +917,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     guard let r = run else { return }
     do {
       let scope = try TeamFiles.taskDirectory(
-        parent: TeamFiles.workFolder(for: r), role: a.role, operation: a.id)
+        parent: managed ? try executionScratch() : try TeamFiles.workFolder(for:r), role:a.role, operation:a.id)
       guard
         try NativeCodex.inspectDirectory(scope.path, isolated: true, requireEmpty: true) == scope
       else { throw TeamError.changedDirectory }
@@ -904,7 +925,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       guard let token = codex.pendingDirectory?.token else { throw TeamError.unavailable }
       creating = a.id
       codex.confirmDirectory(
-        token: token, model: model, effort: "", reviewOnly: a.role == "Reviewer"
+        token: token, model: model, effort: a.memberSnapshot?.effort ?? "", reviewOnly: managed || a.role == "Reviewer"
       ) { [weak self] binding in
         guard let self = self, self.run?.pending?.id == a.id, self.run?.state == "running",
           self.storageOK
@@ -912,11 +933,16 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
         self.creating = nil
         guard binding.directory == scope,
           var item = self.codex.makeSubmission(
-            text: prompt, model: model, effort: "", mode: "send"),
+            text: prompt, model: model, effort: a.memberSnapshot?.effort ?? "", mode: "send"),
           item.thread == binding.thread
         else {
           self.fail("scope")
           return
+        }
+        if self.managed {
+          do { item.attachments = try self.codexImages(a)
+            guard self.codex.validateModel(model,effort:item.effort,attachments:item.attachments) else {throw TeamError.attachmentUnsupported}
+          } catch {self.fail("attachmentUnsupported");return}
         }
         let i = self.run!.attempts.count - 1
         self.run!.attempts[i].thread = binding.thread
@@ -985,6 +1011,10 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     else {
       fail("unconfirmed")
       return
+    }
+    if managed, run?.pending?.id == a.id, a.transportState != record.state, let index = run?.attempts.indices.last {
+      run?.attempts[index].transportState = record.state
+      do { try persist() } catch { fail("storage"); return }
     }
     recordCodexActivity(a, record: record)
     if ["failed", "rejected", "interrupted", "cancelled"].contains(record.state) {
@@ -1099,6 +1129,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       let reviewer = channel(a.role, w.provider)
       var req = w.request(inspectOnly: true)
       req["teamReview"] = true
+    if managed {req["allowTeamMode"]=true}
       reviewer.webTransfer(req) { reply in
         guard reply["state"] as? String == "reply", reply["conversationURL"] as? String == thread,
           reply["replyMessage"] as? String == turn, let body = reply["reply"] as? String,
@@ -1141,6 +1172,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
         provider: member.service,
         targetPane: 0, targetURL: target.absoluteString, binding: r.id)
       r.attempts[r.attempts.count - 1].observedWebSelection = selection
+      if managed { w.files=try webImages(a) }
       w.teamWireVersion = 1
       r.attempts[r.attempts.count - 1].web = w
       run = r
@@ -1164,7 +1196,8 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
   }
   private func invokeWeb(_ id: String, _ w: WebHandoffReceipt, inspect: Bool) {
     guard !checking else { return }
-    guard let role = run?.pending?.role, TeamMember.homes[w.provider] != nil else { return }
+    guard let attempt = run?.pending, attempt.id == id, TeamMember.homes[w.provider] != nil else { return }
+    let role = attempt.role
     let reviewer = channel(role, w.provider)
     if inspect, let bound = w.resolvedURL,
       NativeWorkbench.restorableURL(reviewer.web.url, service: reviewer.serviceHome)?.absoluteString
@@ -1175,9 +1208,18 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     checking = true
     var req = w.request(inspectOnly: inspect)
     req["teamReview"] = true
-    guard let member = run?.members.first(where: { $0.role == role }) else { checking = false; return }
-    req["expectedReviewModel"] = member.model
-    req["allowedTeamSelections"] = TeamMember.selectionLabels(member.model, service: member.service)
+    if managed {req["allowTeamMode"]=true}
+    guard let member = attempt.memberSnapshot ?? run?.members.first(where: { $0.role == role }), member.service == w.provider else { checking = false; return }
+    if managed && !inspect {
+      do {
+        req["files"] = try (w.files ?? []).map { file -> [String:Any] in
+          let bytes=try self.checkedBlob(file.id,hash:file.hash)
+          return ["id":file.id,"name":file.name,"mime":file.mime,"size":file.size,"hash":file.hash,"base64":bytes.base64EncodedString()]
+        }
+      } catch {checking=false;fail("attachmentUnsupported");return}
+    }
+    req["expectedReviewModel"] = aMemberModel(id) ?? member.model
+    req["allowedTeamSelections"] = TeamMember.selectionLabels(aMemberModel(id) ?? member.model, service: member.service)
     reviewer.webTransfer(req) { [weak self] response in
       guard let self = self else { return }
       self.checking = false
@@ -1280,6 +1322,20 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       notice = ""
       run = r
       try persist()
+      if managed {
+        do {
+          try publishRoomFiles()
+          if a.assignment?.kind=="review",let revision=run?.conversation?.revisions.last {try checkVisibleRevision(revision)}
+        } catch {
+          let reason=(error as? TeamError)?.rawValue ?? "storage"
+          run?.state="paused";run?.reason=reason;notice=reason
+          if a.assignment?.kind=="review",reason=="fileConflict",var c=run?.conversation,let i=c.revisions.indices.last {
+            c.mismatchedRevision=c.revisions[i].id;c.issue="fileConflict";run?.conversation=c
+          }
+          try? persist()
+        }
+        return publish()
+      }
       if r.state == "awaitingOwner" {
         do {
           try export(&r)
@@ -1307,6 +1363,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
   private func stop(reason: String = "stopped") {
     guard var r = run, ["running", "paused"].contains(r.state) else { return }
     observingWeb = nil
+    if managed {r.conversation?.queue.removeAll();r.conversation?.held.removeAll();r.conversation?.stoppedByUser=true}
     r.stopRequested = true
     observationDeadline = Date().addingTimeInterval(15)
     r.state = r.pending == nil ? "stopped" : "stopping"
@@ -1373,5 +1430,248 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       try checkDelivery(files, folder: r.folder, name: name)
     }
     r.exported = URL(fileURLWithPath: r.folder.path).appendingPathComponent(name).path
+  }
+}
+
+extension TeamWorkspace {
+  var roomNotice:String {notice}
+  var availableModels:[[String:Any]] {codex.modelCatalog}
+  func aMemberModel(_ id:String)->String? {run?.attempts.last(where:{$0.id==id})?.memberSnapshot?.model}
+  func setupRoom(_ r:TeamRun) throws {
+    guard managed,storageOK,run==nil,r.conversation != nil else {throw TeamError.storage}
+    run=r;try persist()
+  }
+  func changeRoom(_ body:(inout TeamRun)throws->Void)throws {
+    guard managed,storageOK,var r=run else{throw TeamError.storage}
+    try body(&r);run=r;try persist();publish()
+  }
+  func adoptWebSelection(_ id: String) {
+    guard let current = run, let member = current.members.first(where: { $0.role == id }),
+      member.service != "Codex" else { return }
+    inspectModel(id, member.service) { [weak self] value in
+      guard let self, self.run?.id == current.id, self.run?.members.first(where: { $0.role == id }) == member else { return }
+      guard !value.isEmpty, value.utf8.count <= 160 else { self.notice = "reviewerUnavailable"; self.publish(); return }
+      do {
+        try self.changeRoom { r in
+          var roster = r.members
+          guard let i = roster.firstIndex(of: member) else { throw TeamError.wrongVersion }
+          roster[i].model = value
+          roster[i].effort = nil
+          try r.updateChatRoster(roster)
+        }
+        self.notice = ""
+      } catch { self.notice = (error as? TeamError)?.rawValue ?? "storage" }
+      self.publish()
+    }
+  }
+  func openMember(_ id:String) {
+    guard let m=run?.members.first(where:{$0.role==id}) else{return}
+    if m.service=="Codex" {
+      if !codex.connected && !codex.connecting {codex.connectSelectedPane()}
+      startRoomTimer()
+      if codexWindow==nil {
+        let w=NSWindow(contentRect:NSRect(x:0,y:0,width:800,height:620),styleMask:[.titled,.closable,.resizable],backing:.buffered,defer:false)
+        w.isReleasedWhenClosed=false;w.contentView=codex.web;codexWindow=w
+      }
+      codexWindow?.title="AI Team · Codex";codexWindow?.makeKeyAndOrderFront(nil)
+    } else {
+      prepareChannel(id,m.service)
+      let w=channel(id,m.service);w.window?.title="TWOS · "+(m.displayName ?? id)+" · "+m.service
+      w.showWindow(nil);w.window?.makeKeyAndOrderFront(nil)
+    }
+  }
+  func startRoomTimer() {
+    guard managed,timer==nil,storageOK else{return}
+    let t=Timer(timeInterval:1,repeats:true){[weak self] _ in self?.tick()}
+    timer=t;RunLoop.main.add(t,forMode:.common)
+  }
+  func stopRoom() {
+    guard var r=run else{return}
+    if r.pending != nil || ["running","paused"].contains(r.state) {stop();publish();return}
+    r.conversation?.queue=[];r.conversation?.stoppedByUser=true;r.state="stopped";r.stopRequested=true;r.reason="stopped"
+    run=r;try? persist();publish()
+  }
+  func resumeRoom()throws {
+    guard var r=run,let c=r.conversation else{throw TeamError.storage}
+    if let a=r.pending {
+      if let w=a.web {restoreReviewer(w,role:a.role);observingWeb=a.id;r.state="paused"}
+      else {
+        if !codex.connected {if !codex.connecting {codex.connect()};throw TeamError.unavailable}
+        if let thread=a.thread {if thread != codex.threadID {codex.selectThread(thread)} else if codex.uncertain {codex.reconcileDelivery()}}
+        r.state=r.stopRequested==true ? "stopping":"running"
+      }
+      observationDeadline=Date().addingTimeInterval(15);notice="reconciling"
+    } else {
+      guard !c.stoppedByUser else{throw TeamError.wrongVersion}
+      if let a=r.attempts.last,let assignment=a.assignment,a.state=="unsent",
+         a.web?.mayHaveSent==false, !c.queue.contains(where:{$0.id==assignment.id}),
+         !r.attempts.contains(where:{$0.assignment?.id==assignment.id && $0.state != "unsent"}) {
+        r.conversation?.queue.insert(assignment,at:0);run=r;try persist()
+      } else if r.state=="blocked" && c.queue.isEmpty {
+        throw TeamError.invalidReply
+      }
+      if r.reason=="codexUnavailable",!codex.connected,!codex.connecting {codex.connectSelectedPane()}
+      try publishRoomFiles()
+      r=run ?? r
+      if let c=r.conversation,let v=c.revisions.last,c.mismatchedRevision==v.id {
+        try checkVisibleRevision(v);r.conversation?.mismatchedRevision=nil
+        if ["fileConflict","changedDirectory"].contains(c.issue ?? "") {r.conversation?.issue=nil}
+      }
+      r.selectNextChatStep()
+    }
+    run=r;try persist();startRoomTimer();publish()
+  }
+  private func prepareRoomStep(_ r:inout TeamRun,member:TeamMember)->Bool {
+    guard let c=r.conversation, let step=c.queue.first else{fail("wrongVersion");return false}
+    do {
+      if step.kind=="review" {
+        try publishRoomFiles()
+        guard let v=run?.conversation?.revisions.last, v.digest==step.frozen else{throw TeamError.wrongVersion}
+        try checkVisibleRevision(v)
+        r=run ?? r
+      }
+    } catch {fail((error as? TeamError)?.rawValue ?? "storage");return false}
+    if member.service=="Codex" {
+      if !codex.connected {
+        if !codex.connecting {
+          if codex.connectionError.isEmpty {codex.connectSelectedPane()} else {fail("codexUnavailable")}
+        }
+        return false
+      }
+      if member.model.isEmpty {
+        guard let row=codex.modelCatalog.first(where:{$0["isDefault"] as? Bool==true}) ?? codex.modelCatalog.first,
+          let m=row["model"] as? String, !m.isEmpty,let i=r.members.firstIndex(where:{$0.role==member.role}) else{
+          fail("codexUnavailable");return false
+        }
+        r.members[i].model=m;run=r;try? persist();return false
+      }
+      do {
+        let attachments=try imageAttachments(message:step.message)
+        guard codex.validateModel(member.model,effort:member.effort ?? "",attachments:attachments) else{
+          fail(attachments.isEmpty ? "codexUnavailable":"attachmentUnsupported");return false
+        }
+      } catch {fail("attachmentUnsupported");return false}
+    } else {
+      let key=channelKey(member.role,member.service)
+      if channels[key]==nil {prepareChannel(member.role,member.service,fresh:true);return false}
+      if member.model.isEmpty {
+        if let m=models[key],!m.isEmpty,let i=r.members.firstIndex(where:{$0.role==member.role}) {
+          r.members[i].model=m;run=r;try? persist();return false
+        }
+        inspectModel(member.role,member.service)
+        if awaitingSelection?.member != key {awaitingSelection=(key,Date())}
+        if let w=awaitingSelection,Date().timeIntervalSince(w.since)>15 {fail("reviewerUnavailable")}
+        return false
+      }
+    }
+    return true
+  }
+  func validateForAcceptance(_ v: TeamFileRevision) throws {
+    do { try checkVisibleRevision(v) }
+    catch let problem as TeamError where problem == .fileConflict || problem == .changedDirectory {
+      try changeRoom { r in
+        r.conversation?.mismatchedRevision = v.id
+        r.conversation?.issue = problem.rawValue
+        r.state = "paused"
+        r.reason = problem.rawValue
+      }
+      throw problem
+    }
+  }
+  func checkVisibleRevision(_ v:TeamFileRevision)throws {
+    guard let c=run?.conversation else{throw TeamError.storage}
+    if v.files.isEmpty{return}
+    guard let f=c.output else{throw TeamError.outputNeeded}
+    for (name,text) in v.files {
+      guard let file=c.ownedFiles[name],file.hash==NativeCodex.digest(Data(text.utf8)) else {throw TeamError.fileConflict}
+      _=try TeamArtifacts.visible(name,owner:file,in:f)
+    }
+  }
+  func publishRoomFiles()throws {
+    guard var r=run,var c=r.conversation,let v=c.revisions.last,!v.files.isEmpty else{return}
+    guard let output=c.output else{throw TeamError.outputNeeded}
+    if c.publishedRevision==v.id {return}
+    func record()throws {r.conversation=c;run=r;try persist()}
+    if let intent=c.writeIntent {
+      try TeamArtifacts.commit(intent,in:output);c.ownedFiles[intent.path]=intent.file;c.writeIntent=nil;try record()
+    }
+    for (n,body) in v.files.sorted(by:{$0.key<$1.key}) {
+      if let old=c.ownedFiles[n],old.hash==NativeCodex.digest(Data(body.utf8)) {
+        _=try TeamArtifacts.visible(n,owner:old,in:output);continue
+      }
+      let intent=try TeamArtifacts.stage(body,path:n,in:output,previous:c.ownedFiles[n])
+      c.writeIntent=intent;try record()
+      try TeamArtifacts.commit(intent,in:output)
+      c.ownedFiles[n]=intent.file;c.writeIntent=nil;try record()
+    }
+    c.publishedRevision=v.id;try record()
+  }
+  private func executionScratch()throws->CodexDirectory {
+    guard let uuid=run?.id,UUID(uuidString:uuid) != nil else{throw TeamError.storage}
+    // Foundation can retain Darwin's /var alias. Resolve the existing system
+    // temporary root before applying the same strict no-symlink ancestry check.
+    guard let real=realpath(FileManager.default.temporaryDirectory.path,nil) else{throw TeamError.changedDirectory}
+    let temp=URL(fileURLWithPath:String(cString:real),isDirectory:true);free(real)
+    let p=temp.appendingPathComponent("twos-team-turns-"+uuid,isDirectory:true)
+    try NativeWorkbench.safeDirectory(p)
+    let info=try nativePathMetadata(p.path)
+    guard info.st_uid==getuid(),info.st_mode & 0o077==0 else{throw TeamError.changedDirectory}
+    return try NativeCodex.inspectDirectory(p.path,isolated:true)
+  }
+  private func checkedBlob(_ id:String,hash:String)throws->Data {
+    guard UUID(uuidString:id) != nil else{throw TeamError.attachmentUnsupported}
+    let data=try WebTransferFile.read(directory.appendingPathComponent("attachments/"+id))
+    guard NativeCodex.digest(data)==hash else{throw TeamError.wrongVersion}
+    return data
+  }
+  private func images(_ a:TeamAttempt)->[TeamAttachmentRef] {
+    guard let step=a.assignment,let c=run?.conversation else{return []}
+    return c.inputs.first(where:{$0.id==step.message})?.attachments.filter{$0.mime.hasPrefix("image/")} ?? []
+  }
+  private func codexImages(_ a:TeamAttempt)throws->[CodexAttachment] {
+    guard let step=a.assignment else{return []}
+    return try imageAttachments(message:step.message)
+  }
+  private func imageAttachments(message:String)throws->[CodexAttachment] {
+    let files=run?.conversation?.inputs.first(where:{$0.id==message})?.attachments.filter{$0.mime.hasPrefix("image/")} ?? []
+    return try files.map {f in let d=try checkedBlob(f.id,hash:f.hash)
+      return CodexAttachment(id:f.id,name:f.name,mime:f.mime,base64:d.base64EncodedString(),transportVersion:3,coverage:"image_full",sourceBytes:f.size,sourceHash:f.hash)}
+  }
+  private func webImages(_ a:TeamAttempt)throws->[WebTransferFile] {
+    try images(a).map {f in _=try checkedBlob(f.id,hash:f.hash)
+      return WebTransferFile(id:f.id,name:f.name,mime:f.mime,size:f.size,hash:f.hash,source:"team:"+a.id)}
+  }
+}
+
+extension TeamWorkspace {
+  func steerIfBound(_ key:String)throws {
+    guard managed,var r=run,var c=r.conversation,r.state=="running",!c.stoppedByUser,
+      let active=r.pending,active.memberSnapshot?.service=="Codex",
+      ["coordinate","direct","consult","build"].contains(active.assignment?.kind ?? ""),
+      let input=c.inputs.first(where:{$0.id==key}),input.attachments.isEmpty,
+      let q=c.queue.firstIndex(where:{$0.message==key && $0.member==active.role}),
+      let thread=active.thread,thread==codex.threadID,let turn=codex.turnID,
+      codex.controlledThreads.contains(thread),!codex.uncertain,!codex.stopRequested,
+      let source=codex.ledger.submissions.first(where:{$0.id==active.clientID && $0.id==codex.activeSubmission && $0.thread==thread && $0.turn==turn}),
+      codex.draftAttachments.isEmpty,c.supplements?.contains(where:{$0.member==active.role && $0.message==key}) != true,
+      let item=codex.makeSubmission(text:input.text,model:source.model,effort:source.effort,mode:"steer")
+    else{return}
+    let entry=TeamSupplement(message:key,member:active.role,attempt:active.id,thread:thread,turn:turn,client:item.id,state:"intent")
+    c.queue.remove(at:q);c.supplements=(c.supplements ?? [])+[entry];r.conversation=c;run=r;try persist()
+    guard codex.acceptSubmission(item) else {
+      fail("unconfirmed");return
+    }
+    codex.steer(item);refreshSupplements()
+  }
+  private func refreshSupplements() {
+    guard var r=run,var c=r.conversation,var list=c.supplements else{return}
+    var changed=false
+    for i in list.indices where ["intent","queued","sending","accepted","unknown"].contains(list[i].state) {
+      let s=list[i]
+      guard let native=codex.ledger.submissions.first(where:{$0.id==s.client && $0.thread==s.thread && ($0.turn==s.turn || $0.turn==nil)})
+      else{continue}
+      if list[i].state != native.state {list[i].state=native.state;changed=true}
+    }
+    if changed {c.supplements=list;r.conversation=c;run=r;try? persist();publish()}
   }
 }

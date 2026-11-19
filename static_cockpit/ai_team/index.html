@@ -1,15 +1,15 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'">
-<title>AI Team · TWOS</title><link rel="stylesheet" href="style.css"><script defer src="app.js"></script>
-</head>
-<body>
-<header class="bar"><h1>AI Team</h1><nav id="nav"></nav></header>
-<main>
- <aside class="library" id="library"><h2 id="historyTitle"></h2><button type="button" id="new-task"></button><input id="search" type="search"><nav id="rooms"></nav></aside>
- <section class="center" id="work"></section>
- <aside class="inspector" id="inspector"><h2 id="scope-title"></h2><div id="scope-info"></div><section id="delivery-files" class="delivery" hidden></section><p id="notice" role="status"></p></aside>
-</main>
-</body></html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'">
+<title>AI Team</title><link rel="stylesheet" href="room.css"><script src="room.js" defer></script></head>
+<body><div class="workspace">
+<aside class="rail" aria-label="Team chats"><div class="railhead"><span class="mark" aria-hidden="true">✳</span><strong>AI Team</strong></div>
+<button id="new" class="primary"></button><input id="search" type="search"><nav id="rooms"></nav><button id="import" class="subtle"></button></aside>
+<main><header><div><span class="small" id="roomLabel"></span><h1 id="title"></h1></div><div class="actions"><button id="stop"></button><button id="settings"></button></div></header>
+<div id="feed" role="log" aria-live="off" tabindex="0"></div>
+<div id="notice" role="status" hidden></div>
+<section id="compose"><div id="chips"></div><textarea id="message" rows="2" maxlength="32000"></textarea>
+<div id="mentions" role="group" hidden></div><div class="composerbar"><button id="attach" class="square">＋</button><button id="mention" class="square">@</button>
+<button id="config" class="subtle"></button><select id="language"></select><button id="send" class="primary"></button></div></section></main>
+<aside id="inspector"><div class="tabs" role="tablist"><button id="membersTab" role="tab"></button><button id="activityTab" role="tab"></button><button id="filesTab" role="tab"></button></div><div id="detail"></div></aside>
+</div></body></html>

@@ -187,9 +187,10 @@ function person(name, service = '', model = '', alias = '') {
   const row = node('div', null, 'person');
   alias=alias||state.run?.members.find(m=>m[0]===name)?.[3]||'';
   const display = name === 'Owner' ? tr('You','你') : name === 'TWOS' ? 'TWOS' : role(name);
-  const avatar = node('span', ({Planner:'P',Builder:'B',Reviewer:'R',Owner:'Y',TWOS:'T'})[name], 'avatar ' + name);
-  if(alias)avatar.textContent=Array.from(alias)[0].toUpperCase();
-  avatar.setAttribute('aria-hidden','true');
+  const faces = {Planner:'ada',Builder:'kai',Reviewer:'ren',Supervisor:'mira',Tester:'sol',Compliance:'lou'};
+  const avatar = faces[name] ? node('img',null,'avatar') : node('span',display,'avatar');
+  if (faces[name]) { avatar.src='avatars/'+faces[name]+'.png'; avatar.alt=alias||display }
+  else { avatar.setAttribute('aria-hidden','true') }
   const info = node('div'); info.append(node('strong',alias?alias+' · '+display:display));
   if (service || model) info.append(node('small',[service,modelLabel(model)].filter(Boolean).join(' · ')));
   row.append(avatar,info); return row

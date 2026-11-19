@@ -13,7 +13,7 @@ return await (async () => {
  const same=()=>window.twosTransferLease===lease&&location.origin===origin;
  const teamModelMatches=()=>{
   if(!request.expectedReviewModel)return true;
-  const label=window.twosProviderDOM?.teamModel?.();
+  const label=window.twosProviderDOM?.teamModel?.(request.allowTeamMode===true);
   if(!label)return false;
   return Array.isArray(request.allowedTeamSelections)
     ? request.allowedTeamSelections.includes(label.trim().toLowerCase())
@@ -24,11 +24,11 @@ return await (async () => {
  // only for that same dialog/document and recheck the complete target.
  let pickerDeadline=0;
  const waitForTeamPicker=async()=>{
-  if(!request.expectedReviewModel||!same()||clean(location.href)!==original||window.twosProviderDOM?.teamModel?.())return false;
+  if(!request.expectedReviewModel||!same()||clean(location.href)!==original||window.twosProviderDOM?.teamModel?.(request.allowTeamMode===true))return false;
   if(!pickerDeadline)pickerDeadline=performance.now()+3000;
   while(performance.now()<pickerDeadline && same() && clean(location.href)===original){
    await new Promise(resolve=>setTimeout(resolve,75));
-   if(window.twosProviderDOM?.teamModel?.())return targetCurrent();
+   if(window.twosProviderDOM?.teamModel?.(request.allowTeamMode===true))return targetCurrent();
   }
   return false;
  };
@@ -332,7 +332,7 @@ return await (async () => {
   const buttons=scoped||candidates;
   const deepSeekControl=deepSeekSend();if(!buttons.length&&deepSeekControl)buttons.push(deepSeekControl);
   if(buttons.length!==1)continue;
-  const selectedAtSend=request.expectedReviewModel?{selectedAtSend:window.twosProviderDOM.teamModel()}:{};
+  const selectedAtSend=request.expectedReviewModel?{selectedAtSend:window.twosProviderDOM.teamModel(request.allowTeamMode===true)}:{};
   buttons[0].click(); // Exactly one real website control; never guess Enter or another icon.
   // WebKit can throttle timers in a background pane. Bound elapsed time as
   // well as poll count; forty delayed callbacks must not turn a five-second
