@@ -97,13 +97,14 @@ def main():
         assert poster.is_relative_to(root) and hashlib.sha256(poster.read_bytes()).hexdigest() == demo['poster_sha256']
         for video, source, version in zip(document.videos, document.sources, versions):
             assert 'controls' in video and 'playsinline' in video and 'autoplay' not in video
-            assert video['poster'] == './' + demo['poster']
-            assert source == {'src': './' + version['path'], 'type': 'video/mp4'}
+            assert video['poster'] == './' + demo['poster'] + '?film=' + demo['poster_sha256'][:12]
+            assert version['url_suffix'] == '?film=' + version['sha256'][:12]
+            assert source == {'src': './' + version['path'] + version['url_suffix'], 'type': 'video/mp4'}
             assert version['captions'] == ['en', 'zh-CN'] and demo['audio']
             file = (root / version['path']).resolve()
             assert file.is_relative_to(root) and file.stat().st_size == version['bytes']
             assert hashlib.sha256(file.read_bytes()).hexdigest() == version['sha256']
-            assert any(link['href'] == source['src'] and 'download' in link for link in document.links)
+            assert any(link['href'] == source['src'] and link.get('download') == version['download_as'] for link in document.links)
     if interface['status'] == 'CANDIDATE_PREVIEW':
         assert 'candidate preview' in html.lower() and 'not yet a public release' in html
     else:

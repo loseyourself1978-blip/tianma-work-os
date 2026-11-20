@@ -239,31 +239,53 @@
     "width": 1920,
     "height": 1080,
     "audio": true,
-    "kind": "REAL_MACOS_WINDOW_RECORDING",
-    "content": "Real new-chat team setup and responsibility edit, followed by the original saved Ada and Kai engineering chat from first question to last reply. Both exports include burned-in English and Simplified Chinese subtitles.",
-    "poster_sha256": "4e099a172c126b3bcccc71046e0c782a2adbfcfd6705ec8f88010bd6b5467675",
+    "kind": "PRODUCT_FILM_WITH_REAL_MACOS_WINDOW_CAPTURE",
+    "content": "A product introduction to Tianma Work OS for Mac, followed by a typed goal, the built-in starting roster, per-member model settings, a custom duty, six members and a saved engineering chat about a projector brief.",
+    "poster_sha256": "5403e879bd19b21859dfde72500bba28fe1925a49e5e87ab2db7f3fb706e49c1",
     "versions": [
       {
         "path": "assets/product/TWOS-1.0.13-AI-Team-Ada-and-Kai.mp4",
-        "sha256": "ad0c0c2a59176dc529051aed369c1204c600029b99583dbf38ac19fbdc432c3e",
-        "bytes": 4386540,
-        "duration_seconds": 52.6,
+        "sha256": "f6d7d3d0f6b061f670139546ba8eb8a41fa4958c21b3377a2a470fb09e6d787f",
+        "bytes": 4408390,
+        "duration_seconds": 88.5,
         "narration": "en-US",
         "captions": [
           "en",
           "zh-CN"
-        ]
+        ],
+        "download_as": "TWOS-1.0.13-Product-Introduction-en-US.mp4",
+        "url_suffix": "?film=f6d7d3d0f6b0"
       },
       {
         "path": "assets/product/TWOS-1.0.13-AI-Team-Ada-and-Kai-zh-CN.mp4",
-        "sha256": "d8786354366d7ab015397627666f388e4d828857f295984456e25daba0532582",
-        "bytes": 4241436,
-        "duration_seconds": 52.6,
+        "sha256": "96d2542b9710064b7a3ed6af6969498fb8c27bd69dcd6fbecc9d3b7b8945d0b2",
+        "bytes": 4171055,
+        "duration_seconds": 88.5,
         "narration": "zh-CN",
         "captions": [
           "en",
           "zh-CN"
-        ]
+        ],
+        "download_as": "TWOS-1.0.13-Product-Introduction-zh-CN.mp4",
+        "url_suffix": "?film=96d2542b9710"
+      }
+    ],
+    "chapters": [
+      {
+        "seconds": 0,
+        "title": "Tianma Work OS for Mac"
+      },
+      {
+        "seconds": 12.8,
+        "title": "Build your AI team"
+      },
+      {
+        "seconds": 48,
+        "title": "The projector brief"
+      },
+      {
+        "seconds": 83,
+        "title": "Get TWOS"
       }
     ]
   }
