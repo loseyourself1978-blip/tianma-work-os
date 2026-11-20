@@ -11,10 +11,16 @@ class Images(HTMLParser):
     def __init__(self):
         super().__init__()
         self.images = []
+        self.videos = []
+        self.sources = []
         self.links = []
         self.link_text = []
         self.current_link = None
     def handle_starttag(self, tag, attrs):
+        if tag == 'video':
+            self.videos.append(dict(attrs))
+        if tag == 'source':
+            self.sources.append(dict(attrs))
         if tag == 'img':
             self.images.append(dict(attrs))
         if tag == 'a':
@@ -80,6 +86,18 @@ def main():
         assert int(image['height']) == item['height']
     assert interface['version'] in html and interface['build'] in html
     assert '/releases/tag/v' + m['public_download_version'] in html
+    if 'demo' in m:
+        demo = m['demo']
+        assert len(document.videos) == 1 and len(document.sources) == 1
+        video = document.videos[0]
+        assert 'controls' in video and 'playsinline' in video and 'autoplay' not in video
+        assert all(demo[key] == interface[key] for key in ('version', 'build', 'source_commit'))
+        assert document.sources[0] == {'src': './' + demo['path'], 'type': 'video/mp4'}
+        assert video['poster'] == './' + demo['poster']
+        for key, hash_key in [('path', 'sha256'), ('poster', 'poster_sha256')]:
+            file = (root / demo[key]).resolve()
+            assert file.is_relative_to(root) and hashlib.sha256(file.read_bytes()).hexdigest() == demo[hash_key]
+        assert any(link['href'] == './' + demo['path'] and 'download' in link for link in document.links)
     if interface['status'] == 'CANDIDATE_PREVIEW':
         assert 'candidate preview' in html.lower() and 'not yet a public release' in html
     else:

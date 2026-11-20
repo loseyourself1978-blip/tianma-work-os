@@ -133,3 +133,7 @@ actual outcome and any remaining action against the original scope.
 ## Nyra interaction baseline
 
 Owner policy updated November 12, 2026: comparable Nyra task-bubble and input interactions default to the official Codex pet pattern, using observed public behavior as the reference. Keep direct actions discoverable and avoid extra expand/append/configuration steps unless the Owner explicitly requests them or a verified interface/permission boundary requires them. Preserve exact task binding, IME/drafts, send/stop integrity and disclose actual capability differences; matching appearance never implies embedded official UI or control authority.
+
+## GitHub installation for product acceptance
+
+Use the versioned GitHub Release as the distribution point for Owner product acceptance. Upload the exact signed and notarized DMG and checksums, read back the uploaded bytes, then verify the public asset anonymously. Reconcile version, build, source and SHA-256 with the product page, bilingual guides and retained local installer. Provide the public download link to the Owner and retain the test outcome separately from Owner acceptance. Preserve the release-specific push and tag authorization gates.

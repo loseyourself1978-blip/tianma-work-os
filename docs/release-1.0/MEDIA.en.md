@@ -1,4 +1,11 @@
-# Current actual interface: active status and workbench
+# Release screenshots and recording · 1.0.13 / 101.61
+
+[User guide](AI_TEAM_R2.en.md) · [Watch the demo](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo) · [GitHub installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13)
+
+The recording scrolls from the first message to the last replies in Ada and Kai’s real English conversation. The workspace screenshots come from the 1.0.13 installer. Five Nyra portraits match its bundled assets.
+
+## Historical 1.0.11 images
+
 
 Captured November 17, 2026 from final signed TWOS 1.0.11 / 101.59 with embedded Nyra 1.0.8 / 108. Both ChatGPT and Codex were actually active in isolated, non-sensitive engineering tasks. This is the original bubble-window capture, with titles truncated by the product; it does not prove task completion or Owner acceptance. The bubble closes when inactive and controls remain on demand. A viewer background behind transparent pixels is not a stage fill.
 

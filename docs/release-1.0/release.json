@@ -1,64 +1,69 @@
 {
-  "source_commit": "83f5b4b321143d7f2809459e08f44b75d0c789a3",
-  "artifact": "Tianma-Work-OS-1.0.12.dmg",
-  "sha256": "b03dd701025b035df8bcf40d2d0d7e1670c5d4796912fe9b202995f6b249c6f2",
+  "source_commit": "abecabc72eefa362a86f54575fc145486f908067",
+  "artifact": "Tianma-Work-OS-1.0.13.dmg",
+  "sha256": "dcd83f5905441f6d55b446458d6d1c81b76dd86f625258938d3b7cbe8c0cc4ce",
   "signing_identity": "Developer ID Application: Jing Huang (BZJWQJ352K)",
-  "app_notarization_id": "997f08f6-d658-4c73-878f-4875e32ba7f3",
-  "dmg_notarization_id": "6ed4efee-286b-4d89-bb5d-d3cec1e8137d",
+  "app_notarization_id": "f0bc9f50-809c-457a-92c2-fbabdc0cdfc2",
+  "dmg_notarization_id": "ccef2c6a-7fbc-4f4f-bec2-29b4fd036cfb",
   "gatekeeper": "PASS",
-  "version": "1.0.12",
-  "build": "101.60",
+  "version": "1.0.13",
+  "build": "101.61",
   "product": "TWOS",
   "architecture": "arm64",
   "platform": "macOS",
   "declared_minimum_macos": "13.0",
   "tested_macos": "27.0.1",
-  "bytes": 266258793,
+  "bytes": 267128175,
   "status": "SIGNED_NOTARIZED_VALIDATED",
-  "runtime_input_sha256": "51dda6b07d17897f66013bbb367f2dad8ee622f05007d861c17613a71f5b2dfc",
-  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.12",
+  "runtime_input_sha256": "0d2803d1796d8e6a5ac556e4fe59f6f0e68078b58474280d5103ebf749419156",
+  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13",
   "embedded_nyra_version": "1.0.8",
   "embedded_nyra_build": "108",
   "embedded_nyra_source_commit": "bb60b2000b8d5a25c7234c7e1741b111d66d346c",
   "embedded_nyra_source_snapshot": "14cdfa728bb4a13d6d87805bfa43bde7e57840a821c33d5a8b0bc4a65bfe84d8",
   "embedded_nyra_resource_manifest_sha256": "60e3196ae1ec503d2ed01983c1d22f403bd6e0ddfe3c6913de50b26875992c0f",
-  "at": "2026-11-18T23:21:33.473698+08:00",
+  "at": "2026-11-20T11:54:57.820865+08:00",
   "verification_document": "AI_TEAM_VERIFICATION.en.md",
   "store_submission": "NOT_SUBMITTED",
-  "owner_acceptance": "UI_ACCEPTANCE_BUILD_ACKNOWLEDGED_BY_OWNER; FINAL_PACKAGE_NOT_SEPARATELY_ACCEPTED",
+  "owner_acceptance": "R2_PRODUCT_ACCEPTANCE_NOT_RECORDED",
   "main_gate": {
     "complete_pass": true,
     "counts": {
-      "passed": 1889,
+      "passed": 1893,
       "skipped": 1,
       "failed": 0,
       "errors": 0
     },
-    "duration_seconds": 6768.325,
-    "source": "83f5b4b321143d7f2809459e08f44b75d0c789a3",
-    "frozen_inputs_verified": 343,
-    "prior_failures_preserved": 2,
+    "duration_seconds": 5709.735,
+    "source": "abecabc72eefa362a86f54575fc145486f908067",
+    "frozen_inputs_verified": 356,
     "safari": {
       "measurements": 38,
       "visible_start": 38,
       "visible_finish": 38,
       "errors": []
-    }
+    },
+    "junit_sha256": "32cf1f982bbd84a98d3ba02a3daf09d3a47a1a60ed9c2a07b6b5f04f2b48ec5d"
   },
   "ai_team_sample": {
-    "planner": "Codex",
-    "builder": "Claude",
-    "reviewer": "Codex",
-    "roles_completed": 3,
-    "reviewed_frozen_version": 1,
-    "review_verdict": "approve",
-    "independent_total_cents": 17820,
-    "per_operation_reported_models": [
-      "UNKNOWN",
-      "UNKNOWN",
-      "UNKNOWN"
+    "attachment": "synthetic non-CSV text",
+    "recipients": [
+      "Ada",
+      "Kai"
     ],
-    "formal_export": "PENDING_MODEL_EVIDENCE",
-    "additional_model_calls_during_release": 0
+    "replies": [
+      "MAPLE-743 / two spare cables",
+      "09:40"
+    ],
+    "codex_overlap_seconds": 106.83,
+    "reviewed_frozen_versions": 2,
+    "reviewer_response": "approve",
+    "per_turn_reported_model": "UNKNOWN",
+    "formal_review": "PENDING_MODEL_EVIDENCE"
+  },
+  "demo": {
+    "file": "TWOS-1.0.13-AI-Team-Ada-and-Kai.mp4",
+    "sha256": "921e576270398d44168332870c17f89fd21875b13fef0a01c77bd96bb4cfd191",
+    "url": "https://loseyourself1978-blip.github.io/tianma-work-os/assets/product/TWOS-1.0.13-AI-Team-Ada-and-Kai.mp4"
   }
 }

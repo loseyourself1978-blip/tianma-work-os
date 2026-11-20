@@ -1,12 +1,12 @@
 # Privacy, permissions and cost
 
-[AI Team group chats, files and acceptance](AI_TEAM.en.md)
+[AI Team group chats, files and acceptance](AI_TEAM_R2.en.md)
 
-Approval identifies the services that will receive the goal, selected CSV and task inputs. The reviewer receives the frozen report. Chats, role replies, receipts and output locations are stored locally. Importing an older group copies its saved task record for reading. Login data and task-control grants stay in the original profile.
+The chat sends the goal, addressed message and selected attachment contents to the assigned services. The reviewer receives frozen work and requirements. Chats, attachment versions, receipts and output locations are saved locally. Older chats can be imported and continued while the original records are retained.
 
 > **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](MINIMAL_STATUS_AND_FOCUS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
 
-TWOS 1.0.12 / 101.60 · [This update](AI_TEAM.en.md)
+TWOS 1.0.13 / 101.61 · [This update](AI_TEAM_R2.en.md)
 
 
 TWOS hosts official provider websites and a local Codex App Server client. Each provider applies its own account, retention, plan and usage terms. TWOS does not merge all visible services into one quota pool or silently switch billing paths. No credits, resets or subscriptions are purchased automatically.

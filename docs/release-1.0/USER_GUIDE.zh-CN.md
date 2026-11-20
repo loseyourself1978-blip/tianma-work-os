@@ -1,11 +1,11 @@
-# 使用 TWOS 1.0.12
+# 使用 TWOS 1.0.13
 
-[AI Team 群聊、交付文件与验收](AI_TEAM.zh-CN.md)
+[AI Team 群聊、交付文件与验收](AI_TEAM_R2.zh-CN.md)
 
 > **当前控制版：** [单击返回、紧凑任务控制及左右共用 Codex 导航](MINIMAL_STATUS_AND_FOCUS.zh-CN.md)。状态通道保持只读；独立认证控制通道只传递用户主动选定的草稿或动作。旧独立版只读授权不会自动获得控制权。历史版本中仅只读的描述不适用于这个新增控制通道。
 
 
-TWOS 1.0.12 / 101.60 · [本次增量](AI_TEAM.zh-CN.md)
+TWOS 1.0.13 / 101.61 · [本次增量](AI_TEAM_R2.zh-CN.md)
 
 
 按当前场景选择一条路径，不把三种场景串成必做流程。
@@ -56,4 +56,4 @@ Nyra 只读最小状态。空闲、运行、排队/等待、partial/失败/取�
 
 [英文动作语音：tiny-voca F2](ENGLISH_VOICE.zh-CN.md)
 
-[1.0.13 候选版 AI Team 使用指南](AI_TEAM_R2.zh-CN.md)
+[1.0.13 AI Team 使用指南](AI_TEAM_R2.zh-CN.md)

@@ -1,13 +1,13 @@
 # Troubleshooting
 
-[AI Team group chats, files and acceptance](AI_TEAM.en.md)
+[AI Team group chats, files and acceptance](AI_TEAM_R2.en.md)
 
-**Delivery pending model evidence.** Open the saved group and use **Check original model receipts**. Inspect the frozen report and independent review in the right pane. An unavailable service receipt leaves formal delivery pending. Changing reasoning effort on the same model applies to future dispatches.
+After a restart, open the original chat and choose Reconcile. The first click can reconnect the provider. A second click checks the original operation. When the pane reports missing per-turn model evidence, inspect the frozen revision in Activity. The file remains accessible in Files.
 
 > **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](MINIMAL_STATUS_AND_FOCUS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
 
 
-TWOS 1.0.12 / 101.60 · [This update](AI_TEAM.en.md)
+TWOS 1.0.13 / 101.61 · [This update](AI_TEAM_R2.en.md)
 
 
 - **macOS blocks installation:** verify the exact release and hash/signature receipt. Do not disable Gatekeeper or remove quarantine. An unnotarized engineering candidate is not the default public installation path.

@@ -1,4 +1,11 @@
-# 本版真实界面：活动状态与工作台
+# 发行版实机演示与画面 · 1.0.13 / 101.61
+
+[操作指南](AI_TEAM_R2.zh-CN.md) · [录屏](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo) · [GitHub 安装包](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13)
+
+本版演示从头滚动到尾，展示 Ada 和 Kai 的真实英文群聊。桌面工作台截图来自本版安装包，五套 Nyra 形象均与内置资源核对。
+
+## 1.0.11 历史画面
+
 
 2026-11-17，最终签名 TWOS 1.0.11／101.59 内置 Nyra 1.0.8／108。在隔离、非敏感工程任务中，左侧 ChatGPT 与右侧 Codex 均实际活动。下面是原始气泡窗口截图，标题按产品规则省略；不代表任务完成或 Owner 接受。无活动时气泡收起，控制操作按需显示。图片透明区域的查看器背景不是产品舞台填充。
 

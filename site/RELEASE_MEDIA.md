@@ -16,7 +16,7 @@ This is a release SOP, not a background automation. Website publication does not
 
 ## Current capture
 
-TWOS 1.0.12 / 101.60, source 83f5b4b321143d7f2809459e08f44b75d0c789a3, includes Nyra 1.0.8 / 108. Eight English candidate views were captured from the isolated DMG installation. They show six service combinations, team setup and a saved synthetic group. The group view is cropped above local paths. The five wardrobe images match the packaged resources. See the media manifest and outfit-reuse-1.0.12.json for hashes and exact coverage.
+TWOS 1.0.13 / 101.61, built from abecabc72eefa362a86f54575fc145486f908067, includes Nyra 1.0.8 / 108. The current gallery includes six isolated service pairings, team setup, and a saved Ada and Kai discussion. The silent H.264 video records the original English engineering chat from beginning to end. It shares its SHA-256 with the author’s distribution copy. Match future installation checks to the versioned GitHub asset, and verify the anonymous download, product-page button, guides and media together. See the media manifest and outfit-reuse-1.0.13.json.
 
 ## Supported-service combinations — required from November 7, 2026
 

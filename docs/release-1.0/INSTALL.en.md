@@ -1,13 +1,15 @@
-# Install Tianma Work OS 1.0.12
+# Install Tianma Work OS 1.0.13
 
-[AI Team group chats, files and acceptance](AI_TEAM.en.md)
+For product acceptance, download the DMG from [GitHub v1.0.13](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13), compare it with SHA256SUMS, and open the installer. You can keep the second copy in a separate folder. To roll back, quit 1.0.13 and launch a retained 1.0.12 installation or download the [v1.0.12 installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.12). Keep the profile and output folders. R2 stores its rooms in `team-r2`. R1 reads `team-r1`.
+
+[AI Team group chats, files and acceptance](AI_TEAM_R2.en.md)
 
 > **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](MINIMAL_STATUS_AND_FOCUS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
 
-TWOS 1.0.12 / 101.60 · [This update](AI_TEAM.en.md)
+TWOS 1.0.13 / 101.61 · [This update](AI_TEAM_R2.en.md)
 
 
-This guide applies to TWOS 1.0.12 / 101.60. Download availability is determined by its matching GitHub Release. Consult the signed receipt for source, signature and tested platform details.
+This guide applies to TWOS 1.0.13 / 101.61. Download availability is determined by its matching GitHub Release. Consult the signed receipt for source, signature and tested platform details.
 
 Currently supports macOS only. A Windows version is in development; no downloadable build is available yet. The current TWOS package is Apple Silicon. Engineering testing uses macOS 27.0.1 / Safari 27.0.1. A binary deployment target does not prove testing on every older system; consult the release support matrix before installing elsewhere.
 

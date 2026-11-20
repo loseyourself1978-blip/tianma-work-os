@@ -1,12 +1,6 @@
 # 升级与卸载
 
-> **本轮差量：简洁活动气泡、独立宿主聚焦及英文离线语音。** [操作说明](MINIMAL_STATUS_AND_FOCUS.zh-CN.md) · [实际核验与限制](MINIMAL_STATUS_VERIFICATION.zh-CN.md)。无活动时默认收起；修改操作仍需单独授权。
-> **当前控制版：** [单击返回、紧凑任务控制及左右共用 Codex 导航](MINIMAL_STATUS_AND_FOCUS.zh-CN.md)。状态通道保持只读；独立认证控制通道只传递用户主动选定的草稿或动作。旧独立版只读授权不会自动获得控制权。历史版本中仅只读的描述不适用于这个新增控制通道。
-
-TWOS 1.0.11 / 101.59 · [本次增量](MINIMAL_STATUS_AND_FOCUS.zh-CN.md)
-
-[本次增量操作和准确边界](MINIMAL_STATUS_AND_FOCUS.zh-CN.md)。
-
+产品验收请从 [GitHub v1.0.13](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13) 下载 DMG，对照 SHA256SUMS 并打开安装。可在“应用程序”之外单独保留一个安装副本。要回退，正常退出 1.0.13，再启动保留的 1.0.12，或从 [v1.0.12](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.12) 获取旧版安装包。保留配置和成果目录。R2 群聊在配置目录的 `team-r2` 中，R1 仍读取 `team-r1`。
 
 先完成或明确停止自己的活动工作，正常退出 TWOS，再替换已验证的新 App，不修改运行中的包。本机环境、目录授权、草稿、供应商网站存储不是发行资产，不得复制进公开安装包。
 

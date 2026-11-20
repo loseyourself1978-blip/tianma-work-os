@@ -1,4 +1,4 @@
-# AI Team in TWOS 1.0.13 · candidate guide
+# AI Team in TWOS 1.0.13 · user guide
 
 Open **AI Team** in the workbench toolbar, then choose **New task** in the chat list. Describe an outcome in your own words. For a first try, ask the team to explain a paragraph or turn a short meeting note into a checklist. A text conversation can finish in the chat. For file work, choose an existing output folder in **Files**. It may already contain your own documents.
 
@@ -17,6 +17,12 @@ Open **Files** to see the output directory and files. Use **Preview**, **Open**,
 
 A reviewer inspects the frozen content. A blocking finding must cite a requirement, location, evidence and correction. Useful revisions can continue beyond the second attempt. If the same concrete defect persists after a strategy change, the team posts a decision question. Owner acceptance refers to a checked version. If the provider omits per-turn model identity, the activity records the gap and formal independent approval stays pending.
 
-## Candidate and rollback
+## Verify your download
 
-R2 saves its chats in the profile's `team-r2` directory. R1 records remain in `team-r1`. To use the previous interface, close the candidate normally and launch the retained official 1.0.12 / 101.60 installation. Keep the profile and chosen output folders. The earlier binary reads its own records. Reopening R2 restores the later chats.
+1. Install the DMG from the matching GitHub Release. Open AI Team and start a text chat.
+2. Attach a short, non-sensitive note. Mention two members and ask a question that can only be answered from the note. Compare their answers with the source.
+3. Reopen that chat and ask a follow-up. For a file task, choose an existing folder and use Show in Finder to check the result. A request to revise the file creates a new revision in the same chat.
+
+## Installation and rollback
+
+For product acceptance, download the DMG from [GitHub v1.0.13](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13), compare it with SHA256SUMS, and open the installer. You can keep the second copy in a separate folder. To roll back, quit 1.0.13 and launch a retained 1.0.12 installation or download the [v1.0.12 installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.12). Keep the profile and output folders. R2 stores its rooms in `team-r2`. R1 reads `team-r1`.

@@ -6,3 +6,8 @@ figure{margin:0}.workspace-shot{background:var(--paper);border:1px solid var(--l
 
 /* Real supported-service combinations. No fabricated conversation content. */
 .pair-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin:28px 0}.pair-card{min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:16px;background:var(--paper)}.pair-card>a{display:block}.pair-card img{display:block;width:100%;height:auto;aspect-ratio:2880/1768;object-fit:contain;background:#fff}.pair-card figcaption{padding:20px}.pair-card h3{margin:6px 0 10px;font-size:23px}.pair-card p{margin:0 0 14px;color:var(--muted);font-size:16px}.pair-card figcaption>a{font-size:14px}.pair-kind{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);font-weight:700}.pair-boundaries{padding:22px 26px;background:var(--paper);border:1px solid var(--line);border-radius:16px}.pair-boundaries h3{margin-top:0}.pair-boundaries p:last-child{margin-bottom:0}@media(max-width:700px){.pair-grid{grid-template-columns:1fr;gap:18px}.pair-card figcaption,.pair-boundaries{padding:18px}}
+
+.demo-player video { display: block; width: 100%; height: auto; background: #17211b; }
+.demo-player figcaption { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 1rem; }
+.demo-transcript { margin-top: 1rem; color: var(--muted); }
+.demo-transcript summary { cursor: pointer; }

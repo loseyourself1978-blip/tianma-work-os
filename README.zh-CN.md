@@ -1,18 +1,18 @@
 # Tianma Work OS 1.0
 
-**AI Team 群聊 · 1.0.12 / 101.60。** 为任务选择规划、制作、审核成员。点击群聊消息即可查看该次指派、公开进展和交付文件。[操作与验收指南](docs/release-1.0/AI_TEAM.zh-CN.md)。
+**TWOS 1.0.13 / 101.61 · AI Team 群聊与直接交付**
 
-首个模板可将区域销售 CSV 制成离线网页和摘要。每次正式交付使用独立子目录。本次工程样例的数值复算和独立审核已完成，因缺少各次调用的实际型号回执，正式交付仍待核对。
+在工作台顶部进入 **AI Team → 新建任务**，输入目标或附加说明。一个输入框可发送普通消息，也可用 @ 选中一名或多名成员。默认三名成员，最多六名。不同群聊可并行工作。在 **成果文件** 选择现有文件夹，完成的文件直接出现在该目录。 [群聊演示](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo)
 
-**TWOS 1.0.12 / 101.60：左右共用 Codex 项目／会话导航与直接 Nyra 任务控制。内置 Nyra 1.0.8 / 108。**
+**TWOS 1.0.13 / 101.61：左右共用 Codex 项目／会话导航与直接 Nyra 任务控制。内置 Nyra 1.0.8 / 108。**
 
 在任意一侧选择 Codex，使用相同的项目／会话侧栏与最新公开消息读回。单击 Nyra 返回绑定工作台，用紧凑气泡编辑草稿、补充同一轮、排队或停止准确任务。最终候选中发现的迟到历史／派发竞态已修复。原私网网页导航与已接受业务保留。
 
 本版包含五套站姿／侧卧服装、13 段离线小田中文动作短句，以及 13 段 tiny-voca F2 美式女声英文对应录音。声音默认静音；取消静音并开启动作语音后按实际动作播放，带冷却、不叠音。声音面板可通过关闭、Esc 或声音按钮收起。
 
-**TWOS 1.0.12 / build 101.60** · [下载与校验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.12) · [本次更新](docs/release-1.0/AI_TEAM.zh-CN.md)
+**TWOS 1.0.13 / build 101.61** · [下载与校验](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13) · [本次更新](docs/release-1.0/AI_TEAM_R2.zh-CN.md)
 
-[English](README.md) · [安装](docs/release-1.0/INSTALL.zh-CN.md) · [操作指南](docs/release-1.0/USER_GUIDE.zh-CN.md) · [当前发行状态](docs/CURRENT_DELIVERY.md) · [AI Team指南](docs/release-1.0/AI_TEAM.zh-CN.md)
+[English](README.md) · [安装](docs/release-1.0/INSTALL.zh-CN.md) · [操作指南](docs/release-1.0/USER_GUIDE.zh-CN.md) · [当前发行状态](docs/CURRENT_DELIVERY.md) · [AI Team指南](docs/release-1.0/AI_TEAM_R2.zh-CN.md)
 
 在一个 macOS 工作区中讨论目标、交接指令并执行。TWOS 将 ChatGPT、DeepSeek、Claude 官网与本机 Codex 客户端配对，把明确内容交给选定目标，再将结果带回原讨论。
 
@@ -24,7 +24,7 @@
 
 ## 下载与首次使用
 
-从上方链接下载 TWOS v1.0.12；打开 DMG 前核对 SHA256SUMS。匹配回执绑定源码、签名、公证和制品哈希。历史 v1.0.1 与 v1.0.0 保持不变。
+从上方链接下载 TWOS v1.0.13；打开 DMG 前核对 SHA256SUMS。匹配回执绑定源码、签名、公证和制品哈希。历史 v1.0.1 与 v1.0.0 保持不变。
 
 打开对应 DMG，拖入应用程序并启动。登录所选供应商官网，连接已安装/登录的官方本机 Codex，再创建或接续一个绑定目录的任务。Nyra 在同一 App 内，无需第二个桌宠安装包或首次联网下载画稿；普通安装无需 Python、Node 或终端。
 

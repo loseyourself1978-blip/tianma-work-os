@@ -1,12 +1,6 @@
 # Upgrade and uninstall
 
-> **Current update: minimal activity bubble, independent host focus and offline English voice.** [Instructions](MINIMAL_STATUS_AND_FOCUS.en.md) · [Actual verification and limits](MINIMAL_STATUS_VERIFICATION.en.md). The default bubble closes when no work is active; task mutations still require their separate authorization.
-> **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](MINIMAL_STATUS_AND_FOCUS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
-
-TWOS 1.0.11 / 101.59 · [This update](MINIMAL_STATUS_AND_FOCUS.en.md)
-
-[Current incremental instructions and exact boundaries](MINIMAL_STATUS_AND_FOCUS.en.md).
-
+For product acceptance, download the DMG from [GitHub v1.0.13](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13), compare it with SHA256SUMS, and open the installer. You can keep the second copy in a separate folder. To roll back, quit 1.0.13 and launch a retained 1.0.12 installation or download the [v1.0.12 installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.12). Keep the profile and output folders. R2 stores its rooms in `team-r2`. R1 reads `team-r1`.
 
 Finish or explicitly stop your own active work. Quit TWOS normally, then replace its application with the verified release. Do not edit the running bundle. Existing local environments, directory authorizations, drafts and provider website stores are not release assets and must not be copied into a public package.
 
