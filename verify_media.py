@@ -88,16 +88,22 @@ def main():
     assert '/releases/tag/v' + m['public_download_version'] in html
     if 'demo' in m:
         demo = m['demo']
-        assert len(document.videos) == 1 and len(document.sources) == 1
-        video = document.videos[0]
-        assert 'controls' in video and 'playsinline' in video and 'autoplay' not in video
+        versions = demo['versions']
+        assert [v['narration'] for v in versions] == ['en-US', 'zh-CN']
+        assert len(document.videos) == len(document.sources) == len(versions)
+        assert len({v['sha256'] for v in versions}) == len(versions)
         assert all(demo[key] == interface[key] for key in ('version', 'build', 'source_commit'))
-        assert document.sources[0] == {'src': './' + demo['path'], 'type': 'video/mp4'}
-        assert video['poster'] == './' + demo['poster']
-        for key, hash_key in [('path', 'sha256'), ('poster', 'poster_sha256')]:
-            file = (root / demo[key]).resolve()
-            assert file.is_relative_to(root) and hashlib.sha256(file.read_bytes()).hexdigest() == demo[hash_key]
-        assert any(link['href'] == './' + demo['path'] and 'download' in link for link in document.links)
+        poster = (root / demo['poster']).resolve()
+        assert poster.is_relative_to(root) and hashlib.sha256(poster.read_bytes()).hexdigest() == demo['poster_sha256']
+        for video, source, version in zip(document.videos, document.sources, versions):
+            assert 'controls' in video and 'playsinline' in video and 'autoplay' not in video
+            assert video['poster'] == './' + demo['poster']
+            assert source == {'src': './' + version['path'], 'type': 'video/mp4'}
+            assert version['captions'] == ['en', 'zh-CN'] and demo['audio']
+            file = (root / version['path']).resolve()
+            assert file.is_relative_to(root) and file.stat().st_size == version['bytes']
+            assert hashlib.sha256(file.read_bytes()).hexdigest() == version['sha256']
+            assert any(link['href'] == source['src'] and 'download' in link for link in document.links)
     if interface['status'] == 'CANDIDATE_PREVIEW':
         assert 'candidate preview' in html.lower() and 'not yet a public release' in html
     else:

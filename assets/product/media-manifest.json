@@ -232,20 +232,39 @@
     }
   ],
   "demo": {
-    "path": "assets/product/TWOS-1.0.13-AI-Team-Ada-and-Kai.mp4",
     "poster": "assets/product/ada-kai-1.0.13-poster.jpg",
     "version": "1.0.13",
     "build": "101.61",
     "source_commit": "abecabc72eefa362a86f54575fc145486f908067",
-    "sha256": "921e576270398d44168332870c17f89fd21875b13fef0a01c77bd96bb4cfd191",
-    "bytes": 2682885,
     "width": 1920,
-    "height": 1186,
-    "duration_seconds": 27.433333,
-    "audio": false,
+    "height": 1080,
+    "audio": true,
     "kind": "REAL_MACOS_WINDOW_RECORDING",
-    "content": "Previously completed synthetic Ada and Kai conversation, reopened and scrolled in the signed app. No new assignments.",
-    "locale": "English",
-    "poster_sha256": "f0c6744977155e1e73658b46ed5aae2ceb78ce7a51ed2c7ea2cfd5f5a6eb297f"
+    "content": "Real new-chat team setup and responsibility edit, followed by the original saved Ada and Kai engineering chat from first question to last reply. Both exports include burned-in English and Simplified Chinese subtitles.",
+    "poster_sha256": "4e099a172c126b3bcccc71046e0c782a2adbfcfd6705ec8f88010bd6b5467675",
+    "versions": [
+      {
+        "path": "assets/product/TWOS-1.0.13-AI-Team-Ada-and-Kai.mp4",
+        "sha256": "ad0c0c2a59176dc529051aed369c1204c600029b99583dbf38ac19fbdc432c3e",
+        "bytes": 4386540,
+        "duration_seconds": 52.6,
+        "narration": "en-US",
+        "captions": [
+          "en",
+          "zh-CN"
+        ]
+      },
+      {
+        "path": "assets/product/TWOS-1.0.13-AI-Team-Ada-and-Kai-zh-CN.mp4",
+        "sha256": "d8786354366d7ab015397627666f388e4d828857f295984456e25daba0532582",
+        "bytes": 4241436,
+        "duration_seconds": 52.6,
+        "narration": "zh-CN",
+        "captions": [
+          "en",
+          "zh-CN"
+        ]
+      }
+    ]
   }
 }
