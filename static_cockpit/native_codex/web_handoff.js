@@ -12,8 +12,11 @@ return await (async () => {
  const lease=window.twosTransferLease;
  const same=()=>window.twosTransferLease===lease&&location.origin===origin;
  const teamModelMatches=()=>{
+  const connection=request.allowTeamMode===true?window.twosProviderDOM?.teamConnection?.():null;
+  if(request.teamWebsiteDefault===true)return connection?.state==='webDefault';
   if(!request.expectedReviewModel)return true;
-  const label=window.twosProviderDOM?.teamModel?.(request.allowTeamMode===true);
+  if(request.allowTeamMode===true && connection?.state!=='webReady')return false;
+  const label=connection?connection.model:window.twosProviderDOM?.teamModel?.(false);
   if(!label)return false;
   return Array.isArray(request.allowedTeamSelections)
     ? request.allowedTeamSelections.includes(label.trim().toLowerCase())

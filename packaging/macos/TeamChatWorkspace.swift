@@ -8,6 +8,7 @@ final class TeamChatWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDel
   let web: WKWebView
   let resources: URL, preferences: URL, directory: URL
   private let page: URL, translate: (String) -> String
+  var showTeam: (() -> Void)?
   var leftSelection: (@escaping (String, String, String) -> Void) -> Void = { done in
     done("Codex", "", "")
   }
@@ -184,6 +185,12 @@ final class TeamChatWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDel
     let s = TeamWorkspace(
       root: resources, preferences: directory.appendingPathComponent(id), translate: translate,
       managed: true, initialRecord: records[id])
+    s.showRoom = { [weak self, weak s] in
+      guard let self, let s, self.sessions[id] === s else { return }
+      self.showTeam?()
+      do { try self.select(id) } catch { self.error = "storage"; self.publish() }
+      self.web.window?.makeKeyAndOrderFront(nil)
+    }
     s.roomChanged = { [weak self, weak s] in
       guard let self, let s, let r = s.run, self.sessions[id] === s else { return }
       self.records[id] = r
@@ -356,6 +363,7 @@ final class TeamChatWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDel
             ] as [String: Any]
           },
           "supplements": jsonObject(c?.supplements ?? []), "queue": jsonObject(c?.queue ?? []),
+          "recovery": sessions[selected]?.roomRecovery ?? [:], "skippedCopies": c?.skippedCopies ?? [:],
           "issue": c?.issue ?? "", "stop": c?.stoppedByUser ?? false,
           "path": c?.output?.path ?? "", "files": c?.ownedFiles.keys.sorted() ?? [],
           "mismatch": c?.mismatchedRevision ?? "",
@@ -432,13 +440,22 @@ final class TeamChatWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDel
           c.draft.recipients = recipients
           if action == "send" {
             guard !processing.contains(id) else { throw TeamError.busy }
+            let waitingForConnection = !s.roomRecovery.isEmpty
+            if waitingForConnection, let queued = c.queue.last,
+               let original = c.inputs.first(where: { $0.id == queued.message }),
+               original.text == body.trimmingCharacters(in: .whitespacesAndNewlines),
+               original.recipients == recipients, original.attachments == c.draft.attachments,
+               original.language == c.language, original.members == r.members {
+              c.draft = TeamDraft(); r.conversation = c
+              error = "alreadyQueued"; return
+            }
             try c.submit(c.draft, members: r.members, language: c.language)
             if r.goal.isEmpty {
               r.goal = String(
                 (body.isEmpty ? c.inputs.last?.attachments.first?.name ?? "" : body).prefix(100))
             }
             r.conversation = c
-            if r.pending == nil && r.state != "stopping" {
+            if r.pending == nil && r.state != "stopping" && !waitingForConnection {
               r.stopRequested = false
               r.selectNextChatStep()
             }
@@ -498,7 +515,12 @@ final class TeamChatWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDel
           }
         }
       case "stop": s.stopRoom()
-      case "reconcile": try s.resumeRoom()
+      case "checkConnection": try s.checkRoomConnection(step: args["step"] as? String ?? "")
+      case "continueConnection":
+        try s.continueRoomConnection(step: args["step"] as? String ?? "", skipCopies: args["skipCopies"] as? Bool == true)
+      case "reconcile":
+        if let step = s.roomRecovery["step"] as? String { try s.checkRoomConnection(step: step) }
+        else { try s.resumeRoom() }
       case "file", "openFolder", "attachment": try fileAction(args, session: s)
       case "accept":
         guard let r = s.run, r.pending == nil, r.state == "awaitingOwner",

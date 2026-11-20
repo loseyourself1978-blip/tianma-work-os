@@ -7,6 +7,7 @@ import WebKit
 final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
   let managed: Bool
   var roomChanged: (() -> Void)?
+  var showRoom: (() -> Void)?
   let web: WKWebView
   private let root: URL, directory: URL, page: URL
   private let translate: (String) -> String
@@ -50,6 +51,8 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
   private var usageAttempt: String?, usageFirstCheck: Date?, usageGeneration: Int?
   private var evidenceCheck: UUID?
   private var awaitingSelection: (member: String, since: Date)?
+  private var checkedMember: TeamMember?
+  private var recoveryProbe: UUID?, recoveryState = "", recoveryStep = "", recoveryChecked: Double = 0
   private var observingWeb: String?
   private var lastPayload: Data?
   private var observationDeadline: Date?, terminationObserver: NSObjectProtocol?
@@ -127,6 +130,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
   func shutdown() {
     draftSave?.cancel()
     if !managed && storageOK && lock >= 0 { writeSetupDraft() }
+    recoveryProbe = nil
     evidenceCheck = nil
     timer?.invalidate()
     timer = nil
@@ -1150,16 +1154,18 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       finish(nil, "")
     }
   }
+  private func isRoomWebTarget(_ url: URL?, member: TeamMember, home: URL) -> Bool {
+    guard let target = NativeWorkbench.restorableURL(url, service: home) else { return false }
+    return target.path == home.path || (target.path.isEmpty && home.path == "/") ||
+      run?.attempts.contains(where: {
+        $0.role == member.role && $0.web?.provider == member.service && $0.web?.resolvedURL == target.absoluteString
+      }) == true
+  }
   private func dispatchWeb(member: TeamMember, selection: String) {
     let reviewer = channel(member.role, member.service)
     guard var r = run, r.state == "running", r.pending == nil,
       let target = NativeWorkbench.restorableURL(reviewer.web.url, service: reviewer.serviceHome),
-      target.host == reviewer.serviceHome.host,
-      target.path == reviewer.serviceHome.path
-        || (target.path.isEmpty && reviewer.serviceHome.path == "/")
-        || r.attempts.contains(where: {
-          $0.role == member.role && $0.web?.resolvedURL == target.absoluteString
-        })
+      isRoomWebTarget(target, member: member, home: reviewer.serviceHome)
     else {
       fail("reviewerChat")
       return
@@ -1218,6 +1224,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
         }
       } catch {checking=false;fail("attachmentUnsupported");return}
     }
+    if managed && member.model.isEmpty { req["teamWebsiteDefault"] = true }
     req["expectedReviewModel"] = aMemberModel(id) ?? member.model
     req["allowedTeamSelections"] = TeamMember.selectionLabels(aMemberModel(id) ?? member.model, service: member.service)
     reviewer.webTransfer(req) { [weak self] response in
@@ -1283,7 +1290,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
           self.run?.reason = "stopped"
         } else {
           self.run?.state = "paused"
-          self.run?.reason = "reviewerUnavailable"
+          self.run?.reason = self.managed ? (["verification":"webVerification","login":"webLogin","not_loaded":"webComposer","busy":"webBusy","draft_conflict":"webDraft","provider_limited":"webLimit"][state] ?? "webUnavailable") : "reviewerUnavailable"
         }
         try? self.persist()
         self.publish()
@@ -1434,6 +1441,119 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
 }
 
 extension TeamWorkspace {
+  // A pre-dispatch check may inspect only the exact queued assignment. An
+  // uncertain send is handled exclusively by the existing receipt reconciler.
+  private var recoveryTarget: (step: TeamAssignment, member: TeamMember)? {
+    guard let r = run, r.state == "paused", r.pending == nil, r.stopRequested != true,
+      let c = r.conversation, !c.stoppedByUser,
+      ["reviewerUnavailable", "reviewerChanged", "codexUnavailable", "webLogin", "webLoading",
+       "webUnavailable", "webVerification", "webComposer", "webSelection", "webMismatch",
+       "webBusy", "webLimit", "webDraft", "reviewerChat"].contains(r.reason) else { return nil }
+    let step = r.retryableUnsentAssignment ?? c.queue.first
+    guard let step, let member = r.members.first(where: { $0.role == step.member }) else { return nil }
+    return (step, member)
+  }
+  var roomRecovery: [String: Any] {
+    guard let t = recoveryTarget else { return [:] }
+    let current = recoveryStep == t.step.id && checkedMember == t.member
+    return ["step": t.step.id, "member": t.member.role, "provider": t.member.service,
+            "state": current && !recoveryState.isEmpty ? recoveryState : run!.reason,
+            "checked": current ? recoveryChecked : 0,
+            "duplicates": run?.conversation?.queuedCopies(of: t.step).count ?? 0]
+  }
+
+  private func inspectRoomWebsite(_ member: TeamMember, done: @escaping (String, String) -> Void) {
+    let key = channelKey(member.role, member.service)
+    let pane = channel(member.role, member.service)
+    if pane.web.url == nil && !pane.web.isLoading {
+      prepareChannel(member.role, member.service)
+    }
+    guard let url = pane.web.url else { done("webLoading", ""); return }
+    let home = pane.serviceHome
+    let authHosts = ["ChatGPT":["auth.openai.com","auth0.openai.com"], "Claude":["platform.claude.com"]]
+    let authPath = url.path.split(separator:"/").contains { ["auth","login","signin","sign_in","signup"].contains($0.lowercased()) }
+    if url.scheme == "https", let host = url.host,
+       (host == home.host && authPath || (authHosts[member.service] ?? []).contains(host) && (authPath || member.service == "ChatGPT")) {
+      done("webLogin", ""); return
+    }
+    guard url.scheme == home.scheme, url.host == home.host, url.port == home.port,
+          url.user == nil, url.password == nil else { done("webUnavailable", ""); return }
+    pane.web.callAsyncJavaScript("return window.twosProviderDOM?.teamConnection?.(true) || {}",
+      arguments: [:], in: nil, in: NativeWorkbench.handoffWorld) { [weak self, weak pane] reply in
+      guard let self, let pane, self.channels[key] === pane, pane.web.url == url,
+            case .success(let raw) = reply, let observation = raw as? [String: Any],
+            let status = observation["state"] as? String else { done(pane?.web.isLoading == true ? "webLoading" : "webUnavailable", ""); return }
+      if ["webReady","webDefault"].contains(status), !self.isRoomWebTarget(url, member: member, home: home) {
+        done("reviewerChat", ""); return
+      }
+      let model = observation["model"] as? String ?? ""
+      if status == "webReady" {
+        guard !model.isEmpty, model.utf8.count <= 160 else { done("webSelection", ""); return }
+        done(member.model.isEmpty || member.acceptsSelection(model) ? "webReady" : "webMismatch", model)
+      } else if status == "webDefault" {
+        done(member.model.isEmpty ? "webReady" : "webSelection", "")
+      } else {
+        done(["webLogin","webVerification","webComposer","webSelection","webBusy","webLimit","webDraft"].contains(status) ? status : "webUnavailable", "")
+      }
+    }
+  }
+
+  func checkRoomConnection(step: String) throws {
+    guard let target = recoveryTarget, target.step.id == step else { throw TeamError.wrongVersion }
+    if recoveryProbe != nil, recoveryStep == step, checkedMember == target.member { return }
+    let token = UUID(), member = target.member
+    checkedMember = member
+    recoveryProbe = token; recoveryStep = step; recoveryState = "checkingConnection"; recoveryChecked = 0
+    notice = ""; publish()
+    func finish(_ state: String) {
+      guard self.recoveryProbe == token else { return }
+      self.recoveryProbe = nil
+      guard let live = self.recoveryTarget, live.step.id == step, live.member == member else {
+        self.recoveryState = ""; self.publish(); return
+      }
+      self.recoveryState = state; self.recoveryChecked = Date().timeIntervalSince1970
+      self.publish()
+    }
+    let deadline = Date().addingTimeInterval(18)
+    func probe() {
+      guard self.recoveryProbe == token, let current = self.recoveryTarget,
+            current.step.id == step, current.member == member else { finish("webUnavailable"); return }
+      if member.service == "Codex" {
+        if self.codex.connected {
+          let model = member.model.isEmpty
+            ? (self.codex.modelCatalog.first(where: { $0["isDefault"] as? Bool == true }) ?? self.codex.modelCatalog.first)?["model"] as? String
+            : member.model
+          let ready = model.map { self.codex.modelIDs.contains($0) } == true
+          finish(ready ? "webReady" : "codexUnavailable"); return
+        }
+        if !self.codex.connecting { finish("codexUnavailable"); return }
+      } else {
+        self.inspectRoomWebsite(member) { status, _ in
+          guard self.recoveryProbe == token else { return }
+          if status == "webLoading", Date() < deadline {
+            DispatchQueue.main.asyncAfter(deadline: .now()+0.4) { probe() }
+          } else { finish(status) }
+        }
+        return
+      }
+      DispatchQueue.main.asyncAfter(deadline: .now()+0.4) { probe() }
+    }
+    if member.service == "Codex", !codex.connected, !codex.connecting { codex.connectSelectedPane() }
+    DispatchQueue.main.asyncAfter(deadline: .now()+18) { [weak self] in
+      if self?.recoveryProbe == token { finish(member.service == "Codex" ? "codexUnavailable" : "webUnavailable") }
+    }
+    probe()
+  }
+
+  func continueRoomConnection(step: String, skipCopies: Bool) throws {
+    guard let t = recoveryTarget, t.step.id == step, recoveryStep == step,
+          checkedMember == t.member, recoveryState == "webReady", recoveryProbe == nil else { throw TeamError.wrongVersion }
+    if skipCopies {
+      try changeRoom { r in r.conversation?.skipQueuedCopies(of: t.step) }
+    }
+    try resumeRoom()
+  }
+
   var roomNotice:String {notice}
   var availableModels:[[String:Any]] {codex.modelCatalog}
   func aMemberModel(_ id:String)->String? {run?.attempts.last(where:{$0.id==id})?.memberSnapshot?.model}
@@ -1464,6 +1584,30 @@ extension TeamWorkspace {
       self.publish()
     }
   }
+  private func attachRoomReturn(to window: NSWindow?, member: String) {
+    guard let window else { return }
+    let label = translate("Back") == "Back" ? "Back to chat · Check connection" : "返回群聊并检查连接"
+    let button: NSButton
+    if let existing = window.titlebarAccessoryViewControllers.compactMap({ $0.view as? NSButton })
+      .first(where: { $0.action == #selector(returnFromMember(_:)) }) {
+      button = existing
+    } else {
+      button = NSButton(title: label, target: self, action: #selector(returnFromMember(_:)))
+      let accessory = NSTitlebarAccessoryViewController()
+      accessory.layoutAttribute = .right
+      accessory.view = button
+      window.addTitlebarAccessoryViewController(accessory)
+    }
+    button.title = label
+    button.identifier = NSUserInterfaceItemIdentifier(member)
+    button.sizeToFit()
+  }
+  @objc private func returnFromMember(_ sender: NSButton) {
+    showRoom?()
+    if let t = recoveryTarget, t.member.role == sender.identifier?.rawValue {
+      try? checkRoomConnection(step: t.step.id)
+    }
+  }
   func openMember(_ id:String) {
     guard let m=run?.members.first(where:{$0.role==id}) else{return}
     if m.service=="Codex" {
@@ -1473,10 +1617,12 @@ extension TeamWorkspace {
         let w=NSWindow(contentRect:NSRect(x:0,y:0,width:800,height:620),styleMask:[.titled,.closable,.resizable],backing:.buffered,defer:false)
         w.isReleasedWhenClosed=false;w.contentView=codex.web;codexWindow=w
       }
+      attachRoomReturn(to: codexWindow, member: id)
       codexWindow?.title="AI Team · Codex";codexWindow?.makeKeyAndOrderFront(nil)
     } else {
       prepareChannel(id,m.service)
       let w=channel(id,m.service);w.window?.title="TWOS · "+(m.displayName ?? id)+" · "+m.service
+      attachRoomReturn(to: w.window, member: id)
       w.showWindow(nil);w.window?.makeKeyAndOrderFront(nil)
     }
   }
@@ -1487,12 +1633,15 @@ extension TeamWorkspace {
   }
   func stopRoom() {
     guard var r=run else{return}
+    recoveryProbe = nil; recoveryState = ""; recoveryStep = ""; awaitingSelection = nil; notice = ""
     if r.pending != nil || ["running","paused"].contains(r.state) {stop();publish();return}
     r.conversation?.queue=[];r.conversation?.stoppedByUser=true;r.state="stopped";r.stopRequested=true;r.reason="stopped"
     run=r;try? persist();publish()
   }
   func resumeRoom()throws {
     guard var r=run,let c=r.conversation else{throw TeamError.storage}
+    recoveryState = ""; recoveryStep = ""; recoveryProbe = nil; recoveryChecked = 0
+    notice = ""; awaitingSelection = nil
     if let a=r.pending {
       if let w=a.web {restoreReviewer(w,role:a.role);observingWeb=a.id;r.state="paused"}
       else {
@@ -1503,9 +1652,7 @@ extension TeamWorkspace {
       observationDeadline=Date().addingTimeInterval(15);notice="reconciling"
     } else {
       guard !c.stoppedByUser else{throw TeamError.wrongVersion}
-      if let a=r.attempts.last,let assignment=a.assignment,a.state=="unsent",
-         a.web?.mayHaveSent==false, !c.queue.contains(where:{$0.id==assignment.id}),
-         !r.attempts.contains(where:{$0.assignment?.id==assignment.id && $0.state != "unsent"}) {
+      if let assignment = r.retryableUnsentAssignment {
         r.conversation?.queue.insert(assignment,at:0);run=r;try persist()
       } else if r.state=="blocked" && c.queue.isEmpty {
         throw TeamError.invalidReply
@@ -1552,17 +1699,37 @@ extension TeamWorkspace {
         }
       } catch {fail("attachmentUnsupported");return false}
     } else {
-      let key=channelKey(member.role,member.service)
-      if channels[key]==nil {prepareChannel(member.role,member.service,fresh:true);return false}
-      if member.model.isEmpty {
-        if let m=models[key],!m.isEmpty,let i=r.members.firstIndex(where:{$0.role==member.role}) {
-          r.members[i].model=m;run=r;try? persist();return false
-        }
-        inspectModel(member.role,member.service)
-        if awaitingSelection?.member != key {awaitingSelection=(key,Date())}
-        if let w=awaitingSelection,Date().timeIntervalSince(w.since)>15 {fail("reviewerUnavailable")}
-        return false
+      // All managed web work checks the current member window before creating
+      // an intent. Reading the visible picker is independent of having a login.
+      let key = r.id + "/" + step.id
+      if awaitingSelection?.member != key {
+        awaitingSelection = (key, Date()); notice = "checkingConnection"; publish()
       }
+      if let wait = awaitingSelection, Date().timeIntervalSince(wait.since) >= 18 {
+        recoveryProbe = nil; awaitingSelection = nil; fail("webUnavailable"); return false
+      }
+      if recoveryProbe != nil { return false }
+      let token = UUID()
+      recoveryProbe = token
+      inspectRoomWebsite(member) { [weak self] status, selection in
+        guard let self, self.recoveryProbe == token else { return }
+        self.recoveryProbe = nil
+        guard var live = self.run, live.state == "running", live.pending == nil,
+              live.conversation?.queue.first?.id == step.id,
+              live.members.first(where: { $0.role == member.role }) == member else { return }
+        if status == "webLoading" { return }
+        self.awaitingSelection = nil
+        guard status == "webReady" else { self.fail(status); return }
+        var chosen = member
+        if chosen.model.isEmpty && !selection.isEmpty,
+           let i = live.members.firstIndex(where: { $0.role == member.role }) {
+          chosen.model = selection; live.members[i] = chosen; self.run = live
+          do { try self.persist() } catch { self.fail("storage"); return }
+        }
+        self.notice = ""
+        self.dispatchWeb(member: chosen, selection: selection)
+      }
+      return false
     }
     return true
   }

@@ -1,5 +1,10 @@
 # Troubleshooting
 
+### Resume the first queued message
+
+If the chat pauses, the notice names the member and service. Choose **Refresh connection** to check that member’s window. If prompted, sign in there, then click **Back to chat · Check connection**. When the notice says **Connection ready**, select **Continue queued message**. The check itself does not send anything. If an earlier version queued consecutive identical messages, **Continue once · skip duplicate copies** retains their history and sends one. Choose **Keep and send all** only if you intended separate assignments. A message with an uncertain delivery receipt is reconciled against its original operation before any further dispatch.
+
+
 [AI Team group chats, files and acceptance](AI_TEAM_R2.en.md)
 
 After a restart, open the original chat and choose Reconcile. The first click can reconnect the provider. A second click checks the original operation. When the pane reports missing per-turn model evidence, inspect the frozen revision in Activity. The file remains accessible in Files.

@@ -1,5 +1,10 @@
 # AI Team in TWOS 1.0.13 · user guide
 
+### Resume the first queued message
+
+If the chat pauses, the notice names the member and service. Choose **Refresh connection** to check that member’s window. If prompted, sign in there, then click **Back to chat · Check connection**. When the notice says **Connection ready**, select **Continue queued message**. The check itself does not send anything. If an earlier version queued consecutive identical messages, **Continue once · skip duplicate copies** retains their history and sends one. Choose **Keep and send all** only if you intended separate assignments. A message with an uncertain delivery receipt is reconciled against its original operation before any further dispatch.
+
+
 Open **AI Team** in the workbench toolbar, then choose **New task** in the chat list. Describe an outcome in your own words. For a first try, ask the team to explain a paragraph or turn a short meeting note into a checklist. A text conversation can finish in the chat. For file work, choose an existing output folder in **Files**. It may already contain your own documents.
 
 ## Work in a group chat

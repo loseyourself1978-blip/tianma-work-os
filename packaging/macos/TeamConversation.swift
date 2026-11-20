@@ -67,6 +67,7 @@ struct TeamConversation: Codable {
   var issue: String?, held: [TeamAssignment] = [], reviewedAttempts: [String] = []
   var supplements: [TeamSupplement]?, stalledSignatures: [String]?,
     rosterChanges: [TeamRosterChange]?
+  var skippedCopies: [String: String]?
   var undelivered: [TeamUndelivered]?
   var lastStrategy: String?
   var coordinator: String = "Planner"
@@ -115,6 +116,28 @@ struct TeamConversation: Codable {
       let ids = Set(departed.map(\.id))
       queue.removeAll { ids.contains($0.id) }
     }
+  }
+  // Only consecutive unstarted copies of the same owner's group message
+  // qualify. The owner chooses the disposition and both inputs remain visible.
+  func queuedCopies(of first: TeamAssignment) -> [TeamAssignment] {
+    guard first.kind == "coordinate", queue.first?.id == first.id,
+          let original = inputs.first(where: { $0.id == first.message }) else { return [] }
+    return Array(queue.dropFirst().prefix { step in
+      guard step.kind == first.kind, step.member == first.member, step.round == first.round,
+            step.instruction == first.instruction, step.message != first.message,
+            let input = inputs.first(where: { $0.id == step.message }) else { return false }
+      return original.text == input.text && original.recipients == input.recipients
+        && original.members == input.members && original.attachments == input.attachments
+        && original.language == input.language
+    })
+  }
+  mutating func skipQueuedCopies(of first: TeamAssignment) {
+    let copies = queuedCopies(of: first)
+    guard !copies.isEmpty else { return }
+    var skipped = skippedCopies ?? [:]
+    for step in copies { skipped[step.message] = first.message }
+    skippedCopies = skipped
+    queue.removeSubrange(1..<(copies.count + 1))
   }
   mutating func submit(_ content: TeamDraft, members: [TeamMember], language: String) throws {
     let body = content.text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -261,6 +284,14 @@ extension TeamRun {
     }
     conversation = c
     if pending == nil, state == "running" || reason == "memberUnavailable" { selectNextChatStep() }
+  }
+  var retryableUnsentAssignment: TeamAssignment? {
+    guard let a = attempts.last, let step = a.assignment, a.state == "unsent",
+          a.web?.mayHaveSent == false, let c = conversation,
+          !c.queue.contains(where: { $0.id == step.id }),
+          !attempts.contains(where: { $0.assignment?.id == step.id && $0.state != "unsent" })
+    else { return nil }
+    return step
   }
   mutating func selectNextChatStep() {
     guard let c = conversation, pending == nil else { return }

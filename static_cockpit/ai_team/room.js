@@ -30,6 +30,7 @@ const terms={
   reviewerChanged:['The website model selection changed. Check the member settings.','网页所选模型已变化，请核对成员配置。'],
   reviewerDraft:['The website retained a draft. Check the original conversation before continuing.','网页保留了草稿，请在原会话核对后继续。'],
   codexUnavailable:['Local Codex is unavailable. Open the member connection to check it.','本机 Codex 不可用，请打开成员连接核对。'],
+  alreadyQueued:['This message is already queued. Use the connection action below.','相同消息已在队列中，请使用连接操作继续。'],
   reviewerUnavailable:['Open the member’s website and check sign-in, model selection and availability.','请打开该成员的网页核对登录、模型选择和可用性。'],
   attachmentUnsupported:['This channel cannot read this attachment. Choose a supported file or another member.','当前通道无法读取该附件，请选择支持的文件或成员。'],
   tooLarge:['Choose up to eight files, 8 MB each and 12 MB total.','最多八个文件，每个不超过 8 MB，总计不超过 12 MB。'],
@@ -45,7 +46,7 @@ const terms={
   storage:['The chat could not be safely saved. Check the task storage.','无法安全保存群聊，请检查任务存储。'],
   unavailable:['The requested action is unavailable.','当前操作不可用。'],timeout:['The request timed out. Check its receipt.','请求超时，请核对回执。']
 };
-function label(key){return terms[key] ? tr(...terms[key]) : key || '';}
+function label(key){const copy=terms[key]||connectionCopy[key];return copy ? tr(...copy) : key || '';}
 function el(tag,txt,cls){const x=document.createElement(tag);if(txt!==undefined)x.textContent=txt;if(cls)x.className=cls;return x;}
 function btn(text,act,cls){const b=el('button',text,cls);b.type='button';b.onclick=act;return b;}
 function post(action,args={}){window.webkit.messageHandlers.teamChat.postMessage({action,id:room?.id||state.id,...args});}
@@ -118,7 +119,7 @@ function attemptStatus(a){
 }
 function renderFeed(){
   const log=$('feed');if(!room){log.replaceChildren();return;}
-  const key=JSON.stringify([state.zh,room.id,room.inputs,room.answers,room.attempts,room.queue,room.supplements,room.undelivered,room.historyRows,room.rosterChanges]);
+  const key=JSON.stringify([state.zh,room.id,room.inputs,room.answers,room.attempts,room.queue,room.supplements,room.undelivered,room.historyRows,room.rosterChanges,room.skippedCopies]);
   if(feedStamp===key)return;feedStamp=key;
   const nearEnd=log.scrollHeight-log.scrollTop-log.clientHeight<90,oldTop=log.scrollTop,rows=[];
   for(const a of room.historyRows||[])rows.push([a.time,cardEntry({name:a.member==="Owner"?tr("You","你"):a.member,text:a.text,tag:tr('Earlier round','历史轮次')+' · '+label(a.state),time:a.time,key:'old'+a.time})]);
@@ -129,6 +130,7 @@ function renderFeed(){
     for(const a of m.attachments)extra.append(attachment(a));
     const pending=room.queue.filter(q=>q.message===m.id&&['direct','coordinate'].includes(q.kind)).map(q=>display(member(q.member))||q.member);
     if(pending.length)extra.append(el('small',tr('Queued for ','待处理 · ')+pending.join(', ')));
+    if(room.skippedCopies?.[m.id])extra.append(el('small',tr('Duplicate kept in history · skipped','重复消息已保留 · 已跳过派发')));
     for(const entry of (room.undelivered||[]).filter(x=>x.message===m.id))extra.append(el('small',(display(m.members.find(x=>x.role===entry.member))||entry.member)+' · '+tr('Member removed before delivery','成员已移除，消息未派发')));
     for(const s of room.supplements.filter(s=>s.message===m.id))extra.append(el('small',(display(member(s.member))||s.member)+' · '+label(s.state)));
     rows.push([m.time,cardEntry({name:tr('You','你'),text:m.text,owner:true,tag:tags.join(' '),time:m.time,key:m.id,extra})]);
@@ -228,8 +230,53 @@ function renderSide(force=false){
   detail.append(btn(tr('Close details','关闭详情'),()=>{$('inspector').classList.remove('open');},'narrowclose subtle'));
 }
 function localError(k){errorLocal=k;notice();}
+const connectionCopy={
+  reviewerChat:['Open a fresh chat in this member window or return to its assigned chat.','请在这个成员窗口打开空白对话，或回到该成员已绑定的对话。'],
+  reviewerUnavailable:['Check this member’s connection before continuing.','请先检查这位成员的连接。'],
+  reviewerChanged:['The website selection differs from the member settings.','网页当前选择与成员设置不一致。'],
+  checkingConnection:['Checking the connection…','正在检查连接…'],
+  webLogin:['Sign in in this member’s window. Then return here to continue.','请在这位成员的窗口登录，完成后回到群聊继续。'],
+  webVerification:['Complete the website verification, then return here.','请在成员窗口完成网站验证，再回到群聊。'],
+  webLoading:['The member’s page is loading. Check again when it opens.','成员网页正在加载，打开后请重新检查。'],
+  webComposer:['The member’s page has no unambiguous message box yet. Open it to check.','尚未识别到唯一输入框，请打开成员网页检查。'],
+  webSelection:['Could not confirm the website’s model or signed-in default. Check the model in the member window.','尚未确认网页模型或已登录的默认选择，请在成员窗口核对模型。'],
+  webMismatch:['Switch the website to the member’s model, or adopt the current selection under Members.','请切换到成员设定的模型，或在成员栏采用网页当前选择。'],
+  webUnavailable:['The member’s page could not be verified. Open it and refresh the connection.','暂时无法确认成员网页，请打开该窗口后重新检查。'],
+  webReady:['Connection ready. Continue the queued message without typing it again.','连接已就绪，可直接继续这条待发消息。'],
+  webBusy:['The provider is still replying. Check again after it finishes.','提供方正在回复，结束后请重新检查。'],
+  webDraft:['The member’s window has a draft. Save or clear it, then check again.','成员窗口中有草稿，请先保留或清空，再重新检查。'],
+  webLimit:['The provider reported a usage or capacity limit. Check its window before continuing.','提供方提示用量或服务容量受限，请查看成员窗口后再继续。'],
+  codexUnavailable:['Open local Codex and check the connection and chosen model.','请打开本机 Codex，核对连接和所选模型。']
+};
+function recoveryNotice(target,recovery){
+  const m=member(recovery.member), message=connectionCopy[recovery.state]||connectionCopy.webUnavailable;
+  target.hidden=false;
+  target.append(el('strong',(display(m)||recovery.member)+' · '+recovery.provider),el('span',tr(...message)));
+  const actions=row();
+  if(recovery.state==='webReady'){
+    const copies=recovery.duplicates||0;
+    actions.append(btn(copies?tr('Continue once · skip duplicate copies','继续一次，跳过重复消息'):tr('Continue queued message','继续待发消息'),
+      ()=>post('continueConnection',{step:recovery.step,skipCopies:copies>0}),'primary'));
+    if(copies)actions.append(actionLink(tr('Keep and send all','保留并继续全部'),()=>post('continueConnection',{step:recovery.step,skipCopies:false})));
+  }else{
+    const open=btn(recovery.state==='webLogin'?tr('Sign in to ','登录 ')+recovery.provider:tr('Open connection','打开成员连接'),
+      ()=>post('channel',{member:recovery.member}),'subtle');
+    const check=btn(recovery.state==='checkingConnection'?tr('Checking…','正在检查…'):tr('Refresh connection','刷新连接'),
+      ()=>post('checkConnection',{step:recovery.step}),'primary');
+    check.disabled=recovery.state==='checkingConnection';actions.append(open,check);
+  }
+  target.append(actions);
+  if(recovery.checked && recovery.state!=='webReady')target.append(el('small',tr('Last checked ','上次检查 ')+new Date(recovery.checked*1000).toLocaleTimeString()));
+}
 function notice(){
   const target=$('notice');target.replaceChildren();
+  const recovery=room?.recovery;
+  target.classList.toggle('recovery',!!recovery?.step);
+  if(recovery?.step){
+    recoveryNotice(target,recovery);
+    if(state.error||errorLocal)target.append(el('small',label(state.error||errorLocal)));
+    return;
+  }
   const msgs=[errorLocal,state.error,room?.reason,room?.issue,room?.channelNotice].filter(Boolean);
   const text=[...new Set(msgs)].map(label).join(' · ');target.hidden=!text;
   if(!text)return;

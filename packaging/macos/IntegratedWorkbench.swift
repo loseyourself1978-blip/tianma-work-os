@@ -489,6 +489,10 @@ final class IntegratedWorkbench: NSWindowController, NSWindowDelegate, NSTextVie
         guard let root=resources,let container=window?.contentView else {return}
         if teamPanel == nil {
             let panel=TeamChatWorkspace(root:root,preferences:preferences,translate:translate)
+            panel.showTeam = { [weak self] in
+                guard let self else { return }
+                if !self.split.isHidden { self.toggleTeam() }
+            }
             panel.leftSelection = { [weak self] done in
                 guard let self, let service=self.kinds.first else {done("Codex","","");return}
                 if service=="Codex",let client=self.codex {done(service,client.nextModel,client.nextEffort);return}

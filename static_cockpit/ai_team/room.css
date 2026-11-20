@@ -14,3 +14,5 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0}header{display:
 @media(max-width:760px){.workspace{grid-template-columns:130px minmax(220px,1fr)}#inspector{display:none;position:fixed;right:0;top:0;bottom:0;width:min(82vw,310px);box-shadow:-4px 0 18px #0002}#inspector.open{display:block}header{padding:10px}.rail{padding:10px 7px}.composerbar{gap:2px}}
 @media(prefers-color-scheme:dark){:root{--paper:#19211d;--rail:#141a17;--ink:#e4eae5;--muted:#acbbb0;--line:#35463b;--tint:#263e30;--green:#356b4c;--accent:#47855e}.inline{color:#a8dabb}}
 .narrowclose{display:none}@media(max-width:760px){.narrowclose{display:block}}
+
+#notice.recovery{display:grid;gap:.35rem;align-items:start}#notice.recovery .line{flex-wrap:wrap}#notice.recovery small{color:var(--muted)}

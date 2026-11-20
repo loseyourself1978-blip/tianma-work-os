@@ -241,21 +241,42 @@
   }
   return resolvedLatest();
  }
+ function teamPicker(){
+  const selectors=['[data-testid="model-selector-dropdown"]','[data-testid="model-switcher-dropdown-button"]','[data-testid="model-selector"]','[aria-label^="Model:" i]','[aria-label^="模型"]','[aria-label*="ChatGPT model" i]','[aria-label*="ChatGPT 模型"]'];
+  return all(selectors.join(',')).filter(e=>e.matches('button,[role=button],[role=combobox]')&&!e.closest(history));
+ }
  function teamModel(allowMode=false){
   if(!composerSelection().element)return '';
-  const p=selectedProvider();
-  const selectors=['button[data-testid="model-selector-dropdown"]','button[data-testid="model-switcher-dropdown-button"]','button[data-testid="model-selector"]','button[aria-label^="Model:" i]','button[aria-label^="模型"]'];
-  const buttons=all(selectors.join(',')).filter(e=>!e.closest(history));
+  const buttons=teamPicker();
   if(buttons.length!==1)return '';
-  const b=buttons[0], label=(b.getAttribute('aria-label')||'').replace(/^(?:select |choose )?model\s*[:：]?\s*|^(?:选择)?模型\s*[:：]?\s*/i,'').trim();
-  const names=[label,b.innerText.trim()];
-  const pattern=p==='Claude'?/\b(opus|sonnet|haiku)\b/i:p==='ChatGPT'?/\b(gpt[- ]?\d|o\d\b)/i:p==='DeepSeek'?/deepseek[- ]?(?:v|r)\d/i:null;
-  const model=pattern?names.find(v=>v.length<=100 && pattern.test(v))||'':'';
-  if(model||!allowMode)return model;
-  // A visible mode pins a selection, but does not identify the model that answered.
-  return names.find(v=>v && v.length<=100 && !/[\r\n]/.test(v) && !/^(model|select model|选择模型|模型)$/i.test(v))||'';
+  const b=buttons[0], raw=b.getAttribute('aria-label')||'';
+  const generic=/^(?:(?:select|choose|switch) (?:the )?(?:chatgpt )?model|(?:选择|切换)\s*(?:ChatGPT\s*)?模型|模型|model)[：:]?$/i;
+  const label=generic.test(raw.trim())?'':raw.replace(/^(?:model|模型)\s*[:：]\s*/i,'').trim();
+  const names=[label,...(b.innerText||'').split(/[\r\n]+/)].map(v=>v.trim()).filter(v=>v && v.length<=100 && !generic.test(v));
+  const pattern=selectedProvider()==='Claude'?/\b(opus|sonnet|haiku)\b/i:selectedProvider()==='ChatGPT'?/\b(gpt[- ]?\d|o\d\b)/i:/deepseek[- ]?(?:v|r)\d/i;
+  return names.find(v=>pattern.test(v))||(allowMode?names.find(v=>!/[\r\n]/.test(v)):'')||'';
  }
- window.twosProviderDOM={teamModel,activityIdentity,observe,latest,resolvedLatest,seedSnapshot,selectedOrLatest,replies,text,navigationSafety,composerSelection,replyState,identity,isStop,deepSeekControl,interrupted,speaker,headings,stoppedAfter};
+ // Positive, public UI evidence only. A guest may also have a composer.
+ function teamConnection(beforeDispatch=false){
+  const controls=s=>[...document.querySelectorAll(s)].filter(e=>visible(e)&&!e.closest(history+',article,[data-twos-native-card]'));
+  if(!selectedProvider())return {state:'webUnavailable'};
+  if(document.querySelector('#challenge-running,#challenge-stage,iframe[src*="challenges.cloudflare.com"]')||controls('h1,h2').some(e=>/security verification|verify you are human|安全验证|验证您是真人/i.test(e.textContent)))return {state:'webVerification'};
+  if(controls('a,button,[role=button]').some(e=>e.matches('[data-testid="login-button"]')||/^(log in|sign in|登录|登入)$/i.test((e.getAttribute('aria-label')||e.textContent).trim()))||controls('input[autocomplete="current-password"]').length)return {state:'webLogin'};
+  const field=composerSelection().element;
+  if(!field)return {state:'webComposer'};
+  if(beforeDispatch){
+   const warning=controls('[role=alert],[data-testid*=toast]').map(e=>e.innerText||'').join(' ');
+   if(/at capacity|usage limit|rate limit|limit reached|too many requests|服务繁忙|容量不足|额度已用完|达到.{0,6}上限/i.test(warning))return {state:'webLimit'};
+   if(stop())return {state:'webBusy'};
+   if((field instanceof HTMLTextAreaElement?field.value:field.innerText||'').trim())return {state:'webDraft'};
+  }
+  const model=teamModel(true);
+  if(model)return {state:'webReady',model};
+  const profile=controls('[data-testid="accounts-profile-button"],[data-testid="profile-button"],[data-testid="user-menu-button"],button[aria-label="Open profile menu" i],button[aria-label="打开个人资料菜单"]');
+  if(!teamPicker().length&&profile.length)return {state:'webDefault'};
+  return {state:'webSelection'};
+ }
+ window.twosProviderDOM={teamModel,teamConnection,activityIdentity,observe,latest,resolvedLatest,seedSnapshot,selectedOrLatest,replies,text,navigationSafety,composerSelection,replyState,identity,isStop,deepSeekControl,interrupted,speaker,headings,stoppedAfter};
  // Only a genuine user activation of a recognized native Stop control signals
  // the host. Isolated-world handler + native frame/origin checks stay in force.
  if(!window.twosNativeStopListener){

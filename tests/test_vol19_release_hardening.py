@@ -55,9 +55,9 @@ def test_exact_head_manifest_hash_required_docs_and_deterministic_bytes(candidat
     archive, manifest_path = artifact
     manifest = json.loads(manifest_path.read_bytes())
     assert manifest['source_git_sha'] == command(candidate_repo, 'rev-parse', 'HEAD')
-    assert manifest['application_version'] == '1.0.13'
+    assert manifest['application_version'] == '1.0.14'
     assert manifest['schema_version'] == 'vol20.002'
-    assert archive.name == f"twos-1.0.13-{manifest['source_git_sha'][:12]}.tar.gz"
+    assert archive.name == f"twos-1.0.14-{manifest['source_git_sha'][:12]}.tar.gz"
     assert manifest_path.name == archive.name.removesuffix('.tar.gz') + '.manifest.json'
     assert hashlib.sha256(archive.read_bytes()).hexdigest() == manifest['sha256']
     assert release.inspect(archive, manifest_path)['verified']
@@ -298,7 +298,7 @@ def test_current_version_surfaces_agree():
     import ast
     from scripts import twos_bootstrap
     from twos_runtime import __version__, codex_adapter, codex_connectivity
-    assert __version__ == twos_bootstrap.APP_VERSION == '1.0.13'
+    assert __version__ == twos_bootstrap.APP_VERSION == '1.0.14'
     for module in (codex_adapter, codex_connectivity):
         assert module.__version__ == __version__
         tree = ast.parse(Path(module.__file__).read_text())
@@ -310,10 +310,10 @@ def test_current_version_surfaces_agree():
                        if isinstance(key, ast.Constant) and key.value == 'version')
         assert isinstance(version, ast.Name) and version.id == '__version__'
     html = (ROOT / 'static_cockpit/vol12_static_mvp/twos_command_center.html').read_text()
-    assert '<meta name="twos-version" content="1.0.13">' in html
-    assert html.count('?v=1.0.13') == 2
+    assert '<meta name="twos-version" content="1.0.14">' in html
+    assert html.count('?v=1.0.14') == 2
     script = (ROOT / 'static_cockpit/vol12_static_mvp/twos_command_center.js').read_text()
-    assert 'const UI_VERSION = "1.0.13";' in script
+    assert 'const UI_VERSION = "1.0.14";' in script
 
 
 def test_historical_rc_still_builds_and_inspects(candidate_repo, tmp_path):
@@ -322,7 +322,7 @@ def test_historical_rc_still_builds_and_inspects(candidate_repo, tmp_path):
     command(repo, 'config', 'user.name', 'Historical fixture')
     command(repo, 'config', 'user.email', 'fixture@example.invalid')
     version = repo / 'twos_runtime/__init__.py'
-    version.write_text(version.read_text().replace('1.0.13', '0.17.0'))
+    version.write_text(version.read_text().replace('1.0.14', '0.17.0'))
     command(repo, 'add', 'twos_runtime/__init__.py')
     command(repo, 'commit', '-m', 'historical naming fixture')
     archive, manifest = release.build(repo, tmp_path / 'historical-output')
@@ -348,22 +348,22 @@ def test_formal_release_receipt_requires_annotated_exact_commit(candidate_repo, 
     command(repo, 'config', 'user.name', 'Release fixture')
     command(repo, 'config', 'user.email', 'release@example.invalid')
     archive, manifest = release.build(repo, tmp_path / 'formal')
-    command(repo, 'tag', 'v1.0.13')
+    command(repo, 'tag', 'v1.0.14')
     with pytest.raises(release.ReleaseError, match='annotated'):
-        release.release_receipt(repo, archive, manifest, tag='v1.0.13', release_date='2026-09-23')
+        release.release_receipt(repo, archive, manifest, tag='v1.0.14', release_date='2026-09-23')
     # This is a disposable unpublished test repository, not a product tag.
-    command(repo, 'tag', '-d', 'v1.0.13')
-    command(repo, 'tag', '-a', 'v1.0.13', '-m', 'Fixture release')
-    receipt = release.release_receipt(repo, archive, manifest, tag='v1.0.13', release_date='2026-09-23')
+    command(repo, 'tag', '-d', 'v1.0.14')
+    command(repo, 'tag', '-a', 'v1.0.14', '-m', 'Fixture release')
+    receipt = release.release_receipt(repo, archive, manifest, tag='v1.0.14', release_date='2026-09-23')
     data = json.loads(receipt.read_bytes())['release']
     assert data['commit'] == command(repo, 'rev-parse', 'HEAD')
     assert data['sha256'] == hashlib.sha256(archive.read_bytes()).hexdigest()
-    assert data['tag'] == 'v1.0.13'
+    assert data['tag'] == 'v1.0.14'
     for line in (archive.parent/'SHA256SUMS').read_text().splitlines():
         digest, name = line.split('  ')
         assert hashlib.sha256((archive.parent/name).read_bytes()).hexdigest() == digest
     with pytest.raises(release.ReleaseError, match='never overwrite'):
-        release.release_receipt(repo, archive, manifest, tag='v1.0.13', release_date='2026-09-23')
+        release.release_receipt(repo, archive, manifest, tag='v1.0.14', release_date='2026-09-23')
     command(repo, 'commit', '--allow-empty', '-m', 'later fixture state')
     with pytest.raises(release.ReleaseError, match='same commit'):
-        release.release_receipt(repo, archive, manifest, tag='v1.0.13', release_date='2026-09-23')
+        release.release_receipt(repo, archive, manifest, tag='v1.0.14', release_date='2026-09-23')
