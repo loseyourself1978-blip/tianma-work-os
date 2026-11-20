@@ -2,7 +2,9 @@
 
 [User guide](AI_TEAM_R2.en.md) · [Watch the demo](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo) · [GitHub installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13)
 
-The recording scrolls from the first message to the last replies in Ada and Kai’s real English conversation. The workspace screenshots come from the 1.0.13 installer. Five Nyra portraits match its bundled assets.
+The demo opens in a new team chat. Watch Ada receive a second responsibility, inspect Kai’s settings, then follow their previously completed engineering conversation from its first question to the final replies. Choose English or Mandarin narration. Both MP4s include English and Simplified Chinese subtitles. The workspace screenshots come from the 1.0.13 installer. Five Nyra portraits match its bundled assets.
+
+The English narration uses KittenTTS Nano 0.2 and the Mandarin narration uses MeloTTS. Both were synthesized locally for this recording. [KittenTTS model card](https://huggingface.co/KittenML/kitten-tts-nano-0.2) · [MeloTTS model card](https://huggingface.co/myshell-ai/MeloTTS-Chinese).
 
 ## Historical 1.0.11 images
 

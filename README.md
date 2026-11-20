@@ -2,7 +2,7 @@
 
 **TWOS 1.0.13 / 101.61 · AI Team conversations and direct file delivery**
 
-Open **AI Team → New task** in the top toolbar. Type a goal or attach a brief. Send a message to the group or mention one or more members by name. Start with three members and add up to three more. Other chats can work in parallel. For file work, choose an existing folder in **Files** and open the finished files there. [Watch Ada and Kai work from the same brief](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo).
+Open **AI Team → New task** in the top toolbar. Type a goal or attach a brief. Send a message to the group or mention one or more members by name. Start with three members and add up to three more. Other chats can work in parallel. For file work, choose an existing folder in **Files** and open the finished files there. [Watch team setup and Ada and Kai’s group chat in English or Mandarin](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo).
 
 **TWOS 1.0.13 / 101.61: shared Codex projects/chats and direct Nyra task controls. Includes Nyra 1.0.8 / 108.**
 

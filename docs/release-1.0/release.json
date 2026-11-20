@@ -62,8 +62,29 @@
     "formal_review": "PENDING_MODEL_EVIDENCE"
   },
   "demo": {
-    "file": "TWOS-1.0.13-AI-Team-Ada-and-Kai.mp4",
-    "sha256": "921e576270398d44168332870c17f89fd21875b13fef0a01c77bd96bb4cfd191",
-    "url": "https://loseyourself1978-blip.github.io/tianma-work-os/assets/product/TWOS-1.0.13-AI-Team-Ada-and-Kai.mp4"
+    "versions": [
+      {
+        "file": "TWOS-1.0.13-AI-Team-Ada-and-Kai.mp4",
+        "sha256": "ad0c0c2a59176dc529051aed369c1204c600029b99583dbf38ac19fbdc432c3e",
+        "url": "https://loseyourself1978-blip.github.io/tianma-work-os/assets/product/TWOS-1.0.13-AI-Team-Ada-and-Kai.mp4",
+        "narration": "en-US",
+        "captions": [
+          "en",
+          "zh-CN"
+        ],
+        "seconds": 52.6
+      },
+      {
+        "file": "TWOS-1.0.13-AI-Team-Ada-and-Kai-zh-CN.mp4",
+        "sha256": "d8786354366d7ab015397627666f388e4d828857f295984456e25daba0532582",
+        "url": "https://loseyourself1978-blip.github.io/tianma-work-os/assets/product/TWOS-1.0.13-AI-Team-Ada-and-Kai-zh-CN.mp4",
+        "narration": "zh-CN",
+        "captions": [
+          "en",
+          "zh-CN"
+        ],
+        "seconds": 52.6
+      }
+    ]
   }
 }

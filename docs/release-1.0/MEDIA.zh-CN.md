@@ -2,7 +2,9 @@
 
 [操作指南](AI_TEAM_R2.zh-CN.md) · [录屏](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo) · [GitHub 安装包](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13)
 
-本版演示从头滚动到尾，展示 Ada 和 Kai 的真实英文群聊。桌面工作台截图来自本版安装包，五套 Nyra 形象均与内置资源核对。
+演示从新建群聊开始，为 Ada 增加测试职责，查看 Kai 的成员设置，再打开之前保存的工程群聊，从首条问题滚动至最终回复。可选择英语或普通话旁白，两份视频都带中英文字幕。桌面工作台截图来自本版安装包，五套 Nyra 形象均与内置资源核对。
+
+英语旁白使用 KittenTTS Nano 0.2，普通话旁白使用 MeloTTS，两份声音均为本次演示在本机合成。[KittenTTS 模型资料](https://huggingface.co/KittenML/kitten-tts-nano-0.2) · [MeloTTS 模型资料](https://huggingface.co/myshell-ai/MeloTTS-Chinese)。
 
 ## 1.0.11 历史画面
 
