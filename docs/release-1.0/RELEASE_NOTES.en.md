@@ -1,6 +1,6 @@
 # TWOS 1.0.13 / 101.61 · AI Team conversations and direct file delivery
 
-[Watch team setup and the saved group chat with English or Mandarin narration](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo). Both downloads have bilingual subtitles.
+[Watch the product introduction, six-member setup and projector checklist example in English or Mandarin](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo). Both downloads have bilingual subtitles.
 
 Open **AI Team → New task** in the top toolbar. Type a goal or attach a brief. Send a message to the group or mention one or more members by name. Start with three members and add up to three more. Other chats can work in parallel. For file work, choose an existing folder in **Files** and open the finished files there.
 

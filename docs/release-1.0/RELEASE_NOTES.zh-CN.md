@@ -1,6 +1,6 @@
 # TWOS 1.0.13 / 101.61 · AI Team 群聊与直接交付
 
-[观看组队与真实群聊演示](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo)。两份视频均含中英文字幕，可分别下载英语或普通话旁白版。
+[观看产品介绍、六人组队与投影仪清单实录](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo)。两份视频均含中英文字幕，可分别下载英语或普通话旁白版。
 
 在工作台顶部进入 **AI Team → 新建任务**，输入目标或附加说明。一个输入框可发送普通消息，也可用 @ 选中一名或多名成员。默认三名成员，最多六名。不同群聊可并行工作。在 **成果文件** 选择现有文件夹，完成的文件直接出现在该目录。
 

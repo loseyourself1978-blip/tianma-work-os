@@ -2,7 +2,7 @@
 
 [User guide](AI_TEAM_R2.en.md) · [Watch the demo](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo) · [GitHub installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13)
 
-The demo opens in a new team chat. Watch Ada receive a second responsibility, inspect Kai’s settings, then follow their previously completed engineering conversation from its first question to the final replies. Choose English or Mandarin narration. Both MP4s include English and Simplified Chinese subtitles. The workspace screenshots come from the 1.0.13 installer. Five Nyra portraits match its bundled assets.
+The 89-second product introduction explains TWOS for Mac and shows a real 1.0.13 window. Type a goal, inspect the suggested starting roles and connection defaults, choose a member’s settings, add a custom duty and grow a group to six members. A separate saved engineering chat shows Ada and Kai using one brief to identify two spare cables and a 09:40 deadline. Both editions include English and Simplified Chinese captions.
 
 The English narration uses KittenTTS Nano 0.2 and the Mandarin narration uses MeloTTS. Both were synthesized locally for this recording. [KittenTTS model card](https://huggingface.co/KittenML/kitten-tts-nano-0.2) · [MeloTTS model card](https://huggingface.co/myshell-ai/MeloTTS-Chinese).
 

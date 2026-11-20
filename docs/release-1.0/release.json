@@ -65,26 +65,29 @@
     "versions": [
       {
         "file": "TWOS-1.0.13-AI-Team-Ada-and-Kai.mp4",
-        "sha256": "ad0c0c2a59176dc529051aed369c1204c600029b99583dbf38ac19fbdc432c3e",
-        "url": "https://loseyourself1978-blip.github.io/tianma-work-os/assets/product/TWOS-1.0.13-AI-Team-Ada-and-Kai.mp4",
+        "sha256": "f6d7d3d0f6b061f670139546ba8eb8a41fa4958c21b3377a2a470fb09e6d787f",
+        "url": "https://loseyourself1978-blip.github.io/tianma-work-os/assets/product/TWOS-1.0.13-AI-Team-Ada-and-Kai.mp4?film=f6d7d3d0f6b0",
         "narration": "en-US",
         "captions": [
           "en",
           "zh-CN"
         ],
-        "seconds": 52.6
+        "seconds": 88.5,
+        "download_as": "TWOS-1.0.13-Product-Introduction-en-US.mp4"
       },
       {
         "file": "TWOS-1.0.13-AI-Team-Ada-and-Kai-zh-CN.mp4",
-        "sha256": "d8786354366d7ab015397627666f388e4d828857f295984456e25daba0532582",
-        "url": "https://loseyourself1978-blip.github.io/tianma-work-os/assets/product/TWOS-1.0.13-AI-Team-Ada-and-Kai-zh-CN.mp4",
+        "sha256": "96d2542b9710064b7a3ed6af6969498fb8c27bd69dcd6fbecc9d3b7b8945d0b2",
+        "url": "https://loseyourself1978-blip.github.io/tianma-work-os/assets/product/TWOS-1.0.13-AI-Team-Ada-and-Kai-zh-CN.mp4?film=96d2542b9710",
         "narration": "zh-CN",
         "captions": [
           "en",
           "zh-CN"
         ],
-        "seconds": 52.6
+        "seconds": 88.5,
+        "download_as": "TWOS-1.0.13-Product-Introduction-zh-CN.mp4"
       }
-    ]
+    ],
+    "title": "Tianma Work OS for Mac — Build your AI team"
   }
 }
