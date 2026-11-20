@@ -1,4 +1,4 @@
-# TWOS 1.0.13 AI Team 使用指南
+# TWOS 1.0.14 AI Team 使用指南
 
 ### 第一条消息待发时如何继续
 
@@ -30,4 +30,4 @@
 
 ## 安装与回退
 
-产品验收请从 [GitHub v1.0.13](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13) 下载 DMG，对照 SHA256SUMS 并打开安装。可在“应用程序”之外单独保留一个安装副本。要回退，正常退出 1.0.13，再启动保留的 1.0.12，或从 [v1.0.12](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.12) 获取旧版安装包。保留配置和成果目录。R2 群聊在配置目录的 `team-r2` 中，R1 仍读取 `team-r1`。
+从 [GitHub v1.0.14](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.14) 下载安装包，打开前核对 SHA256SUMS。升级前请先结束正在执行的任务并正常退出 TWOS。要回退，请正常退出 1.0.14，从 [v1.0.13](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13) 获取上一版；保留原群聊配置和成果目录。

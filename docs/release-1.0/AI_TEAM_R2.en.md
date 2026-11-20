@@ -1,4 +1,4 @@
-# AI Team in TWOS 1.0.13 · user guide
+# AI Team in TWOS 1.0.14 · user guide
 
 ### Resume the first queued message
 
@@ -30,4 +30,4 @@ A reviewer inspects the frozen content. A blocking finding must cite a requireme
 
 ## Installation and rollback
 
-For product acceptance, download the DMG from [GitHub v1.0.13](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13), compare it with SHA256SUMS, and open the installer. You can keep the second copy in a separate folder. To roll back, quit 1.0.13 and launch a retained 1.0.12 installation or download the [v1.0.12 installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.12). Keep the profile and output folders. R2 stores its rooms in `team-r2`. R1 reads `team-r1`.
+Download the installer from [GitHub v1.0.14](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.14) and check SHA256SUMS before opening it. Finish active tasks and quit TWOS before upgrading. To roll back, quit 1.0.14 and use the [v1.0.13 installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13). Keep the existing chat profile and output folders.

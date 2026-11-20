@@ -1,41 +1,41 @@
 {
-  "source_commit": "abecabc72eefa362a86f54575fc145486f908067",
-  "artifact": "Tianma-Work-OS-1.0.13.dmg",
-  "sha256": "dcd83f5905441f6d55b446458d6d1c81b76dd86f625258938d3b7cbe8c0cc4ce",
+  "source_commit": "5ef25df252e75cf9f55b7a4e2774219a9eddd4a9",
+  "artifact": "Tianma-Work-OS-1.0.14.dmg",
+  "sha256": "6104046335fd3b502c83dcdb92c7fa120de3a2580578bf55fc14b83937ced155",
   "signing_identity": "Developer ID Application: Jing Huang (BZJWQJ352K)",
-  "app_notarization_id": "f0bc9f50-809c-457a-92c2-fbabdc0cdfc2",
-  "dmg_notarization_id": "ccef2c6a-7fbc-4f4f-bec2-29b4fd036cfb",
+  "app_notarization_id": "86e80766-951f-47e0-becc-42e92e572069",
+  "dmg_notarization_id": "79e62300-18fe-4c4e-96c4-a4b3b5f50c24",
   "gatekeeper": "PASS",
-  "version": "1.0.13",
-  "build": "101.61",
+  "version": "1.0.14",
+  "build": "101.62",
   "product": "TWOS",
   "architecture": "arm64",
   "platform": "macOS",
   "declared_minimum_macos": "13.0",
   "tested_macos": "27.0.1",
-  "bytes": 267128175,
+  "bytes": 267228243,
   "status": "SIGNED_NOTARIZED_VALIDATED",
-  "runtime_input_sha256": "0d2803d1796d8e6a5ac556e4fe59f6f0e68078b58474280d5103ebf749419156",
-  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13",
+  "runtime_input_sha256": "b0b36c51068c8d75d0f5ca8bc6984da2c6bd4f296ae2f88ed29901260a2bb030",
+  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.14",
   "embedded_nyra_version": "1.0.8",
   "embedded_nyra_build": "108",
   "embedded_nyra_source_commit": "bb60b2000b8d5a25c7234c7e1741b111d66d346c",
   "embedded_nyra_source_snapshot": "14cdfa728bb4a13d6d87805bfa43bde7e57840a821c33d5a8b0bc4a65bfe84d8",
   "embedded_nyra_resource_manifest_sha256": "60e3196ae1ec503d2ed01983c1d22f403bd6e0ddfe3c6913de50b26875992c0f",
-  "at": "2026-11-20T11:54:57.820865+08:00",
+  "at": "2026-11-20T16:59:11.674121+08:00",
   "verification_document": "AI_TEAM_VERIFICATION.en.md",
   "store_submission": "NOT_SUBMITTED",
-  "owner_acceptance": "R2_PRODUCT_ACCEPTANCE_NOT_RECORDED",
+  "owner_acceptance": "NOT_RECORDED",
   "main_gate": {
     "complete_pass": true,
     "counts": {
-      "passed": 1893,
+      "passed": 1897,
       "skipped": 1,
       "failed": 0,
       "errors": 0
     },
-    "duration_seconds": 5709.735,
-    "source": "abecabc72eefa362a86f54575fc145486f908067",
+    "duration_seconds": 6074.698,
+    "source": "5ef25df252e75cf9f55b7a4e2774219a9eddd4a9",
     "frozen_inputs_verified": 356,
     "safari": {
       "measurements": 38,
@@ -43,23 +43,7 @@
       "visible_finish": 38,
       "errors": []
     },
-    "junit_sha256": "32cf1f982bbd84a98d3ba02a3daf09d3a47a1a60ed9c2a07b6b5f04f2b48ec5d"
-  },
-  "ai_team_sample": {
-    "attachment": "synthetic non-CSV text",
-    "recipients": [
-      "Ada",
-      "Kai"
-    ],
-    "replies": [
-      "MAPLE-743 / two spare cables",
-      "09:40"
-    ],
-    "codex_overlap_seconds": 106.83,
-    "reviewed_frozen_versions": 2,
-    "reviewer_response": "approve",
-    "per_turn_reported_model": "UNKNOWN",
-    "formal_review": "PENDING_MODEL_EVIDENCE"
+    "junit_sha256": "f548e63174fdb191ef47c1d4c5719a68dad7cebbc2eac21d8b35644fe1032369"
   },
   "demo": {
     "versions": [
@@ -91,6 +75,20 @@
       }
     ],
     "title": "Tianma Work OS for Mac — Build your AI team",
-    "media_revision": "product-introduction"
+    "media_revision": "product-introduction",
+    "recorded_version": "1.0.13",
+    "recorded_build": "101.61"
+  },
+  "first_send_recovery": {
+    "service": "ChatGPT",
+    "room": "isolated synthetic paused room",
+    "sign_in_action": true,
+    "returned_and_rechecked": true,
+    "retained_inputs": 2,
+    "authorized_continue_clicks": 1,
+    "completed_attempts": 1,
+    "matched_replies": 1,
+    "queue_remaining": 0,
+    "provider_reported_model": "UNKNOWN"
   }
 }

@@ -1,11 +1,13 @@
-# Use TWOS 1.0.13
+# Use TWOS 1.0.14
+
+If the first message pauses, the chat identifies the member who needs attention. Sign in in that member’s window, choose **Back to chat · Check connection**, then continue the queued message when ready. Repeated pending copies can be sent once.
 
 [AI Team group chats, files and acceptance](AI_TEAM_R2.en.md)
 
 > **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](MINIMAL_STATUS_AND_FOCUS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
 
 
-TWOS 1.0.13 / 101.61 · [This update](AI_TEAM_R2.en.md)
+TWOS 1.0.14 / 101.62 · [This update](AI_TEAM_R2.en.md)
 
 
 Choose the path matching your situation; they are not one mandatory sequence.
@@ -56,4 +58,4 @@ Click the character once to restore the bound TWOS workbench. The bubble default
 
 [English action voice: tiny-voca F2](ENGLISH_VOICE.en.md)
 
-[AI Team guide for 1.0.13](AI_TEAM_R2.en.md)
+[AI Team guide for 1.0.14](AI_TEAM_R2.en.md)

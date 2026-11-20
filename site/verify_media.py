@@ -92,7 +92,18 @@ def main():
         assert [v['narration'] for v in versions] == ['en-US', 'zh-CN']
         assert len(document.videos) == len(document.sources) == len(versions)
         assert len({v['sha256'] for v in versions}) == len(versions)
-        assert all(demo[key] == interface[key] for key in ('version', 'build', 'source_commit'))
+        if demo.get('recording_release'):
+            history = root.parent / 'docs/release-1.0/history'
+            record_path = history / ('TWOS-' + demo['version'] + '-release.json')
+            assert record_path.resolve().is_relative_to(history.resolve())
+            assert record_path == root.parent / demo['recording_release']
+            record = json.loads(record_path.read_text())
+            assert all(record[k] == demo[k] for k in ('version', 'build', 'source_commit'))
+            archived = {v['narration']: v['sha256'] for v in record['demo']['versions']}
+            assert archived == {v['narration']: v['sha256'] for v in versions}
+            assert 'Recorded with TWOS ' + demo['version'] in html
+        else:
+            assert all(demo[key] == interface[key] for key in ('version', 'build', 'source_commit'))
         poster = (root / demo['poster']).resolve()
         assert poster.is_relative_to(root) and hashlib.sha256(poster.read_bytes()).hexdigest() == demo['poster_sha256']
         for video, source, version in zip(document.videos, document.sources, versions):

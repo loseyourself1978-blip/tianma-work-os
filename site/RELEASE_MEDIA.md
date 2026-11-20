@@ -16,7 +16,7 @@ This is a release SOP, not a background automation. Website publication does not
 
 ## Current capture
 
-TWOS 1.0.13 / 101.61, built from abecabc72eefa362a86f54575fc145486f908067, includes Nyra 1.0.8 / 108. The current gallery includes six isolated service pairings, team setup, and a saved Ada and Kai discussion. The silent H.264 video records the original English engineering chat from beginning to end. It shares its SHA-256 with the author’s distribution copy. Match future installation checks to the versioned GitHub asset, and verify the anonymous download, product-page button, guides and media together. See the media manifest and outfit-reuse-1.0.13.json.
+TWOS 1.0.14 / 101.62, built from 5ef25df252e75cf9f55b7a4e2774219a9eddd4a9, includes Nyra 1.0.8 / 108. The gallery shows the signed installer in six isolated provider combinations, new-task setup and first-message recovery in a saved synthetic chat. The five portraits match the embedded files. Both 89-second product films retain their original 1.0.13 / 101.61 recording credit and release hashes.
 
 ## Supported-service combinations — required from November 7, 2026
 

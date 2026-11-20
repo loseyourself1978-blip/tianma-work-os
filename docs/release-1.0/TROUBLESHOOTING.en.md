@@ -12,7 +12,7 @@ After a restart, open the original chat and choose Reconcile. The first click ca
 > **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](MINIMAL_STATUS_AND_FOCUS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
 
 
-TWOS 1.0.13 / 101.61 · [This update](AI_TEAM_R2.en.md)
+TWOS 1.0.14 / 101.62 · [This update](AI_TEAM_R2.en.md)
 
 
 - **macOS blocks installation:** verify the exact release and hash/signature receipt. Do not disable Gatekeeper or remove quarantine. An unnotarized engineering candidate is not the default public installation path.

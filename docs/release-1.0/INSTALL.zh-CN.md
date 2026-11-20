@@ -1,15 +1,15 @@
-# 安装 Tianma Work OS 1.0.13
+# 安装 Tianma Work OS 1.0.14
 
-产品验收请从 [GitHub v1.0.13](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13) 下载 DMG，对照 SHA256SUMS 并打开安装。可在“应用程序”之外单独保留一个安装副本。要回退，正常退出 1.0.13，再启动保留的 1.0.12，或从 [v1.0.12](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.12) 获取旧版安装包。保留配置和成果目录。R2 群聊在配置目录的 `team-r2` 中，R1 仍读取 `team-r1`。
+从 [GitHub v1.0.14](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.14) 下载安装包，打开前核对 SHA256SUMS。升级前请先结束正在执行的任务并正常退出 TWOS。要回退，请正常退出 1.0.14，从 [v1.0.13](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13) 获取上一版；保留原群聊配置和成果目录。
 
 [AI Team 群聊、交付文件与验收](AI_TEAM_R2.zh-CN.md)
 
 > **当前控制版：** [单击返回、紧凑任务控制及左右共用 Codex 导航](MINIMAL_STATUS_AND_FOCUS.zh-CN.md)。状态通道保持只读；独立认证控制通道只传递用户主动选定的草稿或动作。旧独立版只读授权不会自动获得控制权。历史版本中仅只读的描述不适用于这个新增控制通道。
 
-TWOS 1.0.13 / 101.61 · [本次增量](AI_TEAM_R2.zh-CN.md)
+TWOS 1.0.14 / 101.62 · [本次增量](AI_TEAM_R2.zh-CN.md)
 
 
-适用 TWOS 1.0.13 / build 101.61；公开下载以对应 GitHub Release 为准，源码、签名、公证及系统覆盖见配套发行回执。
+适用 TWOS 1.0.14 / build 101.62；公开下载以对应 GitHub Release 为准，源码、签名、公证及系统覆盖见配套发行回执。
 
 当前仅支持 macOS。Windows 版本开发中，尚无可下载版本。当前 TWOS 包为 Apple Silicon，工程实测为 macOS 27.0.1 / Safari 27.0.1。编译下限不代表所有旧系统都已测试，其他系统请先核对发行支持表。
 

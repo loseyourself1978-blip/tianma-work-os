@@ -1,10 +1,12 @@
-# TWOS 1.0.13 / 101.61 · AI Team conversations and direct file delivery
-
-## 1.0.14 / 101.62
+# TWOS 1.0.14 / 101.62 · Resume a queued team message after sign-in
 
 ### Resume the first queued message
 
 If the chat pauses, the notice names the member and service. Choose **Refresh connection** to check that member’s window. If prompted, sign in there, then click **Back to chat · Check connection**. When the notice says **Connection ready**, select **Continue queued message**. The check itself does not send anything. If an earlier version queued consecutive identical messages, **Continue once · skip duplicate copies** retains their history and sends one. Choose **Keep and send all** only if you intended separate assignments. A message with an uncertain delivery receipt is reconciled against its original operation before any further dispatch.
+
+---
+
+# TWOS 1.0.13 / 101.61 · AI Team conversations and direct file delivery
 
 
 [Watch the product introduction, six-member setup and projector checklist example in English or Mandarin](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo). Both downloads have bilingual subtitles.

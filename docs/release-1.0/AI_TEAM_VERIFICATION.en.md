@@ -1,4 +1,12 @@
-# AI Team verification · 1.0.13 / 101.61
+# AI Team verification · 1.0.14 / 101.62
+
+The signed installer was tested with an isolated ChatGPT member window. The saved chat identified Ada’s sign-in requirement. After the user signed in and returned, the chat offered Continue once. One explicit click preserved both original example inputs and produced one dispatch with one matched reply, `Connection verified.`. The queue emptied. The provider did not report a per-turn model identity.
+
+On macOS 27.0.1, the complete serial run included 1,898 tests. 1,897 passed, 1 skipped, with zero failures or errors. All 38 Safari measurements began and ended with the page visible. All 410 files in the signed install manifest and all 356 source inputs matched.
+
+The live post-sign-in dispatch in this release used ChatGPT. Other providers, the original private task and Owner product acceptance are outside that live check.
+
+## AI Team verification · 1.0.13 / 101.61
 
 One complete serial run on the signed installation took 1 h 35 min 9 s. Of 1,894 tests, 1,893 passed, zero failed and one skipped because it requires the original 101.1 and 101.2 installers. All 38 Safari measurements began and ended with the page visible. The build used 356 verified inputs and all 410 installed files matched the manifest.
 

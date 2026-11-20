@@ -1,0 +1,32 @@
+{
+  "version": "1.0.14",
+  "build": "101.62",
+  "source": "5ef25df252e75cf9f55b7a4e2774219a9eddd4a9",
+  "outfits": [
+    {
+      "outfit": "runtime-default",
+      "file": "runtime-default.png",
+      "sha256": "7780d8d9319a6578ba492e37dd122d7bfe2f559adfac5d053c62d73fa26ecd69"
+    },
+    {
+      "outfit": "runtime-office",
+      "file": "runtime-office.png",
+      "sha256": "e12414521cba25dc01077aeea97ed935d79035d80d6b23e4e0a516740b6d94d4"
+    },
+    {
+      "outfit": "runtime-gala",
+      "file": "runtime-gala.png",
+      "sha256": "e390c578f481cd42caae6af08835c4c2a44e28afc4125aaa1ecb588fa749fce4"
+    },
+    {
+      "outfit": "runtime-office_white",
+      "file": "runtime-office_white.png",
+      "sha256": "a824beab71303827b8c45dc7f3804a6922b518c619b9407d7d9da29c87dd0556"
+    },
+    {
+      "outfit": "runtime-gala_red",
+      "file": "runtime-gala_red.png",
+      "sha256": "f4fab3c295c0716ed489ff9b12a0d66879e924d9db71e54c80df28d1eb088ca3"
+    }
+  ]
+}
