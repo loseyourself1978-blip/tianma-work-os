@@ -16,7 +16,7 @@ This is a release SOP, not a background automation. Website publication does not
 
 ## Current capture
 
-Current download: TWOS 1.0.11 / 101.59, including Nyra 1.0.8 / 108. All six starting-state screenshots were newly captured from the final signed package on November 17, 2026, source 4f29264ea9d156a671ef4d512f22430d3f875c19. Each saved window was visually inspected. The isolated profiles were signed out, Codex disconnected, and no model task or login was performed for marketing. English app and process locale were used; actual provider welcome/consent UI is retained. All five unchanged outfit portraits match the final pinned Nyra runtime by SHA-256. See the current media manifest and outfit-reuse-1.0.11.json; prior media provenance remains in Git and the history manifest.
+TWOS 1.0.13 / 101.61, built from abecabc72eefa362a86f54575fc145486f908067, includes Nyra 1.0.8 / 108. The current gallery includes six isolated service pairings, team setup, and a saved Ada and Kai discussion. The silent H.264 video records the original English engineering chat from beginning to end. It shares its SHA-256 with the author’s distribution copy. Match future installation checks to the versioned GitHub asset, and verify the anonymous download, product-page button, guides and media together. See the media manifest and outfit-reuse-1.0.13.json.
 
 ## Supported-service combinations — required from November 7, 2026
 
