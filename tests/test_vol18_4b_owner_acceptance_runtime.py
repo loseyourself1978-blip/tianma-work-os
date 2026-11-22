@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import os
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -89,7 +90,12 @@ def test_fresh_fixture_has_exact_task_and_push_ready_repository_before_signup(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
+    # The disposable server sanitizes its own environment. Keep the test runner
+    # unchanged and check that every inherited Git override was reported.
     monkeypatch.setenv("GIT_PAGER", "cat")
+    inherited = sorted(key for key in os.environ if key.startswith("GIT_"))
+    for key in inherited:
+        monkeypatch.setenv(key, os.environ[key])
     settings = _settings(tmp_path)
     app = create_app(settings=settings, start_scheduler=False)
     factory = app.state.session_factory
@@ -126,7 +132,7 @@ def test_fresh_fixture_has_exact_task_and_push_ready_repository_before_signup(
         assert health["ready"] is True
         assert health["task"] == {"title": TASK_TITLE}
         assert health["process_environment"] == {
-            "inherited_git_overrides_removed": ["GIT_PAGER"],
+            "inherited_git_overrides_removed": inherited,
             "git_overrides_present": [],
         }
         assert health["counts"] == {
