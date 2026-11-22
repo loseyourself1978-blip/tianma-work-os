@@ -837,11 +837,11 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       } else {
         observingWeb = nil
         observationDeadline = nil
-        notice = "unconfirmed"
+        notice = a.state == "sent" ? "webReplyPending" : "unconfirmed"
       }
     }
     if let r = run, ["running", "stopping"].contains(r.state) {
-      if r.expired || r.pending.map({ Date().timeIntervalSince1970 - max($0.started, $0.web?.updatedAt ?? 0) >= 600 }) == true {
+      if r.expired || r.pending.map({ $0.observationExpired(at: Date().timeIntervalSince1970) }) == true {
         if r.state == "running" { stop(reason: "timeout") }
       }
       if r.state == "stopping", let limit = observationDeadline, Date() >= limit {
@@ -1201,6 +1201,8 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     let id = String(url.path.dropFirst(prefix.count))
     return id.range(of: #"^[A-Za-z0-9_-]+$"#, options: .regularExpression) != nil
   }
+  private static let webConversationGrace: TimeInterval = 90
+
   private func pollReviewer(_ a: TeamAttempt) {
     guard let w = a.web else {
       fail("unconfirmed")
@@ -1217,7 +1219,12 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       NativeWorkbench.restorableURL(reviewer.web.url, service: reviewer.serviceHome)?.absoluteString
         != bound
     {
-      if checkDraft { recoveryState = "retainedCheck"; publish() }
+      if checkDraft {
+        recoveryState = "retainedCheck"; publish()
+      } else if attempt.state == "sent", run?.state == "running",
+                Date() >= (observationDeadline ?? .distantPast) {
+        fail("webReplyPending")
+      }
       return
     }
     checking = true
@@ -1340,14 +1347,33 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
           turn: t)
       } else if state == "generation_stopped" {
         self.closeAttempt("interrupted")
-      } else if state == "sent"
-        && (a.state != "sent" || a.web?.resolvedURL != self.run!.attempts[i].web?.resolvedURL)
-      {
-        self.run!.attempts[i].state = "sent"
-        if !inspect { self.observationDeadline = Date().addingTimeInterval(15) }
-        try? self.persist()
-      } else if state == "sent" {
-        return
+      } else if state == "sent" || state == "reply" {
+        // The exact user echo can be visible on the homepage before the provider
+        // mounts its conversation. An unbound reply cannot complete this step.
+        let bound = self.run!.attempts[i].web?.resolvedURL
+        if bound != nil, self.run?.state == "running" {
+          self.observationDeadline = Date().addingTimeInterval(Self.webConversationGrace)
+        }
+        if a.state != "sent" || a.web?.resolvedURL != bound {
+          self.run!.attempts[i].state = "sent"
+          self.run!.attempts[i].web?.state = "sent"
+          self.run!.attempts[i].web?.mayHaveSent = true
+          if a.state != "sent" {
+            self.run!.attempts[i].web?.updatedAt = Date().timeIntervalSince1970
+          }
+          do { try self.persist() } catch { self.fail("storage"); return }
+        } else if bound == nil && Date().timeIntervalSince1970 - w.updatedAt >= Self.webConversationGrace {
+          self.fail("webReplyPending")
+        }
+      } else if inspect, a.state == "sent", self.run?.state == "running" {
+        // During a route change parent and child DOM nodes can disappear in
+        // separate renders. Observe the same operation without clicking again.
+        let limit = w.resolvedURL == nil
+          ? Date(timeIntervalSince1970: w.updatedAt + Self.webConversationGrace)
+          : self.observationDeadline ?? .distantPast
+        if ["verification", "login", "provider_limited"].contains(state) || Date() >= limit {
+          self.fail("webReplyPending")
+        }
       } else if !inspect
         && ["verification", "login", "not_loaded", "busy", "draft_conflict", "provider_limited"]
           .contains(state)
@@ -1386,7 +1412,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
         r.attempts[r.attempts.count - 1].model = actual
         r.attempts[r.attempts.count - 1].source = source
         r.state = "stopped"
-        r.reason = "stopped"
+        if r.reason != "timeout" { r.reason = "stopped" }
       } else {
         try r.receive(
           id: a.id, text: text, actual: actual, source: source, thread: thread, turn: turn)
@@ -1430,7 +1456,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     guard var r = run, r.pending != nil else { return }
     r.attempts[r.attempts.count - 1].state = outcome
     r.state = r.stopRequested == true || r.state == "stopping" ? "stopped" : "blocked"
-    r.reason = outcome
+    if r.reason != "timeout" { r.reason = outcome }
     run = r
     try? persist()
     publish()
@@ -1438,7 +1464,11 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
   private func stop(reason: String = "stopped") {
     guard var r = run, ["running", "paused"].contains(r.state) else { return }
     observingWeb = nil
-    if managed {r.conversation?.queue.removeAll();r.conversation?.held.removeAll();r.conversation?.stoppedByUser=true}
+    if managed {
+      r.conversation?.queue.removeAll()
+      r.conversation?.held.removeAll()
+      r.conversation?.stoppedByUser = reason != "timeout"
+    }
     r.stopRequested = true
     observationDeadline = Date().addingTimeInterval(15)
     r.state = r.pending == nil ? "stopped" : "stopping"
@@ -1536,6 +1566,15 @@ extension TeamWorkspace {
     return a
   }
 
+  func retryInterruptedBuild(_ id: String) throws {
+    guard codex.ledgerReadable, let r = run, let a = r.retryableTimedOutBuild, a.id == id,
+      let record = codex.ledger.submissions.first(where: { $0.id == a.clientID && $0.thread == a.thread }),
+      record.state == "interrupted", record.turn != nil, record.sourceContentHash == a.inputHash,
+      record.result?.isEmpty != false else { throw TeamError.wrongVersion }
+    try changeRoom { try $0.retryTimedOutBuild(id) }
+    startRoomTimer()
+  }
+
   func restoreEmptyDraft(_ id: String) throws {
     guard let a = retainedAttempt, a.id == id, let w = a.web, !checking,
       recoveryStep == id, recoveryState == "retainedEmpty", (w.files ?? []).isEmpty
@@ -1571,8 +1610,9 @@ extension TeamWorkspace {
   var roomRecovery: [String: Any] {
     if let a = inspectableAttempt, let w = a.web {
       let uncertain = w.mayHaveSent == true
-      return ["step":a.id, "member":a.role, "provider":w.provider, "retained":!uncertain,
-              "uncertain":uncertain, "state":recoveryStep == a.id ? recoveryState : (uncertain ? "unconfirmed" : "retainedDraft")]
+      let sent = a.state == "sent"
+      return ["confirmedSent":sent, "step":a.id, "member":a.role, "provider":w.provider, "retained":!uncertain,
+              "uncertain":uncertain, "state":recoveryStep == a.id ? recoveryState : (sent ? "webReplyPending" : uncertain ? "unconfirmed" : "retainedDraft")]
     }
     guard let t = recoveryTarget else { return [:] }
     let current = recoveryStep == t.step.id && checkedMember == t.member

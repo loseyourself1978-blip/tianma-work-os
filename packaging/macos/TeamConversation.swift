@@ -285,6 +285,31 @@ extension TeamRun {
     conversation = c
     if pending == nil, state == "running" || reason == "memberUnavailable" { selectNextChatStep() }
   }
+  var retryableTimedOutBuild: TeamAttempt? {
+    guard state == "stopped", ["timeout", "interrupted"].contains(reason),
+      stopRequested == true, let c = conversation,
+      let a = attempts.last, a.state == "interrupted", a.transportState == "interrupted",
+      a.resultHash == nil, a.memberSnapshot?.service == "Codex",
+      let step = a.assignment, step.kind == "build", step.round == c.round,
+      c.plans.last?.round == c.round, c.plans.last?.builder == step.member,
+      c.inputs.contains(where: { $0.id == step.message }),
+      c.queue.isEmpty, c.held.isEmpty, !c.revisions.contains(where: { $0.attempt == a.id }),
+      members.first(where: { $0.role == step.member }) == a.memberSnapshot,
+      let stopping = milestones?.last(where: { $0.afterAttempt == a.id && $0.state == "stopping" }),
+      stopping.reason == "timeout" else { return nil }
+    return a
+  }
+
+  mutating func retryTimedOutBuild(_ id: String) throws {
+    guard let a = retryableTimedOutBuild, a.id == id, let step = a.assignment else {
+      throw TeamError.wrongVersion
+    }
+    stopRequested = false
+    conversation?.stoppedByUser = false
+    conversation?.queue.append(step)
+    selectNextChatStep()
+  }
+
   var retryableUnsentAssignment: TeamAssignment? {
     guard let a = attempts.last, let step = a.assignment, a.state == "unsent",
           a.web?.mayHaveSent == false, let c = conversation,

@@ -29,6 +29,28 @@ if scenario == "uncertain" {
   restored.attempts[0].web = receipt; restored.attempts[0].state = "unknown"
   restored.state = "paused"; restored.reason = "unconfirmed"
 }
+if scenario == "timeoutBoundary" {
+  let builder = TeamMember(role:"Builder", product:"Codex", provider:"OpenAI", model:"fixture")
+  var run=restored, c=conversation
+  let step=TeamAssignment(message:c.inputs[0].id,member:"Builder",kind:"build",instruction:"Create the fixture",round:c.round)
+  c.plans=[TeamChatPlan(round:c.round,requirements:["fixture"],builder:"Builder",reviewer:"Reviewer")]
+  c.queue=[step]; run.members.append(builder); run.conversation=c; run.selectNextChatStep()
+  var attempt=try run.begin(run.prompt())
+  precondition(attempt.observationExpired(at:attempt.started+600))
+  attempt.thread="thread-fixture";attempt.clientID="client-fixture";attempt.transportState="running"
+  precondition(!attempt.observationExpired(at:attempt.started+600))
+  precondition(attempt.observationExpired(at:attempt.started+1800))
+  run.attempts=[attempt];run.stopRequested=true;run.state="stopping";run.reason="timeout";run.recordState()
+  run.attempts[0].state="interrupted";run.attempts[0].transportState="interrupted"
+  run.state="stopped";run.reason="interrupted";run.recordState()
+  var unknown=run;unknown.attempts[0].transportState="unknown";precondition(unknown.retryableTimedOutBuild==nil)
+  var manual=run;manual.reason="stopped";precondition(manual.retryableTimedOutBuild==nil)
+  try run.retryTimedOutBuild(attempt.id)
+  precondition(run.conversation?.queue == [step] && run.next=="Builder" && run.attempts.count==1)
+  precondition(run.retryableTimedOutBuild==nil)
+  print("PASS bounded production deadline, user stop and unknown delivery protected, same plan retries once")
+  exit(0)
+}
 try TeamFiles.bytes(restored).write(to: dir.appendingPathComponent(roomID + ".json"))
 try Data(roomID.utf8).write(to: dir.appendingPathComponent("current"))
 try Data(roomID.utf8).write(to: library.appendingPathComponent("selected"))
@@ -41,8 +63,8 @@ func webView(_ view: NSView?) -> WKWebView? {
   return view?.subviews.compactMap { webView($0) }.first
 }
 struct ProbeFailure: Error, CustomStringConvertible { let description: String }
-@MainActor func waitUntil(_ page: WKWebView, _ predicate: String) async throws {
-  let limit = Date().addingTimeInterval(20)
+@MainActor func waitUntil(_ page: WKWebView, _ predicate: String, timeout: TimeInterval = 20) async throws {
+  let limit = Date().addingTimeInterval(timeout)
   while Date() < limit {
     if (try? await page.evaluateJavaScript(predicate)) as? Bool == true { return }
     try await Task.sleep(nanoseconds: 100_000_000)
@@ -137,7 +159,33 @@ Task { @MainActor in
           arguments:[:],in:nil,in:NativeWorkbench.handoffWorld) { continuation.resume(with:$0) }
       }
     }
+    if scenario == "delayedRoute" {
+      let setup = """
+        const submit=document.querySelector('[data-testid=send-button]');
+        const original=submit.onclick, route=history.pushState.bind(history);
+        submit.onclick=()=>{
+          history.pushState=()=>{};
+          try{ original(); } finally{ history.pushState=route; }
+          const sent=document.querySelector('[data-message-author-role=user]');
+          const reply=document.querySelector('[data-message-author-role=assistant]');
+          setTimeout(()=>{sent.remove();reply.remove()},3000);
+          setTimeout(()=>document.querySelector('main').prepend(sent,reply),17500);
+          setTimeout(()=>route(null,'','/c/first-send-fixture'),22000);
+        }; true
+        """
+      _ = try await provider.evaluateJavaScript(setup)
+    }
     try await press("Continue once · skip duplicate copies")
+    if scenario == "delayedRoute" {
+      try await waitUntil(team.web, "room.state==='running' && room.attempts[0]?.state==='sent'")
+      try await waitUntil(provider, "deliveries===1 && !document.querySelector('[data-message-author-role=user]')")
+      try await waitUntil(provider, "location.pathname==='/' && !!document.querySelector('[data-message-author-role=assistant]')")
+      let awaiting = try TeamWorkspace.readRecord(roomID, from:dir)
+      guard awaiting.state=="running", awaiting.pending?.state=="sent",
+        awaiting.pending?.web?.resolvedURL==nil, awaiting.conversation?.answers.isEmpty==true else {
+        throw ProbeFailure(description:"An unbound reply advanced the room or lost its sent receipt")
+      }
+    }
     if scenario == "prepareError" {
       try await waitUntil(team.web, "room.recovery.retained && room.attempts.length===1")
       try await waitUntil(provider, "deliveries===0")
@@ -177,6 +225,13 @@ Task { @MainActor in
     let record=try TeamWorkspace.readRecord(roomID,from:dir)
     guard record.attempts.count==1,record.conversation?.inputs.count==2,record.conversation?.skippedCopies?.count==1,
           record.attempts.first?.model==nil else { throw ProbeFailure(description:"Durable receipt mismatch") }
+    if scenario == "delayedRoute" {
+      guard record.attempts[0].thread?.hasSuffix("/c/first-send-fixture")==true,
+        record.milestones?.contains(where:{$0.state=="paused" && $0.afterAttempt==record.attempts[0].id}) != true else {
+        throw ProbeFailure(description:"The original conversation needed manual reconciliation")
+      }
+      print("PASS confirmed exact echo, unloaded nodes, delayed official route, automatic completion, one click")
+    }
     print("PASS guest with composer, visible sign-in, actual member window, website default, refresh without send, explicit continuation, one provider click, one matched reply, duplicate history preserved, unknown model retained")
     team.shutdown(); exit(0)
   } catch { print("FAILED",error);exit(1) }

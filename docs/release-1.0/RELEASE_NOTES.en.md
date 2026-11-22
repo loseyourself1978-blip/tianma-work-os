@@ -8,6 +8,8 @@ For a text-only ChatGPT assignment, TWOS saves the draft before starting the sen
 
 For an older attempt with uncertain delivery, **Check original conversation** reports whether the composer is empty, contains the original marked text, or contains a different draft. TWOS checks for the sent message first. Checking preserves the receipt and does not send or restore text.
 
+When the website acknowledges a message before opening its conversation, TWOS keeps watching for the matching reply. A file-producing local Codex turn can run for up to 30 minutes after dispatch. If TWOS interrupts it at the deadline, the group shows the timeout. Choose **Retry production with this plan** to start a new production turn using the saved plan when the interrupted turn is verified.
+
 ---
 
 # TWOS 1.0.14 / 101.62 · Resume a queued team message after sign-in

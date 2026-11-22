@@ -28,6 +28,7 @@ const terms={
   unconfirmed:['Delivery is uncertain. Reconcile the original request.','送达情况待确认，请核对原请求。'],
   reviewerChat:['Open the member’s assigned conversation and reconcile.','请打开成员绑定的会话并核对。'],
   reviewerChanged:['The website model selection changed. Check the member settings.','网页所选模型已变化，请核对成员配置。'],
+  webReplyPending:['Message sent. Waiting for the matching reply in the original conversation.','消息已送达，正在等待原会话中与它对应的回复。'],
   reviewerDraft:['The website retained a draft. Check the original conversation before continuing.','网页保留了草稿，请在原会话核对后继续。'],
   codexUnavailable:['Local Codex is unavailable. Open the member connection to check it.','本机 Codex 不可用，请打开成员连接核对。'],
   alreadyQueued:['This message is already queued. Use the connection action below.','相同消息已在队列中，请使用连接操作继续。'],
@@ -268,7 +269,9 @@ function recoveryNotice(target,recovery){
       retainedChanged:['The composer contains different text. No matching sent message was found. Your draft is preserved.','输入框中是其他文字，当前未找到对应的已发送消息。已保留现有草稿。'],
       retainedCheck:['Could not verify delivery on this page. Open the original conversation and check again.','当前页面无法核实送达。请打开原成员会话后再核对。']
     };
-    const message=recovery.uncertain?(uncertainCopy[recovery.state]||uncertainCopy.unconfirmed):(copy[recovery.state]||copy.retainedDraft);
+    const confirmedCopy = recovery.state === 'checkingConnection' ? copy.checkingConnection :
+      ['The member received this message. Check the original conversation for its reply.','成员已收到消息。可在原会话中核对对应回复。'];
+    const message=recovery.confirmedSent?confirmedCopy:recovery.uncertain?(uncertainCopy[recovery.state]||uncertainCopy.unconfirmed):(copy[recovery.state]||copy.retainedDraft);
     target.append(el('strong',name+' · '+recovery.provider),el('span',tr(...message)));
     const actions=row();
     if(recovery.retained && recovery.state==='retainedExact')
@@ -305,6 +308,14 @@ function notice(){
   target.classList.toggle('recovery',!!recovery?.step);
   if(recovery?.step){
     recoveryNotice(target,recovery);
+    if(state.error||errorLocal)target.append(el('small',label(state.error||errorLocal)));
+    return;
+  }
+  if(room?.timedOutBuild){
+    const attempt=room.timedOutBuild;
+    target.hidden=false;
+    target.append(el('span',tr('Production reached its time limit. The plan is saved. Starting again uses another member turn.','制作达到时限。规划已保留，重新制作将使用一次成员调用。')),
+      btn(tr('Retry production with this plan','沿用规划重新制作'),()=>post('retryTimedOutBuild',{step:attempt})));
     if(state.error||errorLocal)target.append(el('small',label(state.error||errorLocal)));
     return;
   }

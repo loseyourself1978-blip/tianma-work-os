@@ -351,7 +351,7 @@ final class TeamChatWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDel
           "answers": jsonObject(c?.answers ?? []),
           "undelivered": jsonObject(c?.undelivered ?? []),
           "rosterChanges": jsonObject(c?.rosterChanges ?? []), "plans": jsonObject(c?.plans ?? []),
-          "pending": r.pending?.id ?? "",
+          "pending": r.pending?.id ?? "", "timedOutBuild": r.retryableTimedOutBuild?.id ?? "",
           "attempts": r.attempts.map { a in
             [
               "id": a.id, "member": a.role, "snapshot": jsonObject(a.memberSnapshot),
@@ -514,6 +514,7 @@ final class TeamChatWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDel
             try FileManager.default.removeItem(at: url)
           }
         }
+      case "retryTimedOutBuild": try s.retryInterruptedBuild(args["step"] as? String ?? "")
       case "stop": s.stopRoom()
       case "checkConnection": try s.checkRoomConnection(step: args["step"] as? String ?? "")
       case "restoreDraft": try s.restoreEmptyDraft(args["step"] as? String ?? "")
