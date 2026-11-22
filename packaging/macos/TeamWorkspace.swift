@@ -841,7 +841,12 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       }
     }
     if let r = run, ["running", "stopping"].contains(r.state) {
-      if r.expired || r.pending.map({ $0.observationExpired(at: Date().timeIntervalSince1970) }) == true {
+      let overdue = r.pending.map { a in
+        a.observationExpired(at: Date().timeIntervalSince1970) &&
+          !codex.ledger.submissions.contains(where: { $0.id == a.clientID && $0.thread == a.thread &&
+            $0.state == "completed" && $0.turn != nil && $0.result != nil })
+      } ?? false
+      if r.expired || overdue {
         if r.state == "running" { stop(reason: "timeout") }
       }
       if r.state == "stopping", let limit = observationDeadline, Date() >= limit {
@@ -1046,13 +1051,21 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     if usageAttempt != a.id {
       usageAttempt = a.id
       usageFirstCheck = Date()
+      // Metadata may be unavailable even after the provider has returned the
+      // complete result. Deliver those exact bytes at the lookup deadline.
+      DispatchQueue.main.asyncAfter(deadline: .now()+15) { [weak self] in
+        guard let self, self.storageOK, self.usageAttempt == a.id,
+          self.run?.pending?.id == a.id else { return }
+        self.checking = false
+        self.usageGeneration = nil
+        self.finish(a, text: text, actual: nil, source: nil, thread: record.thread, turn: t)
+      }
     }
     checking = true
     usageGeneration = codex.transportGeneration
     readCodexModel(record, turn: t) { [weak self] actual in
-      guard let self = self else { return }
+      guard let self, self.run?.pending?.id == a.id else { return }
       self.checking = false
-      guard self.run?.pending?.id == a.id else { return }
       if actual == nil, Date().timeIntervalSince(self.usageFirstCheck ?? .distantPast) < 15 {
         return
       }
@@ -1564,6 +1577,18 @@ extension TeamWorkspace {
   private var retainedAttempt: TeamAttempt? {
     guard let a = inspectableAttempt, a.web?.state == "draft", a.web?.mayHaveSent == false else { return nil }
     return a
+  }
+
+  func recoverCompletedBuild(_ id: String) throws {
+    guard codex.ledgerReadable, let a = run?.timedOutBuild, a.id == id,
+      let record = codex.ledger.submissions.first(where: { $0.id == a.clientID && $0.thread == a.thread }),
+      record.state == "completed", record.sourceContentHash == a.inputHash,
+      let text = record.result, let turn = record.turn else { throw TeamError.wrongVersion }
+    try changeRoom { try $0.recoverCompletedBuild(id, text: text, thread: record.thread, turn: turn) }
+    do { try publishRoomFiles() } catch {
+      fail((error as? TeamError)?.rawValue ?? "storage"); return
+    }
+    startRoomTimer()
   }
 
   func retryInterruptedBuild(_ id: String) throws {

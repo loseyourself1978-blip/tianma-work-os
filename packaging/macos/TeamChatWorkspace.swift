@@ -351,7 +351,8 @@ final class TeamChatWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDel
           "answers": jsonObject(c?.answers ?? []),
           "undelivered": jsonObject(c?.undelivered ?? []),
           "rosterChanges": jsonObject(c?.rosterChanges ?? []), "plans": jsonObject(c?.plans ?? []),
-          "pending": r.pending?.id ?? "", "timedOutBuild": r.retryableTimedOutBuild?.id ?? "",
+          "pending": r.pending?.id ?? "", "timedOutBuild": r.timedOutBuild?.id ?? "",
+          "completedBuild": r.timedOutBuild?.state == "completed",
           "attempts": r.attempts.map { a in
             [
               "id": a.id, "member": a.role, "snapshot": jsonObject(a.memberSnapshot),
@@ -367,7 +368,7 @@ final class TeamChatWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDel
           "issue": c?.issue ?? "", "stop": c?.stoppedByUser ?? false,
           "path": c?.output?.path ?? "", "files": c?.ownedFiles.keys.sorted() ?? [],
           "mismatch": c?.mismatchedRevision ?? "",
-          "currentFiles": c?.revisions.last?.files.keys.sorted() ?? [],
+          "currentFiles": c?.revisions.last?.files.keys.sorted() ?? [], "originalPaths": c?.revisions.last?.originalPaths ?? [:],
           "updated": c?.revisions.last?.time ?? 0, "revision": c?.revisions.last?.id ?? "",
           "verdict": c?.revisions.last?.verdict ?? "",
           "accepted": c?.revisions.last?.acceptedAt != nil, "legacy": c?.legacyID ?? "",
@@ -514,6 +515,7 @@ final class TeamChatWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDel
             try FileManager.default.removeItem(at: url)
           }
         }
+      case "recoverCompletedBuild": try s.recoverCompletedBuild(args["step"] as? String ?? "")
       case "retryTimedOutBuild": try s.retryInterruptedBuild(args["step"] as? String ?? "")
       case "stop": s.stopRoom()
       case "checkConnection": try s.checkRoomConnection(step: args["step"] as? String ?? "")

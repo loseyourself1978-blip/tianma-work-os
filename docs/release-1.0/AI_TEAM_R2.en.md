@@ -34,6 +34,8 @@ If the group shows “Draft · not sent”, choose **Check original conversation
 
 If a member has already received a message, the group waits for its reply while the website opens the conversation. A timeout during local file production keeps the finished plan. Once the original interruption is verified, **Retry production with this plan** requests a new production turn in the same chat. It uses your existing Codex allowance.
 
+A completed local result is delivered even when the provider omits the model identity. If a previous timeout captured the completed result, **Recover files and continue to review** verifies its stored receipt and hash, then hands those same files to the reviewer. Optional root Git ignore rules are delivered as **gitignore.example**.
+
 For a previous attempt marked **Delivery unconfirmed**, open the original member conversation and choose **Check original conversation**. The check looks for a matching sent message and reports the state of the composer. It leaves the original receipt intact.
 
 ## Installation and rollback

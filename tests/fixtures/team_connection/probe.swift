@@ -34,7 +34,7 @@ if scenario == "timeoutBoundary" {
   var run=restored, c=conversation
   let step=TeamAssignment(message:c.inputs[0].id,member:"Builder",kind:"build",instruction:"Create the fixture",round:c.round)
   c.plans=[TeamChatPlan(round:c.round,requirements:["fixture"],builder:"Builder",reviewer:"Reviewer")]
-  c.queue=[step]; run.members.append(builder); run.conversation=c; run.selectNextChatStep()
+  c.queue=[step]; run.members.append(builder); run.members.append(TeamMember(role:"Reviewer",product:"Claude",provider:"Anthropic",model:"")); run.conversation=c; run.selectNextChatStep()
   var attempt=try run.begin(run.prompt())
   precondition(attempt.observationExpired(at:attempt.started+600))
   attempt.thread="thread-fixture";attempt.clientID="client-fixture";attempt.transportState="running"
@@ -43,6 +43,21 @@ if scenario == "timeoutBoundary" {
   run.attempts=[attempt];run.stopRequested=true;run.state="stopping";run.reason="timeout";run.recordState()
   run.attempts[0].state="interrupted";run.attempts[0].transportState="interrupted"
   run.state="stopped";run.reason="interrupted";run.recordState()
+  var completed=run
+  let produced = #"{"text":"Ready","files":{"index.html":"<title>Fixture</title>",".gitignore":"dist/"}}"#
+  completed.attempts[0].state="completed";completed.attempts[0].transportState="completed"
+  completed.attempts[0].turn="provider-turn";completed.reason="timeout"
+  completed.attempts[0].resultHash=NativeCodex.digest(Data(produced.utf8))
+  do {
+    try completed.recoverCompletedBuild(attempt.id,text:produced+"!",thread:"thread-fixture",turn:"provider-turn")
+    fatalError("Accepted a changed result")
+  } catch TeamError.wrongVersion {}
+  try completed.recoverCompletedBuild(attempt.id,text:produced,thread:"thread-fixture",turn:"provider-turn")
+  precondition(completed.attempts.count==1 && completed.next=="Reviewer")
+  precondition(completed.conversation?.revisions.last?.files["gitignore.example"]=="dist/")
+  precondition(completed.conversation?.revisions.last?.files[".gitignore"]==nil)
+  precondition(completed.conversation?.revisions.last?.originalPaths?["gitignore.example"]==".gitignore")
+  precondition(completed.conversation?.queue.map(\.kind)==["review"] && completed.timedOutBuild==nil)
   var unknown=run;unknown.attempts[0].transportState="unknown";precondition(unknown.retryableTimedOutBuild==nil)
   var manual=run;manual.reason="stopped";precondition(manual.retryableTimedOutBuild==nil)
   try run.retryTimedOutBuild(attempt.id)

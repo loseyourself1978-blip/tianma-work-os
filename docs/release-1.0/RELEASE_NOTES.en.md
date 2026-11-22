@@ -10,6 +10,8 @@ For an older attempt with uncertain delivery, **Check original conversation** re
 
 When the website acknowledges a message before opening its conversation, TWOS keeps watching for the matching reply. A file-producing local Codex turn can run for up to 30 minutes after dispatch. If TWOS interrupts it at the deadline, the group shows the timeout. Choose **Retry production with this plan** to start a new production turn using the saved plan when the interrupted turn is verified.
 
+A completed local result is delivered even when the provider omits the model identity. If a previous timeout captured the completed result, **Recover files and continue to review** verifies its stored receipt and hash, then hands those same files to the reviewer. Optional root Git ignore rules are delivered as **gitignore.example**.
+
 ---
 
 # TWOS 1.0.14 / 101.62 · Resume a queued team message after sign-in

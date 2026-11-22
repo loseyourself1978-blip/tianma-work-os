@@ -223,6 +223,7 @@ function renderSide(force=false){
     if(room.updated)detail.append(el('p',new Date(room.updated*1000).toLocaleString(state.zh?'zh-CN':'en-US'),'small'));
     for(const path of room.files){
       const c=el('div',undefined,'card');c.append(el('strong',path),el('div',!room.currentFiles.includes(path)?tr('Earlier version','较早版本'):room.mismatch===room.revision?label('fileConflict'):room.verdict?label(room.verdict):tr('Draft · in review','草稿 · 待审核'),'small'));
+      if(room.originalPaths?.[path])c.append(el('small',tr('Original filename: ','原文件名：')+room.originalPaths[path]));
       for(const [mode,title] of [['preview',tr('Preview','预览')],['open',tr('Open','打开')],['reveal',tr('Show in Finder','在 Finder 中显示')]])c.append(actionLink(title,()=>post('file',{path,mode})));
       detail.append(c);
     }
@@ -314,7 +315,10 @@ function notice(){
   if(room?.timedOutBuild){
     const attempt=room.timedOutBuild;
     target.hidden=false;
-    target.append(el('span',tr('Production reached its time limit. The plan is saved. Starting again uses another member turn.','制作达到时限。规划已保留，重新制作将使用一次成员调用。')),
+    if(room.completedBuild){
+      target.append(el('span',tr('The member finished production. Its saved result is ready to recover.','成员已完成制作，可恢复已保存的原始结果。')),
+        btn(tr('Recover files and continue to review','恢复文件并继续审核'),()=>post('recoverCompletedBuild',{step:attempt})));
+    } else target.append(el('span',tr('Production reached its time limit. The plan is saved. Starting again uses another member turn.','制作达到时限。规划已保留，重新制作将使用一次成员调用。')),
       btn(tr('Retry production with this plan','沿用规划重新制作'),()=>post('retryTimedOutBuild',{step:attempt})));
     if(state.error||errorLocal)target.append(el('small',label(state.error||errorLocal)));
     return;

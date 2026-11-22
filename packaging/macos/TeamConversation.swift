@@ -41,6 +41,7 @@ struct TeamFileRevision: Codable {
   let time: Double, files: [String: String], digest: String
   var reviewAttempt: String?, verdict: String?, findings: [TeamFinding]?
   var acceptedAt: Double?
+  var originalPaths: [String: String]?
 }
 struct TeamOwnedFile: Codable, Equatable {
   let hash: String, device: UInt64, inode: UInt64
@@ -187,7 +188,7 @@ struct TeamConversation: Codable {
         """
     case "build":
       instructions = """
-        Produce the requested result. Return JSON {"text":"public result or summary","files":{"relative/file.ext":"complete UTF-8 contents"}}. Return an empty files object for text-only work. Only create files required by the goal. Keep relevant previously produced files in the revision, and use normal relative project paths. Consider all assigned requirements, evidence and blocking findings.
+        Produce the requested result. Return JSON {"text":"public result or summary","files":{"relative/file.ext":"complete UTF-8 contents"}}. Return an empty files object for text-only work. Only create files required by the goal. Use visible relative paths. Supply optional Git ignore rules as gitignore.example. Keep relevant previously produced files in the revision, and use normal relative project paths. Consider all assigned requirements, evidence and blocking findings.
         """
     case "review":
       instructions = """
@@ -225,7 +226,7 @@ struct TeamConversation: Codable {
       "recentPublicAnswers": history,
       "pendingDecision": issue ?? "", "heldAssignments": held.map { $0.instruction },
       "stoppedByUser": stoppedByUser, "requirements": plans.last?.requirements ?? [],
-      "frozenDigest": revision?.digest ?? "", "frozenFiles": revision?.files ?? [:],
+      "frozenDigest": revision?.digest ?? "", "originalPaths": revision?.originalPaths ?? [:], "frozenFiles": revision?.files ?? [:],
       "frozenText": revision.flatMap { v in answers.last(where: { $0.attemptID == v.attempt })?.text
       } ?? "",
       "blockingFindings": try TeamFiles.json(revision?.findings),
@@ -285,11 +286,11 @@ extension TeamRun {
     conversation = c
     if pending == nil, state == "running" || reason == "memberUnavailable" { selectNextChatStep() }
   }
-  var retryableTimedOutBuild: TeamAttempt? {
+  var timedOutBuild: TeamAttempt? {
     guard state == "stopped", ["timeout", "interrupted"].contains(reason),
       stopRequested == true, let c = conversation,
-      let a = attempts.last, a.state == "interrupted", a.transportState == "interrupted",
-      a.resultHash == nil, a.memberSnapshot?.service == "Codex",
+      let a = attempts.last, ["interrupted", "completed"].contains(a.state), a.transportState == a.state,
+      a.memberSnapshot?.service == "Codex", !c.answers.contains(where: { $0.attemptID == a.id }),
       let step = a.assignment, step.kind == "build", step.round == c.round,
       c.plans.last?.round == c.round, c.plans.last?.builder == step.member,
       c.inputs.contains(where: { $0.id == step.message }),
@@ -298,6 +299,26 @@ extension TeamRun {
       let stopping = milestones?.last(where: { $0.afterAttempt == a.id && $0.state == "stopping" }),
       stopping.reason == "timeout" else { return nil }
     return a
+  }
+
+  var retryableTimedOutBuild: TeamAttempt? {
+    guard let a = timedOutBuild, a.state == "interrupted", a.resultHash == nil else { return nil }
+    return a
+  }
+
+  mutating func recoverCompletedBuild(_ id: String, text: String, thread: String, turn: String) throws {
+    guard let a = timedOutBuild, a.id == id, a.state == "completed",
+      a.thread == thread, a.turn == turn, NativeCodex.digest(Data(text.utf8)) == a.resultHash else {
+      throw TeamError.wrongVersion
+    }
+    var recovered = self
+    recovered.state = "running"
+    recovered.reason = ""
+    recovered.stopRequested = false
+    recovered.conversation?.stoppedByUser = false
+    recovered.attempts[recovered.attempts.count - 1].state = "sent"
+    try recovered.receive(id: id, text: text, actual: a.model, source: a.source, thread: thread, turn: turn)
+    self = recovered
   }
 
   mutating func retryTimedOutBuild(_ id: String) throws {
@@ -428,9 +449,17 @@ extension TeamRun {
         c.queue.append(job("coordinate", c.coordinator, body))
       }
     case "build":
-      guard let files = data["files"]?.stringMap, let plan = c.plans.last, plan.round == step.round,
+      guard var files = data["files"]?.stringMap, let plan = c.plans.last, plan.round == step.round,
         plan.builder == step.member
       else { throw TeamError.wrongVersion }
+      // Keep ignore rules as a visible example. Publishing generated output
+      // must never change the selected directory's Git configuration.
+      var originalPaths: [String: String]?
+      if let rules = files.removeValue(forKey: ".gitignore") {
+        guard files["gitignore.example"] == nil else { throw TeamError.fileConflict }
+        files["gitignore.example"] = rules
+        originalPaths = ["gitignore.example": ".gitignore"]
+      }
       try TeamArtifacts.validate(files)
       let digest = try TeamFiles.freezeID([
         "files": TeamFiles.json(files), "text": body,
@@ -438,7 +467,7 @@ extension TeamRun {
       ])
       let v = TeamFileRevision(
         id: UUID().uuidString, round: c.round, producer: member.role, attempt: a.id,
-        time: answer.time, files: files, digest: digest)
+        time: answer.time, files: files, digest: digest, originalPaths: originalPaths)
       c.revisions.append(v)
       c.mismatchedRevision = nil
       c.queue.append(job("review", plan.reviewer, "Review this frozen revision.", digest))
