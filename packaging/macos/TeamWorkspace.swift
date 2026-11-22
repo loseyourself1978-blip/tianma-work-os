@@ -53,6 +53,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
   private var awaitingSelection: (member: String, since: Date)?
   private var checkedMember: TeamMember?
   private var recoveryProbe: UUID?, recoveryState = "", recoveryStep = "", recoveryChecked: Double = 0
+  private var draftInspectionID: UUID?
   private var observingWeb: String?
   private var lastPayload: Data?
   private var observationDeadline: Date?, terminationObserver: NSObjectProtocol?
@@ -1238,8 +1239,24 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     if managed && member.model.isEmpty { req["teamWebsiteDefault"] = true }
     req["expectedReviewModel"] = aMemberModel(id) ?? member.model
     req["allowedTeamSelections"] = TeamMember.selectionLabels(aMemberModel(id) ?? member.model, service: member.service)
+    let inspectionID = checkDraft ? UUID() : nil
+    if let inspectionID {
+      draftInspectionID = inspectionID
+      DispatchQueue.main.asyncAfter(deadline: .now()+15) { [weak self] in
+        guard let self, self.draftInspectionID == inspectionID else { return }
+        self.draftInspectionID = nil
+        self.checking = false
+        if self.inspectableAttempt?.id == id {
+          self.recoveryState = "retainedCheck"; self.publish()
+        }
+      }
+    }
     reviewer.webTransfer(req) { [weak self] response in
       guard let self = self else { return }
+      if let inspectionID {
+        guard self.draftInspectionID == inspectionID else { return }
+        self.draftInspectionID = nil
+      }
       self.checking = false
       guard let a = self.run?.pending, a.id == id, self.storageOK else { return }
       let i = self.run!.attempts.count - 1
@@ -1259,7 +1276,8 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
           self.fail("reviewerDraft"); return
         }
       }
-      if (checkDraft || restoreDraft), self.retainedAttempt?.id != id { return }
+      if restoreDraft, self.retainedAttempt?.id != id { return }
+      if checkDraft, self.inspectableAttempt?.id != id { return }
       if (checkDraft || restoreDraft), !["sent", "reply", "generation_stopped"].contains(state) {
         self.recoveryStep = id
         switch state {
@@ -1503,13 +1521,18 @@ extension TeamWorkspace {
     guard let step, let member = r.members.first(where: { $0.role == step.member }) else { return nil }
     return (step, member)
   }
-  private var retainedAttempt: TeamAttempt? {
+  private var inspectableAttempt: TeamAttempt? {
     guard let r = run, r.state == "paused", r.stopRequested != true,
-      let a = r.pending, let w = a.web, w.state == "draft", w.mayHaveSent == false,
+      let a = r.pending, let w = a.web,
+      (w.state == "draft" && w.mayHaveSent == false) || w.mayHaveSent == true,
       w.message == a.id, w.binding == r.id, w.source == "team:" + r.id,
       let m = a.memberSnapshot, m.service == w.provider,
       r.members.contains(where: { $0.role == m.role && $0.service == m.service }),
       w.hash == a.inputHash, NativeCodex.digest(Data(w.text.utf8)) == a.inputHash else { return nil }
+    return a
+  }
+  private var retainedAttempt: TeamAttempt? {
+    guard let a = inspectableAttempt, a.web?.state == "draft", a.web?.mayHaveSent == false else { return nil }
     return a
   }
 
@@ -1546,9 +1569,10 @@ extension TeamWorkspace {
     startRoomTimer(); publish()
   }
   var roomRecovery: [String: Any] {
-    if let a = retainedAttempt, let w = a.web {
-      return ["step":a.id, "member":a.role, "provider":w.provider, "retained":true,
-              "state":recoveryStep == a.id ? recoveryState : "retainedDraft"]
+    if let a = inspectableAttempt, let w = a.web {
+      let uncertain = w.mayHaveSent == true
+      return ["step":a.id, "member":a.role, "provider":w.provider, "retained":!uncertain,
+              "uncertain":uncertain, "state":recoveryStep == a.id ? recoveryState : (uncertain ? "unconfirmed" : "retainedDraft")]
     }
     guard let t = recoveryTarget else { return [:] }
     let current = recoveryStep == t.step.id && checkedMember == t.member
@@ -1595,7 +1619,7 @@ extension TeamWorkspace {
   }
 
   func checkRoomConnection(step: String) throws {
-    if let a = retainedAttempt, a.id == step, let w = a.web {
+    if let a = inspectableAttempt, a.id == step, let w = a.web {
       guard !checking else { return }
       restoreReviewer(w, role: a.role)
       recoveryState = "checkingConnection"; recoveryStep = step; notice = ""; publish()
@@ -1707,7 +1731,7 @@ extension TeamWorkspace {
   }
   @objc private func returnFromMember(_ sender: NSButton) {
     showRoom?()
-    if let a = retainedAttempt, a.role == sender.identifier?.rawValue {
+    if let a = inspectableAttempt, a.role == sender.identifier?.rawValue {
       try? checkRoomConnection(step: a.id)
     } else if let t = recoveryTarget, t.member.role == sender.identifier?.rawValue {
       try? checkRoomConnection(step: t.step.id)

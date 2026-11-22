@@ -58,10 +58,24 @@ struct ProbeFailure: Error, CustomStringConvertible { let description: String }
 Task { @MainActor in
   do {
     if scenario == "uncertain" {
-      try await waitUntil(team.web, "room?.pending && !room.recovery.step && document.querySelector('#notice').innerText.includes('Reconcile')")
-      try await press("Reconcile")
-      try await waitUntil(team.web, "room.channelNotice==='reconciling' && !room.recovery.step && room.attempts.length===1")
-      print("PASS uncertain receipt offered inspection only");team.shutdown();exit(0)
+      try await waitUntil(team.web, "room?.pending && room.recovery.uncertain")
+      try await press("Open member window")
+      guard let provider = NSApp.windows.first(where: { $0.title.contains("Ada") && $0.title.contains("ChatGPT") }).flatMap({webView($0.contentView)}) else { throw ProbeFailure(description:"Missing original member window") }
+      try await waitUntil(provider, "Boolean(document.querySelector('[data-testid=login-button]'))")
+      _ = try await provider.evaluateJavaScript("document.querySelector('[data-testid=login-button]').click();true")
+      try await press("Check original conversation")
+      try await waitUntil(team.web, "room.recovery.state==='retainedEmpty' && document.querySelector('#notice').innerText.includes('composer is empty')")
+      guard let w=restored.attempts.first?.web else { throw ProbeFailure(description:"Missing receipt") }
+      let entered="[TWOS handoff " + w.id + "]\n" + w.text
+      let _: Any = try await withCheckedThrowingContinuation { waiter in
+        provider.callAsyncJavaScript("document.querySelector('textarea').value=text;return true", arguments:["text":entered],in:nil,in:.page) { waiter.resume(with:$0) }
+      }
+      try await press("Check original conversation")
+      try await waitUntil(team.web, "room.recovery.state==='retainedExact' && !room.recovery.retained && !document.querySelector('#notice').innerText.includes('Send verified draft')")
+      let saved=try TeamWorkspace.readRecord(roomID,from:dir)
+      guard saved.attempts.count==1, saved.attempts[0].web?.mayHaveSent==true,
+            (try await provider.evaluateJavaScript("deliveries")) as? Int == 0 else { throw ProbeFailure(description:"Inspection changed delivery") }
+      print("PASS uncertain legacy receipt reports empty and exact inputs without sending, restoring or clearing uncertainty");team.shutdown();exit(0)
     }
     try await press("Refresh connection")
     try await waitUntil(team.web, "room.recovery.state==='webLogin' && room.attempts.length===0")

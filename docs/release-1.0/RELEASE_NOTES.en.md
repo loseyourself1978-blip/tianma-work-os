@@ -6,6 +6,8 @@ If the composer contains different text, TWOS leaves it in place. If it is empty
 
 For a text-only ChatGPT assignment, TWOS saves the draft before starting the send operation. If WebKit fails during that first step, the chat can identify the message as unsent. If the send operation has started, TWOS checks the original conversation for its matching receipt.
 
+For an older attempt with uncertain delivery, **Check original conversation** reports whether the composer is empty, contains the original marked text, or contains a different draft. TWOS checks for the sent message first. Checking preserves the receipt and does not send or restore text.
+
 ---
 
 # TWOS 1.0.14 / 101.62 · Resume a queued team message after sign-in

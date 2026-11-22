@@ -249,7 +249,7 @@ const connectionCopy={
   codexUnavailable:['Open local Codex and check the connection and chosen model.','请打开本机 Codex，核对连接和所选模型。']
 };
 function recoveryNotice(target,recovery){
-  if(recovery.retained){
+  if(recovery.retained || recovery.uncertain){
     const name=display(member(recovery.member))||recovery.member;
     const copy={
       checkingConnection:['Checking the original conversation…','正在核对原会话…'],
@@ -260,11 +260,20 @@ function recoveryNotice(target,recovery){
       retainedDraft:['The website did not send this draft.','这份网页草稿尚未发送。']
     };
     target.hidden=false;
-    target.append(el('strong',name+' · '+recovery.provider),el('span',tr(...(copy[recovery.state]||copy.retainedDraft))));
+    const uncertainCopy={
+      unconfirmed:['Delivery is unconfirmed. Check the original member conversation.','送达待确认，请核对原成员会话。'],
+      checkingConnection:copy.checkingConnection,
+      retainedExact:['The original text is still in the composer. No matching sent message was found. Check the member window before taking any action.','原文仍在输入框中，当前未找到对应的已发送消息。请打开成员窗口核对。'],
+      retainedEmpty:['The original composer is empty. No matching sent message was found in this conversation.','原输入框为空，当前会话中未找到对应的已发送消息。'],
+      retainedChanged:['The composer contains different text. No matching sent message was found. Your draft is preserved.','输入框中是其他文字，当前未找到对应的已发送消息。已保留现有草稿。'],
+      retainedCheck:['Could not verify delivery on this page. Open the original conversation and check again.','当前页面无法核实送达。请打开原成员会话后再核对。']
+    };
+    const message=recovery.uncertain?(uncertainCopy[recovery.state]||uncertainCopy.unconfirmed):(copy[recovery.state]||copy.retainedDraft);
+    target.append(el('strong',name+' · '+recovery.provider),el('span',tr(...message)));
     const actions=row();
-    if(recovery.state==='retainedExact')
+    if(recovery.retained && recovery.state==='retainedExact')
       actions.append(btn(tr('Send verified draft','发送已核对的草稿'),()=>post('sendRetained',{step:recovery.step}),'primary'));
-    if(recovery.state==='retainedEmpty')
+    if(recovery.retained && recovery.state==='retainedEmpty')
       actions.append(btn(tr('I have not sent it · restore draft','确认未发送，恢复草稿'),()=>post('restoreDraft',{step:recovery.step}),'primary'));
     const check=btn(tr('Check original conversation','核对原会话'),()=>post('checkConnection',{step:recovery.step}));
     check.disabled=recovery.state==='checkingConnection';

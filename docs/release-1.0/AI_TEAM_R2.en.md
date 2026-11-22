@@ -32,6 +32,8 @@ A reviewer inspects the frozen content. A blocking finding must cite a requireme
 
 If the group shows “Draft · not sent”, choose **Check original conversation**. A matching draft can be sent once with **Send verified draft**. If you already sent it on the website, return to the group and check to collect its receipt. If the original composer is empty, inspect the member conversation before choosing **I have not sent it · restore draft**. Restoring fills the composer. Sending requires a separate click.
 
+For a previous attempt marked **Delivery unconfirmed**, open the original member conversation and choose **Check original conversation**. The check looks for a matching sent message and reports the state of the composer. It leaves the original receipt intact.
+
 ## Installation and rollback
 
 Download the installer from [GitHub v1.0.14](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.14) and check SHA256SUMS before opening it. Finish active tasks and quit TWOS before upgrading. To roll back, quit 1.0.14 and use the [v1.0.13 installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13). Keep the existing chat profile and output folders.
