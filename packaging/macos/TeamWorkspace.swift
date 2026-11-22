@@ -1180,6 +1180,13 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       r.attempts[r.attempts.count - 1].observedWebSelection = selection
       if managed { w.files=try webImages(a) }
       w.teamWireVersion = 1
+      // On ChatGPT the rich editor and its send control can mount separately.
+      // Journal a draft-only phase before WebKit can write anything.
+      if managed, w.provider == "ChatGPT", (w.files ?? []).isEmpty {
+        w.state = "draft"
+        w.mayHaveSent = false
+        w.dispatchReason = "PREPARING_DRAFT_NO_MESSAGE_SENT"
+      }
       r.attempts[r.attempts.count - 1].web = w
       run = r
       try persist()
@@ -1226,7 +1233,8 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       } catch {checking=false;fail("attachmentUnsupported");return}
     }
     if checkDraft { req["inspectRetainedDraft"] = true }
-    if restoreDraft { req["draftOnly"] = true; req["resumeDraft"] = false }
+    let preparing = !inspect && !restoreDraft && w.dispatchReason == "PREPARING_DRAFT_NO_MESSAGE_SENT"
+    if preparing || restoreDraft { req["draftOnly"] = true; req["resumeDraft"] = false }
     if managed && member.model.isEmpty { req["teamWebsiteDefault"] = true }
     req["expectedReviewModel"] = aMemberModel(id) ?? member.model
     req["allowedTeamSelections"] = TeamMember.selectionLabels(aMemberModel(id) ?? member.model, service: member.service)
@@ -1236,6 +1244,21 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       guard let a = self.run?.pending, a.id == id, self.storageOK else { return }
       let i = self.run!.attempts.count - 1
       let state = response["state"] as? String ?? "unknown"
+      if preparing, !["sent", "reply", "generation_stopped"].contains(state) {
+        if self.run?.stopRequested == true {
+          self.closeAttempt("cancelled"); return
+        }
+        if state == "draft", response["reason"] as? String == "EXACT_DRAFT_CONFIRMED_NO_MESSAGE_SENT" {
+          guard self.run?.state == "running" else { return }
+          do { try self.submitVerifiedDraft(id, w) } catch { self.fail("storage") }
+          return
+        }
+        if ["unknown", "unsupported", "target_changed", "draft"].contains(state) {
+          self.run!.attempts[i].web?.dispatchReason = (response["errorCode"] as? Int)
+            .map { "DRAFT_WEBKIT_" + String($0) + "_NO_MESSAGE_SENT" } ?? "DRAFT_NOT_CONFIRMED_NO_MESSAGE_SENT"
+          self.fail("reviewerDraft"); return
+        }
+      }
       if (checkDraft || restoreDraft), self.retainedAttempt?.id != id { return }
       if (checkDraft || restoreDraft), !["sent", "reply", "generation_stopped"].contains(state) {
         self.recoveryStep = id
@@ -1256,6 +1279,9 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
         self.run!.attempts[i].web?.state = state
         self.run!.attempts[i].web?.dispatchReason = (response["reason"] as? String)?
           .components(separatedBy: " · ").first.map { String($0.prefix(100)) }
+        if let code = response["errorCode"] as? Int {
+          self.run!.attempts[i].web?.dispatchReason = "WEBKIT_ERROR_" + String(code)
+        }
         self.run!.attempts[i].web?.mayHaveSent = ["sent", "reply", "unknown"].contains(state)
         try? self.persist()
       }
@@ -1496,8 +1522,15 @@ extension TeamWorkspace {
   }
 
   func retryRetainedDraft(_ id: String) throws {
-    guard let a = retainedAttempt, a.id == id, var w = a.web, !checking,
+    guard let a = retainedAttempt, a.id == id, let w = a.web, !checking,
       recoveryStep == id, recoveryState == "retainedExact" else { throw TeamError.wrongVersion }
+    try submitVerifiedDraft(id, w)
+  }
+
+  private func submitVerifiedDraft(_ id: String, _ receipt: WebHandoffReceipt) throws {
+    guard run?.pending?.id == id, run?.stopRequested != true, !checking else { throw TeamError.wrongVersion }
+    var w = receipt
+    w.dispatchReason = nil
     // Persist uncertainty before the website can receive a click, including across a crash.
     w.resumeDraft = true
     w.mayHaveSent = true

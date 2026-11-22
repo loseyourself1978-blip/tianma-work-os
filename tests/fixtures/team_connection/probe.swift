@@ -100,7 +100,7 @@ Task { @MainActor in
     if ["retained", "manual", "missing"].contains(scenario) {
       _ = try await provider.evaluateJavaScript("const submit=document.querySelector('[data-testid=send-button]'); submit.disabled=true; true")
     }
-    if scenario == "richText" {
+    if ["richText","prepareError"].contains(scenario) {
       let configure = """
         const editor=document.createElement('div');
         editor.id='prompt-textarea'; editor.contentEditable='true'; editor.setAttribute('role','textbox');
@@ -117,13 +117,28 @@ Task { @MainActor in
         """
       _ = try await provider.evaluateJavaScript(configure)
     }
+    if scenario == "prepareError" {
+      let _: Any = try await withCheckedThrowingContinuation { continuation in
+        provider.callAsyncJavaScript("document.execCommand=()=>{throw new Error('offline edit failure')};return true",
+          arguments:[:],in:nil,in:NativeWorkbench.handoffWorld) { continuation.resume(with:$0) }
+      }
+    }
     try await press("Continue once · skip duplicate copies")
+    if scenario == "prepareError" {
+      try await waitUntil(team.web, "room.recovery.retained && room.attempts.length===1")
+      try await waitUntil(provider, "deliveries===0")
+      let record = try TeamWorkspace.readRecord(roomID,from:dir)
+      guard let w = record.pending?.web, w.state=="draft", w.mayHaveSent==false,
+            w.dispatchReason?.hasPrefix("DRAFT_WEBKIT_")==true else {throw ProbeFailure(description:"Lost draft-only failure boundary")}
+      print("PASS WebKit failed in the draft-only phase; no click; original operation recoverable")
+      team.shutdown();exit(0)
+    }
     if ["retained", "manual", "missing"].contains(scenario) {
       try await waitUntil(team.web, "room.recovery.retained && room.attempts.length===1 && room.attempts[0].state==='retainedDraft'")
       try await waitUntil(provider, "deliveries===0 && document.querySelector('textarea').value.includes('[TWOS handoff ')")
       _ = try await provider.evaluateJavaScript("submit.disabled=false;submit.removeAttribute('data-testid');submit.removeAttribute('aria-label');submit.textContent='';submit.type='submit';submit.form.onsubmit=e=>e.preventDefault();true")
       if scenario == "manual" {
-        _ = try await provider.evaluateJavaScript("submit.click();true")
+        _ = try await provider.evaluateJavaScript("submit.click();input.remove();true")
       } else if scenario == "missing" {
         _ = try await provider.evaluateJavaScript("input.value='other draft';true")
         try await press("Check original conversation")

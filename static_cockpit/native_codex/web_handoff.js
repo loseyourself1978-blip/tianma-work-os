@@ -50,7 +50,7 @@ return await (async () => {
   return selection?.element?[selection.element]:[];
  };
  const fields=composerFields();
- if(fields.length!==1){
+ if(fields.length!==1 && (!request.inspectOnly || request.readinessOnly)){
   const login=[...document.querySelectorAll('button,a')].filter(visible).some(e=>/^(log in|sign in|登录|登入)$/i.test(e.textContent.trim()));
   return {state:login?'login':'not_loaded',reason:window.twosProviderDOM?.composerSelection().reason||'OBSERVER_UNAVAILABLE'};
  }
@@ -70,7 +70,7 @@ return await (async () => {
  const isSendControl=e=>{
   const namedBy=(e.getAttribute('aria-labelledby')||'').trim().split(/\s+/).map(id=>document.getElementById(id)?.textContent||'').join(' ').trim();
   const labels=[e.getAttribute('aria-label'),e.getAttribute('title'),namedBy].map(v=>(v||'').trim()).filter(Boolean);
-  const form=input.closest('form');
+  const form=input?.closest('form');
   if(provider==='ChatGPT'&&form&&!form.contains(e)&&e.form!==form)return false;
   const caption=(e.matches('input[type=submit]')?e.value:e.textContent).trim();
   if([...labels,caption,e.getAttribute('data-testid')||''].some(v=>/voice|speech|dictat|stop|cancel|语音|听写|停止|取消/i.test(v)))return false;
@@ -190,7 +190,7 @@ return await (async () => {
   return {...modelEvidence,...(request.teamReview && !nextUser && (busy() || claudeStreaming) ? {teamGenerating:true}:{}),...(teamActivity?{teamActivity}:{}),state:settled&&reply.trim()?'reply':'sent',conversationURL:clean(location.href),attachments:request.files?.map(({id,name,mime,size,hash})=>({id,name,mime,size,hash}))||[],...(reply?{reply,replyMessage:replyID||'rendered-answer'}:{})};
  };
  const existing=result();if(existing)return existing;
- if(request.inspectOnly && request.inspectRetainedDraft && targetCurrent()){
+ if(request.inspectOnly && request.inspectRetainedDraft && fields.length===1 && targetCurrent()){
   if(!value().trim())return {state:'retained_empty'};
   return {state:normalize(value())===normalize(prompt)?'retained_exact':'retained_changed'};
  }

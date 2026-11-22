@@ -4,6 +4,8 @@ A queued ChatGPT assignment enters the rich-text editor as plain text. TWOS chec
 
 If the composer contains different text, TWOS leaves it in place. If it is empty, inspect the member window first. For text-only assignments, **I have not sent it · restore draft** restores the original wording for review. A separate click sends it. An uncertain delivery stays on the reconciliation path.
 
+For a text-only ChatGPT assignment, TWOS saves the draft before starting the send operation. If WebKit fails during that first step, the chat can identify the message as unsent. If the send operation has started, TWOS checks the original conversation for its matching receipt.
+
 ---
 
 # TWOS 1.0.14 / 101.62 · Resume a queued team message after sign-in
