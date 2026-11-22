@@ -1,15 +1,15 @@
-# Install Tianma Work OS 1.0.14
+# Install Tianma Work OS 1.0.15
 
-Download the installer from [GitHub v1.0.14](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.14) and check SHA256SUMS before opening it. Finish active tasks and quit TWOS before upgrading. To roll back, quit 1.0.14 and use the [v1.0.13 installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13). Keep the existing chat profile and output folders.
+Download the installer from [GitHub v1.0.15](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.15) and check SHA256SUMS before opening it. Finish active tasks and quit TWOS before upgrading. To roll back, quit 1.0.15 and use the [v1.0.14 installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.14). Keep the existing chat profile and output folders.
 
 [AI Team group chats, files and acceptance](AI_TEAM_R2.en.md)
 
 > **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](MINIMAL_STATUS_AND_FOCUS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
 
-TWOS 1.0.14 / 101.62 · [This update](AI_TEAM_R2.en.md)
+TWOS 1.0.15 / 101.63 · [This update](AI_TEAM_R2.en.md)
 
 
-This guide applies to TWOS 1.0.14 / 101.62. Download availability is determined by its matching GitHub Release. Consult the signed receipt for source, signature and tested platform details.
+This guide applies to TWOS 1.0.15 / 101.63. Download availability is determined by its matching GitHub Release. Consult the signed receipt for source, signature and tested platform details.
 
 Currently supports macOS only. A Windows version is in development; no downloadable build is available yet. The current TWOS package is Apple Silicon. Engineering testing uses macOS 27.0.1 / Safari 27.0.1. A binary deployment target does not prove testing on every older system; consult the release support matrix before installing elsewhere.
 

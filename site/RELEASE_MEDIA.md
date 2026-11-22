@@ -16,7 +16,7 @@ This is a release SOP, not a background automation. Website publication does not
 
 ## Current capture
 
-TWOS 1.0.14 / 101.62, built from 5ef25df252e75cf9f55b7a4e2774219a9eddd4a9, includes Nyra 1.0.8 / 108. The gallery shows the signed installer in six isolated provider combinations, new-task setup and first-message recovery in a saved synthetic chat. The five portraits match the embedded files. Both 89-second product films retain their original 1.0.13 / 101.61 recording credit and release hashes.
+TWOS 1.0.15 / 101.63, from c93672ea6fc3cd52160b7147e3dcf00f629072cb, includes Nyra 1.0.8 / 108. The signed release was captured with six isolated provider combinations, a new team task and a reopened synthetic request. No task was sent to a model in the media session. All five portraits match the bundled resources. The two narrated films retain their original 1.0.13 recording provenance.
 
 ## Supported-service combinations — required from November 7, 2026
 

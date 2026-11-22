@@ -1,4 +1,4 @@
-# AI Team in TWOS 1.0.14 · user guide
+# AI Team in TWOS 1.0.15 · user guide
 
 ### Resume the first queued message
 
@@ -40,4 +40,4 @@ For a previous attempt marked **Delivery unconfirmed**, open the original member
 
 ## Installation and rollback
 
-Download the installer from [GitHub v1.0.14](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.14) and check SHA256SUMS before opening it. Finish active tasks and quit TWOS before upgrading. To roll back, quit 1.0.14 and use the [v1.0.13 installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13). Keep the existing chat profile and output folders.
+Download the installer from [GitHub v1.0.15](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.15) and check SHA256SUMS before opening it. Finish active tasks and quit TWOS before upgrading. To roll back, quit 1.0.15 and use the [v1.0.14 installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.14). Keep the existing chat profile and output folders.

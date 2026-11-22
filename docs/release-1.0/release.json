@@ -1,49 +1,54 @@
 {
-  "source_commit": "5ef25df252e75cf9f55b7a4e2774219a9eddd4a9",
-  "artifact": "Tianma-Work-OS-1.0.14.dmg",
-  "sha256": "6104046335fd3b502c83dcdb92c7fa120de3a2580578bf55fc14b83937ced155",
+  "source_commit": "c93672ea6fc3cd52160b7147e3dcf00f629072cb",
+  "artifact": "Tianma-Work-OS-1.0.15.dmg",
+  "sha256": "99bc9b582bde0e2ce5b1a10b51f51118e8dd950a4942ddbb86ce0db1dac0c78d",
   "signing_identity": "Developer ID Application: Jing Huang (BZJWQJ352K)",
-  "app_notarization_id": "86e80766-951f-47e0-becc-42e92e572069",
-  "dmg_notarization_id": "79e62300-18fe-4c4e-96c4-a4b3b5f50c24",
+  "app_notarization_id": "14383fa0-3348-4351-a781-177e0f0cc335",
+  "dmg_notarization_id": "36ab5137-3696-4b1a-b93a-790f87fbffd4",
   "gatekeeper": "PASS",
-  "version": "1.0.14",
-  "build": "101.62",
+  "version": "1.0.15",
+  "build": "101.63",
   "product": "TWOS",
   "architecture": "arm64",
   "platform": "macOS",
   "declared_minimum_macos": "13.0",
   "tested_macos": "27.0.1",
-  "bytes": 267228243,
+  "bytes": 267053091,
   "status": "SIGNED_NOTARIZED_VALIDATED",
-  "runtime_input_sha256": "b0b36c51068c8d75d0f5ca8bc6984da2c6bd4f296ae2f88ed29901260a2bb030",
-  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.14",
+  "runtime_input_sha256": "95ada3f78f2f94ab558d0fe673530390ed41583888ab521ed7ea38748f43d280",
+  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.15",
   "embedded_nyra_version": "1.0.8",
   "embedded_nyra_build": "108",
   "embedded_nyra_source_commit": "bb60b2000b8d5a25c7234c7e1741b111d66d346c",
   "embedded_nyra_source_snapshot": "14cdfa728bb4a13d6d87805bfa43bde7e57840a821c33d5a8b0bc4a65bfe84d8",
   "embedded_nyra_resource_manifest_sha256": "60e3196ae1ec503d2ed01983c1d22f403bd6e0ddfe3c6913de50b26875992c0f",
-  "at": "2026-11-20T16:59:11.674121+08:00",
+  "at": "2026-11-22T21:16:45.177731+08:00",
   "verification_document": "AI_TEAM_VERIFICATION.en.md",
   "store_submission": "NOT_SUBMITTED",
   "owner_acceptance": "NOT_RECORDED",
   "main_gate": {
     "complete_pass": true,
+    "artifact": "ad-hoc candidate, same frozen source inputs as the public installer",
     "counts": {
-      "passed": 1897,
+      "tests": 1901,
       "skipped": 1,
-      "failed": 0,
-      "errors": 0
+      "failures": 0,
+      "errors": 0,
+      "passed": 1900
     },
-    "duration_seconds": 6074.698,
-    "source": "5ef25df252e75cf9f55b7a4e2774219a9eddd4a9",
+    "duration_seconds": 5437.852,
+    "source": "c93672ea6fc3cd52160b7147e3dcf00f629072cb",
     "frozen_inputs_verified": 356,
     "safari": {
       "measurements": 38,
-      "visible_start": 38,
-      "visible_finish": 38,
-      "errors": []
+      "widths": [
+        390,
+        884,
+        1280,
+        1329
+      ]
     },
-    "junit_sha256": "f548e63174fdb191ef47c1d4c5719a68dad7cebbc2eac21d8b35644fe1032369"
+    "junit_sha256": "c422e1a39fe7f8c4274e2ebe7b3cd85da7a1b5792004de24fb4cbf746f20dcf3"
   },
   "demo": {
     "versions": [
@@ -80,15 +85,34 @@
     "recorded_build": "101.61"
   },
   "first_send_recovery": {
-    "service": "ChatGPT",
-    "room": "isolated synthetic paused room",
-    "sign_in_action": true,
-    "returned_and_rechecked": true,
-    "retained_inputs": 2,
-    "authorized_continue_clicks": 1,
-    "completed_attempts": 1,
-    "matched_replies": 1,
-    "queue_remaining": 0,
-    "provider_reported_model": "UNKNOWN"
+    "scenario": "synthetic photo-library website",
+    "planner": "ChatGPT",
+    "builder": "local Codex",
+    "reviewer": "Claude website",
+    "retained_user_inputs": 1,
+    "planner_reply_reconciled_without_resend": true,
+    "reviewed_files": 12,
+    "review_verdict": "revise",
+    "frontend_build": "PASS",
+    "backend_startup": "FAIL",
+    "provider_reported_models": "UNKNOWN",
+    "unexpected_revision": {
+      "terminal": "interrupted",
+      "elapsed_seconds": 44.356,
+      "output_bytes": 0,
+      "allowance_used": "UNKNOWN"
+    }
+  },
+  "signed_installer_gate": {
+    "counts": {
+      "tests": 58,
+      "skipped": 1,
+      "failures": 0,
+      "errors": 0,
+      "passed": 57
+    },
+    "duration_seconds": 127.217,
+    "manifest_files": 410,
+    "junit_sha256": "f814ec6be1a5f628523e66ae287ee58f8f75d66ac40fb59907f62d24302ff2b3"
   }
 }

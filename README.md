@@ -1,18 +1,18 @@
 # Tianma Work OS 1.0
 
-**TWOS 1.0.14 / 101.62 · Resume a queued team message after sign-in**
+**TWOS 1.0.15 / 101.63 · Recover the first team message and completed files**
 
-If the first message pauses, the chat identifies the member who needs attention. Sign in in that member’s window, choose **Back to chat · Check connection**, then continue the queued message when ready. Repeated pending copies can be sent once.
+If a first message stalls, choose **Check original conversation** in its group. TWOS checks the assigned member’s conversation for that exact message. A verified unsent draft can be sent once. An acknowledged message stays linked to its reply while the website switches pages.
 
 Open **AI Team → New task** in the top toolbar. Type a goal or attach a brief. Send a message to the group or mention one or more members by name. Start with three members and add up to three more. Other chats can work in parallel. For file work, choose an existing folder in **Files** and open the finished files there. [Watch the TWOS product introduction and projector checklist demo](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo).
 
-**TWOS 1.0.14 / 101.62: shared Codex projects/chats and direct Nyra task controls. Includes Nyra 1.0.8 / 108.**
+**TWOS 1.0.15 / 101.63: shared Codex projects/chats and direct Nyra task controls. Includes Nyra 1.0.8 / 108.**
 
 Select Codex on either side for the same project/chat sidebar and current conversation readback. Click Nyra to return to the bound workbench; use its compact task bubble to edit a draft, steer an owned turn, queue a supplement or stop the exact task. The delayed-history dispatch race discovered during final-candidate testing is repaired. Existing private-network navigation and accepted business results remain preserved.
 
 This version includes five standing/reclining outfits, 13 bundled Chinese Tian action recordings and 13 matching offline tiny-voca F2 American English recordings. Sound starts muted; unmute and enable Action voice for eligible transitions, with cooldown and no overlap. Close the panel with Close, Escape or Sound.
 
-**TWOS 1.0.14 / build 101.62** · [Download and verify](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.14) · [This update](docs/release-1.0/AI_TEAM_R2.en.md)
+**TWOS 1.0.15 / build 101.63** · [Download and verify](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.15) · [This update](docs/release-1.0/AI_TEAM_R2.en.md)
 
 [简体中文](README.zh-CN.md) · [Install](docs/release-1.0/INSTALL.en.md) · [User guide](docs/release-1.0/USER_GUIDE.en.md) · [Current release status](docs/CURRENT_DELIVERY.md) · [AI Team guide](docs/release-1.0/AI_TEAM_R2.en.md)
 
@@ -26,7 +26,7 @@ Discuss a goal and execute it in one macOS workspace. TWOS pairs official ChatGP
 
 ## Download and first use
 
-Download TWOS v1.0.14 using the link above. Verify SHA256SUMS before opening its DMG. The matching receipt binds source, signatures, notarization and artifact hashes. Historical v1.0.1 and v1.0.0 remain unchanged.
+Download TWOS v1.0.15 using the link above. Verify SHA256SUMS before opening its DMG. The matching receipt binds source, signatures, notarization and artifact hashes. Historical v1.0.1 and v1.0.0 remain unchanged.
 
 Open the matching DMG, drag TWOS into Applications and open it. Sign into the chosen official provider website, connect your already installed/logged-in local Codex, then create or resume one folder-bound task. Nyra is inside the same app; no separate pet installer or first-run artwork download is required. Ordinary installation needs no Python, Node or terminal.
 

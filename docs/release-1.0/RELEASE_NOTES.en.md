@@ -12,6 +12,8 @@ When the website acknowledges a message before opening its conversation, TWOS ke
 
 A completed local result is delivered even when the provider omits the model identity. If a previous timeout captured the completed result, **Recover files and continue to review** verifies its stored receipt and hash, then hands those same files to the reviewer. Optional root Git ignore rules are delivered as **gitignore.example**.
 
+In an isolated photo-library website trial, the group saved the planner’s response and recovered 12 files from the completed local turn. Claude reviewed that frozen revision and requested changes. The front end built. The back end failed to start, and the media, map and annotation endpoints were incomplete. The sample website did not pass end-to-end verification.
+
 ---
 
 # TWOS 1.0.14 / 101.62 · Resume a queued team message after sign-in

@@ -1,5 +1,9 @@
 # Troubleshooting
 
+If a first message stalls, choose **Check original conversation** in its group. TWOS checks the assigned member’s conversation for that exact message. A verified unsent draft can be sent once. An acknowledged message stays linked to its reply while the website switches pages.
+
+A confirmed local production timeout offers **Retry production with this plan**, which starts a new model call. If the local turn has already completed, **Recover files and continue to review** uses the original result. A review asking for changes can start another production turn and consume provider allowance.
+
 ### Resume the first queued message
 
 If the chat pauses, the notice names the member and service. Choose **Refresh connection** to check that member’s window. If prompted, sign in there, then click **Back to chat · Check connection**. When the notice says **Connection ready**, select **Continue queued message**. The check itself does not send anything. If an earlier version queued consecutive identical messages, **Continue once · skip duplicate copies** retains their history and sends one. Choose **Keep and send all** only if you intended separate assignments. A message with an uncertain delivery receipt is reconciled against its original operation before any further dispatch.
@@ -12,7 +16,7 @@ After a restart, open the original chat and choose Reconcile. The first click ca
 > **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](MINIMAL_STATUS_AND_FOCUS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
 
 
-TWOS 1.0.14 / 101.62 · [This update](AI_TEAM_R2.en.md)
+TWOS 1.0.15 / 101.63 · [This update](AI_TEAM_R2.en.md)
 
 
 - **macOS blocks installation:** verify the exact release and hash/signature receipt. Do not disable Gatekeeper or remove quarantine. An unnotarized engineering candidate is not the default public installation path.

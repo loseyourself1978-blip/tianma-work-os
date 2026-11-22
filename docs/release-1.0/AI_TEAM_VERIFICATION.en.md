@@ -1,4 +1,14 @@
-# AI Team verification · 1.0.14 / 101.62
+# AI Team verification · 1.0.15 / 101.63
+
+ChatGPT planned an isolated website task using synthetic media. The original run needed one explicit check to recover the matching planner reply. A native WebKit test verified automatic recovery when the conversation URL arrived 22 seconds after submission. It observed one send. The local builder returned 12 files after a confirmed timeout and an authorized second attempt. The final candidate recovered those exact bytes without repeating production. Claude inspected the frozen version and requested changes. The providers did not report verified per-turn model identities.
+
+The sample front end built. The index recognized two photos, a video, GPS coordinates, duplicate media and a damaged input. The website back end failed at startup. Missing media and annotation endpoints also blocked the timeline, map and tagging experience.
+
+Automatic revision started an additional local turn before the test's external stop control took effect. It was interrupted after 44.356 seconds with no output. The provider did not report the allowance consumed. The group stopped with an empty queue.
+
+The complete serial regression on the matching local candidate passed 1,900 tests with 1 historical installer test skipped. The 38 Safari measurements covered four viewport widths. The signed and notarized installer was mounted separately. Its 410 files and 356 source inputs matched. On that installer, 57 targeted tests passed and 1 skipped. Owner product acceptance remains open.
+
+## AI Team verification · 1.0.14 / 101.62
 
 The signed installer was tested with an isolated ChatGPT member window. The saved chat identified Ada’s sign-in requirement. After the user signed in and returned, the chat offered Continue once. One explicit click preserved both original example inputs and produced one dispatch with one matched reply, `Connection verified.`. The queue emptied. The provider did not report a per-turn model identity.
 
