@@ -67,7 +67,20 @@ return await (async () => {
   const chain=[];for(let p=e.parentElement,n=0;p&&p!==document.body&&n<4;p=p.parentElement,n++)chain.push({tag:p.tagName,role:p.getAttribute('role'),testID:p.getAttribute('data-testid'),className:String(p.className||'').slice(0,180),visible:visible(p),containsDraft:p.contains(input)});
   return {index,accept:e.accept.slice(0,400),multiple:e.multiple,disabled:e.disabled,directory:e.webkitdirectory||e.hasAttribute('directory'),capture:e.getAttribute('capture'),selfAriaHidden:e.getAttribute('aria-hidden'),ariaHidden:Boolean(e.closest('[aria-hidden=true]')),chain};
  });
- const isSendControl=e=>e.matches('[data-testid="send-button"],#composer-submit-button,[data-testid="chat-input-send"]')||/^(Send(?: message| prompt)?|发送(?:消息|提示)?)$/i.test(e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent.trim());
+ const isSendControl=e=>{
+  const namedBy=(e.getAttribute('aria-labelledby')||'').trim().split(/\s+/).map(id=>document.getElementById(id)?.textContent||'').join(' ').trim();
+  const labels=[e.getAttribute('aria-label'),e.getAttribute('title'),namedBy].map(v=>(v||'').trim()).filter(Boolean);
+  const form=input.closest('form');
+  if(provider==='ChatGPT'&&form&&!form.contains(e)&&e.form!==form)return false;
+  const caption=(e.matches('input[type=submit]')?e.value:e.textContent).trim();
+  if([...labels,caption,e.getAttribute('data-testid')||''].some(v=>/voice|speech|dictat|stop|cancel|语音|听写|停止|取消/i.test(v)))return false;
+  const send=/^(?:send(?: (?:a |the )?(?:message|prompt))?|发送(?:消息|提示词?|提示语|提示信息)?)(?:\s*[（(](?:Enter|Return|回车)[）)])?$/i;
+  if(e.matches('[data-testid="send-button"],#composer-submit-button,[data-testid="chat-input-send"]')||[...labels,caption].some(v=>send.test(v)))return true;
+  // An unlabelled native submitter belongs only to the form owning this editor.
+  return provider==='ChatGPT'&&form&&e.matches('button[type=submit],input[type=submit]')&&e.form===form&&
+   !labels.length&&!caption&&!e.hasAttribute('formaction')&&!e.hasAttribute('formtarget')&&
+   !e.hasAttribute('aria-haspopup')&&!e.hasAttribute('data-testid');
+ };
  const sendShape=()=>[...document.querySelectorAll('button,[role=button]')].filter(isSendControl).slice(0,8).map(e=>({tag:e.tagName,testID:e.getAttribute('data-testid'),visible:visible(e),disabled:Boolean(e.disabled),ariaDisabled:e.getAttribute('aria-disabled'),inHistory:Boolean(e.closest('[data-twos-native-card],[data-message-author-role],[data-is-streaming],.font-claude-response'))}));
  const deepSeekSend=(requireEnabled=true)=>provider==='DeepSeek' ? window.twosProviderDOM?.deepSeekControl('send',requireEnabled)||null : null;
  // Limit reconciliation to visible conversation messages, not account history.
@@ -177,6 +190,10 @@ return await (async () => {
   return {...modelEvidence,...(request.teamReview && !nextUser && (busy() || claudeStreaming) ? {teamGenerating:true}:{}),...(teamActivity?{teamActivity}:{}),state:settled&&reply.trim()?'reply':'sent',conversationURL:clean(location.href),attachments:request.files?.map(({id,name,mime,size,hash})=>({id,name,mime,size,hash}))||[],...(reply?{reply,replyMessage:replyID||'rendered-answer'}:{})};
  };
  const existing=result();if(existing)return existing;
+ if(request.inspectOnly && request.inspectRetainedDraft && targetCurrent()){
+  if(!value().trim())return {state:'retained_empty'};
+  return {state:normalize(value())===normalize(prompt)?'retained_exact':'retained_changed'};
+ }
  if(request.inspectOnly)return {state:'unknown',reason:'EXACT_RECEIPT_NOT_FOUND · SEND_CONTROL_SHAPE '+JSON.stringify(sendShape())+(request.files?.length?' · UPLOAD_CONTROL_SHAPE '+JSON.stringify(uploadShape()):'')};
  // An old draft may have been manually submitted outside TWOS. Losing that
  // draft is not proof of non-delivery: reconcile rather than recreate/resend.
@@ -220,11 +237,31 @@ return await (async () => {
  if(request.preflightOnly)return {state:'ready'};
  if(!targetCurrent() && !(await waitForTeamPicker()))return {state:'target_changed'};
  // Keep the exact marked body as a recoverable draft while uploads settle.
- input.focus();
- if(input instanceof HTMLTextAreaElement){Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(input,prompt);input.dispatchEvent(new Event('input',{bubbles:true}));}
- else {
-  const range=document.createRange();range.selectNodeContents(input);const selection=getSelection();selection.removeAllRanges();selection.addRange(range);
-  if(!document.execCommand('insertHTML',false,prompt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')))return {state:'unsupported'};
+ if(!request.resumeDraft){
+  input.focus();
+  if(input instanceof HTMLTextAreaElement){
+   Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(input,prompt);
+   input.dispatchEvent(new Event('input',{bubbles:true}));
+  }else{
+   const range=document.createRange();range.selectNodeContents(input);
+   const selection=getSelection();selection.removeAllRanges();selection.addRange(range);
+   // The team's versioned wire format is one line of plain text. Use the
+   // editor's text-input path so its model and rendered draft update together.
+   const textInput=provider==='ChatGPT' && request.teamReview && request.teamWireVersion===1;
+   const body=textInput?prompt:prompt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+   // macOS can smart-substitute a JSON delimiter during insertText. Keep the
+   // web editor's own input event, with substitutions off only for this edit.
+   const settings=textInput?['autocorrect','spellcheck','writingsuggestions']:[];
+   const saved=settings.map(name=>[name,input.getAttribute(name)]);
+   try{
+    for(const name of settings)input.setAttribute(name,name==='autocorrect'?'off':'false');
+    if(!document.execCommand(textInput?'insertText':'insertHTML',false,body))return {state:'unsupported'};
+   }finally{
+    for(const [name,originalValue] of saved){
+     if(originalValue===null)input.removeAttribute(name);else input.setAttribute(name,originalValue);
+    }
+   }
+  }
  }
  // Rich-text editors may reconcile their controlled value asynchronously.
  // Wait for the exact frozen body, never normalize away a content difference.
@@ -324,13 +361,13 @@ return await (async () => {
  }
  // Optional draft-only mode never reports SENT. Normal transfers require one
  // exact visible send control and then the complete marked user-message echo.
- if(request.draftOnly)return {state:'draft'};
+ if(request.draftOnly)return {state:'draft',reason:'EXACT_DRAFT_CONFIRMED_NO_MESSAGE_SENT'};
  const sendDeadline=performance.now()+8000;
  while(performance.now()<sendDeadline){
   await new Promise(r=>setTimeout(r,100));
   if(!targetCurrent() && !(await waitForTeamPicker()))return {state:'target_changed'};
   if(!bindExactComposer())return {state:'draft',reason:'EXACT_DRAFT_CHANGED_NO_MESSAGE_SENT'};
-  const candidates=[...document.querySelectorAll('button,[role=button]')].filter(e=>visible(e)&&!e.disabled&&e.getAttribute('aria-disabled')!=='true'&&!e.closest('[inert],[aria-hidden=true],[data-twos-native-card],[data-message-author-role],[data-is-streaming],.font-claude-response')&&isSendControl(e));
+  const candidates=[...document.querySelectorAll('button,[role=button],input[type=submit]')].filter(e=>visible(e)&&!e.disabled&&e.getAttribute('aria-disabled')!=='true'&&!e.closest('[inert],[aria-hidden=true],[data-twos-native-card],[data-message-author-role],[data-is-streaming],.font-claude-response')&&isSendControl(e));
   const scoped=composerScopes.map(root=>candidates.filter(e=>root.contains(e))).find(items=>items.length);
   const buttons=scoped||candidates;
   const deepSeekControl=deepSeekSend();if(!buttons.length&&deepSeekControl)buttons.push(deepSeekControl);

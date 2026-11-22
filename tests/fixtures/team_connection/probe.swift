@@ -4,6 +4,10 @@ let profile = URL(fileURLWithPath: CommandLine.arguments[1])
 let resources = URL(fileURLWithPath: CommandLine.arguments[2])
 let roomID = UUID().uuidString
 let library = profile.appendingPathComponent("team-r2"), dir = library.appendingPathComponent(roomID)
+do {
+  try NativeWorkbench.safeDirectory(profile.appendingPathComponent("unused/../traversal"))
+  fatalError("Accepted traversal")
+} catch let error as CocoaError where error.code == .fileWriteNoPermission {}
 try NativeWorkbench.safeDirectory(dir)
 let member = TeamMember(role: "Planner", product: "ChatGPT", provider: "OpenAI", model: "", displayName: "Ada", duties: ["Planner"])
 let folder = try NativeCodex.inspectDirectory(dir.path, isolated: true)
@@ -93,9 +97,54 @@ Task { @MainActor in
       .first(where: { $0.title == "Back to chat · Check connection" }) else { throw ProbeFailure(description: "Missing return action") }
     back.performClick(nil)
     try await waitUntil(team.web, "room.recovery.state==='webReady' && room.inputs.length===2 && room.attempts.length===0")
+    if ["retained", "manual", "missing"].contains(scenario) {
+      _ = try await provider.evaluateJavaScript("const submit=document.querySelector('[data-testid=send-button]'); submit.disabled=true; true")
+    }
+    if scenario == "richText" {
+      let configure = """
+        const editor=document.createElement('div');
+        editor.id='prompt-textarea'; editor.contentEditable='true'; editor.setAttribute('role','textbox');
+        const send=document.querySelector('[data-testid=send-button]');
+        editor.setAttribute('spellcheck','true'); input.replaceWith(editor); send.disabled=true;
+        send.removeAttribute('data-testid'); send.setAttribute('aria-label','发送提示词'); send.textContent='';
+        editor.addEventListener('input',e=>{send.disabled=e.inputType!=='insertText'||!e.isTrusted;});
+        const voice=document.createElement('button'); voice.id='composer-submit-button';
+        voice.type='button'; voice.dataset.testid='composer-speech-button'; send.after(voice);
+        const other=document.createElement('form'); other.innerHTML='<button type="button">Send</button>'; document.body.append(other);
+        const deliver=send.onclick;
+        send.onclick=()=>{input.value=editor.innerText;editor.textContent='';deliver();};
+        true
+        """
+      _ = try await provider.evaluateJavaScript(configure)
+    }
     try await press("Continue once · skip duplicate copies")
+    if ["retained", "manual", "missing"].contains(scenario) {
+      try await waitUntil(team.web, "room.recovery.retained && room.attempts.length===1 && room.attempts[0].state==='retainedDraft'")
+      try await waitUntil(provider, "deliveries===0 && document.querySelector('textarea').value.includes('[TWOS handoff ')")
+      _ = try await provider.evaluateJavaScript("submit.disabled=false;submit.removeAttribute('data-testid');submit.removeAttribute('aria-label');submit.textContent='';submit.type='submit';submit.form.onsubmit=e=>e.preventDefault();true")
+      if scenario == "manual" {
+        _ = try await provider.evaluateJavaScript("submit.click();true")
+      } else if scenario == "missing" {
+        _ = try await provider.evaluateJavaScript("input.value='other draft';true")
+        try await press("Check original conversation")
+        try await waitUntil(team.web, "room.recovery.state==='retainedChanged' && !document.querySelector('#notice').innerText.includes('Send verified draft')")
+        _ = try await provider.evaluateJavaScript("input.value='';true")
+        try await press("Check original conversation")
+        try await press("I have not sent it · restore draft")
+        try await waitUntil(provider, "deliveries===0 && input.value.includes('[TWOS handoff ')")
+      }
+      try await press("Check original conversation")
+      if scenario != "manual" {
+        try await waitUntil(team.web, "room.recovery.state==='retainedExact'")
+        try await waitUntil(provider, "deliveries===0")
+        try await press("Send verified draft")
+      }
+    }
     try await waitUntil(team.web, "room.answers.length===1 && room.state==='completed' && room.queue.length===0")
     try await waitUntil(provider, "deliveries===1")
+    if scenario == "richText" {
+      try await waitUntil(provider, "(e=>e.getAttribute('spellcheck')==='true' && !e.hasAttribute('autocorrect') && !e.hasAttribute('writingsuggestions'))(document.querySelector('#prompt-textarea'))")
+    }
     let record=try TeamWorkspace.readRecord(roomID,from:dir)
     guard record.attempts.count==1,record.conversation?.inputs.count==2,record.conversation?.skippedCopies?.count==1,
           record.attempts.first?.model==nil else { throw ProbeFailure(description:"Durable receipt mismatch") }

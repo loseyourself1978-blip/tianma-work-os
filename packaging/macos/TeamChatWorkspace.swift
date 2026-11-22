@@ -355,7 +355,7 @@ final class TeamChatWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDel
           "attempts": r.attempts.map { a in
             [
               "id": a.id, "member": a.role, "snapshot": jsonObject(a.memberSnapshot),
-              "state": a.state, "transport": a.transportState ?? "",
+              "state": a.state == "intent" && a.web?.state == "draft" && a.web?.mayHaveSent == false ? "retainedDraft" : a.state, "transport": a.transportState ?? "",
               "requested": a.memberSnapshot?.model ?? "", "actual": a.model ?? "",
               "text": a.replyText ?? "", "time": a.started, "message": a.assignment?.message ?? "",
               "kind": a.assignment?.kind ?? a.role,
@@ -516,6 +516,8 @@ final class TeamChatWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDel
         }
       case "stop": s.stopRoom()
       case "checkConnection": try s.checkRoomConnection(step: args["step"] as? String ?? "")
+      case "restoreDraft": try s.restoreEmptyDraft(args["step"] as? String ?? "")
+      case "sendRetained": try s.retryRetainedDraft(args["step"] as? String ?? "")
       case "continueConnection":
         try s.continueRoomConnection(step: args["step"] as? String ?? "", skipCopies: args["skipCopies"] as? Bool == true)
       case "reconcile":

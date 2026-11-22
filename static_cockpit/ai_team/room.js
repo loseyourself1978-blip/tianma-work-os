@@ -12,7 +12,7 @@ const terms={
   draft:['New','新建'],running:['Running','执行中'],stopping:['Stopping…','正在停止…'],stopped:['Stopped','已停止'],
   paused:['Paused','已暂停'],blocked:['Needs attention','需要处理'],awaitingOwner:['Ready for your review','等待你验收'],
   completed:['Completed','已完成'],accepted:['Accepted','已接受'],changes:['Changes requested','已要求修改'],
-  sent:['Sent','已发送'],unsent:['Not sent','未送达'],intent:['Preparing','准备中'],unknown:['Delivery unconfirmed','送达待确认'],
+  retainedDraft:['Draft · not sent','草稿 · 尚未发送'],sent:['Sent','已发送'],unsent:['Not sent','未送达'],intent:['Preparing','准备中'],unknown:['Delivery unconfirmed','送达待确认'],
   sending:['Sending','发送中'],queued:['Queued','队列中'],failed:['Failed','失败'],cancelled:['Cancelled','已取消'],
   rejected:['Rejected','已拒绝'],interrupted:['Interrupted','已中断'],Planner:['Planning','计划'],Builder:['Production','执行'],
   Supervisor:['Supervision','监督'],Reviewer:['Review','审查'],Tester:['Testing','测试'],
@@ -249,6 +249,28 @@ const connectionCopy={
   codexUnavailable:['Open local Codex and check the connection and chosen model.','请打开本机 Codex，核对连接和所选模型。']
 };
 function recoveryNotice(target,recovery){
+  if(recovery.retained){
+    const name=display(member(recovery.member))||recovery.member;
+    const copy={
+      checkingConnection:['Checking the original conversation…','正在核对原会话…'],
+      retainedExact:['The original draft matches. Send it once here, or send it in the member window and return to check.','已核对原草稿。可在这里发送一次，也可在成员窗口发送后返回核对。'],
+      retainedEmpty:['The original composer is empty. Check the member window. If you have never sent this draft there, you can restore its text.','原输入框已空。请检查成员窗口。如确认从未手动发送，可以恢复原草稿。'],
+      retainedChanged:['The composer contains different text. Open the member window to review it.','输入框中已有其他内容，请打开成员窗口核对。'],
+      retainedCheck:['Open the original conversation to locate the draft or the sent message, then check again.','请打开成员窗口找到原草稿或已发送消息，再回来核对。'],
+      retainedDraft:['The website did not send this draft.','这份网页草稿尚未发送。']
+    };
+    target.hidden=false;
+    target.append(el('strong',name+' · '+recovery.provider),el('span',tr(...(copy[recovery.state]||copy.retainedDraft))));
+    const actions=row();
+    if(recovery.state==='retainedExact')
+      actions.append(btn(tr('Send verified draft','发送已核对的草稿'),()=>post('sendRetained',{step:recovery.step}),'primary'));
+    if(recovery.state==='retainedEmpty')
+      actions.append(btn(tr('I have not sent it · restore draft','确认未发送，恢复草稿'),()=>post('restoreDraft',{step:recovery.step}),'primary'));
+    const check=btn(tr('Check original conversation','核对原会话'),()=>post('checkConnection',{step:recovery.step}));
+    check.disabled=recovery.state==='checkingConnection';
+    actions.append(check,actionLink(tr('Open member window','打开成员窗口'),()=>post('channel',{member:recovery.member})));
+    target.append(actions);return;
+  }
   const m=member(recovery.member), message=connectionCopy[recovery.state]||connectionCopy.webUnavailable;
   target.hidden=false;
   target.append(el('strong',(display(m)||recovery.member)+' · '+recovery.provider),el('span',tr(...message)));

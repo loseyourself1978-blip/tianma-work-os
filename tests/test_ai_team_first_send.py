@@ -41,7 +41,7 @@ def test_signed_out_member_can_resume_first_message_once(tmp_path):
             binary = tmp_path / 'connection-test'
             subprocess.run(['xcrun','swiftc','-swift-version','5','-module-cache-path',
                             str(tmp_path/'cache'),str(main),'-o',str(binary)],check=True,timeout=180)
-            for case in ('resume', 'stop', 'uncertain'):
+            for case in ('resume', 'stop', 'uncertain', 'retained', 'manual', 'missing', 'richText'):
                 result = subprocess.run([str(binary),str(tmp_path/case),str(ROOT/'static_cockpit'),case],
                                         env=os.environ,capture_output=True,text=True,timeout=75)
                 assert result.returncode == 0, case + ': ' + result.stdout + result.stderr

@@ -840,7 +840,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       }
     }
     if let r = run, ["running", "stopping"].contains(r.state) {
-      if r.expired || r.pending.map({ Date().timeIntervalSince1970 - $0.started >= 600 }) == true {
+      if r.expired || r.pending.map({ Date().timeIntervalSince1970 - max($0.started, $0.web?.updatedAt ?? 0) >= 600 }) == true {
         if r.state == "running" { stop(reason: "timeout") }
       }
       if r.state == "stopping", let limit = observationDeadline, Date() >= limit {
@@ -1200,7 +1200,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     }
     if !checking { invokeWeb(a.id, w, inspect: true) }
   }
-  private func invokeWeb(_ id: String, _ w: WebHandoffReceipt, inspect: Bool) {
+  private func invokeWeb(_ id: String, _ w: WebHandoffReceipt, inspect: Bool, checkDraft: Bool = false, restoreDraft: Bool = false) {
     guard !checking else { return }
     guard let attempt = run?.pending, attempt.id == id, TeamMember.homes[w.provider] != nil else { return }
     let role = attempt.role
@@ -1209,6 +1209,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       NativeWorkbench.restorableURL(reviewer.web.url, service: reviewer.serviceHome)?.absoluteString
         != bound
     {
+      if checkDraft { recoveryState = "retainedCheck"; publish() }
       return
     }
     checking = true
@@ -1224,6 +1225,8 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
         }
       } catch {checking=false;fail("attachmentUnsupported");return}
     }
+    if checkDraft { req["inspectRetainedDraft"] = true }
+    if restoreDraft { req["draftOnly"] = true; req["resumeDraft"] = false }
     if managed && member.model.isEmpty { req["teamWebsiteDefault"] = true }
     req["expectedReviewModel"] = aMemberModel(id) ?? member.model
     req["allowedTeamSelections"] = TeamMember.selectionLabels(aMemberModel(id) ?? member.model, service: member.service)
@@ -1233,6 +1236,19 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       guard let a = self.run?.pending, a.id == id, self.storageOK else { return }
       let i = self.run!.attempts.count - 1
       let state = response["state"] as? String ?? "unknown"
+      if (checkDraft || restoreDraft), self.retainedAttempt?.id != id { return }
+      if (checkDraft || restoreDraft), !["sent", "reply", "generation_stopped"].contains(state) {
+        self.recoveryStep = id
+        switch state {
+        case "retained_exact": self.recoveryState = "retainedExact"
+        case "draft" where restoreDraft && response["reason"] as? String == "EXACT_DRAFT_CONFIRMED_NO_MESSAGE_SENT":
+          self.recoveryState = "retainedExact"
+        case "retained_empty" where (w.files ?? []).isEmpty: self.recoveryState = "retainedEmpty"
+        case "retained_changed", "draft_conflict": self.recoveryState = "retainedChanged"
+        default: self.recoveryState = "retainedCheck"
+        }
+        self.publish(); return
+      }
       if !inspect {
         if let selection = response["selectedAtSend"] as? String, member.acceptsSelection(selection) {
           self.run!.attempts[i].observedWebSelection = selection
@@ -1256,6 +1272,14 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       {
         self.fail("unconfirmed")
         return
+      }
+      if (checkDraft || restoreDraft), ["sent","reply"].contains(state),
+        self.run?.stopRequested != true {
+        self.run!.state = "running"; self.run!.reason = ""; self.notice = ""
+        self.run!.attempts[i].web?.state = "sent"
+        self.run!.attempts[i].web?.mayHaveSent = true
+        self.run!.attempts[i].web?.updatedAt = Date().timeIntervalSince1970
+        self.startRoomTimer()
       }
       if response["teamGenerating"] as? Bool == true {
         self.recordActivity(
@@ -1453,7 +1477,46 @@ extension TeamWorkspace {
     guard let step, let member = r.members.first(where: { $0.role == step.member }) else { return nil }
     return (step, member)
   }
+  private var retainedAttempt: TeamAttempt? {
+    guard let r = run, r.state == "paused", r.stopRequested != true,
+      let a = r.pending, let w = a.web, w.state == "draft", w.mayHaveSent == false,
+      w.message == a.id, w.binding == r.id, w.source == "team:" + r.id,
+      let m = a.memberSnapshot, m.service == w.provider,
+      r.members.contains(where: { $0.role == m.role && $0.service == m.service }),
+      w.hash == a.inputHash, NativeCodex.digest(Data(w.text.utf8)) == a.inputHash else { return nil }
+    return a
+  }
+
+  func restoreEmptyDraft(_ id: String) throws {
+    guard let a = retainedAttempt, a.id == id, let w = a.web, !checking,
+      recoveryStep == id, recoveryState == "retainedEmpty", (w.files ?? []).isEmpty
+    else { throw TeamError.wrongVersion }
+    recoveryState = "checkingConnection"; publish()
+    invokeWeb(id, w, inspect: false, restoreDraft: true)
+  }
+
+  func retryRetainedDraft(_ id: String) throws {
+    guard let a = retainedAttempt, a.id == id, var w = a.web, !checking,
+      recoveryStep == id, recoveryState == "retainedExact" else { throw TeamError.wrongVersion }
+    // Persist uncertainty before the website can receive a click, including across a crash.
+    w.resumeDraft = true
+    w.mayHaveSent = true
+    w.updatedAt = Date().timeIntervalSince1970
+    w.state = "sending"
+    observingWeb = nil
+    recoveryState = ""; recoveryStep = ""; notice = ""
+    run!.attempts[run!.attempts.count - 1].web = w
+    run!.state = "running"; run!.reason = ""
+    try persist()
+    observationDeadline = Date().addingTimeInterval(15)
+    invokeWeb(id, w, inspect: false)
+    startRoomTimer(); publish()
+  }
   var roomRecovery: [String: Any] {
+    if let a = retainedAttempt, let w = a.web {
+      return ["step":a.id, "member":a.role, "provider":w.provider, "retained":true,
+              "state":recoveryStep == a.id ? recoveryState : "retainedDraft"]
+    }
     guard let t = recoveryTarget else { return [:] }
     let current = recoveryStep == t.step.id && checkedMember == t.member
     return ["step": t.step.id, "member": t.member.role, "provider": t.member.service,
@@ -1499,6 +1562,13 @@ extension TeamWorkspace {
   }
 
   func checkRoomConnection(step: String) throws {
+    if let a = retainedAttempt, a.id == step, let w = a.web {
+      guard !checking else { return }
+      restoreReviewer(w, role: a.role)
+      recoveryState = "checkingConnection"; recoveryStep = step; notice = ""; publish()
+      invokeWeb(step, w, inspect: true, checkDraft: true)
+      return
+    }
     guard let target = recoveryTarget, target.step.id == step else { throw TeamError.wrongVersion }
     if recoveryProbe != nil, recoveryStep == step, checkedMember == target.member { return }
     let token = UUID(), member = target.member
@@ -1604,7 +1674,9 @@ extension TeamWorkspace {
   }
   @objc private func returnFromMember(_ sender: NSButton) {
     showRoom?()
-    if let t = recoveryTarget, t.member.role == sender.identifier?.rawValue {
+    if let a = retainedAttempt, a.role == sender.identifier?.rawValue {
+      try? checkRoomConnection(step: a.id)
+    } else if let t = recoveryTarget, t.member.role == sender.identifier?.rawValue {
       try? checkRoomConnection(step: t.step.id)
     }
   }

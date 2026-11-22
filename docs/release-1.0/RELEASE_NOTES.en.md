@@ -1,3 +1,11 @@
+# TWOS 1.0.15 / 101.63 · AI Team first-message recovery
+
+A queued ChatGPT assignment enters the rich-text editor as plain text. TWOS checks the complete marked draft before clicking Send. If the website leaves a draft, the group shows **Draft · not sent**. Choose **Check original conversation**. A matching draft offers **Send verified draft**. If you already sent it from the member window, TWOS looks for the matching message and reply.
+
+If the composer contains different text, TWOS leaves it in place. If it is empty, inspect the member window first. For text-only assignments, **I have not sent it · restore draft** restores the original wording for review. A separate click sends it. An uncertain delivery stays on the reconciliation path.
+
+---
+
 # TWOS 1.0.14 / 101.62 · Resume a queued team message after sign-in
 
 ### Resume the first queued message

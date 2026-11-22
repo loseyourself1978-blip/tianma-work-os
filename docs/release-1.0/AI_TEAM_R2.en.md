@@ -28,6 +28,10 @@ A reviewer inspects the frozen content. A blocking finding must cite a requireme
 2. Attach a short, non-sensitive note. Mention two members and ask a question that can only be answered from the note. Compare their answers with the source.
 3. Reopen that chat and ask a follow-up. For a file task, choose an existing folder and use Show in Finder to check the result. A request to revise the file creates a new revision in the same chat.
 
+## Recover a website draft
+
+If the group shows “Draft · not sent”, choose **Check original conversation**. A matching draft can be sent once with **Send verified draft**. If you already sent it on the website, return to the group and check to collect its receipt. If the original composer is empty, inspect the member conversation before choosing **I have not sent it · restore draft**. Restoring fills the composer. Sending requires a separate click.
+
 ## Installation and rollback
 
 Download the installer from [GitHub v1.0.14](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.14) and check SHA256SUMS before opening it. Finish active tasks and quit TWOS before upgrading. To roll back, quit 1.0.14 and use the [v1.0.13 installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13). Keep the existing chat profile and output folders.

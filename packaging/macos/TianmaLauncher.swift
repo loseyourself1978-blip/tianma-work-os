@@ -141,6 +141,11 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
     }
 
     static func safeDirectory(_ directory: URL) throws {
+        // A URL ending in ".." can be its own parent in Foundation.
+        // Reject traversal before checking ancestry, including symlink boundaries.
+        guard directory.isFileURL, directory.path.hasPrefix("/"), !directory.pathComponents.contains("..") else {
+            throw CocoaError(.fileWriteNoPermission)
+        }
         var cursor = directory
         while cursor.path != "/" {
             do {
