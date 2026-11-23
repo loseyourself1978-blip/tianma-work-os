@@ -14,6 +14,13 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_team_toolbar_roster_and_language_preserve_draft(tmp_path):
     mac = ROOT / "packaging/macos"
     swift = (mac / "TianmaLauncher.swift").read_text().split("// The only child runtime", 1)[0]
+    # Preserve the actual destination selection, including saved team chats.
+    # This offline UI harness only permits local pages at the loading boundary.
+    start = "func start(embedded: Bool = false, navigateTo: URL? = nil) {"
+    assert swift.count(start) == 1
+    swift = swift.replace(start, start + """
+        guard ["localhost", "127.0.0.1", "::1"].contains(serviceHome.host ?? "") else { return }
+    """)
     for name in ("CodexAttachments","CodexTelemetry","NativeCodex","TeamReport","TeamRun","TeamConversation", "TeamArtifacts", "TeamWorkspace", "TeamChatWorkspace","IntegratedWorkbench","PairedWorkflow"):
         body = (mac / (name+".swift")).read_text()
         if name == "TeamWorkspace":
@@ -22,9 +29,6 @@ def test_team_toolbar_roster_and_language_preserve_draft(tmp_path):
             assert body.count("connectTeamChannels()") == 2
             body = re.sub(r"(?m)^\s*connectTeamChannels\(\)\s*$", "", body)
             assert body.count("connectTeamChannels()") == 1
-            navigation = "w.start(embedded: true, navigateTo: URL(string: home))"
-            assert body.count(navigation) == 1
-            body = body.replace(navigation, "_ = home")
             # Start the actual native folder sheet at a populated fixture. The
             # picker completion, validation and UI publication use product code.
             insert = "    panel.beginSheetModal(for: win)"
