@@ -1,6 +1,6 @@
 # Upgrade and uninstall
 
-Download the installer from [GitHub v1.0.15](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.15) and check SHA256SUMS before opening it. Finish active tasks and quit TWOS before upgrading. To roll back, quit 1.0.15 and use the [v1.0.14 installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.14). Keep the existing chat profile and output folders.
+Download the installer from [GitHub v1.0.16](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.16) and check SHA256SUMS before opening it. Finish active tasks and quit TWOS before upgrading. To roll back, quit 1.0.16 and use the [v1.0.15 installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.15). Keep the existing chat profile and output folders.
 
 Finish or explicitly stop your own active work. Quit TWOS normally, then replace its application with the verified release. Do not edit the running bundle. Existing local environments, directory authorizations, drafts and provider website stores are not release assets and must not be copied into a public package.
 

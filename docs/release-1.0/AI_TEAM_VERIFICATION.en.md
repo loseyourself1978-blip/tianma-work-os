@@ -1,4 +1,12 @@
-# AI Team verification · 1.0.15 / 101.63
+# TWOS 1.0.16 / 101.64
+
+The mounted candidate completed two official ChatGPT turns in one conversation. The second turn recalled a random marker that appeared only in the first request. An ordinary signed-in ChatGPT and Claude exchange returned two distinct reply receipts. Claude’s complete response matched the message sent back to ChatGPT. The checkbox stopped future dispatches. The two-composer project layout was tested separately with local macOS WebKit, including a preserved project draft and a discussion change. Per-turn backend model identities were unavailable.
+
+The live checks used candidate `e83e72874638`. The final installer uses `410ff3a62cd7`. Among the frozen runtime inputs, only the two localized pause explanations changed. The final candidate's WebKit regression checked the visible reason and recovery action in both languages.
+
+The complete serial suite passed 1,904 cases. One historical upgrade case requires both TWOS 1.0.1 installers (builds 101.1 and 101.2) and was skipped. The signed installer passed 168 focused checks. Product acceptance remains with the Owner.
+
+## AI Team verification · 1.0.15 / 101.63
 
 ChatGPT planned an isolated website task using synthetic media. The original run needed one explicit check to recover the matching planner reply. A native WebKit test verified automatic recovery when the conversation URL arrived 22 seconds after submission. It observed one send. The local builder returned 12 files after a confirmed timeout and an authorized second attempt. The final candidate recovered those exact bytes without repeating production. Claude inspected the frozen version and requested changes. The providers did not report verified per-turn model identities.
 

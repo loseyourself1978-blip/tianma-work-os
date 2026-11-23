@@ -6,7 +6,7 @@ The chat sends the goal, addressed message and selected attachment contents to t
 
 > **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](MINIMAL_STATUS_AND_FOCUS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
 
-TWOS 1.0.15 / 101.63 · [This update](AI_TEAM_R2.en.md)
+TWOS 1.0.16 / 101.64 · [This update](AI_TEAM_R2.en.md)
 
 
 TWOS hosts official provider websites and a local Codex App Server client. Each provider applies its own account, retention, plan and usage terms. TWOS does not merge all visible services into one quota pool or silently switch billing paths. No credits, resets or subscriptions are purchased automatically.

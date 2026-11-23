@@ -44,4 +44,4 @@ Claude 项目同时打开讨论串时，双栏自动发送只使用已识别的�
 
 ## 安装与回退
 
-从 [GitHub v1.0.15](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.15) 下载安装包，打开前核对 SHA256SUMS。升级前请先结束正在执行的任务并正常退出 TWOS。要回退，请正常退出 1.0.15，从 [v1.0.14](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.14) 获取上一版；保留原群聊配置和成果目录。
+从 [GitHub v1.0.16](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.16) 下载安装包，打开前核对 SHA256SUMS。升级前请先结束正在执行的任务并正常退出 TWOS。要回退，请正常退出 1.0.16，从 [v1.0.15](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.15) 获取上一版；保留原群聊配置和成果目录。

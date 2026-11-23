@@ -1,4 +1,8 @@
-# Use TWOS 1.0.15
+# Use TWOS 1.0.16
+
+Ada can continue a conversation after the first round. A member that follows the website uses its current choice. For an explicitly pinned model, the group shows the configured and observed choices. Select the configured model on the website, or adopt the current choice for future turns.
+
+The auto-send checkboxes in both panes control the same exchange. When a Claude project has two composers, TWOS needs to identify the selected discussion. If it cannot, open that discussion separately and resume there. Sign in to ChatGPT before starting an exchange from a guest conversation.
 
 If a first message stalls, choose **Check original conversation** in its group. TWOS checks the assigned member’s conversation for that exact message. A verified unsent draft can be sent once. An acknowledged message stays linked to its reply while the website switches pages.
 
@@ -11,7 +15,7 @@ If the first message pauses, the chat identifies the member who needs attention.
 > **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](MINIMAL_STATUS_AND_FOCUS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
 
 
-TWOS 1.0.15 / 101.63 · [This update](AI_TEAM_R2.en.md)
+TWOS 1.0.16 / 101.64 · [This update](AI_TEAM_R2.en.md)
 
 
 Choose the path matching your situation; they are not one mandatory sequence.
@@ -62,4 +66,4 @@ Click the character once to restore the bound TWOS workbench. The bubble default
 
 [English action voice: tiny-voca F2](ENGLISH_VOICE.en.md)
 
-[AI Team guide for 1.0.15](AI_TEAM_R2.en.md)
+[AI Team guide for 1.0.16](AI_TEAM_R2.en.md)

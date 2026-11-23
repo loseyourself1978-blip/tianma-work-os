@@ -129,6 +129,15 @@ never invent a percentage or a precise completion time. Explain blockers
 promptly and continue independent authorized work. At closeout reconcile the
 actual outcome and any remaining action against the original scope.
 
+Every progress update must give the estimated time remaining to the requested
+deliverable, including verification and release when in scope. Give the current
+stage, measured progress, the time of the estimate and a local completion window.
+Separate active work from external waits. Update at each major milestone, on a
+failed check, a blocker or a material change of pace. During longer active runs,
+report at least every 15 minutes. If an external wait has no dependable ETA, give
+the next check time and the estimated work remaining after that wait. Record the
+latest estimate, its assumptions and the next check in the existing checkpoint.
+
 
 ## Nyra interaction baseline
 

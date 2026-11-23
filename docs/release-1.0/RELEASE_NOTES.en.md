@@ -1,4 +1,4 @@
-# TWOS 1.0.16 / 101.64 · Candidate
+# TWOS 1.0.16 / 101.64 · Continue team conversations and route replies to the selected discussion
 
 AI Team keeps a website default for future turns and checks the observed selection again before each send. Older ChatGPT rooms can continue when an effort such as Medium was stored as a model. An explicit model mismatch shows both choices. Use the displayed website choice to update future turns, then continue the queued message. Reopening a member uses the last confirmed conversation for that group.
 

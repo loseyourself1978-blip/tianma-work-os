@@ -1,43 +1,45 @@
 {
-  "source_commit": "c93672ea6fc3cd52160b7147e3dcf00f629072cb",
-  "artifact": "Tianma-Work-OS-1.0.15.dmg",
-  "sha256": "99bc9b582bde0e2ce5b1a10b51f51118e8dd950a4942ddbb86ce0db1dac0c78d",
+  "source_commit": "410ff3a62cd7788061881b156cb15e04a952dc52",
+  "artifact": "Tianma-Work-OS-1.0.16.dmg",
+  "sha256": "8f15e1c33ef00d65e32426116e0b50628e5ada1ec21cb3e823542aab387f4f63",
   "signing_identity": "Developer ID Application: Jing Huang (BZJWQJ352K)",
-  "app_notarization_id": "14383fa0-3348-4351-a781-177e0f0cc335",
-  "dmg_notarization_id": "36ab5137-3696-4b1a-b93a-790f87fbffd4",
+  "app_notarization_id": "7bbecf0b-8062-4a4c-892c-00ea8d081891",
+  "dmg_notarization_id": "65fc1020-0309-4a2b-983b-4083b9a47124",
   "gatekeeper": "PASS",
-  "version": "1.0.15",
-  "build": "101.63",
+  "version": "1.0.16",
+  "build": "101.64",
   "product": "TWOS",
   "architecture": "arm64",
   "platform": "macOS",
   "declared_minimum_macos": "13.0",
   "tested_macos": "27.0.1",
-  "bytes": 267053091,
+  "bytes": 266428882,
   "status": "SIGNED_NOTARIZED_VALIDATED",
-  "runtime_input_sha256": "95ada3f78f2f94ab558d0fe673530390ed41583888ab521ed7ea38748f43d280",
-  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.15",
+  "runtime_input_sha256": "9c484c8fe0e870a8480f980fb2c3e01b86903663123202039881c0e18858ef2a",
+  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.16",
   "embedded_nyra_version": "1.0.8",
   "embedded_nyra_build": "108",
   "embedded_nyra_source_commit": "bb60b2000b8d5a25c7234c7e1741b111d66d346c",
   "embedded_nyra_source_snapshot": "14cdfa728bb4a13d6d87805bfa43bde7e57840a821c33d5a8b0bc4a65bfe84d8",
   "embedded_nyra_resource_manifest_sha256": "60e3196ae1ec503d2ed01983c1d22f403bd6e0ddfe3c6913de50b26875992c0f",
-  "at": "2026-11-22T21:16:45.177731+08:00",
+  "at": "2026-11-23T14:56:29.127444+08:00",
   "verification_document": "AI_TEAM_VERIFICATION.en.md",
   "store_submission": "NOT_SUBMITTED",
   "owner_acceptance": "NOT_RECORDED",
   "main_gate": {
-    "complete_pass": true,
-    "artifact": "ad-hoc candidate, same frozen source inputs as the public installer",
     "counts": {
-      "tests": 1901,
-      "skipped": 1,
+      "tests": 1905,
       "failures": 0,
       "errors": 0,
-      "passed": 1900
+      "skipped": 1,
+      "passed": 1904
     },
-    "duration_seconds": 5437.852,
-    "source": "c93672ea6fc3cd52160b7147e3dcf00f629072cb",
+    "duration_seconds": 5558.404,
+    "junit_sha256": "0d646786098c5096613cfe0977c98ec2867f414649d83b6acb3d898aa7bca67f",
+    "validation_commit": "410ff3a62cd7788061881b156cb15e04a952dc52",
+    "complete_pass": true,
+    "artifact": "matching local candidate",
+    "source": "410ff3a62cd7788061881b156cb15e04a952dc52",
     "frozen_inputs_verified": 356,
     "safari": {
       "measurements": 38,
@@ -47,8 +49,7 @@
         1280,
         1329
       ]
-    },
-    "junit_sha256": "c422e1a39fe7f8c4274e2ebe7b3cd85da7a1b5792004de24fb4cbf746f20dcf3"
+    }
   },
   "demo": {
     "versions": [
@@ -84,35 +85,26 @@
     "recorded_version": "1.0.13",
     "recorded_build": "101.61"
   },
-  "first_send_recovery": {
-    "scenario": "synthetic photo-library website",
-    "planner": "ChatGPT",
-    "builder": "local Codex",
-    "reviewer": "Claude website",
-    "retained_user_inputs": 1,
-    "planner_reply_reconciled_without_resend": true,
-    "reviewed_files": 12,
-    "review_verdict": "revise",
-    "frontend_build": "PASS",
-    "backend_startup": "FAIL",
-    "provider_reported_models": "UNKNOWN",
-    "unexpected_revision": {
-      "terminal": "interrupted",
-      "elapsed_seconds": 44.356,
-      "output_bytes": 0,
-      "allowance_used": "UNKNOWN"
-    }
-  },
   "signed_installer_gate": {
     "counts": {
-      "tests": 58,
-      "skipped": 1,
+      "tests": 169,
       "failures": 0,
       "errors": 0,
-      "passed": 57
+      "skipped": 1,
+      "passed": 168
     },
-    "duration_seconds": 127.217,
-    "manifest_files": 410,
-    "junit_sha256": "f814ec6be1a5f628523e66ae287ee58f8f75d66ac40fb59907f62d24302ff2b3"
+    "duration_seconds": 553.062,
+    "junit_sha256": "e5b5cc7305c99974987fd363061fab0dd105f47504112373bd026907455abab9",
+    "manifest_files": 410
+  },
+  "multi_round": {
+    "two_turns_same_chat": true,
+    "directions": [
+      "ChatGPT to Claude",
+      "Claude to ChatGPT"
+    ],
+    "official_live_layout": "ordinary signed-in conversations",
+    "project_discussion_layout": "local WebKit test",
+    "per_turn_reported_models": "UNKNOWN"
   }
 }

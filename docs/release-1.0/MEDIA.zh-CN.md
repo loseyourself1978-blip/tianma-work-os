@@ -1,6 +1,6 @@
-# 发行版实机演示与画面 · 1.0.15 / 101.63
+# 发行版实机演示与画面 · 1.0.16 / 101.64
 
-[操作指南](AI_TEAM_R2.zh-CN.md) · [录屏](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo) · [GitHub 安装包](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.15)
+[操作指南](AI_TEAM_R2.zh-CN.md) · [录屏](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo) · [GitHub 安装包](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.16)
 
 约 89 秒的产品介绍从天马工作台的用途开始。实录展示输入目标、查看起始角色和默认服务、查看成员模型配置、保存自定义职责及组成六人团队。随后打开另一个真实保存的工程群聊：凯从附件找出两根备用线，艾达和凯均回复投影仪测试期限为 09:40。英语和普通话旁白版均带中英文字幕。
 
