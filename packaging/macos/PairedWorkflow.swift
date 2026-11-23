@@ -490,7 +490,7 @@ extension IntegratedWorkbench {
     func dialogueTargetsMatch(_ value:PairedDialogue) -> Bool {
         (0...1).allSatisfy { index in
             guard kinds[index] == value.providers[index], let pane=webPanes[index] else { return false }
-            let actual=NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome)?.absoluteString
+            guard let actual=NativeWorkbench.restorableURL(pane.web.url,service:pane.serviceHome)?.absoluteString else { return false }
             if actual == value.conversations[index] { return true }
             // Only the exact pending receipt may prove the new conversation URL
             // after a first send. Merely navigating elsewhere is not a rebind.

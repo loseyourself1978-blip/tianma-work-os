@@ -1,4 +1,8 @@
-# AI Team in TWOS 1.0.15 · user guide
+# AI Team in TWOS 1.0.16 · user guide
+
+AI Team keeps a website default for future turns and checks the observed selection again before each send. Older ChatGPT rooms can continue when an effort such as Medium was stored as a model. An explicit model mismatch shows both choices. Use the displayed website choice to update future turns, then continue the queued message. Reopening a member uses the last confirmed conversation for that group.
+
+In a Claude Code project with a selected discussion, auto-send uses its identified editor and message area. The two checkboxes control one exchange. The project draft and replies in other discussions stay separate. If the discussion cannot be identified, open the intended conversation on its own before continuing.
 
 ### Resume the first queued message
 

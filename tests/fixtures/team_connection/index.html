@@ -11,10 +11,10 @@ document.querySelector('[data-testid=login-button]').onclick=()=>{
   account.dataset.testid='accounts-profile-button';account.textContent='Local test profile';header.append(account);
 };
 document.querySelector('[data-testid=send-button]').onclick=()=>{
-  const sent=document.createElement('article');sent.dataset.messageAuthorRole='user';sent.dataset.messageId='user-1';
-  sent.textContent=input.value;input.value='';document.querySelector('main').prepend(sent);deliveries++;
+  const sent=document.createElement('article');sent.dataset.messageAuthorRole='user';sent.dataset.messageId='user-'+(deliveries+1);
+  sent.textContent=input.value;input.value='';document.querySelector('form').before(sent);deliveries++;
   history.pushState(null,'','/c/first-send-fixture');
-  const answer=document.createElement('article');answer.dataset.messageAuthorRole='assistant';answer.dataset.messageId='assistant-1';
+  const answer=document.createElement('article');answer.dataset.messageAuthorRole='assistant';answer.dataset.messageId='assistant-'+deliveries;
   answer.textContent=JSON.stringify({mode:'answer',text:'Synthetic connection check complete.'});
   sent.after(answer);
 };

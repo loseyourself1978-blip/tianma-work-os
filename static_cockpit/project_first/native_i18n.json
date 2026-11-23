@@ -1616,8 +1616,12 @@
     "zh-CN": "来源轮次已变化"
   },
   "AMBIGUOUS_COMPOSER": {
-    "en-US": "Ambiguous composer",
-    "zh-CN": "存在多个独立输入框"
+    "en-US": "Multiple message boxes are open. Open the intended conversation on its own, then continue auto-send.",
+    "zh-CN": "页面上有多个输入框。请单独打开要接力的会话，再点「继续自动发送」。"
+  },
+  "DISCUSSION_NOT_IDENTIFIED": {
+    "en-US": "The selected Claude discussion has no verified input yet. Open it on its own, then continue auto-send.",
+    "zh-CN": "尚未识别所选 Claude 讨论串的输入框。请单独打开该讨论串，再点「继续自动发送」。"
   },
   "INPUT_UNAVAILABLE": {
     "en-US": "Input unavailable",

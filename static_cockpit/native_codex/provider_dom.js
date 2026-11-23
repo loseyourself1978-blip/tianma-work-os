@@ -6,12 +6,53 @@
  const provider=hosts[location.hostname];
  const visible=e=>Boolean(e?.getClientRects().length)&&getComputedStyle(e).visibility!=='hidden'&&!e.closest('[hidden],[inert],[aria-hidden="true"]');
  const excluded='nav,aside,[role=menu],[data-twos-native-card]';
- const all=s=>[...document.querySelectorAll(s)].filter(e=>visible(e)&&!e.closest(excluded));
+ // A Claude Code project can display two independent chat histories at once.
+ // Only the discussion identified by the public URL and its own composer may participate.
+ const isProject=url=>url.pathname.startsWith('/code/project/') && (url.hostname==='claude.ai'||(url.origin===location.origin && selectedProvider()==='Claude'));
+ function conversationURL(raw){
+  const url=new URL(raw),threads=isProject(url)?url.searchParams.getAll('thread'):[];
+  if(threads.length && (threads.length!==1||!/^[A-Za-z0-9_-]{1,160}$/.test(threads[0])))return null;
+  url.search='';url.hash='';if(threads.length)url.searchParams.set('thread',threads[0]);return url.href;
+ }
+ const discussionBindings=window.twosDiscussionBindings ||= new WeakMap();
+ const editorSelector='textarea,#prompt-textarea,[contenteditable=true][role=textbox],.tiptap[contenteditable=true]';
+ function conversationScope(){
+  if(!isProject(location)||!new URL(location.href).searchParams.has('thread'))return document;
+  if(!conversationURL(location.href))return null;
+  const editors=[...document.querySelectorAll(editorSelector)].filter(e=>visible(e)&&!e.closest(history+',nav,[role=menu],[role=dialog],[data-twos-native-card]'));
+  const roots=editors.filter(e=>!editors.some(parent=>parent!==e&&parent.contains(e)));
+  const threadID=new URL(location.href).searchParams.get('thread');
+  const targets=roots.filter(e=>{
+   const bound=e.closest('[data-thread-id]');
+   if(bound)return bound.getAttribute('data-thread-id')===threadID;
+   const labels=[e.getAttribute('aria-label'),e.getAttribute('placeholder'),e.getAttribute('data-placeholder'),e.querySelector('[data-placeholder]')?.getAttribute('data-placeholder')];
+   return labels.some(v=>/^(?:引导此讨论串|引导此讨论串的对话|guide this thread|steer this thread)(?:\.{3}|…)?$/i.test((v||'').trim()));
+  });
+  if(targets.length!==1)return null;
+  const editor=targets[0],bound=editor.closest('[data-thread-id]');
+  if(bound && roots.filter(e=>bound.contains(e)).length===1)return bound;
+  // Without an explicit DOM id require a physically separate project panel.
+  // A singleton editor during a thread switch cannot establish this boundary.
+  if(roots.length<2)return null;
+  let root=editor;
+  while(root.parentElement && !roots.some(e=>e!==editor&&root.parentElement.contains(e)))root=root.parentElement;
+  if(root===editor||!root.querySelector('button,[role=button]'))return null;
+  // A website may change the URL before replacing the discussion editor.
+  // Without a DOM thread id, a reused editor cannot prove the new destination.
+  const previous=discussionBindings.get(editor);
+  if(previous && previous!==threadID)return null;
+  discussionBindings.set(editor,threadID);return root;
+ }
+ const exclusions=scope=>scope===document?excluded:'nav,[role=menu],[data-twos-native-card]';
+ const all=s=>{
+  const scope=conversationScope();
+  return scope?[...scope.querySelectorAll(s)].filter(e=>visible(e)&&!e.closest(exclusions(scope))):[];
+ };
  const selectedProvider=()=>provider||(location.hostname==='127.0.0.1'?document.documentElement.dataset.twosFixtureProvider:null);
  const assistant='[data-message-author-role="assistant"],[data-markdown-text-style="assistant-message"]';
  const history=assistant+',[data-message-author-role="user"],[data-testid="user-message"],[data-user-message-bubble],[data-role="user"],[data-role="assistant"],[data-message-role="user"],[data-message-role="assistant"],[data-is-streaming],.font-claude-response,.ds-message';
  const speaker=e=>/^(?:(?:You said|你说)[:：]?\s*)+(?:You)?$/i.test(e.textContent.trim())?'user':/^(?:(?:ChatGPT said|ChatGPT 说)[:：]?\s*)+(?:ChatGPT)?$/i.test(e.textContent.trim())?'assistant':null;
- const headings=()=>[...document.querySelectorAll('h1,h2,h3,h4,h5,h6,[role=heading]')].filter(e=>speaker(e)&&!e.closest(excluded+','+history+',textarea,[contenteditable=true],[hidden],[inert],[aria-hidden="true"]')&&(visible(e)||visible(e.parentElement)));
+ const headings=()=>[...(conversationScope()?.querySelectorAll('h1,h2,h3,h4,h5,h6,[role=heading]')||[])].filter(e=>speaker(e)&&!e.closest(excluded+','+history+',textarea,[contenteditable=true],[hidden],[inert],[aria-hidden="true"]')&&(visible(e)||visible(e.parentElement)));
  const sourceKey=e=>e.closest('[data-message-id]')?.getAttribute('data-message-id')||e.closest('[data-testid^="conversation-turn-"]')?.getAttribute('data-testid')||'';
  const replies=()=>{
   const p=selectedProvider(),s=p==='ChatGPT'?assistant:p==='Claude'?'[data-is-streaming],.font-claude-response':p==='DeepSeek'?'[data-role="assistant"],[data-message-role="assistant"],.ds-message .ds-markdown':assistant;
@@ -32,15 +73,16 @@
  // Exclude hidden compatibility fields and reply/canvas editors. Nested editor
  // wrappers are one editing root; two independent roots remain ambiguous.
  function composerSelection(){
-  const candidates=all('textarea,#prompt-textarea,[contenteditable=true][role=textbox],.tiptap[contenteditable=true]').filter(e=>!e.disabled&&!e.readOnly&&!e.closest(history+',[role=dialog]'));
+  if(!conversationScope())return {element:null,count:0,reason:'DISCUSSION_NOT_IDENTIFIED'};
+  const candidates=all(editorSelector).filter(e=>!e.disabled&&!e.readOnly&&!e.closest(history+',[role=dialog]'));
   const roots=candidates.filter(e=>!candidates.some(parent=>parent!==e&&parent.contains(e)));
   const known=roots.filter(e=>e.id==='prompt-textarea'||e.querySelector('#prompt-textarea')||e.matches('[data-testid="chat-input"],[data-testid="composer-input"]'));
-  const fields=known.length===1?known:roots;
+  const fields=known.length===1 && !isProject(location)?known:roots;
   return {element:fields.length===1?fields[0]:null,count:roots.length,reason:fields.length===1?'COMPOSER_IDENTIFIED':roots.length?'AMBIGUOUS_COMPOSER':'INPUT_UNAVAILABLE'};
  }
  const input=()=>composerSelection().element;
- const semanticStop=e=>visible(e)&&!e.closest(excluded+','+history)&&!e.disabled&&(e.matches('[data-testid="stop-button"]')||/^(stop(?: generating| response)?|停止(?:生成|回复)?)$/i.test(e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent.trim()));
- const isStop=e=>semanticStop(e)||e===deepSeekControl('stop',true);
+ const semanticStop=e=>visible(e)&&!e.closest(exclusions(conversationScope())+','+history)&&!e.disabled&&(e.matches('[data-testid="stop-button"]')||/^(stop(?: generating| response)?|停止(?:生成|回复)?)$/i.test(e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent.trim()));
+ const isStop=e=>Boolean(e&&conversationScope()?.contains(e))&&(semanticStop(e)||e===deepSeekControl('stop',true));
  const stop=()=>all('button,[role=button]').some(semanticStop)||Boolean(deepSeekControl('stop',true));
  const users=()=>all('[data-message-author-role="user"],[data-testid="user-message"],[data-markdown-text-style="user-message"],[data-user-message-bubble],[data-role="user"],[data-message-role="user"],.ds-collapsible-text').concat(headings().filter(e=>speaker(e)==='user')).filter(e=>!e.closest(assistant));
  const hasLaterUser=reply=>users().some(e=>Boolean(reply.compareDocumentPosition(e)&Node.DOCUMENT_POSITION_FOLLOWING));
@@ -253,8 +295,10 @@
   const generic=/^(?:(?:select|choose|switch) (?:the )?(?:chatgpt )?model|(?:选择|切换)\s*(?:ChatGPT\s*)?模型|模型|model)[：:]?$/i;
   const label=generic.test(raw.trim())?'':raw.replace(/^(?:model|模型)\s*[:：]\s*/i,'').trim();
   const names=[label,...(b.innerText||'').split(/[\r\n]+/)].map(v=>v.trim()).filter(v=>v && v.length<=100 && !generic.test(v));
-  const pattern=selectedProvider()==='Claude'?/\b(opus|sonnet|haiku)\b/i:selectedProvider()==='ChatGPT'?/\b(gpt[- ]?\d|o\d\b)/i:/deepseek[- ]?(?:v|r)\d/i;
-  return names.find(v=>pattern.test(v))||(allowMode?names.find(v=>!/[\r\n]/.test(v)):'')||'';
+  const effort=/^(?:(?:thinking|reasoning) effort|思考强度|推理强度|low|medium|high|extra high|xhigh|低|中|中等|高|超高)$/i;
+  const choices=selectedProvider()==='ChatGPT'?names.filter(v=>!effort.test(v)):names;
+  const pattern=selectedProvider()==='Claude'?/\b(opus|sonnet|haiku|fable)\b/i:selectedProvider()==='ChatGPT'?/\b(gpt[- ]?\d|o\d\b)/i:/deepseek[- ]?(?:v|r)\d/i;
+  return choices.find(v=>pattern.test(v))||(allowMode?choices.find(v=>!/[\r\n]/.test(v)):'')||'';
  }
  // Positive, public UI evidence only. A guest may also have a composer.
  function teamConnection(beforeDispatch=false){
@@ -273,10 +317,13 @@
   const model=teamModel(true);
   if(model)return {state:'webReady',model};
   const profile=controls('[data-testid="accounts-profile-button"],[data-testid="profile-button"],[data-testid="user-menu-button"],button[aria-label="Open profile menu" i],button[aria-label="打开个人资料菜单"]');
-  if(!teamPicker().length&&profile.length)return {state:'webDefault'};
+  const pickers=teamPicker();
+  const effortOnly=selectedProvider()==='ChatGPT' && pickers.length===1 &&
+    /^(?:low|medium|high|extra high|xhigh|低|中|中等|高|超高)$/i.test((pickers[0].innerText||'').trim());
+  if((!pickers.length||effortOnly)&&profile.length)return {state:'webDefault'};
   return {state:'webSelection'};
  }
- window.twosProviderDOM={teamModel,teamConnection,activityIdentity,observe,latest,resolvedLatest,seedSnapshot,selectedOrLatest,replies,text,navigationSafety,composerSelection,replyState,identity,isStop,deepSeekControl,interrupted,speaker,headings,stoppedAfter};
+ window.twosProviderDOM={conversationScope,conversationURL,teamModel,teamConnection,activityIdentity,observe,latest,resolvedLatest,seedSnapshot,selectedOrLatest,replies,text,navigationSafety,composerSelection,replyState,identity,isStop,deepSeekControl,interrupted,speaker,headings,stoppedAfter};
  // Only a genuine user activation of a recognized native Stop control signals
  // the host. Isolated-world handler + native frame/origin checks stay in force.
  if(!window.twosNativeStopListener){

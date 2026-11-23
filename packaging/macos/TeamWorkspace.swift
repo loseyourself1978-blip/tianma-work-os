@@ -39,7 +39,10 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
   private func prepareChannel(_ role: String, _ service: String, fresh: Bool = false) {
     guard let home = TeamMember.homes[service] else { return }
     let w = channel(role, service)
-    if fresh || w.web.url == nil { w.start(embedded: true, navigateTo: URL(string: home)) }
+    if fresh || (w.web.url == nil && !w.web.isLoading) {
+      let bound = managed && !fresh ? lastRoomConversation(role: role, service: service, home: w.serviceHome) : nil
+      w.start(embedded: true, navigateTo: bound ?? URL(string: home))
+    }
     inspectModel(role, service)
   }
   private var codexWindow: NSWindow?
@@ -52,6 +55,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
   private var evidenceCheck: UUID?
   private var awaitingSelection: (member: String, since: Date)?
   private var checkedMember: TeamMember?
+  private var checkedSelection = ""
   private var recoveryProbe: UUID?, recoveryState = "", recoveryStep = "", recoveryChecked: Double = 0
   private var draftInspectionID: UUID?
   private var observingWeb: String?
@@ -1168,12 +1172,27 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       finish(nil, "")
     }
   }
+  private func lastRoomConversation(role: String, service: String, home: URL) -> URL? {
+    guard let last = run?.attempts.last(where: {
+      $0.role == role && $0.web?.provider == service && $0.web?.resolvedURL != nil
+    }), let raw = last.web?.resolvedURL, let url = URL(string: raw),
+      NativeWorkbench.restorableURL(url, service: home) == url, Self.conversation(url, service: service)
+    else { return nil }
+    return url
+  }
+
   private func isRoomWebTarget(_ url: URL?, member: TeamMember, home: URL) -> Bool {
     guard let target = NativeWorkbench.restorableURL(url, service: home) else { return false }
-    return target.path == home.path || (target.path.isEmpty && home.path == "/") ||
-      run?.attempts.contains(where: {
-        $0.role == member.role && $0.web?.provider == member.service && $0.web?.resolvedURL == target.absoluteString
-      }) == true
+    if !managed {
+      return target.path == home.path || (target.path.isEmpty && home.path == "/") ||
+        run?.attempts.contains(where: {
+          $0.role == member.role && $0.web?.provider == member.service && $0.web?.resolvedURL == target.absoluteString
+        }) == true
+    }
+    if let bound = lastRoomConversation(role: member.role, service: member.service, home: home) {
+      return target == bound
+    }
+    return target.path == home.path || (target.path.isEmpty && home.path == "/")
   }
   private func dispatchWeb(member: TeamMember, selection: String) {
     let reviewer = channel(member.role, member.service)
@@ -1256,9 +1275,11 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     if checkDraft { req["inspectRetainedDraft"] = true }
     let preparing = !inspect && !restoreDraft && w.dispatchReason == "PREPARING_DRAFT_NO_MESSAGE_SENT"
     if preparing || restoreDraft { req["draftOnly"] = true; req["resumeDraft"] = false }
-    if managed && member.model.isEmpty { req["teamWebsiteDefault"] = true }
-    req["expectedReviewModel"] = aMemberModel(id) ?? member.model
-    req["allowedTeamSelections"] = TeamMember.selectionLabels(aMemberModel(id) ?? member.model, service: member.service)
+    // Freeze the verified choice for this send, independently of future rounds.
+    let expected = managed && member.followsWebsite ? (attempt.observedWebSelection ?? member.model) : member.model
+    if managed && expected.isEmpty { req["teamWebsiteDefault"] = true }
+    req["expectedReviewModel"] = expected
+    req["allowedTeamSelections"] = TeamMember.selectionLabels(expected, service: member.service)
     let inspectionID = checkDraft ? UUID() : nil
     if let inspectionID {
       draftInspectionID = inspectionID
@@ -1644,6 +1665,8 @@ extension TeamWorkspace {
     return ["step": t.step.id, "member": t.member.role, "provider": t.member.service,
             "state": current && !recoveryState.isEmpty ? recoveryState : run!.reason,
             "checked": current ? recoveryChecked : 0,
+            "expected": t.member.model, "observed": current ? checkedSelection : "",
+            "hasBoundChat": run?.attempts.contains(where: { $0.role == t.member.role && $0.web?.provider == t.member.service && $0.web?.resolvedURL != nil }) == true,
             "duplicates": run?.conversation?.queuedCopies(of: t.step).count ?? 0]
   }
 
@@ -1668,15 +1691,18 @@ extension TeamWorkspace {
       guard let self, let pane, self.channels[key] === pane, pane.web.url == url,
             case .success(let raw) = reply, let observation = raw as? [String: Any],
             let status = observation["state"] as? String else { done(pane?.web.isLoading == true ? "webLoading" : "webUnavailable", ""); return }
+      if pane.web.isLoading && ["webComposer","webSelection","webUnavailable"].contains(status) {
+        done("webLoading", ""); return
+      }
       if ["webReady","webDefault"].contains(status), !self.isRoomWebTarget(url, member: member, home: home) {
         done("reviewerChat", ""); return
       }
       let model = observation["model"] as? String ?? ""
       if status == "webReady" {
         guard !model.isEmpty, model.utf8.count <= 160 else { done("webSelection", ""); return }
-        done(member.model.isEmpty || member.acceptsSelection(model) ? "webReady" : "webMismatch", model)
+        done(member.followsWebsite || member.acceptsSelection(model) ? "webReady" : "webMismatch", model)
       } else if status == "webDefault" {
-        done(member.model.isEmpty ? "webReady" : "webSelection", "")
+        done(member.followsWebsite ? "webReady" : "webSelection", "")
       } else {
         done(["webLogin","webVerification","webComposer","webSelection","webBusy","webLimit","webDraft"].contains(status) ? status : "webUnavailable", "")
       }
@@ -1697,12 +1723,13 @@ extension TeamWorkspace {
     checkedMember = member
     recoveryProbe = token; recoveryStep = step; recoveryState = "checkingConnection"; recoveryChecked = 0
     notice = ""; publish()
-    func finish(_ state: String) {
+    func finish(_ state: String, observed: String = "") {
       guard self.recoveryProbe == token else { return }
       self.recoveryProbe = nil
       guard let live = self.recoveryTarget, live.step.id == step, live.member == member else {
         self.recoveryState = ""; self.publish(); return
       }
+      self.checkedSelection = observed
       self.recoveryState = state; self.recoveryChecked = Date().timeIntervalSince1970
       self.publish()
     }
@@ -1720,11 +1747,11 @@ extension TeamWorkspace {
         }
         if !self.codex.connecting { finish("codexUnavailable"); return }
       } else {
-        self.inspectRoomWebsite(member) { status, _ in
+        self.inspectRoomWebsite(member) { status, observed in
           guard self.recoveryProbe == token else { return }
           if status == "webLoading", Date() < deadline {
             DispatchQueue.main.asyncAfter(deadline: .now()+0.4) { probe() }
-          } else { finish(status) }
+          } else { finish(status, observed: observed) }
         }
         return
       }
@@ -1735,6 +1762,38 @@ extension TeamWorkspace {
       if self?.recoveryProbe == token { finish(member.service == "Codex" ? "codexUnavailable" : "webUnavailable") }
     }
     probe()
+  }
+
+  func openAssignedConversation(step: String) throws {
+    guard let t = recoveryTarget, t.step.id == step, recoveryStep == step,
+      checkedMember == t.member, recoveryState == "reviewerChat" else { throw TeamError.wrongVersion }
+    let pane = channel(t.member.role, t.member.service), original = pane.web.url
+    guard let bound = lastRoomConversation(role: t.member.role, service: t.member.service, home: pane.serviceHome)
+      else { throw TeamError.wrongVersion }
+    pane.web.evaluateJavaScript("window.twosProviderDOM?.navigationSafety()", in: nil, in: NativeWorkbench.handoffWorld) { [weak self] result in
+      guard let self, self.recoveryTarget?.step.id == step, self.recoveryTarget?.member == t.member,
+        self.recoveryState == "reviewerChat", pane.web.url == original else { return }
+      guard case .success(let raw) = result, let state = raw as? [String:Any],
+        state["state"] as? String == "idle", state["hasDraft"] as? Bool == false else {
+        self.recoveryState = "preserveMemberWindow"; self.publish(); return
+      }
+      pane.start(embedded: true, navigateTo: bound)
+      self.openMember(t.member.role)
+    }
+  }
+
+  func useCheckedSelection(step: String, observed: String) throws {
+    guard let t = recoveryTarget, t.step.id == step, recoveryStep == step,
+          t.member == checkedMember, recoveryState == "webMismatch", recoveryProbe == nil,
+          !observed.isEmpty, observed == checkedSelection else { throw TeamError.wrongVersion }
+    // Recheck the exact member/step before allowing Continue. Never send from this action.
+    try changeRoom { r in
+      var roster = r.members
+      guard let index = roster.firstIndex(of: t.member) else { throw TeamError.wrongVersion }
+      roster[index].model = observed
+      try r.updateChatRoster(roster)
+    }
+    try checkRoomConnection(step: step)
   }
 
   func continueRoomConnection(step: String, skipCopies: Bool) throws {
@@ -1748,7 +1807,6 @@ extension TeamWorkspace {
 
   var roomNotice:String {notice}
   var availableModels:[[String:Any]] {codex.modelCatalog}
-  func aMemberModel(_ id:String)->String? {run?.attempts.last(where:{$0.id==id})?.memberSnapshot?.model}
   func setupRoom(_ r:TeamRun) throws {
     guard managed,storageOK,run==nil,r.conversation != nil else {throw TeamError.storage}
     run=r;try persist()
@@ -1908,20 +1966,19 @@ extension TeamWorkspace {
       inspectRoomWebsite(member) { [weak self] status, selection in
         guard let self, self.recoveryProbe == token else { return }
         self.recoveryProbe = nil
-        guard var live = self.run, live.state == "running", live.pending == nil,
+        guard let live = self.run, live.state == "running", live.pending == nil,
               live.conversation?.queue.first?.id == step.id,
               live.members.first(where: { $0.role == member.role }) == member else { return }
         if status == "webLoading" { return }
         self.awaitingSelection = nil
-        guard status == "webReady" else { self.fail(status); return }
-        var chosen = member
-        if chosen.model.isEmpty && !selection.isEmpty,
-           let i = live.members.firstIndex(where: { $0.role == member.role }) {
-          chosen.model = selection; live.members[i] = chosen; self.run = live
-          do { try self.persist() } catch { self.fail("storage"); return }
+        guard status == "webReady" else {
+          self.checkedMember = member; self.recoveryStep = step.id
+          self.checkedSelection = selection; self.recoveryState = status
+          self.recoveryChecked = Date().timeIntervalSince1970
+          self.fail(status); return
         }
         self.notice = ""
-        self.dispatchWeb(member: chosen, selection: selection)
+        self.dispatchWeb(member: member, selection: selection)
       }
       return false
     }

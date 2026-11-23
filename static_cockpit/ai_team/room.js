@@ -233,7 +233,8 @@ function renderSide(force=false){
 }
 function localError(k){errorLocal=k;notice();}
 const connectionCopy={
-  reviewerChat:['Open a fresh chat in this member window or return to its assigned chat.','请在这个成员窗口打开空白对话，或回到该成员已绑定的对话。'],
+  preserveMemberWindow:['The member window has a draft, an active reply, or an unverified state. Check that window before returning to the assigned conversation.','成员窗口中有草稿、正在生成回复或状态待确认。请先在成员窗口核对，再返回本群会话。'],
+  reviewerChat:['Return to this group’s conversation in the member window, then check the connection.','请在成员窗口打开本群绑定的会话，再刷新连接。'],
   reviewerUnavailable:['Check this member’s connection before continuing.','请先检查这位成员的连接。'],
   reviewerChanged:['The website selection differs from the member settings.','网页当前选择与成员设置不一致。'],
   checkingConnection:['Checking the connection…','正在检查连接…'],
@@ -294,6 +295,13 @@ function recoveryNotice(target,recovery){
       ()=>post('continueConnection',{step:recovery.step,skipCopies:copies>0}),'primary'));
     if(copies)actions.append(actionLink(tr('Keep and send all','保留并继续全部'),()=>post('continueConnection',{step:recovery.step,skipCopies:false})));
   }else{
+    if(recovery.state==='reviewerChat' && recovery.hasBoundChat)
+      actions.append(btn(tr('Open assigned conversation','打开本群绑定的会话'),()=>post('openAssignedConversation',{step:recovery.step})));
+    if(recovery.state==='webMismatch' && recovery.observed){
+      target.append(el('span',tr('Member setting: ','成员设置：')+recovery.expected+tr(' · Website: ',' · 网页当前：')+recovery.observed));
+      actions.append(btn(tr('Use ','采用 ')+recovery.observed+tr(' for future turns','，用于后续轮次'),
+        ()=>post('useCheckedSelection',{step:recovery.step,observed:recovery.observed})));
+    }
     const open=btn(recovery.state==='webLogin'?tr('Sign in to ','登录 ')+recovery.provider:tr('Open connection','打开成员连接'),
       ()=>post('channel',{member:recovery.member}),'subtle');
     const check=btn(recovery.state==='checkingConnection'?tr('Checking…','正在检查…'):tr('Refresh connection','刷新连接'),

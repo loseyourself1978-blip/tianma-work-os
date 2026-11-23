@@ -28,9 +28,14 @@ extension TeamMember {
     if let effort = efforts.sorted(by: { $0.count > $1.count }).first(where: { base.hasSuffix(" " + $0) }) {
       base = String(base.dropLast(effort.count + 1))
     }
-    guard base.range(of: #"^(?:claude )?(?:opus|sonnet|haiku) [0-9]+(?:\.[0-9]+)+$"#,
+    guard base.range(of: #"^(?:claude )?(?:opus|sonnet|haiku|fable) [0-9]+(?:\.[0-9]+)+$"#,
                      options: .regularExpression) != nil else { return [original] }
     return [base] + efforts.map { base + " " + $0 }
+  }
+  // Older rooms sometimes stored the ChatGPT effort control as their model.
+  // These values cannot identify a model. An actual model/mode pin stays exact.
+  var followsWebsite: Bool {
+    model.isEmpty || (service == "ChatGPT" && Self.efforts.contains(model.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()))
   }
   func acceptsSelection(_ observed: String?) -> Bool {
     guard let observed, !observed.isEmpty else { return false }

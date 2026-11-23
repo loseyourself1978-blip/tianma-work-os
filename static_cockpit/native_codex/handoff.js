@@ -23,10 +23,11 @@
  // Route revision prevents stale dispatch; persisted destination identity prevents
  // an already delivered reply from regaining Send after refresh or App restart.
  const recordedTarget=record=>!record.binding||record.binding===target.binding||record.binding.split('|').slice(1).join('|')===target.binding.split('|').slice(1).join('|');
- const sourceMatches=record=>{try{const a=new URL(record.source),b=new URL(location.href);a.search=b.search='';a.hash=b.hash='';return a.href===b.href;}catch{return false;}};
+ const sourceMatches=record=>{try{const bound=api().conversationURL(record.source);return !!bound&&bound===api().conversationURL(location.href);}catch{return false;}};
  const digest=async text=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))].map(x=>x.toString(16).padStart(2,'0')).join('');
  const reasonText=r=>({
-  AMBIGUOUS_COMPOSER:label('Message input is ambiguous. Sending is paused.','输入区域不明确，发送已暂停。'),
+  AMBIGUOUS_COMPOSER:label('Open the intended conversation on its own, then continue auto-send.','请单独打开要接力的会话，再点「继续自动发送」。'),
+  DISCUSSION_NOT_IDENTIFIED:label('Open the intended Claude discussion on its own, then continue auto-send.','请在 Claude 单独打开目标讨论串，再点「继续自动发送」。'),
   INPUT_UNAVAILABLE:label('Message input is not available yet.','输入区域尚不可用。'),
   REPLY_INTERRUPTED:label('Reply interrupted; it will not be sent as complete.','回复已中断，不会作为完整回复发送。'),
   LATEST_USER_AWAITS_REPLY:label('Waiting for the current reply.','等待当前回复。'),
@@ -148,10 +149,11 @@
  window.twosHandoffAutoState=value=>{if(!value||typeof value.enabled!=='boolean')return;auto=value;inspect();};
  window.twosHandoffLanguage=value=>{zh=Boolean(value);inspect();};
  window.twosDeliverResult=async ({id,text,source,inspectOnly})=>{
-  const same=()=>{const url=new URL(location.href);url.search='';url.hash='';return url.href===source;};
+  const scope=api().conversationScope();
+  const same=()=>scope && api().conversationScope()===scope && api().conversationURL(location.href)===source;
   const marker='[TWOS delivery '+id+']';
   const seen=()=>{
-   if([...document.querySelectorAll('[data-message-author-role="user"], [data-markdown-text-style="user-message"], [data-testid="user-message"]')].some(el=>visible(el)&&(el.innerText||'').includes(marker)))return true;
+   if([...scope.querySelectorAll('[data-message-author-role="user"], [data-markdown-text-style="user-message"], [data-testid="user-message"]')].some(el=>visible(el)&&(el.innerText||'').includes(marker)))return true;
    // The current official site also exposes plain user turns with an accessible
    // “You said / 你说” heading instead of the older message-role attribute.
    // Never count our composer or result card as proof of website delivery.
@@ -188,8 +190,10 @@
   for(let n=0;n<25;n++){
    await new Promise(resolve=>setTimeout(resolve,100));
    if(!same()||value().replace(/\r/g,'')!==prompt)return 'pending';
-   const send=document.querySelector('[data-testid="send-button"],#composer-submit-button,button[aria-label="Send prompt"],button[aria-label="发送提示"],button[aria-label="发送"],button[aria-label="Send"]');
-   if(!send||send.disabled)continue;
+   if(composer()!==el)return 'pending';
+   const candidates=[...scope.querySelectorAll('[data-testid="send-button"],#composer-submit-button,button[aria-label="Send prompt"],button[aria-label="发送提示"],button[aria-label="发送"],button[aria-label="Send"]')].filter(b=>visible(b)&&!b.closest('[data-twos-native-card]')&&(!el.closest('form')||b.form===el.closest('form')||el.closest('form').contains(b)));
+   if(candidates.length!==1||candidates[0].disabled)continue;
+   const send=candidates[0];
    send.click();
    for(let j=0;j<40;j++){await new Promise(resolve=>setTimeout(resolve,125));if(same()&&seen())return 'confirmed';}
    return 'unknown';

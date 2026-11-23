@@ -9,7 +9,8 @@ do {
   fatalError("Accepted traversal")
 } catch let error as CocoaError where error.code == .fileWriteNoPermission {}
 try NativeWorkbench.safeDirectory(dir)
-let member = TeamMember(role: "Planner", product: "ChatGPT", provider: "OpenAI", model: "", displayName: "Ada", duties: ["Planner"])
+let scenario = CommandLine.arguments[3]
+let member = TeamMember(role: "Planner", product: "ChatGPT", provider: "OpenAI", model: scenario == "multiround" ? "Medium" : (scenario == "mismatch" ? "GPT-6.0" : ""), displayName: "Ada", duties: ["Planner"])
 let folder = try NativeCodex.inspectDirectory(dir.path, isolated: true)
 var restored = TeamRun(id: roomID, created: 1, goal: "Offline recovery fixture", csv: "", folder: folder, members: [member])
 var conversation = TeamConversation()
@@ -19,7 +20,6 @@ for _ in 0..<2 {
   try conversation.submit(draft, members: [member], language: "en")
 }
 restored.conversation = conversation; restored.state = "paused"; restored.reason = "reviewerUnavailable"; restored.next = "Planner"
-let scenario = CommandLine.arguments[3]
 if scenario == "uncertain" {
   restored.state = "running"
   let prompt = try restored.prompt(), a = try restored.begin(prompt)
@@ -144,9 +144,17 @@ Task { @MainActor in
     guard statuses as? [String] == ["Pro","webSelection","webDraft","webVerification"] else {
       throw ProbeFailure(description: "Wrong rendered web evidence " + String(describing:statuses))
     }
+    if ["multiround","mismatch"].contains(scenario) {
+      _ = try await provider.evaluateJavaScript("const picker=document.createElement('button');picker.dataset.testid='model-selector';picker.textContent='\(scenario == "multiround" ? "Medium" : "GPT-6.2")';document.querySelector('header').append(picker);true")
+    }
     guard let back = provider.window?.titlebarAccessoryViewControllers.compactMap({ $0.view as? NSButton })
       .first(where: { $0.title == "Back to chat · Check connection" }) else { throw ProbeFailure(description: "Missing return action") }
     back.performClick(nil)
+    if scenario == "mismatch" {
+      try await waitUntil(team.web, "room.recovery.state==='webMismatch' && room.recovery.expected==='GPT-6.0' && room.recovery.observed==='GPT-6.2'")
+      try await press("Use GPT-6.2 for future turns")
+      try await waitUntil(provider, "deliveries===0")
+    }
     try await waitUntil(team.web, "room.recovery.state==='webReady' && room.inputs.length===2 && room.attempts.length===0")
     if ["retained", "manual", "missing"].contains(scenario) {
       _ = try await provider.evaluateJavaScript("const submit=document.querySelector('[data-testid=send-button]'); submit.disabled=true; true")
@@ -240,6 +248,16 @@ Task { @MainActor in
     let record=try TeamWorkspace.readRecord(roomID,from:dir)
     guard record.attempts.count==1,record.conversation?.inputs.count==2,record.conversation?.skippedCopies?.count==1,
           record.attempts.first?.model==nil else { throw ProbeFailure(description:"Durable receipt mismatch") }
+    if scenario == "multiround" {
+      _ = try await provider.evaluateJavaScript("picker.textContent='GPT-6.2';true")
+      _ = try await team.web.evaluateJavaScript("const m=document.getElementById('message');m.value='Second synthetic status request';m.dispatchEvent(new Event('input'));document.getElementById('send').click();true")
+      try await waitUntil(team.web, "room.answers.length===2 && room.state==='completed' && room.queue.length===0")
+      try await waitUntil(provider, "deliveries===2")
+      let second = try TeamWorkspace.readRecord(roomID, from:dir)
+      guard second.attempts.count==2, second.attempts[1].observedWebSelection=="GPT-6.2",
+            second.attempts[0].id != second.attempts[1].id else { throw ProbeFailure(description:"Multi-round receipt mismatch") }
+      print("PASS old Medium room, two completed user turns, unique receipts, updated model selection")
+    }
     if scenario == "delayedRoute" {
       guard record.attempts[0].thread?.hasSuffix("/c/first-send-fixture")==true,
         record.milestones?.contains(where:{$0.state=="paused" && $0.afterAttempt==record.attempts[0].id}) != true else {

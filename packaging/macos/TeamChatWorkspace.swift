@@ -521,6 +521,9 @@ final class TeamChatWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDel
       case "checkConnection": try s.checkRoomConnection(step: args["step"] as? String ?? "")
       case "restoreDraft": try s.restoreEmptyDraft(args["step"] as? String ?? "")
       case "sendRetained": try s.retryRetainedDraft(args["step"] as? String ?? "")
+      case "openAssignedConversation": try s.openAssignedConversation(step: args["step"] as? String ?? "")
+      case "useCheckedSelection":
+        try s.useCheckedSelection(step: args["step"] as? String ?? "", observed: args["observed"] as? String ?? "")
       case "continueConnection":
         try s.continueRoomConnection(step: args["step"] as? String ?? "", skipCopies: args["skipCopies"] as? Bool == true)
       case "reconcile":

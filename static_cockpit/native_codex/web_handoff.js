@@ -3,14 +3,23 @@
 // cookies, background-history extraction, synthetic keys or provider fallback.
 return await (async () => {
  'use strict';
- const clean=raw=>{const u=new URL(raw);u.search='';u.hash='';return u.href;};
- const original=clean(request.targetURL), origin=new URL(original).origin;
+ const dom=window.twosProviderDOM;
+ if(!dom)return {state:'not_loaded',reason:'OBSERVER_UNAVAILABLE'};
+ const clean=raw=>dom.conversationURL(raw);
+ const original=clean(request.targetURL);
+ if(!original)return {state:'target_changed'};
+ const origin=new URL(original).origin;
+ if(new URL(original).searchParams.has('thread') && clean(location.href)!==original)return {state:'target_changed'};
+ const scope=dom.conversationScope();
+ if(!scope)return {state:'not_loaded',reason:'DISCUSSION_NOT_IDENTIFIED'};
+ const scoped=scope!==document;
+ if(scoped && clean(location.href)!==original)return {state:'target_changed'};
  const provider=request.provider;
  const host={ChatGPT:'chatgpt.com',DeepSeek:'chat.deepseek.com',Claude:'claude.ai'}[provider];
  const localFixture=location.hostname==='127.0.0.1'&&new URL(original).origin===location.origin;
  if((location.hostname!==host&&!localFixture)||location.origin!==origin||(!request.inspectOnly&&clean(location.href)!==original))return {state:request.inspectOnly?'unknown':'target_changed'};
  const lease=window.twosTransferLease;
- const same=()=>window.twosTransferLease===lease&&location.origin===origin;
+ const same=()=>window.twosTransferLease===lease&&location.origin===origin&&dom.conversationScope()===scope&&(!scoped||clean(location.href)===original);
  const teamModelMatches=()=>{
   const connection=request.allowTeamMode===true?window.twosProviderDOM?.teamConnection?.():null;
   if(request.teamWebsiteDefault===true)return connection?.state==='webDefault';
@@ -51,7 +60,7 @@ return await (async () => {
  };
  const fields=composerFields();
  if(fields.length!==1 && (!request.inspectOnly || request.readinessOnly)){
-  const login=[...document.querySelectorAll('button,a')].filter(visible).some(e=>/^(log in|sign in|登录|登入)$/i.test(e.textContent.trim()));
+  const login=[...scope.querySelectorAll('button,a')].filter(visible).some(e=>/^(log in|sign in|登录|登入)$/i.test(e.textContent.trim()));
   return {state:login?'login':'not_loaded',reason:window.twosProviderDOM?.composerSelection().reason||'OBSERVER_UNAVAILABLE'};
  }
  if(request.readinessOnly)return {state:'input_ready'};
@@ -63,7 +72,7 @@ return await (async () => {
    ? marker+' '+JSON.stringify({instruction:request.text}) : marker+'\n'+request.text;
  // Read-only control metadata for an unavailable upload path. Never include
  // values, filenames, page text, URLs, credentials or arbitrary DOM dumps.
- const uploadShape=()=>[...document.querySelectorAll('input[type=file]')].slice(0,12).map((e,index)=>{
+ const uploadShape=()=>[...scope.querySelectorAll('input[type=file]')].slice(0,12).map((e,index)=>{
   const chain=[];for(let p=e.parentElement,n=0;p&&p!==document.body&&n<4;p=p.parentElement,n++)chain.push({tag:p.tagName,role:p.getAttribute('role'),testID:p.getAttribute('data-testid'),className:String(p.className||'').slice(0,180),visible:visible(p),containsDraft:p.contains(input)});
   return {index,accept:e.accept.slice(0,400),multiple:e.multiple,disabled:e.disabled,directory:e.webkitdirectory||e.hasAttribute('directory'),capture:e.getAttribute('capture'),selfAriaHidden:e.getAttribute('aria-hidden'),ariaHidden:Boolean(e.closest('[aria-hidden=true]')),chain};
  });
@@ -81,13 +90,13 @@ return await (async () => {
    !labels.length&&!caption&&!e.hasAttribute('formaction')&&!e.hasAttribute('formtarget')&&
    !e.hasAttribute('aria-haspopup')&&!e.hasAttribute('data-testid');
  };
- const sendShape=()=>[...document.querySelectorAll('button,[role=button]')].filter(isSendControl).slice(0,8).map(e=>({tag:e.tagName,testID:e.getAttribute('data-testid'),visible:visible(e),disabled:Boolean(e.disabled),ariaDisabled:e.getAttribute('aria-disabled'),inHistory:Boolean(e.closest('[data-twos-native-card],[data-message-author-role],[data-is-streaming],.font-claude-response'))}));
+ const sendShape=()=>[...scope.querySelectorAll('button,[role=button]')].filter(isSendControl).slice(0,8).map(e=>({tag:e.tagName,testID:e.getAttribute('data-testid'),visible:visible(e),disabled:Boolean(e.disabled),ariaDisabled:e.getAttribute('aria-disabled'),inHistory:Boolean(e.closest('[data-twos-native-card],[data-message-author-role],[data-is-streaming],.font-claude-response'))}));
  const deepSeekSend=(requireEnabled=true)=>provider==='DeepSeek' ? window.twosProviderDOM?.deepSeekControl('send',requireEnabled)||null : null;
  // Limit reconciliation to visible conversation messages, not account history.
  const selectors=provider==='ChatGPT'?{user:'[data-message-author-role="user"],[data-testid="user-message"],[data-markdown-text-style="user-message"],[data-user-message-bubble]',reply:'[data-message-author-role="assistant"],[data-markdown-text-style="assistant-message"]'}:
  provider==='DeepSeek'?{user:'[data-role="user"],[data-message-role="user"],.ds-message .ds-collapsible-text',reply:'[data-role="assistant"],[data-message-role="assistant"],.ds-message .ds-markdown'}:
  {user:'[data-testid="user-message"]',reply:'[data-is-streaming],.font-claude-response'};
- const messages=()=>[...document.querySelectorAll(selectors.user)].filter(e=>visible(e)&&!e.closest('textarea,[contenteditable=true],[data-twos-native-card]')).slice(-8);
+ const messages=()=>[...scope.querySelectorAll(selectors.user)].filter(e=>visible(e)&&!e.closest('textarea,[contenteditable=true],[data-twos-native-card]')).slice(-8);
  const matchesPrompt=e=>{
   const body=plain(e),compact=v=>v.replace(/\s/g,'');
   if(compact(body)===compact(prompt))return true;
@@ -145,11 +154,12 @@ return await (async () => {
  // or an assistant quotation containing the marker.
  const matchesUser=e=>matchesPrompt(e)||(provider==='ChatGPT'&&e.matches('[data-user-message-bubble]')&&[...e.querySelectorAll('[data-search-result-target]')].some(body=>body.closest('[data-user-message-bubble]')===e&&matchesPrompt(body)));
  const receipt=()=>messages().find(e=>(normalize(e.textContent)===normalize(prompt)||normalize(e.innerText)===normalize(prompt)||matchesUser(e)))||semanticReceipt();
- const busy=()=>Boolean(window.twosProviderDOM?.deepSeekControl('stop',true))||[...document.querySelectorAll('button,[role=button]')].some(e=>window.twosProviderDOM?.isStop(e));
+ const busy=()=>Boolean(window.twosProviderDOM?.deepSeekControl('stop',true))||[...scope.querySelectorAll('button,[role=button]')].some(e=>window.twosProviderDOM?.isStop(e));
  const result=()=>{
+  if(!same())return null;
   const user=receipt();if(!user)return null;
   const nextUser=[...messages(),...turnHeadings().filter(e=>window.twosProviderDOM?.speaker(e)==='user')].filter(e=>e!==user&&!user.contains(e)&&!e.contains(user)&&Boolean(user.compareDocumentPosition(e)&Node.DOCUMENT_POSITION_FOLLOWING)).sort((a,b)=>a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING?-1:1)[0];
-  const replies=[...document.querySelectorAll(selectors.reply)].filter(e=>visible(e)&&!e.closest('[data-twos-native-card]')&&Boolean(user.compareDocumentPosition(e)&Node.DOCUMENT_POSITION_FOLLOWING)&&(!nextUser||Boolean(e.compareDocumentPosition(nextUser)&Node.DOCUMENT_POSITION_FOLLOWING)));
+  const replies=[...scope.querySelectorAll(selectors.reply)].filter(e=>visible(e)&&!e.closest('[data-twos-native-card]')&&Boolean(user.compareDocumentPosition(e)&Node.DOCUMENT_POSITION_FOLLOWING)&&(!nextUser||Boolean(e.compareDocumentPosition(nextUser)&Node.DOCUMENT_POSITION_FOLLOWING)));
   const last=replies.at(-1);
   if(!busy()&&window.twosProviderDOM?.stoppedAfter(user,nextUser))return {state:'generation_stopped',reason:'PROVIDER_REPLY_INTERRUPTED',conversationURL:clean(location.href)};
   // DeepSeek's stop icon is not consistently labelled. A reply node can exist
@@ -218,7 +228,7 @@ return await (async () => {
   if(current.length!==1||normalize(current[0] instanceof HTMLTextAreaElement?current[0].value:current[0].innerText)!==normalize(prompt))return false;
   input=current[0];refreshComposerScopes();return true;
  };
- const inComposer=e=>visible(e)&&composerScopes.some(root=>root.contains(e))&&!e.closest('nav,aside,[data-twos-native-card],[data-message-author-role],[data-message-role],[data-role="user"],[data-role="assistant"],[data-testid="user-message"],[data-is-streaming],.font-claude-response,.ds-message');
+ const inComposer=e=>scope.contains(e)&&visible(e)&&composerScopes.some(root=>root.contains(e))&&(!e.closest('aside')||scoped)&&!e.closest('nav,[data-twos-native-card],[data-message-author-role],[data-message-role],[data-role="user"],[data-role="assistant"],[data-testid="user-message"],[data-is-streaming],.font-claude-response,.ds-message');
  // Past uploaded files belong to conversation history, not the current draft.
  // Do not mistake them for newly selected attachments or re-upload evidence.
  const removeLabel=/^(?:Remove(?: attachment| file)?|移除(?:附件)?)\s*/i;
@@ -227,10 +237,10 @@ return await (async () => {
   // ChatGPT images are filename-labelled popup buttons. Text/PDF cards
   // additionally have a sibling Remove button. Count each real card once;
   // discover unknown existing cards too, not just names in this request.
-  const primary=[...document.querySelectorAll('[data-testid*=attachment],[data-testid*=file-upload],[data-testid*=file-card],button,[role=button]')]
+  const primary=[...scope.querySelectorAll('[data-testid*=attachment],[data-testid*=file-upload],[data-testid*=file-card],button,[role=button]')]
    .filter(e=>inComposer(e)&&(e.matches('[data-testid*=attachment],[data-testid*=file-upload],[data-testid*=file-card]')||fileLabel(e)));
   const outer=primary.filter(e=>!primary.some(other=>other!==e&&other.contains(e)));
-  const removals=[...document.querySelectorAll('[aria-label^="Remove attachment"],[aria-label^="Remove file"],[aria-label^="移除附件"],button[aria-label^="移除 "],button[aria-label^="Remove "]')].filter(inComposer);
+  const removals=[...scope.querySelectorAll('[aria-label^="Remove attachment"],[aria-label^="Remove file"],[aria-label^="移除附件"],button[aria-label^="移除 "],button[aria-label^="Remove "]')].filter(inComposer);
   return [...outer,...removals.filter(e=>!outer.some(card=>card.contains(e)||(e.parentElement?.contains(card)&&fileLabel(card)&&(e.getAttribute('aria-label')||'').replace(removeLabel,'').trim()===fileLabel(card))))];
  };
  if(!request.files?.length&&attachmentChips().length)return {state:'draft_conflict',reason:'EXISTING_WEBSITE_ATTACHMENTS_PRESERVED'};
@@ -287,7 +297,7 @@ return await (async () => {
   if(!previous){
    if(chips().length)return {state:'draft_conflict',reason:'EXISTING_WEBSITE_ATTACHMENTS_PRESERVED'};
    const uploadInputs=()=>{
-    const candidates=[...document.querySelectorAll('input[type=file]')].filter(e=>!e.disabled&&!e.closest('[inert]')&&!e.parentElement?.closest('[aria-hidden=true]')&&!e.webkitdirectory&&!e.hasAttribute('directory')&&(files.length===1||e.multiple)&&files.every(f=>{
+    const candidates=[...scope.querySelectorAll('input[type=file]')].filter(e=>!e.disabled&&!e.closest('[inert]')&&!e.parentElement?.closest('[aria-hidden=true]')&&!e.webkitdirectory&&!e.hasAttribute('directory')&&(files.length===1||e.multiple)&&files.every(f=>{
     const accept=e.accept.toLowerCase().split(',').map(x=>x.trim()).filter(Boolean);
     return !accept.length||accept.includes('*/*')||accept.some(a=>a===f.mime||a==='.'+f.name.split('.').at(-1).toLowerCase()||(a.endsWith('/*')&&f.mime.startsWith(a.slice(0,-1))));
     }));
@@ -308,14 +318,14 @@ return await (async () => {
     // lazily on a new chat. Open only the verified local composer menu, never
     // the file-picker action, history, a connector or a private upload API.
     if(inputs.length===0&&provider==='ChatGPT'&&!openedMenu){
-     const menus=[...document.querySelectorAll('button')].filter(e=>inComposer(e)&&/^(Add files and more|添加文件等内容)$/i.test(e.getAttribute('aria-label')||''));
+     const menus=[...scope.querySelectorAll('button')].filter(e=>inComposer(e)&&/^(Add files and more|添加文件等内容)$/i.test(e.getAttribute('aria-label')||''));
      if(menus.length===1&&menus[0].getAttribute('aria-expanded')!=='true'){menus[0].click();openedMenu=true;}
     }
     await new Promise(r=>setTimeout(r,100));
     if(!bindExactComposer())return {state:'draft',reason:'EXACT_DRAFT_NOT_CONFIRMED_NO_MESSAGE_SENT'};
     inputs=uploadInputs();
    }
-   if(inputs.length!==1)return {state:'unsupported',reason:'EXACT_FILE_UPLOAD_CONTROL_UNAVAILABLE · eligible='+inputs.length+' · total='+document.querySelectorAll('input[type=file]').length+' · UPLOAD_CONTROL_SHAPE '+JSON.stringify(uploadShape())};
+   if(inputs.length!==1)return {state:'unsupported',reason:'EXACT_FILE_UPLOAD_CONTROL_UNAVAILABLE · eligible='+inputs.length+' · total='+scope.querySelectorAll('input[type=file]').length+' · UPLOAD_CONTROL_SHAPE '+JSON.stringify(uploadShape())};
    const transfer=new DataTransfer();
    for(const f of files){
     const bytes=Uint8Array.from(atob(f.base64),c=>c.charCodeAt(0));
@@ -347,14 +357,14 @@ return await (async () => {
     const chip=[...available].find(e=>labels(e).some(v=>v.startsWith(stem)&&v.endsWith(ext)&&/^\([1-9][0-9]*\)$/.test(v.slice(stem.length,-ext.length))));
     if(!chip)return false;available.delete(chip);return true;
    });
-   const progress=[...document.querySelectorAll('[role=progressbar],[data-testid*=uploading]')].some(inComposer);
+   const progress=[...scope.querySelectorAll('[role=progressbar],[data-testid*=uploading]')].some(inComposer);
    if(names&&nodes.length===files.length&&!progress){uploaded=true;break;}
    await new Promise(r=>setTimeout(r,250));
   }
   if(!uploaded){
    // Bounded control-shape diagnostics only: no DOM/text dump or account data.
    // Each ordinal refers to a caller-selected file, never an unselected file.
-   const controls=[...document.querySelectorAll('button,[role=button]')];
+   const controls=[...scope.querySelectorAll('button,[role=button]')];
    const shape=files.map((f,i)=>({file:i,controls:controls.filter(e=>[(e.innerText||''),e.getAttribute('aria-label')||'',e.getAttribute('title')||''].some(v=>v.includes(f.name))).map(e=>({tag:e.tagName,role:e.getAttribute('role'),visible:visible(e),inComposer:inComposer(e),selectedByChip:chips().includes(e),aria:Boolean(e.getAttribute('aria-label')),title:Boolean(e.getAttribute('title'))})).slice(0,4)}));
    return {state:'draft',reason:'UPLOAD_NOT_CONFIRMED_NO_MESSAGE_SENT',diagnostics:{scopeCount:composerScopes.length,chipCount:chips().length,shape}};
   }
@@ -367,9 +377,9 @@ return await (async () => {
   await new Promise(r=>setTimeout(r,100));
   if(!targetCurrent() && !(await waitForTeamPicker()))return {state:'target_changed'};
   if(!bindExactComposer())return {state:'draft',reason:'EXACT_DRAFT_CHANGED_NO_MESSAGE_SENT'};
-  const candidates=[...document.querySelectorAll('button,[role=button],input[type=submit]')].filter(e=>visible(e)&&!e.disabled&&e.getAttribute('aria-disabled')!=='true'&&!e.closest('[inert],[aria-hidden=true],[data-twos-native-card],[data-message-author-role],[data-is-streaming],.font-claude-response')&&isSendControl(e));
-  const scoped=composerScopes.map(root=>candidates.filter(e=>root.contains(e))).find(items=>items.length);
-  const buttons=scoped||candidates;
+  const candidates=[...scope.querySelectorAll('button,[role=button],input[type=submit]')].filter(e=>visible(e)&&!e.disabled&&e.getAttribute('aria-disabled')!=='true'&&!e.closest('[inert],[aria-hidden=true],[data-twos-native-card],[data-message-author-role],[data-is-streaming],.font-claude-response')&&isSendControl(e));
+  const nearby=composerScopes.map(root=>candidates.filter(e=>root.contains(e))).find(items=>items.length);
+  const buttons=nearby||candidates;
   const deepSeekControl=deepSeekSend();if(!buttons.length&&deepSeekControl)buttons.push(deepSeekControl);
   if(buttons.length!==1)continue;
   const selectedAtSend=request.expectedReviewModel?{selectedAtSend:window.twosProviderDOM.teamModel(request.allowTeamMode===true)}:{};

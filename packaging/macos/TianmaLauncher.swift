@@ -123,7 +123,13 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
               !url.path.split(separator: "/").contains(where: { ["auth", "oauth", "callback", "login", "signin", "sign_in", "signup", "sign_up", "api"].contains(String($0).lowercased()) })
         else { return nil }
         var clean = URLComponents(url: url, resolvingAgainstBaseURL: false)!
+        let thread = (clean.queryItems ?? []).filter { $0.name == "thread" }
         clean.query = nil; clean.fragment = nil
+        if url.host == "claude.ai", url.path.hasPrefix("/code/project/"), !thread.isEmpty {
+            guard thread.count == 1, let id = thread[0].value,
+                  id.range(of: #"^[A-Za-z0-9_-]{1,160}$"#, options: .regularExpression) != nil else { return nil }
+            clean.queryItems = [URLQueryItem(name: "thread", value: id)]
+        }
         return clean.url
     }
 
