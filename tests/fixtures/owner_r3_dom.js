@@ -20,6 +20,10 @@ await wait();assert(api().composerSelection().element===outer&&api().observe().s
 const extra=document.createElement('textarea');document.body.append(extra);await wait();
 assert(api().observe().reason==='AMBIGUOUS_COMPOSER','independent composers fail closed');
 assert(card()?.matches('[data-twos-native-card]')&&card().querySelector('[data-twos-primary]').hidden&&card().textContent.includes('ambiguous'),'R4 unknown hides Send but retains precise reason');
+assert(card().textContent.includes('multiple message boxes')&&card().textContent.includes('Open the intended conversation'),'English explains the reason and the safe next action');
+window.twosHandoffLanguage(true);
+assert(card().querySelector('[data-twos-primary]').hidden&&card().textContent.includes('多个输入框')&&card().textContent.includes('继续自动发送'),'Chinese explains how to recover without enabling Send');
+window.twosHandoffLanguage(false);
 assert(api().latest().state==='unknown','unknown cannot freeze partial answer');
 const stop=document.createElement('button');stop.setAttribute('aria-label','Stop');document.body.append(stop);await wait();
 assert(api().observe().state==='running','real generation signal outranks missing/ambiguous composer');

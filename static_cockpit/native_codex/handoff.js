@@ -26,8 +26,8 @@
  const sourceMatches=record=>{try{const bound=api().conversationURL(record.source);return !!bound&&bound===api().conversationURL(location.href);}catch{return false;}};
  const digest=async text=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))].map(x=>x.toString(16).padStart(2,'0')).join('');
  const reasonText=r=>({
-  AMBIGUOUS_COMPOSER:label('Open the intended conversation on its own, then continue auto-send.','请单独打开要接力的会话，再点「继续自动发送」。'),
-  DISCUSSION_NOT_IDENTIFIED:label('Open the intended Claude discussion on its own, then continue auto-send.','请在 Claude 单独打开目标讨论串，再点「继续自动发送」。'),
+  AMBIGUOUS_COMPOSER:label('The destination is ambiguous because multiple message boxes are open. Open the intended conversation on its own, then continue auto-send.','页面有多个输入框，无法确定目标会话。请单独打开要接力的会话，再点「继续自动发送」。'),
+  DISCUSSION_NOT_IDENTIFIED:label('TWOS could not identify the input for the selected Claude discussion. Open that discussion on its own, then continue auto-send.','尚未识别选中讨论串的输入框。请在 Claude 单独打开目标讨论串，再点「继续自动发送」。'),
   INPUT_UNAVAILABLE:label('Message input is not available yet.','输入区域尚不可用。'),
   REPLY_INTERRUPTED:label('Reply interrupted; it will not be sent as complete.','回复已中断，不会作为完整回复发送。'),
   LATEST_USER_AWAITS_REPLY:label('Waiting for the current reply.','等待当前回复。'),
