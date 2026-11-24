@@ -56,13 +56,17 @@ struct TeamAttempt: Codable {
   var state = "intent"
   var web: WebHandoffReceipt?
 
-  func observationExpired(at now: Double) -> Bool {
+  func observationExpired(at now: Double, lastBuildActivity: Double? = nil) -> Bool {
     // File-producing group turns can take longer than a short web exchange.
     // Extend only a bound, running Codex build. Startup and unknown deliveries
     // retain their original deadline. Group turns always have a finite limit.
     if assignment?.kind == "build", memberSnapshot?.service == "Codex",
        thread != nil, clientID != nil, transportState == "running" {
-      return now - started >= 1800
+      let elapsed = now - started
+      if elapsed < 1800 { return false }
+      guard elapsed < 5400, let activity = lastBuildActivity,
+            activity >= started, activity <= now else { return true }
+      return now - activity >= 600
     }
     return now - max(started, web?.updatedAt ?? 0) >= 600
   }

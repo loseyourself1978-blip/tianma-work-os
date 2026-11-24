@@ -9,6 +9,10 @@ return await (async () => {
  const original=clean(request.targetURL);
  if(!original)return {state:'target_changed'};
  const origin=new URL(original).origin;
+ // A follow-up has a journalled conversation even before its response supplies a URL.
+ const inspectionURL=request.inspectOnly && request.allowTeamMode ? request.inspectionURL : null;
+ const onInspectionTarget=()=>!inspectionURL||clean(location.href)===inspectionURL;
+ if(!onInspectionTarget())return {state:'target_changed'};
  if(new URL(original).searchParams.has('thread') && clean(location.href)!==original)return {state:'target_changed'};
  const scope=dom.conversationScope();
  if(!scope)return {state:'not_loaded',reason:'DISCUSSION_NOT_IDENTIFIED'};
@@ -19,10 +23,11 @@ return await (async () => {
  const localFixture=location.hostname==='127.0.0.1'&&new URL(original).origin===location.origin;
  if((location.hostname!==host&&!localFixture)||location.origin!==origin||(!request.inspectOnly&&clean(location.href)!==original))return {state:request.inspectOnly?'unknown':'target_changed'};
  const lease=window.twosTransferLease;
- const same=()=>window.twosTransferLease===lease&&location.origin===origin&&dom.conversationScope()===scope&&(!scoped||clean(location.href)===original);
+ const same=()=>onInspectionTarget()&&window.twosTransferLease===lease&&location.origin===origin&&dom.conversationScope()===scope&&(!scoped||clean(location.href)===original);
  const teamModelMatches=()=>{
   const connection=request.allowTeamMode===true?window.twosProviderDOM?.teamConnection?.():null;
-  if(request.teamWebsiteDefault===true)return connection?.state==='webDefault';
+  if(request.teamWebsiteDefault===true)return connection?.state==='webDefault' ||
+    (request.followWebsiteSelection===true && connection?.state==='webReady' && Boolean(connection.model));
   if(!request.expectedReviewModel)return true;
   if(request.allowTeamMode===true && connection?.state!=='webReady')return false;
   const label=connection?connection.model:window.twosProviderDOM?.teamModel?.(false);
@@ -68,7 +73,13 @@ return await (async () => {
  // Claude's rich-text composer can expand paragraph breaks. Keep the full
  // Team instruction in a single JSON-encoded line; old receipts retain their wire format.
  const marker='[TWOS handoff '+request.id+']';
- const prompt=request.teamReview && request.teamWireVersion===1
+ const documentWire=request.teamReview===true && request.allowTeamMode===true && ['Claude','ChatGPT'].includes(provider) && request.teamWireVersion===2;
+ const documentName='TWOS-instruction-'+request.id+'.txt';
+ if(documentWire && (request.files?.length!==1 || request.files[0].name!==documentName ||
+     request.files[0].id!==request.id || request.files[0].hash!==request.hash ||
+     !/^[a-f0-9]{64}$/.test(request.hash)))return {state:'unsupported',reason:'ATTACHMENT_SCOPE_CHANGED'};
+ const prompt=documentWire ? marker+' Read '+documentName+' in full and follow its instructions. SHA-256 '+request.hash :
+  request.teamReview && request.teamWireVersion===1
    ? marker+' '+JSON.stringify({instruction:request.text}) : marker+'\n'+request.text;
  // Read-only control metadata for an unavailable upload path. Never include
  // values, filenames, page text, URLs, credentials or arbitrary DOM dumps.
@@ -99,6 +110,28 @@ return await (async () => {
  const messages=()=>[...scope.querySelectorAll(selectors.user)].filter(e=>visible(e)&&!e.closest('textarea,[contenteditable=true],[data-twos-native-card]')).slice(-8);
  const matchesPrompt=e=>{
   const body=plain(e),compact=v=>v.replace(/\s/g,'');
+  if(documentWire){
+   const at=body.indexOf(marker);
+   if(at<0)return false;
+   const before=normalize(body.slice(0,at)),cover=normalize(body.slice(at));
+   if(cover!==prompt)return false;
+   if(before.includes(documentName))return true;
+   // Claude puts its file card and the text bubble in sibling nodes of
+   // the same user turn. Stop at the first boundary containing another
+   // message, an answer, a composer, or the surrounding conversation.
+   for(let turn=e,depth=0;turn&&turn!==scope&&turn!==document.body&&depth<6;turn=turn.parentElement,depth++){
+    if(turn.querySelector(selectors.reply+',textarea,[contenteditable=true],nav,aside,[data-twos-native-card]'))break;
+    const users=[...turn.querySelectorAll(selectors.user)];
+    if(users.some(other=>other!==e&&!e.contains(other)&&!other.contains(e)))break;
+    const cards=[...turn.querySelectorAll('button,[role=button]')].filter(node=>
+     visible(node) && !node.closest('[data-twos-native-card]') &&
+     [node.getAttribute('aria-label'),node.getAttribute('title'),node.innerText].some(label=>
+      label?.split(/[,，\n]/).some(part=>part.trim()===documentName)));
+    if(cards.length===1)return true;
+    if(cards.length>1)return false;
+   }
+   return false;
+  }
   if(compact(body)===compact(prompt))return true;
   if(provider==='Claude'||provider==='ChatGPT'){
    // Both observed user-message renderers use inline Markdown code rather
@@ -153,7 +186,7 @@ return await (async () => {
  // submitted text inside the same user bubble, never any arbitrary text node
  // or an assistant quotation containing the marker.
  const matchesUser=e=>matchesPrompt(e)||(provider==='ChatGPT'&&e.matches('[data-user-message-bubble]')&&[...e.querySelectorAll('[data-search-result-target]')].some(body=>body.closest('[data-user-message-bubble]')===e&&matchesPrompt(body)));
- const receipt=()=>messages().find(e=>(normalize(e.textContent)===normalize(prompt)||normalize(e.innerText)===normalize(prompt)||matchesUser(e)))||semanticReceipt();
+ const receipt=()=>messages().find(e=>((!documentWire && (normalize(e.textContent)===normalize(prompt)||normalize(e.innerText)===normalize(prompt)))||matchesUser(e)))||semanticReceipt();
  const busy=()=>Boolean(window.twosProviderDOM?.deepSeekControl('stop',true))||[...scope.querySelectorAll('button,[role=button]')].some(e=>window.twosProviderDOM?.isStop(e));
  const result=()=>{
   if(!same())return null;
@@ -199,8 +232,50 @@ return await (async () => {
   if(request.teamReview && reply && !replyID)return {state:'sent',conversationURL:clean(location.href)};
   return {...modelEvidence,...(request.teamReview && !nextUser && (busy() || claudeStreaming) ? {teamGenerating:true}:{}),...(teamActivity?{teamActivity}:{}),state:settled&&reply.trim()?'reply':'sent',conversationURL:clean(location.href),attachments:request.files?.map(({id,name,mime,size,hash})=>({id,name,mime,size,hash}))||[],...(reply?{reply,replyMessage:replyID||'rendered-answer'}:{})};
  };
- const existing=result();if(existing)return existing;
- if(request.inspectOnly && request.inspectRetainedDraft && fields.length===1 && targetCurrent()){
+ let existing=result();if(existing)return existing;
+ let partialMarkedTurn=false;
+ if(request.inspectOnly && request.allowTeamMode && provider==='ChatGPT' && same()){
+  // Some layouts have a user bubble with no speaker heading. The disclosure
+  // can be a sibling of that bubble. Search only its single-user turn.
+  const headings=turnHeadings(), users=messages();
+  const marked=node=>node.textContent.includes(prompt.slice(0,Math.min(256,prompt.length)));
+  const roots=[...users.filter(marked).reverse(),...headings.filter(h=>dom.speaker(h)==='user').reverse()];
+  const opened=window.twosExpandedHandoffs ||= new WeakSet();
+  for(const root of roots){
+   for(let turn=root,depth=0;turn&&turn!==scope&&turn!==document.body&&depth<8;depth++,turn=turn.parentElement){
+    const speakers=headings.filter(h=>turn.contains(h));
+    const bubbles=users.filter(u=>turn.contains(u));
+    if(speakers.some(h=>dom.speaker(h)==='assistant') || speakers.length>1 ||
+       bubbles.some(u=>bubbles.some(other=>u!==other&&!u.contains(other)&&!other.contains(u))) ||
+       turn.querySelector(selectors.reply+',form,textarea,[contenteditable=true],nav,aside'))break;
+    if(!marked(turn))continue;
+    partialMarkedTurn=true;
+    const buttons=[...turn.querySelectorAll('button,[role=button]')].filter(button=>{
+     if(!visible(button)||button.disabled||button.getAttribute('aria-expanded')==='true'||
+        button.closest('a,pre,code,form,[contenteditable=true],[data-twos-native-card]'))return false;
+     return [button.getAttribute('aria-label'),button.textContent].some(label=>
+       /^(show more|显示更多|顯示更多)$/i.test((label||'').trim()));
+    });
+    if(buttons.length!==1)continue;
+    if(!opened.has(buttons[0])){
+     opened.add(buttons[0]);buttons[0].click();
+     await new Promise(resolve=>setTimeout(resolve,75));
+     if(!same())return {state:'target_changed'};
+     existing=result();if(existing)return existing;
+    }
+    break;
+   }
+  }
+ }
+ if(request.inspectOnly && request.inspectRetainedDraft && same() && clean(location.href)===original && request.allowTeamMode){
+  const status=window.twosProviderDOM?.teamConnection()?.state;
+  if(status==='webLogin'||status==='webVerification')return {state:status};
+  if(busy())return {state:'busy'};
+  if(status!=='webReady'&&status!=='webDefault')return {state:'unknown',reason:'MEMBER_SESSION_UNVERIFIED'};
+ }
+ if(request.inspectOnly && request.inspectRetainedDraft && fields.length===1 && same() && clean(location.href)===original){
+  if(provider==='Claude' && request.allowTeamMode && pastedClaudeDraft())return {state:'retained_attachment'};
+  if(partialMarkedTurn)return {state:'retained_partial'};
   if(!value().trim())return {state:'retained_empty'};
   return {state:normalize(value())===normalize(prompt)?'retained_exact':'retained_changed'};
  }
@@ -211,6 +286,15 @@ return await (async () => {
  if(request.resumeDraft&&!value().trim())return {state:'unknown'};
  if(busy())return {state:'busy'};
  if(value().trim()&&!(request.resumeDraft&&normalize(value())===normalize(prompt)))return {state:'draft_conflict'};
+ function pastedClaudeDraft(){
+  for(let root=input?.parentElement,depth=0;root&&root!==document.body&&depth<8;root=root.parentElement,depth++){
+   if(root.querySelector(selectors.user+','+selectors.reply))break;
+   if([...root.querySelectorAll('button,[role=button]')].some(b=>visible(b)&&
+     /^(?:remove\s+(?:pasted (?:text|content)|paste)|移除\s*(?:已粘贴|粘贴的文本|已貼上|貼上的文字))/i.test((b.getAttribute('aria-label')||b.title||'').trim())))return true;
+  }
+  return false;
+ }
+ if(provider==='Claude' && request.allowTeamMode && pastedClaudeDraft())return {state:'draft_conflict',reason:'EXISTING_WEBSITE_ATTACHMENTS_PRESERVED'};
  // Some providers put uploaded cards beside, not inside, their labelled
  // composer. Expand only through bounded draft ancestors which contain no
  // conversation messages; never count an earlier message's file card.
@@ -232,7 +316,8 @@ return await (async () => {
  // Past uploaded files belong to conversation history, not the current draft.
  // Do not mistake them for newly selected attachments or re-upload evidence.
  const removeLabel=/^(?:Remove(?: attachment| file)?|移除(?:附件)?)\s*/i;
- const fileLabel=e=>[e.getAttribute('aria-label'),e.getAttribute('title')].find(v=>v&&!removeLabel.test(v)&&/\.[a-z0-9]{1,10}$/i.test(v.trim()))?.trim();
+ const instructionFileLabel=e=>documentWire && [e.getAttribute('aria-label'),e.getAttribute('title'),e.innerText].some(label=>label?.split(/[,，\n]/)[0].trim()===documentName)?documentName:null;
+ const fileLabel=e=>instructionFileLabel(e)||[e.getAttribute('aria-label'),e.getAttribute('title')].find(v=>v&&!removeLabel.test(v)&&/\.[a-z0-9]{1,10}$/i.test(v.trim()))?.trim();
  const attachmentChips=()=>{
   // ChatGPT images are filename-labelled popup buttons. Text/PDF cards
   // additionally have a sibling Remove button. Count each real card once;
@@ -243,7 +328,7 @@ return await (async () => {
   const removals=[...scope.querySelectorAll('[aria-label^="Remove attachment"],[aria-label^="Remove file"],[aria-label^="移除附件"],button[aria-label^="移除 "],button[aria-label^="Remove "]')].filter(inComposer);
   return [...outer,...removals.filter(e=>!outer.some(card=>card.contains(e)||(e.parentElement?.contains(card)&&fileLabel(card)&&(e.getAttribute('aria-label')||'').replace(removeLabel,'').trim()===fileLabel(card))))];
  };
- if(!request.files?.length&&attachmentChips().length)return {state:'draft_conflict',reason:'EXISTING_WEBSITE_ATTACHMENTS_PRESERVED'};
+ if((!request.files?.length || (documentWire&&!request.resumeDraft))&&attachmentChips().length)return {state:'draft_conflict',reason:'EXISTING_WEBSITE_ATTACHMENTS_PRESERVED'};
  if(request.preflightOnly)return {state:'ready'};
  if(!targetCurrent() && !(await waitForTeamPicker()))return {state:'target_changed'};
  // Keep the exact marked body as a recoverable draft while uploads settle.
@@ -257,7 +342,8 @@ return await (async () => {
    const selection=getSelection();selection.removeAllRanges();selection.addRange(range);
    // The team's versioned wire format is one line of plain text. Use the
    // editor's text-input path so its model and rendered draft update together.
-   const textInput=provider==='ChatGPT' && request.teamReview && request.teamWireVersion===1;
+   const teamText=request.teamReview && (request.teamWireVersion===1 || documentWire);
+   const textInput=teamText && (provider==='ChatGPT' || (provider==='Claude' && request.allowTeamMode===true));
    const body=textInput?prompt:prompt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
    // macOS can smart-substitute a JSON delimiter during insertText. Keep the
    // web editor's own input event, with substitutions off only for this edit.
@@ -265,7 +351,18 @@ return await (async () => {
    const saved=settings.map(name=>[name,input.getAttribute(name)]);
    try{
     for(const name of settings)input.setAttribute(name,name==='autocorrect'?'off':'false');
-    if(!document.execCommand(textInput?'insertText':'insertHTML',false,body))return {state:'unsupported'};
+    if(textInput && provider==='Claude'){
+     // A large paste is converted to a separate document by Claude. Enter
+     // bounded plain-text edits and verify the entire resulting draft below.
+     // Each slice ends at a code point boundary, including supplementary CJK.
+     for(let offset=0;offset<body.length;){
+      let end=Math.min(offset+768,body.length);
+      if(end<body.length && /[\uD800-\uDBFF]/.test(body[end-1]))end--;
+      if(!same() || !input.isConnected || !input.contains(selection.anchorNode) ||
+         !document.execCommand('insertText',false,body.slice(offset,end)))return {state:'draft',reason:'EXACT_DRAFT_NOT_CONFIRMED_NO_MESSAGE_SENT'};
+      offset=end;
+     }
+    }else if(!document.execCommand(textInput?'insertText':'insertHTML',false,body))return {state:'unsupported'};
    }finally{
     for(const [name,originalValue] of saved){
      if(originalValue===null)input.removeAttribute(name);else input.setAttribute(name,originalValue);
@@ -382,7 +479,7 @@ return await (async () => {
   const buttons=nearby||candidates;
   const deepSeekControl=deepSeekSend();if(!buttons.length&&deepSeekControl)buttons.push(deepSeekControl);
   if(buttons.length!==1)continue;
-  const selectedAtSend=request.expectedReviewModel?{selectedAtSend:window.twosProviderDOM.teamModel(request.allowTeamMode===true)}:{};
+  const selectedAtSend=(request.expectedReviewModel || request.followWebsiteSelection===true)?{selectedAtSend:window.twosProviderDOM.teamModel(request.allowTeamMode===true)}:{};
   buttons[0].click(); // Exactly one real website control; never guess Enter or another icon.
   // WebKit can throttle timers in a background pane. Bound elapsed time as
   // well as poll count; forty delayed callbacks must not turn a five-second
@@ -390,11 +487,11 @@ return await (async () => {
   const receiptDeadline=performance.now()+5000;
   for(let j=0;j<40;j++){
    await new Promise(r=>setTimeout(r,125));
-   if(!same())return {state:'unknown',...selectedAtSend};
+   if(!same())return {state:'unknown',reason:'AWAITING_CLICK_RECEIPT',...selectedAtSend};
    const confirmed=result();if(confirmed)return {...confirmed,...selectedAtSend};
    if(performance.now()>=receiptDeadline)break;
   }
-  return {state:'unknown',...selectedAtSend};
+  return {state:'unknown',reason:'AWAITING_CLICK_RECEIPT',...selectedAtSend};
  }
  return {state:'draft',reason:'EXACT_SEND_CONTROL_NOT_READY_NO_MESSAGE_SENT · SEND_CONTROL_SHAPE '+JSON.stringify(sendShape())};
 })();

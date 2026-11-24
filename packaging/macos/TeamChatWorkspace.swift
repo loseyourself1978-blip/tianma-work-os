@@ -519,6 +519,7 @@ final class TeamChatWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDel
       case "retryTimedOutBuild": try s.retryInterruptedBuild(args["step"] as? String ?? "")
       case "stop": s.stopRoom()
       case "checkConnection": try s.checkRoomConnection(step: args["step"] as? String ?? "")
+      case "leaveUnconfirmedPlanning": try s.leaveUnconfirmedPlanning(step: args["step"] as? String ?? "", nextID: args["next"] as? String ?? "")
       case "restoreDraft": try s.restoreEmptyDraft(args["step"] as? String ?? "")
       case "sendRetained": try s.retryRetainedDraft(args["step"] as? String ?? "")
       case "openAssignedConversation": try s.openAssignedConversation(step: args["step"] as? String ?? "")

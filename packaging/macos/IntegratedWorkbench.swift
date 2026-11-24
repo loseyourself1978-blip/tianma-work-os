@@ -1281,6 +1281,16 @@ struct WebHandoffReceipt: Codable {
         default: return "Delivery needs verification. It will not be repeated automatically."
         }
     }
+    // Only a managed team dispatch can select this representation. The
+    // original frozen UTF-8 bytes and operation ID survive restarts.
+    var prefersInstructionFile: Bool {
+        ["Claude", "ChatGPT"].contains(provider) && text.utf8.count > 8192 && (files ?? []).isEmpty
+    }
+    var instructionFile: WebTransferFile? {
+        guard teamWireVersion == 2, prefersInstructionFile else { return nil }
+        return WebTransferFile(id: id, name: "TWOS-instruction-" + id + ".txt",
+                               mime: "text/plain", size: text.utf8.count, hash: hash, source: source)
+    }
     func request(inspectOnly: Bool) -> [String: Any] {
         var value: [String: Any] = ["id": id, "text": text, "hash": hash, "provider": provider, "targetURL": resolvedURL ?? targetURL, "inspectOnly": inspectOnly, "draftOnly": false, "resumeDraft": resumeDraft == true]
         if let activity=nyraActivity {value["expectedActivity"]=activity}
@@ -1289,7 +1299,7 @@ struct WebHandoffReceipt: Codable {
         // website-added file captions from the exact submitted body. Metadata
         // only: observing delivery never rereads or uploads file bytes.
         if inspectOnly {
-            value["files"] = (files ?? []).map { ["id":$0.id,"name":$0.name,"mime":$0.mime,"size":$0.size,"hash":$0.hash] as [String:Any] }
+            value["files"] = ((files ?? []) + [instructionFile].compactMap { $0 }).map { ["id":$0.id,"name":$0.name,"mime":$0.mime,"size":$0.size,"hash":$0.hash] as [String:Any] }
         }
         return value
     }

@@ -40,7 +40,11 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     guard let home = TeamMember.homes[service] else { return }
     let w = channel(role, service)
     if fresh || (w.web.url == nil && !w.web.isLoading) {
-      let bound = managed && !fresh ? lastRoomConversation(role: role, service: service, home: w.serviceHome) : nil
+      let pending = run?.pending.flatMap { attempt -> URL? in
+        guard attempt.role == role, let receipt = attempt.web, receipt.provider == service else { return nil }
+        return receiptDestination(receipt, home: w.serviceHome)
+      }
+      let bound = managed && !fresh ? pending ?? lastRoomConversation(role: role, service: service, home: w.serviceHome) : nil
       w.start(embedded: true, navigateTo: bound ?? URL(string: home))
     }
     inspectModel(role, service)
@@ -113,7 +117,8 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
         guard UUID(uuidString: id) != nil else { throw TeamError.storage }
         if managed,let initialRecord,initialRecord.id==id {run=initialRecord} else {run = try readRun(id)}
         guard let current = run, current.id == id else { throw TeamError.storage }
-        remember(current)
+        if managed, run?.recoverUnsentRouteChange() == true { try persist() }
+        remember(run ?? current)
         if current.pendingDecision != nil {
           do { try applyDecision() } catch { notice = "decisionConflict" }
         }
@@ -186,12 +191,41 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
   private func restoreReviewer(_ receipt: WebHandoffReceipt, role: String) {
     guard TeamMember.homes[receipt.provider] != nil else { return }
     let reviewer = channel(role, receipt.provider)
-    if let raw = receipt.resolvedURL, let url = URL(string: raw),
-      NativeWorkbench.restorableURL(reviewer.web.url, service: reviewer.serviceHome) != url
-    {
-      reviewer.start(embedded: true, navigateTo: url)
-    } else {
-      reviewer.start(embedded: true)
+    guard let target = receiptDestination(receipt, home: reviewer.serviceHome) else { return }
+    // A saved browsing location is not a delivery receipt. A cold member window
+    // must reopen the journalled target, including a follow-up with no resolvedURL.
+    if !reviewer.web.isLoading && (reviewer.web.url == nil || (!managed && reviewer.web.url != target)) {
+      reviewer.start(embedded: true, navigateTo: target)
+    }
+  }
+
+  private func receiptDestination(_ receipt: WebHandoffReceipt, home: URL) -> URL? {
+    let raw = receipt.resolvedURL ?? receipt.targetURL
+    guard let url = URL(string: raw), NativeWorkbench.restorableURL(url, service: home) == url,
+          url.path == home.path || Self.conversation(url, service: receipt.provider) else { return nil }
+    return url
+  }
+
+  // A user can inspect a different history item to confirm login. Return to the
+  // room's actual destination only if leaving the visible editor is safe.
+  private func navigateRoomPane(_ pane: NativeWorkbench, to target: URL,
+                                current: @escaping () -> Bool, done: @escaping (Bool) -> Void) {
+    let before = pane.web.url
+    guard current(), NativeWorkbench.restorableURL(target, service: pane.serviceHome) == target
+    else { done(false); return }
+    if before == nil && !pane.web.isLoading {
+      pane.start(embedded: true, navigateTo: target); done(true); return
+    }
+    guard let before, NativeWorkbench.restorableURL(before, service: pane.serviceHome) != nil,
+          !pane.web.isLoading else { done(false); return }
+    pane.web.evaluateJavaScript("window.twosProviderDOM?.navigationSafety()", in: nil, in: NativeWorkbench.handoffWorld) { result in
+      guard current(), pane.web.url == before, !pane.web.isLoading,
+            case .success(let raw) = result, let value = raw as? [String:Any],
+            value["state"] as? String == "idle", value["hasDraft"] as? Bool == false else {
+        done(false); return
+      }
+      pane.start(embedded: true, navigateTo: target)
+      done(true)
     }
   }
   private func readRun(_ id: String) throws -> TeamRun { try Self.readRecord(id, from: directory) }
@@ -846,9 +880,18 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     }
     if let r = run, ["running", "stopping"].contains(r.state) {
       let overdue = r.pending.map { a in
-        a.observationExpired(at: Date().timeIntervalSince1970) &&
-          !codex.ledger.submissions.contains(where: { $0.id == a.clientID && $0.thread == a.thread &&
-            $0.state == "completed" && $0.turn != nil && $0.result != nil })
+        let submission = codex.ledger.submissions.first {
+          $0.id == a.clientID && $0.thread == a.thread && $0.sourceContentHash == a.inputHash
+        }
+        if submission?.state == "completed", submission?.turn != nil, submission?.result != nil { return false }
+        var activity: Double?
+        if codex.connected, submission?.state == "running", let thread = a.thread, let turn = submission?.turn,
+           let observation = codex.telemetry.runs[thread + "/" + turn],
+           observation.thread == thread, observation.turn == turn, observation.state == "running",
+           !observation.terminal, !observation.offlineUnknown, observation.serviceInterrupted != true {
+          activity = observation.lastActivity
+        }
+        return a.observationExpired(at: Date().timeIntervalSince1970, lastBuildActivity: activity)
       } ?? false
       if r.expired || overdue {
         if r.state == "running" { stop(reason: "timeout") }
@@ -1212,7 +1255,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
         targetPane: 0, targetURL: target.absoluteString, binding: r.id)
       r.attempts[r.attempts.count - 1].observedWebSelection = selection
       if managed { w.files=try webImages(a) }
-      w.teamWireVersion = 1
+      w.teamWireVersion = managed && w.prefersInstructionFile ? 2 : 1
       // On ChatGPT the rich editor and its send control can mount separately.
       // Journal a draft-only phase before WebKit can write anything.
       if managed, w.provider == "ChatGPT", (w.files ?? []).isEmpty {
@@ -1261,13 +1304,21 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     }
     checking = true
     var req = w.request(inspectOnly: inspect)
+    if managed, inspect, let destination = receiptDestination(w, home: reviewer.serviceHome),
+       Self.conversation(destination, service: w.provider) {
+      req["inspectionURL"] = destination.absoluteString
+    }
     req["teamReview"] = true
     if managed {req["allowTeamMode"]=true}
     guard let member = attempt.memberSnapshot ?? run?.members.first(where: { $0.role == role }), member.service == w.provider else { checking = false; return }
     if managed && !inspect {
       do {
-        req["files"] = try (w.files ?? []).map { file -> [String:Any] in
-          let bytes=try self.checkedBlob(file.id,hash:file.hash)
+        req["files"] = try ((w.files ?? []) + [w.instructionFile].compactMap { $0 }).map { file -> [String:Any] in
+          let bytes: Data
+          if file.id == w.instructionFile?.id {
+            bytes = Data(w.text.utf8)
+            guard NativeCodex.digest(bytes) == file.hash else { throw TeamError.wrongVersion }
+          } else { bytes = try self.checkedBlob(file.id,hash:file.hash) }
           return ["id":file.id,"name":file.name,"mime":file.mime,"size":file.size,"hash":file.hash,"base64":bytes.base64EncodedString()]
         }
       } catch {checking=false;fail("attachmentUnsupported");return}
@@ -1276,8 +1327,11 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     let preparing = !inspect && !restoreDraft && w.dispatchReason == "PREPARING_DRAFT_NO_MESSAGE_SENT"
     if preparing || restoreDraft { req["draftOnly"] = true; req["resumeDraft"] = false }
     // Freeze the verified choice for this send, independently of future rounds.
-    let expected = managed && member.followsWebsite ? (attempt.observedWebSelection ?? member.model) : member.model
-    if managed && expected.isEmpty { req["teamWebsiteDefault"] = true }
+    let expected = managed && member.followsWebsite ? (attempt.observedWebSelection ?? "") : member.model
+    if managed && expected.isEmpty {
+      req["teamWebsiteDefault"] = true
+      if member.followsWebsite { req["followWebsiteSelection"] = true }
+    }
     req["expectedReviewModel"] = expected
     req["allowedTeamSelections"] = TeamMember.selectionLabels(expected, service: member.service)
     let inspectionID = checkDraft ? UUID() : nil
@@ -1322,7 +1376,12 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       if (checkDraft || restoreDraft), !["sent", "reply", "generation_stopped"].contains(state) {
         self.recoveryStep = id
         switch state {
+        case "login", "webLogin": self.recoveryState = "webLogin"
+        case "verification", "webVerification": self.recoveryState = "webVerification"
+        case "busy": self.recoveryState = "webBusy"
         case "retained_exact": self.recoveryState = "retainedExact"
+        case "retained_attachment": self.recoveryState = "retainedAttachment"
+        case "retained_partial": self.recoveryState = "retainedPartial"
         case "draft" where restoreDraft && response["reason"] as? String == "EXACT_DRAFT_CONFIRMED_NO_MESSAGE_SENT":
           self.recoveryState = "retainedExact"
         case "retained_empty" where (w.files ?? []).isEmpty: self.recoveryState = "retainedEmpty"
@@ -1332,7 +1391,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
         self.publish(); return
       }
       if !inspect {
-        if let selection = response["selectedAtSend"] as? String, member.acceptsSelection(selection) {
+        if let selection = response["selectedAtSend"] as? String, !selection.isEmpty, selection.utf8.count <= 160, member.followsWebsite || member.acceptsSelection(selection) {
           self.run!.attempts[i].observedWebSelection = selection
         }
         self.run!.attempts[i].web?.state = state
@@ -1344,7 +1403,8 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
         self.run!.attempts[i].web?.mayHaveSent = ["sent", "reply", "unknown"].contains(state)
         try? self.persist()
       }
-      if let raw = response["conversationURL"] as? String,
+      if ["sent", "reply", "generation_stopped"].contains(state),
+        let raw = response["conversationURL"] as? String,
         let url = NativeWorkbench.restorableURL(
           URL(string: raw), service: reviewer.serviceHome), url.host == reviewer.serviceHome.host,
         Self.conversation(url, service: w.provider),
@@ -1369,6 +1429,16 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
       if response["teamGenerating"] as? Bool == true {
         self.recordActivity(
           [TeamActivity(key: id, kind: "generation", status: "running", text: "")], for: a)
+      }
+      // A click can finish before a web app mounts the corresponding user
+      // message. Poll that single intent read-only while the room is running.
+      if self.managed, !inspect, state == "unknown",
+         response["reason"] as? String == "AWAITING_CLICK_RECEIPT",
+         self.run?.state == "running", self.run?.stopRequested != true {
+        self.run!.attempts[i].state = "unknown"
+        self.observationDeadline = Date().addingTimeInterval(Self.webConversationGrace)
+        do { try self.persist() } catch { self.fail("storage") }
+        return
       }
       if state == "reply", let text = response["reply"] as? String,
         let t = response["replyMessage"] as? String,
@@ -1396,7 +1466,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
             self.run!.attempts[i].web?.updatedAt = Date().timeIntervalSince1970
           }
           do { try self.persist() } catch { self.fail("storage"); return }
-        } else if bound == nil && Date().timeIntervalSince1970 - w.updatedAt >= Self.webConversationGrace {
+        } else if !self.managed && bound == nil && Date().timeIntervalSince1970 - w.updatedAt >= Self.webConversationGrace {
           self.fail("webReplyPending")
         }
       } else if inspect, a.state == "sent", self.run?.state == "running" {
@@ -1405,11 +1475,18 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
         let limit = w.resolvedURL == nil
           ? Date(timeIntervalSince1970: w.updatedAt + Self.webConversationGrace)
           : self.observationDeadline ?? .distantPast
-        if ["verification", "login", "provider_limited"].contains(state) || Date() >= limit {
+        // A confirmed first send can retain the home URL while the model
+        // works. Keep reading the same attempt under its normal finite turn
+        // deadline. Neither a delayed route nor a temporarily absent echo
+        // authorizes another send.
+        let awaitingFirstRoute = self.managed && w.resolvedURL == nil &&
+          self.receiptDestination(w, home: reviewer.serviceHome)?.path == reviewer.serviceHome.path
+        if ["verification", "login", "provider_limited", "target_changed"].contains(state)
+            || (!awaitingFirstRoute && Date() >= limit) {
           self.fail("webReplyPending")
         }
       } else if !inspect
-        && ["verification", "login", "not_loaded", "busy", "draft_conflict", "provider_limited"]
+        && ["verification", "login", "not_loaded", "busy", "draft_conflict", "provider_limited", "target_changed"]
           .contains(state)
       {
         self.run!.attempts[i].state = "unsent"
@@ -1418,7 +1495,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
           self.run?.reason = "stopped"
         } else {
           self.run?.state = "paused"
-          self.run?.reason = self.managed ? (["verification":"webVerification","login":"webLogin","not_loaded":"webComposer","busy":"webBusy","draft_conflict":"webDraft","provider_limited":"webLimit"][state] ?? "webUnavailable") : "reviewerUnavailable"
+          self.run?.reason = self.managed ? (["verification":"webVerification","login":"webLogin","not_loaded":"webComposer","busy":"webBusy","draft_conflict":"webDraft","provider_limited":"webLimit","target_changed":"reviewerChat"][state] ?? "webUnavailable") : "reviewerUnavailable"
         }
         try? self.persist()
         self.publish()
@@ -1580,7 +1657,7 @@ extension TeamWorkspace {
       let c = r.conversation, !c.stoppedByUser,
       ["reviewerUnavailable", "reviewerChanged", "codexUnavailable", "webLogin", "webLoading",
        "webUnavailable", "webVerification", "webComposer", "webSelection", "webMismatch",
-       "webBusy", "webLimit", "webDraft", "reviewerChat"].contains(r.reason) else { return nil }
+       "webBusy", "webLimit", "webDraft", "webDefaultOnly", "reviewerChat"].contains(r.reason) else { return nil }
     let step = r.retryableUnsentAssignment ?? c.queue.first
     guard let step, let member = r.members.first(where: { $0.role == step.member }) else { return nil }
     return (step, member)
@@ -1622,11 +1699,45 @@ extension TeamWorkspace {
   }
 
   func restoreEmptyDraft(_ id: String) throws {
-    guard let a = retainedAttempt, a.id == id, let w = a.web, !checking,
+    guard let a = retainedAttempt, a.id == id, var w = a.web, !checking,
       recoveryStep == id, recoveryState == "retainedEmpty", (w.files ?? []).isEmpty
     else { throw TeamError.wrongVersion }
+    if managed, w.teamWireVersion == 1, w.prefersInstructionFile {
+      w.teamWireVersion = 2
+      run!.attempts[run!.attempts.count - 1].web = w
+      try persist()
+    }
     recoveryState = "checkingConnection"; publish()
     invokeWeb(id, w, inspect: false, restoreDraft: true)
+  }
+
+  // The owner may leave an inconclusive planning request in history and use
+  // a separately queued instruction. Keeping the receipt prevents replay.
+  private var nextInstructionAfterUnknown: TeamAssignment? {
+    guard let a = inspectableAttempt, let w = a.web, w.mayHaveSent == true,
+          a.state != "sent", w.state != "sent", a.resultHash == nil,
+          a.assignment?.kind == "coordinate", recoveryStep == a.id,
+          ["retainedEmpty", "retainedPartial"].contains(recoveryState), !checking, recoveryProbe == nil,
+          let next = run?.conversation?.queue.first, next.kind == "coordinate",
+          next.message != a.assignment?.message, next.instruction != a.assignment?.instruction,
+          let pane = channels[channelKey(a.role, w.provider)],
+          let actual = NativeWorkbench.restorableURL(pane.web.url, service: pane.serviceHome),
+          Self.conversation(actual, service: w.provider),
+          actual == receiptDestination(w, home: pane.serviceHome) else { return nil }
+    return next
+  }
+
+  func leaveUnconfirmedPlanning(step: String, nextID: String) throws {
+    guard let next = nextInstructionAfterUnknown, next.id == nextID,
+          let attempt = inspectableAttempt, attempt.id == step else { throw TeamError.wrongVersion }
+    try changeRoom { r in
+      guard r.pending?.id == step else { throw TeamError.wrongVersion }
+      let index = r.attempts.count - 1
+      r.attempts[index].state = "leftUnconfirmed"
+      r.state = "paused"; r.reason = "reviewerUnavailable"
+    }
+    observingWeb = nil; observationDeadline = nil
+    try checkRoomConnection(step: next.id)
   }
 
   func retryRetainedDraft(_ id: String) throws {
@@ -1658,7 +1769,7 @@ extension TeamWorkspace {
       let uncertain = w.mayHaveSent == true
       let sent = a.state == "sent"
       return ["confirmedSent":sent, "step":a.id, "member":a.role, "provider":w.provider, "retained":!uncertain,
-              "uncertain":uncertain, "state":recoveryStep == a.id ? recoveryState : (sent ? "webReplyPending" : uncertain ? "unconfirmed" : "retainedDraft")]
+              "uncertain":uncertain, "nextInstruction":nextInstructionAfterUnknown?.id ?? "", "state":recoveryStep == a.id ? recoveryState : (sent ? "webReplyPending" : uncertain ? "unconfirmed" : "retainedDraft")]
     }
     guard let t = recoveryTarget else { return [:] }
     let current = recoveryStep == t.step.id && checkedMember == t.member
@@ -1702,7 +1813,7 @@ extension TeamWorkspace {
         guard !model.isEmpty, model.utf8.count <= 160 else { done("webSelection", ""); return }
         done(member.followsWebsite || member.acceptsSelection(model) ? "webReady" : "webMismatch", model)
       } else if status == "webDefault" {
-        done(member.followsWebsite ? "webReady" : "webSelection", "")
+        done(member.followsWebsite ? "webReady" : "webDefaultOnly", "")
       } else {
         done(["webLogin","webVerification","webComposer","webSelection","webBusy","webLimit","webDraft"].contains(status) ? status : "webUnavailable", "")
       }
@@ -1711,10 +1822,39 @@ extension TeamWorkspace {
 
   func checkRoomConnection(step: String) throws {
     if let a = inspectableAttempt, a.id == step, let w = a.web {
-      guard !checking else { return }
-      restoreReviewer(w, role: a.role)
-      recoveryState = "checkingConnection"; recoveryStep = step; notice = ""; publish()
-      invokeWeb(step, w, inspect: true, checkDraft: true)
+      guard !checking, recoveryProbe == nil else { return }
+      let pane = channel(a.role, w.provider)
+      guard let target = receiptDestination(w, home: pane.serviceHome) else { throw TeamError.wrongVersion }
+      let token = UUID()
+      recoveryProbe = token; recoveryState = "checkingConnection"; recoveryStep = step; notice = ""; publish()
+      let current = { self.recoveryProbe == token && self.inspectableAttempt?.id == step }
+      func finish(_ status: String) {
+        guard current() else { return }
+        self.recoveryProbe = nil; self.recoveryState = status; self.publish()
+      }
+      var navigated = false
+      func checkPage() {
+        guard current() else { return }
+        let actual = NativeWorkbench.restorableURL(pane.web.url, service: pane.serviceHome)
+        // A new conversation may have acquired its provider URL after the send.
+        // In that case inspect only, and require the exact handoff echo to bind it.
+        let emerging = w.resolvedURL == nil && target.path == pane.serviceHome.path &&
+          actual.map { Self.conversation($0, service: w.provider) } == true
+        if pane.web.isLoading {
+          DispatchQueue.main.asyncAfter(deadline: .now()+0.25) { checkPage() }
+        } else if actual == target || emerging {
+          self.recoveryProbe = nil
+          self.invokeWeb(step, w, inspect: true, checkDraft: true)
+        } else if !navigated {
+          navigated = true
+          self.navigateRoomPane(pane, to: target, current: current) { ok in
+            if ok { DispatchQueue.main.asyncAfter(deadline: .now()+0.25) { checkPage() } }
+            else { finish("preserveMemberWindow") }
+          }
+        } else { finish("retainedCheck") }
+      }
+      DispatchQueue.main.asyncAfter(deadline: .now()+18) { finish("retainedCheck") }
+      checkPage()
       return
     }
     guard let target = recoveryTarget, target.step.id == step else { throw TeamError.wrongVersion }
@@ -1734,6 +1874,7 @@ extension TeamWorkspace {
       self.publish()
     }
     let deadline = Date().addingTimeInterval(18)
+    var navigationRequested = false
     func probe() {
       guard self.recoveryProbe == token, let current = self.recoveryTarget,
             current.step.id == step, current.member == member else { finish("webUnavailable"); return }
@@ -1749,7 +1890,17 @@ extension TeamWorkspace {
       } else {
         self.inspectRoomWebsite(member) { status, observed in
           guard self.recoveryProbe == token else { return }
-          if status == "webLoading", Date() < deadline {
+          if status == "reviewerChat", !navigationRequested {
+            navigationRequested = true
+            let pane = self.channel(member.role, member.service)
+            let target = self.lastRoomConversation(role: member.role, service: member.service, home: pane.serviceHome) ?? pane.serviceHome
+            self.navigateRoomPane(pane, to: target, current: {
+              self.recoveryProbe == token && self.recoveryTarget?.step.id == step && self.recoveryTarget?.member == member
+            }) { ok in
+              if ok { DispatchQueue.main.asyncAfter(deadline: .now()+0.25) { probe() } }
+              else { finish("preserveMemberWindow") }
+            }
+          } else if status == "webLoading", Date() < deadline {
             DispatchQueue.main.asyncAfter(deadline: .now()+0.4) { probe() }
           } else { finish(status, observed: observed) }
         }
@@ -1784,13 +1935,15 @@ extension TeamWorkspace {
 
   func useCheckedSelection(step: String, observed: String) throws {
     guard let t = recoveryTarget, t.step.id == step, recoveryStep == step,
-          t.member == checkedMember, recoveryState == "webMismatch", recoveryProbe == nil,
-          !observed.isEmpty, observed == checkedSelection else { throw TeamError.wrongVersion }
+          t.member == checkedMember, recoveryProbe == nil, observed == checkedSelection,
+          (recoveryState == "webMismatch" && !observed.isEmpty ||
+           recoveryState == "webDefaultOnly" && observed.isEmpty) else { throw TeamError.wrongVersion }
     // Recheck the exact member/step before allowing Continue. Never send from this action.
     try changeRoom { r in
       var roster = r.members
       guard let index = roster.firstIndex(of: t.member) else { throw TeamError.wrongVersion }
       roster[index].model = observed
+      roster[index].effort = nil
       try r.updateChatRoster(roster)
     }
     try checkRoomConnection(step: step)

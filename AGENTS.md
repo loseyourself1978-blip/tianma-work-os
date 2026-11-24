@@ -138,6 +138,16 @@ report at least every 15 minutes. If an external wait has no dependable ETA, giv
 the next check time and the estimated work remaining after that wait. Record the
 latest estimate, its assumptions and the next check in the existing checkpoint.
 
+When a specific Owner action or approval is required, bring the current Codex
+chat to the foreground before sending the actionable request. Use the desktop
+chat navigation tool with the active thread ID when available. On macOS use the
+running application with bundle ID `com.openai.codex` and verify it actually
+became frontmost. State the exact target window, action and expected result in
+the request. If the desktop is locked or the focus change fails, say so in that
+request and use the available Codex notification. Routine progress stays in the
+background. Never read other conversations or change notification permissions
+for this purpose.
+
 
 ## Nyra interaction baseline
 

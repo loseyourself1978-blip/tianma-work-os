@@ -360,12 +360,12 @@ def test_current_build_identity_matches_packaged_schema():
     from twos_runtime.maintenance import TARGET_SCHEMA
     from scripts import build_macos
     source = Path(build_macos.__file__).read_text()
-    assert __version__ == "1.0.16"
-    expected_build = "101.64"
+    assert __version__ == "1.0.17"
+    expected_build = "101.65"
     assert f'"build_version": "{expected_build}"' in source
     assert TARGET_SCHEMA == "vol20.002"
     native = (Path(build_macos.__file__).resolve().parents[1] / "packaging/macos/NativeCodex.swift").read_text()
-    assert '"version": "1.0.16"' in native
+    assert '"version": "1.0.17"' in native
     assert '"CFBundleVersion": provenance["build_version"]' in source
     assert "build-{provenance['build_version']}.dmg" in source
 

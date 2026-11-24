@@ -12,6 +12,7 @@ const terms={
   draft:['New','新建'],running:['Running','执行中'],stopping:['Stopping…','正在停止…'],stopped:['Stopped','已停止'],
   paused:['Paused','已暂停'],blocked:['Needs attention','需要处理'],awaitingOwner:['Ready for your review','等待你验收'],
   completed:['Completed','已完成'],accepted:['Accepted','已接受'],changes:['Changes requested','已要求修改'],
+  leftUnconfirmed:['Left unconfirmed by owner','已留档 · 送达未确认'],
   retainedDraft:['Draft · not sent','草稿 · 尚未发送'],sent:['Sent','已发送'],unsent:['Not sent','未送达'],intent:['Preparing','准备中'],unknown:['Delivery unconfirmed','送达待确认'],
   sending:['Sending','发送中'],queued:['Queued','队列中'],failed:['Failed','失败'],cancelled:['Cancelled','已取消'],
   rejected:['Rejected','已拒绝'],interrupted:['Interrupted','已中断'],Planner:['Planning','计划'],Builder:['Production','执行'],
@@ -243,6 +244,7 @@ const connectionCopy={
   webLoading:['The member’s page is loading. Check again when it opens.','成员网页正在加载，打开后请重新检查。'],
   webComposer:['The member’s page has no unambiguous message box yet. Open it to check.','尚未识别到唯一输入框，请打开成员网页检查。'],
   webSelection:['Could not confirm the website’s model or signed-in default. Check the model in the member window.','尚未确认网页模型或已登录的默认选择，请在成员窗口核对模型。'],
+  webDefaultOnly:['Signed in. The website shows its default selection. To use it, choose the default for future turns or open the member window to select the configured model.','已登录。网页只显示默认选择。可让后续轮次使用网页默认选择，也可打开成员窗口选择原定模型。'],
   webMismatch:['Switch the website to the member’s model, or adopt the current selection under Members.','请切换到成员设定的模型，或在成员栏采用网页当前选择。'],
   webUnavailable:['The member’s page could not be verified. Open it and refresh the connection.','暂时无法确认成员网页，请打开该窗口后重新检查。'],
   webReady:['Connection ready. Continue the queued message without typing it again.','连接已就绪，可直接继续这条待发消息。'],
@@ -255,10 +257,13 @@ function recoveryNotice(target,recovery){
   if(recovery.retained || recovery.uncertain){
     const name=display(member(recovery.member))||recovery.member;
     const copy={
+      preserveMemberWindow:connectionCopy.preserveMemberWindow,
       checkingConnection:['Checking the original conversation…','正在核对原会话…'],
       retainedExact:['The original draft matches. Send it once here, or send it in the member window and return to check.','已核对原草稿。可在这里发送一次，也可在成员窗口发送后返回核对。'],
       retainedEmpty:['The original composer is empty. Check the member window. If you have never sent this draft there, you can restore its text.','原输入框已空。请检查成员窗口。如确认从未手动发送，可以恢复原草稿。'],
       retainedChanged:['The composer contains different text. Open the member window to review it.','输入框中已有其他内容，请打开成员窗口核对。'],
+      retainedPartial:['This conversation contains the request marker. TWOS is checking the complete text before linking its reply.','已在原会话找到这条请求的标记。TWOS 需要核实完整正文，才能关联回复。'],
+      retainedAttachment:['The member website has a pasted-text attachment. Open the member window to inspect it, then check the original conversation again.','成员网页中有一个粘贴文本附件。请打开成员窗口核对该附件，再回来核对原会话。'],
       retainedCheck:['Open the original conversation to locate the draft or the sent message, then check again.','请打开成员窗口找到原草稿或已发送消息，再回来核对。'],
       retainedDraft:['The website did not send this draft.','这份网页草稿尚未发送。']
     };
@@ -266,20 +271,28 @@ function recoveryNotice(target,recovery){
     const uncertainCopy={
       unconfirmed:['Delivery is unconfirmed. Check the original member conversation.','送达待确认，请核对原成员会话。'],
       checkingConnection:copy.checkingConnection,
+      preserveMemberWindow:connectionCopy.preserveMemberWindow,
       retainedExact:['The original text is still in the composer. No matching sent message was found. Check the member window before taking any action.','原文仍在输入框中，当前未找到对应的已发送消息。请打开成员窗口核对。'],
       retainedEmpty:['The original composer is empty. No matching sent message was found in this conversation.','原输入框为空，当前会话中未找到对应的已发送消息。'],
       retainedChanged:['The composer contains different text. No matching sent message was found. Your draft is preserved.','输入框中是其他文字，当前未找到对应的已发送消息。已保留现有草稿。'],
+      retainedPartial:['This conversation contains the request marker. TWOS is checking the complete text before linking its reply.','已在原会话找到这条请求的标记。TWOS 需要核实完整正文，才能关联回复。'],
+      retainedAttachment:['The member website has a pasted-text attachment. Open the member window to inspect it, then check the original conversation again.','成员网页中有一个粘贴文本附件。请打开成员窗口核对该附件，再回来核对原会话。'],
       retainedCheck:['Could not verify delivery on this page. Open the original conversation and check again.','当前页面无法核实送达。请打开原成员会话后再核对。']
     };
     const confirmedCopy = recovery.state === 'checkingConnection' ? copy.checkingConnection :
       ['The member received this message. Check the original conversation for its reply.','成员已收到消息。可在原会话中核对对应回复。'];
-    const message=recovery.confirmedSent?confirmedCopy:recovery.uncertain?(uncertainCopy[recovery.state]||uncertainCopy.unconfirmed):(copy[recovery.state]||copy.retainedDraft);
+    const sessionStatus=['webLogin','webVerification','webBusy','preserveMemberWindow'].includes(recovery.state);
+    const message=sessionStatus?connectionCopy[recovery.state]:recovery.confirmedSent?confirmedCopy:recovery.uncertain?(uncertainCopy[recovery.state]||uncertainCopy.unconfirmed):(copy[recovery.state]||copy.retainedDraft);
     target.append(el('strong',name+' · '+recovery.provider),el('span',tr(...message)));
     const actions=row();
     if(recovery.retained && recovery.state==='retainedExact')
       actions.append(btn(tr('Send verified draft','发送已核对的草稿'),()=>post('sendRetained',{step:recovery.step}),'primary'));
     if(recovery.retained && recovery.state==='retainedEmpty')
       actions.append(btn(tr('I have not sent it · restore draft','确认未发送，恢复草稿'),()=>post('restoreDraft',{step:recovery.step}),'primary'));
+    if(recovery.nextInstruction){
+      actions.append(btn(tr('Keep original unconfirmed · check next instruction','保留原请求为未确认，核对下一条指令'),
+        ()=>post('leaveUnconfirmedPlanning',{step:recovery.step,next:recovery.nextInstruction})));
+    }
     const check=btn(tr('Check original conversation','核对原会话'),()=>post('checkConnection',{step:recovery.step}));
     check.disabled=recovery.state==='checkingConnection';
     actions.append(check,actionLink(tr('Open member window','打开成员窗口'),()=>post('channel',{member:recovery.member})));
@@ -297,6 +310,10 @@ function recoveryNotice(target,recovery){
   }else{
     if(recovery.state==='reviewerChat' && recovery.hasBoundChat)
       actions.append(btn(tr('Open assigned conversation','打开本群绑定的会话'),()=>post('openAssignedConversation',{step:recovery.step})));
+    if(recovery.state==='webDefaultOnly'){
+      actions.append(btn(tr('Use website default for future turns','后续轮次使用网页默认选择'),
+        ()=>post('useCheckedSelection',{step:recovery.step,observed:''})));
+    }
     if(recovery.state==='webMismatch' && recovery.observed){
       target.append(el('span',tr('Member setting: ','成员设置：')+recovery.expected+tr(' · Website: ',' · 网页当前：')+recovery.observed));
       actions.append(btn(tr('Use ','采用 ')+recovery.observed+tr(' for future turns','，用于后续轮次'),

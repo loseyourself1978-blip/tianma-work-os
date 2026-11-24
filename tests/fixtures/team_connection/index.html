@@ -5,11 +5,14 @@
 <script>
 let deliveries=0;
 const header=document.querySelector('header'),input=document.querySelector('textarea');
-document.querySelector('[data-testid=login-button]').onclick=()=>{
+const signIn=()=>{
+  sessionStorage.setItem('fixture-signed-in','1');
   header.replaceChildren();
   const account=document.createElement('button');
   account.dataset.testid='accounts-profile-button';account.textContent='Local test profile';header.append(account);
 };
+document.querySelector('[data-testid=login-button]').onclick=signIn;
+if(sessionStorage.getItem('fixture-signed-in'))signIn();
 document.querySelector('[data-testid=send-button]').onclick=()=>{
   const sent=document.createElement('article');sent.dataset.messageAuthorRole='user';sent.dataset.messageId='user-'+(deliveries+1);
   sent.textContent=input.value;input.value='';document.querySelector('form').before(sent);deliveries++;

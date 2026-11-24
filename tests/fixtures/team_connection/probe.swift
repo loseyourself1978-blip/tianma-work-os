@@ -10,26 +10,38 @@ do {
 } catch let error as CocoaError where error.code == .fileWriteNoPermission {}
 try NativeWorkbench.safeDirectory(dir)
 let scenario = CommandLine.arguments[3]
-let member = TeamMember(role: "Planner", product: "ChatGPT", provider: "OpenAI", model: scenario == "multiround" ? "Medium" : (scenario == "mismatch" ? "GPT-6.0" : ""), displayName: "Ada", duties: ["Planner"])
+let member = TeamMember(role: "Planner", product: "ChatGPT", provider: "OpenAI", model: scenario == "multiround" ? "Medium" : (["mismatch","unreportedPin"].contains(scenario) ? "GPT-6.0" : ""), displayName: "Ada", duties: ["Planner"])
 let folder = try NativeCodex.inspectDirectory(dir.path, isolated: true)
 var restored = TeamRun(id: roomID, created: 1, goal: "Offline recovery fixture", csv: "", folder: folder, members: [member])
 var conversation = TeamConversation()
-for _ in 0..<2 {
+for messageIndex in 0..<2 {
   var draft = TeamDraft()
-  draft.text = "Give the status of this synthetic fixture."
+  draft.text = scenario == "leaveUnknown" && messageIndex == 1 ? "Summarize the later fixture." : "Give the status of this synthetic fixture."
   try conversation.submit(draft, members: [member], language: "en")
 }
 restored.conversation = conversation; restored.state = "paused"; restored.reason = "reviewerUnavailable"; restored.next = "Planner"
-if scenario == "uncertain" {
+if ["uncertain","pendingHistory","leaveUnknown"].contains(scenario) {
   restored.state = "running"
   let prompt = try restored.prompt(), a = try restored.begin(prompt)
   var receipt = WebHandoffReceipt(source: "team:" + roomID, message: a.id, text: prompt, hash: a.inputHash,
-     provider: "ChatGPT", targetPane: 0, targetURL: TeamMember.homes["ChatGPT"]!, binding: roomID)
+     provider: "ChatGPT", targetPane: 0, targetURL: TeamMember.homes["ChatGPT"]! + (["pendingHistory","leaveUnknown"].contains(scenario) ? "c/bound" : ""), binding: roomID)
   receipt.mayHaveSent = true
   restored.attempts[0].web = receipt; restored.attempts[0].state = "unknown"
   restored.state = "paused"; restored.reason = "unconfirmed"
 }
 if scenario == "timeoutBoundary" {
+  var stoppedRoute = restored
+  stoppedRoute.state = "running"
+  var routeAttempt = try stoppedRoute.begin(stoppedRoute.prompt())
+  var unsent = WebHandoffReceipt(source:"team:"+roomID,message:routeAttempt.id,text:routeAttempt.promptText!,
+      hash:routeAttempt.inputHash,provider:"ChatGPT",targetPane:0,targetURL:"https://chatgpt.com/",binding:roomID)
+  unsent.state="target_changed";unsent.mayHaveSent=false;routeAttempt.web=unsent
+  stoppedRoute.attempts=[routeAttempt];stoppedRoute.state="paused";stoppedRoute.reason="reviewerUnavailable"
+  var uncertainRoute=stoppedRoute;uncertainRoute.attempts[0].web?.mayHaveSent=true
+  precondition(!uncertainRoute.recoverUnsentRouteChange() && uncertainRoute.pending != nil)
+  precondition(stoppedRoute.recoverUnsentRouteChange() && stoppedRoute.pending == nil &&
+    stoppedRoute.retryableUnsentAssignment?.id == routeAttempt.assignment?.id)
+
   let builder = TeamMember(role:"Builder", product:"Codex", provider:"OpenAI", model:"fixture")
   var run=restored, c=conversation
   let step=TeamAssignment(message:c.inputs[0].id,member:"Builder",kind:"build",instruction:"Create the fixture",round:c.round)
@@ -40,6 +52,9 @@ if scenario == "timeoutBoundary" {
   attempt.thread="thread-fixture";attempt.clientID="client-fixture";attempt.transportState="running"
   precondition(!attempt.observationExpired(at:attempt.started+600))
   precondition(attempt.observationExpired(at:attempt.started+1800))
+  precondition(!attempt.observationExpired(at:attempt.started+1800,lastBuildActivity:attempt.started+1798))
+  precondition(attempt.observationExpired(at:attempt.started+2400,lastBuildActivity:attempt.started+1800))
+  precondition(attempt.observationExpired(at:attempt.started+5400,lastBuildActivity:attempt.started+5399))
   run.attempts=[attempt];run.stopRequested=true;run.state="stopping";run.reason="timeout";run.recordState()
   run.attempts[0].state="interrupted";run.attempts[0].transportState="interrupted"
   run.state="stopped";run.reason="interrupted";run.recordState()
@@ -94,14 +109,35 @@ struct ProbeFailure: Error, CustomStringConvertible { let description: String }
 }
 Task { @MainActor in
   do {
-    if scenario == "uncertain" {
+    if ["uncertain","pendingHistory","leaveUnknown"].contains(scenario) {
       try await waitUntil(team.web, "room?.pending && room.recovery.uncertain")
       try await press("Open member window")
       guard let provider = NSApp.windows.first(where: { $0.title.contains("Ada") && $0.title.contains("ChatGPT") }).flatMap({webView($0.contentView)}) else { throw ProbeFailure(description:"Missing original member window") }
       try await waitUntil(provider, "Boolean(document.querySelector('[data-testid=login-button]'))")
       _ = try await provider.evaluateJavaScript("document.querySelector('[data-testid=login-button]').click();true")
+      if scenario == "pendingHistory" {
+        _ = try await provider.evaluateJavaScript("history.pushState(null,'','/c/viewed-history');document.querySelector('textarea').value='unrelated draft';true")
+        try await press("Check original conversation")
+        try await waitUntil(team.web, "room.recovery.state==='preserveMemberWindow'")
+        try await waitUntil(provider, "location.pathname==='/c/viewed-history' && document.querySelector('textarea').value==='unrelated draft'")
+        _ = try await provider.evaluateJavaScript("document.querySelector('textarea').value='';true")
+      }
       try await press("Check original conversation")
       try await waitUntil(team.web, "room.recovery.state==='retainedEmpty' && document.querySelector('#notice').innerText.includes('composer is empty')")
+      if scenario == "pendingHistory" { try await waitUntil(provider, "location.pathname==='/c/bound' && deliveries===0") }
+      if scenario == "leaveUnknown" {
+        try await press("Keep original unconfirmed · check next instruction")
+        try await waitUntil(team.web, "room.recovery.state==='webReady' && room.attempts.length===1")
+        let journal=try TeamWorkspace.readRecord(roomID, from:dir)
+        guard journal.pending == nil, journal.attempts[0].state == "leftUnconfirmed",
+          journal.attempts[0].web?.mayHaveSent == true, journal.conversation?.queue.count == 1,
+          journal.conversation?.queue.first?.instruction == "Summarize the later fixture.",
+          (try await provider.evaluateJavaScript("deliveries")) as? Int == 0 else {
+          throw ProbeFailure(description:"Later message replayed or old receipt lost")
+        }
+        print("PASS unresolved receipt durably retained; later instruction needs separate continuation, zero sends")
+        team.shutdown();exit(0)
+      }
       guard let w=restored.attempts.first?.web else { throw ProbeFailure(description:"Missing receipt") }
       let entered="[TWOS handoff " + w.id + "]\n" + w.text
       let _: Any = try await withCheckedThrowingContinuation { waiter in
@@ -149,7 +185,15 @@ Task { @MainActor in
     }
     guard let back = provider.window?.titlebarAccessoryViewControllers.compactMap({ $0.view as? NSButton })
       .first(where: { $0.title == "Back to chat · Check connection" }) else { throw ProbeFailure(description: "Missing return action") }
+    if scenario == "firstHistory" {
+      _ = try await provider.evaluateJavaScript("history.pushState(null,'','/c/browsed-for-login');true")
+    }
     back.performClick(nil)
+    if scenario == "unreportedPin" {
+      try await waitUntil(team.web, "room.recovery.state==='webDefaultOnly' && room.attempts.length===0")
+      try await press("Use website default for future turns")
+      try await waitUntil(provider, "deliveries===0")
+    }
     if scenario == "mismatch" {
       try await waitUntil(team.web, "room.recovery.state==='webMismatch' && room.recovery.expected==='GPT-6.0' && room.recovery.observed==='GPT-6.2'")
       try await press("Use GPT-6.2 for future turns")
@@ -182,6 +226,30 @@ Task { @MainActor in
           arguments:[:],in:nil,in:NativeWorkbench.handoffWorld) { continuation.resume(with:$0) }
       }
     }
+    if ["foldedEcho","foldedMismatch"].contains(scenario) {
+      let configure = """
+        const submit=document.querySelector('[data-testid=send-button]'),send=submit.onclick;
+        window.expansions=0;window.wrongClicks=0;
+        submit.onclick=()=>{
+          send();const bubble=document.querySelector('[data-message-author-role=user]'),full=bubble.textContent;
+          const wrap=document.createElement('section'), heading=document.createElement('h3');heading.textContent='你说：';
+          const more=document.createElement('button');more.textContent='显示更多';
+          const share=document.createElement('button');share.textContent='共享提示';share.onclick=()=>wrongClicks++;
+          bubble.replaceWith(wrap);wrap.append(heading,bubble,more,share);if(\(scenario == "foldedEcho" ? "true" : "false"))heading.remove();bubble.textContent=full.slice(0,320);
+          more.onclick=()=>{expansions++;bubble.textContent=full+\(scenario == "foldedMismatch" ? "'changed'" : "''");more.remove()};
+          const foreign=wrap.cloneNode(true);foreign.querySelector('article').textContent='Different request';
+          foreign.querySelector('button').onclick=()=>wrongClicks++;wrap.before(foreign);
+        };true
+        """
+      _ = try await provider.evaluateJavaScript(configure)
+    }
+    if scenario == "delayedEcho" {
+      _ = try await provider.evaluateJavaScript("""
+        const submit=document.querySelector('[data-testid=send-button]'), send=submit.onclick;
+        window.clicks=0;
+        submit.onclick=()=>{window.clicks++;setTimeout(send,8500)};true
+        """)
+    }
     if scenario == "delayedRoute" {
       let setup = """
         const submit=document.querySelector('[data-testid=send-button]');
@@ -199,6 +267,19 @@ Task { @MainActor in
       _ = try await provider.evaluateJavaScript(setup)
     }
     try await press("Continue once · skip duplicate copies")
+    if scenario == "foldedMismatch" {
+      try await waitUntil(provider, "expansions===1 && deliveries===1 && wrongClicks===0")
+      try await waitUntil(team.web, "room.state==='paused' && room.answers.length===0")
+      let unchanged=try TeamWorkspace.readRecord(roomID,from:dir)
+      guard unchanged.attempts.count==1,unchanged.pending?.resultHash==nil else {
+        throw ProbeFailure(description:"Accepted a partially matching expanded request")
+      }
+      print("PASS expanded the bound user turn; full text mismatch kept unresolved, no duplicate")
+      team.shutdown();exit(0)
+    }
+    if scenario == "delayedEcho" {
+      try await waitUntil(team.web, "room.state==='running' && room.attempts[0]?.state==='unknown'")
+    }
     if scenario == "delayedRoute" {
       try await waitUntil(team.web, "room.state==='running' && room.attempts[0]?.state==='sent'")
       try await waitUntil(provider, "deliveries===1 && !document.querySelector('[data-message-author-role=user]')")
@@ -246,6 +327,13 @@ Task { @MainActor in
       try await waitUntil(provider, "(e=>e.getAttribute('spellcheck')==='true' && !e.hasAttribute('autocorrect') && !e.hasAttribute('writingsuggestions'))(document.querySelector('#prompt-textarea'))")
     }
     let record=try TeamWorkspace.readRecord(roomID,from:dir)
+    if scenario == "foldedEcho" {try await waitUntil(provider, "expansions===1 && wrongClicks===0 && deliveries===1")}
+    if scenario == "delayedEcho" {
+      try await waitUntil(provider, "clicks===1 && deliveries===1")
+      guard record.attempts[0].thread?.hasSuffix("/c/first-send-fixture")==true else {
+        throw ProbeFailure(description:"Did not bind late echo to its provider conversation")
+      }
+    }
     guard record.attempts.count==1,record.conversation?.inputs.count==2,record.conversation?.skippedCopies?.count==1,
           record.attempts.first?.model==nil else { throw ProbeFailure(description:"Durable receipt mismatch") }
     if scenario == "multiround" {

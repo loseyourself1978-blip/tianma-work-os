@@ -42,6 +42,16 @@ A completed local result is delivered even when the provider omits the model ide
 
 For a previous attempt marked **Delivery unconfirmed**, open the original member conversation and choose **Check original conversation**. The check looks for a matching sent message and reports the state of the composer. It leaves the original receipt intact.
 
+## Resume the team's work
+
+After signing in, choose **Back to chat · Check connection**. TWOS returns an idle member window to this group's assigned conversation. A new group starts in a fresh conversation. If the window contains a draft, attachments or an active reply, finish or save that work first. If the site only exposes its default model, choose **Use website default for future turns** to apply it to later assignments.
+
+For an earlier send, choose **Check original conversation**. TWOS opens the recorded destination and checks the matching user turn, expanding a folded message when available. If the original planning request remains unconfirmed and a distinct instruction is already queued, **Keep original unconfirmed · check next instruction** lets you continue with that instruction. The original receipt remains in the chat.
+
+For long ChatGPT and Claude team instructions without other attachments, TWOS uploads a UTF-8 file and includes its SHA-256 in the short accompanying message. TWOS verifies the original bytes before upload and checks the file and message in the same user turn before associating the reply. An older unsent draft can use this format when its original composer is empty and you explicitly restore it.
+
+After 30 minutes of local production, TWOS checks recent activity on that exact submission, thread and turn. An active build can continue for up to 90 minutes total. A saved completion can be recovered through the original receipt.
+
 ## Installation and rollback
 
 Download the installer from [GitHub v1.0.16](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.16) and check SHA256SUMS before opening it. Finish active tasks and quit TWOS before upgrading. To roll back, quit 1.0.16 and use the [v1.0.15 installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.15). Keep the existing chat profile and output folders.

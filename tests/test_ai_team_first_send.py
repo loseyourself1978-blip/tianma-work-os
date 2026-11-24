@@ -16,6 +16,11 @@ FIXTURE = ROOT / 'tests/fixtures/team_connection'
 @pytest.mark.skipif(sys.platform != 'darwin', reason='native WebKit member window')
 def test_signed_out_member_can_resume_first_message_once(tmp_path):
     class Handler(SimpleHTTPRequestHandler):
+        def do_GET(self):
+            if self.path.startswith("/c/"):
+                self.path = "/index.html"
+            super().do_GET()
+
         def log_message(self, *args):
             pass
 
@@ -34,6 +39,12 @@ def test_signed_out_member_can_resume_first_message_once(tmp_path):
                     original = '"ChatGPT": "https://chatgpt.com/"'
                     assert source.count(original) == 1
                     source = source.replace(original, f'"ChatGPT": "http://127.0.0.1:{server.server_port}/"')
+                if name == 'TeamWorkspace':
+                    # Exercise a confirmed send beyond the routing grace period
+                    # without waiting 90 seconds for each native fixture.
+                    original = 'webConversationGrace: TimeInterval = 90'
+                    assert source.count(original) == 1
+                    source = source.replace(original, 'webConversationGrace: TimeInterval = 6')
                 parts.append(source)
             parts.append((FIXTURE / 'probe.swift').read_text())
             main = tmp_path / 'main.swift'
@@ -42,7 +53,8 @@ def test_signed_out_member_can_resume_first_message_once(tmp_path):
             subprocess.run(['xcrun','swiftc','-swift-version','5','-module-cache-path',
                             str(tmp_path/'cache'),str(main),'-o',str(binary)],check=True,timeout=180)
             for case in ('resume', 'stop', 'uncertain', 'retained', 'manual', 'missing', 'richText', 'prepareError',
-                         'timeoutBoundary', 'delayedRoute', 'multiround', 'mismatch'):
+                         'timeoutBoundary', 'delayedRoute', 'delayedEcho', 'foldedEcho', 'foldedMismatch',
+                         'multiround', 'mismatch', 'firstHistory', 'pendingHistory', 'leaveUnknown', 'unreportedPin'):
                 result = subprocess.run([str(binary),str(tmp_path/case),str(ROOT/'static_cockpit'),case],
                                         env=os.environ,capture_output=True,text=True,timeout=75)
                 assert result.returncode == 0, case + ': ' + result.stdout + result.stderr

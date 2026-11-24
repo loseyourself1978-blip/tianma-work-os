@@ -331,6 +331,21 @@ extension TeamRun {
     selectNextChatStep()
   }
 
+  // Earlier builds left a verified pre-click route change as an active
+  // intent. Preserve the receipt and assignment; the member must be checked
+  // again on the original target before the ordinary retry path can run.
+  mutating func recoverUnsentRouteChange() -> Bool {
+    guard conversation != nil, state == "paused", reason == "reviewerUnavailable",
+          stopRequested != true, conversation?.stoppedByUser == false,
+          let a = pending, a.state == "intent", a.assignment != nil,
+          let w = a.web, w.state == "target_changed", w.mayHaveSent == false,
+          w.message == a.id, w.binding == id, w.source == "team:" + id,
+          w.hash == a.inputHash, NativeCodex.digest(Data(w.text.utf8)) == a.inputHash,
+          w.result == nil, w.resolvedURL == nil, a.resultHash == nil else { return false }
+    attempts[attempts.count - 1].state = "unsent"
+    reason = "reviewerChat"
+    return true
+  }
   var retryableUnsentAssignment: TeamAssignment? {
     guard let a = attempts.last, let step = a.assignment, a.state == "unsent",
           a.web?.mayHaveSent == false, let c = conversation,
