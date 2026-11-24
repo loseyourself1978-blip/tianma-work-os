@@ -4542,9 +4542,12 @@ def test_codex_success_git_result_acceptance_and_compact_sync(tmp_path: Path) ->
 
 def test_runtime_shutdown_hands_off_detached_run_for_restart_recovery(
     tmp_path: Path,
+    request: pytest.FixtureRequest,
 ) -> None:
     source_repo = make_source_repo(tmp_path)
     fake_codex = make_fake_codex(tmp_path)
+    release = fake_codex.with_name(fake_codex.name + ".progress-release")
+    request.addfinalizer(release.touch)
     database = tmp_path / "runtime-shutdown.sqlite3"
     client = make_client(
         tmp_path,
@@ -4555,7 +4558,8 @@ def test_runtime_shutdown_hands_off_detached_run_for_restart_recovery(
     )
     with client:
         headers = init_and_login(client)
-        task_id = create_executable_task(client, headers, marker="FAKE_RUNTIME_HANDOFF")
+        # Keep this exact child alive until the restarted client is observing it.
+        task_id = create_executable_task(client, headers, marker="FAKE_VOL19_PROGRESS")
         pack = generate_pack(client, headers, task_id)
         approve_pack(client, headers, task_id, pack["id"])
         started = start_codex_run(client, headers, task_id, pack)
@@ -4599,6 +4603,8 @@ def test_runtime_shutdown_hands_off_detached_run_for_restart_recovery(
         timeout=20,
     ) as restarted:
         headers = init_and_login(restarted)
+        assert not release.exists()
+        release.touch()
         run = wait_for_run(restarted, headers, run_id, {"completed"}, timeout=20)
         audits = [
             item
