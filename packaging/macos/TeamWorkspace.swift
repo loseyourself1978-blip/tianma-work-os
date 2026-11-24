@@ -2181,10 +2181,67 @@ extension TeamWorkspace {
       throw problem
     }
   }
+  private func measuredDelivery(_ c: TeamConversation, revision v: TeamFileRevision,
+                                extending prior: TeamFileRevision?) throws -> TeamDeliveryManifest {
+    guard let folder = c.output else { throw TeamError.outputNeeded }
+    var origins = v.files.mapValues { (NativeCodex.digest(Data($0.utf8)), v.digest) }
+    if let prior {
+      // Only inherit this room's previously frozen artifacts still owned in this output.
+      let previous = prior.deliveryManifest
+      if let previous, previous.folder == folder {
+        for (path, entry) in previous.files where origins[path] == nil && c.ownedFiles[path] != nil {
+          origins[path] = (entry.sha256, entry.contentRevision)
+        }
+      } else if previous == nil {
+        for (path, content) in prior.files where origins[path] == nil && c.ownedFiles[path] != nil {
+          origins[path] = (NativeCodex.digest(Data(content.utf8)), prior.digest)
+        }
+      }
+    }
+    var files = [String: TeamDeliveryEntry]()
+    for (path, origin) in origins {
+      guard let owned = c.ownedFiles[path], owned.hash == origin.0 else { throw TeamError.fileConflict }
+      let bytes = try TeamArtifacts.verifiedContents(path, owner: owned, in: folder)
+      files[path] = TeamDeliveryEntry(sha256: owned.hash, bytes: bytes.count, contentRevision: origin.1)
+    }
+    return TeamDeliveryManifest(folder: folder, files: files)
+  }
+
+  func recheckDeliveredFiles(_ review: String) throws {
+    try changeRoom { r in
+      guard let a = r.reviewNeedingFileEvidence, a.id == review, let previousStep = a.assignment,
+            var c = r.conversation, let last = c.revisions.indices.last else { throw TeamError.wrongVersion }
+      let v = c.revisions[last]
+      let manifest = try measuredDelivery(c, revision: v, extending: c.revisions.dropLast().last)
+      c.revisions[last].deliveryManifest = manifest
+      let step = TeamAssignment(message: previousStep.message, member: previousStep.member, kind: "review",
+        instruction: "Recheck the outstanding findings using the TWOS verifiedDeliveryFiles manifest. Inspect the frozen submission, prior assessment and delivered file hashes.", round: previousStep.round, frozen: v.digest)
+      _ = try c.prompt(for: step, members: r.members)
+      c.queue.append(step)
+      c.issue = nil
+      r.conversation = c
+      r.selectNextChatStep()
+    }
+    startRoomTimer()
+  }
+
   func checkVisibleRevision(_ v:TeamFileRevision)throws {
     guard let c=run?.conversation else{throw TeamError.storage}
     if v.files.isEmpty{return}
     guard let f=c.output else{throw TeamError.outputNeeded}
+    if let manifest = v.deliveryManifest {
+      guard manifest.folder == f else { throw TeamError.changedDirectory }
+      for (path, content) in v.files {
+        guard let entry = manifest.files[path], entry.contentRevision == v.digest,
+              entry.sha256 == NativeCodex.digest(Data(content.utf8)) else { throw TeamError.fileConflict }
+      }
+      for (path, entry) in manifest.files {
+        guard let owned = c.ownedFiles[path], owned.hash == entry.sha256 else { throw TeamError.fileConflict }
+        let bytes = try TeamArtifacts.verifiedContents(path, owner: owned, in: f)
+        guard bytes.count == entry.bytes else { throw TeamError.fileConflict }
+      }
+      return
+    }
     for (name,text) in v.files {
       guard let file=c.ownedFiles[name],file.hash==NativeCodex.digest(Data(text.utf8)) else {throw TeamError.fileConflict}
       _=try TeamArtifacts.visible(name,owner:file,in:f)
@@ -2207,6 +2264,12 @@ extension TeamWorkspace {
       try TeamArtifacts.commit(intent,in:output)
       c.ownedFiles[n]=intent.file;c.writeIntent=nil;try record()
     }
+    let previous = c.revisions.dropLast().last
+    let base = previous.flatMap { prior in
+      c.publishedRevision == prior.id && (v.round == prior.round || !Set(v.files.keys).isDisjoint(with: prior.files.keys)) ? prior : nil
+    }
+    let manifest = try measuredDelivery(c, revision: v, extending: base)
+    c.revisions[c.revisions.count - 1].deliveryManifest = manifest
     c.publishedRevision=v.id;try record()
   }
   private func executionScratch()throws->CodexDirectory {

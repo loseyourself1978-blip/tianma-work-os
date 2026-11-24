@@ -354,7 +354,10 @@ function notice(){
   if(!text)return;
   target.append(el('span',text));
   if(msgs.includes('outputNeeded'))target.append(actionLink(tr('Choose folder','选择目录'),()=>post('directory')));
-  if(room && ['paused','blocked','stopping'].includes(room.state)&&!room.stop)
+  if(room?.reviewNeedingFileEvidence){
+    const step=room.reviewNeedingFileEvidence;
+    target.append(btn(tr('Verify files and send the manifest to the reviewer','核对交付文件并发给审核者'),()=>post('recheckDeliveredFiles',{step})));
+  } else if(room && ['paused','blocked','stopping'].includes(room.state)&&!room.stop)
     target.append(actionLink(tr('Reconcile','核对状态'),()=>post('reconcile')));
 }
 window.renderTeam=next=>{

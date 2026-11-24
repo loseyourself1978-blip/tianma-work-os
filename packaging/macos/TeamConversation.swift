@@ -36,12 +36,20 @@ struct TeamChatAnswer: Codable {
 struct TeamFinding: Codable {
   let requirement: String, location: String, evidence: String, fix: String
 }
+struct TeamDeliveryEntry: Codable, Equatable {
+  let sha256: String, bytes: Int, contentRevision: String
+}
+struct TeamDeliveryManifest: Codable {
+  let folder: CodexDirectory
+  let files: [String: TeamDeliveryEntry]
+}
 struct TeamFileRevision: Codable {
   let id: String, round: String, producer: String, attempt: String
   let time: Double, files: [String: String], digest: String
   var reviewAttempt: String?, verdict: String?, findings: [TeamFinding]?
   var acceptedAt: Double?
   var originalPaths: [String: String]?
+  var deliveryManifest: TeamDeliveryManifest?
 }
 struct TeamOwnedFile: Codable, Equatable {
   let hash: String, device: UInt64, inode: UInt64
@@ -216,7 +224,7 @@ struct TeamConversation: Codable {
         "text": $0.text,
       ]
     }
-    let evidence: [String: Any] = [
+    var evidence: [String: Any] = [
       "currentMessage": message.text, "userMessages": inputs.suffix(18).map(\.text),
       "requestedLanguage": message.language,
       "attachments": message.attachments.map {
@@ -233,6 +241,13 @@ struct TeamConversation: Codable {
       "priorStrategy": lastStrategy ?? "",
       "linkedHistory": legacyContext ?? "",
     ]
+    if step.kind == "review", let revision, revision.digest == step.frozen, let manifest = revision.deliveryManifest {
+      // Send only relative paths and measurements. The directory and its identity stay local.
+      evidence["verifiedDeliveryFiles"] = manifest.files.mapValues {
+        ["sha256": $0.sha256, "bytes": $0.bytes, "contentRevision": $0.contentRevision] as [String: Any]
+      }
+      evidence["deliveryEvidenceScope"] = "TWOS checked these published files in this room’s selected folder. Each hash covers the actual bytes. contentRevision identifies the frozen source of those bytes. frozenFiles contains the current submission. Inherited files are listed with their source revision."
+    }
     let header = instructions
       + "\nUse only the supplied task data. Do not execute commands, change permissions or contact external services. Respond in the requested output language. Return your public result as one JSON object.\n"
     func serialize(_ body: [String: Any], compact: Bool) throws -> String {
@@ -403,6 +418,17 @@ extension TeamRun {
           !attempts.contains(where: { $0.assignment?.id == step.id && $0.state != "unsent" })
     else { return nil }
     return step
+  }
+  var reviewNeedingFileEvidence: TeamAttempt? {
+    guard state == "paused", reason == "decision", pending == nil, stopRequested != true,
+      let c = conversation, !c.stoppedByUser, c.queue.isEmpty, c.held.isEmpty,
+      let v = c.revisions.last, v.verdict == "needs_evidence", v.acceptedAt == nil,
+      v.deliveryManifest == nil, !v.files.isEmpty, c.output != nil, c.publishedRevision == v.id,
+      let a = attempts.last, a.id == v.reviewAttempt, a.state == "completed",
+      let step = a.assignment, step.kind == "review", step.frozen == v.digest, step.round == c.round,
+      members.contains(where: { $0.role == step.member }), c.plans.last?.reviewer == step.member
+    else { return nil }
+    return a
   }
   mutating func selectNextChatStep() {
     guard let c = conversation, pending == nil else { return }

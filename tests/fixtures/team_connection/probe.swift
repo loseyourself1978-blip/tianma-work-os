@@ -29,6 +29,73 @@ if ["uncertain","pendingHistory","leaveUnknown"].contains(scenario) {
   restored.attempts[0].web = receipt; restored.attempts[0].state = "unknown"
   restored.state = "paused"; restored.reason = "unconfirmed"
 }
+if scenario == "manifest" {
+  let outputURL = profile.appendingPathComponent("output")
+  try NativeWorkbench.safeDirectory(outputURL)
+  let output = try NativeCodex.inspectDirectory(outputURL.path, isolated: true)
+  let untouched = outputURL.appendingPathComponent("personal.txt")
+  try Data("private".utf8).write(to: untouched)
+  let workspace = TeamWorkspace(root: resources, preferences: dir, translate: { $0 }, managed: true)
+  let reviewer = TeamMember(role: "Reviewer", product: "Claude", provider: "Anthropic", model: "")
+  let builder = TeamMember(role: "Builder", product: "Codex", provider: "OpenAI", model: "")
+  restored.members += [builder, reviewer]
+  conversation.output = output
+  conversation.plans = [TeamChatPlan(round: conversation.round, requirements: ["Return a checked site"], builder: "Builder", reviewer: "Reviewer")]
+  let original = ["index.html": "<title>Example</title>", "app.js": "void 0", "REVIEW.md": "First edition"]
+  func revision(_ files: [String: String]) throws -> TeamFileRevision {
+    TeamFileRevision(id: UUID().uuidString, round: conversation.round, producer: "Builder",
+                     attempt: UUID().uuidString, time: 1, files: files, digest: NativeCodex.digest(try TeamFiles.bytes(files)))
+  }
+  let first = try revision(original), amendment = try revision(["REVIEW.md": "Evidence"])
+  conversation.revisions = [first]
+  conversation.queue = []
+  restored.conversation = conversation
+  try workspace.setupRoom(restored)
+  try workspace.publishRoomFiles()
+  try workspace.changeRoom { $0.conversation?.revisions.append(amendment) }
+  try workspace.publishRoomFiles()
+  let published = workspace.run!.conversation!.revisions.last!
+  let measured = published.deliveryManifest!.files
+  precondition(Set(measured.keys) == Set(original.keys) && measured["index.html"]?.contentRevision == first.digest)
+  precondition(measured["REVIEW.md"]?.contentRevision == amendment.digest)
+  try workspace.checkVisibleRevision(published)
+  let review = TeamAssignment(message: conversation.inputs[0].id, member: "Reviewer", kind: "review",
+                              instruction: "Verify the files", round: conversation.round, frozen: amendment.digest)
+  var attempt = TeamAttempt(id: UUID().uuidString, role: "Reviewer", version: 2, inputHash: "test", started: 2)
+  attempt.assignment = review
+  attempt.state = "completed"
+  try workspace.changeRoom { run in
+    run.attempts = [attempt]
+    run.conversation?.revisions[1].deliveryManifest = nil
+    run.conversation?.revisions[1].reviewAttempt = attempt.id
+    run.conversation?.revisions[1].verdict = "needs_evidence"
+    run.state = "paused"
+    run.reason = "decision"
+  }
+  var stopped = workspace.run!
+  stopped.conversation?.stoppedByUser = true
+  precondition(stopped.reviewNeedingFileEvidence == nil)
+  try workspace.recheckDeliveredFiles(attempt.id)
+  let recovered = workspace.run!
+  let next = recovered.conversation!.queue
+  precondition(next.count == 1 && next[0].member == "Reviewer" && next[0].frozen == amendment.digest)
+  precondition(recovered.reviewNeedingFileEvidence == nil && recovered.attempts.last?.id == attempt.id)
+  let prompt = try recovered.prompt()
+  precondition(prompt.contains("verifiedDeliveryFiles") && prompt.contains(measured["app.js"]!.sha256))
+  precondition(!prompt.contains(untouched.lastPathComponent) && !prompt.contains(output.path))
+  do {
+    try workspace.recheckDeliveredFiles(attempt.id)
+    fatalError("Duplicate dispatch")
+  } catch TeamError.wrongVersion {}
+  let tampered = outputURL.appendingPathComponent("app.js")
+  try Data("user edit".utf8).write(to: tampered)
+  do {
+    try workspace.checkVisibleRevision(recovered.conversation!.revisions.last!)
+    fatalError("Changed inherited file was approved")
+  } catch TeamError.fileConflict {}
+  print("PASS partial update keeps verified owned outputs, legacy same-revision review, unrelated file excluded, edited output blocks approval")
+  exit(0)
+}
 if scenario == "timeoutBoundary" {
   var stoppedRoute = restored
   stoppedRoute.state = "running"
