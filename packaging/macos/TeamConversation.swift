@@ -377,6 +377,25 @@ extension TeamRun {
     reason = "reviewerChat"
     return true
   }
+  // Older versions promoted a draft-only timeout into an unconfirmed stop.
+  // An explicit user stop and any operation that could have sent stay terminal
+  // or uncertain. Recover only the original draft for an explicit recheck.
+  mutating func recoverTimedOutDraft() -> Bool {
+    guard let c = conversation, !c.stoppedByUser, stopRequested == true,
+          ["paused", "stopping"].contains(state), ["stopUnconfirmed", "timeout", "restart"].contains(reason),
+          let a = pending, a.state == "intent", a.assignment != nil, a.resultHash == nil,
+          let w = a.web, w.provider == "ChatGPT", w.state == "draft", w.mayHaveSent == false,
+          w.dispatchReason == "PREPARING_DRAFT_NO_MESSAGE_SENT", w.result == nil,
+          w.message == a.id, w.binding == id, w.source == "team:" + id,
+          w.hash == a.inputHash, NativeCodex.digest(Data(w.text.utf8)) == a.inputHash
+    else { return false }
+    attempts[attempts.count - 1].web?.dispatchReason = "DRAFT_CHECK_TIMED_OUT_NO_MESSAGE_SENT"
+    stopRequested = false
+    state = "paused"
+    reason = "reviewerDraft"
+    return true
+  }
+
   var retryableUnsentAssignment: TeamAssignment? {
     guard let a = attempts.last, let step = a.assignment, a.state == "unsent",
           a.web?.mayHaveSent == false, let c = conversation,

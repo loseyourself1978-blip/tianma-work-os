@@ -437,6 +437,29 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
     }
     // Invoked only by the trusted host for an explicit transfer or inspection.
     // No credentials, network interception, page-world native bridge or arbitrary command.
+    private var scheduledHandoff: UUID?
+    private var restoreHandoffScheduling: (() -> Void)?
+    private func finishHandoffScheduling(_ id: UUID?) {
+        guard let id, scheduledHandoff == id else { return }
+        restoreHandoffScheduling?()
+        scheduledHandoff = nil
+        restoreHandoffScheduling = nil
+    }
+    private func beginHandoffScheduling(_ request: [String: Any]) -> UUID? {
+        guard #available(macOS 14.0, *), request["allowTeamMode"] as? Bool == true,
+              request["inspectOnly"] as? Bool == false else { return nil }
+        // A member page may be offscreen while a user is in the group. Keep
+        // its current file/draft operation scheduled and restore the exact
+        // previous preference even if WebKit never calls its completion.
+        finishHandoffScheduling(scheduledHandoff)
+        let prefs = web.configuration.preferences, prior = prefs.inactiveSchedulingPolicy
+        let id = UUID()
+        prefs.inactiveSchedulingPolicy = .none
+        scheduledHandoff = id
+        restoreHandoffScheduling = { prefs.inactiveSchedulingPolicy = prior }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 45) { [weak self] in self?.finishHandoffScheduling(id) }
+        return id
+    }
     func webTransfer(_ request: [String: Any], completion: @escaping ([String: Any]) -> Void) {
         guard let raw = request["targetURL"] as? String,
               let expected = URL(string: raw), let actual = Self.restorableURL(web.url, service: serviceHome),
@@ -444,7 +467,9 @@ final class NativeWorkbench: NSWindowController, WKNavigationDelegate, WKUIDeleg
               let file = handoffResources?.appendingPathComponent("native_codex/web_handoff.js"),
               let script = try? String(contentsOf: file, encoding: .utf8) else { completion(["state": "target_changed"]); return }
         let observer = (try? String(contentsOf: file.deletingLastPathComponent().appendingPathComponent("provider_dom.js"), encoding: .utf8)) ?? ""
-        web.callAsyncJavaScript(observer + "\n" + script, arguments: ["request": request], in: nil, in: Self.handoffWorld) { result in
+        let scheduled = beginHandoffScheduling(request)
+        web.callAsyncJavaScript(observer + "\n" + script, arguments: ["request": request], in: nil, in: Self.handoffWorld) { [weak self] result in
+            self?.finishHandoffScheduling(scheduled)
             switch result {
             case .success(let value): completion(value as? [String: Any] ?? ["state": "unknown"])
             case .failure(let error):

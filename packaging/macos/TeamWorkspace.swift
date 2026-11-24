@@ -62,6 +62,8 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
   private var checkedSelection = ""
   private var recoveryProbe: UUID?, recoveryState = "", recoveryStep = "", recoveryChecked: Double = 0
   private var draftInspectionID: UUID?
+  private var draftPreparationID: UUID?
+  private static let draftPreparationGrace: TimeInterval = 45
   private var observingWeb: String?
   private var lastPayload: Data?
   private var observationDeadline: Date?, terminationObserver: NSObjectProtocol?
@@ -117,7 +119,11 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
         guard UUID(uuidString: id) != nil else { throw TeamError.storage }
         if managed,let initialRecord,initialRecord.id==id {run=initialRecord} else {run = try readRun(id)}
         guard let current = run, current.id == id else { throw TeamError.storage }
-        if managed, run?.recoverUnsentRouteChange() == true { try persist() }
+        if managed {
+          let routeRecovered = run?.recoverUnsentRouteChange() == true
+          let draftRecovered = run?.recoverTimedOutDraft() == true
+          if routeRecovered || draftRecovered { try persist() }
+        }
         remember(run ?? current)
         if current.pendingDecision != nil {
           do { try applyDecision() } catch { notice = "decisionConflict" }
@@ -139,6 +145,7 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
   }
   func shutdown() {
     draftSave?.cancel()
+    draftPreparationID = nil
     if !managed && storageOK && lock >= 0 { writeSetupDraft() }
     recoveryProbe = nil
     evidenceCheck = nil
@@ -1334,6 +1341,27 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     }
     req["expectedReviewModel"] = expected
     req["allowedTeamSelections"] = TeamMember.selectionLabels(expected, service: member.service)
+    // A background renderer may delay or lose a draft-only callback. This phase
+    // has no authority to click Send. Keep the operation/draft available for
+    // inspection, and ignore a late completion after its deadline.
+    let preparationID = (preparing || restoreDraft) ? UUID() : nil
+    if let preparationID {
+      draftPreparationID = preparationID
+      DispatchQueue.main.asyncAfter(deadline: .now() + Self.draftPreparationGrace) { [weak self] in
+        guard let self, self.draftPreparationID == preparationID else { return }
+        self.draftPreparationID = nil
+        self.checking = false
+        guard self.storageOK, self.run?.pending?.id == id, self.run?.stopRequested != true else { return }
+        let i = self.run!.attempts.count - 1
+        self.run!.attempts[i].web?.dispatchReason = "DRAFT_CHECK_TIMED_OUT_NO_MESSAGE_SENT"
+        self.run!.state = "paused"
+        self.run!.reason = "reviewerDraft"
+        self.recoveryState = "draftPreparationDelayed"
+        self.recoveryStep = id
+        try? self.persist()
+        self.publish()
+      }
+    }
     let inspectionID = checkDraft ? UUID() : nil
     if let inspectionID {
       draftInspectionID = inspectionID
@@ -1348,6 +1376,10 @@ final class TeamWorkspace: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     }
     reviewer.webTransfer(req) { [weak self] response in
       guard let self = self else { return }
+      if let preparationID {
+        guard self.draftPreparationID == preparationID else { return }
+        self.draftPreparationID = nil
+      }
       if let inspectionID {
         guard self.draftInspectionID == inspectionID else { return }
         self.draftInspectionID = nil
@@ -1769,7 +1801,7 @@ extension TeamWorkspace {
       let uncertain = w.mayHaveSent == true
       let sent = a.state == "sent"
       return ["confirmedSent":sent, "step":a.id, "member":a.role, "provider":w.provider, "retained":!uncertain,
-              "uncertain":uncertain, "nextInstruction":nextInstructionAfterUnknown?.id ?? "", "state":recoveryStep == a.id ? recoveryState : (sent ? "webReplyPending" : uncertain ? "unconfirmed" : "retainedDraft")]
+              "uncertain":uncertain, "nextInstruction":nextInstructionAfterUnknown?.id ?? "", "state":recoveryStep == a.id ? recoveryState : (sent ? "webReplyPending" : uncertain ? "unconfirmed" : w.dispatchReason == "DRAFT_CHECK_TIMED_OUT_NO_MESSAGE_SENT" ? "draftPreparationDelayed" : "retainedDraft")]
     }
     guard let t = recoveryTarget else { return [:] }
     let current = recoveryStep == t.step.id && checkedMember == t.member

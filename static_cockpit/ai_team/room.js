@@ -259,6 +259,7 @@ function recoveryNotice(target,recovery){
     const copy={
       preserveMemberWindow:connectionCopy.preserveMemberWindow,
       checkingConnection:['Checking the original conversation…','正在核对原会话…'],
+      draftPreparationDelayed:['TWOS is waiting for the member page to confirm the draft and its attachments. Check the original conversation to continue.','成员网页尚未确认草稿及附件。点「核对原会话」查看原草稿并继续。'],
       retainedExact:['The original draft matches. Send it once here, or send it in the member window and return to check.','已核对原草稿。可在这里发送一次，也可在成员窗口发送后返回核对。'],
       retainedEmpty:['The original composer is empty. Check the member window. If you have never sent this draft there, you can restore its text.','原输入框已空。请检查成员窗口。如确认从未手动发送，可以恢复原草稿。'],
       retainedChanged:['The composer contains different text. Open the member window to review it.','输入框中已有其他内容，请打开成员窗口核对。'],

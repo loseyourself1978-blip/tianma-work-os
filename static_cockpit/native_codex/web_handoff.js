@@ -436,10 +436,12 @@ return await (async () => {
    window.twosUploadReceipts.set(request.id,manifest);
   }
   let uploaded=false;
-  for(let n=0;n<80;n++){
+  const uploadDeadline=performance.now()+20000;
+  for(let n=0;n<80 && performance.now()<uploadDeadline;n++){
    if(!targetCurrent() && !(await waitForTeamPicker()))return {state:'unknown',reason:'ATTACHMENT_TARGET_CHANGED'};
    if(!bindExactComposer()){await new Promise(r=>setTimeout(r,100));continue;}
-   const nodes=chips().filter(e=>!chips().some(other=>other!==e&&other.contains(e)));
+   const observed=chips();
+   const nodes=observed.filter(e=>!observed.some(other=>other!==e&&other.contains(e)));
    const available=new Set(nodes),remaining=[];
    const labels=e=>[fileLabel(e),...(e.innerText||'').split('\n'),(e.getAttribute('aria-label')||'').replace(removeLabel,''),e.getAttribute('title')||''].filter(Boolean).map(v=>v.trim());
    // The observed ChatGPT UI adds '(1)' before the extension when a name

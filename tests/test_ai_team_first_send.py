@@ -45,6 +45,7 @@ def test_signed_out_member_can_resume_first_message_once(tmp_path):
                     original = 'webConversationGrace: TimeInterval = 90'
                     assert source.count(original) == 1
                     source = source.replace(original, 'webConversationGrace: TimeInterval = 6')
+                    source = source.replace('draftPreparationGrace: TimeInterval = 45', 'draftPreparationGrace: TimeInterval = 4')
                 parts.append(source)
             parts.append((FIXTURE / 'probe.swift').read_text())
             main = tmp_path / 'main.swift'
@@ -52,7 +53,7 @@ def test_signed_out_member_can_resume_first_message_once(tmp_path):
             binary = tmp_path / 'connection-test'
             subprocess.run(['xcrun','swiftc','-swift-version','5','-module-cache-path',
                             str(tmp_path/'cache'),str(main),'-o',str(binary)],check=True,timeout=180)
-            for case in ('resume', 'stop', 'uncertain', 'retained', 'manual', 'missing', 'richText', 'prepareError',
+            for case in ('resume', 'stop', 'uncertain', 'retained', 'manual', 'missing', 'richText', 'prepareError', 'slowDraft',
                          'timeoutBoundary', 'delayedRoute', 'delayedEcho', 'foldedEcho', 'foldedMismatch',
                          'multiround', 'mismatch', 'firstHistory', 'pendingHistory', 'leaveUnknown', 'unreportedPin'):
                 result = subprocess.run([str(binary),str(tmp_path/case),str(ROOT/'static_cockpit'),case],

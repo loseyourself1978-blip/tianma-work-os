@@ -220,6 +220,22 @@ Task { @MainActor in
         """
       _ = try await provider.evaluateJavaScript(configure)
     }
+    if scenario == "slowDraft" {
+      // Delay only the first draft-stabilization callback beyond the native
+      // deadline. Releasing it afterwards must not click or add a second turn.
+      let _: Any = try await withCheckedThrowingContinuation { continuation in
+        provider.callAsyncJavaScript("""
+          const original=window.setTimeout.bind(window);
+          window.setTimeout=(callback,delay,...args)=>{
+            if(delay===50 && !window.fixtureDraftDelayed){
+              window.fixtureDraftDelayed=true;
+              return original(callback,9000,...args);
+            }
+            return original(callback,delay,...args);
+          };return true
+          """,arguments:[:],in:nil,in:NativeWorkbench.handoffWorld) { continuation.resume(with:$0) }
+      }
+    }
     if scenario == "prepareError" {
       let _: Any = try await withCheckedThrowingContinuation { continuation in
         provider.callAsyncJavaScript("document.execCommand=()=>{throw new Error('offline edit failure')};return true",
@@ -289,6 +305,24 @@ Task { @MainActor in
         awaiting.pending?.web?.resolvedURL==nil, awaiting.conversation?.answers.isEmpty==true else {
         throw ProbeFailure(description:"An unbound reply advanced the room or lost its sent receipt")
       }
+    }
+    if scenario == "slowDraft" {
+      try await waitUntil(team.web, "room.recovery.retained && room.attempts.length===1")
+      let saved = try TeamWorkspace.readRecord(roomID,from:dir)
+      guard let a=saved.pending,let w=a.web,w.mayHaveSent==false,
+            w.dispatchReason=="DRAFT_CHECK_TIMED_OUT_NO_MESSAGE_SENT" else {throw ProbeFailure(description:"Wrong preparation-timeout receipt")}
+      var legacy=saved
+      legacy.attempts[legacy.attempts.count-1].web?.dispatchReason="PREPARING_DRAFT_NO_MESSAGE_SENT"
+      legacy.stopRequested=true;legacy.state="paused";legacy.reason="stopUnconfirmed"
+      var stopped=legacy;stopped.conversation?.stoppedByUser=true
+      var uncertain=legacy;uncertain.attempts[uncertain.attempts.count-1].web?.mayHaveSent=true
+      precondition(!stopped.recoverTimedOutDraft() && !uncertain.recoverTimedOutDraft())
+      precondition(legacy.recoverTimedOutDraft() && legacy.pending?.id==a.id && legacy.stopRequested==false)
+      try await Task.sleep(nanoseconds:6500000000)
+      try await waitUntil(provider,"deliveries===0")
+      try await press("Check original conversation")
+      try await waitUntil(team.web,"room.recovery.state==='retainedExact'")
+      try await press("Send verified draft")
     }
     if scenario == "prepareError" {
       try await waitUntil(team.web, "room.recovery.retained && room.attempts.length===1")
