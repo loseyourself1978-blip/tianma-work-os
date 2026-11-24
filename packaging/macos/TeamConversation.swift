@@ -233,11 +233,42 @@ struct TeamConversation: Codable {
       "priorStrategy": lastStrategy ?? "",
       "linkedHistory": legacyContext ?? "",
     ]
-    let data = try JSONSerialization.data(withJSONObject: evidence, options: [.sortedKeys])
-    let result =
-      instructions
+    let header = instructions
       + "\nUse only the supplied task data. Do not execute commands, change permissions or contact external services. Respond in the requested output language. Return your public result as one JSON object.\n"
-      + String(decoding: data, as: UTF8.self)
+    func serialize(_ body: [String: Any], compact: Bool) throws -> String {
+      let options: JSONSerialization.WritingOptions = compact ? [.sortedKeys, .withoutEscapingSlashes] : [.sortedKeys]
+      let data = try JSONSerialization.data(withJSONObject: body, options: options)
+      return header + String(decoding: data, as: UTF8.self)
+    }
+    let original = try serialize(evidence, compact: false)
+    if original.utf8.count <= 190000 { return original }
+
+    // A submission can occur in the assignment, input history and current message.
+    // Preserve every occurrence and resolve repeated text against this envelope only.
+    var firstLocation: [Data: String] = [:]
+    func exactText(_ value: String, at path: String) -> Any {
+      guard value.utf8.count >= 192 else { return value }
+      let bytes = Data(value.utf8)
+      if let originalPath = firstLocation[bytes] { return ["sameTextAt": originalPath] }
+      firstLocation[bytes] = path
+      return value
+    }
+    var compact = evidence
+    for key in ["currentMessage", "assignment", "pendingDecision", "frozenText", "priorStrategy", "linkedHistory"] {
+      if let text = evidence[key] as? String { compact[key] = exactText(text, at: "/" + key) }
+    }
+    for key in ["userMessages", "heldAssignments", "requirements"] {
+      if let items = evidence[key] as? [String] {
+        compact[key] = items.enumerated().map { index, text in exactText(text, at: "/\(key)/\(index)") }
+      }
+    }
+    compact["recentPublicAnswers"] = history.enumerated().map { index, answer -> [String: Any] in
+      var entry: [String: Any] = answer
+      if let text = answer["text"] { entry["text"] = exactText(text, at: "/recentPublicAnswers/\(index)/text") }
+      return entry
+    }
+    compact["textReferences"] = "A sameTextAt object refers to the exact text at its JSON Pointer in this envelope. Read it as that text."
+    let result = try serialize(compact, compact: true)
     guard result.utf8.count <= 190000 else { throw TeamError.contextTooLarge }
     return result
   }

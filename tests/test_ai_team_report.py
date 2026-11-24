@@ -238,6 +238,43 @@ func submit(_ r:inout TeamRun,_ body:String,_ recipients:[String]=[])throws {
     draft.text+=" changed";precondition((try? c.submit(draft,members:r.members,language:"en"))==nil)
     r.conversation=c;r.selectNextChatStep()
 }
+// Exercise submission before persistence, as a room resuming with frozen files would.
+func testLargeEvidence() throws {
+    let r=room()
+    let artifact=String(repeating:"0123456789",count:15800)
+    let original=[ "site.js":artifact ]
+    var c=r.conversation!
+    let revision=TeamFileRevision(id:"frozen",round:c.round,producer:"Builder",attempt:"attempt",
+                                  time:0,files:original,digest:"digest")
+    c.revisions=[revision]
+    var draft=c.draft
+    draft.text=String(repeating:"large supplementary evidence ",count:530)
+    let uniqueRequirement=String(repeating:"previous requirement ",count:60)
+    c.plans=[TeamChatPlan(round:c.round,requirements:[uniqueRequirement],builder:"Builder",reviewer:"Reviewer")]
+    try c.submit(draft,members:r.members,language:"en")
+    let prompt=try c.prompt(for:c.queue[0],members:r.members)
+    let data=Data(prompt[prompt.range(of:"one JSON object.\n")!.upperBound...].utf8)
+    let payload=try JSONSerialization.jsonObject(with:data) as! [String:Any]
+    let body=draft.text.trimmingCharacters(in:.whitespacesAndNewlines)
+    precondition(prompt.utf8.count<=190000 && payload["currentMessage"] as? String==body)
+    precondition(payload["frozenFiles"] as? [String:String]==original)
+    precondition(payload["assignment"] as? [String:String]==["sameTextAt":"/currentMessage"])
+    precondition(payload["userMessages"] as? [[String:String]]==[["sameTextAt":"/currentMessage"]])
+    precondition(payload["requirements"] as? [String]==[uniqueRequirement])
+    try c.submit(draft,members:r.members,language:"en")
+    precondition(c.queue.count==1)
+    var impossible=c.draft
+    impossible.text=String(repeating:"a different follow-up ",count:1400)
+    c.draft=impossible
+    do {
+        try c.submit(impossible,members:r.members,language:"en")
+        preconditionFailure("Unique evidence exceeding the transport limit must be preserved locally")
+    } catch TeamError.contextTooLarge {
+        precondition(c.draft.key==impossible.key && c.draft.text==impossible.text)
+        precondition(c.inputs.count==1 && c.queue.count==1)
+    }
+}
+try testLargeEvidence()
 var a=room(),b=room()
 try submit(&a,"Explain the difference between grouping and sorting")
 try deliver(&a,["mode":"answer","text":"Grouping collects equal keys."])
