@@ -2,7 +2,7 @@
 
 [User guide](AI_TEAM_R2.en.md) · [Watch the demo](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo) · [GitHub installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.17)
 
-The first 48 seconds introduce TWOS and show how to set up a team. The next 35 seconds show two saved groups reopened in 1.0.17. Browse an offline photo library, then follow a second group into a seven-page feasibility report and its calculation table. The original opening and closing are from 1.0.13. Both 88.5-second editions include English and Simplified Chinese subtitles.
+Both 89-second films follow the local photo website and the AI industry feasibility report. Watch the timeline, people and globe views, then compare the annual and 90-day economics of three proposed businesses. Each film uses matching interface labels, task text, report excerpts and narration, with subtitles in both languages. The English edition translates the saved Chinese cases. The team scenes use the shipped interface to present edited excerpts. The report figures are projections in USD as of November 24, 2026.
 
 The English narration uses KittenTTS Nano 0.2 and the Mandarin narration uses MeloTTS. Both were synthesized locally for this recording. [KittenTTS model card](https://huggingface.co/KittenML/kitten-tts-nano-0.2) · [MeloTTS model card](https://huggingface.co/myshell-ai/MeloTTS-Chinese).
 

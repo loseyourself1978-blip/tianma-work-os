@@ -108,7 +108,13 @@ def main():
         assert poster.is_relative_to(root) and hashlib.sha256(poster.read_bytes()).hexdigest() == demo['poster_sha256']
         for video, source, version in zip(document.videos, document.sources, versions):
             assert 'controls' in video and 'playsinline' in video and 'autoplay' not in video
-            assert video['poster'] == './' + demo['poster'] + '?film=' + demo['poster_sha256'][:12]
+            poster_path = version.get('poster', demo['poster'])
+            poster_hash = version.get('poster_sha256', demo['poster_sha256'])
+            version_poster = (root / poster_path).resolve()
+            assert version_poster.is_relative_to(root) and hashlib.sha256(version_poster.read_bytes()).hexdigest() == poster_hash
+            assert video['poster'] == './' + poster_path + '?film=' + poster_hash[:12]
+            if demo.get('kind') == 'LOCALIZED_CASE_FILMS':
+                assert version['narration'] == version['interface_language'] == version['case_input_and_output_language']
             assert version['url_suffix'] == '?film=' + version['sha256'][:12]
             assert source == {'src': './' + version['path'] + version['url_suffix'], 'type': 'video/mp4'}
             assert version['captions'] == ['en', 'zh-CN'] and demo['audio']

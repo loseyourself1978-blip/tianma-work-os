@@ -232,93 +232,93 @@
     }
   ],
   "demo": {
-    "poster": "assets/product/ada-kai-1.0.13-poster.jpg",
     "version": "1.0.17",
     "build": "101.65",
     "source_commit": "961d5d06539246a3e9afc2b9d1ff885fdca554b7",
     "width": 1920,
     "height": 1080,
     "audio": true,
-    "kind": "PRODUCT_FILM_WITH_REAL_MACOS_WINDOW_CAPTURE",
-    "content": "The original product introduction and team setup lead into two saved engineering chats. A photo library opens offline. A seven-page industry report comes with a calculation table.",
-    "poster_sha256": "5403e879bd19b21859dfde72500bba28fe1925a49e5e87ab2db7f3fb706e49c1",
+    "kind": "LOCALIZED_CASE_FILMS",
+    "poster": "assets/product/ai-team-cases-1.0.17-en-US.jpg",
+    "poster_sha256": "703c1a7e27eb1c9cbbb4cabd2e3a6a25c89b0303f8e4e0178e06650d914cda31",
     "versions": [
       {
-        "path": "assets/product/TWOS-1.0.17-Product-Introduction-en-US.mp4",
-        "sha256": "f1b2c674c66245b6adc2b93437916fc6749ed4ad71d5e0ec83e7731289d16d35",
-        "bytes": 7037037,
-        "duration_seconds": 88.5,
+        "path": "assets/product/TWOS-1.0.17-AI-Team-Cases-en-US.mp4",
+        "bytes": 4701356,
+        "sha256": "c67df815f0631693aa50ca4bc637ed5162199ac7e85a4d09012743365633a7e1",
+        "duration_seconds": 89.0,
         "narration": "en-US",
         "captions": [
           "en",
           "zh-CN"
         ],
-        "download_as": "TWOS-1.0.17-Product-Introduction-en-US.mp4",
-        "url_suffix": "?film=f1b2c674c662",
-        "github_asset": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/download/v1.0.17/TWOS-1.0.17-Product-Introduction-en-US.mp4"
+        "download_as": "TWOS-1.0.17-AI-Team-Cases-en-US.mp4",
+        "url_suffix": "?film=c67df815f063",
+        "poster": "assets/product/ai-team-cases-1.0.17-en-US.jpg",
+        "poster_sha256": "703c1a7e27eb1c9cbbb4cabd2e3a6a25c89b0303f8e4e0178e06650d914cda31",
+        "interface_language": "en-US",
+        "case_input_and_output_language": "en-US"
       },
       {
-        "path": "assets/product/TWOS-1.0.17-Product-Introduction-zh-CN.mp4",
-        "sha256": "b91186e1bb39c0ed452431d05c0d0dfe793fa06fbc765dcd7e4a3664c6317f3d",
-        "bytes": 6749484,
-        "duration_seconds": 88.5,
+        "path": "assets/product/TWOS-1.0.17-AI-Team-Cases-zh-CN.mp4",
+        "bytes": 4229322,
+        "sha256": "11cb5914593232d96a330dab600df67a63020250e3b386b7f9a2edd68bafa2e5",
+        "duration_seconds": 89.0,
         "narration": "zh-CN",
         "captions": [
           "en",
           "zh-CN"
         ],
-        "download_as": "TWOS-1.0.17-Product-Introduction-zh-CN.mp4",
-        "url_suffix": "?film=b91186e1bb39",
-        "github_asset": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/download/v1.0.17/TWOS-1.0.17-Product-Introduction-zh-CN.mp4"
+        "download_as": "TWOS-1.0.17-AI-Team-Cases-zh-CN.mp4",
+        "url_suffix": "?film=11cb59145932",
+        "poster": "assets/product/ai-team-cases-1.0.17-zh-CN.jpg",
+        "poster_sha256": "cac9de729d7c031d51469189a060e39558feaf99963c0abc36d779d0c8283e55",
+        "interface_language": "zh-CN",
+        "case_input_and_output_language": "zh-CN"
       }
     ],
     "chapters": [
       {
         "seconds": 0,
-        "title": "Tianma Work OS for Mac"
+        "en": "Two deliveries",
+        "zh": "两项交付"
       },
       {
-        "seconds": 12.8,
-        "title": "Build your AI team"
+        "seconds": 8,
+        "en": "Brief and team review",
+        "zh": "相册需求与团队审核"
       },
       {
-        "seconds": 48,
-        "title": "Build an offline photo library"
+        "seconds": 28,
+        "en": "Timeline, people and globe",
+        "zh": "时间轴、人物与地球"
       },
       {
-        "seconds": 63,
-        "title": "Research AI business opportunities"
+        "seconds": 49,
+        "en": "Research brief and review",
+        "zh": "研究任务与独立复算"
       },
       {
-        "seconds": 83,
-        "title": "Get TWOS"
+        "seconds": 69,
+        "en": "Pilot economics",
+        "zh": "试点测算"
+      },
+      {
+        "seconds": 79,
+        "en": "The recommendation and files",
+        "zh": "结论与交付文件"
       }
     ],
-    "retained_master": {
-      "version": "1.0.13",
-      "build": "101.61",
-      "source_commit": "abecabc72eefa362a86f54575fc145486f908067",
-      "cut_ranges_seconds": [
-        [
-          0,
-          48
-        ],
-        [
-          83,
-          88.5
-        ]
-      ],
-      "sha256_by_locale": {
-        "en-US": "f6d7d3d0f6b061f670139546ba8eb8a41fa4958c21b3377a2a470fb09e6d787f",
-        "zh-CN": "96d2542b9710064b7a3ed6af6969498fb8c27bd69dcd6fbecc9d3b7b8945d0b2"
-      }
+    "content": "Two saved TWOS cases: local photo website and AI industry feasibility report. The 1.0.17 team interface renders edited, localized excerpts offline. The website footage uses synthetic media. Report visuals present figures from the delivered CSV and Markdown. English is a presentation translation of the original Chinese work.",
+    "case_sources": {
+      "photo_revision": "e710cad2e36a4a1c3f5106167c99b84c616737e8d3bd0c4cb2cc8c657dd10adb",
+      "report_revision": "631361b989d5d1a0227bf13e384d605db0526b2f0f05f972cab5935f239f087f",
+      "figures_as_of": "2026-11-24",
+      "projected_profit_currency": "USD"
     },
-    "original_case_excerpt_language": "zh-CN",
-    "latest_capture": {
-      "version": "1.0.17",
-      "build": "101.65",
-      "source_commit": "961d5d06539246a3e9afc2b9d1ff885fdca554b7",
-      "scope": "Separate offline English and Simplified Chinese windows reopened the two saved engineering cases. The original case messages and deliverables were authored in Chinese."
+    "voice_models": {
+      "en-US": "KittenTTS Nano 0.2",
+      "zh-CN": "MeloTTS Chinese"
     }
   }
 }
