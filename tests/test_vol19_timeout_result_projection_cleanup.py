@@ -150,12 +150,12 @@ def test_repeated_app_disposal_returns_sqlite_and_workers_to_baseline(tmp_path, 
 
 
 @pytest.mark.parametrize("scenario", ["migration", "restart"])
-def test_existing_test_observations_close_their_own_database_resources(tmp_path, scenario):
+def test_existing_test_observations_close_their_own_database_resources(tmp_path, scenario, request):
     before = sqlite_handles(tmp_path)
     if scenario == "migration":
         fixtures.test_existing_database_migration_preserves_old_task(tmp_path)
     else:
-        fixtures.test_runtime_shutdown_hands_off_detached_run_for_restart_recovery(tmp_path)
+        fixtures.test_runtime_shutdown_hands_off_detached_run_for_restart_recovery(tmp_path, request)
     assert sqlite_handles(tmp_path) == before
     assert run_lifecycle._reconciliation_lock_registry_size() == 0
 
