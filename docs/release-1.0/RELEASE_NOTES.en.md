@@ -1,3 +1,9 @@
+# TWOS 1.0.17 / 101.65 · Resume a team task after signing in
+
+After signing in, use **Back to chat · Check connection** in the member window. TWOS checks the conversation assigned to that group. If a file draft is still being prepared, TWOS keeps the original available for checking. Once it is ready, continue the queued message. Opening another chat to check your login keeps that chat separate from the team task.
+
+If a delivery is uncertain, choose **Check original conversation**. Keep any personal draft. TWOS checks the original handoff and its reply. Large instructions can arrive as a UTF-8 attachment identified by its checksum. Repeated evidence is referenced by its exact text when a long follow-up would otherwise exceed the message limit. A later change to a member’s settings applies to future work. If a reviewer asks for proof after a partial file update, choose **Verify files and send the manifest to the reviewer** when available. TWOS reads the delivered files, records their hashes, and sends the reviewer their relative names and source revisions. User files outside the team delivery stay private.
+
 # TWOS 1.0.16 / 101.64 · Continue team conversations and route replies to the selected discussion
 
 AI Team keeps a website default for future turns and checks the observed selection again before each send. Older ChatGPT rooms can continue when an effort such as Medium was stored as a model. An explicit model mismatch shows both choices. Use the displayed website choice to update future turns, then continue the queued message. Reopening a member uses the last confirmed conversation for that group.
@@ -33,7 +39,7 @@ If the chat pauses, the notice names the member and service. Choose **Refresh co
 # TWOS 1.0.13 / 101.61 · AI Team conversations and direct file delivery
 
 
-[Watch the product introduction, six-member setup and projector checklist example in English or Mandarin](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo). Both downloads have bilingual subtitles.
+[Watch the product introduction, six-member setup and projector checklist example in English or Mandarin](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.13). Both downloads have bilingual subtitles.
 
 Open **AI Team → New task** in the top toolbar. Type a goal or attach a brief. Send a message to the group or mention one or more members by name. Start with three members and add up to three more. Other chats can work in parallel. For file work, choose an existing folder in **Files** and open the finished files there.
 

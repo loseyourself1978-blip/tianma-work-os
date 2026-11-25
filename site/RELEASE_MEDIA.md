@@ -16,7 +16,7 @@ This is a release SOP, not a background automation. Website publication does not
 
 ## Current capture
 
-TWOS 1.0.16 / 101.64, from 410ff3a62cd7788061881b156cb15e04a952dc52, includes Nyra 1.0.8 / 108. The signed release was captured with six isolated provider combinations, a new team task and a reopened synthetic request. No task was sent to a model in the media session. All five portraits match the bundled resources. The two narrated films retain their original 1.0.13 recording provenance.
+TWOS 1.0.17 / 101.65, from 961d5d06539246a3e9afc2b9d1ff885fdca554b7, includes Nyra 1.0.8 / 108. The signed release was captured with six isolated provider combinations, a new team task and a reopened synthetic request. No task was sent to a model in the media session. All five portraits match the bundled resources. The 88.5-second films retain the 1.0.13 introduction, team setup and closing. The 48–83 second chapter shows two saved cases in 1.0.17 / 101.65. Both English and Chinese controls, local narrators, captions, and retained video frames were verified.
 
 ## Supported-service combinations — required from November 7, 2026
 

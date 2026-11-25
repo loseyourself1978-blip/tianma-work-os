@@ -1,4 +1,8 @@
-# Use TWOS 1.0.16
+# Use TWOS 1.0.17
+
+After signing in, use **Back to chat · Check connection** in the member window. TWOS checks the conversation assigned to that group. If a file draft is still being prepared, TWOS keeps the original available for checking. Once it is ready, continue the queued message. Opening another chat to check your login keeps that chat separate from the team task.
+
+If a delivery is uncertain, choose **Check original conversation**. Keep any personal draft. TWOS checks the original handoff and its reply. Large instructions can arrive as a UTF-8 attachment identified by its checksum. Repeated evidence is referenced by its exact text when a long follow-up would otherwise exceed the message limit. A later change to a member’s settings applies to future work. If a reviewer asks for proof after a partial file update, choose **Verify files and send the manifest to the reviewer** when available. TWOS reads the delivered files, records their hashes, and sends the reviewer their relative names and source revisions. User files outside the team delivery stay private.
 
 Ada can continue a conversation after the first round. A member that follows the website uses its current choice. For an explicitly pinned model, the group shows the configured and observed choices. Select the configured model on the website, or adopt the current choice for future turns.
 
@@ -15,7 +19,7 @@ If the first message pauses, the chat identifies the member who needs attention.
 > **Current control-enabled version:** [Focus, compact task controls and shared Codex navigation](MINIMAL_STATUS_AND_FOCUS.en.md). The status channel remains read-only; a separate authenticated channel carries only user-selected drafts/actions. Existing standalone status grants do not gain control permission automatically. Historical read-only-only descriptions do not describe this new control channel.
 
 
-TWOS 1.0.16 / 101.64 · [This update](AI_TEAM_R2.en.md)
+TWOS 1.0.17 / 101.65 · [This update](AI_TEAM_R2.en.md)
 
 
 Choose the path matching your situation; they are not one mandatory sequence.
@@ -66,4 +70,4 @@ Click the character once to restore the bound TWOS workbench. The bubble default
 
 [English action voice: tiny-voca F2](ENGLISH_VOICE.en.md)
 
-[AI Team guide for 1.0.16](AI_TEAM_R2.en.md)
+[AI Team guide for 1.0.17](AI_TEAM_R2.en.md)

@@ -1,4 +1,10 @@
-# TWOS 1.0.16 / 101.64
+# TWOS 1.0.17 / 101.65
+
+Two isolated groups ran through the actual ChatGPT, local Codex and Claude channels using synthetic or public data. The media website was independently reviewed and exercised offline in Chromium and macOS WebKit. The industry report’s Markdown and calculation table were reviewed together; the seven-page print edition was rendered and checked separately. The websites did not attest the model used on every turn.
+
+The photo team continued its original room on the mounted release candidate for the final evidence handoff. The initial photo run and the earlier report run used separate engineering builds. The complete serial suite ran against the mounted release package. Full suite: 1908 passed, 1 skipped. Signed package: 172 passed, 1 skipped. Owner acceptance is separate.
+
+## TWOS 1.0.16 / 101.64
 
 The mounted candidate completed two official ChatGPT turns in one conversation. The second turn recalled a random marker that appeared only in the first request. An ordinary signed-in ChatGPT and Claude exchange returned two distinct reply receipts. Claude’s complete response matched the message sent back to ChatGPT. The checkbox stopped future dispatches. The two-composer project layout was tested separately with local macOS WebKit, including a preserved project draft and a discussion change. Per-turn backend model identities were unavailable.
 

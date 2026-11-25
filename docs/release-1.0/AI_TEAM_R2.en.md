@@ -1,4 +1,8 @@
-# AI Team in TWOS 1.0.16 · user guide
+# AI Team in TWOS 1.0.17 · user guide
+
+After signing in, use **Back to chat · Check connection** in the member window. TWOS checks the conversation assigned to that group. If a file draft is still being prepared, TWOS keeps the original available for checking. Once it is ready, continue the queued message. Opening another chat to check your login keeps that chat separate from the team task.
+
+If a delivery is uncertain, choose **Check original conversation**. Keep any personal draft. TWOS checks the original handoff and its reply. Large instructions can arrive as a UTF-8 attachment identified by its checksum. Repeated evidence is referenced by its exact text when a long follow-up would otherwise exceed the message limit. A later change to a member’s settings applies to future work. If a reviewer asks for proof after a partial file update, choose **Verify files and send the manifest to the reviewer** when available. TWOS reads the delivered files, records their hashes, and sends the reviewer their relative names and source revisions. User files outside the team delivery stay private.
 
 AI Team keeps a website default for future turns and checks the observed selection again before each send. Older ChatGPT rooms can continue when an effort such as Medium was stored as a model. An explicit model mismatch shows both choices. Use the displayed website choice to update future turns, then continue the queued message. Reopening a member uses the last confirmed conversation for that group.
 
@@ -54,4 +58,4 @@ After 30 minutes of local production, TWOS checks recent activity on that exact 
 
 ## Installation and rollback
 
-Download the installer from [GitHub v1.0.16](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.16) and check SHA256SUMS before opening it. Finish active tasks and quit TWOS before upgrading. To roll back, quit 1.0.16 and use the [v1.0.15 installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.15). Keep the existing chat profile and output folders.
+Download the installer from [GitHub v1.0.17](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.17) and check SHA256SUMS before opening it. Finish active tasks and quit TWOS before upgrading. To roll back, quit 1.0.17 and use the [v1.0.16 installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.16). Keep the existing chat profile and output folders.

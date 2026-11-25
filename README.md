@@ -1,18 +1,18 @@
 # Tianma Work OS 1.0
 
-**TWOS 1.0.16 / 101.64 · Continue team conversations and route replies to the selected discussion**
+**TWOS 1.0.17 / 101.65 · Resume a team task after signing in**
 
-Ada can continue a conversation after the first round. A member that follows the website uses its current choice. For an explicitly pinned model, the group shows the configured and observed choices. Select the configured model on the website, or adopt the current choice for future turns.
+After signing in, use **Back to chat · Check connection** in the member window. TWOS checks the conversation assigned to that group. If a file draft is still being prepared, TWOS keeps the original available for checking. Once it is ready, continue the queued message. Opening another chat to check your login keeps that chat separate from the team task.
 
-Open **AI Team → New task** in the top toolbar. Type a goal or attach a brief. Send a message to the group or mention one or more members by name. Start with three members and add up to three more. Other chats can work in parallel. For file work, choose an existing folder in **Files** and open the finished files there. [Watch the TWOS product introduction and projector checklist demo](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo).
+Open **AI Team → New task** in the top toolbar. Type a goal or attach a brief. Send a message to the group or mention one or more members by name. Start with three members and add up to three more. Other chats can work in parallel. For file work, choose an existing folder in **Files** and open the finished files there. [Watch team setup, the offline photo library and the AI industry report](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo).
 
-**TWOS 1.0.16 / 101.64: shared Codex projects/chats and direct Nyra task controls. Includes Nyra 1.0.8 / 108.**
+**TWOS 1.0.17 / 101.65: shared Codex projects/chats and direct Nyra task controls. Includes Nyra 1.0.8 / 108.**
 
 Select Codex on either side for the same project/chat sidebar and current conversation readback. Click Nyra to return to the bound workbench; use its compact task bubble to edit a draft, steer an owned turn, queue a supplement or stop the exact task. The delayed-history dispatch race discovered during final-candidate testing is repaired. Existing private-network navigation and accepted business results remain preserved.
 
 This version includes five standing/reclining outfits, 13 bundled Chinese Tian action recordings and 13 matching offline tiny-voca F2 American English recordings. Sound starts muted; unmute and enable Action voice for eligible transitions, with cooldown and no overlap. Close the panel with Close, Escape or Sound.
 
-**TWOS 1.0.16 / build 101.64** · [Download and verify](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.16) · [This update](docs/release-1.0/AI_TEAM_R2.en.md)
+**TWOS 1.0.17 / build 101.65** · [Download and verify](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.17) · [This update](docs/release-1.0/AI_TEAM_R2.en.md)
 
 [简体中文](README.zh-CN.md) · [Install](docs/release-1.0/INSTALL.en.md) · [User guide](docs/release-1.0/USER_GUIDE.en.md) · [Current release status](docs/CURRENT_DELIVERY.md) · [AI Team guide](docs/release-1.0/AI_TEAM_R2.en.md)
 
@@ -26,7 +26,7 @@ Discuss a goal and execute it in one macOS workspace. TWOS pairs official ChatGP
 
 ## Download and first use
 
-Download TWOS v1.0.16 using the link above. Verify SHA256SUMS before opening its DMG. The matching receipt binds source, signatures, notarization and artifact hashes. Historical v1.0.1 and v1.0.0 remain unchanged.
+Download TWOS v1.0.17 using the link above. Verify SHA256SUMS before opening its DMG. The matching receipt binds source, signatures, notarization and artifact hashes. Historical v1.0.1 and v1.0.0 remain unchanged.
 
 Open the matching DMG, drag TWOS into Applications and open it. Sign into the chosen official provider website, connect your already installed/logged-in local Codex, then create or resume one folder-bound task. Nyra is inside the same app; no separate pet installer or first-run artwork download is required. Ordinary installation needs no Python, Node or terminal.
 

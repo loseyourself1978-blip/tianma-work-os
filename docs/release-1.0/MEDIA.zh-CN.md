@@ -1,8 +1,8 @@
-# 发行版实机演示与画面 · 1.0.16 / 101.64
+# 发行版实机演示与画面 · 1.0.17 / 101.65
 
-[操作指南](AI_TEAM_R2.zh-CN.md) · [录屏](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo) · [GitHub 安装包](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.16)
+[操作指南](AI_TEAM_R2.zh-CN.md) · [录屏](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo) · [GitHub 安装包](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.17)
 
-约 89 秒的产品介绍从天马工作台的用途开始。实录展示输入目标、查看起始角色和默认服务、查看成员模型配置、保存自定义职责及组成六人团队。随后打开另一个真实保存的工程群聊：凯从附件找出两根备用线，艾达和凯均回复投影仪测试期限为 09:40。英语和普通话旁白版均带中英文字幕。
+前 48 秒沿用原片的产品介绍和组队实录。接下来 35 秒在 1.0.17 中重新打开两个已保存的群聊，展示离线照片网站，以及七页行业可行性报告和测算表。开场和片尾来自 1.0.13。两版均为 88.5 秒，分别配英语、普通话旁白，都有中英文字幕。
 
 英语旁白使用 KittenTTS Nano 0.2，普通话旁白使用 MeloTTS，两份声音均为本次演示在本机合成。[KittenTTS 模型资料](https://huggingface.co/KittenML/kitten-tts-nano-0.2) · [MeloTTS 模型资料](https://huggingface.co/myshell-ai/MeloTTS-Chinese)。
 

@@ -1,110 +1,126 @@
 {
-  "source_commit": "410ff3a62cd7788061881b156cb15e04a952dc52",
-  "artifact": "Tianma-Work-OS-1.0.16.dmg",
-  "sha256": "8f15e1c33ef00d65e32426116e0b50628e5ada1ec21cb3e823542aab387f4f63",
+  "source_commit": "961d5d06539246a3e9afc2b9d1ff885fdca554b7",
+  "artifact": "Tianma-Work-OS-1.0.17.dmg",
+  "sha256": "77ce1780a63b3f3972acdc3f8ae6a6848f18a0fd772412accabb300b45d6261a",
   "signing_identity": "Developer ID Application: Jing Huang (BZJWQJ352K)",
-  "app_notarization_id": "7bbecf0b-8062-4a4c-892c-00ea8d081891",
-  "dmg_notarization_id": "65fc1020-0309-4a2b-983b-4083b9a47124",
+  "app_notarization_id": "31e89ee8-8f85-42d1-b330-715c07577fe1",
+  "dmg_notarization_id": "ddea86a5-7009-4cd2-8349-7c70a67a305e",
   "gatekeeper": "PASS",
-  "version": "1.0.16",
-  "build": "101.64",
+  "version": "1.0.17",
+  "build": "101.65",
   "product": "TWOS",
   "architecture": "arm64",
   "platform": "macOS",
   "declared_minimum_macos": "13.0",
   "tested_macos": "27.0.1",
-  "bytes": 266428882,
+  "bytes": 267053800,
   "status": "SIGNED_NOTARIZED_VALIDATED",
-  "runtime_input_sha256": "9c484c8fe0e870a8480f980fb2c3e01b86903663123202039881c0e18858ef2a",
-  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.16",
+  "runtime_input_sha256": "0d9717d6d2d11374faf456536f650bfc82c4d013bce6032846dbe885cec2e253",
+  "github_release": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.17",
   "embedded_nyra_version": "1.0.8",
   "embedded_nyra_build": "108",
   "embedded_nyra_source_commit": "bb60b2000b8d5a25c7234c7e1741b111d66d346c",
   "embedded_nyra_source_snapshot": "14cdfa728bb4a13d6d87805bfa43bde7e57840a821c33d5a8b0bc4a65bfe84d8",
   "embedded_nyra_resource_manifest_sha256": "60e3196ae1ec503d2ed01983c1d22f403bd6e0ddfe3c6913de50b26875992c0f",
-  "at": "2026-11-23T14:56:29.127444+08:00",
+  "at": "2026-11-25T17:53:37.452748+08:00",
   "verification_document": "AI_TEAM_VERIFICATION.en.md",
   "store_submission": "NOT_SUBMITTED",
   "owner_acceptance": "NOT_RECORDED",
   "main_gate": {
     "counts": {
-      "tests": 1905,
+      "tests": 1909,
       "failures": 0,
       "errors": 0,
       "skipped": 1,
-      "passed": 1904
+      "passed": 1908
     },
-    "duration_seconds": 5558.404,
-    "junit_sha256": "0d646786098c5096613cfe0977c98ec2867f414649d83b6acb3d898aa7bca67f",
-    "validation_commit": "410ff3a62cd7788061881b156cb15e04a952dc52",
+    "duration_seconds": 5118.328,
+    "junit_sha256": "978a0d49a05bdaaa3ee3d8119b21f8ed56c45f00b278a6bb9c93518f8d341708",
+    "validation_commit": "9d8f354dabab81a1a08247f17158f384d5714a25",
+    "test_only_changes": [
+      "tests/test_self_hosting.py",
+      "tests/test_vol19_timeout_result_projection_cleanup.py"
+    ],
     "complete_pass": true,
     "artifact": "matching local candidate",
-    "source": "410ff3a62cd7788061881b156cb15e04a952dc52",
+    "source": "961d5d06539246a3e9afc2b9d1ff885fdca554b7",
     "frozen_inputs_verified": 356,
     "safari": {
-      "measurements": 38,
-      "widths": [
-        390,
-        884,
-        1280,
-        1329
-      ]
+      "measurements": 38
     }
   },
   "demo": {
     "versions": [
       {
-        "file": "TWOS-1.0.13-Product-Introduction-en-US.mp4",
-        "sha256": "f6d7d3d0f6b061f670139546ba8eb8a41fa4958c21b3377a2a470fb09e6d787f",
-        "url": "https://loseyourself1978-blip.github.io/tianma-work-os/assets/product/TWOS-1.0.13-AI-Team-Ada-and-Kai.mp4?film=f6d7d3d0f6b0",
+        "file": "TWOS-1.0.17-Product-Introduction-en-US.mp4",
+        "sha256": "f1b2c674c66245b6adc2b93437916fc6749ed4ad71d5e0ec83e7731289d16d35",
+        "url": "https://loseyourself1978-blip.github.io/tianma-work-os/assets/product/TWOS-1.0.17-Product-Introduction-en-US.mp4?film=f1b2c674c662",
         "narration": "en-US",
         "captions": [
           "en",
           "zh-CN"
         ],
         "seconds": 88.5,
-        "download_as": "TWOS-1.0.13-Product-Introduction-en-US.mp4",
-        "github_asset": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/download/v1.0.13/TWOS-1.0.13-Product-Introduction-en-US.mp4"
+        "download_as": "TWOS-1.0.17-Product-Introduction-en-US.mp4",
+        "github_asset": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/download/v1.0.17/TWOS-1.0.17-Product-Introduction-en-US.mp4"
       },
       {
-        "file": "TWOS-1.0.13-Product-Introduction-zh-CN.mp4",
-        "sha256": "96d2542b9710064b7a3ed6af6969498fb8c27bd69dcd6fbecc9d3b7b8945d0b2",
-        "url": "https://loseyourself1978-blip.github.io/tianma-work-os/assets/product/TWOS-1.0.13-AI-Team-Ada-and-Kai-zh-CN.mp4?film=96d2542b9710",
+        "file": "TWOS-1.0.17-Product-Introduction-zh-CN.mp4",
+        "sha256": "b91186e1bb39c0ed452431d05c0d0dfe793fa06fbc765dcd7e4a3664c6317f3d",
+        "url": "https://loseyourself1978-blip.github.io/tianma-work-os/assets/product/TWOS-1.0.17-Product-Introduction-zh-CN.mp4?film=b91186e1bb39",
         "narration": "zh-CN",
         "captions": [
           "en",
           "zh-CN"
         ],
         "seconds": 88.5,
-        "download_as": "TWOS-1.0.13-Product-Introduction-zh-CN.mp4",
-        "github_asset": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/download/v1.0.13/TWOS-1.0.13-Product-Introduction-zh-CN.mp4"
+        "download_as": "TWOS-1.0.17-Product-Introduction-zh-CN.mp4",
+        "github_asset": "https://github.com/loseyourself1978-blip/tianma-work-os/releases/download/v1.0.17/TWOS-1.0.17-Product-Introduction-zh-CN.mp4"
       }
     ],
     "title": "Tianma Work OS for Mac — Build your AI team",
-    "media_revision": "product-introduction",
-    "recorded_version": "1.0.13",
-    "recorded_build": "101.61"
+    "media_revision": "photo-library-and-industry-report",
+    "recorded_version": "1.0.17",
+    "recorded_build": "101.65",
+    "retained_master": {
+      "version": "1.0.13",
+      "build": "101.61",
+      "source_commit": "abecabc72eefa362a86f54575fc145486f908067",
+      "cut_ranges_seconds": [
+        [
+          0,
+          48
+        ],
+        [
+          83,
+          88.5
+        ]
+      ],
+      "sha256_by_locale": {
+        "en-US": "f6d7d3d0f6b061f670139546ba8eb8a41fa4958c21b3377a2a470fb09e6d787f",
+        "zh-CN": "96d2542b9710064b7a3ed6af6969498fb8c27bd69dcd6fbecc9d3b7b8945d0b2"
+      }
+    }
   },
   "signed_installer_gate": {
     "counts": {
-      "tests": 169,
+      "tests": 173,
       "failures": 0,
       "errors": 0,
       "skipped": 1,
-      "passed": 168
+      "passed": 172
     },
-    "duration_seconds": 553.062,
-    "junit_sha256": "e5b5cc7305c99974987fd363061fab0dd105f47504112373bd026907455abab9",
+    "duration_seconds": 642.839,
+    "junit_sha256": "4394196fdaf87404f9c7e58e2f6e534dc35acd3bb8ce7c18a92bbe23d7dde9cf",
     "manifest_files": 410
   },
-  "multi_round": {
-    "two_turns_same_chat": true,
-    "directions": [
-      "ChatGPT to Claude",
-      "Claude to ChatGPT"
+  "team_recovery": {
+    "photo_site_reviewed": true,
+    "industry_report_sources_reviewed": true,
+    "offline_media_engines": [
+      "Chromium",
+      "macOS WebKit"
     ],
-    "official_live_layout": "ordinary signed-in conversations",
-    "project_discussion_layout": "local WebKit test",
-    "per_turn_reported_models": "UNKNOWN"
+    "reported_per_turn_models": "UNKNOWN"
   }
 }

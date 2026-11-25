@@ -1,8 +1,8 @@
-# Release screenshots and recording · 1.0.16 / 101.64
+# Release screenshots and recording · 1.0.17 / 101.65
 
-[User guide](AI_TEAM_R2.en.md) · [Watch the demo](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo) · [GitHub installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.16)
+[User guide](AI_TEAM_R2.en.md) · [Watch the demo](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo) · [GitHub installer](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.17)
 
-The 89-second product introduction explains TWOS for Mac and shows a real 1.0.13 window. Type a goal, inspect the suggested starting roles and connection defaults, choose a member’s settings, add a custom duty and grow a group to six members. A separate saved engineering chat shows Ada and Kai using one brief to identify two spare cables and a 09:40 deadline. Both editions include English and Simplified Chinese captions.
+The first 48 seconds introduce TWOS and show how to set up a team. The next 35 seconds show two saved groups reopened in 1.0.17. Browse an offline photo library, then follow a second group into a seven-page feasibility report and its calculation table. The original opening and closing are from 1.0.13. Both 88.5-second editions include English and Simplified Chinese subtitles.
 
 The English narration uses KittenTTS Nano 0.2 and the Mandarin narration uses MeloTTS. Both were synthesized locally for this recording. [KittenTTS model card](https://huggingface.co/KittenML/kitten-tts-nano-0.2) · [MeloTTS model card](https://huggingface.co/myshell-ai/MeloTTS-Chinese).
 
