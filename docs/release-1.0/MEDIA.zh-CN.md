@@ -1,10 +1,8 @@
-# 发行版实机演示与画面 · 1.0.17 / 101.65
+# 发行截图与视频更正 · 1.0.17 / 101.65
 
-[操作指南](AI_TEAM_R2.zh-CN.md) · [录屏](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo) · [GitHub 安装包](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.17)
+[操作指南](AI_TEAM_R2.zh-CN.md) · [视频更正说明](https://loseyourself1978-blip.github.io/tianma-work-os/#ada-kai-demo) · [GitHub 安装包](https://github.com/loseyourself1978-blip/tianma-work-os/releases/tag/v1.0.17)
 
-两版视频各 89 秒，展示本地照片网站和 AI 行业可行性报告。先看时间轴、人物页和地球操作，再比较三个业务方向的首年与九十天试点测算。中英文版分别采用对应语言的界面、任务文字、报告节选及旁白，都有双语字幕。群聊画面使用发行版界面呈现原群记录的摘编，英文版翻译自原始中文案例。报告中的试点金额为截至 2026 年 11 月 24 日的情景预测，单位为美元。
-
-英语旁白使用 KittenTTS Nano 0.2，普通话旁白使用 MeloTTS，两份声音均为本次演示在本机合成。[KittenTTS 模型资料](https://huggingface.co/KittenML/kitten-tts-nano-0.2) · [MeloTTS 模型资料](https://huggingface.co/myshell-ai/MeloTTS-Chinese)。
+2026 年 11 月 26 日，我们撤下两部案例视频。中英文群聊台词均由制作者编写，再用产品界面离线渲染。实际工程测试有人工参与。
 
 ## 1.0.11 历史画面
 
