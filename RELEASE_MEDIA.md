@@ -16,7 +16,7 @@ This is a release SOP, not a background automation. Website publication does not
 
 ## Current capture
 
-TWOS 1.0.17 / 101.65, from 961d5d06539246a3e9afc2b9d1ff885fdca554b7, includes Nyra 1.0.8 / 108. The signed release was captured with six isolated provider combinations, a new team task and a reopened synthetic request. No task was sent to a model in the media session. All five portraits match the bundled resources. The 88.5-second films retain the 1.0.13 introduction, team setup and closing. The 48–83 second chapter shows two saved cases in 1.0.17 / 101.65. Both English and Chinese controls, local narrators, captions, and retained video frames were verified.
+TWOS 1.0.17 / 101.65, from 961d5d06539246a3e9afc2b9d1ff885fdca554b7, includes Nyra 1.0.8 / 108. The signed release was captured with six isolated provider combinations, a new team task and a reopened synthetic request. No task was sent to a model in the media session. All five portraits match the bundled resources. On November 26, 2026, both films and their posters were withdrawn. The case chapters used scripted dialogue attributed to Ada, Kai and Ren, rendered offline in the TWOS interface. The two engineering cases produced files with human assistance. The [product page](https://shangfuhongtai.top/tianma-work-os/#ada-kai-demo) carries the English and Chinese correction.
 
 ## Supported-service combinations — required from November 7, 2026
 
